@@ -680,6 +680,10 @@ public class SvnChangeList implements CommittedChangeList {
     final String commonPath = myCommonPathSearcher.getCommon();
     if (commonPath != null) {
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
+      if (urlMapping.isEmpty()) {
+        myCachedInfoLoaded = false;
+        return;
+      }
       final String absoluteUrl = SVNPathUtil.append(myRepositoryRoot, commonPath);
       myWcRoot = urlMapping.getWcRootForUrl(absoluteUrl);
       if (myWcRoot != null) {
