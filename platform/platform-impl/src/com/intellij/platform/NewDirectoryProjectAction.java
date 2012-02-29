@@ -16,6 +16,7 @@
 package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
