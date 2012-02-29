@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
@@ -437,7 +434,7 @@ public class UIUtil {
 
   public static Color getTreeSelectionBackground() {
     if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Tree.nimbusSelectionBackground");
+      Color color = UIManager.getColor("Tree.selectionBackground");
       if (color != null) return color;
       color = UIManager.getColor("nimbusSelectionBackground");
       if (color != null) return color;
@@ -463,7 +460,7 @@ public class UIUtil {
 
   public static Color getTableSelectionBackground() {
     if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Table.nimbusSelectionBackground");
+      Color color = UIManager.getColor("Table[Enabled+Selected].textBackground");
       if (color != null) return color;
       color = UIManager.getColor("nimbusSelectionBackground");
       if (color != null) return color;
@@ -625,12 +622,6 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("List.nimbusSelectionBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     final Color color = UIManager.getColor("List.selectionBackground");
     if (color == null) {
       return UIManager.getColor("List[Selected].textBackground");  // Nimbus
@@ -2238,6 +2229,7 @@ public class UIUtil {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
+  @SuppressWarnings("deprecation")
   public static void setComboBoxEditorBounds(int x, int y, int width, int height, JComponent editor) {
     if(SystemInfo.isMac && isUnderAquaLookAndFeel()) {
       // fix for too wide combobox editor, see AquaComboBoxUI.layoutContainer:
@@ -2257,7 +2249,8 @@ public class UIUtil {
     Component eachParent = c;
     while (eachParent != null) {
       if (cls.isAssignableFrom(eachParent.getClass())) {
-        return (T)eachParent;
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)eachParent;
+        return t;
       }
 
       eachParent = eachParent.getParent();
@@ -2284,7 +2277,10 @@ public class UIUtil {
 
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
-    if (parent == null || cls.isAssignableFrom(parent.getClass())) return (T)parent;
+    if (parent == null || cls.isAssignableFrom(parent.getClass())) {
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)parent;
+      return t;
+    }
     for (Component component : parent.getComponents()) {
       if (component instanceof JComponent) {
         T comp = findComponentOfType((JComponent)component, cls);
@@ -2303,7 +2299,8 @@ public class UIUtil {
   private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<T> result) {
     if (parent == null) return;
     if (cls.isAssignableFrom(parent.getClass())) {
-      result.add((T)parent);
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"}) final T t = (T)parent;
+      result.add(t);
     }
     for (Component c : parent.getComponents()) {
       if (c instanceof JComponent) {
@@ -2314,23 +2311,46 @@ public class UIUtil {
 
   public static class TextPainter {
     private List<Pair<String, LineInfo>> myLines = new ArrayList<Pair<String, LineInfo>>();
-    private boolean myDrawMacShadow;
-    private Color myMacShadowColor;
+    private boolean myDrawShadow;
+    private Color myShadowColor;
     private float myLineSpacing;
 
-
     public TextPainter() {
-      this(true, Gray._220, 1.0f);
+      myDrawShadow = isUnderAquaLookAndFeel();
+      myShadowColor = Gray._220;
+      myLineSpacing = 1.0f;
     }
 
+    /** @deprecated use {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
+    @SuppressWarnings("UnusedDeclaration")
     public TextPainter(final float lineSpacing) {
-      this(true, Gray._220, lineSpacing);
+      myDrawShadow = isUnderAquaLookAndFeel();
+      myShadowColor = Gray._220;
+      myLineSpacing = lineSpacing;
     }
 
-    public TextPainter(final boolean drawMacShadow, final Color shadowColor, final float lineSpacing) {
-      myDrawMacShadow = drawMacShadow;
-      myMacShadowColor = shadowColor;
+    /** @deprecated use {@linkplain #withShadow(boolean, java.awt.Color)} and {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
+    @SuppressWarnings("UnusedDeclaration")
+    public TextPainter(final boolean drawShadow, final Color shadowColor, final float lineSpacing) {
+      myDrawShadow = drawShadow;
+      myShadowColor = shadowColor;
       myLineSpacing = lineSpacing;
+    }
+
+    public TextPainter withShadow(final boolean drawShadow) {
+      myDrawShadow = drawShadow;
+      return this;
+    }
+
+    public TextPainter withShadow(final boolean drawShadow, final Color shadowColor) {
+      myDrawShadow = drawShadow;
+      myShadowColor = shadowColor;
+      return this;
+    }
+
+    public TextPainter withLineSpacing(final float lineSpacing) {
+      myLineSpacing = lineSpacing;
+      return this;
     }
 
     public TextPainter appendLine(final String text) {
@@ -2339,7 +2359,7 @@ public class UIUtil {
       return this;
     }
 
-    public TextPainter underlined(final Color color) {
+    public TextPainter underlined(@Nullable final Color color) {
       if (!myLines.isEmpty()) {
         final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.underlined = true;
@@ -2424,6 +2444,7 @@ public class UIUtil {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
           final LineInfo info = pair.getSecond();
+
           Font old = null;
           if (info.smaller) {
             old = g.getFont();
@@ -2438,9 +2459,9 @@ public class UIUtil {
             xOffset = x + (maxWidth[0] - fm.stringWidth(pair.getFirst())) / 2;
           }
 
-          if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
+          if (myDrawShadow) {
             final Color oldColor = g.getColor();
-            g.setColor(myMacShadowColor);
+            g.setColor(myShadowColor);
 
             if (info.withBullet) {
               g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0] + 1);
@@ -2468,9 +2489,9 @@ public class UIUtil {
               g.setColor(c);
             }
 
-            if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
+            if (myDrawShadow) {
               c = g.getColor();
-              g.setColor(myMacShadowColor);
+              g.setColor(myShadowColor);
               g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10, yOffset[0] + fm.getDescent() + 1);
               g.setColor(c);
             }
@@ -2488,21 +2509,23 @@ public class UIUtil {
     }
 
     private static class LineInfo {
-      boolean underlined;
-      boolean withBullet;
-      char bulletChar;
-      Color underlineColor;
-      boolean smaller;
-      public boolean center;
+      private boolean underlined;
+      private boolean withBullet;
+      private char bulletChar;
+      private Color underlineColor;
+      private boolean smaller;
+      private boolean center;
     }
   }
 
+  @Nullable
   public static JRootPane getRootPane(Component c) {
     JRootPane root = getParentOfType(JRootPane.class, c);
     if (root != null) return root;
     Component eachParent = c;
     while (eachParent != null) {
       if (eachParent instanceof JComponent) {
+        @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
         WeakReference<JRootPane> pane = (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
         if (pane != null) return pane.get();
       }
@@ -2539,23 +2562,30 @@ public class UIUtil {
     return false;
   }
 
-  public static void mergeComponentsWithAnchor(PanelWithAnchor c1, PanelWithAnchor c2) {
-    if (c1 == null || c2 == null) return;
-
-    if (c1.getAnchor() == null) {
-      c1.setAnchor(c2.getAnchor());
-    } else {
-      if (c2.getAnchor() == null) {
-        c2.setAnchor(c1.getAnchor());
-      } else {
-        JComponent anchor = c1.getAnchor().getPreferredSize().getWidth() > c2.getAnchor().getPreferredSize().getWidth() ?
-                            c1.getAnchor() : c2.getAnchor();
-        c2.setAnchor(anchor);
-        c1.setAnchor(anchor);
-      }
-    }
+  @Nullable
+  public static JComponent mergeComponentsWithAnchor(PanelWithAnchor...panels) {
+    return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
   
+  @Nullable
+  public static JComponent mergeComponentsWithAnchor(Collection<? extends PanelWithAnchor> panels) {
+    JComponent tempAnchor = null;
+    int maxWidth = 0;
+    for (PanelWithAnchor panel : panels) {
+      if (panel == null) continue;
+      if (panel.getAnchor() == null) continue;
+      if (maxWidth < panel.getAnchor().getPreferredSize().width) {
+        maxWidth = panel.getAnchor().getPreferredSize().width;
+        tempAnchor = panel.getAnchor();
+      }
+    }
+    for (PanelWithAnchor panel : panels) {
+      if (panel == null) continue;
+      panel.setAnchor(tempAnchor);
+    }
+    return tempAnchor;
+  }
+
   public static void setNotOpaqueRecursively(@NotNull Component component) {
     if (!isUnderAquaLookAndFeel()) return;
 
@@ -2572,6 +2602,8 @@ public class UIUtil {
   }
 
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
+    if (component == null || insets == null) return;
+
     if (component.getBorder() != null) {
       component.setBorder(new CompoundBorder(new EmptyBorder(insets), component.getBorder()));
     }
@@ -2622,6 +2654,17 @@ public class UIUtil {
     catch (InterruptedException ignore) {
     }
     return null;
+  }
+
+  public static void addBorder(JComponent component, Border border) {
+    if (component == null) return;
+
+    if (component.getBorder() != null) {
+      component.setBorder(new CompoundBorder(border, component.getBorder()));
+    }
+    else {
+      component.setBorder(border);
+    }
   }
 }
 

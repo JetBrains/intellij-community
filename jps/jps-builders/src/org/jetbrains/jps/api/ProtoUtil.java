@@ -116,6 +116,10 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.FS_EVENT).setFsEvent(builder.build()).build();
   }
 
+  public static JpsRemoteProto.Message.Request createPingRequest() {
+    return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.PING).build();
+  }
+
   public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars, List<GlobalLibrary> sdkAndLibs, @Nullable String globalEncoding) {
     final JpsRemoteProto.Message.Request.SetupCommand.Builder cmdBuilder = JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
 

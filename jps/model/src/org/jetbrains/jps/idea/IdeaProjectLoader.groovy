@@ -16,6 +16,7 @@ public class IdeaProjectLoader {
   private Map<String, String> pathVariables
   private ProjectMacroExpander projectMacroExpander
   private ProjectLoadingErrorReporter errorReporter
+  private static final OwnServiceLoader<AdditionalRootsProviderService> rootsProviderLoader = OwnServiceLoader.load(AdditionalRootsProviderService.class)
 
   public static String guessHome(Script script) {
     File home = new File(script["gant.file"].substring("file:".length()))
@@ -508,6 +509,15 @@ public class IdeaProjectLoader {
           currentModule.languageLevel = convertLanguageLevel(languageLevel)
         }
 
+        rootsProviderLoader.each {AdditionalRootsProviderService service ->
+          def sourceRoots = service.getAdditionalSourceRoots(currentModule)
+          def testSourceRoots = service.getAdditionalTestSourceRoots(currentModule)
+          currentModule.sourceRoots.addAll(sourceRoots)
+          currentModule.testRoots.addAll(testSourceRoots)
+          if (!sourceRoots.isEmpty() || !testSourceRoots.isEmpty()) {
+            srcFolderExists = true
+          }
+        }
         if (srcFolderExists) {
           if (componentTag."@inherit-compiler-output" == "true") {
             if (projectOutputPath == null) {

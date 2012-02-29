@@ -10,12 +10,15 @@ import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.model.id.GradleContentRootId;
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
 import org.jetbrains.plugins.gradle.model.id.GradleModuleDependencyId;
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 
 /**
  * Thread-safe.
@@ -102,6 +105,35 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
     return null;
   }
 
+  @Nullable
+  public GradleContentRoot findGradleContentRoot(@NotNull GradleContentRootId id) {
+    final GradleModule module = findGradleModule(id.getModuleName());
+    if (module == null) {
+      return null;
+    }
+    for (GradleContentRoot root : module.getContentRoots()) {
+      if (id.getRootPath().equals(root.getRootPath())) {
+        return root;
+      }
+    }
+    return null;
+  }
+  
+  @Nullable
+  public ModuleAwareContentRoot findIntellijContentRoot(@NotNull GradleContentRootId id) {
+    final Module module = findIntellijModule(id.getModuleName());
+    if (module == null) {
+      return null;
+    }
+    for (ModuleAwareContentRoot contentRoot : myFacade.getContentRoots(module)) {
+      final VirtualFile file = contentRoot.getFile();
+      if (file != null && id.getRootPath().equals(file.getPath())) {
+        return contentRoot;
+      }
+    }
+    return null;
+  }
+  
   @Nullable
   public Library findIntellijLibrary(@NotNull final GradleLibrary library) {
     return findIntellijLibrary(library.getName());

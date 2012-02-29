@@ -45,6 +45,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
+import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -534,11 +536,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       supportProvider != null &&
       editor.getSettings().isVariableInplaceRenameEnabled() &&
       supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
-      !ApplicationManager.getApplication().isUnitTestMode();
+      !ApplicationManager.getApplication().isUnitTestMode() &&
+      !isInJspHolderMethod(expr);
     final boolean inFinalContext = occurenceManager.isInFinalContext();
     final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurenceManager);
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, originalType, expr, occurrences);
-
     final boolean[] wasSucceed = new boolean[]{true};
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
       @Override
@@ -597,6 +599,17 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap);
     }
     return wasSucceed[0];
+  }
+
+  private static boolean isInJspHolderMethod(PsiExpression expr) {
+    final PsiElement parent1 = expr.getParent();
+    if (parent1 == null) {
+      return false;
+    }
+    final PsiElement parent2 = parent1.getParent();
+    if (!(parent2 instanceof JspCodeBlock)) return false;
+    final PsiElement parent3 = parent2.getParent();
+    return parent3 instanceof JspHolderMethod;
   }
 
   /**

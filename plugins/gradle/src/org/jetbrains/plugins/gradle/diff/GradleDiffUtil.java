@@ -45,6 +45,9 @@ public class GradleDiffUtil {
       @Override
       public void visit(@NotNull GradleModule module) {
         context.register(new GradleModulePresenceChange(module, null));
+        for (GradleContentRoot root : module.getContentRoots()) {
+          root.invite(this);
+        }
         for (GradleDependency dependency : module.getDependencies()) {
           dependency.invite(this);
         }
@@ -52,12 +55,12 @@ public class GradleDiffUtil {
 
       @Override
       public void visit(@NotNull GradleContentRoot contentRoot) {
-        // TODO den implement 
+        context.register(new GradleContentRootPresenceChange(contentRoot, null)); 
       }
 
       @Override
       public void visit(@NotNull GradleLibrary library) {
-        // TODO den implement 
+        // Don't show library nodes. 
       }
 
       @Override
@@ -101,7 +104,7 @@ public class GradleDiffUtil {
 
         @Override
         public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
-          // TODO den implement 
+          context.register(new GradleContentRootPresenceChange(null, contentRoot)); 
         }
 
         @Override

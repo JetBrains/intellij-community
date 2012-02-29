@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -77,7 +78,7 @@ import java.util.regex.Matcher;
 public class AndroidCompileUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidCompileUtil");
 
-  private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
+  private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>(AndroidCommonUtils.RELEASE_BUILD_OPTION);
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
 
@@ -768,5 +769,40 @@ public class AndroidCompileUtil {
     VirtualFile compilerOutput = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     if (compilerOutput == null) return null;
     return new File(compilerOutput.getPath(), getApkName(module)).getPath();
+  }
+
+  public static boolean isExcludedFromCompilation(@NotNull File file, @Nullable Project project) {
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    return vFile != null && isExcludedFromCompilation(vFile, project);
+  }
+
+  public static boolean isExcludedFromCompilation(VirtualFile child, @Nullable Project project) {
+    final CompilerManager compilerManager = project != null ? CompilerManager.getInstance(project) : null;
+
+    if (compilerManager == null) {
+      return false;
+    }
+
+    if (!compilerManager.isExcludedFromCompilation(child)) {
+      return false;
+    }
+
+    final Module module = ModuleUtil.findModuleForFile(child, project);
+    if (module == null) {
+      return true;
+    }
+
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+    if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
+      return true;
+    }
+
+    final AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+    if (platform == null) {
+      return true;
+    }
+
+    // we exclude sources of library modules automatically for tools r7 or previous
+    return platform.getSdkData().getPlatformToolsRevision() > 7;
   }
 }

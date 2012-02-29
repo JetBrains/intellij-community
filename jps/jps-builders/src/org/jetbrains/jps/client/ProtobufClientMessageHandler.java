@@ -6,6 +6,7 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.RequestFuture;
 
 import java.util.ArrayList;
@@ -20,9 +21,13 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   private final ConcurrentHashMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<UUID, RequestFuture<T>>();
   @NotNull
   private final UUIDGetter myUuidGetter;
+  private final SimpleProtobufClient myClient;
+  private final AsyncTaskExecutor myAsyncExec;
 
-  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter) {
+  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, AsyncTaskExecutor asyncExec) {
     myUuidGetter = uuidGetter;
+    myClient = client;
+    myAsyncExec = asyncExec;
   }
 
   public final void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -77,6 +82,22 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
       for (UUID uuid : new ArrayList<UUID>(myHandlers.keySet())) {
         terminateSession(uuid);
       }
+    }
+  }
+
+  @Override
+  public void channelDisconnected(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+    try {
+      super.channelDisconnected(ctx, e);
+    }
+    finally {
+      // make sure the client is in disconnected state
+      myAsyncExec.submit(new Runnable() {
+        @Override
+        public void run() {
+          myClient.disconnect();
+        }
+      });
     }
   }
 

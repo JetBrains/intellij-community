@@ -81,7 +81,7 @@ public class KnownElementWeigher extends ProximityWeigher {
       if (qname.startsWith("java.lang")) return 5;
       if (qname.startsWith("java.util")) return 4;
 
-      if (pkg.equals("javax.swing")) return 3;
+      if (pkg.equals("javax.swing")) return element instanceof PsiClass ? 3 : 2;
       if (qname.startsWith("java.")) return 2;
       if (qname.startsWith("javax.")) return 1;
       if (qname.startsWith("com.")) return -1;

@@ -146,11 +146,8 @@ public class BrowserUtil {
   @Nullable
   @NonNls
   private static String[] getDefaultBrowserCommand() {
-    if (SystemInfo.isWindows9x) {
-      return new String[]{"command.com", "/c", "start"};
-    }
-    else if (SystemInfo.isWindows) {
-      return new String[]{"cmd.exe", "/c", "start"};
+    if (SystemInfo.isWindows) {
+      return new String[]{(SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\""};
     }
     else if (SystemInfo.isMac) {
       return new String[]{ExecUtil.getOpenCommandPath()};
@@ -178,20 +175,23 @@ public class BrowserUtil {
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(command);
       commandLine.addParameter(escapeUrl(curl.toString()));
+      if (SystemInfo.isWindows) {
+        commandLine.putUserData(GeneralCommandLine.DO_NOT_ESCAPE_QUOTES, true);
+      }
       commandLine.createProcess();
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("Browser launched with command line: " + commandLine);
       }
     }
-    catch (final ExecutionException e) {
+    catch (ExecutionException e) {
       showErrorMessage(IdeBundle.message("error.cannot.start.browser", e.getMessage()), CommonBundle.getErrorTitle());
     }
   }
 
   @NotNull
   public static String escapeUrl(@NotNull @NonNls String url) {
-    return SystemInfo.isWindows ? url.replaceAll(" ", "%20")
+    return SystemInfo.isWindows ? "\"" + url + "\""
                                 : url;
   }
 
@@ -209,7 +209,7 @@ public class BrowserUtil {
   }
 
   private static void launchBrowserUsingStandardWay(final String url) {
-    String browserPath = getGeneralSettingsInstance().getBrowserPath();
+    final String browserPath = getGeneralSettingsInstance().getBrowserPath();
     if (StringUtil.isEmptyOrSpaces(browserPath)) {
       showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"), IdeBundle.message("title.browser.not.found"));
       return;
@@ -233,7 +233,7 @@ public class BrowserUtil {
       if (new File(browserPath).isFile()) {
         // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
         // so we use full path to browser executable in such case
-        command = new String[] {browserPath};
+        command = new String[]{browserPath};
       }
       else {
         command = new String[]{ExecUtil.getOpenCommandPath(), "-a", browserPath};
@@ -244,7 +244,7 @@ public class BrowserUtil {
         command = new String[]{browserPath};
       }
       else {
-        command = new String[]{SystemInfo.isWindows9x ? "command.com" : "cmd.exe", "/c", "start", browserPath};
+        command = new String[]{(SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\"", browserPath};
       }
     }
     else {

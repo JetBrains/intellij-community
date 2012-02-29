@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs.index;
 
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndexKey;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 public class GrScriptClassNameIndex extends StringStubIndexExtension<GroovyFile> {
   public static final StubIndexKey<String, GroovyFile> KEY = StubIndexKey.createIndexKey("gr.script.class");
 
+  @NotNull
   public StubIndexKey<String, GroovyFile> getKey() {
     return KEY;
   }

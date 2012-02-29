@@ -36,6 +36,7 @@ public class JavaFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
     return ourInstance;
   }
 
+  @NotNull
   @Override
   public StubIndexKey<Integer, PsiClass> getKey() {
     return JavaStubIndexKeys.CLASS_FQN;

@@ -142,6 +142,7 @@ public abstract class DialogWrapper {
   };
   private List<JBOptionButton> myOptionsButtons = new ArrayList<JBOptionButton>();
   private int myCurrentOptionsButtonIndex = -1;
+  private boolean myResizeInProgress = false;
 
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -167,6 +168,20 @@ public abstract class DialogWrapper {
    */
   protected DialogWrapper(Project project, boolean canBeParent) {
     myPeer = createPeer(project, canBeParent);
+    final Window window = myPeer.getWindow();
+    if (window != null) {
+      window.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (!myResizeInProgress) {
+            myActualSize = myPeer.getSize();
+            if (myErrorText.isVisible()) {
+              myActualSize.height -= myErrorText.getHeight() + 10;
+            }
+          }
+        }
+      });
+    }
     createDefaultActions();
   }
 
@@ -1611,8 +1626,10 @@ public abstract class DialogWrapper {
 
   private void resizeWithAnimation(final Dimension size) {
     //todo[kb]: fix this PITA
+    myResizeInProgress = true;
     if (!Registry.is("enable.animation.on.dialogs")) {
       setSize(size.width, size.height);
+      myResizeInProgress = false;
       return;
     }
 
@@ -1637,6 +1654,7 @@ public abstract class DialogWrapper {
         if (myErrorText.shouldBeVisible()) {
           myErrorText.setVisible(true);
         }
+        myResizeInProgress = false;
       }
     }.start();
   }

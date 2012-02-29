@@ -16,11 +16,14 @@
 
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Maxim.Mossienko
  */
 public interface CharSequenceBackedByArray extends CharSequence {
+  @NotNull
   char[] getChars();
 
-  void getChars(char[] dst, int dstOffset);
+  void getChars(@NotNull char[] dst, int dstOffset);
 }

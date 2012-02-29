@@ -45,6 +45,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   public static final ID<String, Void> INDEX_ID = ID.create("html5.custom.attributes.index");
 
   private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<String, Void, FileContent>() {
+    @Override
     @NotNull
     public Map<String, Void> map(FileContent inputData) {
       CharSequence input = inputData.getContentAsText();
@@ -75,17 +76,20 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
   };
 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
              file.getFileType() == StdFileTypes.HTML || file.getFileType() == StdFileTypes.XHTML;
     }
   };
 
+  @NotNull
   @Override
   public ID<String, Void> getName() {
     return INDEX_ID;
   }
 
+  @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myIndexer;

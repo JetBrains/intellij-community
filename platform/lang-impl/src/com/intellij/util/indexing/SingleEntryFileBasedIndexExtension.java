@@ -18,6 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Base implementation for indices that produce single value per single file
@@ -36,6 +37,7 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
     return true;
   }
 
+  @NotNull
   @Override
   public abstract SingleEntryIndexer<V> getIndexer();
 }

@@ -310,7 +310,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
     myContextManager.restoreContext(origin);
 
-    final Task task = doActivate(origin, true);
+    final LocalTask task = doActivate(origin, true);
 
     if (isVcsEnabled()) {
       List<ChangeListInfo> changeLists = getOpenChangelists(task);
@@ -340,17 +340,18 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myActiveTask.setUpdated(new Date());
   }
 
-  public void createChangeList(Task task, String name) {
+  public void createChangeList(LocalTask task, String name) {
     String comment = TaskUtil.getChangeListComment(this, task);
     createChangeList(task, name, comment);
   }
 
-  public void createChangeList(Task task, String name, String comment) {
+  public void createChangeList(LocalTask task, String name, String comment) {
     LocalChangeList changeList = myChangeListManager.findChangeList(name);
     if (changeList == null) {
       changeList = myChangeListManager.addChangeList(name, comment);
     }
     myChangeListManager.setDefaultChangeList(changeList);
+    task.setAssociatedChangelistId(changeList.getId());
     getOpenChangelists(task).add(new ChangeListInfo(changeList));
   }
 

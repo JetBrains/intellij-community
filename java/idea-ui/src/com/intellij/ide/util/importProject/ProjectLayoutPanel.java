@@ -87,13 +87,13 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     final JPanel entriesPanel = new JPanel(new BorderLayout());
     entriesPanel.add(myEntriesChooser, BorderLayout.CENTER);
-    entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(StringUtil.capitalize(StringUtil.pluralize(getElementTypeName())), false, false, true));
+    entriesPanel.setBorder(IdeBorderFactory.createTitledBorder(StringUtil.capitalize(StringUtil.pluralize(getElementTypeName())), false));
     splitter.setFirstComponent(entriesPanel);
 
     final JScrollPane depsPane = ScrollPaneFactory.createScrollPane(myDependenciesList);
     final JPanel depsPanel = new JPanel(new BorderLayout());
     depsPanel.add(depsPane, BorderLayout.CENTER);
-    depsPanel.setBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle(), false, false, true));
+    depsPanel.setBorder(IdeBorderFactory.createTitledBorder(getDependenciesTitle(), false));
     splitter.setSecondComponent(depsPanel);
     
     JPanel groupPanel = new JPanel(new BorderLayout());

@@ -18,8 +18,6 @@ import org.jetbrains.android.util.ValueResourcesFileParser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.ClasspathItem;
-import org.jetbrains.jps.ClasspathKind;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
@@ -130,7 +128,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<File, Module> files,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
+    }
 
     boolean success = true;
 
@@ -151,7 +151,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final File[] sourceRoots = getSourceRootsForModuleAndDependencies(module);
+        final File[] sourceRoots = AndroidJpsUtil.getSourceRootsForModuleAndDependencies(module);
         final String[] sourceRootPaths = AndroidJpsUtil.toPaths(sourceRoots);
         final String packageName = computePackageForFile(context, file);
         
@@ -192,7 +192,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runRenderscriptCompiler(@NotNull final CompileContext context,
                                                  @NotNull Map<File, Module> files,
                                                  @NotNull Map<Module, MyModuleData> moduleDataMap) {
-    context.processMessage(new ProgressMessage("Processing Renderscript files..."));
+    if (files.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.renderscript")));
+    }
 
     boolean success = true;
 
@@ -263,8 +265,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
                                          @NotNull Map<Module, MyModuleData> moduleDataMap,
                                          @NotNull AndroidAptStateStorage storage) {
-    context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt")));
-
     boolean success = true;
 
     for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
@@ -277,7 +277,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
-        final String[] resPaths = AndroidJpsUtil.collectResourceDirs(facet);
+        final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, false, context);
         if (resPaths.length == 0) {
           // there is no resources in the module
           continue;
@@ -305,9 +305,11 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final Set<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
         final AndroidAptValidityState newState = new AndroidAptValidityState(resources, manifestElements, depLibPackagesSet, packageName);
 
-        final AndroidAptValidityState oldState = storage.getState(module.getName());
-        if (newState.equalsTo(oldState)) {
-          continue;
+        if (context.isMake()) {
+          final AndroidAptValidityState oldState = storage.getState(module.getName());
+          if (newState.equalsTo(oldState)) {
+            continue;
+          }
         }
         final File outputDirectory = moduleData.getOutputDirectory();
         final File aptOutputDirectory = new File(outputDirectory, "generated-aapt");
@@ -317,6 +319,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           FileUtil.delete(aptOutputDirectory);
         }
 
+        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
+
         final Map<AndroidCompilerMessageKind, List<String>> messages =
           AndroidApt.compile(target, -1, manifestFile.getPath(), packageName, aptOutputDirectory.getPath(), resPaths,
                              ArrayUtil.toStringArray(depLibPackagesSet), facet.getLibrary());
@@ -325,6 +329,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
         if (messages.get(AndroidCompilerMessageKind.ERROR).size() > 0) {
           success = false;
+          storage.update(module.getName(), null);
         }
         else {
           storage.update(module.getName(), newState);
@@ -560,44 +565,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
     
     return FileUtil.toSystemIndependentName(relPath).replace('/', '.');
-  }
-
-  private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<File> result)
-    throws IOException {
-    visited.add(module);
-    final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-    File resDir = null;
-    File resDirForCompilation = null;
-
-    if (facet != null) {
-      resDir = facet.getResourceDir();
-      resDirForCompilation = facet.getResourceDirForCompilation();
-    }
-
-    for (String sourceRootPath : module.getSourceRoots()) {
-      final File sourceRoot = new File(sourceRootPath).getCanonicalFile();
-      
-      if (!sourceRoot.equals(resDir) && !sourceRoot.equals(resDirForCompilation)) {
-        result.add(sourceRoot);
-      }
-    }
-    
-    for (ClasspathItem classpathItem : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE)) {
-      if (classpathItem instanceof Module) {
-        final Module depModule = (Module)classpathItem;
-
-        if (!visited.contains(depModule)) {
-          fillSourceRoots(depModule, visited, result);
-        }
-      }
-    }
-  }
-
-  @NotNull
-  public static File[] getSourceRootsForModuleAndDependencies(@NotNull Module module) throws IOException {
-    Set<File> result = new HashSet<File>();
-    fillSourceRoots(module, new HashSet<Module>(), result);
-    return result.toArray(new File[result.size()]);
   }
 
   @Override

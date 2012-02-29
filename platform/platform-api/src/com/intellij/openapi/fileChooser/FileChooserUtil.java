@@ -15,21 +15,21 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Temporary class, do not use.
- * Will be removed after migration from file choosing to path choosing (approx. in IDEA 13).
+ * May be removed after migration from file choosing to path choosing (approx. in IDEA 13).
  *
  * @author Roman Shevchenko
  */
@@ -47,7 +47,7 @@ public final class FileChooserUtil {
   }
 
   @NotNull
-  public static String[] getPaths(@Nullable final VirtualFile[] files) {
+  public static String[] filesToPaths(@Nullable final VirtualFile[] files) {
     if (files == null || files.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     final String[] paths = new String[files.length];
@@ -58,28 +58,18 @@ public final class FileChooserUtil {
   }
 
   @NotNull
-  public static VirtualFile[] getFiles(@Nullable final String[] paths) {
-    if (paths == null || paths.length == 0) return VirtualFile.EMPTY_ARRAY;
+  public static List<VirtualFile> pathsToFiles(@Nullable final List<String> paths, final boolean refresh) {
+    if (paths == null || paths.size() == 0) return Collections.emptyList();
 
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    final List<VirtualFile> files = Lists.newArrayListWithExpectedSize(paths.size());
     for (String path : paths) {
-      final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      final VirtualFile file = refresh ? fs.refreshAndFindFileByPath(path) : fs.findFileByPath(path);
       if (file != null && file.isValid()) {
         files.add(file);
       }
     }
-    return VfsUtil.toVirtualFileArray(files);
-  }
-
-  @Nullable
-  public static VirtualFile getFile(@Nullable final String path) {
-    if (path == null) return null;
-
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    if (file == null || !file.isValid()) return null;
-
-    setSelectionPath(file, path);
-    return file;
+    return files;
   }
 
   @Nullable
@@ -89,9 +79,9 @@ public final class FileChooserUtil {
                                        @Nullable String lastPath) {
     if (toSelect == null && lastPath == null) {
       if (project != null) {
-        final VirtualFile baseDir = project.getBaseDir();
-        if (baseDir != null) {
-          return baseDir.getPath();
+        final String basePath = project.getBasePath();
+        if (basePath != null) {
+          return basePath;
         }
       }
     }

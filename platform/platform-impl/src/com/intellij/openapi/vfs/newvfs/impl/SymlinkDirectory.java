@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -25,74 +25,132 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author Dmitry Avdeev
  * @since 31.10.2011
  */
 @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
 public class SymlinkDirectory extends VirtualDirectoryImpl {
-  private final AtomicNotNullLazyValue<VirtualDirectoryImpl> myTarget = new AtomicNotNullLazyValue<VirtualDirectoryImpl>() {
-    @NotNull
+  private static final VirtualFileSystemEntry BAD_LINK = new VirtualFileImpl("*BAD_LINK*", null, -1) {
     @Override
-    protected VirtualDirectoryImpl compute() {
-      final String path = getFileSystem().resolveSymLink(SymlinkDirectory.this);
-      VirtualFile file = null;
-      if (path != null)  {
-        file = findFile(path, false);
-      }
-      if (file == SymlinkDirectory.this && file != null) {
-        final VirtualFile parent = file.getParent();
-        if (parent instanceof VirtualDirectoryImpl) {
-          ((VirtualDirectoryImpl)parent).removeChild(file);
-          file = findFile(path, true);
-        }
-      }
-      return file instanceof VirtualDirectoryImpl ? (VirtualDirectoryImpl)file : new VirtualDirectoryImpl("foo", SymlinkDirectory.this, getFileSystem(), 0);
-    }
-
-    @Nullable
-    private VirtualFile findFile(final String path, final boolean refresh) {
-      return RecursionManager.doPreventingRecursion(SymlinkDirectory.this, false, new NullableComputable<VirtualFile>() {
-        @Override
-        public VirtualFile compute() {
-          return refresh ? VfsImplUtil.refreshAndFindFileByPath(getFileSystem(), path) : VfsImplUtil.findFileByPath(getFileSystem(), path);
-        }
-      });
+    public String toString() {
+      return getName();
     }
   };
 
-  public SymlinkDirectory(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull final NewVirtualFileSystem fs, final int id) {
+  private final String myTargetPath;
+  private VirtualFileSystemEntry myTargetDir;
+
+  public SymlinkDirectory(@NotNull final String name, final VirtualDirectoryImpl parent, @NotNull final NewVirtualFileSystem fs, final int id) {
     super(name, parent, fs, id);
+    myTargetPath = getFileSystem().resolveSymLink(this);
+    if (myTargetPath == null) {
+      myTargetDir = BAD_LINK;
+    }
+  }
+
+  @Nullable
+  public String getTargetPath() {
+    return myTargetPath;
   }
 
   @Override
-  public VirtualFileSystemEntry findChild(@NotNull String name) {
-    return myTarget.getValue().findChild(name);
+  public VirtualDirectoryImpl getRealFile() {
+    if (myTargetDir == BAD_LINK) return null;
+    if (myTargetDir != null) return (VirtualDirectoryImpl)myTargetDir;
+
+    final VirtualFile file = findFile(myTargetPath, false);
+    if (!(file instanceof VirtualDirectoryImpl) ||
+        file == this ||
+        FileUtil.isAncestor(new File(file.getPath()), new File(getPath()), true)) {
+      myTargetDir = BAD_LINK;
+      return null;
+    }
+    else {
+      myTargetDir = (VirtualDirectoryImpl)file;
+    }
+
+    return (VirtualDirectoryImpl)myTargetDir;
+  }
+
+  @Nullable
+  private VirtualFile findFile(final String path, final boolean refresh) {
+    return RecursionManager.doPreventingRecursion(this, false, new NullableComputable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return refresh ? VfsImplUtil.refreshAndFindFileByPath(getFileSystem(), path) : VfsImplUtil.findFileByPath(getFileSystem(), path);
+      }
+    });
   }
 
   @Override
-  public NewVirtualFile findChildIfCached(@NotNull String name) {
-    return myTarget.getValue().findChildIfCached(name);
+  public VirtualFileSystemEntry findChild(@NotNull final String name) {
+    final VirtualDirectoryImpl target = getRealFile();
+    return target == null ? null : target.findChild(name);
   }
 
   @Override
-  public NewVirtualFile findChildById(int id) {
-    return myTarget.getValue().findChildById(id);
+  public NewVirtualFile findChildIfCached(@NotNull final String name) {
+    final VirtualDirectoryImpl target = getRealFile();
+    return target == null ? null : target.findChildIfCached(name);
   }
 
   @Override
-  public NewVirtualFile findChildByIdIfCached(int id) {
-    return myTarget.getValue().findChildByIdIfCached(id);
+  public NewVirtualFile findChildById(final int id) {
+    final VirtualDirectoryImpl target = getRealFile();
+    return target == null ? null : target.findChildById(id);
   }
 
   @Override
-  public NewVirtualFile refreshAndFindChild(@NotNull String name) {
-    return myTarget.getValue().refreshAndFindChild(name);
+  public NewVirtualFile findChildByIdIfCached(final int id) {
+    final VirtualDirectoryImpl target = getRealFile();
+    return target == null ? null : target.findChildByIdIfCached(id);
+  }
+
+  @Override
+  public NewVirtualFile refreshAndFindChild(@NotNull final String name) {
+    final VirtualDirectoryImpl target = getRealFile();
+    return target == null ? null : target.refreshAndFindChild(name);
   }
 
   @NotNull
   @Override
   public VirtualFile[] getChildren() {
-    return myTarget.getValue().getChildren();
+    final VirtualDirectoryImpl target = getRealFile();
+    return target != null ? target.getChildren() : VirtualFile.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public Collection<VirtualFile> getCachedChildren() {
+    final VirtualDirectoryImpl target = getRealFile();
+    return target != null ? target.getCachedChildren() : Collections.<VirtualFile>emptyList();
+  }
+
+  @Override
+  public void addChild(@NotNull final VirtualFileSystemEntry file) {
+    final VirtualDirectoryImpl target = getRealFile();
+    if (target != null) {
+      target.addChild(file);
+    }
+  }
+
+  @Override
+  public void removeChild(@NotNull final VirtualFile file) {
+    final VirtualDirectoryImpl target = getRealFile();
+    if (target != null) {
+      target.removeChild(file);
+    }
+  }
+
+  @NotNull
+  @Override
+  public Iterable<VirtualFile> iterInDbChildren() {
+    final VirtualDirectoryImpl target = getRealFile();
+    return target != null ? target.iterInDbChildren() : Collections.<VirtualFile>emptyList();
   }
 }

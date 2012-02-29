@@ -44,6 +44,7 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(GradleProjectStructureHelper)
     container.registerComponentImplementation(GradleStructureChangesCalculator, GradleProjectStructureChangesCalculator)
     container.registerComponentImplementation(GradleModuleStructureChangesCalculator)
+    container.registerComponentImplementation(GradleContentRootStructureChangesCalculator)
     container.registerComponentImplementation(GradleModuleDependencyStructureChangesCalculator)
     container.registerComponentImplementation(GradleLibraryDependencyStructureChangesCalculator)
     container.registerComponentImplementation(GradleLibraryStructureChangesCalculator)

@@ -177,7 +177,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
 
   /**
    * Registers given change within the given node assuming that it is
-   * {@link GradleTextAttributes#GRADLE_CHANGE_CONFLICT 'conflict change'}. We need to track number of such changes per-node because
+   * {@link GradleTextAttributes#CHANGE_CONFLICT 'conflict change'}. We need to track number of such changes per-node because
    * of the following possible situation:
    * <pre>
    * <ol>
@@ -199,7 +199,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     final TextAttributesKey key = myDescriptor.getAttributes();
     boolean localNode = key == GradleTextAttributes.GRADLE_LOCAL_CHANGE || key == GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
     if (!localNode) {
-      myDescriptor.setAttributes(GradleTextAttributes.GRADLE_CHANGE_CONFLICT);
+      myDescriptor.setAttributes(GradleTextAttributes.CHANGE_CONFLICT);
       onNodeChanged(this);
     }
   }
@@ -212,7 +212,7 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
   public void removeConflictChange(@NotNull GradleProjectStructureChange change) {
     myConflictChanges.remove(change);
     if (myConflictChanges.isEmpty()) {
-      myDescriptor.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+      myDescriptor.setAttributes(GradleTextAttributes.NO_CHANGE);
       onNodeChanged(this);
     }
   }

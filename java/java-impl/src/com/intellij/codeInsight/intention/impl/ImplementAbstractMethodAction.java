@@ -54,7 +54,9 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT) || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+    final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    if (isAbstract || !method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (!isAbstract && !isOnIdentifier(file, offset)) return false;
       MyElementProcessor processor = new MyElementProcessor(method);
       if (containingClass.isEnum()) {
         for (PsiField field : containingClass.getFields()) {
@@ -75,6 +77,16 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
       return isAvailable(processor);
     }
 
+    return false;
+  }
+
+  private static boolean isOnIdentifier(PsiFile file, int offset) {
+    final PsiElement psiElement = file.findElementAt(offset);
+    if (psiElement instanceof PsiIdentifier){
+      if (psiElement.getParent() instanceof PsiMethod) {
+        return true;
+      }
+    }
     return false;
   }
 

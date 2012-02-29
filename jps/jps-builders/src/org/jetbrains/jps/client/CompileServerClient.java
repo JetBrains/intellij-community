@@ -1,26 +1,34 @@
 package org.jetbrains.jps.client;
 
+import com.intellij.util.ConcurrencyUtil;
 import org.jboss.netty.channel.MessageEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: 8/11/11
  */
 public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseHandler> {
+  private static final ScheduledThreadPoolExecutor ourPingService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Compile server ping thread", Thread.MIN_PRIORITY);
+  private volatile ScheduledFuture<?> myPingFuture;
+  private final long myServerPingInterval;
 
-  public CompileServerClient() {
-    super(JpsRemoteProto.Message.getDefaultInstance(), new UUIDGetter() {
+  public CompileServerClient(long serverPingInterval, final AsyncTaskExecutor asyncExec) {
+    super(JpsRemoteProto.Message.getDefaultInstance(), asyncExec, new UUIDGetter() {
       @NotNull
       public UUID getSessionUUID(@NotNull MessageEvent e) {
         final JpsRemoteProto.Message message = (JpsRemoteProto.Message)e.getMessage();
         return ProtoUtil.fromProtoUUID(message.getSessionId());
       }
     });
+    myServerPingInterval = serverPingInterval;
   }
 
   @NotNull
@@ -81,4 +89,27 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
     return sendMessage(sessionUUID, ProtoUtil.toMessage(sessionUUID, request), handler, cancelAction);
   }
 
+  @Override
+  protected void onConnect() {
+    if (myServerPingInterval > 0L) {
+      myPingFuture = ourPingService.scheduleAtFixedRate(new Runnable() {
+        @Override
+        public void run() {
+          final JpsRemoteProto.Message.Request ping = ProtoUtil.createPingRequest();
+          if (isConnected()) {
+            sendRequest(ping, null);
+          }
+        }
+      }, myServerPingInterval, myServerPingInterval, TimeUnit.MILLISECONDS);
+    }
+  }
+
+  @Override
+  protected void beforeDisconnect() {
+    final ScheduledFuture<?> future = myPingFuture;
+    if (future != null) {
+      future.cancel(false);
+      myPingFuture = null;
+    }
+  }
 }

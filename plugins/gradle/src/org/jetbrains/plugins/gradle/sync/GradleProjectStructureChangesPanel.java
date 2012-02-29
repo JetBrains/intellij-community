@@ -65,6 +65,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   protected JComponent buildContent() {
     JPanel result = new JPanel(new GridBagLayout());
     myTreeModel = new GradleProjectStructureTreeModel(getProject(), myContext);
+    myTreeModel.processCurrentChanges(myContext.getChangesModel().getChanges());
     myTree = new Tree(myTreeModel);
     applyInitialAppearance(myTree, (DefaultMutableTreeNode)myTreeModel.getRoot());
 

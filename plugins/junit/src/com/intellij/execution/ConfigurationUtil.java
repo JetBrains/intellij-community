@@ -67,7 +67,7 @@ public class ConfigurationUtil {
           if (containingClass instanceof PsiAnonymousClass) return;
           if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) return;
           if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) return;
-          if (JUnitUtil.isSuiteMethod(method)) {
+          if (JUnitUtil.isSuiteMethod(method) && testClassFilter.isAccepted(containingClass)) {
             found.add(containingClass);
           }
         }

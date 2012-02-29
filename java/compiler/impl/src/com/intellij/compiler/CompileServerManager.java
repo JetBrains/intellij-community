@@ -92,8 +92,10 @@ public class CompileServerManager implements ApplicationComponent{
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
   private volatile OSProcessHandler myProcessHandler;
   private final File mySystemDirectory;
-  private volatile CompileServerClient myClient = new CompileServerClient();
-  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
+  @Nullable
+  private volatile CompileServerClient myClient;
+  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new AsyncTaskExecutor() {
+    @Override
     public void submit(Runnable runnable) {
       ApplicationManager.getApplication().executeOnPooledThread(runnable);
     }
@@ -102,6 +104,12 @@ public class CompileServerManager implements ApplicationComponent{
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
+  private final AsyncTaskExecutor myAsyncExec = new AsyncTaskExecutor() {
+    @Override
+    public void submit(Runnable runnable) {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    }
+  };
 
   public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -121,11 +129,11 @@ public class CompileServerManager implements ApplicationComponent{
       private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       private final AtomicBoolean myAutoMakeInProgress = new AtomicBoolean(false);
       @Override
-      public void before(List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends VFileEvent> events) {
       }
 
       @Override
-      public void after(List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends VFileEvent> events) {
         if (shouldTriggerMake(events)) {
           scheduleMake(new Runnable() {
             @Override
@@ -245,6 +253,7 @@ public class CompileServerManager implements ApplicationComponent{
       final CompileServerClient client = ensureServerRunningAndClientConnected(false);
       if (client != null) {
         myTaskExecutor.submit(new Runnable() {
+          @Override
           public void run() {
             final Project[] openProjects = myProjectManager.getOpenProjects();
             if (openProjects.length > 0) {
@@ -314,7 +323,7 @@ public class CompileServerManager implements ApplicationComponent{
     synchronized (myAutomakeFutures) {
       for (Map.Entry<RequestFuture, Project> entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          entry.getKey().cancel(true);
+          entry.getKey().cancel(false);
         }
       }
     }
@@ -328,6 +337,7 @@ public class CompileServerManager implements ApplicationComponent{
     final String projectId = getProjectPath(project);
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
+      @Override
       public void run() {
         try {
           final CompileServerClient client = ensureServerRunningAndClientConnected(true);
@@ -394,9 +404,11 @@ public class CompileServerManager implements ApplicationComponent{
       }
 
       final int port = NetUtils.findAvailableSocketPort();
-      final Process process = launchServer(port);
+      final long serverPingInterval = Registry.intValue("compiler.server.ping.interval", -1) * 1000L; 
+      final Process process = launchServer(port, serverPingInterval);
 
       final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+        @Override
         protected boolean shouldDestroyProcessRecursively() {
           return true;
         }
@@ -405,6 +417,7 @@ public class CompileServerManager implements ApplicationComponent{
       final Semaphore semaphore  = new Semaphore();
       semaphore.down();
       processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
         public void onTextAvailable(ProcessEvent event, Key outputType) {
           // re-translate server's output to idea.log
           final String text = event.getText();
@@ -414,6 +427,7 @@ public class CompileServerManager implements ApplicationComponent{
         }
       });
       processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
         public void processTerminated(ProcessEvent event) {
           try {
             processHandler.removeProcessListener(this);
@@ -423,6 +437,7 @@ public class CompileServerManager implements ApplicationComponent{
           }
         }
 
+        @Override
         public void onTextAvailable(ProcessEvent event, Key outputType) {
           if (outputType == ProcessOutputTypes.STDERR) {
             try {
@@ -451,7 +466,7 @@ public class CompileServerManager implements ApplicationComponent{
         throw new Exception("Server startup failed: " + startupMsg);
       }
 
-      CompileServerClient client = new CompileServerClient();
+      CompileServerClient client = new CompileServerClient(serverPingInterval, myAsyncExec);
       boolean connected = false;
       try {
         connected = client.connect(NetUtils.getLocalHostString(), port);
@@ -545,7 +560,7 @@ public class CompileServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-  private Process launchServer(final int port) throws ExecutionException {
+  private Process launchServer(final int port, long pingInterval) throws ExecutionException {
     // validate tools.jar presence
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler == null) {
@@ -561,7 +576,10 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
     cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
     cmdLine.addParameter("-Djava.awt.headless=true");
-    //cmdLine.addParameter("-DuseJavaUtilZip");
+    //noinspection ConstantConditions
+    if (pingInterval > 0L) {
+      cmdLine.addParameter("-D" + GlobalOptions.PING_INTERVAL_MS_OPTION + "=" + pingInterval);
+    }
     final String additionalOptions = Registry.stringValue("compiler.server.vm.options");
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
@@ -786,16 +804,20 @@ public class CompileServerManager implements ApplicationComponent{
   private class ProjectWatcher extends ProjectManagerAdapter {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<Project, MessageBusConnection>();
 
+    @Override
     public void projectOpened(final Project project) {
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
       conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        @Override
         public void beforeRootsChange(final ModuleRootEvent event) {
           sendReloadRequest(project);
         }
 
+        @Override
         public void rootsChanged(final ModuleRootEvent event) {
           myTaskExecutor.submit(new Runnable() {
+            @Override
             public void run() {
               try {
                 // this will reload sdks and global libraries
@@ -813,10 +835,12 @@ public class CompileServerManager implements ApplicationComponent{
       });
     }
 
+    @Override
     public void projectClosing(Project project) {
       sendReloadRequest(project);
     }
 
+    @Override
     public void projectClosed(Project project) {
       final MessageBusConnection conn = myConnections.remove(project);
       if (conn != null) {

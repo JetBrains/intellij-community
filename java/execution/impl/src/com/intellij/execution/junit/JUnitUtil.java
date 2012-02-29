@@ -194,10 +194,10 @@ public class JUnitUtil {
     return JavaPsiFacade.getInstance(project).findClass(TESTCASE_CLASS, scope);
   }
 
-  public static boolean isTestMethodOrConfig(PsiMethod psiMethod) {
+  public static boolean isTestMethodOrConfig(@NotNull PsiMethod psiMethod) {
     if (getTestMethod(psiMethod, false) != null) {
       final PsiClass containingClass = psiMethod.getContainingClass();
-      assert containingClass != null;
+      assert containingClass != null : psiMethod + "; " + psiMethod.getClass() + "; " + psiMethod.getParent();
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final boolean[] foundNonAbstractInheritor = new boolean[1];
         ClassInheritorsSearch.search(containingClass).forEach(new Processor<PsiClass>() {

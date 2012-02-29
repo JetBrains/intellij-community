@@ -19,8 +19,8 @@ package com.intellij.tasks.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 
@@ -34,7 +34,7 @@ public class CreateChangelistAction extends BaseTaskAction {
     TaskManager manager = getTaskManager(event);
     Presentation presentation = event.getPresentation();
 
-    if (manager == null || !manager.getOpenChangelists(manager.getActiveTask()).isEmpty()) {
+    if (manager == null || !manager.isVcsEnabled() || !manager.getOpenChangelists(manager.getActiveTask()).isEmpty()) {
       presentation.setText(getTemplatePresentation().getText());
       presentation.setEnabled(false);
     } else {
@@ -45,8 +45,8 @@ public class CreateChangelistAction extends BaseTaskAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Task activeTask = getActiveTask(e);
-    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create changelist", null, TaskUtil.getChangeListName(activeTask), null);
+    LocalTask activeTask = getActiveTask(e);
+    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, TaskUtil.getChangeListName(activeTask), null);
     if (name != null) {
       TaskManagerImpl manager = (TaskManagerImpl)getTaskManager(e);
       assert manager != null;

@@ -103,6 +103,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
   }
 
+
   private final CommandLineFolding myCommandLineFolding = new CommandLineFolding();
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
@@ -140,8 +141,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void foldImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myFlushAlarm.getActiveRequestCount() > 0) {
-      myFlushAlarm.cancelAllRequests();
-      myFlushDeferredRunnable.run();
+      cancelAllFlushRequests();
+      new MyFlushRunnable().run();
     }
 
     myFoldingAlarm.cancelAllRequests();
@@ -230,9 +231,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private final Alarm myFlushUserInputAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
   private final Alarm myFlushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-  private final MyFlushDeferredRunnable myFlushDeferredRunnable = new MyFlushDeferredRunnable(false);
-  private final MyFlushDeferredRunnable myClearRequest = new MyFlushDeferredRunnable(true);
 
+  private final Set<MyFlushRunnable> myCurrentRequests = new HashSet<MyFlushRunnable>(); 
+  
   protected final CompositeFilter myPredefinedMessageFilter;
   protected final CompositeFilter myCustomFilter;
 
@@ -317,22 +318,22 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void clear() {
     if (myEditor == null) return;
     synchronized (LOCK) {
-      // rear document content will be cleared on next flush;
+      // real document content will be cleared on next flush;
       myContentSize = 0;
       myBuffer.clear();
       myHyperlinks.clearHyperlinks();
     }
     if (myFlushAlarm.isDisposed()) return;
-    myFlushAlarm.cancelAllRequests();
-    myFlushAlarm.addRequest(myClearRequest, 0, getStateForUpdate());
+    cancelAllFlushRequests();
+    addFlushRequest(new MyClearRunnable());
     cancelHeavyAlarm();
   }
 
   public void scrollTo(final int offset) {
     if (myEditor == null) return;
-    final Runnable scrollRunnable = new Runnable() {
-      public void run() {
-        flushDeferredText(false);
+    final MyFlushRunnable scrollRunnable = new MyFlushRunnable() {
+      public void doRun() {
+        flushDeferredText();
         if (myEditor == null) return;
         int moveOffset = Math.min(offset, myEditor.getDocument().getTextLength());
         if (myBuffer.isUseCyclicBuffer() && moveOffset >= myEditor.getDocument().getTextLength()) {
@@ -342,20 +343,31 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
     };
-    myFlushAlarm.addRequest(scrollRunnable, 0, getStateForUpdate());
+    addFlushRequest(scrollRunnable);
   }
 
   public void requestScrollingToEnd() {
     if (myEditor == null) return;
-    final Runnable scrollRunnable = new Runnable() {
-      public void run() {
-        flushDeferredText(false);
+    final MyFlushRunnable scrollRunnable = new MyFlushRunnable() {
+      public void doRun() {
+        flushDeferredText();
         if (myEditor == null) return;
         myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
     };
-    myFlushAlarm.addRequest(scrollRunnable, 0, getStateForUpdate());
+    addFlushRequest(scrollRunnable);
+  }
+
+  private void addFlushRequest(MyFlushRunnable scrollRunnable) {
+    addFlushRequest(scrollRunnable, 0);
+  }
+
+  private void addFlushRequest(MyFlushRunnable flushRunnable, final int millis) {
+    synchronized (myCurrentRequests) {
+      myCurrentRequests.add(flushRunnable);
+      myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
+    }
   }
 
   private static void assertIsDispatchThread() {
@@ -409,7 +421,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myEditor = createEditor();
       myEditor.getScrollPane().setBorder(null);
       myHyperlinks = new EditorHyperlinkSupport(myEditor, myProject);
-      //requestFlushImmediately();
+      requestFlushImmediately();
       myMainPanel.add(createCenterComponent(), BorderLayout.CENTER);
       myEditor.getScrollingModel().addVisibleAreaListener(new VisibleAreaListener() {
         @Override
@@ -445,7 +457,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void dispose() {
     myState = myState.dispose();
     if (myEditor != null) {
-      myFlushAlarm.cancelAllRequests();
+      cancelAllFlushRequests();
       mySpareTimeAlarm.cancelAllRequests();
       disposeEditor();
       synchronized (LOCK) {
@@ -456,6 +468,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     if (myJLayeredPane != null) {
       myJLayeredPane.dispose();
+    }
+  }
+
+  private void cancelAllFlushRequests() {
+    synchronized (myCurrentRequests) {
+      for (MyFlushRunnable request : myCurrentRequests) {
+        request.invalidate();
+      }
+      myCurrentRequests.clear();
+      myFlushAlarm.cancelAllRequests();
     }
   }
 
@@ -482,7 +504,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       if (myEditor != null && !myFlushAlarm.isDisposed()) {
         final boolean shouldFlushNow = myBuffer.isUseCyclicBuffer() && myBuffer.getLength() >= myBuffer.getCyclicBufferSize();
-        myFlushAlarm.addRequest(myFlushDeferredRunnable, shouldFlushNow ? 0 : FLUSH_DELAY, getStateForUpdate());
+        addFlushRequest(new MyFlushRunnable(), shouldFlushNow ? 0 : FLUSH_DELAY);
       }
     }
   }
@@ -504,7 +526,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void requestFlushImmediately() {
     if (myEditor != null) {
-      myFlushAlarm.addRequest(myFlushDeferredRunnable, 0, getStateForUpdate());
+      addFlushRequest(new MyFlushRunnable());
     }
   }
 
@@ -518,7 +540,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return true;
   }
 
-  @TestOnly
   public void flushDeferredText() {
     flushDeferredText(false);
   }
@@ -868,13 +889,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
             @Override
             public void consume(final FilterMixin.AdditionalHighlight additionalHighlight) {
               if (myFlushAlarm.isDisposed()) return;
-              myFlushAlarm.addRequest(new Runnable() {
+              addFlushRequest(new MyFlushRunnable() {
                 @Override
-                public void run() {
+                public void doRun() {
                   if (myHeavyUpdateTicket != currentValue) return;
                   myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
                 }
-              }, 0, getStateForUpdate());
+              });
             }
           });
         }
@@ -1142,7 +1163,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
       consoleView.print("\n", ConsoleViewContentType.USER_INPUT);
-      consoleView.flushDeferredText(false);
+      consoleView.flushDeferredText();
       final Editor editor = consoleView.myEditor;
       editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -1427,7 +1448,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
       if (info.contentType != ConsoleViewContentType.USER_INPUT && !textToUse.contains("\n")) {
         consoleView.print(textToUse, ConsoleViewContentType.USER_INPUT);
-        consoleView.flushDeferredText(false);
+        consoleView.flushDeferredText();
         editor.getCaretModel().moveToOffset(document.getTextLength());
         editor.getSelectionModel().removeSelection();
         return;
@@ -1484,7 +1505,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
       if (info.contentType != ConsoleViewContentType.USER_INPUT) {
         consoleView.print(s, ConsoleViewContentType.USER_INPUT);
-        consoleView.flushDeferredText(false);
+        consoleView.flushDeferredText();
         editor.getCaretModel().moveToOffset(document.getTextLength());
         editor.getSelectionModel().removeSelection();
         return;
@@ -1654,15 +1675,35 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private final class MyFlushDeferredRunnable implements Runnable {
-    private final boolean myClear;
-
-    private MyFlushDeferredRunnable(boolean clear) {
-      myClear = clear;
+  private class MyFlushRunnable implements Runnable {
+    private volatile boolean myValid = true;
+    @Override
+    public final void run() {
+      if (myValid) {
+        doRun();
+      }
+      synchronized (myCurrentRequests) {
+        myCurrentRequests.remove(this);
+      }
     }
 
-    public void run() {
-      flushDeferredText(myClear);
+    protected void doRun() {
+      flushDeferredText();
+    }
+
+    public void invalidate() {
+      myValid = false;
+    }
+
+    public boolean isValid() {
+      return myValid;
+    }
+  }
+  
+  private final class MyClearRunnable extends MyFlushRunnable {
+    
+    public void doRun() {
+      flushDeferredText(true);
     }
   }
 

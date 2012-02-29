@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -153,7 +154,7 @@ public class WorkingContextManager {
   private boolean loadContext(String zipPostfix, String entryName) {
     try {
       JBZipFile archive = getTasksArchive(zipPostfix);
-      JBZipEntry entry = archive.getEntry(entryName.startsWith("/") ? entryName : "/" + entryName);
+      JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
         byte[] bytes = entry.getData();
         Document document = JDOMUtil.loadDocument(new String(bytes));

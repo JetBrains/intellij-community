@@ -155,7 +155,7 @@ public class NullableNotNullDialog extends DialogWrapper {
         .addExtraAction(selectButton);
       final JPanel panel = toolbarDecorator.createPanel();
       myComponent = new JPanel(new BorderLayout());
-      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", true, false, true, new Insets(10, 0, 0, 0)));
+      myComponent.setBorder(IdeBorderFactory.createTitledBorder(name + " annotations", false, new Insets(10, 0, 0, 0)));
       myComponent.add(panel);
       final AnActionButton removeButton = ToolbarDecorator.findRemoveButton(myComponent);
       myList.addListSelectionListener(new ListSelectionListener() {

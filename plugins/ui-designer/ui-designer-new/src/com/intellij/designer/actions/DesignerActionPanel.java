@@ -60,6 +60,8 @@ public class DesignerActionPanel implements DataProvider {
         updateSelectionActions(area.getSelection());
       }
     });
+
+    // TODO: support popup
   }
 
   private void registerAction(AnAction action, @NonNls String actionId) {

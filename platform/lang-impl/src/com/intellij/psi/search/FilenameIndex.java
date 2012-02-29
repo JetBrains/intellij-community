@@ -39,11 +39,13 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   private final MyInputFilter myInputFilter = new MyInputFilter();
   private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
+  @NotNull
   @Override
   public ID<String,Void> getName() {
     return NAME;
   }
 
+  @NotNull
   @Override
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;

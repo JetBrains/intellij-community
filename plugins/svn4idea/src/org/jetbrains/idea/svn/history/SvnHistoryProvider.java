@@ -137,7 +137,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
                                                @NotNull List<VcsFileRevision> revisions,
                                                @NotNull FilePath filePath,
                                                VcsRevisionNumber currentRevision) {
-    return new MyHistorySession(revisions, filePath, aBoolean, currentRevision);
+    return new MyHistorySession(revisions, filePath, aBoolean, currentRevision, false);
   }
 
   class MyHistorySession extends VcsAbstractHistorySession {
@@ -145,11 +145,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private final boolean mySupports15;
 
     private MyHistorySession(final List<VcsFileRevision> revisions, final FilePath committedPath, final boolean supports15,
-                             @Nullable final VcsRevisionNumber currentRevision) {
+                             @Nullable final VcsRevisionNumber currentRevision, boolean skipRefreshOnStart) {
       super(revisions, currentRevision);
       myCommittedPath = committedPath;
       mySupports15 = supports15;
-      shouldBeRefreshed();
+      if (! skipRefreshOnStart) {
+        shouldBeRefreshed();
+      }
     }
 
     public HistoryAsTreeProvider getHistoryAsTreeProvider() {
@@ -161,7 +163,23 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       if (myCommittedPath == null) {
         return null;
       }
-      return getCurrentRevision(myCommittedPath);
+      if (myCommittedPath.isNonLocal()) {
+        // technically, it does not make sense, since there's no "current" revision for non-local history (if look how it's used)
+        // but ok, lets keep it for now
+        return new SvnRevisionNumber(SVNRevision.HEAD);
+      }
+      try {
+        SVNWCClient wcClient = myVcs.createWCClient();
+        SVNInfo info = wcClient.doInfo(new File(myCommittedPath.getPath()), SVNRevision.UNDEFINED);
+        if (info != null) {
+          return new SvnRevisionNumber(info.getCommittedRevision());
+        } else {
+          return null;
+        }
+      }
+      catch (SVNException e) {
+        return null;
+      }
     }
 
     public FilePath getCommittedPath() {
@@ -179,7 +197,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     @Override
     public VcsHistorySession copy() {
-      return new MyHistorySession(getRevisionList(), myCommittedPath, mySupports15, getCurrentRevisionNumber());
+      return new MyHistorySession(getRevisionList(), myCommittedPath, mySupports15, getCurrentRevisionNumber(), true);
     }
   }
 
@@ -212,7 +230,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     logLoader.initSupports15();
 
     final MyHistorySession historySession =
-      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null);
+      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null, false);
 
     final Ref<Boolean> sessionReported = new Ref<Boolean>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

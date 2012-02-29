@@ -260,8 +260,10 @@ public class Mappings {
 
   private abstract class PostPass {
     boolean myPerformed = false;
+
     abstract void perform();
-    void run () {
+
+    void run() {
       if (!myPerformed) {
         myPerformed = true;
         perform();
@@ -1605,7 +1607,7 @@ public class Mappings {
         }
       }
 
-      if (delta.isDifferentiated() && false) {
+      if (delta.isDifferentiated()) {
         for (DependencyContext.S c : delta.getChangedClasses()) {
           myClassToSubclasses.remove(c);
 
@@ -1767,9 +1769,9 @@ public class Mappings {
 
       @Override
       public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
-        for (String s: staticImports) {
+        for (String s : staticImports) {
           int i = s.length() - 1;
-          for (; s.charAt(i) != '.'; i--);
+          for (; s.charAt(i) != '.'; i--) ;
           imports.add(s.substring(0, i));
         }
 
