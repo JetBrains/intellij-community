@@ -37,6 +37,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
   private static final int INDENT_TOKEN_ID = 3;
 
   private final DataExternalizer<List<Token>> myDataExternalizer = new DataExternalizer<List<Token>>() {
+    @Override
     public void save(DataOutput out, List<Token> value) throws IOException {
       out.writeInt(value.size());
       for (Token token : value) {
@@ -67,6 +68,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
       }
     }
 
+    @Override
     public List<Token> read(DataInput in) throws IOException {
       List<Token> result = new ArrayList<Token>();
       int n = in.readInt();
@@ -103,6 +105,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
     }
   };
 
+  @NotNull
   @Override
   public ID<TokenIndexKey, List<Token>> getName() {
     return INDEX_ID;
@@ -116,9 +119,11 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
     return h % FILE_BLOCK_SIZE;
   }
 
+  @NotNull
   @Override
   public DataIndexer<TokenIndexKey, List<Token>, FileContent> getIndexer() {
     return new DataIndexer<TokenIndexKey, List<Token>, FileContent>() {
+      @Override
       @NotNull
       public Map<TokenIndexKey, List<Token>> map(FileContent inputData) {
         if (true) return Collections.EMPTY_MAP; // TODO: Eugene index is VERY unefficient and leads to OME
@@ -150,6 +155,7 @@ public class TokenIndex extends FileBasedIndexExtension<TokenIndexKey, List<Toke
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return new FileBasedIndex.InputFilter() {
+      @Override
       public boolean acceptInput(VirtualFile file) {
         if (file.getFileSystem() instanceof JarFileSystem) return false;
         return file.getFileType() instanceof LanguageFileType;
