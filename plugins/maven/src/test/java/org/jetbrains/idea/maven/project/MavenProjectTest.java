@@ -467,6 +467,53 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("true", plugin.getConfigurationElement().getChildText("debug"));
   }
 
+  public void testCompilerPluginConfigurationFromProperties() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>\n" +
+                     "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
+                     "        <maven.compiler.source>1.7</maven.compiler.source>\n" +
+                     "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
+                     "</properties>");
+
+    importProject();
+
+    assertEquals("1.7", getMavenProject().getSourceLevel());
+    assertEquals("1.7", getMavenProject().getTargetLevel());
+  }
+
+  public void testCompilerPluginConfigurationFromPropertiesOverride() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<properties>\n" +
+                     "        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n" +
+                     "        <maven.compiler.source>1.7</maven.compiler.source>\n" +
+                     "        <maven.compiler.target>1.7</maven.compiler.target>\n" +
+                     "</properties>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <target>1.4</target>" +
+                     "        <source>1.4</source>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    importProject();
+
+    assertEquals("1.4", getMavenProject().getSourceLevel());
+    assertEquals("1.4", getMavenProject().getTargetLevel());
+  }
+
   public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
