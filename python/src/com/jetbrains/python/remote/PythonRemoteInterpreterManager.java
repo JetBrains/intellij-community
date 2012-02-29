@@ -56,7 +56,7 @@ public abstract class PythonRemoteInterpreterManager {
     }
   }
 
-  static void addUnbuffered(ParamsGroup exeGroup) {
+  public static void addUnbuffered(ParamsGroup exeGroup) {
     for (String param : exeGroup.getParametersList().getParameters()) {
       if ("-u".equals(param)) {
         return;
