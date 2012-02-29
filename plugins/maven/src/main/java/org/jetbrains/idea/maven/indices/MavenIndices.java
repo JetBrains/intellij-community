@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -45,8 +46,6 @@ public class MavenIndices {
   }
 
   private void load() {
-    if (!myIndicesDir.exists()) return;
-
     File[] indices = myIndicesDir.listFiles();
     if (indices == null) return;
     Arrays.sort(indices);
@@ -90,6 +89,7 @@ public class MavenIndices {
     return index;
   }
 
+  @Nullable
   public MavenIndex find(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) {
     for (MavenIndex each : myIndices) {
       if (each.isFor(kind, repositoryId, repositoryPathOrUrl)) return each;
@@ -116,7 +116,7 @@ public class MavenIndices {
     }
   }
 
-  public void updateOrRepair(MavenIndex index, boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
+  public static void updateOrRepair(MavenIndex index, boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException {
     index.updateOrRepair(fullUpdate, settings, progress);
   }

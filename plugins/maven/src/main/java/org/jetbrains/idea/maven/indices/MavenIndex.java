@@ -15,13 +15,12 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -128,7 +127,7 @@ public class MavenIndex {
       String timestamp = props.getProperty(TIMESTAMP_KEY);
       if (timestamp != null) myUpdateTimestamp = Long.parseLong(timestamp);
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
     }
 
     myDataDirName = props.getProperty(DATA_DIR_NAME_KEY);
@@ -347,9 +346,14 @@ public class MavenIndex {
       myUpdateTimestamp = System.currentTimeMillis();
 
       oldData.close(true);
-      for (File each : getAllDataDirs()) {
-        if (each.getName().equals(newDataDirName)) continue;
-        FileUtil.delete(each);
+
+      File[] children = myDir.listFiles();
+      if (children != null) {
+        for (File each : children) {
+          if (each.getName().startsWith(DATA_DIR_PREFIX) && !each.getName().equals(newDataDirName)) {
+            FileUtil.delete(each);
+          }
+        }
       }
     }
   }
@@ -416,13 +420,13 @@ public class MavenIndex {
     return result;
   }
 
-  private <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
+  private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
     for (Map.Entry<String, T> each : map.entrySet()) {
       persistentMap.put(each.getKey(), each.getValue());
     }
   }
 
-  private void persist(Set<String> groups, PersistentStringEnumerator persistent) throws IOException {
+  private static void persist(Set<String> groups, PersistentStringEnumerator persistent) throws IOException {
     for (String each : groups) {
       persistent.enumerate(each);
     }
@@ -448,22 +452,12 @@ public class MavenIndex {
     return new File(myDir, dataDirName);
   }
 
-  private File getDataContextDir(File dataDir) {
+  private static File getDataContextDir(File dataDir) {
     return new File(dataDir, "context");
   }
 
   private String findAvailableDataDirName() {
     return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
-  }
-
-  private Iterable<File> getAllDataDirs() {
-    File[] children = myDir.listFiles();
-    if (children == null) return ContainerUtil.emptyIterable();
-    return ContainerUtil.iterate(children, new Condition<File>() {
-      public boolean value(File file) {
-        return file.getName().startsWith(DATA_DIR_PREFIX);
-      }
-    });
   }
 
   public synchronized void addArtifact(final File artifactFile) {
@@ -496,7 +490,7 @@ public class MavenIndex {
     }, null);
   }
 
-  private void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
+  private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
     Set<String> values = cache.get(key);
     if (values == null) values = new THashSet<String>();
     values.add(value);
@@ -673,7 +667,7 @@ public class MavenIndex {
       if (exceptions[0] != null) throw exceptions[0];
     }
 
-    private void safeClose(Closeable enumerator, MavenIndexException[] exceptions) {
+    private void safeClose(@Nullable Closeable enumerator, MavenIndexException[] exceptions) {
       try {
         if (enumerator != null) enumerator.close();
       }
