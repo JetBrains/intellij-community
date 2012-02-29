@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
@@ -46,4 +47,7 @@ public interface PlatformFacade {
 
   @NotNull
   Notificator getNotificator(@NotNull Project project);
+
+  void showDialog(@NotNull DialogWrapper dialog);
+
 }

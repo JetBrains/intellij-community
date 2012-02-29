@@ -16,7 +16,6 @@
 package git4idea.tests;
 
 import com.intellij.openapi.ui.DialogWrapper;
-import git4idea.DialogManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,11 +46,11 @@ import java.util.Map;
  * @see TestDialogHandler
  * @author Kirill Likhodedov
  */
-public class TestDialogManager extends DialogManager {
+public class TestDialogManager {
 
   private Map<Class, TestDialogHandler> myHandlers = new HashMap<Class, TestDialogHandler>();
 
-  public void showDialog(DialogWrapper dialog) {
+  public void show(DialogWrapper dialog) {
     final TestDialogHandler handler = myHandlers.get(dialog.getClass());
     int exitCode = DialogWrapper.OK_EXIT_CODE;
     if (handler != null) {

@@ -181,9 +181,13 @@ public final class GitBranchOperationsProcessor {
   public void deleteBranch(final String branchName) {
     new CommonBackgroundTask(myProject, "Deleting " + branchName, myCallInAwtAfterExecution) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        new GitDeleteBranchOperation(myProject, myGit, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
+        doDelete(branchName, indicator);
       }
     }.runInBackground();
+  }
+
+  private void doDelete(@NotNull String branchName, @NotNull ProgressIndicator indicator) {
+    new GitDeleteBranchOperation(myProject, myGit, myRepositories, branchName, getCurrentBranchOrRev(), indicator).execute();
   }
 
   public void deleteRemoteBranch(@NotNull final String branchName) {

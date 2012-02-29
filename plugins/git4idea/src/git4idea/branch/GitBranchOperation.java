@@ -18,6 +18,7 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -345,7 +346,7 @@ abstract class GitBranchOperation {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        DialogManager.getInstance(myProject).showDialog(dialog);
+        ServiceManager.getService(myProject, PlatformFacade.class).showDialog(dialog);
       }
     });
 

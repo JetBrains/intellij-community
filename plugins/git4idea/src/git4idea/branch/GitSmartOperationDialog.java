@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.Change;
@@ -22,7 +23,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
-import git4idea.DialogManager;
+import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,7 +61,7 @@ class GitSmartOperationDialog extends DialogWrapper {
       @Override
       public void run() {
         GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, changes, operationTitle, forceButton);
-        DialogManager.getInstance(project).showDialog(dialog);
+        ServiceManager.getService(project, PlatformFacade.class).showDialog(dialog);
         exitCode.set(dialog.getExitCode());
       }
     });

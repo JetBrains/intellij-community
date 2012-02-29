@@ -93,6 +93,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     myDialogManager = GitTestUtil.registerDialogManager(myProject);
     myNotificationManager = GitTestUtil.registerNotificationManager(myProject);
     myMessageManager = GitTestUtil.registerMessageManager(myProject);
+    GitTestUtil.registerPlatformFacade(myProject);
     
     createAddCommit(myUltimate, "a");
     createAddCommit(myCommunity, "a");
@@ -629,7 +630,11 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   private void doMerge(String branch) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-    callPrivateBranchOperationsProcessorMethod("doMerge", branch);
+    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, myRepositories, myCommunity);
+    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod("doMerge", String.class, Boolean.TYPE, ProgressIndicator.class);
+    method.setAccessible(true);
+    method.invoke(processor, branch, true, new EmptyProgressIndicator());
+
     // sync refresh is needed, because the refresh inside GitMergeOperation is asynchronous.
     for (GitRepository repository : myRepositories) {
       repository.getRoot().refresh(false, true);
