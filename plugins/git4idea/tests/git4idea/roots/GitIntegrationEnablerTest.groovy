@@ -18,20 +18,15 @@ package git4idea.roots
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitMockVirtualFile
 import git4idea.test.GitTestPlatformFacade
 import git4idea.test.MockGit
 import git4idea.test.TestNotificator
-import git4idea.tests.TestDialogHandler
 import git4idea.tests.TestDialogManager
 import org.junit.Before
 import org.junit.Test
-
-import java.lang.reflect.Field
-import javax.swing.JRadioButton
 
 import static git4idea.test.GitGTestUtil.stripLineBreaksAndHtml
 import static git4idea.test.GitGTestUtil.toAbsolute
@@ -98,52 +93,10 @@ class GitIntegrationEnablerTest {
   }
 
   @Test
-  void "Not under Git, some inside => show dialog"() {
-    GitRootDetectInfo detectInfo = complexCaseDetectInfo()
-    new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo)
-    assertDialogShown GitIntegrationEnableComplexCaseDialog
-  }
-
-  private GitRootDetectInfo complexCaseDetectInfo() {
-    given(["community", "contrib"], false)
-  }
-
-  @Test
-  public void "Select just add roots in the dialog"() {
-    GitRootDetectInfo detectInfo = complexCaseDetectInfo()
-    myDialogManager.registerDialogHandler(GitIntegrationEnableComplexCaseDialog,
-                                          new TestDialogHandler<GitIntegrationEnableComplexCaseDialog>() {
-                                            @Override
-                                            int handleDialog(GitIntegrationEnableComplexCaseDialog dialog) {
-                                              Field field = dialog.class.getDeclaredField("myJustAddRoots")
-                                              field.setAccessible(true);
-                                              ((JRadioButton)field.get(dialog)).setSelected(true);
-                                              return DialogWrapper.OK_EXIT_CODE;
-                                            }
-                                          })
-    new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo)
-    assertFalse ".git" in new File(myProjectDir).list()
-    assertVcsRoots(toAbsolute(["community", "contrib"], myProject))
-  }
-
-  @Test
-  public void "Select git init for the project in the dialog"() {
-    GitRootDetectInfo detectInfo = complexCaseDetectInfo()
-    myDialogManager.registerDialogHandler(GitIntegrationEnableComplexCaseDialog,
-                                          new TestDialogHandler<GitIntegrationEnableComplexCaseDialog>() {
-                                            @Override
-                                            int handleDialog(GitIntegrationEnableComplexCaseDialog dialog) {
-                                              return DialogWrapper.OK_EXIT_CODE;
-                                            }
-                                          })
-    new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo)
-    assertTrue ".git" in new File(myProjectDir).list()
-    assertVcsRoots(toAbsolute([".", "community", "contrib"], myProject))
-  }
-
-  void assertDialogShown(Class dialogClass) {
-    assertNotNull "Dialog wasn't shown", myDialogManager.getLastShownDialog()
-    assertTrue    "Incorrect dialog was shown", myDialogManager.getLastShownDialog().getClass().equals(dialogClass)
+  void "Not under Git, some inside => notify"() {
+    doTest given( ["community", "contrib"], false, false),
+           expect(git_init: [],
+                  notification("Added Git roots: ${path("community")}, ${path("contrib")}"))
   }
 
   private void doTest(GitRootDetectInfo detectInfo, Map map) {

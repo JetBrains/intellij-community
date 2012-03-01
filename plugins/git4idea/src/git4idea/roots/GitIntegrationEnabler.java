@@ -55,36 +55,18 @@ public class GitIntegrationEnabler {
     VirtualFile projectDir = myProject.getBaseDir();
     assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
 
-    if (detectInfo.totallyUnderGit()) {
-      assert !roots.isEmpty();
-      if (roots.size() > 1 || detectInfo.projectIsBelowGit()) {
-        notifyAddedRoots(notificator, roots);
-      }
-      addVcsRoots(roots);
-    }
-    else if (detectInfo.empty()) {
+    if (detectInfo.empty()) {
       boolean succeeded = gitInitOrNotifyError(notificator, projectDir);
       if (succeeded) {
         addVcsRoots(Collections.singleton(projectDir));
       }
     }
     else {
-      GitIntegrationEnableComplexCaseDialog dialog = new GitIntegrationEnableComplexCaseDialog(myProject, roots);
-      myPlatformFacade.showDialog(dialog);
-      if (dialog.isOK()) {
-        if (dialog.getChoice() == GitIntegrationEnableComplexCaseDialog.Choice.GIT_INIT) {
-          boolean succeeded = gitInitOrNotifyError(notificator, projectDir);
-          if (succeeded) {
-            roots.add(projectDir);
-            addVcsRoots(roots);
-            notifyAddedRoots(notificator, roots);
-          }
-        }
-        else {
-          addVcsRoots(roots);
-          notifyAddedRoots(notificator, roots);
-        }
+      assert !roots.isEmpty();
+      if (roots.size() > 1 || detectInfo.projectIsBelowGit()) {
+        notifyAddedRoots(notificator, roots);
       }
+      addVcsRoots(roots);
     }
   }
 
