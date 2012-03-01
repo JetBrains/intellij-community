@@ -307,7 +307,6 @@ public abstract class IncrementalTestCase extends TestCase {
     initLoggers();
 
     final String projectPath = getWorkDir() + File.separator + ".idea";
-    final String projectName = getProjectName();
     final Project project = new Project();
 
     final Sdk jdk = project.createSdk("JavaSDK", "IDEA jdk",  System.getProperty("java.home"), null);
@@ -319,9 +318,9 @@ public abstract class IncrementalTestCase extends TestCase {
 
     IdeaProjectLoader.loadFromPath(project, projectPath, "");
 
+    final File dataStorageRoot = Paths.getDataStorageRoot(project);
     final ProjectDescriptor projectDescriptor =
-      new ProjectDescriptor(projectPath, project, new FSState(true), new ProjectTimestamps(projectName),
-                            new BuildDataManager(projectName, true));
+      new ProjectDescriptor(project, new FSState(true), new ProjectTimestamps(dataStorageRoot), new BuildDataManager(dataStorageRoot, true));
     try {
 
       new IncProjectBuilder(

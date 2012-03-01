@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.jps.Project;
 
 import java.io.File;
 import java.net.URI;
@@ -33,8 +34,8 @@ public class Paths {
     mySystemRoot = systemRoot;
   }
 
-  public static File getDataStorageRoot(String projectName) {
-    return new File(getInstance().mySystemRoot, projectName.toLowerCase(Locale.US));
+  public static File getDataStorageRoot(Project project) {
+    return new File(getInstance().mySystemRoot, project.getProjectName().toLowerCase(Locale.US) + Integer.toHexString(project.getLocationHash()));
   }
 
   public static URI toURI(String localPath) {

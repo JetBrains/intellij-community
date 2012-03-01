@@ -7,6 +7,8 @@ import org.jetbrains.jps.idea.SdkLoader
  * @author max
  */
 class Project {
+  String projectName
+  int locationHash
   final Map<String, Library> globalLibraries = [:]
   final Map<String, Sdk> sdks = [:]
 
