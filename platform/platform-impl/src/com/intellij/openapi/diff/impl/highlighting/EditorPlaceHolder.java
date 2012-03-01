@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
@@ -25,9 +24,7 @@ import com.intellij.openapi.diff.impl.DiffVersionComponent;
 import com.intellij.openapi.diff.impl.util.ContentDocumentListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -68,11 +65,11 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
   }
 
   public void setContent(final DiffContent content) {
+    runRegisteredDisposables();
     myContent = content;
     if (myContent != null) {
-      final Document document = myContent.getDocument();
+      Document document = myContent.getDocument();
       if (myContent.isBinary() || document == null || myContent.getContentType() instanceof UIBasedFileType) {
-        runRegisteredDisposables();
         final VirtualFile file = myContent.getFile();
         if (file != null) {
           final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(getProject(), file);
@@ -96,22 +93,6 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
         }
       }
       else {
-        if (myEditor != null) {
-          final DocumentEx doc = ((EditorImpl)myEditor).getDocument();
-          if (doc != null) {
-            final boolean wasWriteable = doc.isWritable();
-            doc.setReadOnly(false);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                doc.setText(document.getText());
-              }
-            });
-            doc.setReadOnly(! wasWriteable);
-            return;
-          }
-        }
-        runRegisteredDisposables();
         final EditorFactory editorFactory = EditorFactory.getInstance();
         myEditor = DiffUtil.createEditor(document, getProject(), false);
         addDisposable(new Disposable() {
