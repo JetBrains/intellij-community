@@ -1,7 +1,6 @@
 package com.jetbrains.python.packaging.setupPy;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,19 +26,6 @@ public class SetupTaskIntrospector {
 
   private static final Map<String, List<SetupTask>> ourDistutilsTaskCache = new HashMap<String, List<SetupTask>>();
   private static final Map<String, List<SetupTask>> ourSetuptoolsTaskCache = new HashMap<String, List<SetupTask>>();
-
-  public static List<AnAction> createSetupTaskActions(Module module, PyFile setupPyFile) {
-    List<AnAction> result = new ArrayList<AnAction>();
-    try {
-      for (SetupTask task : getTaskList(module, usesSetuptools(setupPyFile))) {
-        result.add(new RunSetupTaskAction(task.getName(), task.getName().replace("_", "__") + " (" + task.getDescription() + ")"));
-      }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    return result;
-  }
 
   private static boolean usesSetuptools(PyFile file) {
     final List<PyFromImportStatement> imports = file.getFromImports();
