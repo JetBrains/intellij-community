@@ -493,7 +493,7 @@ public class StringUtil {
 
   @NotNull
   private static String toTitleCase(@NotNull String s, @NotNull String[] prepositions) {
-    StringBuffer buffer = null;
+    StringBuilder buffer = null;
     for (int i = 0; i < s.length(); i++) {
       char prevChar = i == 0 ? ' ' : s.charAt(i - 1);
       char currChar = s.charAt(i);
@@ -508,7 +508,7 @@ public class StringUtil {
             }
             if (!isPreposition(s, i, j - 1, prepositions)) {
               if (buffer == null) {
-                buffer = new StringBuffer(s);
+                buffer = new StringBuilder(s);
               }
               buffer.setCharAt(i, toUpperCase(currChar));
             }

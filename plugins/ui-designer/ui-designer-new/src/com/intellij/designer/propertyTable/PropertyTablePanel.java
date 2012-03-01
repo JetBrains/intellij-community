@@ -55,6 +55,14 @@ public final class PropertyTablePanel extends JPanel {
   }
 
   private void createActions() {
+    String restore = DesignerBundle.message("designer.properties.restore_default");
+    myActionGroup.add(new AnAction(restore, restore, IconLoader.getIcon("/actions/reset-to-default.png")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myPropertyTable.restoreDefaultValue();
+      }
+    });
+
     String expert = DesignerBundle.message("designer.properties.show.expert");
     myActionGroup.add(new ToggleAction(expert, expert, IconLoader.getIcon("/com/intellij/designer/icons/filter.png")) {
       @Override

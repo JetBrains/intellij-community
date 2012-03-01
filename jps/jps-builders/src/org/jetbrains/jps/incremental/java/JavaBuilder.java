@@ -16,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.incremental.*;
@@ -146,17 +143,26 @@ public class JavaBuilder extends ModuleLevelBuilder {
       });
 
       // force compilation of bound source file if the form is dirty
+      final CompilerExcludes excludes = context.getProject().getCompilerConfiguration().getExcludes();
       if (!context.isProjectRebuild()) {
-        for (File form : formsToCompile) {
+        for (Iterator<File> formsIterator = formsToCompile.iterator(); formsIterator.hasNext(); ) {
+          final File form = formsIterator.next();
           final RootDescriptor descriptor = context.getModuleAndRoot(form);
-          if (descriptor != null) {
-            for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
-              final File boundSource = getBoundSource(rd.root, form);
-              if (boundSource != null) {
-                filesToCompile.add(boundSource);
-                break;
-              }
+          if (descriptor == null) {
+            continue;
+          }
+          for (RootDescriptor rd : context.getModuleRoots(descriptor.module)) {
+            final File boundSource = getBoundSource(rd.root, form);
+            if (boundSource == null) {
+              continue;
             }
+            if (!excludes.isExcluded(boundSource)) {
+              filesToCompile.add(boundSource);
+            }
+            else {
+              formsIterator.remove();
+            }
+            break;
           }
         }
 
@@ -165,8 +171,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
         for (File srcFile : filesToCompile) {
           final String srcPath = srcFile.getPath();
           final String formPath = sourceToFormMap.getState(srcPath);
-          if (formPath != null) {
-            final File formFile = new File(formPath);
+          if (formPath == null) {
+            continue;
+          }
+          final File formFile = new File(formPath);
+          if (!excludes.isExcluded(formFile)) {
             if (formFile.exists()) {
               context.markDirty(formFile);
               formsToCompile.add(formFile);
