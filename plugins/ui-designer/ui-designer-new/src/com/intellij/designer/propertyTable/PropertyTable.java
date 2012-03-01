@@ -76,7 +76,6 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   public PropertyTable() {
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    setEnableAntialiasing(true);
 
     addMouseListener(new MouseTableListener());
 
@@ -166,6 +165,32 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     updateProperties();
   }
 
+  public void restoreDefaultValue() {
+    final Property property = getSelectionProperty();
+    if (property != null) {
+      if (isEditing()) {
+        cellEditor.stopCellEditing();
+      }
+
+      CommandProcessor.getInstance().executeCommand(myDesigner.getProject(), new Runnable() {
+        public void run() {
+          myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+            @Override
+            public void run() throws Exception {
+              for (RadComponent component : myComponents) {
+                if (!property.isDefaultValue(component)) {
+                  property.setDefaultValue(component);
+                }
+              }
+            }
+          });
+        }
+      }, DesignerBundle.message("designer.properties.restore_default"), null);
+
+      repaint();
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   //
@@ -189,16 +214,13 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
         myModel.fireTableDataChanged();
       }
       else {
-        Property selectedProperty = null;
-        int selectedRow = getSelectedRow();
-        if (selectedRow >= 0 && selectedRow < myProperties.size()) {
-          selectedProperty = myProperties.get(selectedRow);
-        }
+        Property selection = getSelectionProperty();
 
         myComponents = new ArrayList<RadComponent>(myArea.getSelection());
         fillProperties();
         myModel.fireTableDataChanged();
-        restoreSelection(selectedProperty);
+
+        restoreSelection(selection);
       }
     }
     finally {
@@ -206,11 +228,11 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
   }
 
-  private void restoreSelection(Property selected) {
+  private void restoreSelection(Property selection) {
     List<Property> propertyPath = new ArrayList<Property>(2);
-    while (selected != null) {
-      propertyPath.add(0, selected);
-      selected = selected.getParent();
+    while (selection != null) {
+      propertyPath.add(0, selection);
+      selection = selection.getParent();
     }
 
     int indexToSelect = -1;
@@ -322,6 +344,15 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
 
     return -1;
+  }
+
+  @Nullable
+  private Property getSelectionProperty() {
+    int selectedRow = getSelectedRow();
+    if (selectedRow >= 0 && selectedRow < myProperties.size()) {
+      return myProperties.get(selectedRow);
+    }
+    return null;
   }
 
   @Nullable
@@ -464,11 +495,11 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
   private void finishEditing() {
     if (editingRow != -1) {
-      editingStopped(new ChangeEvent(cellEditor));
+      editingStopped(null);
     }
   }
 
-  public void editingStopped(ChangeEvent ignored) {
+  public void editingStopped(@Nullable ChangeEvent event) {
     if (myStoppingEditing) {
       return;
     }

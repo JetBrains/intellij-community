@@ -19,6 +19,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
+import com.intellij.designer.propertyTable.editors.AbstractTextFieldEditor;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +30,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AttributeProperty extends Property {
   private final LabelPropertyRenderer myRenderer = new LabelPropertyRenderer(null);
+  private final PropertyEditor myEditor = new AbstractTextFieldEditor() {
+    @Override
+    public Object getValue() throws Exception {
+      return myTextField.getText();
+    }
+  };
   @NotNull private final String myAttribute;
 
   public AttributeProperty(Property parent, @NotNull @NonNls String name, @NotNull @NonNls String attribute) {
@@ -38,13 +45,33 @@ public class AttributeProperty extends Property {
 
   @Override
   public Object getValue(RadComponent component) throws Exception {
+    Object value = component.getClientProperty(myAttribute);
+    if (value != null) {
+      return value;
+    }
+
     XmlTag tag = ((RadViewComponent)component).getTag();
     return tag == null ? null : tag.getAttributeValue(myAttribute);
   }
 
   @Override
+  public void setValue(RadComponent component, Object value) throws Exception {
+    component.putClientProperty(myAttribute, value);
+  }
+
+  @Override
   public boolean isDefaultValue(RadComponent component) throws Exception {
-    return myAttribute.equals("android:password");
+    XmlTag tag = ((RadViewComponent)component).getTag();
+    Object value = component.getClientProperty(myAttribute);
+    if (tag != null && value != null) {
+      return value.equals(tag.getAttributeValue(myAttribute));
+    }
+    return true;
+  }
+
+  @Override
+  public void setDefaultValue(RadComponent component) throws Exception {
+    component.putClientProperty(myAttribute, null);
   }
 
   @NotNull
@@ -55,6 +82,6 @@ public class AttributeProperty extends Property {
 
   @Override
   public PropertyEditor getEditor() {
-    return null;  // TODO: Auto-generated method stub
+    return myEditor;
   }
 }
