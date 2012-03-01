@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -7,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,7 +68,7 @@ public class PythonEnvUtil {
   }
 
   public static void addToEnv(Map<String, String> envs, String key, Collection<String> values) {
-    for (String val: values) {
+    for (String val : values) {
       addToEnv(envs, key, val);
     }
   }
@@ -86,5 +88,18 @@ public class PythonEnvUtil {
 
   public static void addToPythonPath(Map<String, String> envs, String value) {
     addToEnv(envs, PYTHONPATH, value);
+  }
+
+
+  @Nullable
+  public static List<String> getPythonPathList(Map<String, String> envs) {
+    String pythonPath = envs.get(PYTHONPATH);
+    if (pythonPath != null) {
+      String[] paths = pythonPath.split(Character.toString(File.pathSeparatorChar));
+      return Lists.newArrayList(paths);
+    }
+    else {
+      return null;
+    }
   }
 }

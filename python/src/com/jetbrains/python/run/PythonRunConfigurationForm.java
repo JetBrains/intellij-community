@@ -41,9 +41,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JPanel myMappingsConfigurationPanel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
-  private boolean myRemoteInterpreterMode;
   private final Project myProject;
-  private PyPathMappingSettings myMappingSettings;
   private TextFieldWithBrowseButton myMappingsTextField;
   private JLabel myMappingsLabel;
 
@@ -73,67 +71,6 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myScriptTextField.addActionListener(listener);
 
     setAnchor(myCommonOptionsForm.getAnchor());
-
-    myCommonOptionsForm.addInterpreterComboBoxActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        updateRemoteInterpreterMode();
-      }
-    }
-    );
-
-    createConfigureMappingsLink();
-
-    updateRemoteInterpreterMode();
-  }
-
-  private void createConfigureMappingsLink() {
-    myMappingsTextField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        showConfigureMappingsDialog();
-      }
-    });
-    myMappingsTextField.setEditable(false);
-  }
-
-  private void updateRemoteInterpreterMode() {
-    setRemoteInterpreterMode(isRemoteSdkSelected());
-    if (myMappingSettings == null) {
-      myMappingSettings = new PyPathMappingSettings();
-    }
-  }
-
-  private void showConfigureMappingsDialog() {
-    PyMappingSettingsDialog dialog = new PyMappingSettingsDialog(myProject, myMappingSettings);
-    dialog.show();
-    if (dialog.isOK()) {
-      setMappingSettings(dialog.getMappingSettings());
-    }
-  }
-
-  private boolean isRemoteSdkSelected() {
-    String sdkHome = myCommonOptionsForm.getSdkHome();
-    if (StringUtil.isEmptyOrSpaces(sdkHome)) {
-      final Sdk projectJdk = PythonSdkType.findPythonSdk(myCommonOptionsForm.getModule());
-      if (projectJdk != null) {
-        sdkHome = projectJdk.getHomePath();
-      }
-    }
-
-    return isRemoteSdkSelected(sdkHome);
-  }
-
-  public static boolean isRemoteSdkSelected(String sdkHome) {
-    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
-    return sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData;
-  }
-
-  private void setRemoteInterpreterMode(boolean remoteInterpreterMode) {
-    myRemoteInterpreterMode = remoteInterpreterMode;
-    myMappingsConfigurationPanel.setVisible(remoteInterpreterMode);
-    myMappingsTextField.setVisible(remoteInterpreterMode);
-    myMappingsLabel.setVisible(remoteInterpreterMode);
   }
 
   public JComponent getPanel() {
@@ -171,24 +108,6 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   public void setMultiprocessMode(boolean multiprocess) {
     myAttachDebuggerToSubprocess.setSelected(multiprocess);
-  }
-
-  @Nullable
-  public PyPathMappingSettings getMappingSettings() {
-    return myMappingSettings;
-  }
-
-  public void setMappingSettings(PyPathMappingSettings mappingSettings) {
-    myMappingSettings = mappingSettings;
-    if (myMappingsTextField != null) {
-      StringBuilder sb = new StringBuilder();
-      if (mappingSettings != null) {
-        for (PyPathMappingSettings.PyPathMapping mapping : mappingSettings.getPathMappings()) {
-          sb.append(mapping.getLocalRoot()).append("=").append(mapping.getRemoteRoot()).append(";");
-        }
-      }
-      myMappingsTextField.setText(sb.toString());
-    }
   }
 
   @Override
