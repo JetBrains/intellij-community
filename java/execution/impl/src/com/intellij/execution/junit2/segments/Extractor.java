@@ -39,6 +39,7 @@ public class Extractor {
 
   public Extractor(final InputStream stream, final Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
+    myQueue.setPassThrough(false);//should be updated in awt thread
   }
 
   public void setDispatchListener(final DispatchListener listener) {
