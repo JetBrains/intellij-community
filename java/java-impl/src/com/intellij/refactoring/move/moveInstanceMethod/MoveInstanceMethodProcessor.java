@@ -260,7 +260,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       else {
         VisibilityUtil.escalateVisibility((PsiField)myTargetVariable, expression);
         String newQualifierName = myTargetVariable.getName();
-        if (myTargetVariable instanceof PsiField) {
+        if (myTargetVariable instanceof PsiField && oldQualifier != null) {
           final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(oldQualifier.getType());
           if (aClass == ((PsiField)myTargetVariable).getContainingClass()) {
             newQualifierName = oldQualifier.getText() + "." + newQualifierName;
