@@ -26,7 +26,7 @@ import java.util.Collection;
  *
  * @author Kirill Likhodedov
  */
-class GitRootDetectInfo {
+public class GitRootDetectInfo {
 
   private final @NotNull Collection<VirtualFile> myRoots;
   private final boolean myFull;
@@ -66,7 +66,7 @@ class GitRootDetectInfo {
    * @return true if the uppermost interesting Git root is above the project dir,
    *         false if all .git directories are immediately under the project dir or deeper.
    */
-  public boolean projectIsBelowGit() {
+  boolean projectIsBelowGit() {
     return myBelow;
   }
 

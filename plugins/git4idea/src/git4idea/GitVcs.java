@@ -71,6 +71,9 @@ import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
+import git4idea.roots.GitIntegrationEnabler;
+import git4idea.roots.GitRootDetectInfo;
+import git4idea.roots.GitRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
@@ -122,6 +125,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitMergeProvider myMergeProvider;
   private final GitMergeProvider myReverseMergeProvider;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
+  private final @NotNull PlatformFacade myPlatformFacade;
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
@@ -173,6 +177,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myCommitAndPushExecutor = new GitCommitAndPushExecutor(myCheckinEnvironment);
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
     myExecutableValidator = new GitExecutableValidator(myProject, this);
+    myPlatformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
   }
 
 
@@ -539,4 +544,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public boolean fileListenerIsSynchronous() {
     return false;
   }
+
+  @Override
+  public void enableIntegration() {
+    GitRootDetectInfo detectInfo = new GitRootDetector(myProject).detect();
+    new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
+  }
+
 }
