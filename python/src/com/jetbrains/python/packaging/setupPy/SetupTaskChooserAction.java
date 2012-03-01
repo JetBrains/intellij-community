@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.run.PythonTask;
+import com.jetbrains.python.sdk.PythonSdkType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +63,7 @@ public class SetupTaskChooserAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     final Module module = e.getData(LangDataKeys.MODULE);
-    e.getPresentation().setEnabled(module != null && PyPackageUtil.findSetupPy(module) != null);
+    e.getPresentation().setEnabled(module != null && PyPackageUtil.findSetupPy(module) != null && PythonSdkType.findPythonSdk(module) != null);
   }
 
   public static void runSetupTask(String taskName, Module module) {
