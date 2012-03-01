@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
@@ -74,5 +75,11 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
     }
     String version = GroovyConfigUtils.getInstance().getSDKVersion(homePath);
     return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : " (" + (bundled ? "Bundled " : "") + "Groovy " + version + ")";
+  }
+
+  @NotNull
+  @Override
+  public String transformUserInput(@NotNull String userInput) {
+    return StringUtil.replace(userInput, "\n", "###\\n");
   }
 }
