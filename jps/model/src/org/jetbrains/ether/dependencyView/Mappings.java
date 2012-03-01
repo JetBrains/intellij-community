@@ -1006,9 +1006,11 @@ public class Mappings {
 
             }
             else {
-              propagated = u.propagateMethodAccess(m.name, it.name);
-              debug("Conservative case on overriding methods, affecting method usages");
-              u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
+              if (m.argumentTypes.length > 0) {
+                propagated = u.propagateMethodAccess(m.name, it.name);
+                debug("Conservative case on overriding methods, affecting method usages");
+                u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
+              }
             }
           }
 
@@ -1529,7 +1531,6 @@ public class Mappings {
                       continue filewise;
                     }
                   }
-
                 }
               }
             }
