@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -406,13 +406,14 @@ public class VfsUtil extends VfsUtilCore {
     return protocol + "://" + path;
   }
 
-  public static String urlToPath(@NonNls String url) {
+  @NotNull
+  public static String urlToPath(@NonNls @Nullable String url) {
     if (url == null) return "";
     return VirtualFileManager.extractPath(url);
   }
 
   @NotNull
-  public static String pathToUrl(@NotNull String path) {
+  public static String pathToUrl(@NonNls @NotNull String path) {
     return VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Oct 14 2003
+ * @since Oct 14, 2003
  */
 public class ToggleSourcesStateAction extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
@@ -52,29 +52,31 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
     }
   }
 
-  public boolean isSelected(AnActionEvent e) {
-    final VirtualFile[] selectedFiles = getSelectedFiles();
-    if (selectedFiles == null || selectedFiles.length == 0) {
-      return false;
-    }
-    final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
-    return myEditTestSources? contentEntryEditor.isTestSource(selectedFiles[0]) : contentEntryEditor.isSource(selectedFiles[0]);
+  @Override
+  public boolean isSelected(final AnActionEvent e) {
+    final List<String> selectedPaths = getSelectedPaths();
+    if (selectedPaths.size() == 0) return false;
+
+    final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
+    return myEditTestSources ? editor.isTestSource(selectedPaths.get(0)) : editor.isSource(selectedPaths.get(0));
   }
 
-  public void setSelected(AnActionEvent e, boolean isSelected) {
-    final VirtualFile[] selectedFiles = getSelectedFiles();
-    assert selectedFiles != null && selectedFiles.length != 0;
+  @Override
+  public void setSelected(final AnActionEvent e, final boolean isSelected) {
+    final List<String> selectedPaths = getSelectedPaths();
+    assert selectedPaths.size() != 0;
+
     final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
-    for (VirtualFile selectedFile : selectedFiles) {
-      final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
+    for (String selectedPath : selectedPaths) {
+      final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedPath);
       if (isSelected) {
         if (sourceFolder == null) { // not marked yet
-          contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
+          contentEntryEditor.addSourceFolder(selectedPath, myEditTestSources);
         }
         else {
-          if (myEditTestSources? !sourceFolder.isTestSource() : sourceFolder.isTestSource()) {
+          if (myEditTestSources != sourceFolder.isTestSource()) {
             contentEntryEditor.removeSourceFolder(sourceFolder);
-            contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
+            contentEntryEditor.addSourceFolder(selectedPath, myEditTestSources);
           }
         }
       }
@@ -86,11 +88,10 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(final AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
-    presentation.setText(myEditTestSources
-                         ? ProjectBundle.message("module.toggle.test.sources.action")
-                         : ProjectBundle.message("module.toggle.sources.action"));
+    presentation.setText(ProjectBundle.message(myEditTestSources ? "module.toggle.test.sources.action" : "module.toggle.sources.action"));
   }
 }
