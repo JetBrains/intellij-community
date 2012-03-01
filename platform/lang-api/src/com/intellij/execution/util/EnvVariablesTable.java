@@ -16,206 +16,82 @@
 
 package com.intellij.execution.util;
 
-import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Observable;
 
-public class EnvVariablesTable extends Observable {
-  private final List<EnvironmentVariable> myVariables = new ArrayList<EnvironmentVariable>();
-  private final JPanel myPanel = new JPanel(new BorderLayout());
-
-  private final ColumnInfo NAME = new EnvVariableColumnInfoBase("Name") {
-    public String valueOf(EnvironmentVariable environmentVariable) {
-      return environmentVariable.getName();
-    }
-
-    public boolean isCellEditable(EnvironmentVariable environmentVariable) {
-      return environmentVariable.getNameIsWriteable();
-    }
-
-    public void setValue(EnvironmentVariable environmentVariable, String s) {
-      if (s.equals(valueOf(environmentVariable))) {
-        return;
+public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
+  @Override
+  protected ListTableModel createListModel() {
+    final ColumnInfo name = new ElementsColumnInfoBase<EnvironmentVariable>("Name") {
+      public String valueOf(EnvironmentVariable environmentVariable) {
+        return environmentVariable.getName();
       }
-      environmentVariable.setName(s);
-      setModified();
-    }
-  };
 
-  private final ColumnInfo VALUE = new EnvVariableColumnInfoBase("Value") {
-    public String valueOf(EnvironmentVariable environmentVariable) {
-      return environmentVariable.getValue();
-    }
-
-    public boolean isCellEditable(EnvironmentVariable environmentVariable) {
-      return !environmentVariable.getIsPredefined();
-    }
-
-    public void setValue(EnvironmentVariable environmentVariable, String s) {
-      if (s.equals(valueOf(environmentVariable))) {
-        return;
+      public boolean isCellEditable(EnvironmentVariable environmentVariable) {
+        return environmentVariable.getNameIsWriteable();
       }
-      environmentVariable.setValue(s);
-      setModified();
-    }
 
-  };
-  private final TableView myTableVeiw;
-  private boolean myIsEnabled = true;
+      public void setValue(EnvironmentVariable environmentVariable, String s) {
+        if (s.equals(valueOf(environmentVariable))) {
+          return;
+        }
+        environmentVariable.setName(s);
+        setModified();
+      }
 
-  public EnvVariablesTable() {
-    myTableVeiw = new TableView(new ListTableModel((new ColumnInfo[]{NAME, VALUE})));
-    myTableVeiw.getTableViewModel().setSortable(false);
-    myPanel.add(ScrollPaneFactory.createScrollPane(myTableVeiw.getComponent()), BorderLayout.CENTER);
-    JComponent toolbarComponent = createToolbar();
-    myPanel.add(toolbarComponent, BorderLayout.NORTH);
-    myTableVeiw.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      @Override
+      protected String getDescription(EnvironmentVariable environmentVariable) {
+        return environmentVariable.getDescription();
+      }
+    };
+
+    final ColumnInfo value = new ElementsColumnInfoBase<EnvironmentVariable>("Value") {
+      public String valueOf(EnvironmentVariable environmentVariable) {
+        return environmentVariable.getValue();
+      }
+
+      public boolean isCellEditable(EnvironmentVariable environmentVariable) {
+        return !environmentVariable.getIsPredefined();
+      }
+
+      public void setValue(EnvironmentVariable environmentVariable, String s) {
+        if (s.equals(valueOf(environmentVariable))) {
+          return;
+        }
+        environmentVariable.setValue(s);
+        setModified();
+      }
+
+      @Nullable
+      @Override
+      protected String getDescription(EnvironmentVariable environmentVariable) {
+        return environmentVariable.getDescription();
+      }
+    };
+
+    return new ListTableModel((new ColumnInfo[]{name, value}));
   }
 
-  private void setModified() {
-    setChanged();
-    notifyObservers();
-  }
-
-
-  private JComponent createToolbar() {
-    DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(new AddAction());
-    actions.add(new DeleteAction());
-    JComponent toolbarComponent = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true).getComponent();
-    return toolbarComponent;
-  }
-
-  public JComponent getComponent() {
-    return myPanel;
-  }
-
-  public void setEnabled() {
-    myTableVeiw.getComponent().setEnabled(true);
-    myIsEnabled = true;
-  }
-
-  public void setDisabled() {
-    myTableVeiw.getComponent().setEnabled(false);
-    myIsEnabled = false;
-
-  }
-
-  public void setValues(List<EnvironmentVariable> envVariables) {
-    myVariables.clear();
-    for (EnvironmentVariable envVariable : envVariables) {
-      myVariables.add(envVariable.clone());
-    }
-    myTableVeiw.getTableViewModel().setItems(myVariables);
-  }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {
-    return myVariables;
+    return getElements();
   }
 
-  public void stopEditing() {
-    myTableVeiw.stopEditing();
+  @Override
+  protected EnvironmentVariable createElement() {
+    return new EnvironmentVariable("", "", false);
   }
 
-  public void refreshValues() {
-    myTableVeiw.getComponent().repaint();
+  @Override
+  protected EnvironmentVariable cloneElement(EnvironmentVariable envVariable) {
+    return envVariable.clone();
   }
 
-  private final class DeleteAction extends AnAction {
-    public DeleteAction() {
-      super(CommonBundle.message("button.delete"), null, IconLoader.getIcon("/general/remove.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      EnvironmentVariable selection = getSelection();
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(selection != null && myIsEnabled && !selection.getIsPredefined());
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      myTableVeiw.stopEditing();
-      setModified();
-      EnvironmentVariable selected = getSelection();
-      if (selected != null) {
-        int selectedIndex = myVariables.indexOf(selected);
-        myVariables.remove(selected);
-        myTableVeiw.getTableViewModel().setItems(myVariables);
-
-        int prev = selectedIndex - 1;
-        if (prev >= 0) {
-          myTableVeiw.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
-        }
-        else if (selectedIndex < myVariables.size()) {
-          myTableVeiw.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
-        }
-      }
-
-    }
-
-  }
-
-  private final class AddAction extends AnAction {
-    public AddAction() {
-      super(CommonBundle.message("button.add"), null, IconLoader.getIcon("/general/add.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIsEnabled);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      myTableVeiw.stopEditing();
-      setModified();
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myVariables.add(new EnvironmentVariable("", "", false));
-          myTableVeiw.getTableViewModel().setItems(myVariables);
-          myTableVeiw.getComponent().editCellAt(myVariables.size() - 1, 0);
-        }
-      });
-    }
-  }
-
-  private EnvironmentVariable getSelection() {
-    int selIndex = myTableVeiw.getComponent().getSelectionModel().getMinSelectionIndex();
-    if (selIndex < 0) {
-      return null;
-    }
-    else {
-      return myVariables.get(selIndex);
-    }
-  }
-
-  private static abstract class EnvVariableColumnInfoBase extends ColumnInfo<EnvironmentVariable, String> {
-    private DefaultTableCellRenderer myRenderer;
-
-    private EnvVariableColumnInfoBase(String name) {
-      super(name);
-    }
-
-    @Override
-    public TableCellRenderer getRenderer(EnvironmentVariable environmentVariable) {
-      if (myRenderer == null) {
-        myRenderer = new DefaultTableCellRenderer();
-      }
-      if (environmentVariable != null) {
-        myRenderer.setText(valueOf(environmentVariable));
-        myRenderer.setToolTipText(environmentVariable.getDescription());
-      }
-      return myRenderer;
-    }
+  @Override
+  protected boolean canDeleteElement(EnvironmentVariable selection) {
+    return !selection.getIsPredefined();
   }
 }
