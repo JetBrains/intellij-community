@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2011 Bas Leijdekkers
+ * Copyright 2010-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;
+
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean ignoreInTestCode = false;
 
   @Override
   @NotNull
@@ -77,7 +81,10 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("too.broad.catch.option"), this, "onlyWarnOnRootExceptions");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("too.broad.catch.option"), "onlyWarnOnRootExceptions");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
+    return panel;
   }
 
   @NotNull
@@ -137,8 +144,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
     return new TooBroadThrowsVisitor();
   }
 
-  private class TooBroadThrowsVisitor
-    extends BaseInspectionVisitor {
+  private class TooBroadThrowsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(PsiMethod method) {
@@ -153,6 +159,9 @@ public class TooBroadThrowsInspection extends BaseInspection {
       }
       final PsiCodeBlock body = method.getBody();
       if (body == null) {
+        return;
+      }
+      if (ignoreInTestCode && TestUtils.isInTestCode(method)) {
         return;
       }
       final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
