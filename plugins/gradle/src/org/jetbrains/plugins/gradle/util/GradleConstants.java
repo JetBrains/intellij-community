@@ -16,8 +16,9 @@ public class GradleConstants {
   @NonNls public static final String EXTENSION           = "gradle";
   @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
 
-  @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE = "GRADLE_SYNC_CHANGES_TOOLBAR";
-  @NonNls public static final String SYNC_TREE_PLACE           = "GRADLE_SYNC_TREE_PLACE";
+  @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE        = "GRADLE_SYNC_CHANGES_TOOLBAR";
+  @NonNls public static final String SYNC_TREE_CONTEXT_MENU_PLACE     = "GRADLE_SYNC_TREE_CONTEXT_MENU_PLACE";
+  @NonNls public static final String SYNC_TREE_FLOATING_TOOLBAR_PLACE = "GRADLE_SYNC_TREE_FLOATING_TOOLBAR_PLACE";
   
   @NonNls public static final String ACTION_GROUP_SYNC_TREE = "Gradle.SyncTreeGroup";
   
