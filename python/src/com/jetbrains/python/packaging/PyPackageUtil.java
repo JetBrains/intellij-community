@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -92,7 +93,11 @@ public class PyPackageUtil {
     // TODO: Cache found module packages, clear cache on module updates
     final List<String> packageNames = new ArrayList<String>();
     final Project project = module.getProject();
-    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
+    VirtualFile[] roots = ModuleRootManager.getInstance(module).getSourceRoots();
+    if (roots.length == 0) {
+      roots = ModuleRootManager.getInstance(module).getContentRoots();
+    }
+    for (VirtualFile root : roots) {
       collectPackageNames(project, root, "", packageNames);
     }
     return packageNames;
