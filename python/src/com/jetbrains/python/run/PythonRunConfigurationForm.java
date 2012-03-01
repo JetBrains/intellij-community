@@ -44,7 +44,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private boolean myRemoteInterpreterMode;
   private final Project myProject;
   private PyPathMappingSettings myMappingSettings;
-  private JBLabel myMappingsConfigLabel;
+  private TextFieldWithBrowseButton myMappingsTextField;
+  private JLabel myMappingsLabel;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -87,19 +88,13 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   private void createConfigureMappingsLink() {
-    JLabel mappingsConfigLabel = new JBLabel("<html><a href=\"#\">Configure path mappings");
-    mappingsConfigLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    mappingsConfigLabel.addMouseListener(new MouseAdapter() {
+    myMappingsTextField.addActionListener(new ActionListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 1) {
-          showConfigureMappingsDialog();
-        }
+      public void actionPerformed(ActionEvent e) {
+        showConfigureMappingsDialog();
       }
     });
-
-    myMappingsConfigurationPanel.setLayout(new BorderLayout());
-    myMappingsConfigurationPanel.add(mappingsConfigLabel, BorderLayout.CENTER);
+    myMappingsTextField.setEditable(false);
   }
 
   private void updateRemoteInterpreterMode() {
@@ -113,7 +108,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     PyMappingSettingsDialog dialog = new PyMappingSettingsDialog(myProject, myMappingSettings);
     dialog.show();
     if (dialog.isOK()) {
-      myMappingSettings = dialog.getMappingSettings();
+      setMappingSettings(dialog.getMappingSettings());
     }
   }
 
@@ -137,6 +132,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private void setRemoteInterpreterMode(boolean remoteInterpreterMode) {
     myRemoteInterpreterMode = remoteInterpreterMode;
     myMappingsConfigurationPanel.setVisible(remoteInterpreterMode);
+    myMappingsTextField.setVisible(remoteInterpreterMode);
+    myMappingsLabel.setVisible(remoteInterpreterMode);
   }
 
   public JComponent getPanel() {
@@ -183,6 +180,15 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   public void setMappingSettings(PyPathMappingSettings mappingSettings) {
     myMappingSettings = mappingSettings;
+    if (myMappingsTextField != null) {
+      StringBuilder sb = new StringBuilder();
+      if (mappingSettings != null) {
+        for (PyPathMappingSettings.PyPathMapping mapping : mappingSettings.getPathMappings()) {
+          sb.append(mapping.getLocalRoot()).append("=").append(mapping.getRemoteRoot()).append(";");
+        }
+      }
+      myMappingsTextField.setText(sb.toString());
+    }
   }
 
   @Override

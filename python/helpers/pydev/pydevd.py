@@ -1276,7 +1276,6 @@ class Dispatcher(object):
         except :
             pass
 
-
 class DispatchReader(ReaderThread):
     def __init__(self, dispatcher):
         self.dispatcher = dispatcher
@@ -1358,6 +1357,7 @@ if __name__ == '__main__':
 
     port = setup['port']
     host = setup['client']
+
     if setup['multiproc']:
         pydev_log.debug("Started in multiproc mode\n")
 
@@ -1383,13 +1383,6 @@ if __name__ == '__main__':
         pydev_log.info("pydev debugger: starting\n")
 
     debugger = PyDB()
-
-    if port<0:
-        (h, p) = pydev_localhost.get_socket_name()
-        sys.stderr.write("Remote port forwarding: %d-%d\n"%(p, -port))
-        sys.stderr.flush()
-        port = p
-        host = h
 
     debugger.connect(host, port)
 

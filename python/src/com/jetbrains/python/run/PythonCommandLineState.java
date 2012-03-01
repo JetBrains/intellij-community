@@ -33,7 +33,6 @@ import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.debugger.remote.PyRemoteDebugConfiguration;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
@@ -68,21 +67,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return isDebug(getConfigurationSettings());
   }
 
-  public Pair<ServerSocket, Integer> createDebugServerSocket() throws ExecutionException {
-    ServerSocket serverSocket = createServerSocket();
-
-    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
-
-    if (sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
-      //remote interpreter
-      return Pair.create(serverSocket, -serverSocket.getLocalPort());
-    }
-    else {
-      return Pair.create(serverSocket, serverSocket.getLocalPort());
-    }
-  }
-
-  private ServerSocket createServerSocket() throws ExecutionException {
+  public static ServerSocket createServerSocket() throws ExecutionException {
     final ServerSocket serverSocket;
     try {
       //noinspection SocketOpenedButNotSafelyClosed
@@ -193,8 +178,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
       while (true) {
         try {
           processHandler =
-            manager.doCreateProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
-                                    ((PythonRunConfiguration)myConfig).getMappingSettings());
+            manager.startRemoteProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
+                                       myConfig.getMappingSettings());
           break;
         }
         catch (PyRemoteInterpreterException e) {

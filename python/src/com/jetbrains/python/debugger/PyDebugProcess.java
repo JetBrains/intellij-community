@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -37,6 +38,7 @@ import com.jetbrains.python.run.PythonProcessHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Collection;
 import java.util.List;
@@ -78,7 +80,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     super(session);
     session.setPauseActionSupported(true);
     if (multiProcess) {
-      myDebugger = createMultiprocessDebugger(serverSocket);
+      myDebugger = createMultiprocessDebugger(serverSocket, processHandler);
     }
     else {
       myDebugger = new RemoteDebugger(this, serverSocket, 10000);
@@ -116,7 +118,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     });
   }
 
-  private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
+  private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket, ProcessHandler processHandler) {
     MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, 10000);
     debugger.setOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
       @Override
@@ -218,6 +220,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
+  }
+
+  @Override
+  public int handleDebugPort(int localPort) throws IOException {
+    if (myProcessHandler instanceof PyRemoteProcessHandlerBase) {
+      PyRemoteProcessHandlerBase remoteProcessHandler = (PyRemoteProcessHandlerBase)myProcessHandler;
+      try {
+        Pair<String, Integer> remoteSocket = remoteProcessHandler.obtainRemoteSocket();
+        remoteProcessHandler.addRemoteForwarding(remoteSocket.getSecond(), localPort);
+        return remoteSocket.getSecond();
+      }
+      catch (Exception e) {
+        throw new IOException(e);
+      }
+    }
+    else {
+      return localPort;
+    }
   }
 
   protected void afterConnect() {

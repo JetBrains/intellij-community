@@ -67,8 +67,8 @@ public class PyDebugRunner extends GenericProgramRunner {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     final PythonCommandLineState pyState = (PythonCommandLineState)profileState;
-    final Pair<ServerSocket, Integer> serverSocket = pyState.createDebugServerSocket();
-    final int serverLocalPort = serverSocket.getSecond();
+    final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
+    final int serverLocalPort = serverSocket.getLocalPort();
     RunProfile profile = env.getRunProfile();
     final ExecutionResult result = pyState.execute(executor, createCommandLinePatchers(pyState, profile, serverLocalPort));
 
@@ -77,7 +77,7 @@ public class PyDebugRunner extends GenericProgramRunner {
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
           PyDebugProcess pyDebugProcess =
-            new PyDebugProcess(session, serverSocket.getFirst(), result.getExecutionConsole(), result.getProcessHandler(),
+            new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
                                pyState.isMultiprocessDebug());
 
           createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess);
