@@ -44,7 +44,7 @@ public class Mappings {
     final DependencyContext.S file = myClassToSourceFile.get(it);
 
     if (file != null) {
-      myChangedFiles.add(it);
+      myChangedFiles.add(file);
     }
 
     myIsDifferentiated = true;
@@ -1625,13 +1625,7 @@ public class Mappings {
             myClassToSourceFile.put(c, sourceFile);
           }
         }
-      }
-      else {
-        myClassToSubclasses.putAll(delta.myClassToSubclasses);
-        myClassToSourceFile.putAll(delta.myClassToSourceFile);
-      }
 
-      if (delta.isDifferentiated() && false) {
         for (DependencyContext.S f : delta.getChangedFiles()) {
           mySourceFileToClasses.remove(f);
           final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
@@ -1653,6 +1647,9 @@ public class Mappings {
         }
       }
       else {
+        myClassToSubclasses.putAll(delta.myClassToSubclasses);
+        myClassToSourceFile.putAll(delta.myClassToSourceFile);
+
         mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
         mySourceFileToUsages.replaceAll(delta.mySourceFileToUsages);
         mySourceFileToAnnotationUsages.replaceAll(delta.mySourceFileToAnnotationUsages);
