@@ -27,11 +27,11 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -49,6 +49,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -83,8 +84,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -103,7 +103,23 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
-  private final JList myList = new JBList(new DefaultListModel());
+  private final JList myList = new JBList(new DefaultListModel()) {
+    @Override
+    protected void processKeyEvent(final KeyEvent e) {
+      final char keyChar = e.getKeyChar();
+      if (keyChar == KeyEvent.VK_ENTER || keyChar == KeyEvent.VK_TAB) {
+        IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            IdeEventQueue.getInstance().getKeyEventDispatcher().dispatchKeyEvent(e);
+          }
+        });
+        return;
+      }
+
+      super.processKeyEvent(e);
+    }
+  };
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
 
@@ -173,8 +189,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         return myScrollBarIncreaseButton;
       }
     });
-    
+
     getComponent().add(myLayeredPane, BorderLayout.CENTER);
+
+    //IDEA-82111
+    fixMouseCheaters();
 
     myLayeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
     myScrollPane.setBorder(null);
@@ -209,6 +228,34 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     });
     updateSorting();
+  }
+
+  //Yes, it's possible to move focus to the hint. It's inconvenient, it doesn't make sense, but it's possible.
+  // This fix is for those jerks
+  private void fixMouseCheaters() {
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final InputEvent event = e.getInputEvent();
+        if (! (event instanceof KeyEvent)) return;
+        final char keyChar = ((KeyEvent)event).getKeyChar();
+        if (keyChar == KeyEvent.VK_ENTER || keyChar == KeyEvent.VK_TAB) {
+          IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                final Robot robot = new Robot();
+                final int code = ((KeyEvent)event).getKeyCode();
+                robot.keyPress(code);
+                robot.keyRelease(code);
+              }
+              catch (AWTException ignored) {
+              }
+            }
+          });
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyboardShortcut.fromString("ENTER"), KeyboardShortcut.fromString("TAB")), getComponent(), this);
   }
 
   private void updateSorting() {
