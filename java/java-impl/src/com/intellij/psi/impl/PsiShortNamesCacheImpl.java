@@ -27,6 +27,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -109,8 +112,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public PsiMethod[] getMethodsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
-    final Collection<PsiMethod> methods =
-        StubIndex.getInstance().get(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope);
+    Collection<PsiMethod> methods = StubIndex.getInstance().get(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope);
     if (methods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
 
     List<PsiMethod> list = filterMembers(methods, scope);
@@ -121,7 +123,24 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
-    return getMethodsByName(name, scope); // TODO!!!
+    final List<PsiMethod> methods = new SmartList<PsiMethod>();
+    StubIndex.getInstance().process(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, new CommonProcessors.CollectProcessor<PsiMethod>(methods){
+      @Override
+      public boolean process(PsiMethod method) {
+        return methods.size() != maxCount && super.process(method);
+      }
+    });
+    if (methods.isEmpty()) return PsiMethod.EMPTY_ARRAY;
+
+    List<PsiMethod> list = filterMembers(methods, scope);
+    return list.toArray(new PsiMethod[list.size()]);
+  }
+
+  @Override
+  public boolean processMethodsWithName(@NonNls @NotNull String name,
+                                        @NotNull GlobalSearchScope scope,
+                                        @NotNull Processor<PsiMethod> processor) {
+    return StubIndex.getInstance().process(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, processor);
   }
 
   @Override
@@ -160,7 +179,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   }
 
   private <T extends PsiMember> List<T> filterMembers(Collection<T> members, final GlobalSearchScope scope) {
-    List<T> result = new ArrayList<T>();
+    List<T> result = new ArrayList<T>(members.size());
     Set<PsiMember> set = new THashSet<PsiMember>(members.size(), new TObjectHashingStrategy<PsiMember>() {
       @Override
       public int computeHashCode(PsiMember member) {
