@@ -38,12 +38,9 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JPanel myCommonOptionsPlaceholder;
   private JBLabel myScriptParametersLabel;
   private JCheckBox myAttachDebuggerToSubprocess;
-  private JPanel myMappingsConfigurationPanel;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
   private final Project myProject;
-  private TextFieldWithBrowseButton myMappingsTextField;
-  private JLabel myMappingsLabel;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
