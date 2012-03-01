@@ -41,6 +41,9 @@
     <action id="CloseContent">
       <keyboard-shortcut first-keystroke="meta W"/>
     </action>
+    <action id="CloseProject">
+      <keyboard-shortcut first-keystroke="meta alt W" />
+    </action>
     <action id="CodeCompletion">
       <keyboard-shortcut first-keystroke="control SPACE" />
       <keyboard-shortcut first-keystroke="F5" />
