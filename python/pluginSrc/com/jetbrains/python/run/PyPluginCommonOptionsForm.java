@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,6 +155,15 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   public void setEnvs(Map<String, String> envs) {
     myEnvsComponent.setEnvs(envs);
+  }
+
+  @Override
+  public PyPathMappingSettings getMappingSettings() {
+    return null;  //TODO: implement for plugin
+  }
+
+  @Override
+  public void setMappingSettings(@Nullable PyPathMappingSettings mappingSettings) {
   }
 
   @Override
