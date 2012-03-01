@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,14 +181,17 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
         onListSelectionChanged();
       }
     };
-    myCodeTemplatesList = new FileTemplateTabAsList(CODE_TITLE) {
-      public void onTemplateSelected() {
-        onListSelectionChanged();
-      }
-    };
     myCurrentTab = myTemplatesList;
 
-    final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
+    final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList));
+    if (FileTemplateManager.getInstance().getAllCodeTemplates().length > 0) {
+      myCodeTemplatesList = new FileTemplateTabAsList(CODE_TITLE) {
+        public void onTemplateSelected() {
+          onListSelectionChanged();
+        }
+      };
+      allTabs.add(myCodeTemplatesList);
+    }
 
     final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
     ContainerUtil.addAll(factories, ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class));
@@ -422,7 +425,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     
     myTemplatesList.init(ArrayUtil.mergeArrays(internalTemplates, templateManager.getAllTemplates()));
     myIncludesList.init(templateManager.getAllPatterns());
-    myCodeTemplatesList.init(templateManager.getAllCodeTemplates());
+    if (myCodeTemplatesList != null) {
+      myCodeTemplatesList.init(templateManager.getAllCodeTemplates());
+    }
     if (myJ2eeTemplatesList != null) {
       myJ2eeTemplatesList.init(templateManager.getAllJ2eeTemplates());
     }
@@ -518,7 +523,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     templatesManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, templates);
     templatesManager.setTemplates(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, internalTemplates);
     templatesManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, Arrays.asList(myIncludesList.getTemplates()));
-    templatesManager.setTemplates(FileTemplateManager.CODE_TEMPLATES_CATEGORY, Arrays.asList(myCodeTemplatesList.getTemplates()));
+    if (myCodeTemplatesList != null) {
+      templatesManager.setTemplates(FileTemplateManager.CODE_TEMPLATES_CATEGORY, Arrays.asList(myCodeTemplatesList.getTemplates()));
+    }
     if (myJ2eeTemplatesList != null) {
       templatesManager.setTemplates(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, Arrays.asList(myJ2eeTemplatesList.getTemplates()));
     }
