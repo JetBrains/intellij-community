@@ -265,7 +265,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     }
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
-      return selectedElements.toArray(new Navigatable[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[selectedElements.size()]);
     }
 
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
