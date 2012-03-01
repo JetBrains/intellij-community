@@ -33,6 +33,8 @@ import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import org.jetbrains.android.dom.animation.AndroidAnimationUtils;
 import org.jetbrains.android.dom.animation.AnimationElement;
+import org.jetbrains.android.dom.animator.AndroidAnimatorUtil;
+import org.jetbrains.android.dom.animator.AnimatorElement;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
@@ -359,6 +361,24 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     }
   }
 
+  public static void registerExtensionsForAnimator(final AndroidFacet facet,
+                                                    String tagName,
+                                                    AnimatorElement element,
+                                                    DomExtensionsRegistrar registrar,
+                                                    Set<String> registeredSubtags) {
+    if (tagName.equals("set")) {
+      for (String subtagName : AndroidAnimatorUtil.getPossibleChildren()) {
+        registerSubtags(subtagName, AnimatorElement.class, registrar, registeredSubtags);
+      }
+    }
+    registerAttributes(facet, element, "Animator", SYSTEM_RESOURCE_PACKAGE, registrar);
+    final String styleableName = AndroidAnimatorUtil.getStyleableNameByTagName(tagName);
+
+    if (styleableName != null) {
+      registerAttributes(facet, element, styleableName, SYSTEM_RESOURCE_PACKAGE, registrar);
+    }
+  }
+
   public static Map<String, PsiClass> getViewClassMap(@NotNull AndroidFacet facet) {
     return facet.getClassMap(AndroidUtils.VIEW_CLASS_NAME, SimpleClassMapConstructor.getInstance());
   }
@@ -530,6 +550,9 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     }
     else if (element instanceof AnimationElement) {
       registerExtensionsForAnimation(facet, tagName, (AnimationElement)element, registrar, registeredSubtags);
+    }
+    else if (element instanceof AnimatorElement) {
+      registerExtensionsForAnimator(facet, tagName, (AnimatorElement)element, registrar, registeredSubtags);
     }
     else if (element instanceof MenuElement) {
       String styleableName = StringUtil.capitalize(tagName);

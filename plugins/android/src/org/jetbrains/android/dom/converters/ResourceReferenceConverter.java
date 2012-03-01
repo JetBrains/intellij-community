@@ -55,8 +55,10 @@ import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
  * @author yole
  */
 public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue> implements CustomReferenceConverter<ResourceValue> {
-  private static final Set<ResourceType> XML_FILE_RESOURCE_TYPES =
-    EnumSet.of(ResourceType.ANIM, ResourceType.LAYOUT, ResourceType.MENU, ResourceType.XML, ResourceType.COLOR, ResourceType.DRAWABLE);
+  private static final Set<ResourceType> XML_FILE_RESOURCE_TYPES = EnumSet.of(ResourceType.ANIM, ResourceType.ANIMATOR,
+                                                                              ResourceType.INTERPOLATOR, ResourceType.LAYOUT,
+                                                                              ResourceType.MENU, ResourceType.XML, ResourceType.COLOR,
+                                                                              ResourceType.DRAWABLE);
 
   private final List<String> myResourceTypes;
   private ResolvingConverter<String> myAdditionalConverter;
