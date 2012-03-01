@@ -33,7 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.android.dom.AdditionalConverter;
-import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.AndroidResourceType;
 import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -196,7 +196,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
 
   @NotNull
   public Set<String> getResourceTypes(@NotNull DomElement element) {
-    ResourceType resourceType = element.getAnnotation(ResourceType.class);
+    AndroidResourceType resourceType = element.getAnnotation(AndroidResourceType.class);
     Set<String> types = new HashSet<String>(myResourceTypes);
     if (resourceType != null) {
       String s = resourceType.value();

@@ -19,7 +19,7 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DefinesXml;
 import com.intellij.util.xml.Required;
 import org.jetbrains.android.dom.AndroidAttributeValue;
-import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.AndroidResourceType;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
 import org.jetbrains.android.dom.resources.ResourceValue;
 
@@ -30,6 +30,6 @@ import org.jetbrains.android.dom.resources.ResourceValue;
 public interface InsetOrClipOrScale extends DrawableDomElement {
   @Convert(ResourceReferenceConverter.class)
   @Required
-  @ResourceType("drawable")
+  @AndroidResourceType("drawable")
   AndroidAttributeValue<ResourceValue> getDrawable();
 }

@@ -25,6 +25,6 @@ import java.lang.annotation.ElementType;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
-public @interface ResourceType {
+public @interface AndroidResourceType {
     String value();
 }
