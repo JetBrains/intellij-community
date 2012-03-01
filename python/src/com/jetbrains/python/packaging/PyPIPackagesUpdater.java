@@ -37,13 +37,14 @@ public class PyPIPackagesUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    if (checkNeeded(project)) {
+    final PyPackageService service = PyPackageService.getInstance(project);
+    if (checkNeeded(project, service)) {
       application.executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
           try {
             PyPIPackageUtil.INSTANCE.updatePyPICache(project);
-            PyPackageService.getInstance(project).LAST_TIME_CHECKED = System.currentTimeMillis();
+            service.LAST_TIME_CHECKED = System.currentTimeMillis();
           }
           catch (IOException e) {
             LOG.warn(e.getMessage());
@@ -54,7 +55,7 @@ public class PyPIPackagesUpdater implements StartupActivity {
   }
 
 
-  public static boolean checkNeeded(Project project) {
+  public static boolean checkNeeded(Project project, PyPackageService service) {
     boolean hasPython = false;
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -64,7 +65,7 @@ public class PyPIPackagesUpdater implements StartupActivity {
       }
     }
     if (!hasPython) return false;
-    final long timeDelta = System.currentTimeMillis() - PyPackageService.getInstance(project).LAST_TIME_CHECKED;
+    final long timeDelta = System.currentTimeMillis() - service.LAST_TIME_CHECKED;
     if (Math.abs(timeDelta) < DateFormatUtil.DAY) return false;
     return true;
   }
