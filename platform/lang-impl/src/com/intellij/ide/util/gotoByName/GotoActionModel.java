@@ -18,6 +18,9 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -26,7 +29,9 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -37,12 +42,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
+public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, Comparator<Object> {
+  private static final String SETTINGS_KEY = "$$$SETTINGS$$$";
   @Nullable private final Project myProject;
   private final Component myContextComponent;
 
@@ -56,6 +59,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   private final PatternMatcher myMatcher = new Perl5Matcher();
   
   private Map<AnAction, String> myActionsMap = new HashMap<AnAction, String>();
+  private final SearchableOptionsRegistrar myIndex;
 
 
   public GotoActionModel(@Nullable Project project, final Component component) {
@@ -63,6 +67,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     myContextComponent = component;
     final ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     collectActions(myActionsMap, mainMenu, mainMenu.getTemplatePresentation().getText());
+    myIndex = SearchableOptionsRegistrar.getInstance();
   }
 
   public String getPromptText() {
@@ -139,6 +144,22 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
             groupLabel.setForeground(fg);
             panel.add(groupLabel, BorderLayout.EAST);
           }
+        } else if (value instanceof OptionDescription) {
+          String hit = ((OptionDescription)value).getHit();
+          if (hit == null) {
+            hit = ((OptionDescription)value).getOption();
+          }
+          if (hit.length() > 30) {
+            hit = hit.substring(0, 30) + "...";
+          }
+          final JBLabel label = new JBLabel(hit.trim());
+          label.setIcon(EMPTY_ICON);
+          panel.add(label, BorderLayout.WEST);
+          panel.add(new JBLabel("Settings"), BorderLayout.EAST);
+        } else if (value instanceof String) {
+          final JBLabel label = new JBLabel((String)value);
+          label.setIcon(EMPTY_ICON);
+          panel.add(label, BorderLayout.WEST);
         }
         return panel;
       }
@@ -166,6 +187,18 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     actionLabel.setBackground(bg);
     actionLabel.setForeground(fg);
     return actionLabel;
+  }
+
+  @Override
+  public int compare(Object o1, Object o2) {
+    if (o1 instanceof Map.Entry && !(o2 instanceof Map.Entry)) {
+      return -1;
+    }
+    if (o2 instanceof Map.Entry && !(o1 instanceof Map.Entry)) {
+      return 1;
+    }
+
+    return StringUtil.compare(getFullName(o1), getFullName(o2), true);
   }
 
   protected static AnActionEvent updateActionBeforeShow(AnAction anAction, DataContext dataContext) {
@@ -200,26 +233,64 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
         }
       }
     }
+    result.add(SETTINGS_KEY);
     return ArrayUtil.toStringArray(result);
   }
 
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
     final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
     final AnAction act = myActionManager.getAction(id);
-    map.put(act, myActionsMap.get(act));
-    if (checkBoxState) {
-      final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-      for (AnAction action : map.keySet()) { //do not add already included actions
-        ids.remove(getActionId(action));
-      }
-      if (ids.contains(id)) {
-        final AnAction anAction = myActionManager.getAction(id);
-        if (!(anAction instanceof ActionGroup)) {
-          map.put(anAction, null);
+    if (act != null) {
+      map.put(act, myActionsMap.get(act));
+      if (checkBoxState) {
+        final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
+        for (AnAction action : map.keySet()) { //do not add already included actions
+          ids.remove(getActionId(action));
+        }
+        if (ids.contains(id)) {
+          final AnAction anAction = myActionManager.getAction(id);
+          if (!(anAction instanceof ActionGroup)) {
+            map.put(anAction, null);
+          }
         }
       }
     }
-    return map.entrySet().toArray(new Map.Entry[map.size()]);
+    Object[] objects = map.entrySet().toArray(new Map.Entry[map.size()]);
+    if (Comparing.strEqual(id, SETTINGS_KEY)) {
+      final Set<String> words = myIndex.getProcessedWords(pattern);
+      Set<OptionDescription> optionDescriptions = null;
+      for (String word : words) {
+        final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)myIndex).getAcceptableDescriptions(word);
+        if (descriptions != null) {
+          for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
+            OptionDescription description = iterator.next();
+            if (description.getConfigurableId().equals("preferences.keymap")) {
+              iterator.remove();
+            }
+          }
+          if (!descriptions.isEmpty()) {
+            if (optionDescriptions == null) {
+              optionDescriptions = descriptions;
+            } else {
+              optionDescriptions.retainAll(descriptions);
+            }
+          }
+        }
+      }
+      if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
+        Set<String> currentHits = new HashSet<String>();
+        for (Iterator<OptionDescription> iterator = optionDescriptions.iterator(); iterator.hasNext(); ) {
+          OptionDescription description = iterator.next();
+          final String hit = description.getHit();
+          if (hit == null || !currentHits.add(hit.trim())) {
+            iterator.remove();
+          }
+        }
+        final Object[] descriptions = optionDescriptions.toArray();
+        objects = ArrayUtil.mergeArrays(objects, descriptions);
+      }
+    }
+    return objects;
   }
 
   private static void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName){
@@ -253,27 +324,33 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
   }
 
   public String getElementName(final Object element) {
+    if (element instanceof OptionDescription) return ((OptionDescription)element).getHit();
     if (!(element instanceof Map.Entry)) return null;
     return ((AnAction)((Map.Entry)element).getKey()).getTemplatePresentation().getText();
   }
 
   public boolean matches(@NotNull final String name, @NotNull final String pattern) {
     final AnAction anAction = myActionManager.getAction(name);
-    if (!(anAction instanceof ActionGroup)) {
-      final Presentation presentation = anAction.getTemplatePresentation();
-      final String text = presentation.getText();
-      final String description = presentation.getDescription();
-      final Pattern compiledPattern = getPattern(pattern);
-      if ((text != null && myMatcher.matches(text, compiledPattern)) ||
-          (description != null && myMatcher.matches(description, compiledPattern))) {
-        return true;
+    final Pattern compiledPattern = getPattern(pattern);
+    if (anAction != null) {
+      if (!(anAction instanceof ActionGroup)) {
+        final Presentation presentation = anAction.getTemplatePresentation();
+        final String text = presentation.getText();
+        final String description = presentation.getDescription();
+        if ((text != null && myMatcher.matches(text, compiledPattern)) ||
+            (description != null && myMatcher.matches(description, compiledPattern))) {
+          return true;
+        }
+        final String groupName = myActionsMap.get(anAction);
+        if (groupName != null && text != null && myMatcher.matches(groupName + " " + text, compiledPattern)) {
+          return true;
+        }
       }
-      final String groupName = myActionsMap.get(anAction);
-      if (groupName != null && text != null && myMatcher.matches(groupName + " " + text, compiledPattern)) {
-        return true;
-      }
+      return false;
     }
-    return false;
+    else {
+      return true;
+    }
   }
 
   protected Project getProject() {
