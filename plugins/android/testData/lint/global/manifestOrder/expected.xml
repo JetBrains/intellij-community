@@ -3,6 +3,6 @@
   <problem>
     <file>AndroidManifest.xml</file>
     <line>9</line>
-    <description>&lt;uses-sdk&gt; tag appears after &lt;application&gt; tag</description>
+    <description>{uses-sdk} tag appears after {application} tag</description>
   </problem>
 </problems>

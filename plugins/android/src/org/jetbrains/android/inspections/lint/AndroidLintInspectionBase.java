@@ -138,7 +138,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
 
     for (ProblemData problemData : problems) {
-      final String message = problemData.getMessage();
+      final String message = problemData.getMessage().replace('<', '{').replace('>', '}');
       final TextRange range = problemData.getTextRange();
 
       if (range.getStartOffset() == range.getEndOffset()) {
