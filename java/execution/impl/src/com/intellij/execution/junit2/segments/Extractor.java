@@ -20,8 +20,9 @@ import com.intellij.execution.junit2.SegmentedInputStream;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 
-import javax.swing.*;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
@@ -34,6 +35,7 @@ public class Extractor {
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
+  private MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT);
 
   public Extractor(final InputStream stream, final Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
@@ -46,7 +48,8 @@ public class Extractor {
   public void setPacketDispatcher(final PacketProcessor packetProcessor, final DeferredActionsQueue queue) {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
       public void addLast(final Runnable runnable) {
-        SwingUtilities.invokeLater(new Runnable() {
+        myQueue.queue(new Update(runnable) {
+          @Override
           public void run() {
             queue.addLast(runnable);
           }
