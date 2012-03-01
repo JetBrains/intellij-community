@@ -41,8 +41,8 @@ public class ExecutionErrorDialog {
       throw new RuntimeException(e.getLocalizedMessage());
     }
     final String message = e.getMessage();
-    if (message.length() < 100) {
-      Messages.showErrorDialog(project, message, title);
+    if (message == null || message.length() < 100) {
+      Messages.showErrorDialog(project, message == null ? "exception was thrown" : message, title);
       return;
     }
     final DialogBuilder builder = new DialogBuilder(project);
