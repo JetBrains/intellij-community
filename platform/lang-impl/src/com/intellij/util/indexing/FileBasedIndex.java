@@ -99,7 +99,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Set<FileType> myNoLimitCheckTypes = new THashSet<FileType>();
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
-  private final ChangedFilesCollector myChangedFilesCollector;
+  @NotNull private final ChangedFilesCollector myChangedFilesCollector;
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
   private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new THashMap<IndexableFileSet, Project>();
@@ -119,15 +119,15 @@ public class FileBasedIndex implements ApplicationComponent {
   @Nullable private final String myConfigPath;
   @Nullable private final String mySystemPath;
   private final boolean myIsUnitTestMode;
-  private ScheduledFuture<?> myFlushingFuture;
+  @Nullable private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
   private volatile int myFilesModCount;
 
-  public void requestReindex(final VirtualFile file) {
+  public void requestReindex(@NotNull final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, true);
   }
 
-  public void requestReindexExcluded(final VirtualFile file) {
+  public void requestReindexExcluded(@NotNull final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, false);
   }
 
@@ -136,7 +136,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm,
-                        FileTypeManager fileTypeManager, MessageBus bus, SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
+                        FileTypeManager fileTypeManager, @NotNull MessageBus bus, SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
     myFileTypeManager = fileTypeManager;
@@ -165,7 +165,7 @@ public class FileBasedIndex implements ApplicationComponent {
     });
 
     connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
-      private Map<FileType, Set<String>> myTypeToExtensionMap;
+      @Nullable private Map<FileType, Set<String>> myTypeToExtensionMap;
       @Override
       public void beforeFileTypesChanged(final FileTypeEvent event) {
         cleanupProcessedFlag();
@@ -201,7 +201,8 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
 
-      private Set<String> getExtensions(FileType type) {
+      @NotNull
+      private Set<String> getExtensions(@NotNull FileType type) {
         final Set<String> set = new THashSet<String>();
         for (FileNameMatcher matcher : myFileTypeManager.getAssociations(type)) {
           set.add(matcher.getPresentableString());
@@ -224,7 +225,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void before(List<? extends VFileEvent> events) {
+      public void before(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
           final Object requestor = event.getRequestor();
           if (requestor instanceof FileDocumentManager || requestor instanceof PsiManager || requestor == LocalHistory.VFS_EVENT_REQUESTOR) {
@@ -235,7 +236,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       @Override
-      public void after(List<? extends VFileEvent> events) {
+      public void after(@NotNull List<? extends VFileEvent> events) {
       }
     });
 
@@ -342,6 +343,7 @@ public class FileBasedIndex implements ApplicationComponent {
   public void initComponent() {
   }
 
+  @Nullable
   private static String calcConfigPath(final String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
@@ -367,7 +369,7 @@ public class FileBasedIndex implements ApplicationComponent {
    * @param extension
    * @param isCurrentVersionCorrupted
    */
-  private <K, V> boolean registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
+  private <K, V> boolean registerIndexer(@NotNull final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
     final ID<K, V> name = extension.getName();
     final int version = extension.getVersion();
     final File versionFile = IndexInfrastructure.getVersionFile(name);
@@ -376,7 +378,7 @@ public class FileBasedIndex implements ApplicationComponent {
     if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
       if (!isCurrentVersionCorrupted && versionFileExisted) {
         versionChanged = true;
-        LOG.info("Version has changed for index " + extension.getName() + ". The index will be rebuilt.");
+        LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
       }
       FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
       IndexInfrastructure.rewriteVersion(versionFile, version);
@@ -412,7 +414,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return versionChanged;
   }
 
-  private static void saveRegisteredIndices(Collection<ID<?, ?>> ids) {
+  private static void saveRegisteredIndices(@NotNull Collection<ID<?, ?>> ids) {
     final File file = getRegisteredIndicesFile();
     try {
       FileUtil.createIfDoesntExist(file);
@@ -431,6 +433,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
+  @NotNull
   private static Set<String> readRegisteredIndexNames() {
     final Set<String> result = new THashSet<String>();
     try {
@@ -450,11 +453,13 @@ public class FileBasedIndex implements ApplicationComponent {
     return result;
   }
 
+  @NotNull
   private static File getRegisteredIndicesFile() {
     return new File(PathManager.getIndexRoot(), "registered");
   }
 
-  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final ID<K, V> indexId, final FileBasedIndexExtension<K, V> extension, final MemoryIndexStorage<K, V> storage) throws IOException {
+  @NotNull
+  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final ID<K, V> indexId, @NotNull final FileBasedIndexExtension<K, V> extension, @NotNull final MemoryIndexStorage<K, V> storage) throws IOException {
     final MapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
       final UpdatableIndex<K, V, FileContent> custom = ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(indexId, this, storage);
@@ -486,16 +491,17 @@ public class FileBasedIndex implements ApplicationComponent {
     return index;
   }
 
-  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(final ID<K, ?> indexId,
-                                                                                       final KeyDescriptor<K> keyDescriptor,
-                                                                                       MemoryIndexStorage<K, ?> storage) throws IOException {
+  @NotNull
+  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull final ID<K, ?> indexId,
+                                                                                       @NotNull final KeyDescriptor<K> keyDescriptor,
+                                                                                       @NotNull MemoryIndexStorage<K, ?> storage) throws IOException {
     final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
     final Ref<Boolean> isBufferingMode = new Ref<Boolean>(false);
     final TIntObjectHashMap<Collection<K>> tempMap = new TIntObjectHashMap<Collection<K>>();
 
     final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
       @Override
-      public void save(DataOutput out, Collection<K> value) throws IOException {
+      public void save(DataOutput out, @NotNull Collection<K> value) throws IOException {
         try {
           DataInputOutputUtil.writeINT(out, value.size());
           for (K key : value) {
@@ -507,6 +513,7 @@ public class FileBasedIndex implements ApplicationComponent {
         }
       }
 
+      @NotNull
       @Override
       public Collection<K> read(DataInput in) throws IOException {
         try {
@@ -545,7 +552,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
 
       @Override
-      protected void doPut(Integer integer, Collection<K> ks) throws IOException {
+      protected void doPut(Integer integer, @Nullable Collection<K> ks) throws IOException {
         if (isBufferingMode.get()) {
           tempMap.put(integer, ks == null? Collections.<K>emptySet() : ks);
         }
@@ -664,7 +671,7 @@ public class FileBasedIndex implements ApplicationComponent {
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
   @NotNull
-  public <K> Collection<K> getAllKeys(final ID<K, ?> indexId, @NotNull Project project) {
+  public <K> Collection<K> getAllKeys(@NotNull final ID<K, ?> indexId, @NotNull Project project) {
     Set<K> allKeys = new THashSet<K>();
     processAllKeys(indexId, new CommonProcessors.CollectProcessor<K>(allKeys), project);
     return allKeys;
@@ -674,7 +681,7 @@ public class FileBasedIndex implements ApplicationComponent {
    * @param project it is guaranteed to return data which is up-to-date withing the project
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
    */
-  public <K> boolean processAllKeys(final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
+  public <K> boolean processAllKeys(@NotNull final ID<K, ?> indexId, Processor<K> processor, @Nullable Project project) {
     try {
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
       if (index == null) {
@@ -736,11 +743,11 @@ public class FileBasedIndex implements ApplicationComponent {
    * DO NOT CALL DIRECTLY IN CLIENT CODE
    * The method is internal to indexing engine end is called internally. The method is public due to implementation details
    */
-  public <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
+  public <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter) {
     ensureUpToDate(indexId, project, filter, null);
   }
 
-  private <K> void ensureUpToDate(final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter,
+  private <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter,
                                  @Nullable VirtualFile restrictedFile) {
     if (!needsFileContentLoading(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
@@ -813,7 +820,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @NotNull
-  public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
+  public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
     final List<V> values = new SmartList<V>();
     processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
       @Override
@@ -826,7 +833,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @NotNull
-  public <K, V> Collection<VirtualFile> getContainingFiles(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
+  public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
     final Set<VirtualFile> files = new THashSet<VirtualFile>();
     processValuesImpl(indexId, dataKey, false, null, new ValueProcessor<V>() {
       @Override
@@ -851,18 +858,19 @@ public class FileBasedIndex implements ApplicationComponent {
   /**
    * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all 
    */
-  public <K, V> boolean processValues(final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
-                                   ValueProcessor<V> processor, @NotNull final GlobalSearchScope filter) {
+  public <K, V> boolean processValues(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
+                                   @NotNull ValueProcessor<V> processor, @NotNull final GlobalSearchScope filter) {
     return processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
   }
 
 
  
   
-  private <K, V, R> R processExceptions(final ID<K, V> indexId,
+  @Nullable
+  private <K, V, R> R processExceptions(@NotNull final ID<K, V> indexId,
                                         @Nullable final VirtualFile restrictToFile,
-                                        final GlobalSearchScope filter,
-                                        ThrowableConvertor<UpdatableIndex<K, V, FileContent>, R, StorageException> computable) {
+                                        @NotNull final GlobalSearchScope filter,
+                                        @NotNull ThrowableConvertor<UpdatableIndex<K, V, FileContent>, R, StorageException> computable) {
     try {
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
@@ -895,12 +903,12 @@ public class FileBasedIndex implements ApplicationComponent {
     return null;
   }
 
-  private <K, V> boolean processValuesImpl(final ID<K, V> indexId, final K dataKey, final boolean ensureValueProcessedOnce,
-                                           @Nullable final VirtualFile restrictToFile, final ValueProcessor<V> processor,
-                                           final GlobalSearchScope filter) {
+  private <K, V> boolean processValuesImpl(@NotNull final ID<K, V> indexId, final K dataKey, final boolean ensureValueProcessedOnce,
+                                           @Nullable final VirtualFile restrictToFile, @NotNull final ValueProcessor<V> processor,
+                                           @NotNull final GlobalSearchScope filter) {
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException> keyProcessor = new ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException>() {
       @Override
-      public Boolean convert(UpdatableIndex<K, V, FileContent> index) throws StorageException {
+      public Boolean convert(@NotNull UpdatableIndex<K, V, FileContent> index) throws StorageException {
         final ValueContainer<V> container = index.getData(dataKey);
 
         boolean shouldContinue = true;
@@ -947,17 +955,14 @@ public class FileBasedIndex implements ApplicationComponent {
     return result == null || result.booleanValue();
   }
 
-  public <K, V> boolean processFilesContainingAllKeys(final ID<K, V> indexId,
-                                                      final Collection<K> dataKeys,
-                                                      final GlobalSearchScope filter,
+  public <K, V> boolean processFilesContainingAllKeys(@NotNull final ID<K, V> indexId,
+                                                      @NotNull final Collection<K> dataKeys,
+                                                      @NotNull final GlobalSearchScope filter,
                                                       @Nullable Condition<V> valueChecker,
-                                                      final Processor<VirtualFile> processor) {
+                                                      @NotNull final Processor<VirtualFile> processor) {
     ProjectIndexableFilesFilter filesSet = projectIndexableFiles(filter.getProject());
     final TIntHashSet set = collectFileIdsContainingAllKeys(indexId, dataKeys, filter, valueChecker, filesSet);
-    if (set == null) {
-      return false;
-    }
-    return processVirtualFiles(set, filter, processor);
+    return set != null && processVirtualFiles(set, filter, processor);
   }
 
   private static final Key<SoftReference<ProjectIndexableFilesFilter>> ourProjectFilesSetKey = Key.create("projectFiles");
@@ -966,7 +971,7 @@ public class FileBasedIndex implements ApplicationComponent {
     private static final int MAGIC = 0x278DDE6D;
     private final int myModificationCount;
 
-    private ProjectIndexableFilesFilter(TIntHashSet set, int modificationCount) {
+    private ProjectIndexableFilesFilter(@NotNull TIntHashSet set, int modificationCount) {
       super(set.size(), 0.005d);
       myModificationCount = modificationCount;
       set.forEach(new TIntProcedure() {
@@ -983,7 +988,8 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  public @Nullable ProjectIndexableFilesFilter projectIndexableFiles(Project project) {
+  @Nullable
+  public ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project) {
     if (project == null) return null;
 
     SoftReference<ProjectIndexableFilesFilter> reference = project.getUserData(ourProjectFilesSetKey);
@@ -993,7 +999,7 @@ public class FileBasedIndex implements ApplicationComponent {
     final TIntHashSet filesSet = new TIntHashSet();
     iterateIndexableFiles(new ContentIterator() {
       @Override
-      public boolean processFile(VirtualFile fileOrDir) {
+      public boolean processFile(@NotNull VirtualFile fileOrDir) {
         filesSet.add(((VirtualFileWithId)fileOrDir).getId());
         return true;
       }
@@ -1004,17 +1010,16 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   @Nullable 
-  private <K, V> TIntHashSet collectFileIdsContainingAllKeys(final ID<K, V> indexId,
-                                                            final Collection<K> dataKeys,
-                                                            final GlobalSearchScope filter,
-                                                            @Nullable final Condition<V> valueChecker,
-                                                            @Nullable final ProjectIndexableFilesFilter projectFilesFilter
-                                                            ) {
+  private <K, V> TIntHashSet collectFileIdsContainingAllKeys(@NotNull final ID<K, V> indexId,
+                                                             @NotNull final Collection<K> dataKeys,
+                                                             @NotNull final GlobalSearchScope filter,
+                                                             @Nullable final Condition<V> valueChecker,
+                                                             @Nullable final ProjectIndexableFilesFilter projectFilesFilter) {
     final ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException> convertor =
       new ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException>() {
         @Nullable
         @Override
-        public TIntHashSet convert(UpdatableIndex<K, V, FileContent> index) throws StorageException {
+        public TIntHashSet convert(@NotNull UpdatableIndex<K, V, FileContent> index) throws StorageException {
           TIntHashSet mainIntersection = null;
 
           for (K dataKey : dataKeys) {
@@ -1065,7 +1070,9 @@ public class FileBasedIndex implements ApplicationComponent {
     return processExceptions(indexId, null, filter, convertor);
   }
 
-  private static boolean processVirtualFiles(TIntHashSet ids, final GlobalSearchScope filter, final Processor<VirtualFile> processor) {
+  private static boolean processVirtualFiles(@NotNull TIntHashSet ids,
+                                             @NotNull final GlobalSearchScope filter,
+                                             @NotNull final Processor<VirtualFile> processor) {
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     return ids.forEach(new TIntProcedure() {
       @Override
@@ -1080,14 +1087,18 @@ public class FileBasedIndex implements ApplicationComponent {
     });
   }
 
-  public static @Nullable Throwable getCauseToRebuildIndex(RuntimeException e) {
+  @Nullable
+  public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
     Throwable cause = e.getCause();
     if (cause instanceof StorageException || cause instanceof IOException ||
         cause instanceof IllegalArgumentException) return cause;
     return null;
   }
 
-  public <K, V> boolean getFilesWithKey(final ID<K, V> indexId, final Set<K> dataKeys, Processor<VirtualFile> processor, GlobalSearchScope filter) {
+  public <K, V> boolean getFilesWithKey(@NotNull final ID<K, V> indexId,
+                                        @NotNull final Set<K> dataKeys,
+                                        @NotNull Processor<VirtualFile> processor,
+                                        @NotNull GlobalSearchScope filter) {
     try {
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
@@ -1159,7 +1170,8 @@ public class FileBasedIndex implements ApplicationComponent {
     return true;
   }
 
-  private static TIntHashSet join(List<TIntHashSet> locals) {
+  @NotNull
+  private static TIntHashSet join(@NotNull List<TIntHashSet> locals) {
     TIntHashSet result = locals.get(0);
     if (locals.size() > 1) {
       TIntIterator it = result.iterator();
@@ -1177,7 +1189,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return result;
   }
 
-  public <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
+  public <K> void scheduleRebuild(@NotNull final ID<K, ?> indexId, @NotNull final Throwable e) {
     LOG.info(e);
     requestRebuild(indexId);
     try {
@@ -1187,7 +1199,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
+  private void checkRebuild(@NotNull final ID<?, ?> indexId, final boolean cleanupOnly) {
     final AtomicInteger status = ourRebuildStatus.get(indexId);
     if (status.get() == OK) return;
     if (status.compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
@@ -1249,7 +1261,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void clearIndex(final ID<?, ?> indexId) throws StorageException {
+  private void clearIndex(@NotNull final ID<?, ?> indexId) throws StorageException {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null: "Index with key " + indexId + " not found or not registered properly";
     index.clear();
@@ -1261,6 +1273,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
+  @NotNull
   private Set<Document> getUnsavedOrTransactedDocuments() {
     final Set<Document> docs = new THashSet<Document>(Arrays.asList(myFileDocumentManager.getUnsavedDocuments()));
     synchronized (myTransactionMap) {
@@ -1269,7 +1282,9 @@ public class FileBasedIndex implements ApplicationComponent {
     return docs;
   }
 
-  private void indexUnsavedDocuments(ID<?, ?> indexId, @Nullable Project project, GlobalSearchScope filter,
+  private void indexUnsavedDocuments(@NotNull ID<?, ?> indexId,
+                                     @Nullable Project project,
+                                     GlobalSearchScope filter,
                                      VirtualFile restrictedFile) throws StorageException {
     if (myUpToDateIndices.contains(indexId)) {
       return; // no need to index unsaved docs
@@ -1366,7 +1381,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
 // returns false if doc was not indexed because the file does not fit in scope
   private boolean indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project, 
-                                       GlobalSearchScope filter, VirtualFile restrictedFile) throws StorageException {
+                                       @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedFile) throws StorageException {
     final VirtualFile vFile = myFileDocumentManager.getFile(document);
     if (!(vFile instanceof VirtualFileWithId) || !vFile.isValid()) {
       return true;
@@ -1451,6 +1466,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private final StorageGuard myStorageLock = new StorageGuard();
 
+  @NotNull
   private StorageGuard.Holder setDataBufferingEnabled(final boolean enabled) {
     final StorageGuard.Holder holder = myStorageLock.enter(enabled);
     for (ID<?, ?> indexId : myIndices.keySet()) {
@@ -1520,6 +1536,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return myChangedFilesCollector.getNumberOfPendingInvalidations();
   }
 
+  @NotNull
   public Collection<VirtualFile> getFilesToUpdate(final Project project) {
     return ContainerUtil.findAll(myChangedFilesCollector.getAllFilesToUpdate(), new Condition<VirtualFile>() {
       @Override
@@ -1538,12 +1555,12 @@ public class FileBasedIndex implements ApplicationComponent {
     });
   }
 
-  public void processRefreshedFile(@NotNull Project project, final com.intellij.ide.caches.FileContent fileContent) {
+  public void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     myChangedFilesCollector.processFileImpl(project, fileContent, false);
   }
 
-  public void indexFileContent(@Nullable Project project, com.intellij.ide.caches.FileContent content) {
+  public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
     final VirtualFile file = content.getVirtualFile();
     FileContentImpl fc = null;
@@ -1593,7 +1610,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC)
+  private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable final FileContent currentFC)
     throws StorageException {
     if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
@@ -1644,7 +1661,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  public static int getFileId(final VirtualFile file) {
+  public static int getFileId(@NotNull final VirtualFile file) {
     if (file instanceof VirtualFileWithId) {
       return ((VirtualFileWithId)file).getId();
     }
@@ -1676,37 +1693,37 @@ public class FileBasedIndex implements ApplicationComponent {
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     @Override
-    public void fileCreated(final VirtualFileEvent event) {
+    public void fileCreated(@NotNull final VirtualFileEvent event) {
       markDirty(event, false);
     }
 
     @Override
-    public void fileDeleted(final VirtualFileEvent event) {
+    public void fileDeleted(@NotNull final VirtualFileEvent event) {
       myFilesToUpdate.remove(event.getFile()); // no need to update it anymore
     }
 
     @Override
-    public void fileCopied(final VirtualFileCopyEvent event) {
+    public void fileCopied(@NotNull final VirtualFileCopyEvent event) {
       markDirty(event, false);
     }
 
     @Override
-    public void beforeFileDeletion(final VirtualFileEvent event) {
+    public void beforeFileDeletion(@NotNull final VirtualFileEvent event) {
       invalidateIndices(event.getFile(), false);
     }
 
     @Override
-    public void beforeContentsChange(final VirtualFileEvent event) {
+    public void beforeContentsChange(@NotNull final VirtualFileEvent event) {
       invalidateIndices(event.getFile(), true);
     }
 
     @Override
-    public void contentsChanged(final VirtualFileEvent event) {
+    public void contentsChanged(@NotNull final VirtualFileEvent event) {
       markDirty(event, true);
     }
 
     @Override
-    public void beforePropertyChange(final VirtualFilePropertyEvent event) {
+    public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
         // indexes may depend on file name
         final VirtualFile file = event.getFile();
@@ -1719,7 +1736,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
 
     @Override
-    public void propertyChanged(final VirtualFilePropertyEvent event) {
+    public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
         // indexes may depend on file name
         if (!event.getFile().isDirectory()) {
@@ -1728,12 +1745,12 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
 
-    private void markDirty(final VirtualFileEvent event, final boolean contentChange) {
+    private void markDirty(@NotNull final VirtualFileEvent event, final boolean contentChange) {
       final VirtualFile eventFile = event.getFile();
       cleanProcessedFlag(eventFile);
       iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         @Override
-        public boolean process(final VirtualFile file) {
+        public boolean process(@NotNull final VirtualFile file) {
           if (!contentChange) ++myFilesModCount;
           FileContent fileContent = null;
           // handle 'content-less' indices separately
@@ -1771,7 +1788,7 @@ public class FileBasedIndex implements ApplicationComponent {
       myFilesToUpdate.add(file);
     }
 
-    void invalidateIndices(final VirtualFile file, final boolean markForReindex) {
+    void invalidateIndices(@NotNull final VirtualFile file, final boolean markForReindex) {
       if (isUnderConfigOrSystem(file)) {
         return;
       }
@@ -1850,7 +1867,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
 
-    private void removeFileDataFromIndices(Collection<ID<?, ?>> affectedIndices, VirtualFile file) {
+    private void removeFileDataFromIndices(@NotNull Collection<ID<?, ?>> affectedIndices, @NotNull VirtualFile file) {
       Throwable unexpectedError = null;
       for (ID<?, ?> indexId : affectedIndices) {
         try {
@@ -1900,11 +1917,11 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
 
-    private void iterateIndexableFiles(final VirtualFile file, final Processor<VirtualFile> processor) {
+    private void iterateIndexableFiles(@NotNull final VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
       if (file.isDirectory()) {
         final ContentIterator iterator = new ContentIterator() {
           @Override
-          public boolean processFile(final VirtualFile fileOrDir) {
+          public boolean processFile(@NotNull final VirtualFile fileOrDir) {
             if (!fileOrDir.isDirectory()) {
               processor.process(fileOrDir);
             }
@@ -1963,7 +1980,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     }
 
-    private void processFileImpl(Project project, final com.intellij.ide.caches.FileContent fileContent, boolean onlyRemoveOutdatedData) {
+    private void processFileImpl(Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent, boolean onlyRemoveOutdatedData) {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
@@ -1993,13 +2010,14 @@ public class FileBasedIndex implements ApplicationComponent {
       myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
     }
 
+    @NotNull
     @Override
     public List<VirtualFile> getFiles() {
       return myFiles;
     }
 
     @Override
-    public boolean processFile(final VirtualFile file) {
+    public boolean processFile(@NotNull final VirtualFile file) {
       if (!file.isValid()) {
         return true;
       }
@@ -2081,7 +2099,7 @@ public class FileBasedIndex implements ApplicationComponent {
            (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
-  private boolean isUnderConfigOrSystem(VirtualFile file) {
+  private boolean isUnderConfigOrSystem(@NotNull VirtualFile file) {
     final String filePath = file.getPath();
     return myConfigPath != null && FileUtil.startsWith(filePath, myConfigPath) ||
            mySystemPath != null && FileUtil.startsWith(filePath, mySystemPath);
@@ -2091,7 +2109,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return !(file instanceof NewVirtualFile);
   }
 
-  private boolean isTooLarge(VirtualFile file) {
+  private boolean isTooLarge(@NotNull VirtualFile file) {
     if (SingleRootFileViewProvider.isTooLarge(file)) {
       final FileType type = file.getFileType();
       return !myNoLimitCheckTypes.contains(type);
@@ -2099,7 +2117,7 @@ public class FileBasedIndex implements ApplicationComponent {
     return false;
   }
 
-  private boolean isTooLarge(VirtualFile file, long contentSize) {
+  private boolean isTooLarge(@NotNull VirtualFile file, long contentSize) {
     if (SingleRootFileViewProvider.isTooLarge(file, contentSize)) {
       final FileType type = file.getFileType();
       return !myNoLimitCheckTypes.contains(type);
@@ -2107,17 +2125,18 @@ public class FileBasedIndex implements ApplicationComponent {
     return false;
   }
 
+  @NotNull
   public CollectingContentIterator createContentIterator() {
     ++myFilesModCount;
     return new UnindexedFilesFinder();
   }
 
-  public void registerIndexableSet(IndexableFileSet set, @Nullable Project project) {
+  public void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
   }
 
-  public void removeIndexableSet(IndexableFileSet set) {
+  public void removeIndexableSet(@NotNull IndexableFileSet set) {
     myChangedFilesCollector.forceUpdate(null, null, null, true);
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
@@ -2148,7 +2167,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private static void cleanProcessedFlag(final VirtualFile file) {
+  private static void cleanProcessedFlag(@NotNull final VirtualFile file) {
     if (!(file instanceof NewVirtualFile)) return;
     
     final NewVirtualFile nvf = (NewVirtualFile)file;
@@ -2162,7 +2181,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  public static void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator) {
+  public static void iterateIndexableFiles(@NotNull final ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
     if (project.isDisposed()) {
       return;
     }
@@ -2220,7 +2239,7 @@ public class FileBasedIndex implements ApplicationComponent {
     }
   }
 
-  private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
+  private static void iterateRecursively(@Nullable final VirtualFile root, @NotNull final ContentIterator processor, @Nullable ProgressIndicator indicator) {
     if (root != null) {
       if (indicator != null) {
         indicator.checkCanceled();
@@ -2263,6 +2282,7 @@ public class FileBasedIndex implements ApplicationComponent {
       }
     };
 
+    @NotNull
     public synchronized Holder enter(boolean mode) {
       if (mode) {
         while (myHolds < 0) {
