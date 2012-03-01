@@ -772,6 +772,13 @@ public class StringUtil {
       return suggestion + "ren";
     }
 
+    if (suggestion.equals("this")) {
+      return "these";
+    }
+    if (suggestion.equals("This")) {
+      return "These";
+    }
+
     if (endsWithIgnoreCase(suggestion, "s") || endsWithIgnoreCase(suggestion, "x") || endsWithIgnoreCase(suggestion, "ch")) {
       return suggestion + "es";
     }

@@ -28,6 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 public class GroovyRunnerUtil {
   @Nullable
   public static PsiClass getRunningClass(PsiElement element) {
+    if (element == null) return null;
+
     final PsiFile file = element.getContainingFile();
 
     if (!(file instanceof GroovyFile)) return null;

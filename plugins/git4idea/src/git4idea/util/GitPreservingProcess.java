@@ -27,7 +27,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitUtil;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashChangesSaver;
@@ -148,7 +148,7 @@ public class GitPreservingProcess {
       return true;
     } catch (VcsException e) {
       LOG.info("Couldn't save local changes", e);
-      NotificationManager.getInstance(myProject).notifyError(
+      Notificator.getInstance(myProject).notifyError(
         "Couldn't save uncommitted changes.",
         String.format("Tried to save uncommitted changes in stash before %s, but failed with an error.<br/>%s",
                       myOperationTitle, join(e.getMessages())));
@@ -167,7 +167,7 @@ public class GitPreservingProcess {
       }
       catch (VcsException e) {
         LOG.info("Couldn't load local changes", e);
-        NotificationManager.getInstance(myProject).notifyError("Couldn't restore uncommitted changes",
+        Notificator.getInstance(myProject).notifyError("Couldn't restore uncommitted changes",
           String.format("Tried to unstash uncommitted changes, but failed with error.<br/>%s",join(e.getMessages())));
       }
     }

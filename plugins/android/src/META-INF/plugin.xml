@@ -47,6 +47,9 @@
     <action id="Android.ExportSignedPackage" class="org.jetbrains.android.actions.ExportSignedPackageAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
+    <action id="Android.ExportUnsignedPackage" class="org.jetbrains.android.actions.AndroidExportUnsignedPackageAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
     <action id="Android.RunAndroidAvdManager" class="org.jetbrains.android.actions.RunAndroidAvdManagerAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>

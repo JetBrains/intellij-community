@@ -44,7 +44,7 @@ public class Mappings {
     final DependencyContext.S file = myClassToSourceFile.get(it);
 
     if (file != null) {
-      myChangedFiles.add(it);
+      myChangedFiles.add(file);
     }
 
     myIsDifferentiated = true;
@@ -1006,9 +1006,11 @@ public class Mappings {
 
             }
             else {
-              propagated = u.propagateMethodAccess(m.name, it.name);
-              debug("Conservative case on overriding methods, affecting method usages");
-              u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
+              if (m.argumentTypes.length > 0) {
+                propagated = u.propagateMethodAccess(m.name, it.name);
+                debug("Conservative case on overriding methods, affecting method usages");
+                u.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), affectedUsages, dependants);
+              }
             }
           }
 
@@ -1529,7 +1531,6 @@ public class Mappings {
                       continue filewise;
                     }
                   }
-
                 }
               }
             }
@@ -1625,13 +1626,7 @@ public class Mappings {
             myClassToSourceFile.put(c, sourceFile);
           }
         }
-      }
-      else {
-        myClassToSubclasses.putAll(delta.myClassToSubclasses);
-        myClassToSourceFile.putAll(delta.myClassToSourceFile);
-      }
 
-      if (delta.isDifferentiated() && false) {
         for (DependencyContext.S f : delta.getChangedFiles()) {
           mySourceFileToClasses.remove(f);
           final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
@@ -1653,6 +1648,9 @@ public class Mappings {
         }
       }
       else {
+        myClassToSubclasses.putAll(delta.myClassToSubclasses);
+        myClassToSourceFile.putAll(delta.myClassToSourceFile);
+
         mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
         mySourceFileToUsages.replaceAll(delta.mySourceFileToUsages);
         mySourceFileToAnnotationUsages.replaceAll(delta.mySourceFileToAnnotationUsages);

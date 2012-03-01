@@ -21,7 +21,7 @@ import git4idea.repo.GitRepository;
 import git4idea.test.GitTestScenarioGenerator;
 import git4idea.test.GitTestUtil;
 import git4idea.test.TestMessageManager;
-import git4idea.test.TestNotificationManager;
+import git4idea.test.TestNotificator;
 import git4idea.tests.TestDialogHandler;
 import git4idea.tests.TestDialogManager;
 import git4idea.util.UntrackedFilesNotifier;
@@ -57,7 +57,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   private GitRepository myContrib;
 
   private TestMessageManager myMessageManager;
-  private TestNotificationManager myNotificationManager;
+  private TestNotificator myNotificationManager;
   private TestDialogManager myDialogManager;
   
   private TempDirTestFixture myTempDirFixture;
@@ -93,6 +93,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     myDialogManager = GitTestUtil.registerDialogManager(myProject);
     myNotificationManager = GitTestUtil.registerNotificationManager(myProject);
     myMessageManager = GitTestUtil.registerMessageManager(myProject);
+    GitTestUtil.registerPlatformFacade(myProject);
     
     createAddCommit(myUltimate, "a");
     createAddCommit(myCommunity, "a");
@@ -629,7 +630,11 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   }
 
   private void doMerge(String branch) throws InvocationTargetException, NoSuchMethodException, IllegalAccessException {
-    callPrivateBranchOperationsProcessorMethod("doMerge", branch);
+    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, myRepositories, myCommunity);
+    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod("doMerge", String.class, Boolean.TYPE, ProgressIndicator.class);
+    method.setAccessible(true);
+    method.invoke(processor, branch, true, new EmptyProgressIndicator());
+
     // sync refresh is needed, because the refresh inside GitMergeOperation is asynchronous.
     for (GitRepository repository : myRepositories) {
       repository.getRoot().refresh(false, true);

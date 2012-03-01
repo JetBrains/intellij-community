@@ -16,7 +16,6 @@
 package git4idea.branch;
 
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -49,17 +48,16 @@ import static git4idea.util.GitUIUtil.code;
  */
 class GitCheckoutOperation extends GitBranchOperation {
 
-  private static final Logger LOG = Logger.getInstance(GitCheckoutOperation.class);
   public static final String ROLLBACK_PROPOSAL_FORMAT = "You may rollback (checkout back to %s) not to let branches diverge.";
 
   @NotNull private final String myStartPointReference;
   @Nullable private final String myNewBranch;
   @NotNull private final String myPreviousBranch;
 
-  GitCheckoutOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
-                              @NotNull String startPointReference, @Nullable String newBranch, @NotNull String previousBranch, 
-                              @NotNull ProgressIndicator indicator) {
-    super(project, repositories, previousBranch, indicator);
+  GitCheckoutOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
+                       @NotNull String startPointReference, @Nullable String newBranch, @NotNull String previousBranch,
+                       @NotNull ProgressIndicator indicator) {
+    super(project, git, repositories, previousBranch, indicator);
     myStartPointReference = startPointReference;
     myNewBranch = newBranch;
     myPreviousBranch = previousBranch;
@@ -76,7 +74,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_CHECKOUT);
       GitMessageWithFilesDetector untrackedOverwrittenByCheckout = new GitMessageWithFilesDetector(UNTRACKED_FILES_OVERWRITTEN_BY, root);
 
-      GitCommandResult result = Git.checkout(repository, myStartPointReference, myNewBranch, false,
+      GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
                                              localChangesOverwrittenByCheckout, unmergedFiles, untrackedOverwrittenByCheckout);
       if (result.success()) {
         refresh(repository);
@@ -158,7 +156,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     GitCompoundResult checkoutResult = new GitCompoundResult(myProject);
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
-      GitCommandResult result = Git.checkout(repository, myPreviousBranch, null, true);
+      GitCommandResult result = myGit.checkout(repository, myPreviousBranch, null, true);
       checkoutResult.append(repository, result);
       if (result.success() && myNewBranch != null) {
         /*
@@ -166,7 +164,7 @@ class GitCheckoutOperation extends GitBranchOperation {
           e.g. being on master create newBranch from feature,
           then rollback => newBranch is not fully merged to master (although it is obviously fully merged to feature).
          */
-        deleteResult.append(repository, Git.branchDelete(repository, myNewBranch, true));
+        deleteResult.append(repository, myGit.branchDelete(repository, myNewBranch, true));
       }
       refresh(repository);
     }
@@ -220,7 +218,7 @@ class GitCheckoutOperation extends GitBranchOperation {
                                    @NotNull String reference, @Nullable String newBranch, boolean force) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     for (GitRepository repository : repositories) {
-      compoundResult.append(repository, Git.checkout(repository, reference, newBranch, force));
+      compoundResult.append(repository, myGit.checkout(repository, reference, newBranch, force));
     }
     if (compoundResult.totalSuccess()) {
       return true;

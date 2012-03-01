@@ -62,14 +62,16 @@ class GitNewChangesCollector extends GitChangesCollector {
   private final GitRepository myRepository;
   private final Collection<Change> myChanges = new HashSet<Change>();
   private final Set<VirtualFile> myUnversionedFiles = new HashSet<VirtualFile>();
+  @NotNull private final Git myGit;
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
    * This may be lengthy.
    */
   @NotNull
-  static GitNewChangesCollector collect(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull VcsDirtyScope dirtyScope, @NotNull  VirtualFile vcsRoot) throws VcsException {
-    return new GitNewChangesCollector(project, changeListManager, dirtyScope, vcsRoot);
+  static GitNewChangesCollector collect(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
+                                        @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException {
+    return new GitNewChangesCollector(project, git, changeListManager, dirtyScope, vcsRoot);
   }
 
   @Override
@@ -84,10 +86,11 @@ class GitNewChangesCollector extends GitChangesCollector {
     return myChanges;
   }
 
-  private GitNewChangesCollector(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot)
-    throws VcsException
+  private GitNewChangesCollector(@NotNull Project project, @NotNull Git git, @NotNull ChangeListManager changeListManager,
+                                 @NotNull VcsDirtyScope dirtyScope, @NotNull VirtualFile vcsRoot) throws VcsException
   {
     super(project, changeListManager, dirtyScope, vcsRoot);
+    myGit = git;
     myRepository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(vcsRoot);
 
     Collection<FilePath> dirtyPaths = dirtyPaths(true);
@@ -107,7 +110,7 @@ class GitNewChangesCollector extends GitChangesCollector {
   private void collectUnversionedFiles() throws VcsException {
     if (myRepository == null) {
       // if GitRepository was not initialized at the time of creation of the GitNewChangesCollector => collecting unversioned files by hands.
-      myUnversionedFiles.addAll(Git.untrackedFiles(myProject, myVcsRoot, null));
+      myUnversionedFiles.addAll(myGit.untrackedFiles(myProject, myVcsRoot, null));
     } else {
       GitUntrackedFilesHolder untrackedFilesHolder = myRepository.getUntrackedFilesHolder();
       myUnversionedFiles.addAll(untrackedFilesHolder.retrieveUntrackedFiles());
@@ -186,6 +189,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           break;
 
         case 'C':
+          //noinspection AssignmentToForLoopParameter
           pos += 1;  // read the "from" filepath which is separated also by NUL character.
           // NB: no "break" here!
           // we treat "Copy" as "Added", but we still have to read the old path not to break the format parsing.
@@ -225,6 +229,7 @@ class GitNewChangesCollector extends GitChangesCollector {
           break;
 
         case 'R':
+          //noinspection AssignmentToForLoopParameter
           pos += 1;  // read the "from" filepath which is separated also by NUL character.
           String oldFilename = split[pos];
 

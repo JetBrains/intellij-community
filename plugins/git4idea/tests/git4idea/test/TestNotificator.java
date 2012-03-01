@@ -20,18 +20,19 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Kirill Likhodedov
  */
-public class TestNotificationManager extends NotificationManager {
+public class TestNotificator extends Notificator {
 
+  private static final String TEST_NOTIFICATION_GROUP = "Test";
   private Notification myLastNotification;
 
-  public TestNotificationManager(@NotNull Project project) {
+  public TestNotificator(@NotNull Project project) {
     super(project);
   }
 
@@ -42,7 +43,17 @@ public class TestNotificationManager extends NotificationManager {
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message, @NotNull NotificationType type) {
     notify(notificationGroup, title, message, type, null);
   }
-  
+
+  @Override
+  public void notifySuccess(@NotNull String title, @NotNull String message) {
+    myLastNotification = createNotification(title, message, NotificationType.INFORMATION);
+  }
+
+  @NotNull
+  private static Notification createNotification(@NotNull String title, @NotNull String message, NotificationType type) {
+    return new Notification(TEST_NOTIFICATION_GROUP, title, message, type);
+  }
+
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
                      @NotNull NotificationType type, @Nullable NotificationListener listener) {
     myLastNotification = createNotification(notificationGroup, title, message, type, listener);
