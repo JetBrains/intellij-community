@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -198,6 +197,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       final RunnerAndConfigurationSettings selectedConfiguration = getConfiguration(project);
       boolean enabled = false;
       String text;
+      final String textWithMnemonic = getTemplatePresentation().getTextWithMnemonic();
       if (selectedConfiguration != null) {
         final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
         enabled = runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
@@ -205,10 +205,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
         }
-        text = getTemplatePresentation().getTextWithMnemonic() + " '" + StringUtil.first(selectedConfiguration.getName(), 30, true) + "'";
+        text = myExecutor.getStartActionText(selectedConfiguration.getName());
       }
       else {
-        text = getTemplatePresentation().getTextWithMnemonic();
+        text = textWithMnemonic;
       }
 
       presentation.setEnabled(enabled);
