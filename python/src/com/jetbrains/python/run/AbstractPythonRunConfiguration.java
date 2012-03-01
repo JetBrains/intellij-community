@@ -19,6 +19,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
@@ -200,6 +201,12 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
     getConfigurationModule().readExternal(element);
 
+    Element settingsElement = element.getChild(PyPathMappingSettings.class.getSimpleName());
+    if (settingsElement != null) {
+      setMappingSettings(
+        XmlSerializer.deserialize(settingsElement, PyPathMappingSettings.class));
+    }
+
     // extension settings:
     PythonRunConfigurationExtensionsManager.getInstance().readExternal(this, element);
   }
@@ -223,6 +230,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
 
     // extension settings:
     PythonRunConfigurationExtensionsManager.getInstance().writeExternal(this, element);
+
+    if (getMappingSettings() != null) {
+      element.addContent(XmlSerializer.serialize(getMappingSettings()));
+    }
   }
 
   protected void writeEnvs(Element element) {
@@ -270,6 +281,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     target.setWorkingDirectory(source.getWorkingDirectory());
     target.setModule(source.getModule());
     target.setUseModuleSdk(source.isUseModuleSdk());
+    target.setMappingSettings(source.getMappingSettings());
   }
 
   /**

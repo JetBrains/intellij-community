@@ -20,11 +20,5 @@ public interface PythonRunConfigurationParams {
   boolean isMultiprocessMode();
 
   void setMultiprocessMode(boolean multiprocess);
-
-  @Nullable
-  PyPathMappingSettings getMappingSettings();
-
-
-  void setMappingSettings(PyPathMappingSettings mappingSettings);
 }
 

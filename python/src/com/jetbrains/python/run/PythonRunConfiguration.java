@@ -39,7 +39,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   private String myScriptName;
   private String myScriptParameters;
   private boolean myMultiprocessMode;
-  private String myRemoteDebugConfiguration;
 
   protected PythonRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
@@ -113,13 +112,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
     myMultiprocessMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MULTIPROCESS));
-    myRemoteDebugConfiguration = JDOMExternalizerUtil.readField(element, REMOTE_DEBUG_RUN_CONFIGURATION);
-
-    Element settingsElement = element.getChild(PyPathMappingSettings.class.getSimpleName());
-    if (settingsElement != null) {
-      setMappingSettings(
-        XmlSerializer.deserialize(settingsElement, PyPathMappingSettings.class));
-    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -127,10 +119,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
     JDOMExternalizerUtil.writeField(element, MULTIPROCESS, Boolean.toString(myMultiprocessMode));
-    JDOMExternalizerUtil.writeField(element, REMOTE_DEBUG_RUN_CONFIGURATION, myRemoteDebugConfiguration);
-    if (getMappingSettings() != null) {
-      element.addContent(XmlSerializer.serialize(getMappingSettings()));
-    }
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -142,15 +130,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptName(source.getScriptName());
     target.setScriptParameters(source.getScriptParameters());
     target.setMultiprocessMode(source.isMultiprocessMode());
-    target.setMappingSettings(source.getMappingSettings());
-  }
-
-  public String getRemoteDebugConfiguration() {
-    return myRemoteDebugConfiguration;
-  }
-
-  public void setRemoteDebugConfiguration(String remoteDebugConfiguration) {
-    myRemoteDebugConfiguration = remoteDebugConfiguration;
   }
 
   @Override
