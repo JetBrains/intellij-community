@@ -96,6 +96,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (originalElement instanceof PsiReferenceExpression) {
+      LOG.assertTrue(originalElement.isValid());
       substitutor = ((PsiReferenceExpression)originalElement).advancedResolve(true).getSubstitutor();
     }
     return substitutor;

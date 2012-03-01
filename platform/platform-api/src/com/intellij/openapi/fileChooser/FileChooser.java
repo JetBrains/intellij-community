@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -111,7 +112,8 @@ public class FileChooser {
     choosePaths(descriptor, project, parent, path, new Consumer<List<String>>() {
       @Override
       public void consume(final List<String> paths) {
-        callback.consume(FileChooserUtil.getFiles(ArrayUtil.toStringArray(paths)));
+        final List<VirtualFile> files = FileChooserUtil.pathsToFiles(paths, true);
+        callback.consume(VfsUtil.toVirtualFileArray(files));
       }
     });
   }

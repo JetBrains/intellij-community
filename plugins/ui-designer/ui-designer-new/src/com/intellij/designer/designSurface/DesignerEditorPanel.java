@@ -16,27 +16,38 @@
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.DesignerToolWindowManager;
+import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.designSurface.tools.InputTool;
-import com.intellij.designer.designSurface.tools.SelectionTool;
-import com.intellij.designer.designSurface.tools.ToolProvider;
+import com.intellij.designer.componentTree.TreeEditableArea;
+import com.intellij.designer.designSurface.tools.*;
+import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
+import com.intellij.designer.palette.Item;
+import com.intellij.ide.palette.PaletteItem;
+import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 
 /**
@@ -50,6 +61,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected static final Integer LAYER_GLASS = LAYER_FEEDBACK + 100;
   protected static final Integer LAYER_BUTTONS = LAYER_GLASS + 100;
   protected static final Integer LAYER_INPLACE_EDITING = LAYER_BUTTONS + 100;
+  private static final Integer LAYER_PROGRESS = LAYER_INPLACE_EDITING + 100;
 
   @NonNls private final static String DESIGNER_CARD = "designer";
   @NonNls private final static String ERROR_CARD = "error";
@@ -59,18 +71,27 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   private final CardLayout myLayout = new CardLayout();
   private JPanel myDesignerCard;
+
+  protected DesignerActionPanel myActionPanel;
+
   private CaptionPanel myHorizontalCaption;
   private CaptionPanel myVerticalCaption;
+
   private JScrollPane myScrollPane;
   protected JLayeredPane myLayeredPane;
   protected GlassLayer myGlassLayer;
   private DecorationLayer myDecorationLayer;
   private FeedbackLayer myFeedbackLayer;
 
+  private ListSelectionListener myPaletteListener;
   protected ToolProvider myToolProvider;
   protected EditableArea mySurfaceArea;
 
   private JLabel myErrorLabel;
+
+  private JPanel myProgressPanel;
+  private AsyncProcessIcon myProgressIcon;
+  private JLabel myProgressMessage;
 
   protected RadComponent myRootComponent;
 
@@ -81,6 +102,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     setLayout(myLayout);
     createDesignerCard();
     createErrorCard();
+    createProgressPanel();
 
     myToolProvider.loadDefaultTool();
   }
@@ -90,15 +112,16 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     add(myDesignerCard, DESIGNER_CARD);
 
     GridBagConstraints gbc = new GridBagConstraints();
+
     gbc.gridx = 0;
-    gbc.gridy = 1;
+    gbc.gridy = 2;
     gbc.fill = GridBagConstraints.BOTH;
 
     myVerticalCaption = new CaptionPanel(this, false);
     myDesignerCard.add(myVerticalCaption, gbc);
 
     gbc.gridx = 1;
-    gbc.gridy = 0;
+    gbc.gridy = 1;
 
     myHorizontalCaption = new CaptionPanel(this, true);
     myDesignerCard.add(myHorizontalCaption, gbc);
@@ -149,10 +172,43 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
     };
 
+    myPaletteListener = new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        if (DesignerToolWindowManager.getInstance(getProject()).getActiveDesigner() == DesignerEditorPanel.this) {
+          Item paletteItem = (Item)PaletteManager.getInstance(getProject()).getActiveItem();
+          if (paletteItem != null) {
+            myToolProvider.setActiveTool(new CreationTool(true, createCreationFactory(paletteItem)));
+          }
+          else if (myToolProvider.getActiveTool() instanceof CreationTool) {
+            myToolProvider.loadDefaultTool();
+          }
+        }
+      }
+    };
+
     myToolProvider = new ToolProvider() {
       @Override
       public void loadDefaultTool() {
         setActiveTool(new SelectionTool());
+      }
+
+      @Override
+      public void setActiveTool(InputTool tool) {
+        if (getActiveTool() instanceof CreationTool && !(tool instanceof CreationTool)) {
+          PaletteManager.getInstance(getProject()).clearActiveItem();
+        }
+        super.setActiveTool(tool);
+      }
+
+      @Override
+      public boolean execute(ThrowableRunnable<Exception> operation) {
+        return DesignerEditorPanel.this.execute(operation);
+      }
+
+      @Override
+      public void execute(List<EditOperation> operations) {
+        DesignerEditorPanel.this.execute(operations);
       }
 
       @Override
@@ -171,13 +227,29 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myLayeredPane.add(myFeedbackLayer, LAYER_FEEDBACK);
 
     gbc.gridx = 1;
-    gbc.gridy = 1;
+    gbc.gridy = 2;
     gbc.weightx = 1;
     gbc.weighty = 1;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
     myScrollPane.setBackground(Color.WHITE);
     myDesignerCard.add(myScrollPane, gbc);
+
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.gridwidth = 2;
+    gbc.weightx = 0;
+    gbc.weighty = 0;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    myActionPanel = new DesignerActionPanel(this, myGlassLayer);
+    myDesignerCard.add(myActionPanel.getToolbarComponent(), gbc);
+
+    PaletteManager.getInstance(getProject()).addSelectionListener(myPaletteListener);
+  }
+
+  protected final void showDesignerCard() {
+    myLayout.show(this, DESIGNER_CARD);
   }
 
   private void createErrorCard() {
@@ -185,16 +257,67 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     add(myErrorLabel, ERROR_CARD);
   }
 
-  protected final void showDesignerCard() {
-    myLayout.show(this, DESIGNER_CARD);
+  private void createProgressPanel() {
+    myProgressIcon = new AsyncProcessIcon("Designer progress");
+    myProgressMessage = new JLabel();
+
+    JPanel progressBlock = new JPanel();
+    progressBlock.add(myProgressIcon);
+    progressBlock.add(myProgressMessage);
+    progressBlock.setBorder(IdeBorderFactory.createRoundedBorder());
+
+    myProgressPanel = new JPanel(new GridBagLayout());
+    myProgressPanel.add(progressBlock,
+                        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
+                                               0, 0));
+    myProgressPanel.setOpaque(false);
+  }
+
+  protected final void showProgress(String message) {
+    myProgressMessage.setText(message);
+    myProgressIcon.resume();
+    myLayeredPane.add(myProgressPanel, LAYER_PROGRESS);
+    myLayeredPane.repaint();
+  }
+
+  protected final void hideProgress() {
+    myProgressIcon.suspend();
+    myLayeredPane.remove(myProgressPanel);
+  }
+
+  public void showError(@NonNls String message, Throwable e) {
+    hideProgress();
+    myRootComponent = null;
+    myErrorLabel.setText(message + e.toString());
+    myLayout.show(this, ERROR_CARD);
+    DesignerToolWindowManager.getInstance(getProject()).refresh();
+    repaint();
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      e.printStackTrace();
+    }
+  }
+
+  public abstract String getPlatformTarget();
+
+  public Project getProject() {
+    return myModule.getProject();
   }
 
   public EditableArea getSurfaceArea() {
     return mySurfaceArea;
   }
 
+  public EditableArea getActionsArea() {
+    TreeEditableArea treeArea = DesignerToolWindowManager.getInstance(getProject()).getTreeArea();
+    return treeArea == null ? mySurfaceArea : treeArea;
+  }
+
   public ToolProvider getToolProvider() {
     return myToolProvider;
+  }
+
+  public DesignerActionPanel getActionPanel() {
+    return myActionPanel;
   }
 
   protected abstract ComponentDecorator getRootSelectionDecorator();
@@ -202,16 +325,15 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Nullable
   protected abstract EditOperation processRootOperation(OperationContext context);
 
-  public void showError(@NonNls String message, Throwable e) {
-    myRootComponent = null;
-    myErrorLabel.setText(message + e.toString());
-    myLayout.show(this, ERROR_CARD);
-    DesignerToolWindowManager.getInstance(myModule.getProject()).refresh();
-    repaint();
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      e.printStackTrace();
-    }
-  }
+  protected abstract boolean execute(ThrowableRunnable<Exception> operation);
+
+  protected abstract void execute(List<EditOperation> operations);
+
+  @NotNull
+  protected abstract ComponentCreationFactory createCreationFactory(Item paletteItem);
+
+  @Nullable
+  public abstract ComponentPasteFactory createPasteFactory(String xmlComponents);
 
   public void activate() {
   }
@@ -221,11 +343,13 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   @Override
   public Object getData(@NonNls String dataId) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    // TODO: support keys
+    return myActionPanel.getData(dataId);
   }
 
   public void dispose() {
-    // TODO: Auto-generated method stub
+    PaletteManager.getInstance(getProject()).removeSelectionListener(myPaletteListener);
+    Disposer.dispose(myProgressIcon);
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -241,7 +365,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private final class MyLayeredPane extends JLayeredPane implements Scrollable {
     public void doLayout() {
       for (int i = getComponentCount() - 1; i >= 0; i--) {
-        final Component component = getComponent(i);
+        Component component = getComponent(i);
         component.setBounds(0, 0, getWidth(), getHeight());
       }
     }

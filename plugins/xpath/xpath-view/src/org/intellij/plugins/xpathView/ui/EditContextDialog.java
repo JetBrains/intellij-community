@@ -103,7 +103,7 @@ public class EditContextDialog extends DialogWrapper {
     protected JComponent createCenterPanel() {
 
         final JPanel p = new JPanel(new BorderLayout());
-        p.setBorder(IdeBorderFactory.createTitledBorder("Variables", false, false, true));
+        p.setBorder(IdeBorderFactory.createTitledBorder("Variables", false));
 
         final DefaultActionGroup group = new DefaultActionGroup(null, false);
         group.add(new AnAction("Add", null, IconLoader.getIcon("/general/add.png")) {
@@ -140,7 +140,7 @@ public class EditContextDialog extends DialogWrapper {
         mySplitter.setHonorComponentsMinimumSize(true);
 
         final JComponent n = new JPanel(new BorderLayout());
-        n.setBorder(IdeBorderFactory.createTitledBorder("Namespaces", false, false, true));
+        n.setBorder(IdeBorderFactory.createTitledBorder("Namespaces", false));
 
         if (myContextProvider.getContextElement() == null) {
             final DefaultActionGroup nsActionGroup = new DefaultActionGroup();

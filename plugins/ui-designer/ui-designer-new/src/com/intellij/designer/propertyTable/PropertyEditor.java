@@ -16,14 +16,53 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.EventListenerList;
 
 /**
  * @author Alexander Lobas
  */
-public interface PropertyEditor {
-  JComponent getComponent(RadComponent component, Object value);
+public abstract class PropertyEditor {
+  private final EventListenerList myListenerList = new EventListenerList();
 
-  Object getValue();
+  @NotNull
+  public abstract JComponent getComponent(@Nullable RadComponent component, Object value);
+
+  @Nullable
+  public JComponent getPreferredFocusedComponent(@NotNull JComponent component) {
+    return null;
+  }
+
+  public abstract Object getValue() throws Exception;
+
+  public abstract void updateUI();
+
+  public final void addPropertyEditorListener(PropertyEditorListener listener) {
+    myListenerList.add(PropertyEditorListener.class, listener);
+  }
+
+  public final void removePropertyEditorListener(PropertyEditorListener listener) {
+    myListenerList.remove(PropertyEditorListener.class, listener);
+  }
+
+  protected final void fireEditingCancelled() {
+    for (PropertyEditorListener listener : myListenerList.getListeners(PropertyEditorListener.class)) {
+      listener.editingCanceled(this);
+    }
+  }
+
+  protected final void fireValueCommitted(boolean continueEditing, boolean closeEditorOnError) {
+    for (PropertyEditorListener listener : myListenerList.getListeners(PropertyEditorListener.class)) {
+      listener.valueCommitted(this, continueEditing, closeEditorOnError);
+    }
+  }
+
+  protected final void preferredSizeChanged() {
+    for (PropertyEditorListener listener : myListenerList.getListeners(PropertyEditorListener.class)) {
+      listener.preferredSizeChanged(this);
+    }
+  }
 }

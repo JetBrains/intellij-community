@@ -1,6 +1,8 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
@@ -70,6 +72,18 @@ public class IncProjectBuilder {
   }
 
   public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild) {
+    final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Forceable() {
+      @Override
+      public boolean isDirty() {
+        return true; // always perform flush when not enough memory
+      }
+
+      @Override
+      public void force() {
+        myProjectDescriptor.dataManager.flush(false);
+        myProjectDescriptor.timestamps.getStorage().force();
+      }
+    });
     CompileContext context = null;
     try {
       try {
@@ -114,6 +128,7 @@ public class IncProjectBuilder {
       }
     }
     finally {
+      memWatcher.stop();
       flushContext(context);
     }
   }
@@ -170,11 +185,11 @@ public class IncProjectBuilder {
     runTasks(context, myBuilderRegistry.getBeforeTasks());
 
     context.setCompilingTests(false);
-    context.processMessage(new ProgressMessage("Building production sources"));
+    context.processMessage(new ProgressMessage("Checking production sources"));
     buildChunks(context, myProductionChunks);
 
     context.setCompilingTests(true);
-    context.processMessage(new ProgressMessage("Building test sources"));
+    context.processMessage(new ProgressMessage("Checking test sources"));
     buildChunks(context, myTestChunks);
 
     context.processMessage(new ProgressMessage("Building project"));
@@ -290,10 +305,12 @@ public class IncProjectBuilder {
       if (context.isMake()) {
         // cleanup outputs
         final Set<String> allChunkRemovedSources = new HashSet<String>();
-        final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
 
         for (Module module : chunk.getModules()) {
           final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module, context.isCompilingTests());
+          if (deletedPaths.isEmpty()) {
+            continue;
+          }
           allChunkRemovedSources.addAll(deletedPaths);
 
           final String moduleName = module.getName().toLowerCase(Locale.US);
@@ -304,29 +321,31 @@ public class IncProjectBuilder {
             // deleting outputs corresponding to non-existing source
             final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
             
-            if (LOG.isDebugEnabled()) {
-              if (outputs.size() > 0) {
-                final String[] buffer = new String[outputs.size()];
-                int i = 0;
-                for (final String o : outputs) {
-                  buffer[i++] = o;
-                }
-                Arrays.sort(buffer);
-                LOG.info("Cleaning output files:");
-                for(final String o : buffer) {
-                  LOG.info(o);
-                }
-                LOG.info("End of files");
-              }
-            }
-            
             if (outputs != null) {
+              if (LOG.isDebugEnabled()) {
+                if (outputs.size() > 0) {
+                  final String[] buffer = new String[outputs.size()];
+                  int i = 0;
+                  for (final String o : outputs) {
+                    buffer[i++] = o;
+                  }
+                  Arrays.sort(buffer);
+                  LOG.info("Cleaning output files:");
+                  for(final String o : buffer) {
+                    LOG.info(o);
+                  }
+                  LOG.info("End of files");
+                }
+              }
+              
               for (String output : outputs) {
                 FileUtil.delete(new File(output));
               }
               sourceToOutputStorage.remove(deletedSource);
             }
+            
             // check if deleted source was associated with a form
+            final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
             final String formPath = sourceToFormMap.getState(deletedSource);
             if (formPath != null) {
               final File formFile = new File(formPath);

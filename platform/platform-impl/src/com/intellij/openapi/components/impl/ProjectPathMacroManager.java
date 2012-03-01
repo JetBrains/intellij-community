@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,9 @@ import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
-import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public class ProjectPathMacroManager extends BasePathMacroManager {
   private final Project myProject;
@@ -35,43 +31,34 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
     myProject = project;
   }
 
+  @Override
   public ExpandMacroToPathMap getExpandMacroMap() {
-    ExpandMacroToPathMap result = super.getExpandMacroMap();
-    getExpandProjectHomeReplacements(result);
+    final ExpandMacroToPathMap result = super.getExpandMacroMap();
+    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, myProject.getBasePath());
     return result;
   }
 
+  @Override
   public ReplacePathToMacroMap getReplacePathMap() {
-    ReplacePathToMacroMap result = super.getReplacePathMap();
-    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject), null);
+    final ReplacePathToMacroMap result = super.getReplacePathMap();
+
+    final String projectDir = getProjectDir(myProject);
+    if (projectDir != null) {
+      addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, projectDir, null);
+    }
+
+    // add non-canonical path if differs
+    final String projectPath = myProject.getBasePath();
+    if (!pathsEqual(projectPath, projectDir)) {
+      addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, projectPath, null);
+    }
+
     return result;
-  }
-
-  private void getExpandProjectHomeReplacements(ExpandMacroToPathMap result) {
-    String projectDir = getProjectDir(myProject);
-    if (projectDir == null) return;
-
-    File f = new File(projectDir.replace('/', File.separatorChar));
-
-    getExpandProjectHomeReplacements(result, f, "$" + PathMacrosImpl.PROJECT_DIR_MACRO_NAME + "$");
-  }
-
-  private static void getExpandProjectHomeReplacements(ExpandMacroToPathMap result, File f, String macro) {
-    if (f == null) return;
-
-    getExpandProjectHomeReplacements(result, f.getParentFile(), macro + "/..");
-    String path = PathMacroMap.quotePath(f.getAbsolutePath());
-    String s = macro;
-
-    if (StringUtil.endsWithChar(path, '/')) s += "/";
-
-    result.put(s, path);
   }
 
   @Nullable
-  public static String getProjectDir(Project myProject) {
-    final VirtualFile baseDir = myProject.getBaseDir();
+  private static String getProjectDir(Project project) {
+    final VirtualFile baseDir = project.getBaseDir();
     return baseDir != null ? baseDir.getPath() : null;
   }
-
 }

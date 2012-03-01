@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.intellij.execution.configurations;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -40,7 +43,9 @@ import java.util.Map;
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
  * as required by the underlying platform.
  */
-public class GeneralCommandLine {
+public class GeneralCommandLine implements UserDataHolder {
+  public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
+
   private String myExePath = null;
   private File myWorkDirectory = null;
   private Map<String, String> myEnvParams = null;
@@ -48,6 +53,7 @@ public class GeneralCommandLine {
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
+  private Map<Object, Object> myUserData = null;
 
   public GeneralCommandLine() { }
 
@@ -173,7 +179,7 @@ public class GeneralCommandLine {
       commands.add(exeName);
     }
     else if (myExePath != null) {
-      commands.add(FileUtil.toSystemDependentName(myExePath));
+      commands.add(myExePath);
     }
     else {
       commands.add("<null>");
@@ -245,18 +251,20 @@ public class GeneralCommandLine {
 
   private String[] prepareCommands() {
     final List<String> parameters = myProgramParams.getList();
+    final boolean doNotEscape = Boolean.TRUE.equals(getUserData(DO_NOT_ESCAPE_QUOTES));
+
     final String[] result = new String[parameters.size() + 1];
-    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath)) : null;
+    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath), doNotEscape) : null;
     for (int i = 0; i < parameters.size(); i++) {
-      result[i + 1] = prepareCommand(parameters.get(i));
+      result[i + 1] = prepareCommand(parameters.get(i), doNotEscape);
     }
     return result;
   }
 
-  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand()
-  private static String prepareCommand(String parameter) {
+  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand() (besides doNotEscape option)
+  private static String prepareCommand(String parameter, final boolean doNotEscape) {
     if (SystemInfo.isWindows) {
-      if (parameter.contains("\"")) {
+      if (!doNotEscape && parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
       }
       else if (parameter.length() == 0) {
@@ -278,5 +286,22 @@ public class GeneralCommandLine {
   @Override
   public String toString() {
     return myExePath + " " + myProgramParams;
+  }
+
+  @Override
+  public <T> T getUserData(@NotNull final Key<T> key) {
+    if (myUserData != null) {
+      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) final T t = (T)myUserData.get(key);
+      return t;
+    }
+    return null;
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull final Key<T> key, @Nullable final T value) {
+    if (myUserData == null) {
+      myUserData = Maps.newHashMap();
+    }
+    myUserData.put(key, value);
   }
 }

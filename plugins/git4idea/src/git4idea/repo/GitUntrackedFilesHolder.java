@@ -222,11 +222,11 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void before(List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends VFileEvent> events) {
   }
 
   @Override
-  public void after(List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends VFileEvent> events) {
     boolean allChanged = false;
     Set<VirtualFile> filesToRefresh = new HashSet<VirtualFile>();
 

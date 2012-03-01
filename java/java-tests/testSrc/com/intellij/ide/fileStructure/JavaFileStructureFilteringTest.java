@@ -31,5 +31,6 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
   public void testCamel2()throws Exception{checkTree("soHe");}
   public void testSelectLeafFirst()throws Exception{checkTree("clear");}
   public void testSelectLeafFirst2()throws Exception{checkTree("clear");}
-
+  public void testSelectLeafFirst3()throws Exception{checkTree("clear");}
+  public void testSelectLeafFirst4()throws Exception{checkTree("clear");}
 }

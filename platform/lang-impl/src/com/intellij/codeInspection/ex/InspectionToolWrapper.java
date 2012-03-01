@@ -58,6 +58,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   protected InspectionToolWrapper(E ep, T tool) {
     myEP = ep;
+    //noinspection unchecked
     myTool = tool == null ? null : (T)InspectionToolRegistrar.instantiateTool(tool.getClass());
   }
 
@@ -66,6 +67,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @NotNull
   public T getTool() {
     if (myTool == null) {
+      //noinspection unchecked
       myTool = (T)myEP.instantiateTool();
       LOG.assertTrue(myTool.getShortName().equals(myEP.shortName), "myTool: " + myTool.getShortName() + "; ep.shortName " + myEP.shortName);
     }
@@ -92,12 +94,24 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   @NotNull
   public String getDisplayName() {
-    return myEP == null ? getTool().getDisplayName() : myEP.getDisplayName();
+    if (myEP == null) {
+      return getTool().getDisplayName();
+    }
+    else {
+      String name = myEP.getDisplayName();
+      return name == null ? getTool().getDisplayName() : name;
+    }
   }
 
   @NotNull
   public String getGroupDisplayName() {
-    return myEP == null ? getTool().getGroupDisplayName() : myEP.getGroupDisplayName();
+    if (myEP == null) {
+      return getTool().getGroupDisplayName();
+    }
+    else {
+      String groupDisplayName = myEP.getGroupDisplayName();
+      return groupDisplayName == null ? getTool().getGroupDisplayName() : groupDisplayName;
+    }
   }
 
   public boolean isEnabledByDefault() {
@@ -112,7 +126,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @NotNull
   @Override
   public String[] getGroupPath() {
-    return myEP == null ? getTool().getGroupPath() : myEP.getGroupPath();
+    if (myEP == null) {
+      return getTool().getGroupPath();
+    }
+    else {
+      String[] path = myEP.getGroupPath();
+      return path == null ? getTool().getGroupPath() : path;
+    }
   }
 
   public void readSettings(Element element) throws InvalidDataException {
@@ -163,5 +183,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getTool().getClass();
+  }
+
+  @Override
+  public String toString() {
+    return getShortName();
   }
 }

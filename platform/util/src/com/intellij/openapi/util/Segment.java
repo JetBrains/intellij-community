@@ -19,6 +19,7 @@ package com.intellij.openapi.util;
  * User: cdr
  */
 public interface Segment {
+  Segment[] EMPTY_ARRAY = new Segment[0];
   int getStartOffset();
   int getEndOffset();
 }

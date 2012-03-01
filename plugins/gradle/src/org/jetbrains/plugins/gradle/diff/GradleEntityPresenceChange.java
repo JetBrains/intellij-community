@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines common interface for a change that indicates that particular entity has been added/removed at Gradle or IntelliJ IDEA.
+ * <p/>
+ * Thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 11/17/11 12:43 PM

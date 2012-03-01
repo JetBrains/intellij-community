@@ -44,10 +44,10 @@ public class ChangesComparator implements Comparator<Change> {
     if (myTreeCompare) {
       final FilePath parentPath1 = filePath1.getParentPath();
       final FilePath parentPath2 = filePath2.getParentPath();
-      if (parentPath1 != null && parentPath1.isUnder(parentPath2, true)) {
+      if (parentPath1 != null && parentPath2 != null && parentPath1.isUnder(parentPath2, true)) {
         return -1;
       }
-      if (parentPath2 != null && parentPath2.isUnder(parentPath1, true)) {
+      if (parentPath2 != null && parentPath1 != null && parentPath2.isUnder(parentPath1, true)) {
         return 1;
       }
       return filePath1.getPath().compareToIgnoreCase(filePath2.getPath());

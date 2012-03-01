@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -76,7 +77,6 @@ import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -100,6 +100,7 @@ import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
+  private final static String KEEP_CONNECTIONS_KEY = "svn.keep.connections";
   private final static Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
 
   private final static int ourLogUsualInterval = 20 * 1000;
@@ -115,6 +116,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public static final Topic<Runnable> WC_CONVERTED = new Topic<Runnable>("WC_CONVERTED", Runnable.class);
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache = new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
+  private DefaultSVNRepositoryPool myPool;
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
 
@@ -386,6 +388,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public void activate() {
+    createPool();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (! myProject.isDefault()) {
       ChangeListManager.getInstance(myProject).addChangeListListener(myChangeListListener);
@@ -511,7 +514,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     
     VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
     SvnApplicationSettings.getInstance().svnDeactivated();
-    new DefaultSVNRepositoryPool(null, null).shutdownConnections(true);
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
     }
@@ -528,6 +530,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     mySvnBranchPointsCalculator = null;
     myWorkingCopiesContent.deactivate();
     myLoadedBranchesStorage.deactivate();
+    myPool.dispose();
+    myPool = null;
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -571,56 +575,63 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return repos;
   }
 
+  private void createPool() {
+    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
+    final boolean keep;
+    if (StringUtil.isEmptyOrSpaces(property)) {
+      keep = true;  // default
+    } else {
+      keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
+    }
+    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), null, 60*1000, keep);
+  }
+
+  private ISVNRepositoryPool getPool() {
+    return myPool;
+  }
+
   public SVNUpdateClient createUpdateClient() {
-    return new SVNUpdateClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNStatusClient createStatusClient() {
-    SVNStatusClient client = new SVNStatusClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
     client.setIgnoreExternals(true);
     return client;
   }
 
   public SVNWCClient createWCClient() {
-    return new SVNWCClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNCopyClient createCopyClient() {
-    return new SVNCopyClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNCopyClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNMoveClient createMoveClient() {
-    return new SVNMoveClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNMoveClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNLogClient createLogClient() {
-    return new SVNLogClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNCommitClient createCommitClient() {
-    return new SVNCommitClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNCommitClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNDiffClient createDiffClient() {
-    return new SVNDiffClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNDiffClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNChangelistClient createChangelistClient() {
-    return new SVNChangelistClient(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
+    return new SVNChangelistClient(getPool(), myConfiguration.getOptions(myProject));
   }
 
   public SVNWCAccess createWCAccess() {
     final SVNWCAccess access = SVNWCAccess.newInstance(null);
     access.setOptions(myConfiguration.getOptions(myProject));
     return access;
-  }
-
-  public ISVNOptions getSvnOptions() {
-    return myConfiguration.getOptions(myProject);
-  }
-
-  public ISVNAuthenticationManager getSvnAuthenticationManager() {
-    return myConfiguration.getAuthenticationManager(this);
   }
 
   void dumpFileStatus(FileStatus fs) {
@@ -795,7 +806,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @Nullable
   public SVNInfo getInfo(final VirtualFile file) {
     try {
-      SVNWCClient wcClient = new SVNWCClient(getSvnAuthenticationManager(), getSvnOptions());
+      SVNWCClient wcClient = createWCClient();
       SVNInfo info = wcClient.doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
       if (info == null || info.getRepositoryRootURL() == null) {
         info = wcClient.doInfo(new File(file.getPath()), SVNRevision.HEAD);

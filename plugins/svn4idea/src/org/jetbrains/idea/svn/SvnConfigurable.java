@@ -284,7 +284,9 @@ public class SvnConfigurable implements Configurable {
 
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     applicationSettings17.setCommandLinePath(myCommandLineClient.getText().trim());
-    vcs17.checkCommandLineVersion();
+    if (SvnConfiguration.UseAcceleration.commandLine.equals(configuration.myUseAcceleration)) {
+      vcs17.checkCommandLineVersion();
+    }
   }
 
   public void reset() {

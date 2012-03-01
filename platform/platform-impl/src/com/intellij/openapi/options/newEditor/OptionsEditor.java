@@ -288,7 +288,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public ActionCallback select(Configurable configurable) {
-    myFilter.refilterFor("", false, true);
+    return select(configurable, "");
+  }
+
+  public ActionCallback select(Configurable configurable, final String text) {
+    myFilter.refilterFor(text, false, true);
     return myTree.select(configurable);
   }
 

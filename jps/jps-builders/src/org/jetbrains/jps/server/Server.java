@@ -2,6 +2,7 @@ package org.jetbrains.jps.server;
 
 //import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ConcurrencyUtil;
 import org.apache.log4j.Level;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -16,6 +17,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.incremental.Paths;
@@ -24,6 +26,8 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
@@ -35,19 +39,39 @@ public class Server {
   public static final String SERVER_SUCCESS_START_MESSAGE = "Compile Server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting Compile Server: ";
   private static final String LOG_FILE_NAME = "log.xml";
+  private static final long PING_INTERVAL = Long.parseLong(System.getProperty(GlobalOptions.PING_INTERVAL_MS_OPTION, "-1")); 
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("compile-server");
   private final ChannelFactory myChannelFactory;
   private final ChannelPipelineFactory myPipelineFactory;
   private final ExecutorService myBuildsExecutor;
+  private volatile long myLastPingTime  = -1L;
+  private final ScheduledExecutorService myScheduler;
+  private final ServerMessageHandler myMessageHandler;
 
   public Server(File systemDir) {
     Paths.getInstance().setSystemRoot(systemDir);
     final ExecutorService threadPool = Executors.newCachedThreadPool();
+    myScheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Client activity checker", Thread.MIN_PRIORITY);
     myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);
     myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    final ServerMessageHandler messageHandler = new ServerMessageHandler(myBuildsExecutor, this);
+    myMessageHandler = new ServerMessageHandler(this, new AsyncTaskExecutor() {
+      @Override
+      public void submit(final Runnable runnable) {
+        myBuildsExecutor.submit(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              runnable.run();
+            }
+            finally {
+              Thread.interrupted(); // clear interrupted status before returning to pull
+            }
+          }
+        });
+      }
+    });
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -56,7 +80,7 @@ public class Server {
           new ProtobufDecoder(JpsRemoteProto.Message.getDefaultInstance()),
           new ProtobufVarint32LengthFieldPrepender(),
           new ProtobufEncoder(),
-          messageHandler
+          myMessageHandler
         );
       }
     };
@@ -69,17 +93,68 @@ public class Server {
     bootstrap.setOption("child.keepAlive", true);
     final Channel serverChannel = bootstrap.bind(new InetSocketAddress(listenPort));
     myAllOpenChannels.add(serverChannel);
+
+    startActivityMonitor();
+  }
+
+  private void startActivityMonitor() {
+    if (PING_INTERVAL <= 0L) {
+      return;
+    }
+    final long allowedIdlePeriod = 2 * PING_INTERVAL;
+    myScheduler.scheduleAtFixedRate(new Runnable() {
+      private long myStartTime;
+      @Override
+      public void run() {
+        final long now = System.currentTimeMillis();
+        final long lastPing = myLastPingTime;
+        if (lastPing > 0L) {
+          final long elapsed = now - lastPing;
+          if (elapsed > allowedIdlePeriod) {
+            doStop(elapsed);
+          }
+        }
+        else {
+          final long start = myStartTime;
+          if (start > 0) {
+            final long elapsed = now - start;
+            if (elapsed > 5 * PING_INTERVAL) {
+              // no pings received since start
+              doStop(elapsed);
+            }
+          }
+          else {
+            myStartTime = now;
+          }
+        }
+      }
+
+      private void doStop(long elapsedTime) {
+        try {
+          System.out.println("Stopping compile server; reason: no pings from client received in " + elapsedTime + " ms");
+          myMessageHandler.cancelAllBuildsAndClearState();
+        }
+        finally {
+          stop();
+        }
+      }
+    }, allowedIdlePeriod, allowedIdlePeriod, TimeUnit.MILLISECONDS);
   }
 
   public void stop() {
     try {
-      myBuildsExecutor.shutdownNow();
+      myScheduler.shutdown();
+      myBuildsExecutor.shutdown();
       final ChannelGroupFuture closeFuture = myAllOpenChannels.close();
       closeFuture.awaitUninterruptibly();
     }
     finally {
       myChannelFactory.releaseExternalResources();
     }
+  }
+
+  public void pingReceived() {
+    myLastPingTime = System.currentTimeMillis();
   }
 
   public static void main(String[] args) {
@@ -101,7 +176,12 @@ public class Server {
       final Server server = new Server(systemDir);
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
         public void run() {
-          server.stop();
+          try {
+            server.myMessageHandler.cancelAllBuildsAndClearState();
+          }
+          finally {
+            server.stop();
+          }
         }
       });
 

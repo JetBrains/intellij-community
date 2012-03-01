@@ -75,11 +75,11 @@ public class LineStatusTrackerDrawing {
     final int x = r.x + r.width - 5;
     final int width = endX - x;
     if (r.height > 0) {
-      g.fillRect(x, r.y + 2, width, r.height - 4);
+      g.fillRect(x, r.y, width, r.height);
       g.setColor(gutter.getOutlineColor(false));
-      UIUtil.drawLine(g, x, r.y + 2, x + width, r.y + 2);
-      UIUtil.drawLine(g, x, r.y + 2, x, r.y + r.height - 3);
-      UIUtil.drawLine(g, x, r.y + r.height - 3, x + width, r.y + r.height - 3);
+      UIUtil.drawLine(g, x, r.y, x + width, r.y);
+      UIUtil.drawLine(g, x, r.y, x, r.y + r.height - 1);
+      UIUtil.drawLine(g, x, r.y + r.height - 1, x + width, r.y + r.height - 1);
     }
     else {
       final int[] xPoints = new int[]{x,

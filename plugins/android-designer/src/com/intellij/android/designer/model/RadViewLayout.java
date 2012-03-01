@@ -17,10 +17,16 @@ package com.intellij.android.designer.model;
 
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
+import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
+import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -33,7 +39,26 @@ public class RadViewLayout extends RadLayout {
   }
 
   @Override
-  public ComponentDecorator getChildSelectionDecorator(RadComponent component) {
+  public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     return new NonResizeSelectionDecorator(Color.RED, 1);
+  }
+
+  @Override
+  public void addSelectionActions(DefaultActionGroup actionGroup, JComponent shortcuts, List<RadComponent> selection) {
+    if (myContainer.getTag() != null && myContainer.getTag().getName().equals("LinearLayout")) {
+      for (RadComponent component : selection) {
+        if (myContainer != component.getParent()) {
+          return;
+        }
+      }
+      AnAction action = new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          System.out.println("LinearLayout: " + e);
+        }
+      };
+      action.copyFrom(RadViewComponent.LinearLayout);
+      actionGroup.add(action);
+    }
   }
 }

@@ -147,6 +147,16 @@ public class SystemInfo {
   }
 
   @NotNull
+  public static String getMacOSMajorVersion() {
+    return getMacOSMajorVersion(OS_VERSION);
+  }
+
+  public static String getMacOSMajorVersion(String version) {
+    int[] parts = getMacOSVersionParts(version);
+    return String.format("%d.%d", parts[0], parts[1]);
+  }
+
+  @NotNull
   public static String getMacOSVersionCode() {
     return getMacOSVersionCode(OS_VERSION);
   }

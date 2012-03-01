@@ -21,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -34,8 +36,9 @@ public class DecorationLayer extends JComponent {
 
   @Nullable
   public InputTool findTargetTool(int x, int y) {
-    for (RadComponent component : myArea.getSelection()) {
-      ComponentDecorator decorator = getDecorator(component);
+    List<RadComponent> selection = myArea.getSelection();
+    for (RadComponent component : selection) {
+      ComponentDecorator decorator = getDecorator(component, selection);
       InputTool tracker = decorator.findTargetTool(this, component, x, y);
       if (tracker != null) {
         return tracker;
@@ -50,17 +53,18 @@ public class DecorationLayer extends JComponent {
   }
 
   private void painSelection(Graphics2D g) {
-    for (RadComponent component : myArea.getSelection()) {
-      ComponentDecorator decorator = getDecorator(component);
+    List<RadComponent> selection = myArea.getSelection();
+    for (RadComponent component : selection) {
+      ComponentDecorator decorator = getDecorator(component, selection);
       decorator.decorate(this, g, component);
     }
   }
 
-  private ComponentDecorator getDecorator(RadComponent component) {
+  private ComponentDecorator getDecorator(RadComponent component, List<RadComponent> selection) {
     RadComponent parent = component.getParent();
     if (parent == null) {
       return myArea.getRootSelectionDecorator();
     }
-    return parent.getLayout().getChildSelectionDecorator(component);
+    return parent.getLayout().getChildSelectionDecorator(component, selection);
   }
 }

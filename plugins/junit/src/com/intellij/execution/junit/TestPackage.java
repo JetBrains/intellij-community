@@ -69,8 +69,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TestPackage extends TestObject {
-  private BackgroundableProcessIndicator mySearchForTestsIndicator;
-  private ServerSocket myServerSocket;
+  protected BackgroundableProcessIndicator mySearchForTestsIndicator;
+  protected ServerSocket myServerSocket;
   private boolean myFoundTests = true;
 
   public TestPackage(final Project project,
@@ -89,12 +89,12 @@ public class TestPackage extends TestObject {
   @Override
   protected JUnitProcessHandler createHandler() throws ExecutionException {
     final JUnitProcessHandler handler = super.createHandler();
-    final MySearchForTestsTask[] tasks = new MySearchForTestsTask[1];
+    final SearchForTestsTask[] tasks = new SearchForTestsTask[1];
     handler.addProcessListener(new ProcessAdapter() {
       @Override
       public void startNotified(ProcessEvent event) {
         super.startNotified(event);
-        tasks[0] = (MySearchForTestsTask)findTests();
+        tasks[0] = (SearchForTestsTask)findTests();
       }
 
       @Override
@@ -138,7 +138,7 @@ public class TestPackage extends TestObject {
                 return null;
               }
             }
-          }, getPackage(data).getQualifiedName(), false, isJunit4);
+          }, getPackageName(data), false, isJunit4);
         }
         catch (CantRunException e) {
           //can't be here
@@ -147,24 +147,15 @@ public class TestPackage extends TestObject {
     }, filter);
   }
 
+  protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+    return getPackage(data).getQualifiedName();
+  }
+
   protected void initialize() throws ExecutionException {
     super.initialize();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     getClassFilter(data);//check if junit found
-    final ExecutionException[] exception = new ExecutionException[1];
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        try {
-          myConfiguration.configureClasspath(myJavaParameters);
-        }
-        catch (CantRunException e) {
-          exception[0] = e;
-        }
-      }
-    });
-    if (exception[0] != null) {
-      throw exception[0];
-    }
+    configureClasspath();
 
     try {
       myTempFile = FileUtil.createTempFile("idea_junit", ".tmp");
@@ -184,7 +175,24 @@ public class TestPackage extends TestObject {
     }
   }
 
-  private TestClassFilter getClassFilter(final JUnitConfiguration.Data data) throws CantRunException {
+  protected void configureClasspath() throws ExecutionException {
+    final ExecutionException[] exception = new ExecutionException[1];
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        try {
+          myConfiguration.configureClasspath(myJavaParameters);
+        }
+        catch (CantRunException e) {
+          exception[0] = e;
+        }
+      }
+    });
+    if (exception[0] != null) {
+      throw exception[0];
+    }
+  }
+
+  protected TestClassFilter getClassFilter(final JUnitConfiguration.Data data) throws CantRunException {
     Module module = myConfiguration.getConfigurationModule().getModule();
     if (myConfiguration.getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT){
       module = null;
@@ -320,8 +328,55 @@ public class TestPackage extends TestObject {
     void found(@NotNull Collection<PsiClass> classes, final boolean isJunit4);
   }
 
-  private class MySearchForTestsTask extends Task.Backgroundable {
-    private Socket mySocket;
+  protected abstract class SearchForTestsTask extends Task.Backgroundable {
+
+    protected Socket mySocket;
+
+    public SearchForTestsTask(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
+      super(project, title, canBeCancelled);
+    }
+
+
+    protected void finish() {
+      DataOutputStream os = null;
+      try {
+        if (mySocket == null || mySocket.isClosed()) return;
+        os = new DataOutputStream(mySocket.getOutputStream());
+        os.writeBoolean(true);
+      }
+      catch (Throwable e) {
+        LOG.info(e);
+      }
+      finally {
+        try {
+          if (os != null) os.close();
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+
+        try {
+          if (!myServerSocket.isClosed()) {
+            myServerSocket.close();
+          }
+        }
+        catch (Throwable e) {
+          LOG.info(e);
+        }
+      }
+    }
+
+    @Override
+    public void onCancel() {
+      finish();
+    }
+
+    @Override
+    public DumbModeAction getDumbModeAction() {
+      return DumbModeAction.WAIT;
+    }
+  }
+  private class MySearchForTestsTask extends SearchForTestsTask {
     private final TestClassFilter myClassFilter;
     private final boolean[] myJunit4;
     private final THashSet<PsiClass> myClasses;
@@ -354,45 +409,6 @@ public class TestPackage extends TestObject {
     public void onSuccess() {
       myCallback.found(myClasses, myJunit4[0]);
       finish();
-    }
-
-    @Override
-    public void onCancel() {
-      finish();
-    }
-
-    @Override
-    public DumbModeAction getDumbModeAction() {
-      return DumbModeAction.WAIT;
-    }
-
-    private void finish() {
-      DataOutputStream os = null;
-      try {
-        if (mySocket == null || mySocket.isClosed()) return;
-        os = new DataOutputStream(mySocket.getOutputStream());
-        os.writeBoolean(true);
-      }
-      catch (Throwable e) {
-        LOG.info(e);
-      }
-      finally {
-        try {
-          if (os != null) os.close();
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-
-        try {
-          if (!myServerSocket.isClosed()) {
-            myServerSocket.close();
-          }
-        }
-        catch (Throwable e) {
-          LOG.info(e);
-        }
-      }
     }
   }
 

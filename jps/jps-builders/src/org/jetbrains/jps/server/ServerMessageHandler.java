@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RunnableFuture;
 
 /**
@@ -27,15 +26,16 @@ class ServerMessageHandler extends SimpleChannelHandler {
 
   private final Map<String, SequentialTaskExecutor> myTaskExecutors = new HashMap<String, SequentialTaskExecutor>();
   private final List<Pair<RunnableFuture, CompilationTask>> myBuildsInProgress = Collections.synchronizedList(new LinkedList<Pair<RunnableFuture, CompilationTask>>());
-  private final ExecutorService myBuildsExecutor;
   private final Server myServer;
+  private final AsyncTaskExecutor myAsyncExecutor;
 
-  public ServerMessageHandler(ExecutorService buildsExecutor, Server server) {
-    myBuildsExecutor = buildsExecutor;
+  public ServerMessageHandler(Server server, final AsyncTaskExecutor asyncExecutor) {
     myServer = server;
+    myAsyncExecutor = asyncExecutor;
   }
 
   public void messageReceived(final ChannelHandlerContext ctx, MessageEvent e) throws Exception {
+    myServer.pingReceived();
     final JpsRemoteProto.Message message = (JpsRemoteProto.Message)e.getMessage();
     final UUID sessionId = ProtoUtil.fromProtoUUID(message.getSessionId());
 
@@ -86,36 +86,14 @@ class ServerMessageHandler extends SimpleChannelHandler {
           break;
 
         case SHUTDOWN_COMMAND :
-          // todo pay attention to policy
-          myBuildsExecutor.submit(new Runnable() {
+          myAsyncExecutor.submit(new Runnable() {
             public void run() {
-              final List<RunnableFuture> futures = new ArrayList<RunnableFuture>();
-
-              synchronized (myBuildsInProgress) {
-                for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
-                  final Pair<RunnableFuture, CompilationTask> pair = it.next();
-                  it.remove();
-                  pair.second.cancel();
-                  final RunnableFuture future = pair.first;
-                  futures.add(future);
-                  future.cancel(true);
-                }
+              try {
+                cancelAllBuildsAndClearState();
               }
-
-              facade.clearCahedState();
-
-              // wait until really stopped
-              for (RunnableFuture future : futures) {
-                try {
-                  future.get();
-                }
-                catch (InterruptedException ignored) {
-                }
-                catch (ExecutionException ignored) {
-                }
+              finally {
+                myServer.stop();
               }
-
-              myServer.stop();
             }
           });
           break;
@@ -124,26 +102,64 @@ class ServerMessageHandler extends SimpleChannelHandler {
           final String projectId = fsEvent.getProjectId();
           final ProjectDescriptor pd = facade.getProjectDescriptor(projectId);
           if (pd != null) {
+            final boolean wasInterrupted = Thread.interrupted();
             try {
-              for (String path : fsEvent.getChangedPathsList()) {
-                facade.notifyFileChanged(pd, new File(path));
+              try {
+                for (String path : fsEvent.getChangedPathsList()) {
+                  facade.notifyFileChanged(pd, new File(path));
+                }
+                for (String path : fsEvent.getDeletedPathsList()) {
+                  facade.notifyFileDeleted(pd, new File(path));
+                }
               }
-              for (String path : fsEvent.getDeletedPathsList()) {
-                facade.notifyFileDeleted(pd, new File(path));
+              finally {
+                pd.release();
               }
             }
             finally {
-              pd.release();
+              if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+              }
             }
           }
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
+        case PING:
+          reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
         default:
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createFailure("Unknown request: " + message));
       }
     }
     if (reply != null) {
       Channels.write(ctx.getChannel(), reply);
+    }
+  }
+
+  public void cancelAllBuildsAndClearState() {
+    final List<RunnableFuture> futures = new ArrayList<RunnableFuture>();
+
+    synchronized (myBuildsInProgress) {
+      for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
+        final Pair<RunnableFuture, CompilationTask> pair = it.next();
+        it.remove();
+        pair.second.cancel();
+        final RunnableFuture future = pair.first;
+        futures.add(future);
+        future.cancel(false);
+      }
+    }
+
+    ServerState.getInstance().clearCahedState();
+
+    // wait until really stopped
+    for (RunnableFuture future : futures) {
+      try {
+        future.get();
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (ExecutionException ignored) {
+      }
     }
   }
 
@@ -155,7 +171,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
         if (task.getSessionId().equals(targetSessionId)) {
           it.remove();
           task.cancel();
-          pair.first.cancel(true);
+          pair.first.cancel(false);
           break;
         }
       }
@@ -210,12 +226,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
     synchronized (myTaskExecutors) {
       SequentialTaskExecutor executor = myTaskExecutors.get(projectId);
       if (executor == null) {
-        executor = new SequentialTaskExecutor(new SequentialTaskExecutor.AsyncTaskExecutor() {
-          @Override
-          public void submit(Runnable runnable) {
-            myBuildsExecutor.submit(runnable);
-          }
-        });
+        executor = new SequentialTaskExecutor(myAsyncExecutor);
         myTaskExecutors.put(projectId, executor);
       }
       return executor;
@@ -223,10 +234,12 @@ class ServerMessageHandler extends SimpleChannelHandler {
   }
 
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e) throws Exception {
-    if (this == ctx.getPipeline().getLast()) {
-      LOG.error(e);
-    }
+    LOG.error(e);
     ctx.sendUpstream(e);
+  }
+
+  public boolean hasRunningBuilds() {
+    return !myBuildsInProgress.isEmpty();
   }
 
   private class CompilationTask implements Runnable, CanceledStatus {
@@ -311,6 +324,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
         }, this);
       }
       catch (Throwable e) {
+        LOG.info(e);
         error = e;
       }
       finally {

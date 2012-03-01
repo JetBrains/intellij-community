@@ -1,6 +1,7 @@
 package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.*;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
@@ -9,10 +10,12 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.RequestFuture;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,6 +24,9 @@ import java.util.concurrent.atomic.AtomicReference;
  *         Date: 1/22/12
  */
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");
+  private final ExecutorService ourExecutor = Executors.newCachedThreadPool();
+
   private static enum State {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING
   }
@@ -31,9 +37,9 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   protected ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
-  public SimpleProtobufClient(final MessageLite msgDefaultInstance, final UUIDGetter uuidGetter) {
-    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter);
-    myChannelFactory = new NioClientSocketChannelFactory(Executors.newCachedThreadPool(), Executors.newCachedThreadPool(), 1);
+  public SimpleProtobufClient(final MessageLite msgDefaultInstance, final AsyncTaskExecutor asyncExec, final UUIDGetter uuidGetter) {
+    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this, asyncExec);
+    myChannelFactory = new NioClientSocketChannelFactory(ourExecutor, ourExecutor, 1);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -69,6 +75,12 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
 
         if (success) {
           myConnectFuture = future;
+          try {
+            onConnect();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
         else {
           final Throwable reason = future.getCause();
@@ -87,11 +99,24 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     return true;
   }
 
+  protected void onConnect() {
+  }
+  protected void beforeDisconnect() {
+  }
+  protected void onDisconnect() {
+  }
+
   public final void disconnect() {
     if (myState.compareAndSet(State.CONNECTED, State.DISCONNECTING)) {
       try {
         final ChannelFuture future = myConnectFuture;
         if (future != null) {
+          try {
+            beforeDisconnect();
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
           try {
             final ChannelFuture closeFuture = future.getChannel().close();
             closeFuture.awaitUninterruptibly();
@@ -104,6 +129,12 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
       finally {
         myConnectFuture = null;
         myState.compareAndSet(State.DISCONNECTING, State.DISCONNECTED);
+        try {
+          onDisconnect();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
     }
   }
@@ -115,23 +146,31 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   public final RequestFuture<T> sendMessage(final UUID messageId, MessageLite message, @Nullable final T responseHandler, @Nullable final RequestFuture.CancelAction<T> cancelAction) {
     final RequestFuture<T> requestFuture = new RequestFuture<T>(responseHandler, messageId, cancelAction);
     myMessageHandler.registerFuture(messageId, requestFuture);
-    final ChannelFuture channelFuture = Channels.write(myConnectFuture.getChannel(), message);
-    channelFuture.addListener(new ChannelFutureListener() {
-      public void operationComplete(ChannelFuture future) throws Exception {
-        if (!future.isSuccess()) {
-          try {
-            myMessageHandler.removeFuture(messageId);
-            if (responseHandler != null) {
-              responseHandler.sessionTerminated();
-            }
-          }
-          finally {
-            requestFuture.setDone();
+    final Channel channel = myConnectFuture.getChannel();
+    if (channel.isConnected()) {
+      Channels.write(channel, message).addListener(new ChannelFutureListener() {
+        public void operationComplete(ChannelFuture future) throws Exception {
+          if (!future.isSuccess()) {
+            notifyTerminated(messageId, requestFuture, responseHandler);
           }
         }
-      }
-    });
+      });
+    }
+    else {
+      notifyTerminated(messageId, requestFuture, responseHandler);
+    }
     return requestFuture;
   }
 
+  private void notifyTerminated(UUID messageId, RequestFuture<T> requestFuture, @Nullable T responseHandler) {
+    try {
+      myMessageHandler.removeFuture(messageId);
+      if (responseHandler != null) {
+        responseHandler.sessionTerminated();
+      }
+    }
+    finally {
+      requestFuture.setDone();
+    }
+  }
 }

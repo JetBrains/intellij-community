@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.designer.model.MetaModel;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -34,6 +35,8 @@ public final class Item implements PaletteItem {
   private String myIconPath;
   private Icon myIcon;
   private String myTooltip;
+
+  private MetaModel myMetaModel;
 
   public Item(String title, String iconPath, String tooltip) {
     myTitle = title;
@@ -66,11 +69,19 @@ public final class Item implements PaletteItem {
 
   @Override
   public ActionGroup getPopupActionGroup() {
-    return (ActionGroup)ActionManager.getInstance().getAction("Designer.PaletteItemPopupMenu");
+    return null; // TODO: Auto-generated method stub
   }
 
   @Override
   public Object getData(Project project, String dataId) {
-    return null;  // TODO: Auto-generated method stub
+    return null; // TODO: Auto-generated method stub
+  }
+
+  public MetaModel getMetaModel() {
+    return myMetaModel;
+  }
+
+  public void setMetaModel(MetaModel metaModel) {
+    myMetaModel = metaModel;
   }
 }

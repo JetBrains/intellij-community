@@ -30,24 +30,29 @@ public abstract class AbstractProjectComponent implements ProjectComponent {
     myProject = project;
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return getClass().getName();
   }
 
+  @Override
   public void initComponent() {
 
   }
 
+  @Override
   public void disposeComponent() {
 
   }
 
+  @Override
   public void projectOpened() {
 
   }
 
+  @Override
   public void projectClosed() {
 
   }

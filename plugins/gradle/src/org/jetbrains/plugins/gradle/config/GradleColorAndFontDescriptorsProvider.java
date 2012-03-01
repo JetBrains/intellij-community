@@ -20,11 +20,11 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
   private static final AttributesDescriptor[] DESCRIPTORS = {
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.conflict"),
-      GradleTextAttributes.GRADLE_CHANGE_CONFLICT
+      GradleTextAttributes.CHANGE_CONFLICT
     ),
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.confirmed"),
-      GradleTextAttributes.GRADLE_CONFIRMED_CONFLICT
+      GradleTextAttributes.CONFIRMED_CONFLICT
     ),
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.gradle"),
@@ -36,7 +36,7 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
     ),
     new AttributesDescriptor(
       GradleBundle.message("gradle.sync.change.type.unchanged"),
-      GradleTextAttributes.GRADLE_NO_CHANGE
+      GradleTextAttributes.NO_CHANGE
     )
   };
 

@@ -393,8 +393,8 @@ public class FindDialog extends DialogWrapper {
   private JComponent createFilterPanel() {
     JPanel filterPanel = new JPanel();
     filterPanel.setLayout(new BorderLayout());
-    filterPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.filter.file.name.group"), false,
-                                                              true, true));
+    filterPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.filter.file.name.group"),
+                                                              true));
 
     myFileFilter = new ComboBox(100);
     initCombobox(myFileFilter);
@@ -578,7 +578,7 @@ public class FindDialog extends DialogWrapper {
 
   private JPanel createFindOptionsPanel() {
     JPanel findOptionsPanel = new JPanel();
-    findOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group"), false, true, true));
+    findOptionsPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.options.group"), true));
     findOptionsPanel.setLayout(new BoxLayout(findOptionsPanel, BoxLayout.Y_AXIS));
 
     myCbCaseSensitive = createCheckbox(FindBundle.message("find.options.case.sensitive"));
@@ -701,7 +701,7 @@ public class FindDialog extends DialogWrapper {
 
   private JPanel createDirectionPanel() {
     JPanel directionPanel = new JPanel();
-    directionPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.direction.group"), false, true, true));
+    directionPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.direction.group"), true));
     directionPanel.setLayout(new BoxLayout(directionPanel, BoxLayout.Y_AXIS));
 
     myRbForward = new JRadioButton(FindBundle.message("find.direction.forward.radio"), true);
@@ -718,7 +718,7 @@ public class FindDialog extends DialogWrapper {
   private JComponent createGlobalScopePanel() {
     JPanel scopePanel = new JPanel();
     scopePanel.setLayout(new GridBagLayout());
-    scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group"), false, true, true));
+    scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group"), true));
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.anchor = GridBagConstraints.WEST;
@@ -902,7 +902,7 @@ public class FindDialog extends DialogWrapper {
 
   private JPanel createScopePanel() {
     JPanel scopePanel = new JPanel();
-    scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group"), false, true, true));
+    scopePanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.scope.group"), true));
     scopePanel.setLayout(new BoxLayout(scopePanel, BoxLayout.Y_AXIS));
 
     myRbGlobal = new JRadioButton(FindBundle.message("find.scope.global.radio"), true);
@@ -927,7 +927,7 @@ public class FindDialog extends DialogWrapper {
 
   private JPanel createOriginPanel() {
     JPanel originPanel = new JPanel();
-    originPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.origin.group"), false, true, true));
+    originPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.origin.group"), true));
     originPanel.setLayout(new BoxLayout(originPanel, BoxLayout.Y_AXIS));
 
     myRbFromCursor = new JRadioButton(FindBundle.message("find.origin.from.cursor.radio"), true);

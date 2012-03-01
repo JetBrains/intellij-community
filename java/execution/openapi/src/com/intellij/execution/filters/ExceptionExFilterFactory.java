@@ -113,7 +113,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
 
     @Override
     public String getUpdateMessage() {
-      return "Highlighting try blocks";
+      return "Highlighting try blocks...";
     }
   }
 }

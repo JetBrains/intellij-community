@@ -179,7 +179,7 @@ public class ActivateTaskDialog extends DialogWrapper {
         }
       }
     }
-    myMarkAsInProgressBox.setSelected(myMarkAsInProgress && isMarkAsInProgressApplicable());
+    myMarkAsInProgressBox.setSelected(myMarkAsInProgress);
 
     // refresh change lists
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);

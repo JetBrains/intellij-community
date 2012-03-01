@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ import java.nio.BufferUnderflowException;
 import java.nio.BufferOverflowException;
 
 class Native2AsciiCharsetEncoder extends CharsetEncoder {
+
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  private static final char ANCHOR = Boolean.getBoolean("idea.native2ascii.lowercase") ? 'a' : 'A';
+  
   private final Charset myBaseCharset;
 
   public Native2AsciiCharsetEncoder(Native2AsciiCharset charset) {
@@ -70,6 +74,6 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
     if (digit < 10) {
       return (byte)('0' + digit);
     }
-    return (byte)('A' - 10 + digit);
+    return (byte)(ANCHOR - 10 + digit);
   }
 }

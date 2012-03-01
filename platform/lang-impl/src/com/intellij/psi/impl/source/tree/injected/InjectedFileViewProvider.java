@@ -21,16 +21,15 @@ import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -55,7 +54,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
                            @NotNull Language language) {
     super(psiManager, (VirtualFile)virtualFile, true, language);
     myDocumentWindow = documentWindow;
-    myProject = documentWindow.getShreds().get(0).host.getProject();
+    myProject = documentWindow.getShreds().get(0).getHost().getProject();
   }
 
   @Override
@@ -73,10 +72,11 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
       String change = changes[i];
       if (change != null) {
         PsiLanguageInjectionHost.Shred shred = shreds.get(i);
-        PsiLanguageInjectionHost host = shred.host;
+        PsiLanguageInjectionHost host = shred.getHost();
         TextRange rangeInsideHost = shred.getRangeInsideHost();
         String newHostText = StringUtil.replaceSubstring(host.getText(), rangeInsideHost, change);
-        shred.host = host.updateText(newHostText);
+        //shred.host =
+          host.updateText(newHostText);
       }
     }
   }
@@ -89,7 +89,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
     final Language hostFileLanguage = getPsi(getBaseLanguage()).getContext().getContainingFile().getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
-    RangeMarker firstTextRange = oldDocumentWindow.getHostRanges()[0];
+    Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
     PsiElement elementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
     assert elementCopy != null;
     final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
@@ -103,15 +103,6 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
       }
     });
     return provider.get();
-  }
-
-  @Override
-  @Nullable
-  protected PsiFile getPsiInner(Language target) {
-    // when FileManager rebuilds file map, all files temporarily become invalid, so this check is doomed
-    PsiFile file = super.getPsiInner(target);
-    //if (file == null || file.getContext() == null) return null;
-    return file;
   }
 
   // returns true if shreds were set, false if old ones were reused

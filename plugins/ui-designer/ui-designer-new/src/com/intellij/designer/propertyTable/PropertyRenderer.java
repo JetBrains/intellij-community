@@ -16,6 +16,8 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -23,19 +25,8 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public interface PropertyRenderer {
-  /**
-   * @return <code>JComponent</code> to represent the <code>value</code>
-   *         somewhere in UI (for example in the JList of in the JTree). To be
-   *         consistent with other UI additional parameter abount selection and
-   *         focus are also passed.
-   */
-  JComponent getComponent(RadComponent component, Object value, boolean selected, boolean hasFocus);
+  @NotNull
+  JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus);
 
-  /**
-   * Renderer should update UI of all its internal components to fit current
-   * IDEA Look And Feel. We cannot directly update UI of the component
-   * that is returned by {@link #getComponent } method
-   * because hidden component that are not in the Swing tree can exist.
-   */
   void updateUI();
 }

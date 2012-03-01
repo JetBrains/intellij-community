@@ -99,11 +99,13 @@ public class GradleContentRoot extends AbstractGradleEntity {
 
   @Override
   public String toString() {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder("content root:");
     for (Map.Entry<SourceType, Collection<String>> entry : myData.entrySet()) {
-      buffer.append(entry.getKey().toString().toLowerCase()).append(": ").append(entry.getValue()).append("; ");
+      buffer.append(entry.getKey().toString().toLowerCase()).append("=").append(entry.getValue()).append("|");
     }
-    buffer.setLength(buffer.length() - 2);
+    if (!myData.isEmpty()) {
+      buffer.setLength(buffer.length() - 1);
+    }
     return buffer.toString();
   }
 

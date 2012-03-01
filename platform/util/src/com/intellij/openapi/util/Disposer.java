@@ -114,8 +114,11 @@ public class Disposer {
   }
 
   public static void assertIsEmpty() {
+    assertIsEmpty(false);
+  }
+  public static void assertIsEmpty(boolean throwError) {
     if (ourDebugMode) {
-      ourTree.assertIsEmpty();
+      ourTree.assertIsEmpty(throwError);
     }
   }
 

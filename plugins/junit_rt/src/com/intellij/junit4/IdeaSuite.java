@@ -86,19 +86,23 @@ class IdeaSuite extends Suite {
     }
     for (Iterator iterator = children.iterator(); iterator.hasNext();) {
       final Object child = iterator.next();
-      if (child instanceof Suite || child instanceof SuiteMethod) {
+      if (isSuite(child)) {
         skipSuiteComponents(allNames, child);
       }
     }
 
     for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
       Object child = iterator.next();
-      if (!allNames.contains(describeChild((Runner)child).getDisplayName())) {
+      if (!isSuite(child) && !allNames.contains(describeChild((Runner)child).getDisplayName())) {
         iterator.remove();
       }
     }
 
     return children;
+  }
+
+  private static boolean isSuite(Object child) {
+    return child instanceof Suite || child instanceof SuiteMethod;
   }
 
   private void skipSuiteComponents(Set allNames, Object child) {

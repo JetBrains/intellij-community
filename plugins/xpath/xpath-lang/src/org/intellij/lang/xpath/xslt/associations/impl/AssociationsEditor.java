@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -128,7 +126,7 @@ class AssociationsEditor {
     myComponent.add(mySplitter, BorderLayout.CENTER);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT Files", false, false, true, new Insets(0, 0, 0, 0)));
+    leftPanel.setBorder(IdeBorderFactory.createTitledBorder("Project XSLT Files", false, new Insets(0, 0, 0, 0)));
     myTree = new Tree();
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
@@ -136,7 +134,7 @@ class AssociationsEditor {
     mySplitter.setFirstComponent(leftPanel);
 
     JPanel rightPanel = new JPanel(new BorderLayout());
-    rightPanel.setBorder(IdeBorderFactory.createTitledBorder("Associated Files", false, false, true, new Insets(0, 0, 0, 0)));
+    rightPanel.setBorder(IdeBorderFactory.createTitledBorder("Associated Files", false, new Insets(0, 0, 0, 0)));
     myToolbar = new JPanel(new GridLayoutManager(1, 1));
     rightPanel.add(myToolbar, BorderLayout.NORTH);
     myList = new JBList();

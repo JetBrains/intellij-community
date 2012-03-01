@@ -26,15 +26,7 @@ public class GradleModuleDependencyPresenceChange extends GradleEntityPresenceCh
   }
 
   @Nullable
-  private static GradleModuleDependencyId of(@Nullable GradleModuleDependency dependency) {
-    if (dependency == null) {
-      return null;
-    }
-    return GradleEntityIdMapper.mapEntityToId(dependency);
-  }
-
-  @Nullable
-  private static GradleModuleDependencyId of(@Nullable ModuleOrderEntry dependency) {
+  private static GradleModuleDependencyId of(@Nullable Object dependency) {
     if (dependency == null) {
       return null;
     }

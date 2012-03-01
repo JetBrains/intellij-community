@@ -37,11 +37,11 @@ public class AlphaComponent extends JComponent {
     myBorderColor = borderColor;
   }
 
-  protected void paintComponent(final Graphics g) {
+  protected void paintComponent(Graphics g) {
     Graphics2D g2d = (Graphics2D)g;
     super.paintComponent(g);
-    final Composite oldComposite = g2d.getComposite();
-    final Color oldColor = g2d.getColor();
+    Composite oldComposite = g2d.getComposite();
+    Color oldColor = g2d.getColor();
 
     g2d.setColor(myColor);
     g2d.setComposite(myComposite1);

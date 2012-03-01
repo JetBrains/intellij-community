@@ -91,12 +91,12 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void before(List<? extends VFileEvent> events) {
+  public void before(@NotNull List<? extends VFileEvent> events) {
     // everything is handled in #after()
   }
 
   @Override
-  public void after(List<? extends VFileEvent> events) {
+  public void after(@NotNull List<? extends VFileEvent> events) {
     // which files in .git were changed
     boolean configChanged = false;
     boolean headChanged = false;

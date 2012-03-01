@@ -142,7 +142,7 @@ public class UiUtils {
         }
       }).createPanel();
     optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
-                                                               false, false, true, new Insets(10, 0, 0, 0)));
+                                                               false, new Insets(10, 0, 0, 0)));
     optionsPanel.add(panel);
     return optionsPanel;
   }

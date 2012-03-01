@@ -1,5 +1,6 @@
 package org.jetbrains.android.util;
 
+import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
@@ -41,6 +42,12 @@ public class AndroidCommonUtils {
   public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
   @NonNls public static final String PNG_EXTENSION = "png";
   private static final String[] DRAWABLE_EXTENSIONS = new String[]{PNG_EXTENSION, "jpg", "gif"};
+
+  @NonNls public static final String RELEASE_BUILD_OPTION = "RELEASE_BUILD_KEY";
+  @NonNls public static final String LIGHT_BUILD_OPTION = "LIGHT_BUILD_KEY";
+  @NonNls public static final String PROGUARD_CFG_PATH_OPTION = "ANDROID_PROGUARD_CFG_PATH";
+  @NonNls public static final String DIRECTORY_FOR_LOGS_NAME = "proguard_logs";
+  @NonNls public static final String PROGUARD_OUTPUT_JAR_NAME = "obfuscated_sources.jar";
 
   private AndroidCommonUtils() {
   }
@@ -260,5 +267,84 @@ public class AndroidCommonUtils {
       tagName = "array";
     }
     return tagName;
+  }
+
+  @NotNull
+  public static Map<AndroidCompilerMessageKind, List<String>> launchProguard(@NotNull IAndroidTarget target,
+                                                                              @NotNull String sdkOsPath,
+                                                                              @NotNull String proguardConfigFileOsPath,
+                                                                              @NotNull String inputJarOsPath,
+                                                                              @NotNull String[] externalJarOsPaths,
+                                                                              @NotNull String outputJarFileOsPath,
+                                                                              @Nullable String logDirOutputOsPath) throws IOException {
+
+    final List<String> commands = new ArrayList<String>();
+    final String toolOsPath = sdkOsPath + File.separator + SdkConstants.OS_SDK_TOOLS_PROGUARD_BIN_FOLDER + SdkConstants.FN_PROGUARD;
+
+    commands.add(toolOsPath);
+    commands.add("@" + quotePath(proguardConfigFileOsPath));
+
+    commands.add("-injars");
+
+    StringBuilder builder = new StringBuilder(quotePath(inputJarOsPath));
+
+    for (String jarFile : externalJarOsPaths) {
+      builder.append(File.pathSeparatorChar);
+      builder.append(quotePath(jarFile));
+    }
+    commands.add(builder.toString());
+
+    commands.add("-outjars");
+    commands.add(quotePath(outputJarFileOsPath));
+
+    commands.add("-libraryjars");
+
+    builder = new StringBuilder(quotePath(target.getPath(IAndroidTarget.ANDROID_JAR)));
+
+    IAndroidTarget.IOptionalLibrary[] libraries = target.getOptionalLibraries();
+    if (libraries != null) {
+      for (IAndroidTarget.IOptionalLibrary lib : libraries) {
+        builder.append(File.pathSeparatorChar);
+        builder.append(quotePath(lib.getJarPath()));
+      }
+    }
+    commands.add(builder.toString());
+
+    if (logDirOutputOsPath != null) {
+      commands.add("-dump");
+      commands.add(quotePath(new File(logDirOutputOsPath, "dump.txt").getAbsolutePath()));
+
+      commands.add("-printseeds");
+      commands.add(quotePath(new File(logDirOutputOsPath, "seeds.txt").getAbsolutePath()));
+
+      commands.add("-printusage");
+      commands.add(quotePath(new File(logDirOutputOsPath, "usage.txt").getAbsolutePath()));
+
+      commands.add("-printmapping");
+      commands.add(quotePath(new File(logDirOutputOsPath, "mapping.txt").getAbsolutePath()));
+    }
+
+    LOG.info(command2string(commands));
+    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(commands));
+  }
+
+  private static String quotePath(String path) {
+    if (path.indexOf(' ') != -1) {
+      path = '\'' + path + '\'';
+    }
+    return path;
+  }
+
+  public static String buildTempInputJar(@NotNull String[] classFilesDirOsPaths, @NotNull String[] libClassFilesDirOsPaths)
+    throws IOException {
+    final File inputJar = FileUtil.createTempFile("proguard_input", ".jar");
+
+    packClassFilesIntoJar(classFilesDirOsPaths, libClassFilesDirOsPaths, inputJar);
+
+    return FileUtil.toSystemDependentName(inputJar.getPath());
+  }
+
+  public static String toolPath(@NotNull String toolFileName) {
+    return SdkConstants.OS_SDK_TOOLS_FOLDER + toolFileName;
   }
 }

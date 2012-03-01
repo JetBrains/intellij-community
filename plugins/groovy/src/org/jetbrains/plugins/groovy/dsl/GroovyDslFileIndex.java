@@ -114,26 +114,34 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     });
   }
 
+  @Override
+  @NotNull
   public ID<String, Void> getName() {
     return NAME;
   }
 
+  @Override
+  @NotNull
   public DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
+  @Override
   public KeyDescriptor<String> getKeyDescriptor() {
     return myKeyDescriptor;
   }
 
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
+  @Override
   public boolean dependsOnFileContent() {
     return false;
   }
 
+  @Override
   public int getVersion() {
     return 0;
   }
@@ -393,6 +401,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
 
+    @Override
     @NotNull
     public Map<String, Void> map(final FileContent inputData) {
       return Collections.singletonMap(OUR_KEY, null);
@@ -400,6 +409,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   }
 
   private static class MyInputFilter implements FileBasedIndex.InputFilter {
+    @Override
     public boolean acceptInput(final VirtualFile file) {
       return "gdsl".equals(file.getExtension());
     }
@@ -413,6 +423,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     final String fileUrl = vfile.getUrl();
 
     final Runnable parseScript = new Runnable() {
+      @Override
       public void run() {
         GroovyDslExecutor executor = getCachedExecutor(vfile, stamp);
         try {
@@ -502,6 +513,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     String content = "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>";
     NOTIFICATION_GROUP.createNotification("DSL script execution error", content, NotificationType.ERROR,
                                           new NotificationListener() {
+                                            @Override
                                             public void hyperlinkUpdate(@NotNull Notification notification,
                                                                         @NotNull HyperlinkEvent event) {
                                               GroovyDslAnnotator.analyzeStackTrace(project, exceptionText);

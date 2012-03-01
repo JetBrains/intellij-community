@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -56,9 +54,8 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
   private final JTextField myNumPostfixes = new JTextField(5);
   private final JBList[] myKeywordsLists = new JBList[]{new JBList(), new JBList(), new JBList(), new JBList()};
-  private final DefaultListModel[] myKeywordModels = new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
-  private final JButton[] myAddKeywordButtons = new JButton[4];
-  private final JButton[] myRemoveKeywordButtons = new JButton[4];
+  private final DefaultListModel[] myKeywordModels =
+    new DefaultListModel[]{new DefaultListModel(), new DefaultListModel(), new DefaultListModel(), new DefaultListModel()};
 
   public CustomFileTypeEditor() {
     myLineComment.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -113,7 +110,8 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     if (myFileTypeName.getText().trim().length() == 0) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
                                        CommonBundle.getErrorTitle());
-    } else if (myFileTypeDescr.getText().trim().length() == 0) {
+    }
+    else if (myFileTypeDescr.getText().trim().length() == 0) {
       myFileTypeDescr.setText(myFileTypeName.getText());
     }
     type.setName(myFileTypeName.getText());
@@ -160,7 +158,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     fileTypePanel.add(info, BorderLayout.NORTH);
 
     JPanel highlighterPanel = new JPanel();
-    highlighterPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.syntax.highlighting"), false, false, true));
+    highlighterPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("group.customfiletype.syntax.highlighting"), false));
     highlighterPanel.setLayout(new BorderLayout());
     JPanel commentsAndNumbersPanel = new JPanel();
     commentsAndNumbersPanel.setLayout(new GridBagLayout());
@@ -195,7 +193,8 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     highlighterPanel.add(_panel1, BorderLayout.NORTH);
 
     TabbedPaneWrapper tabbedPaneWrapper = new TabbedPaneWrapper(this);
-    tabbedPaneWrapper.getComponent().setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords"), false, false, true));
+    tabbedPaneWrapper.getComponent().setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("listbox.customfiletype.keywords"),
+                                                                                   false));
     tabbedPaneWrapper.addTab(" 1 ", createKeywordsPanel(0));
     tabbedPaneWrapper.addTab(" 2 ", createKeywordsPanel(1));
     tabbedPaneWrapper.addTab(" 3 ", createKeywordsPanel(2));
@@ -222,43 +221,30 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   private JPanel createKeywordsPanel(final int index) {
-    JPanel keywordsPanel = new JPanel();
-    keywordsPanel.setLayout(new BorderLayout());
-
-    keywordsPanel.add(ScrollPaneFactory.createScrollPane(myKeywordsLists[index]), BorderLayout.CENTER);
-
-    DialogButtonGroup buttonGroup = new DialogButtonGroup();
-    buttonGroup.setBorder(BorderFactory.createEmptyBorder(0, 10, 5, 0));
-
-    myAddKeywordButtons[index] = new JButton(IdeBundle.message("button.add"));
-    myAddKeywordButtons[index].addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ModifyKeywordDialog dialog = new ModifyKeywordDialog(myAddKeywordButtons[index], "");
-        dialog.show();
-        if (dialog.isOK()) {
-          String keywordName = dialog.getKeywordName();
-          if (!myKeywordModels[index].contains(keywordName)) myKeywordModels[index].addElement(keywordName);
+    JPanel panel = ToolbarDecorator.createDecorator(myKeywordsLists[index])
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], "");
+          dialog.show();
+          if (dialog.isOK()) {
+            String keywordName = dialog.getKeywordName();
+            if (!myKeywordModels[index].contains(keywordName)) myKeywordModels[index].addElement(keywordName);
+          }
         }
-      }
-    });
-    buttonGroup.addButton(myAddKeywordButtons[index]);
-
-    myRemoveKeywordButtons[index] = new JButton(IdeBundle.message("button.remove"));
-    myRemoveKeywordButtons[index].addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ListUtil.removeSelectedItems(myKeywordsLists[index]);
-      }
-    });
-
-    buttonGroup.addButton(myRemoveKeywordButtons[index]);
-
-    keywordsPanel.add(buttonGroup, BorderLayout.EAST);
-    return keywordsPanel;
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          ListUtil.removeSelectedItems(myKeywordsLists[index]);
+        }
+      }).disableUpDownActions().createPanel();
+    panel.setBorder(null);
+    return panel;
   }
 
   private void edit(int index) {
     if (myKeywordsLists[index].getSelectedIndex() == -1) return;
-    ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], (String) myKeywordsLists[index].getSelectedValue());
+    ModifyKeywordDialog dialog = new ModifyKeywordDialog(myKeywordsLists[index], (String)myKeywordsLists[index].getSelectedValue());
     dialog.show();
     if (dialog.isOK()) {
       myKeywordModels[index].setElementAt(dialog.getKeywordName(), myKeywordsLists[index].getSelectedIndex());
@@ -284,30 +270,34 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
     for (int i = 0; i < myKeywordModels[0].size(); i++) {
       if (ignoreCase) {
-        syntaxTable.addKeyword1(((String) myKeywordModels[0].getElementAt(i)).toLowerCase());
-      } else {
-        syntaxTable.addKeyword1((String) myKeywordModels[0].getElementAt(i));
+        syntaxTable.addKeyword1(((String)myKeywordModels[0].getElementAt(i)).toLowerCase());
+      }
+      else {
+        syntaxTable.addKeyword1((String)myKeywordModels[0].getElementAt(i));
       }
     }
     for (int i = 0; i < myKeywordModels[1].size(); i++) {
       if (ignoreCase) {
-        syntaxTable.addKeyword2(((String) myKeywordModels[1].getElementAt(i)).toLowerCase());
-      } else {
-        syntaxTable.addKeyword2((String) myKeywordModels[1].getElementAt(i));
+        syntaxTable.addKeyword2(((String)myKeywordModels[1].getElementAt(i)).toLowerCase());
+      }
+      else {
+        syntaxTable.addKeyword2((String)myKeywordModels[1].getElementAt(i));
       }
     }
     for (int i = 0; i < myKeywordModels[2].size(); i++) {
       if (ignoreCase) {
-        syntaxTable.addKeyword3(((String) myKeywordModels[2].getElementAt(i)).toLowerCase());
-      } else {
-        syntaxTable.addKeyword3((String) myKeywordModels[2].getElementAt(i));
+        syntaxTable.addKeyword3(((String)myKeywordModels[2].getElementAt(i)).toLowerCase());
+      }
+      else {
+        syntaxTable.addKeyword3((String)myKeywordModels[2].getElementAt(i));
       }
     }
     for (int i = 0; i < myKeywordModels[3].size(); i++) {
       if (ignoreCase) {
-        syntaxTable.addKeyword4(((String) myKeywordModels[3].getElementAt(i)).toLowerCase());
-      } else {
-        syntaxTable.addKeyword4((String) myKeywordModels[3].getElementAt(i));
+        syntaxTable.addKeyword4(((String)myKeywordModels[3].getElementAt(i)).toLowerCase());
+      }
+      else {
+        syntaxTable.addKeyword4((String)myKeywordModels[3].getElementAt(i));
       }
     }
     return syntaxTable;

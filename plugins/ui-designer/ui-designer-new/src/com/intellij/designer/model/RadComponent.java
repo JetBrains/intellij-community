@@ -19,12 +19,15 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.util.containers.hash.HashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +40,12 @@ public abstract class RadComponent {
   private RadComponent myParent;
   private RadLayout myLayout;
   private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // MetaModel
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   public MetaModel getMetaModel() {
     return myMetaModel;
@@ -97,6 +106,8 @@ public abstract class RadComponent {
   public void processDropOperation(OperationContext context) {
   }
 
+  public void addSelectionActions(DefaultActionGroup actionGroup, JComponent shortcuts, List<RadComponent> selection) {
+  }
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // layout
@@ -123,7 +134,7 @@ public abstract class RadComponent {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public List<Property> getProperties() {
-    return null;
+    return Collections.emptyList();
   }
 
   public final Object getClientProperty(@NotNull Object key) {
@@ -156,5 +167,50 @@ public abstract class RadComponent {
       }
       visitor.endVisit(this);
     }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Operations
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public boolean canDelete() {
+    return true;
+  }
+
+  public void delete() throws Exception {
+  }
+
+  public void copyTo(Element parentElement) throws Exception {
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Utils
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public static boolean isParentsContainedIn(List<RadComponent> components, RadComponent component) {
+    RadComponent parent = component.getParent();
+    while (parent != null) {
+      if (components.contains(parent)) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
+  }
+
+  public static List<RadComponent> getPureSelection(List<RadComponent> selection) {
+    List<RadComponent> components = new ArrayList<RadComponent>();
+
+    for (RadComponent component : selection) {
+      if (!isParentsContainedIn(selection, component)) {
+        components.add(component);
+      }
+    }
+
+    return components;
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -97,10 +98,13 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     final int lineNumber = document.getLineNumber(caret);
+
+
     final int lineStartOffset = document.getLineStartOffset(lineNumber);
+    final int previousLineStartOffset = lineNumber > 0 ? document.getLineStartOffset(lineNumber - 1) : lineStartOffset;
     final EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     final HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    final IElementType type = getNonWhitespaceElementType(iterator, lineStartOffset);
+    final IElementType type = getNonWhitespaceElementType(iterator, previousLineStartOffset);
 
     final CharSequence editorCharSequence = editor.getDocument().getCharsSequence();
     final CharSequence lineIndent =
@@ -116,18 +120,23 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
 
-    if (myIndentTokens.contains(type)) {
-      final String singleIndent = getSingleIndent(file);
-      EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + singleIndent);
+    if (LanguageFormatting.INSTANCE.forLanguage(myLanguage) != null) {
+      return Result.Continue;
+    }
+    else {
+      if (myIndentTokens.contains(type)) {
+        final String singleIndent = getSingleIndent(file);
+        EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + singleIndent);
+        return Result.Stop;
+      }
+
+      EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, lineIndent.length()));
       return Result.Stop;
     }
-
-    EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
-    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, lineIndent.length()));
-    return Result.Stop;
   }
 
-  protected String getSingleIndent(final PsiFile file) {
+  protected static String getSingleIndent(final PsiFile file) {
     CodeStyleSettings currantSettings = CodeStyleSettingsManager.getSettings(file.getProject());
     CommonCodeStyleSettings.IndentOptions indentOptions = currantSettings.getIndentOptions(file.getFileType());
     return StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);

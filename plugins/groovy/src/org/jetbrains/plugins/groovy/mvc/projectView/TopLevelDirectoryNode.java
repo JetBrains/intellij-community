@@ -36,7 +36,7 @@ public class TopLevelDirectoryNode extends AbstractFolderNode {
                                String title,
                                Icon icon,
                                int weight) {
-    super(module, directory, directory, title, viewSettings, weight);
+    super(module, directory, directory.getName(), title, viewSettings, weight);
     myTitle = title;
     myIcon = icon;
   }

@@ -85,7 +85,7 @@ public class InjectedLanguageUtil {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
-          if (place.host == inTree) {
+          if (place.getHost() == inTree) {
             result.add(new Pair<PsiElement, TextRange>(injectedPsi, place.getRangeInsideHost()));
           }
         }
@@ -238,7 +238,7 @@ public class InjectedLanguageUtil {
         for (Pair<Place, PsiFile> pair : places) {
           Place place = pair.first;
           for (PsiLanguageInjectionHost.Shred shred : place) {
-            if (shred.host.getTextRange().intersects(elementRange)) {
+            if (shred.getHost().getTextRange().intersects(elementRange)) {
               if (place.isValid()) break nextParent;
             }
           }
@@ -310,7 +310,7 @@ public class InjectedLanguageUtil {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         for (PsiLanguageInjectionHost.Shred place : places) {
-          TextRange hostRange = place.host.getTextRange();
+          TextRange hostRange = place.getHost().getTextRange();
           if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(hostOffset)) {
             DocumentWindowImpl document = (DocumentWindowImpl)documentManager.getCachedDocument(injectedPsi);
             if (document == null) return;

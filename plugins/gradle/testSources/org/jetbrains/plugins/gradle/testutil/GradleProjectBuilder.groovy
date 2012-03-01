@@ -7,6 +7,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType
 import com.intellij.pom.java.LanguageLevel
 import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency
+import org.jetbrains.plugins.gradle.model.gradle.GradleContentRoot
 
 /** 
  * @author Denis Zhdanov
@@ -31,6 +32,13 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
   protected registerModule(module) {
     project.addModule(module)
     module
+  }
+
+  @Override
+  protected createContentRoot(module, rootPath, Map paths) {
+    def result = new GradleContentRoot(module, rootPath)
+    module.addContentRoot(result)
+    return result
   }
 
   @Override
@@ -64,6 +72,6 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected reset() {
-    modulesCache.values().each { it.clearDependencies() }
+    modulesCache.values().each { it.clearDependencies(); it.clearContentRoots() }
   }
 }

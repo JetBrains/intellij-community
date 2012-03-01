@@ -107,6 +107,9 @@ public class SvnChangeProvider implements ChangeProvider {
       LOG.info(e);
       throw new VcsException(e.getCause());
     } catch (SVNException e) {
+      if (e.getCause() != null) {
+        throw new VcsException(e.getMessage() + e.getCause().getMessage(), e);
+      }
       throw new VcsException(e);
     }
   }

@@ -65,8 +65,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     if (cancelled.compute()) {
       throw new ProcessCanceledException();
     }
-    // Here we sort using namePattern to have similar logic with empty qualified patten case
-    Collections.sort(namesList, new MatchesComparator(namePattern));
+    sortNamesList(namePattern, namesList);
+
 
     List<Object> sameNameElements = new SmartList<Object>();
 
@@ -93,8 +93,18 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
+  protected void sortNamesList(String namePattern, List<String> namesList) {
+    // Here we sort using namePattern to have similar logic with empty qualified patten case
+    Collections.sort(namesList, new MatchesComparator(namePattern));
+  }
+
   private void sortByProximity(ChooseByNameBase base, final List<Object> sameNameElements) {
-    Collections.sort(sameNameElements, new PathProximityComparator(base.getModel(), myContext.get()));
+    final ChooseByNameModel model = base.getModel();
+    if (model instanceof Comparator) {
+      Collections.sort(sameNameElements, (Comparator)model);
+    } else {
+      Collections.sort(sameNameElements, new PathProximityComparator(model, myContext.get()));
+    }
   }
 
   private static String getQualifierPattern(ChooseByNameBase base, String pattern) {

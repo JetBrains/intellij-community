@@ -14,6 +14,8 @@ import com.intellij.openapi.roots.OrderRootType
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.ModuleOrderEntry
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot
+import com.intellij.openapi.roots.ContentEntry
 
 /** 
  * @author Denis Zhdanov
@@ -57,6 +59,11 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   protected registerModule(Object module) { }
 
   @Override
+  protected createContentRoot(module, rootPath, Map paths) {
+    new ModuleAwareContentRoot(module, [ getFile: {asVirtualFile(rootPath)} ] as ContentEntry)
+  }
+
+  @Override
   protected createModuleDependency(ownerModule, targetModule) {
     def stub = [:]
     def result = stub as ModuleOrderEntry
@@ -74,10 +81,8 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
       getName: { name },
       getPresentableName: { name },
       getFiles: {
-        type -> (libraryPaths[name])[LIBRARY_ENTRY_TYPES[type]].findAll { it }.collect {
-          String path = it
-          [getPath: { GradleUtil.toCanonicalPath(path) }] as VirtualFile
-        }.toArray(DUMMY_VIRTUAL_FILE_ARRAY)
+        type ->
+          (libraryPaths[name])[LIBRARY_ENTRY_TYPES[type]].findAll { it }.collect { asVirtualFile(it) }.toArray(DUMMY_VIRTUAL_FILE_ARRAY)
       }
     ] as Library
   }
@@ -100,4 +105,8 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected reset() { }
+
+  private def asVirtualFile(path) {
+    [getPath: { GradleUtil.toCanonicalPath(path) }] as VirtualFile
+  }
 }

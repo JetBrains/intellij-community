@@ -3,6 +3,7 @@ package org.jetbrains.jps.android;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -11,6 +12,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.sdk.MessageBuildingSdkLog;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
@@ -34,7 +36,41 @@ import java.util.regex.Matcher;
 class AndroidJpsUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.android.AndroidJpsUtil");
 
+  @NonNls public static final String ANDROID_STORAGE_DIR = "android";
+  @NonNls private static final String RESOURCE_CACHE_STORAGE = "res-cache";
+
+  public static final Condition<File> CLASSES_AND_JARS_FILTER = new Condition<File>() {
+    @Override
+    public boolean value(File file) {
+      final String ext = FileUtil.getExtension(file.getName());
+      return "jar".equals(ext) || "class".equals(ext);
+    }
+  };
+
   private AndroidJpsUtil() {
+  }
+
+  @Nullable
+  public static File getMainContentRoot(@NotNull AndroidFacet facet) throws IOException {
+    final Module module = facet.getModule();
+
+    final List<String> contentRoots = module.getContentRoots();
+
+    if (contentRoots.size() == 0) {
+      return null;
+    }
+    final File manifestFile = facet.getManifestFile();
+
+    if (manifestFile != null) {
+      for (String rootPath : contentRoots) {
+        final File root = new File(rootPath);
+
+        if (FileUtil.isAncestor(root, manifestFile, true)) {
+          return root;
+        }
+      }
+    }
+    return new File(contentRoots.get(0));
   }
 
   public static void addMessages(@NotNull CompileContext context,
@@ -80,6 +116,19 @@ class AndroidJpsUtil {
     return result;
   }
 
+  @NotNull
+  public static List<String> toPaths(@NotNull Collection<File> files) {
+    if (files.size() == 0) {
+      return Collections.emptyList();
+    }
+
+    final List<String> result = new ArrayList<String>(files.size());
+    for (File file : files) {
+      result.add(file.getPath());
+    }
+    return result;
+  }
+
   @Nullable
   public static File getOutputDirectoryForPackagedFiles(@NotNull ProjectPaths paths, @NotNull Module module) {
     // todo: return build directory for mavenized modules to place .dex and .apk files into target dir (not target/classes)
@@ -107,7 +156,7 @@ class AndroidJpsUtil {
   }
 
   @NotNull
-  public static Set<String> getClassdirsOfDependentModules(@NotNull ProjectPaths paths, @NotNull Module module) {
+  public static Set<String> getClassdirsOfDependentModulesAndPackagesLibraries(@NotNull ProjectPaths paths, @NotNull Module module) {
     final Set<String> result = new HashSet<String>();
     fillClasspath(paths, module, result, null, new HashSet<String>(), false);
     return result;
@@ -124,6 +173,7 @@ class AndroidJpsUtil {
     }
 
     if (libraries != null) {
+      // todo: do not include provided libs there
       for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE, exportedLibrariesOnly)) {
         if (item instanceof Library && !(item instanceof Sdk)) {
           for (String filePath : item.getClasspathRoots(ClasspathKind.PRODUCTION_COMPILE)) {
@@ -154,7 +204,7 @@ class AndroidJpsUtil {
           if (depLibrary) {
             final File packagedClassesJar = new File(depClassDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
 
-            if (packagedClassesJar.isDirectory()) {
+            if (packagedClassesJar.isFile()) {
               outputDirs.add(packagedClassesJar.getPath());
             }
           }
@@ -307,8 +357,17 @@ class AndroidJpsUtil {
     return Pair.create(androidSdk, target);
   }
 
-  public static String[] collectResourceDirs(@NotNull AndroidFacet facet) throws IOException {
+  public static String[] collectResourceDirsForCompilation(@NotNull AndroidFacet facet,
+                                                           boolean withCacheDirs,
+                                                           @NotNull CompileContext context) throws IOException {
     final List<String> result = new ArrayList<String>();
+
+    if (withCacheDirs) {
+      final File resourcesCacheDir = getResourcesCacheDir(context, facet.getModule());
+      if (resourcesCacheDir.exists()) {
+        result.add(resourcesCacheDir.getPath());
+      }
+    }
 
     final File resDir = getResourceDirForCompilationPath(facet);
     if (resDir != null) {
@@ -325,7 +384,7 @@ class AndroidJpsUtil {
   }
 
   @Nullable
-  private static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
+  public static File getResourceDirForCompilationPath(@NotNull AndroidFacet facet) throws IOException {
     return facet.getUseCustomResFolderForCompilation()
            ? facet.getResourceDirForCompilation()
            : facet.getResourceDir();
@@ -352,5 +411,87 @@ class AndroidJpsUtil {
         }
       }
     }
+  }
+
+  public static boolean isLightBuild(@NotNull CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.LIGHT_BUILD_OPTION));
+  }
+
+  public static boolean isReleaseBuild(@NotNull CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(AndroidCommonUtils.RELEASE_BUILD_OPTION));
+  }
+
+  @NotNull
+  public static File getResourcesCacheDir(@NotNull CompileContext context, @NotNull Module module) {
+    final File androidStorage = new File(context.getDataManager().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+    return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
+  }
+
+  private static void fillSourceRoots(@NotNull Module module, @NotNull Set<Module> visited, @NotNull Set<File> result)
+    throws IOException {
+    visited.add(module);
+    final AndroidFacet facet = getFacet(module);
+    File resDir = null;
+    File resDirForCompilation = null;
+
+    if (facet != null) {
+      resDir = facet.getResourceDir();
+      resDirForCompilation = facet.getResourceDirForCompilation();
+    }
+
+    for (String sourceRootPath : module.getSourceRoots()) {
+      final File sourceRoot = new File(sourceRootPath).getCanonicalFile();
+
+      if (!sourceRoot.equals(resDir) && !sourceRoot.equals(resDirForCompilation)) {
+        result.add(sourceRoot);
+      }
+    }
+
+    if (facet != null && facet.isPackTestCode()) {
+      for (String testRootPath : module.getTestRoots()) {
+        final File testRoot = new File(testRootPath).getCanonicalFile();
+
+        if (!testRoot.equals(resDir) && !testRoot.equals(resDirForCompilation)) {
+          result.add(testRoot);
+        }
+      }
+    }
+
+    for (ClasspathItem classpathItem : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE)) {
+      if (classpathItem instanceof Module) {
+        final Module depModule = (Module)classpathItem;
+
+        if (!visited.contains(depModule)) {
+          fillSourceRoots(depModule, visited, result);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  public static File[] getSourceRootsForModuleAndDependencies(@NotNull Module module) throws IOException {
+    Set<File> result = new HashSet<File>();
+    fillSourceRoots(module, new HashSet<Module>(), result);
+    return result.toArray(new File[result.size()]);
+  }
+
+  @Nullable
+  public static String getApkPath(@NotNull AndroidFacet facet, @NotNull File outputDirForPackagedArtifacts) {
+    final String apkRelativePath = facet.getApkRelativePath();
+    final Module module = facet.getModule();
+
+    if (apkRelativePath.length() == 0) {
+      return new File(outputDirForPackagedArtifacts, getApkName(module)).getPath();
+    }
+    final String moduleDirPath = module.getBasePath();
+
+    return moduleDirPath != null
+           ? FileUtil.toSystemDependentName(moduleDirPath + apkRelativePath)
+           : null;
+  }
+
+  @NotNull
+  public static String getApkName(@NotNull Module module) {
+    return module.getName() + ".apk";
   }
 }

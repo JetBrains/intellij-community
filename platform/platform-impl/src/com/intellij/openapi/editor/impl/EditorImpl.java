@@ -1732,7 +1732,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintBackgrounds(g, clip, clipStartPosition, clipStartVisualPos, clipStartOffset, clipEndOffset);
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
-    paintCustomRenderers((Graphics2D)g, clipStartOffset, clipEndOffset);
+    paintCustomRenderers(g, clipStartOffset, clipEndOffset);
     MarkupModelEx docMarkup = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
     paintLineMarkersSeparators(g, clip, docMarkup, clipStartOffset, clipEndOffset);
     paintLineMarkersSeparators(g, clip, myMarkupModel, clipStartOffset, clipEndOffset);
@@ -1745,7 +1745,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     borderEffect.paintHighlighters(myMarkupModel);
     paintCaretCursor(g);
     
-    paintComposedTextDecoration((Graphics2D)g);
+    paintComposedTextDecoration(g);
   }
 
   private void paintCustomRenderers(final Graphics2D g, final int clipStartOffset, final int clipEndOffset) {

@@ -8,6 +8,8 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.*;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
+import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeComparator;
@@ -104,9 +106,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       final Collection<ModuleAwareContentRoot> contentRoots = myPlatformFacade.getContentRoots(module);
       for (ContentEntry entry : contentRoots) {
         GradleContentRootId contentRootId = GradleEntityIdMapper.mapEntityToId(entry);
-        GradleProjectStructureNode<GradleContentRootId> contentRootNode
-          = buildNode(contentRootId, getNodeName(contentRootId, contentRoots.size() <= 1));
-        moduleNode.add(contentRootNode);
+        moduleNode.add(buildContentRootNode(contentRootId, contentRoots.size() <= 1));
       }
       
       // Dependencies
@@ -126,7 +126,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   @NotNull
-  private static String getNodeName(@NotNull GradleContentRootId id, boolean singleRoot) {
+  private static String getContentRootNodeName(@NotNull GradleContentRootId id, boolean singleRoot) {
     final String name = GradleBundle.message("gradle.import.structure.tree.node.content.root");
     if (singleRoot) {
       return name;
@@ -144,12 +144,35 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     return myProject;
   }
 
+  @NotNull
+  private GradleProjectStructureNode<GradleContentRootId> buildContentRootNode(@NotNull GradleContentRootId id) {
+    final boolean singleRoot;
+    if (id.getOwner() == GradleEntityOwner.GRADLE) {
+      final GradleModule module = myProjectStructureHelper.findGradleModule(id.getModuleName());
+      singleRoot = module == null || module.getContentRoots().size() <= 1;
+    }
+    else {
+      final Module module = myProjectStructureHelper.findIntellijModule(id.getModuleName());
+      singleRoot = module == null || myPlatformFacade.getContentRoots(module).size() <= 1;
+    }
+    return buildContentRootNode(id, singleRoot);
+  }
+  
+  @NotNull
+  private GradleProjectStructureNode<GradleContentRootId> buildContentRootNode(@NotNull GradleContentRootId id, boolean singleRoot) {
+    GradleProjectStructureNode<GradleContentRootId> result = buildNode(id, getContentRootNodeName(id, singleRoot));
+    result.getDescriptor().setToolTip(id.getRootPath());
+    return result;
+  }
+
+  @NotNull
   private <T extends GradleEntityId> GradleProjectStructureNode<T> buildNode(@NotNull T id, @NotNull String name) {
     final GradleProjectStructureNode<T> result = new GradleProjectStructureNode<T>(GradleUtil.buildDescriptor(id, name), myNodeComparator);
     result.addListener(myNodeListener);
     return result;
   }
 
+  @NotNull
   private GradleProjectStructureNode<GradleSyntheticId> getDependenciesNode(@NotNull GradleModuleId id) {
     final GradleProjectStructureNode<GradleSyntheticId> cached = myModuleDependencies.get(id.getModuleName());
     if (cached != null) {
@@ -280,6 +303,26 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     final GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
     moduleNode.setAttributes(key);
   }
+
+  private void processNewContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change) {
+    GradleContentRootId id = change.getGradleEntity();
+    TextAttributesKey key = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
+    if (id == null) {
+      id = change.getIntellijEntity();
+      key = GradleTextAttributes.INTELLIJ_LOCAL_CHANGE;
+    }
+    assert id != null;
+    final GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id.getModuleId());
+    for (GradleProjectStructureNode<GradleContentRootId> contentRoot : moduleNode.getChildren(GradleContentRootId.class)) {
+      if (id.equals(contentRoot.getDescriptor().getElement())) {
+        contentRoot.setAttributes(key);
+        return;
+      }
+    }
+    GradleProjectStructureNode<GradleContentRootId> contentRootNode = buildContentRootNode(id);
+    moduleNode.add(contentRootNode);
+    contentRootNode.setAttributes(key);
+  }
   
   private void processObsoleteProjectRenameChange(@NotNull GradleProjectRenameChange change) {
     // TODO den implement
@@ -351,7 +394,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         holder.remove(node);
       }
       else {
-        descriptor.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+        descriptor.setAttributes(GradleTextAttributes.NO_CHANGE);
         holder.correctChildPositionIfNecessary(node);
       }
       return;
@@ -385,7 +428,36 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       moduleNode.removeFromParent();
     }
     else {
-      moduleNode.setAttributes(GradleTextAttributes.GRADLE_NO_CHANGE);
+      moduleNode.setAttributes(GradleTextAttributes.NO_CHANGE);
+    }
+  }
+
+  private void processObsoleteContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change) {
+    GradleContentRootId id = change.getGradleEntity();
+    final boolean removeNode;
+    if (id == null) {
+      id = change.getIntellijEntity();
+      assert id != null;
+      removeNode = myProjectStructureHelper.findIntellijContentRoot(id) == null;
+    }
+    else {
+      removeNode = myProjectStructureHelper.findGradleContentRoot(id) == null;
+    }
+    final GradleProjectStructureNode<GradleModuleId> moduleNode = myModules.get(id.getModuleName());
+    if (moduleNode == null) {
+      return;
+    }
+    for (GradleProjectStructureNode<GradleContentRootId> contentRootNode : moduleNode.getChildren(GradleContentRootId.class)) {
+      if (!id.equals(contentRootNode.getDescriptor().getElement())) {
+        continue;
+      }
+      if (removeNode) {
+        contentRootNode.removeFromParent();
+      }
+      else {
+        contentRootNode.setAttributes(GradleTextAttributes.NO_CHANGE);
+      }
+      return;
     }
   }
   
@@ -422,7 +494,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleProjectRenameChange change) { processNewProjectRenameChange(change); }
     @Override public void visit(@NotNull GradleLanguageLevelChange change) { processNewLanguageLevelChange(change); }
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processNewModulePresenceChange(change); }
-    @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
+    @Override public void visit(@NotNull GradleContentRootPresenceChange change) { processNewContentRootPresenceChange(change); }
+
+      @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) { processNewModuleDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processNewMismatchedLibraryPathChange(change); }
   }
@@ -431,6 +505,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleProjectRenameChange change) { processObsoleteProjectRenameChange(change); }
     @Override public void visit(@NotNull GradleLanguageLevelChange change) { processObsoleteLanguageLevelChange(change); }
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processObsoleteModulePresenceChange(change); }
+    @Override public void visit(@NotNull GradleContentRootPresenceChange change) { processObsoleteContentRootPresenceChange(change); }
     @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
       processObsoleteLibraryDependencyPresenceChange(change); 
     }

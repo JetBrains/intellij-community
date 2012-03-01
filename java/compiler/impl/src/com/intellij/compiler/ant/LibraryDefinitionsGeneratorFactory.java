@@ -113,8 +113,15 @@ public class LibraryDefinitionsGeneratorFactory {
                                        final Library library,
                                        final File baseDir,
                                        final CompositeGenerator libraryPath) {
+    genLibraryContent(genOptions, library, OrderRootType.CLASSES, baseDir, libraryPath);
+  }
+
+  public static void genLibraryContent(final GenerationOptions genOptions,
+                                       final Library library,
+                                       final OrderRootType rootType, final File baseDir,
+                                       final CompositeGenerator libraryPath) {
     if (genOptions.expandJarDirectories) {
-      final VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
+      final VirtualFile[] files = library.getFiles(rootType);
       // note that it is assumed that directory entries inside library path are unordered
       TreeSet<String> visitedPaths = new TreeSet<String>();
       for (final VirtualFile file : files) {
@@ -127,7 +134,7 @@ public class LibraryDefinitionsGeneratorFactory {
       }
     }
     else {
-      TreeSet<String> urls = new TreeSet<String>(Arrays.asList(library.getUrls(OrderRootType.CLASSES)));
+      TreeSet<String> urls = new TreeSet<String>(Arrays.asList(library.getUrls(rootType)));
       for (String url : urls) {
         File file = fileFromUrl(url);
         final String path = GenerationUtils
@@ -136,7 +143,7 @@ public class LibraryDefinitionsGeneratorFactory {
           libraryPath.add(new PathElement(path));
         }
         else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-          if (library.isJarDirectory(url, OrderRootType.CLASSES)) {
+          if (library.isJarDirectory(url, rootType)) {
             final FileSet fileSet = new FileSet(path);
             fileSet.add(new PatternSetRef(BuildProperties.PROPERTY_LIBRARIES_PATTERNS));
             libraryPath.add(fileSet);

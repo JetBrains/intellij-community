@@ -6,7 +6,7 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -64,7 +64,12 @@ class OptimizedFileManager extends DefaultFileManager {
       }
       else {
         File directory = relativePath.length() != 0 ? new File(root, relativePath) : root;
-        collectFromDirectory(directory, kinds, recurse, results);
+        if (recurse) {
+          collectFromDirectoryRecursively(directory, kinds, results, true);
+        }
+        else {
+          collectFromDirectory(directory, kinds, false, results);
+        }
       }
     }
 
@@ -114,23 +119,31 @@ class OptimizedFileManager extends DefaultFileManager {
   }
 
   private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, boolean recurse, ListBuffer<JavaFileObject> result) {
-    File[] children = directory.listFiles();
-    if (children == null) {
-      return;
-    }
-
-    for (File child : children) {
-      final String name = child.getName();
-      if (child.isDirectory()) {
-        if (recurse && SourceVersion.isIdentifier(name)) {
-          collectFromDirectory(directory, fileKinds, recurse, result);
-        }
-      }
-      else {
-        if (isValidFile(name, fileKinds)) {
-          JavaFileObject fe = getRegularFile(child);
+    final File[] children = directory.listFiles();
+    if (children != null) {
+      for (File child : children) {
+        if (isValidFile(child.getName(), fileKinds) && !child.isDirectory()) {
+          final JavaFileObject fe = getRegularFile(child);
           result.append(fe);
         }
+      }
+    }
+  }
+
+  private void collectFromDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean isRootCall) {
+    final File[] children = file.listFiles();
+    final String name = file.getName();
+    if (children != null) { // is directory
+      if (isRootCall || SourceVersion.isIdentifier(name)) {
+        for (File child : children) {
+          collectFromDirectoryRecursively(child, fileKinds, result, false);
+        }
+      }
+    }
+    else {
+      if (isValidFile(name, fileKinds)) {
+        JavaFileObject fe = getRegularFile(file);
+        result.append(fe);
       }
     }
   }

@@ -20,16 +20,12 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
 
 /**
  * @author Alexander Lobas
  */
-public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener, TreeSelectionListener {
-  private final TreeSelectionModel myTreeSelectionModel;
+public final class ComponentTreeBuilder extends AbstractTreeBuilder implements ComponentSelectionListener {
   private final EditableArea mySurfaceArea;
   private final TreeEditableArea myTreeArea;
   private final TreeGlassLayer myGlassLayer;
@@ -39,7 +35,6 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
 
     initRootNode();
 
-    myTreeSelectionModel = getTree().getSelectionModel();
     mySurfaceArea = designer.getSurfaceArea();
     myTreeArea = new TreeEditableArea(tree, this);
     myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
@@ -50,50 +45,41 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     addListeners();
   }
 
+  public TreeEditableArea getTreeArea() {
+    return myTreeArea;
+  }
+
   @Override
   public void dispose() {
     removeListeners();
+    myTreeArea.unhookSelection();
     myGlassLayer.dispose();
     super.dispose();
   }
 
   private void addListeners() {
     mySurfaceArea.addSelectionListener(this);
-    myTreeSelectionModel.addTreeSelectionListener(this);
+    myTreeArea.addSelectionListener(this);
   }
 
   private void removeListeners() {
     mySurfaceArea.removeSelectionListener(this);
-    myTreeSelectionModel.removeTreeSelectionListener(this);
-  }
-
-  private void handleSelection(Runnable runnable) {
-    try {
-      removeListeners();
-      runnable.run();
-    }
-    finally {
-      addListeners();
-    }
+    myTreeArea.removeSelectionListener(this);
   }
 
   @Override
   public void selectionChanged(EditableArea area) {
-    handleSelection(new Runnable() {
-      @Override
-      public void run() {
+    try {
+      removeListeners();
+      if (mySurfaceArea == area) {
         myTreeArea.setSelection(mySurfaceArea.getSelection());
       }
-    });
-  }
-
-  @Override
-  public void valueChanged(TreeSelectionEvent e) {
-    handleSelection(new Runnable() {
-      @Override
-      public void run() {
+      else {
         mySurfaceArea.setSelection(myTreeArea.getSelection());
       }
-    });
+    }
+    finally {
+      addListeners();
+    }
   }
 }

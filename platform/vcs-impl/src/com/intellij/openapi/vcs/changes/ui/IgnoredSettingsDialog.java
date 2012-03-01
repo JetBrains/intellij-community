@@ -44,7 +44,7 @@ public class IgnoredSettingsDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    return myPanel.getPanel();
+    return myPanel.createComponent();
   }
 
   @Override
@@ -67,9 +67,9 @@ public class IgnoredSettingsDialog extends DialogWrapper {
     dlg.dispose();
   }
 
-  @Override @NonNls
+  @Override
+  @NonNls
   protected String getDimensionServiceKey() {
     return "IgnoredSettingsDialog";
   }
-
 }

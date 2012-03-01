@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableModel;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -36,14 +35,12 @@ import java.beans.PropertyChangeListener;
 class TableToolbarDecorator extends ToolbarDecorator {
   private final JTable myTable;
   @Nullable private final ElementProducer<?> myProducer;
-  private TableModel myTableModel;
 
   TableToolbarDecorator(@NotNull JTable table, @Nullable final ElementProducer<?> producer) {
     myTable = table;
     myProducer = producer;
-    myTableModel = table.getModel();
-    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTableModel instanceof EditableModel;
-    if (myTableModel instanceof EditableModel) {
+    myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = myTable.getModel() instanceof EditableModel;
+    if (myTable.getModel() instanceof EditableModel) {
       createDefaultTableActions(producer);
     }
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -70,7 +67,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
     if (p != null) {
       if (myTable.isEnabled()) {
         final int index = myTable.getSelectedRow();
-        final int size = myTableModel.getRowCount();
+        final int size = myTable.getModel().getRowCount();
         if (0 <= index && index < size) {
           final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
           final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
@@ -99,7 +96,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
 
   private void createDefaultTableActions(@Nullable final ElementProducer<?> producer) {
     final JTable table = myTable;
-    final EditableModel tableModel = (EditableModel)myTableModel;
+    final EditableModel tableModel = (EditableModel)table.getModel();
 
     myAddAction = new AnActionButtonRunnable() {
       @Override
@@ -113,7 +110,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
           tableModel.addRow();
         }
         if (rowCount == table.getRowCount()) return;
-        final int index = myTableModel.getRowCount() - 1;
+        final int index = table.getModel().getRowCount() - 1;
         table.editCellAt(index, 0);
         table.setRowSelectionInterval(index, index);
         table.setColumnSelectionInterval(0, 0);
@@ -132,9 +129,9 @@ class TableToolbarDecorator extends ToolbarDecorator {
       public void run(AnActionButton button) {
         TableUtil.stopEditing(table);
         int index = table.getSelectedRow();
-        if (0 <= index && index < myTableModel.getRowCount()) {
+        if (0 <= index && index < table.getModel().getRowCount()) {
           tableModel.removeRow(index);
-          if (index < myTableModel.getRowCount()) {
+          if (index < table.getModel().getRowCount()) {
             table.setRowSelectionInterval(index, index);
           }
           else {
@@ -158,7 +155,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
         TableUtil.stopEditing(table);
         final int[] indexes = table.getSelectedRows();
         for (int index : indexes) {
-          if (0 < index && index < myTableModel.getRowCount()) {
+          if (0 < index && index < table.getModel().getRowCount()) {
             tableModel.exchangeRows(index, index - 1);
             table.setRowSelectionInterval(index - 1, index - 1);
           }
@@ -179,7 +176,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
         TableUtil.stopEditing(table);
         final int[] indexes = table.getSelectedRows();
         for (int index : indexes) {
-          if (0 <= index && index < myTableModel.getRowCount() - 1) {
+          if (0 <= index && index < table.getModel().getRowCount() - 1) {
             tableModel.exchangeRows(index, index + 1);
             table.setRowSelectionInterval(index + 1, index + 1);
           }
@@ -197,8 +194,8 @@ class TableToolbarDecorator extends ToolbarDecorator {
     if (myUpAction != null && myUpActionEnabled
         && myDownAction != null && myDownActionEnabled
         && !ApplicationManager.getApplication().isHeadlessEnvironment()
-        && myTableModel instanceof EditableModel) {
-      TableRowsDnDSupport.install(myTable, (EditableModel)myTableModel);
+        && myTable.getModel() instanceof EditableModel) {
+      TableRowsDnDSupport.install(myTable, (EditableModel)myTable.getModel());
     }
   }
 }

@@ -41,22 +41,27 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   protected final JComboBox myExtensions = new JComboBox();
   protected final FileSaverDescriptor myDescriptor;
 
-  public FileSaverDialogImpl(@NotNull FileSaverDescriptor chooserDescriptor, @NotNull Component parent) {
-    super(chooserDescriptor, parent);
-    myDescriptor = chooserDescriptor;
-    setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
-    for (String ext : chooserDescriptor.getFileExtensions()) {
+  public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
+    super(descriptor, parent);
+    myDescriptor = descriptor;
+    for (String ext : descriptor.getFileExtensions()) {
       myExtensions.addItem(ext);
     }
+    setTitle(getChooserTitle(descriptor));
   }
 
-  public FileSaverDialogImpl(@NotNull FileSaverDescriptor chooserDescriptor, @Nullable Project project) {
-    super(chooserDescriptor, project);
-    myDescriptor = chooserDescriptor;
-    setTitle(UIBundle.message("file.chooser.save.dialog.default.title"));
-    for (String ext : chooserDescriptor.getFileExtensions()) {
+  public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
+    super(descriptor, project);
+    myDescriptor = descriptor;
+    for (String ext : descriptor.getFileExtensions()) {
       myExtensions.addItem(ext);
     }
+    setTitle(getChooserTitle(descriptor));
+  }
+
+  private static String getChooserTitle(final FileSaverDescriptor descriptor) {
+    final String title = descriptor.getTitle();
+    return title != null ? title : UIBundle.message("file.chooser.save.dialog.default.title");
   }
 
   @Nullable

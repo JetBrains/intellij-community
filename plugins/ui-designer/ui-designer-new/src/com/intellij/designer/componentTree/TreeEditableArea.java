@@ -24,6 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.EventListenerList;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,13 +36,23 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
+public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, TreeSelectionListener {
+  private final EventListenerList myListenerList = new EventListenerList();
   private final ComponentTree myTree;
   private final AbstractTreeBuilder myTreeBuilder;
 
   public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder) {
     myTree = tree;
     myTreeBuilder = treeBuilder;
+    hookSelection();
+  }
+
+  private void hookSelection() {
+    myTree.getSelectionModel().addTreeSelectionListener(this);
+  }
+
+  public void unhookSelection() {
+    myTree.getSelectionModel().removeTreeSelectionListener(this);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -50,10 +63,23 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
 
   @Override
   public void addSelectionListener(ComponentSelectionListener listener) {
+    myListenerList.add(ComponentSelectionListener.class, listener);
   }
 
   @Override
   public void removeSelectionListener(ComponentSelectionListener listener) {
+    myListenerList.remove(ComponentSelectionListener.class, listener);
+  }
+
+  private void fireSelectionChanged() {
+    for (ComponentSelectionListener listener : myListenerList.getListeners(ComponentSelectionListener.class)) {
+      listener.selectionChanged(this);
+    }
+  }
+
+  @Override
+  public void valueChanged(TreeSelectionEvent e) {
+    fireSelectionChanged();
   }
 
   @NotNull
@@ -96,22 +122,32 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer {
     setRawSelection(null);
   }
 
-  private void setRawSelection(@Nullable Object value) {
-    myTreeBuilder.queueUpdate();
-
-    if (value == null) {
-      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, null);
-    }
-    else if (value instanceof RadComponent) {
-      myTreeBuilder.select(value, null);
-    }
-    else {
-      myTreeBuilder.select(((Collection)value).toArray(), null);
-    }
-  }
-
   private Collection<RadComponent> getRawSelection() {
     return myTreeBuilder.getSelectedElements(RadComponent.class);
+  }
+
+  private void setRawSelection(@Nullable Object value) {
+    unhookSelection();
+    myTreeBuilder.queueUpdate();
+
+    // skip Tree.clearSelection() echo
+    Runnable onDone = new Runnable() {
+      @Override
+      public void run() {
+        hookSelection();
+        fireSelectionChanged();
+      }
+    };
+
+    if (value == null) {
+      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, onDone);
+    }
+    else if (value instanceof RadComponent) {
+      myTreeBuilder.select(value, onDone);
+    }
+    else {
+      myTreeBuilder.select(((Collection)value).toArray(), onDone);
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

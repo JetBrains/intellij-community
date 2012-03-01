@@ -20,6 +20,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.IntStubIndexExtension;
 import com.intellij.psi.stubs.StubIndexKey;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 
 import java.util.Collection;
@@ -35,6 +36,7 @@ public class GrFullClassNameIndex extends IntStubIndexExtension<PsiClass> {
     return ourInstance;
   }
 
+  @NotNull
   public StubIndexKey<Integer, PsiClass> getKey() {
     return KEY;
   }

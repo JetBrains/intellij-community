@@ -17,13 +17,13 @@ public class AndroidBuilderService extends BuilderService {
   @Override
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders(ExecutorService executorService) {
     return Arrays.asList(new AndroidSourceGeneratingBuilder(),
-                         new AndroidLibraryPackagingBuilder(),
-                         new AndroidResourcePackagingBuilder());
+                         new AndroidLibraryPackagingBuilder());
   }
 
   @NotNull
   @Override
   public List<? extends ProjectLevelBuilder> createProjectLevelBuilders() {
-    return Arrays.asList(new AndroidDexBuilder());
+    return Arrays.asList(new AndroidDexBuilder(),
+                         new AndroidPackagingBuilder());
   }
 }

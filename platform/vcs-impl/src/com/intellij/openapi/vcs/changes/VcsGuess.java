@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsGuess {
@@ -41,7 +42,7 @@ public class VcsGuess {
   }
 
   @Nullable
-  public AbstractVcs getVcsForDirty(final VirtualFile file) {
+  public AbstractVcs getVcsForDirty(@NotNull final VirtualFile file) {
     if (!file.isInLocalFileSystem()) {
       return null;
     }
@@ -56,7 +57,7 @@ public class VcsGuess {
   }
 
   @Nullable
-  public AbstractVcs getVcsForDirty(final FilePath filePath) {
+  public AbstractVcs getVcsForDirty(@NotNull final FilePath filePath) {
     if (filePath.isNonLocal()) {
       return null;
     }

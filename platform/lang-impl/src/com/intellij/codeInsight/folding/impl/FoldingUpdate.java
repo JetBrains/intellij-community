@@ -182,6 +182,10 @@ public class FoldingUpdate {
     protected Map<PsiElement, Collection<FoldingDescriptor>> createMap() {
       return new TreeMap<PsiElement, Collection<FoldingDescriptor>>(COMPARE_BY_OFFSET);
     }
-  }
 
+    @Override
+    protected Collection<FoldingDescriptor> createCollection() {
+      return new ArrayList<FoldingDescriptor>(1);
+    }
+  }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>A.java</file>
+    <line>6</line>
+    <description>Casting &lt;code&gt;t&lt;/code&gt; to &lt;code&gt;Foo&lt;/code&gt; is redundant</description>
+  </problem>
+
+  <problem>
+    <file>A.java</file>
+    <line>5</line>
+    <description>Casting &lt;code&gt;t&lt;/code&gt; to &lt;code&gt;Foo&lt;/code&gt; is redundant</description>
+  </problem>
+
+</problems>
+

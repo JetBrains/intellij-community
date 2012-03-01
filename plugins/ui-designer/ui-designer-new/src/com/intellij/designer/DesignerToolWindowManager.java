@@ -17,9 +17,12 @@ package com.intellij.designer;
 
 import com.intellij.designer.componentTree.ComponentTree;
 import com.intellij.designer.componentTree.ComponentTreeBuilder;
+import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -34,15 +37,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +62,7 @@ public final class DesignerToolWindowManager implements ProjectComponent {
   private final FileEditorManager myFileEditorManager;
   private ToolWindow myToolWindow;
   private ComponentTree myComponentTree;
-  private AbstractTreeBuilder myTreeBuilder;
+  private ComponentTreeBuilder myTreeBuilder;
   private PropertyTablePanel myPropertyTablePanel;
   private boolean myToolWindowReady;
   private boolean myToolWindowDisposed;
@@ -119,6 +125,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     }
   }
 
+  @Nullable
+  public TreeEditableArea getTreeArea() {
+    return myTreeBuilder == null ? null : myTreeBuilder.getTreeArea();
+  }
+
+  @Nullable
   private static DesignerEditorPanel getDesigner(FileEditor editor) {
     if (editor instanceof DesignerEditor) {
       DesignerEditor designerEditor = (DesignerEditor)editor;
@@ -127,7 +139,8 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     return null;
   }
 
-  private DesignerEditorPanel getActiveDesigner() {
+  @Nullable
+  public DesignerEditorPanel getActiveDesigner() {
     FileEditor[] editors = myFileEditorManager.getSelectedEditors();
     return editors.length > 0 ? getDesigner(editors[0]) : null;
   }
@@ -150,11 +163,15 @@ public final class DesignerToolWindowManager implements ProjectComponent {
         myComponentTree.newModel();
         if (designer == null) {
           myComponentTree.setDecorator(null);
+          myComponentTree.setActionPanel(null);
+          myPropertyTablePanel.getPropertyTable().setArea(null, null);
           myToolWindow.setAvailable(false, null);
         }
         else {
           myComponentTree.setDecorator(designer.getTreeDecorator());
+          myComponentTree.setActionPanel(designer.getActionPanel());
           myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
+          myPropertyTablePanel.getPropertyTable().setArea(designer, myTreeBuilder.getTreeArea());
           myToolWindow.setAvailable(true, null);
           myToolWindow.show(null);
         }
@@ -180,6 +197,8 @@ public final class DesignerToolWindowManager implements ProjectComponent {
         .registerToolWindow(DesignerBundle.message("designer.toolwindow.name"), false, ToolWindowAnchor.LEFT, myProject, true);
     myToolWindow.setIcon(IconLoader.getIcon("/com/intellij/designer/icons/toolWindow.png"));
 
+    ((ToolWindowEx)myToolWindow).setTitleActions(createActions());
+
     ContentManager contentManager = myToolWindow.getContentManager();
     Content content =
       contentManager.getFactory().createContent(toolWindowPanel, DesignerBundle.message("designer.toolwindow.title"), false);
@@ -188,6 +207,28 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
     myToolWindow.setAvailable(false, null);
+  }
+
+  private AnAction[] createActions() {
+    AnAction expandAll = new AnAction("Expand All", null, IconLoader.getIcon("/com/intellij/designer/icons/ExpandAll.png")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myTreeBuilder != null) {
+          myTreeBuilder.expandAll(null);
+        }
+      }
+    };
+
+    AnAction collapseAll = new AnAction("Collapse All", null, IconLoader.getIcon("/general/collapseAll.png")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myTreeBuilder != null) {
+          TreeUtil.collapseAll(myComponentTree, 1);
+        }
+      }
+    };
+
+    return new AnAction[]{expandAll, collapseAll};
   }
 
   @Override

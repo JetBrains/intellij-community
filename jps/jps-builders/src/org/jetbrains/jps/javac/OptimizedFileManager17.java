@@ -67,7 +67,13 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
         }
       }
       else {
-        listDirectory(file, subdirectory, kinds, recurse, results);
+        final File dir = subdirectory.getFile(file);
+        if (recurse) {
+          listDirectoryRecursively(dir, kinds, results, true);
+        }
+        else {
+          listDirectory(dir, kinds, results);
+        }
       }
       
     }
@@ -97,31 +103,40 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     }
   }
   
-  private void listDirectory(File directory, RelativePath.RelativeDirectory subdirectory, Set<JavaFileObject.Kind> fileKinds, boolean recurse, ListBuffer<JavaFileObject> resultList) {
-    File d = subdirectory.getFile(directory);
-
-    File[] files = d.listFiles();
-    if (files == null) {
-      return;
-    }
-
-    if (sortFiles != null) {
-      Arrays.sort(files, sortFiles);
-    }
-
-    for (File f: files) {
-      String fileName = f.getName();
-      if (f.isDirectory()) {
-        if (recurse && SourceVersion.isIdentifier(fileName)) {
-          listDirectory(directory, new RelativePath.RelativeDirectory(subdirectory, fileName), fileKinds, recurse, resultList);
-        }
-      } 
-      else {
-        if (isValidFile(fileName, fileKinds)) {
-          //JavaFileObject fe = new RegularFileObject(this, fname, new File(d, fname));
+  private void listDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList) {
+    final File[] files = directory.listFiles();
+    if (files != null) {
+      if (sortFiles != null) {
+        Arrays.sort(files, sortFiles);
+      }
+  
+      for (File f: files) {
+        String fileName = f.getName();
+        if (isValidFile(fileName, fileKinds) && !f.isDirectory()) {
           JavaFileObject fe = getRegularFile(f);
           resultList.append(fe);
         }
+      }
+    }
+  }
+
+  private void listDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> resultList, boolean isRootCall) {
+    final File[] children = file.listFiles();
+    final String fileName = file.getName();
+    if (children != null) { // is directory
+      if (isRootCall || SourceVersion.isIdentifier(fileName)) {
+        if (sortFiles != null) {
+          Arrays.sort(children, sortFiles);
+        }
+        for (File child : children) {
+          listDirectoryRecursively(child, fileKinds, resultList, false);
+        }
+      }
+    }
+    else {
+      if (isValidFile(fileName, fileKinds)) {
+        JavaFileObject fe = getRegularFile(file);
+        resultList.append(fe);
       }
     }
   }
@@ -142,8 +157,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   }
 
   private static boolean isValidFile(String name, Set<JavaFileObject.Kind> fileKinds) {
-    JavaFileObject.Kind kind = getKind(name);
-    return fileKinds.contains(kind);
+    return fileKinds.contains(getKind(name));
   }
 
 }

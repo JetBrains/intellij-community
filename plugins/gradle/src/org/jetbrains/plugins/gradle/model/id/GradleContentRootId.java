@@ -3,8 +3,6 @@ package org.jetbrains.plugins.gradle.model.id;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.GradleEntityType;
-import org.jetbrains.plugins.gradle.model.gradle.GradleContentRoot;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 /**
@@ -23,25 +21,25 @@ public class GradleContentRootId extends GradleAbstractEntityId {
   }
 
   @NotNull
+  public String getModuleName() {
+    return myModuleName;
+  }
+
+  @NotNull
   public String getRootPath() {
     return myRootPath;
   }
 
+  @NotNull
+  public GradleModuleId getModuleId() {
+    return new GradleModuleId(getOwner(), myModuleName);
+  }
+  
   @Override
   public Object mapToEntity(@NotNull GradleProjectStructureContext context) {
     switch (getOwner()) {
-      case GRADLE:
-        final GradleModule module = context.getProjectStructureHelper().findGradleModule(myModuleName);
-        if (module == null) {
-          return null;
-        }
-        for (GradleContentRoot root : module.getContentRoots()) {
-          if (myRootPath.equals(root.getRootPath())) {
-            return root;
-          }
-        }
-        return null;
-      case INTELLIJ: return null;
+      case GRADLE: return context.getProjectStructureHelper().findGradleContentRoot(this);
+      case INTELLIJ: return context.getProjectStructureHelper().findIntellijContentRoot(this);
     }
     return null;
   }

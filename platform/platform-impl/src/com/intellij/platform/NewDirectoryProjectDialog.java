@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ import java.io.File;
 public class NewDirectoryProjectDialog extends DialogWrapper {
   private JTextField myProjectNameTextField;
   private TextFieldWithBrowseButton myLocationField;
-  private JPanel myRootPane;
-  private JComboBox myProjectTypeComboBox;
+  protected JPanel myRootPane;
+  protected JComboBox myProjectTypeComboBox;
   private JPanel myProjectTypePanel;
   private JLabel myLocationLabel;
 
@@ -57,7 +57,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
     new LocationNameFieldsBinding(project, myLocationField, myProjectNameTextField, getBaseDir());
 
-    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
+    final DirectoryProjectGenerator[] generators = getGenerators();
     if (generators.length == 0) {
       myProjectTypePanel.setVisible(false);
     }
@@ -90,6 +90,10 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         checkValid();
       }
     });
+  }
+
+  protected DirectoryProjectGenerator[] getGenerators() {
+    return Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
   }
 
   private void checkValid() {

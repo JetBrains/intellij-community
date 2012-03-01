@@ -111,6 +111,9 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doBasicTest();
   }
 
+  public void testInstanceofHelpsDetermineTypeInBinaryAnd() throws Throwable { doBasicTest() }
+  public void testInstanceofHelpsDetermineTypeInBinaryOr() throws Throwable { doBasicTest() }
+
   public void testNotInstanceofDoesntHelpDetermineType() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + ".groovy");
   }
@@ -1170,6 +1173,17 @@ class Base {
 }
 
 new Base().@prefixField<caret>''')
+  }
+
+  public void testPrivateFieldOnSecondInvocation() {
+    myFixture.configureByText('_a.groovy', '''\
+class Base {
+  private int field1
+}
+
+new Base().fie<caret>x''')
+    myFixture.complete(CompletionType.BASIC, 2)
+    assert myFixture.lookupElementStrings == ['field1']
   }
 
 }

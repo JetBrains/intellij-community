@@ -342,7 +342,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (documentWindow == null) return true;
         Place places = InjectedLanguageUtil.getShreds(injectedPsi);
         for (PsiLanguageInjectionHost.Shred place : places) {
-          TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
+          TextRange textRange = place.getRangeInsideHost().shiftRight(place.getHost().getTextRange().getStartOffset());
           if (textRange.isEmpty()) continue;
           String desc = injectedPsi.getLanguage().getDisplayName() + ": " + injectedPsi.getText();
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_BACKGROUND, textRange, null, desc, injectedAttributes);
@@ -457,7 +457,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   // finds the first nearest text range
   private static TextRange findNearestTextRange(final DocumentWindow documentWindow, final int startOffset) {
     TextRange textRange = null;
-    for (RangeMarker marker : documentWindow.getHostRanges()) {
+    for (Segment marker : documentWindow.getHostRanges()) {
       TextRange curRange = ProperTextRange.create(marker);
       if (curRange.getStartOffset() > startOffset && textRange != null) break;
       textRange = curRange;
