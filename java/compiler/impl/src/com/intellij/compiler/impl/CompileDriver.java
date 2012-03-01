@@ -609,7 +609,7 @@ public class CompileDriver {
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
                 if (indicator.isCanceled()) {
-                  future.cancel(true);
+                  future.cancel(false);
                 }
               }
             }

@@ -33,9 +33,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ListUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -494,43 +494,42 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   public static class PatternsPanel extends JPanel {
     private JBList myPatternsList;
-    private JButton myAddButton;
-    private JButton myRemoveButton;
+    private JComponent myAddButton;
     private JPanel myWholePanel;
-    private JButton myEditButton;
+    private FileTypeConfigurable myController;
 
     public PatternsPanel() {
       super(new BorderLayout());
-      add(myWholePanel, BorderLayout.CENTER);
+      myPatternsList = new JBList(new DefaultListModel());
+      myPatternsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myPatternsList.setCellRenderer(new ExtensionRenderer());
-      myPatternsList.setModel(new DefaultListModel());
-      myPatternsList.addListSelectionListener(new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e) {
-          myRemoveButton.setEnabled(myPatternsList.getSelectedIndex() != -1 && getListModel().size() > 0);
-        }
-      });
-
       myPatternsList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
+
+      myWholePanel = ToolbarDecorator.createDecorator(myPatternsList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myController.addPattern();
+          }
+        }).setEditAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myController.editPattern();
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myController.removePattern();
+          }
+        }).disableUpDownActions().createPanel();
+      UIUtil.addBorder(myWholePanel, IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false));
+      myAddButton = ToolbarDecorator.findAddButton(myWholePanel).getContextComponent();
+
+      add(myWholePanel, BorderLayout.CENTER);
     }
 
     public void attachActions(final FileTypeConfigurable controller) {
-      myAddButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          controller.addPattern();
-        }
-      });
-      myEditButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          controller.editPattern();
-        }
-      });
-
-      myRemoveButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          controller.removePattern();
-        }
-      });
-
+      myController = controller;
     }
 
     public JComponent getComponent() {

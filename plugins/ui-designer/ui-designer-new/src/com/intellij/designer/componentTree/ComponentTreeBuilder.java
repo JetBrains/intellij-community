@@ -52,7 +52,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
   @Override
   public void dispose() {
     removeListeners();
-    myTreeArea.dispose();
+    myTreeArea.unhookSelection();
     myGlassLayer.dispose();
     super.dispose();
   }

@@ -164,14 +164,14 @@ public final class DesignerToolWindowManager implements ProjectComponent {
         if (designer == null) {
           myComponentTree.setDecorator(null);
           myComponentTree.setActionPanel(null);
-          myPropertyTablePanel.getPropertyTable().setArea(null);
+          myPropertyTablePanel.getPropertyTable().setArea(null, null);
           myToolWindow.setAvailable(false, null);
         }
         else {
           myComponentTree.setDecorator(designer.getTreeDecorator());
           myComponentTree.setActionPanel(designer.getActionPanel());
           myTreeBuilder = new ComponentTreeBuilder(myComponentTree, designer);
-          myPropertyTablePanel.getPropertyTable().setArea(myTreeBuilder.getTreeArea());
+          myPropertyTablePanel.getPropertyTable().setArea(designer, myTreeBuilder.getTreeArea());
           myToolWindow.setAvailable(true, null);
           myToolWindow.show(null);
         }

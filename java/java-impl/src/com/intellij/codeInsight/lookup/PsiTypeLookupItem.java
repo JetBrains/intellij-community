@@ -77,7 +77,7 @@ public class PsiTypeLookupItem extends LookupItem {
 
     PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     assert position != null;
-    context.getDocument().insertString(context.getTailOffset(), calcGenerics(position));
+    context.getDocument().insertString(context.getTailOffset(), calcGenerics(position, context));
     JavaCompletionUtil.shortenReference(context.getFile(), context.getStartOffset());
 
     int tail = context.getTailOffset();
@@ -95,13 +95,17 @@ public class PsiTypeLookupItem extends LookupItem {
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
     InsertHandler handler = getInsertHandler();
-    if (handler != null && !(handler instanceof DefaultInsertHandler)) {
+     if (handler != null && !(handler instanceof DefaultInsertHandler)) {
       //noinspection unchecked
       handler.handleInsert(context, this);
     }
   }
 
-  public String calcGenerics(@NotNull PsiElement context) {
+  public String calcGenerics(@NotNull PsiElement context, InsertionContext insertionContext) {
+    if (insertionContext.getCompletionChar() == '<') {
+      return "";
+    }
+
     assert context.isValid();
     if (myDiamond) {
       return "<>";
@@ -115,7 +119,7 @@ public class PsiTypeLookupItem extends LookupItem {
       for (PsiTypeParameter parameter : psiClass.getTypeParameters()) {
         PsiType substitute = substitutor.substitute(parameter);
         if (substitute == null ||
-            (PsiUtil.resolveClassInType(substitute) == parameter && 
+            (PsiUtil.resolveClassInType(substitute) == parameter &&
              resolveHelper.resolveReferencedClass(parameter.getName(), context) != CompletionUtil.getOriginalOrSelf(parameter))) {
           return "";
         }

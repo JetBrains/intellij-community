@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Alexander Lobas
  */
 public class AttributeProperty extends Property {
-  private LabelPropertyRenderer myRenderer = new LabelPropertyRenderer(null);
+  private final LabelPropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   @NotNull private final String myAttribute;
 
   public AttributeProperty(Property parent, @NotNull @NonNls String name, @NotNull @NonNls String attribute) {
@@ -40,6 +40,11 @@ public class AttributeProperty extends Property {
   public Object getValue(RadComponent component) throws Exception {
     XmlTag tag = ((RadViewComponent)component).getTag();
     return tag == null ? null : tag.getAttributeValue(myAttribute);
+  }
+
+  @Override
+  public boolean isDefaultValue(RadComponent component) throws Exception {
+    return myAttribute.equals("android:password");
   }
 
   @NotNull

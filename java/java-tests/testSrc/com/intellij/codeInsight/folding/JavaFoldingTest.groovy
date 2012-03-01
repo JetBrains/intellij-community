@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl
+import com.intellij.find.FindManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 
 /**
  * @author Denis Zhdanov
@@ -134,6 +137,24 @@ class Test {
     assertTrue closureEndFold.expanded
   }
 
+  public void testFindInFolding() {
+    def text = """\
+class Test {
+    void test1() {
+    }
+    void test2() {
+        <caret>test1();
+    }
+}
+"""
+    configure text
+    myFixture.performEditorAction 'CollapseBlock'
+    myFixture.editor.caretModel.moveToOffset(text.indexOf('test1'))
+    myFixture.performEditorAction 'HighlightUsagesInFile'
+    FindManager.getInstance(project).findNextUsageInEditor(TextEditorProvider.getInstance().getTextEditor(myFixture.editor))
+    assertEquals('test1', myFixture.editor.selectionModel.selectedText)
+  }
+  
   public void testCustomFolding() {
     myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
   }

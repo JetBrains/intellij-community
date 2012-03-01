@@ -16,6 +16,7 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -24,6 +25,7 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public interface PropertyRenderer {
+  @NotNull
   JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus);
 
   void updateUI();

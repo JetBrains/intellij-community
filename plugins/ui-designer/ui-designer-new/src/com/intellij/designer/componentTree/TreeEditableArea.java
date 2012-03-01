@@ -44,10 +44,14 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   public TreeEditableArea(ComponentTree tree, AbstractTreeBuilder treeBuilder) {
     myTree = tree;
     myTreeBuilder = treeBuilder;
-    tree.getSelectionModel().addTreeSelectionListener(this);
+    hookSelection();
   }
 
-  public void dispose() {
+  private void hookSelection() {
+    myTree.getSelectionModel().addTreeSelectionListener(this);
+  }
+
+  public void unhookSelection() {
     myTree.getSelectionModel().removeTreeSelectionListener(this);
   }
 
@@ -67,11 +71,15 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     myListenerList.remove(ComponentSelectionListener.class, listener);
   }
 
-  @Override
-  public void valueChanged(TreeSelectionEvent e) {
+  private void fireSelectionChanged() {
     for (ComponentSelectionListener listener : myListenerList.getListeners(ComponentSelectionListener.class)) {
       listener.selectionChanged(this);
     }
+  }
+
+  @Override
+  public void valueChanged(TreeSelectionEvent e) {
+    fireSelectionChanged();
   }
 
   @NotNull
@@ -114,22 +122,32 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     setRawSelection(null);
   }
 
-  private void setRawSelection(@Nullable Object value) {
-    myTreeBuilder.queueUpdate();
-
-    if (value == null) {
-      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, null);
-    }
-    else if (value instanceof RadComponent) {
-      myTreeBuilder.select(value, null);
-    }
-    else {
-      myTreeBuilder.select(((Collection)value).toArray(), null);
-    }
-  }
-
   private Collection<RadComponent> getRawSelection() {
     return myTreeBuilder.getSelectedElements(RadComponent.class);
+  }
+
+  private void setRawSelection(@Nullable Object value) {
+    unhookSelection();
+    myTreeBuilder.queueUpdate();
+
+    // skip Tree.clearSelection() echo
+    Runnable onDone = new Runnable() {
+      @Override
+      public void run() {
+        hookSelection();
+        fireSelectionChanged();
+      }
+    };
+
+    if (value == null) {
+      myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, onDone);
+    }
+    else if (value instanceof RadComponent) {
+      myTreeBuilder.select(value, onDone);
+    }
+    else {
+      myTreeBuilder.select(((Collection)value).toArray(), onDone);
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

@@ -17,6 +17,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.incremental.Paths;
@@ -55,7 +56,22 @@ public class Server {
     myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);
     myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    myMessageHandler = new ServerMessageHandler(myBuildsExecutor, this);
+    myMessageHandler = new ServerMessageHandler(this, new AsyncTaskExecutor() {
+      @Override
+      public void submit(final Runnable runnable) {
+        myBuildsExecutor.submit(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              runnable.run();
+            }
+            finally {
+              Thread.interrupted(); // clear interrupted status before returning to pull
+            }
+          }
+        });
+      }
+    });
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -114,14 +130,12 @@ public class Server {
       }
 
       private void doStop(long elapsedTime) {
-        if (!myMessageHandler.hasRunningBuilds()) {
-          try {
-            System.out.println("Stopping compile server; reason: no pings from client received in " + elapsedTime + " ms");
-            stop();
-          }
-          finally {
-            System.exit(0);
-          }
+        try {
+          System.out.println("Stopping compile server; reason: no pings from client received in " + elapsedTime + " ms");
+          myMessageHandler.cancelAllBuildsAndClearState();
+        }
+        finally {
+          stop();
         }
       }
     }, allowedIdlePeriod, allowedIdlePeriod, TimeUnit.MILLISECONDS);
@@ -129,8 +143,8 @@ public class Server {
 
   public void stop() {
     try {
-      myScheduler.shutdownNow();
-      myBuildsExecutor.shutdownNow();
+      myScheduler.shutdown();
+      myBuildsExecutor.shutdown();
       final ChannelGroupFuture closeFuture = myAllOpenChannels.close();
       closeFuture.awaitUninterruptibly();
     }
@@ -162,7 +176,12 @@ public class Server {
       final Server server = new Server(systemDir);
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
         public void run() {
-          server.stop();
+          try {
+            server.myMessageHandler.cancelAllBuildsAndClearState();
+          }
+          finally {
+            server.stop();
+          }
         }
       });
 

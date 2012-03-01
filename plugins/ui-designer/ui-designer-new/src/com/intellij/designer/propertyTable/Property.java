@@ -73,6 +73,9 @@ public abstract class Property {
     return null;
   }
 
+  public void setValue(RadComponent component, Object value) throws Exception {
+  }
+
   public boolean isDefaultValue(RadComponent component) throws Exception {
     return false;
   }
@@ -82,6 +85,10 @@ public abstract class Property {
 
   public boolean availableFor(List<RadComponent> components) {
     return true;
+  }
+
+  public boolean needRefreshPropertyList() {
+    return false;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

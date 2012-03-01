@@ -47,7 +47,7 @@ public final class AndroidDesignerEditorProvider implements FileEditorProvider, 
   }
 
   @Override
-  public boolean accept(final @NotNull Project project, final @NotNull VirtualFile file) {
+  public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return acceptLayout(project, file);
   }
 

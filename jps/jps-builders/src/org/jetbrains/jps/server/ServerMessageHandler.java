@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RunnableFuture;
 
 /**
@@ -27,12 +26,12 @@ class ServerMessageHandler extends SimpleChannelHandler {
 
   private final Map<String, SequentialTaskExecutor> myTaskExecutors = new HashMap<String, SequentialTaskExecutor>();
   private final List<Pair<RunnableFuture, CompilationTask>> myBuildsInProgress = Collections.synchronizedList(new LinkedList<Pair<RunnableFuture, CompilationTask>>());
-  private final ExecutorService myBuildsExecutor;
   private final Server myServer;
+  private final AsyncTaskExecutor myAsyncExecutor;
 
-  public ServerMessageHandler(ExecutorService buildsExecutor, Server server) {
-    myBuildsExecutor = buildsExecutor;
+  public ServerMessageHandler(Server server, final AsyncTaskExecutor asyncExecutor) {
     myServer = server;
+    myAsyncExecutor = asyncExecutor;
   }
 
   public void messageReceived(final ChannelHandlerContext ctx, MessageEvent e) throws Exception {
@@ -87,35 +86,14 @@ class ServerMessageHandler extends SimpleChannelHandler {
           break;
 
         case SHUTDOWN_COMMAND :
-          myBuildsExecutor.submit(new Runnable() {
+          myAsyncExecutor.submit(new Runnable() {
             public void run() {
-              final List<RunnableFuture> futures = new ArrayList<RunnableFuture>();
-
-              synchronized (myBuildsInProgress) {
-                for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
-                  final Pair<RunnableFuture, CompilationTask> pair = it.next();
-                  it.remove();
-                  pair.second.cancel();
-                  final RunnableFuture future = pair.first;
-                  futures.add(future);
-                  future.cancel(true);
-                }
+              try {
+                cancelAllBuildsAndClearState();
               }
-
-              facade.clearCahedState();
-
-              // wait until really stopped
-              for (RunnableFuture future : futures) {
-                try {
-                  future.get();
-                }
-                catch (InterruptedException ignored) {
-                }
-                catch (ExecutionException ignored) {
-                }
+              finally {
+                myServer.stop();
               }
-
-              myServer.stop();
             }
           });
           break;
@@ -124,16 +102,24 @@ class ServerMessageHandler extends SimpleChannelHandler {
           final String projectId = fsEvent.getProjectId();
           final ProjectDescriptor pd = facade.getProjectDescriptor(projectId);
           if (pd != null) {
+            final boolean wasInterrupted = Thread.interrupted();
             try {
-              for (String path : fsEvent.getChangedPathsList()) {
-                facade.notifyFileChanged(pd, new File(path));
+              try {
+                for (String path : fsEvent.getChangedPathsList()) {
+                  facade.notifyFileChanged(pd, new File(path));
+                }
+                for (String path : fsEvent.getDeletedPathsList()) {
+                  facade.notifyFileDeleted(pd, new File(path));
+                }
               }
-              for (String path : fsEvent.getDeletedPathsList()) {
-                facade.notifyFileDeleted(pd, new File(path));
+              finally {
+                pd.release();
               }
             }
             finally {
-              pd.release();
+              if (wasInterrupted) {
+                Thread.currentThread().interrupt();
+              }
             }
           }
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
@@ -149,6 +135,34 @@ class ServerMessageHandler extends SimpleChannelHandler {
     }
   }
 
+  public void cancelAllBuildsAndClearState() {
+    final List<RunnableFuture> futures = new ArrayList<RunnableFuture>();
+
+    synchronized (myBuildsInProgress) {
+      for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
+        final Pair<RunnableFuture, CompilationTask> pair = it.next();
+        it.remove();
+        pair.second.cancel();
+        final RunnableFuture future = pair.first;
+        futures.add(future);
+        future.cancel(false);
+      }
+    }
+
+    ServerState.getInstance().clearCahedState();
+
+    // wait until really stopped
+    for (RunnableFuture future : futures) {
+      try {
+        future.get();
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (ExecutionException ignored) {
+      }
+    }
+  }
+
   private void cancelSession(UUID targetSessionId) {
     synchronized (myBuildsInProgress) {
       for (Iterator<Pair<RunnableFuture, CompilationTask>> it = myBuildsInProgress.iterator(); it.hasNext(); ) {
@@ -157,7 +171,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
         if (task.getSessionId().equals(targetSessionId)) {
           it.remove();
           task.cancel();
-          pair.first.cancel(true);
+          pair.first.cancel(false);
           break;
         }
       }
@@ -212,12 +226,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
     synchronized (myTaskExecutors) {
       SequentialTaskExecutor executor = myTaskExecutors.get(projectId);
       if (executor == null) {
-        executor = new SequentialTaskExecutor(new AsyncTaskExecutor() {
-          @Override
-          public void submit(Runnable runnable) {
-            myBuildsExecutor.submit(runnable);
-          }
-        });
+        executor = new SequentialTaskExecutor(myAsyncExecutor);
         myTaskExecutors.put(projectId, executor);
       }
       return executor;
