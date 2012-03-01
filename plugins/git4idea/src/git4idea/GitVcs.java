@@ -546,9 +546,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
+  @CalledInAwt
   public void enableIntegration() {
-    GitRootDetectInfo detectInfo = new GitRootDetector(myProject).detect();
-    new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        GitRootDetectInfo detectInfo = new GitRootDetector(myProject).detect();
+        new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
+      }
+    });
   }
 
 }
