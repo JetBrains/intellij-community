@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -70,7 +69,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -781,6 +781,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
     }
     if (highlighterToSelect != null) {
+      expandFoldRegionsIfNecessary(editor, highlighterToSelect.getStartOffset(), highlighterToSelect.getEndOffset());
       editor.getSelectionModel().setSelection(highlighterToSelect.getStartOffset(), highlighterToSelect.getEndOffset());
       editor.getCaretModel().moveToOffset(highlighterToSelect.getStartOffset());
       ScrollType scrollType;
@@ -831,8 +832,63 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return false;
   }
 
+  private static void expandFoldRegionsIfNecessary(@NotNull Editor editor, final int startOffset, int endOffset) {
+    final FoldingModel foldingModel = editor.getFoldingModel();
+    final FoldRegion[] regions;
+    if (foldingModel instanceof FoldingModelEx) {
+      regions = ((FoldingModelEx)foldingModel).fetchTopLevel();
+    }
+    else {
+      regions = foldingModel.getAllFoldRegions();
+    }
+    if (regions == null) {
+      return;
+    }
+    int i = Arrays.binarySearch(regions, null, new Comparator<FoldRegion>() {
+      @Override
+      public int compare(FoldRegion o1, FoldRegion o2) {
+        // Find the first region that ends after the given start offset
+        if (o1 == null) {
+          return startOffset - o2.getEndOffset();
+        }
+        else {
+          return o1.getEndOffset() - startOffset;
+        }
+      }
+    });
+    if (i < 0) {
+      i = -i - 1;
+    }
+    else {
+      i++; // Don't expand fold region that ends at the start offset.
+    }
+    if (i >= regions.length) {
+      return;
+    }
+    final List<FoldRegion> toExpand = new ArrayList<FoldRegion>();
+    for (; i < regions.length; i++) {
+      final FoldRegion region = regions[i];
+      if (region.getStartOffset() >= endOffset) {
+        break;
+      }
+      if (!region.isExpanded()) {
+        toExpand.add(region);
+      }
+    }
+    if (toExpand.isEmpty()) {
+      return;
+    }
+    foldingModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        for (FoldRegion region : toExpand) {
+          region.setExpanded(true);
+        }
+      }
+    });
+  }
+  
   public FindUsagesManager getFindUsagesManager() {
     return myFindUsagesManager;
   }
 }
-
