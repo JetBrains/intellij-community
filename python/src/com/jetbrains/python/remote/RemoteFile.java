@@ -46,7 +46,7 @@ public class RemoteFile {
     return isWindowsPath(myPath);
   }
 
-  private static boolean isWindowsPath(@NotNull String path) {
+  public static boolean isWindowsPath(@NotNull String path) {
     return path.contains("\\");
   }
 
