@@ -1,5 +1,6 @@
 package org.jetbrains.android.util;
 
+import com.android.resources.ResourceFolderType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
@@ -39,7 +40,7 @@ public class AndroidCommonUtils {
   private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
 
   public static final Pattern COMPILER_MESSAGE_PATTERN = Pattern.compile("(.+):(\\d+):.+");
-  public static final String[] FILE_RESOURCE_TYPES = new String[]{"drawable", "anim", "layout", "values", "menu", "xml", "raw", "color"};
+
   @NonNls public static final String PNG_EXTENSION = "png";
   private static final String[] DRAWABLE_EXTENSIONS = new String[]{PNG_EXTENSION, "jpg", "gif"};
 
@@ -242,7 +243,7 @@ public class AndroidCommonUtils {
   public static String getResourceTypeByDirName(@NotNull String name) {
     final int index = name.indexOf('-');
     final String type = index >= 0 ? name.substring(0, index) : name;
-    return ArrayUtil.find(FILE_RESOURCE_TYPES, type) >= 0 ? type : null;
+    return ResourceFolderType.getTypeByName(type) != null ? type : null;
   }
 
   @NotNull

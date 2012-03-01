@@ -661,8 +661,8 @@ public class AndroidCompileUtil {
     final LocalResourceManager manager = facet.getLocalResourceManager();
     final Project project = facet.getModule().getProject();
 
-    for (final String resType : ResourceType.getNames()) {
-      for (final ResourceElement element : manager.getValueResources(resType)) {
+    for (final ResourceType resType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
+      for (final ResourceElement element : manager.getValueResources(resType.getName())) {
         waitForSmartMode(project);
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -674,7 +674,7 @@ public class AndroidCompileUtil {
             final String name = element.getName().getValue();
 
             if (name != null) {
-              resourceSet.add(new ResourceEntry(resType, name));
+              resourceSet.add(new ResourceEntry(resType.getName(), name));
             }
           }
         });

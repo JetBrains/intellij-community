@@ -16,6 +16,8 @@
 
 package org.jetbrains.android.util;
 
+import com.android.resources.ResourceFolderType;
+import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -42,29 +44,32 @@ import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import static java.util.Collections.addAll;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidResourceUtil {
   public static final String NEW_ID_PREFIX = "@+id/";
-  public static final String[] VALUE_RESOURCE_TYPES =
-    new String[]{"drawable", "dimen", "color", "string", "style", "array", "id", "bool", "integer", "integer-array"};
-  public static final Set<String> REFERABLE_RESOURCE_TYPES = new HashSet<String>();
 
-  static {
-    addAll(REFERABLE_RESOURCE_TYPES, AndroidCommonUtils.FILE_RESOURCE_TYPES);
-    addAll(REFERABLE_RESOURCE_TYPES, VALUE_RESOURCE_TYPES);
-    REFERABLE_RESOURCE_TYPES.remove("values");
-  }
+  public static final Set<ResourceType> VALUE_RESOURCE_TYPES = EnumSet.of(ResourceType.DRAWABLE, ResourceType.COLOR, ResourceType.DIMEN,
+                                                                          ResourceType.STRING, ResourceType.STYLE, ResourceType.ARRAY,
+                                                                          ResourceType.ID, ResourceType.BOOL, ResourceType.INTEGER);
+
+  public static final Set<ResourceType> REFERRABLE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
 
   private AndroidResourceUtil() {
+  }
+
+  static {
+    REFERRABLE_RESOURCE_TYPES.addAll(Arrays.asList(ResourceType.values()));
+    REFERRABLE_RESOURCE_TYPES.remove(ResourceType.ATTR);
+    REFERRABLE_RESOURCE_TYPES.remove(ResourceType.STYLEABLE);
+  }
+
+  public static boolean isValueResourceType(@NotNull String resTypeName) {
+    final ResourceType type = ResourceType.getEnum(resTypeName);
+    return type != null && VALUE_RESOURCE_TYPES.contains(type);
   }
 
   @NotNull
@@ -383,7 +388,7 @@ public class AndroidResourceUtil {
 
   @NotNull
   public static List<VirtualFile> getResourceSubdirs(@Nullable String resourceType, @NotNull VirtualFile[] resourceDirs) {
-    if (ArrayUtil.find(AndroidCommonUtils.FILE_RESOURCE_TYPES, resourceType) < 0 && resourceType != null) {
+    if (resourceType != null && ResourceFolderType.getTypeByName(resourceType) == null) {
       return Collections.emptyList();
     }
     final List<VirtualFile> dirs = new ArrayList<VirtualFile>();
@@ -407,10 +412,7 @@ public class AndroidResourceUtil {
 
   @Nullable
   public static String getDefaultResourceFileName(@NotNull String resourceType) {
-    if (ArrayUtil.find(VALUE_RESOURCE_TYPES, resourceType) < 0) {
-      return null;
-    }
-    return resourceType + "s.xml";
+    return isValueResourceType(resourceType) ? resourceType + "s.xml" : null;
   }
 
   @NotNull
@@ -539,5 +541,23 @@ public class AndroidResourceUtil {
       }
     }
     return false;
+  }
+
+  public static List<String> getNames(@NotNull Collection<ResourceType> resourceTypes) {
+    if (resourceTypes.size() == 0) {
+      return Collections.emptyList();
+    }
+    final List<String> result = new ArrayList<String>();
+
+    for (ResourceType type : resourceTypes) {
+      result.add(type.getName());
+    }
+    return result;
+  }
+
+  @NotNull
+  public static String[] getNamesArray(@NotNull Collection<ResourceType> resourceTypes) {
+    final List<String> names = getNames(resourceTypes);
+    return ArrayUtil.toStringArray(names);
   }
 }
