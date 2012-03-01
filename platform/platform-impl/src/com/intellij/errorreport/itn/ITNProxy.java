@@ -144,6 +144,8 @@ public class ITNProxy {
 
     params.add(Pair.create("error.description", error.getDescription()));
 
+    params.add(Pair.create("assignee.id", error.getAssigneeId() == null ? null : Integer.toString(error.getAssigneeId())));
+
     for (Attachment attachment : error.getAttachments()) {
       params.add(Pair.create("attachment.name", attachment.getName()));
       params.add(Pair.create("attachment.value", attachment.getEncodedBytes()));

@@ -8,6 +8,10 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +26,9 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -42,15 +49,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
+import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -63,6 +70,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
   public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
   public static final int COMPONENTS_WIDTH = 670;
+  public static Collection<Developer> ourDevelopersList = Collections.emptyList();
 
   private JPanel myContentPane;
   private JPanel myBackButtonPanel;
@@ -105,6 +113,38 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     setCancelButtonText(CommonBundle.message("close.action.name"));
     setModal(false);
+    if (INTERNAL_MODE) {
+      if (ourDevelopersList.isEmpty()) {
+        loadDevelopersAsynchronously();
+      } else {
+        myDetailsTabForm.setDevelopers(ourDevelopersList);
+      }
+    }
+  }
+
+  private void loadDevelopersAsynchronously() {
+    Task.Backgroundable task = new Task.Backgroundable(null, "Loading developers list", true) {
+      private final Collection[] myDevelopers = new Collection[]{Collections.emptyList()};
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          myDevelopers[0] = DevelopersLoader.fetchDevelopers();
+        } catch (IOException e) {
+          Notifications.Bus.register("Error reporter", NotificationDisplayType.BALLOON);
+          Notifications.Bus.notify(new Notification("Error reporter", "Communication error",
+                                                    "Unable to load developers list from server.", NotificationType.WARNING));
+        }
+      }
+
+      @Override
+      public void onSuccess() {
+        Collection<Developer> developers = myDevelopers[0];
+        myDetailsTabForm.setDevelopers(developers);
+        ourDevelopersList = developers;
+      }
+    };
+    ProgressManager.getInstance().run(task);
   }
 
   private boolean moveSelectionToMessage(LogMessage defaultMessage) {
@@ -304,6 +344,18 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     });
 
+    myDetailsTabForm.addAssigneeListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myMute) return;
+
+        AbstractMessage message = getSelectedMessage();
+        if (message != null) {
+          message.setAssigneeId(myDetailsTabForm.getAssigneeId());
+        }
+      }
+    });
+
     return myContentPane;
   }
 
@@ -377,6 +429,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final AbstractMessage message = getSelectedMessage();
     updateInfoLabel(message);
     updateCredentialsPane(message);
+    updateAssigneePane(message);
     updateAttachmentWarning(message);
     myDisableLink.setVisible(canDisablePlugin(message));
     updateForeignPluginLabel(message != null ? message : null);
@@ -455,6 +508,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
     myCredentialsPanel.setVisible(false);
+  }
+
+  private void updateAssigneePane(AbstractMessage message) {
+    final ErrorReportSubmitter submitter = getSubmitter(message.getThrowable());
+    myDetailsTabForm.setAssigneeVisible(submitter instanceof ITNReporter && INTERNAL_MODE);
   }
 
   private void updateInfoLabel(AbstractMessage message) {
@@ -631,6 +689,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         myDetailsTabForm.setCommentsText(null);
         myDetailsTabForm.setCommentsTextEnabled(false);
       }
+
+      myDetailsTabForm.setAssigneeId(message == null ? null : message.getAssigneeId());
 
       List<Attachment> attachments =
         message instanceof LogMessageEx ? ((LogMessageEx)message).getAttachments() : Collections.<Attachment>emptyList();
@@ -891,7 +951,12 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (logMessage instanceof LogMessageEx) {
         return ((LogMessageEx)logMessage).toEvent();
       }
-      return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable());
+      return new IdeaLoggingEvent(logMessage.getMessage(), logMessage.getThrowable()) {
+        @Override
+        public AbstractMessage getData() {
+          return logMessage;
+        }
+      };
     }
   }
 

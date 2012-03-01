@@ -38,6 +38,7 @@ public class ErrorBean {
   private String message;
   private String stackTrace;
   private String description;
+  private Integer assigneeId;
 
   private List<Attachment> attachments = Collections.emptyList();
 
@@ -106,5 +107,13 @@ public class ErrorBean {
 
   public List<Attachment> getAttachments() {
     return attachments;
+  }
+
+  public Integer getAssigneeId() {
+    return assigneeId;
+  }
+
+  public void setAssigneeId(Integer assigneeId) {
+    this.assigneeId = assigneeId;
   }
 }
