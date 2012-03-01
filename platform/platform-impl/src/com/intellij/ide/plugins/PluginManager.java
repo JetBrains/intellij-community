@@ -1049,7 +1049,8 @@ public class PluginManager {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (classPath.length == 0) return null;
+    //if (classPath.length == 0) return null;
+    if (isUnitTestMode()) return null;
     try {
       final List<URL> urls = new ArrayList<URL>(classPath.length);
       for (File aClassPath : classPath) {
