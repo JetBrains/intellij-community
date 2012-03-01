@@ -48,6 +48,11 @@ public abstract class GroovyShellRunner {
     return null;
   }
 
+  @NotNull
+  public String transformUserInput(@NotNull String userInput) {
+    return userInput;
+  }
+
   @Nullable
   public static GroovyShellRunner getAppropriateRunner(@NotNull Module module) {
     for (GroovyShellRunner runner : EP_NAME.getExtensions()) {

@@ -143,8 +143,8 @@ public class LocalResourceManager extends ResourceManager {
     final FileBasedIndex index = FileBasedIndex.getInstance();
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(myModule.getProject());
 
-    for (String resourceType : ResourceType.getNames()) {
-      final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType);
+    for (ResourceType resourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
+      final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType.getName());
 
       for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
         for (ResourceEntry entry : entrySet) {

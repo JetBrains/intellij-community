@@ -179,7 +179,7 @@ public class GroovyShellAction extends DumbAwareAction {
           ConsoleExecuteActionHandler handler = new ConsoleExecuteActionHandler(getProcessHandler(), false) {
             @Override
             public void processLine(String line) {
-              super.processLine(StringUtil.replace(line, "\n", "###\\n"));
+              super.processLine(shellRunner.transformUserInput(line));
             }
 
             @Override

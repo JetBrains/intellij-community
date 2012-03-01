@@ -128,7 +128,7 @@ public class AndroidDomUtil {
     if (containsReference) {
       if (resourceTypes.contains("color")) resourceTypes.add("drawable");
       if (resourceTypes.size() == 0) {
-        resourceTypes.addAll(AndroidResourceUtil.REFERABLE_RESOURCE_TYPES);
+        resourceTypes.addAll(AndroidResourceUtil.getNames(AndroidResourceUtil.REFERRABLE_RESOURCE_TYPES));
       }
     }
     if (resourceTypes.size() > 0) {

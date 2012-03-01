@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.converters;
 
+import com.android.resources.ResourceType;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -29,11 +30,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.xml.*;
 import org.jetbrains.android.dom.AdditionalConverter;
-import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.AndroidResourceType;
 import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -55,8 +55,10 @@ import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
  * @author yole
  */
 public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue> implements CustomReferenceConverter<ResourceValue> {
-  private static final Set<String> FIXABLE_RESOURCE_TYPES =
-    new HashSet<String>(Arrays.asList("anim", "layout", "style", "menu", "xml", "dimen", "color", "string", "array", "id", "drawable"));
+  private static final Set<ResourceType> XML_FILE_RESOURCE_TYPES = EnumSet.of(ResourceType.ANIM, ResourceType.ANIMATOR,
+                                                                              ResourceType.INTERPOLATOR, ResourceType.LAYOUT,
+                                                                              ResourceType.MENU, ResourceType.XML, ResourceType.COLOR,
+                                                                              ResourceType.DRAWABLE);
 
   private final List<String> myResourceTypes;
   private ResolvingConverter<String> myAdditionalConverter;
@@ -145,7 +147,8 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
                                          ? null
                                          : getResourceTypesInCurrentModule(facet);
 
-        for (String type : AndroidResourceUtil.REFERABLE_RESOURCE_TYPES) {
+        for (ResourceType resourceType : ResourceType.values()) {
+          final String type = resourceType.getName();
           String typePrefix = getTypePrefix(resourcePackage, type);
           if (value.startsWith(typePrefix)) {
             addResourceReferenceValues(facet, type, resourcePackage, result, true);
@@ -196,14 +199,14 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
 
   @NotNull
   public Set<String> getResourceTypes(@NotNull DomElement element) {
-    ResourceType resourceType = element.getAnnotation(ResourceType.class);
+    AndroidResourceType resourceType = element.getAnnotation(AndroidResourceType.class);
     Set<String> types = new HashSet<String>(myResourceTypes);
     if (resourceType != null) {
       String s = resourceType.value();
       if (s != null) types.add(s);
     }
     if (types.size() == 0) {
-      types.addAll(AndroidResourceUtil.REFERABLE_RESOURCE_TYPES);
+      types.addAll(AndroidResourceUtil.getNames(AndroidResourceUtil.VALUE_RESOURCE_TYPES));
     }
     return types;
   }
@@ -290,14 +293,16 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           ResourceValue resourceValue = ResourceValue.parse(value, false, myWithPrefix);
           if (resourceValue != null) {
             String aPackage = resourceValue.getPackage();
-            String resourceType = resourceValue.getResourceType();
-            if (resourceType == null && myResourceTypes.size() == 1) {
-              resourceType = myResourceTypes.get(0);
+            String resTypeName = resourceValue.getResourceType();
+            if (resTypeName == null && myResourceTypes.size() == 1) {
+              resTypeName = myResourceTypes.get(0);
             }
             final String resourceName = resourceValue.getResourceName();
-            if (aPackage == null && resourceType != null && resourceName != null) {
-              if (FIXABLE_RESOURCE_TYPES.contains(resourceType) && AndroidResourceUtil.isCorrectAndroidResourceName(resourceName)) {
-                return new LocalQuickFix[]{new MyLocalQuickFix(facet, resourceType, resourceName, context.getFile())};
+            final ResourceType resType = resTypeName != null ? ResourceType.getEnum(resTypeName) : null;
+            if (aPackage == null && resType != null && resourceName != null) {
+              if ((AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(resType) || XML_FILE_RESOURCE_TYPES.contains(resType)) &&
+                  AndroidResourceUtil.isCorrectAndroidResourceName(resourceName)) {
+                return new LocalQuickFix[]{new MyLocalQuickFix(facet, resType.getName(), resourceName, context.getFile())};
               }
             }
           }
@@ -343,7 +348,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     @NotNull
     public String getName() {
       String containerName;
-      if (ArrayUtil.find(AndroidResourceUtil.VALUE_RESOURCE_TYPES, myResourceType) >= 0) {
+      if (AndroidResourceUtil.isValueResourceType(myResourceType)) {
         containerName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType);
       }
       else {
@@ -359,7 +364,8 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       LocalResourceManager manager = myFacet.getLocalResourceManager();
-      if (ArrayUtil.find(AndroidResourceUtil.VALUE_RESOURCE_TYPES, myResourceType) >= 0) {
+
+      if (AndroidResourceUtil.isValueResourceType(myResourceType)) {
         String initialValue = !myResourceType.equals("id") ? "value" : null;
         ResourceElement resElement = manager.addValueResource(myResourceType, myResourceName, initialValue);
         if (resElement != null) {

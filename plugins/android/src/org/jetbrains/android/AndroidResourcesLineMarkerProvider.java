@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android;
 
+import com.android.resources.ResourceType;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -175,9 +176,9 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
     final Map<MyResourceEntry, List<PsiElement>> result = new HashMap<MyResourceEntry, List<PsiElement>>();
     Collection<Resources> resourceFiles = resManager.getResourceElements();
     for (Resources res : resourceFiles) {
-      for (String valueResourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
-        for (ResourceElement valueResource : AndroidResourceUtil.getValueResourcesFromElement(valueResourceType, res)) {
-          addResource(valueResourceType, valueResource, result);
+      for (ResourceType valueResourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
+        for (ResourceElement valueResource : AndroidResourceUtil.getValueResourcesFromElement(valueResourceType.getName(), res)) {
+          addResource(valueResourceType.getName(), valueResource, result);
         }
       }
       for (Attr attr : res.getAttrs()) {
