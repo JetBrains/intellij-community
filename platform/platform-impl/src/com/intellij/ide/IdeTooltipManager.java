@@ -130,7 +130,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         hideCurrent(me, null, null);
       }
     } else if (me.getID() == MouseEvent.MOUSE_MOVED) {
-      if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
+      if (c instanceof JComponent && ((JComponent)c).getToolTipText(me) == null) {
+        hideCurrent(me, null, null);//There is no tooltip here, let's proceed it as MOUSE_EXITED
+      } else if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
           if (hideCurrent(me, null, null)) {
             maybeShowFor(c, me);
@@ -197,6 +199,16 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
 
+    // Balloon may appear exactly above useful content, such behavior is rather annoying.
+    if (tooltip.getPreferredPosition() == Balloon.Position.above && c instanceof JTree) {
+      javax.swing.tree.TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
+      if (path != null) {
+        Rectangle pathBounds = ((JTree)c).getPathBounds(path);
+        if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
+          tooltip.setPositionChangeShift(tooltip.getPositionChangeX(), tooltip.getPositionChangeY() - ((me.getY() - pathBounds.y - 4)));
+        }
+      }
+    }
     show(tooltip, false);
   }
 
