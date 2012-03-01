@@ -661,7 +661,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void cancelHeavyAlarm() {
-    if (myHeavyAlarm != null) {
+    if (myHeavyAlarm != null && !myHeavyAlarm.isDisposed()) {
       myHeavyAlarm.cancelAllRequests();
       ++myHeavyUpdateTicket;
     }
