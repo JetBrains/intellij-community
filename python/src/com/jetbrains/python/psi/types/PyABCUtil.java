@@ -32,7 +32,7 @@ public class PyABCUtil {
       return hasIter || hasGetItem;
     }
     if (PyNames.ITERATOR.equals(superClassName)) {
-      return (hasIter && hasMethod(subClass, PyNames.NEXT)) || hasGetItem;
+      return (hasIter && (hasMethod(subClass, PyNames.NEXT) || hasMethod(subClass, PyNames.DUNDER_NEXT))) || hasGetItem;
     }
     final boolean isSized = hasMethod(subClass, PyNames.LEN);
     if (PyNames.SIZED.equals(superClassName)) {
