@@ -112,12 +112,9 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   
       for (File f: files) {
         String fileName = f.getName();
-        if (!f.isDirectory()) {
-          if (isValidFile(fileName, fileKinds)) {
-            //JavaFileObject fe = new RegularFileObject(this, fname, new File(d, fname));
-            JavaFileObject fe = getRegularFile(f);
-            resultList.append(fe);
-          }
+        if (isValidFile(fileName, fileKinds) && !f.isDirectory()) {
+          JavaFileObject fe = getRegularFile(f);
+          resultList.append(fe);
         }
       }
     }
@@ -160,8 +157,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   }
 
   private static boolean isValidFile(String name, Set<JavaFileObject.Kind> fileKinds) {
-    JavaFileObject.Kind kind = getKind(name);
-    return fileKinds.contains(kind);
+    return fileKinds.contains(getKind(name));
   }
 
 }
