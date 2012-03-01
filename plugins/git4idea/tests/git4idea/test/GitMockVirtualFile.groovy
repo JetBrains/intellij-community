@@ -32,7 +32,7 @@ class GitMockVirtualFile extends VirtualFile {
   private String myPath;
 
   GitMockVirtualFile(@NotNull String path) {
-    myPath = path;
+    myPath = FileUtil.toSystemIndependentName(path);
   }
 
   @NotNull
