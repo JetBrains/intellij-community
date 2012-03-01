@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -40,7 +41,7 @@ import java.util.List;
 
 public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeQuickFix");
-  private final PsiElement myElement;
+  private final PsiAnchor myElement;
   private final String myKey;
   private final List<PropertiesFile> myPropertiesFiles;
 
@@ -51,7 +52,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   public CreatePropertyFix(PsiElement element, String key, final List<PropertiesFile> propertiesFiles) {
-    myElement = element;
+    myElement = element == null ? null : PsiAnchor.create(element);
     myKey = key;
     myPropertiesFiles = propertiesFiles;
   }
@@ -79,11 +80,11 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile file) {
-    return myElement.isValid();
+    return myElement != null && myElement.retrieve() != null;
   }
 
   public void invoke(@NotNull final Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    invokeAction(project, file, myElement, myKey, myPropertiesFiles);
+    invokeAction(project, file, myElement.retrieve(), myKey, myPropertiesFiles);
   }
 
   @Nullable
