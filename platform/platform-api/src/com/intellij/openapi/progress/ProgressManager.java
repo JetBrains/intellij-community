@@ -17,6 +17,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +56,7 @@ public abstract class ProgressManager {
   public abstract boolean hasUnsafeProgressIndicator();
 
   public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
 
   public abstract ProgressIndicator getProgressIndicator();
 

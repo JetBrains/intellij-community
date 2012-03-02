@@ -372,8 +372,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   @Override
-  public DiffViewerType getType() {
-    return DiffViewerType.contents;
+  public boolean acceptsType(DiffViewerType type) {
+    return DiffViewerType.contents.equals(type);
   }
 
   public ComparisonPolicy getComparisonPolicy() {

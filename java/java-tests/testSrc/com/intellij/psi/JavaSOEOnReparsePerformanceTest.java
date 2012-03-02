@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 
-public class JavaSOEOnReparseTest extends LightDaemonAnalyzerTestCase {
+public class JavaSOEOnReparsePerformanceTest extends LightDaemonAnalyzerTestCase {
   private StringBuilder myHugeExpr;
 
   @Override

@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import git4idea.Notificator
 import git4idea.PlatformFacade
 import git4idea.tests.TestDialogManager
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.NotNull
 public class GitTestPlatformFacade implements PlatformFacade {
 
   GitMockVcsManager myVcsManager
+  GitMockVcs myVcs
   TestNotificator myNotificator
   TestDialogManager myTestDialogManager
 
@@ -63,7 +63,10 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @NotNull
   @Override
   AbstractVcs getVcs(@NotNull Project project) {
-    new MockAbstractVcs(project, "Git")
+    if (!myVcs) {
+      myVcs = new GitMockVcs(project)
+    }
+    myVcs
   }
 
   @NotNull

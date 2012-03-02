@@ -59,7 +59,7 @@ public class ShowPrevChangeAction extends AnAction implements DumbAware {
 
     final DiffRequest request = chain.moveBack();
     if (request != null) {
-      if (diffViewer.getType().equals(request.getType())) {
+      if (diffViewer.acceptsType(request.getType())) {
         diffViewer.setDiffRequest(request);
       } else {
         final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();

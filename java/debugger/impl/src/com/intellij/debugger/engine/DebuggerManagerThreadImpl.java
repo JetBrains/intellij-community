@@ -40,12 +40,14 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.DebuggerManagerThreadImpl");
   public static final int COMMAND_TIMEOUT = 3000;
   private static final int RESTART_TIMEOUT = 500;
+  private volatile boolean myDisposed;
 
   DebuggerManagerThreadImpl(@NotNull Disposable parent) {
     Disposer.register(parent, this);
   }
 
   public void dispose() {
+    myDisposed = true;
   }
 
   @TestOnly
@@ -104,6 +106,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     invoke(command);
 
     if (currentCommand != null) {
+      assert !myDisposed;
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this);
       alarm.addRequest(new Runnable() {
         public void run() {

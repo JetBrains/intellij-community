@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.StdLanguages;
@@ -41,7 +40,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -192,7 +194,7 @@ public class InspectionValidatorWrapper implements Validator {
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
-  private boolean checkFile(List<LocalInspectionTool> inspections, final PsiFile file, CompileContext context) {
+  private boolean checkFile(List<LocalInspectionTool> inspections, final PsiFile file, final CompileContext context) {
     if (!checkUnderReadAction(file, context, new Computable<Map<ProblemDescriptor, HighlightDisplayLevel>>() {
       @Override
       public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
@@ -219,7 +221,8 @@ public class InspectionValidatorWrapper implements Validator {
         @Override
         public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
           if (getHighlightDisplayLevel(inspectionTool, inspectionProfile, file) != HighlightDisplayLevel.DO_NOT_SHOW) {
-            return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file));
+            return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file)
+            );
           }
           return Collections.emptyMap();
         }
@@ -278,7 +281,7 @@ public class InspectionValidatorWrapper implements Validator {
                                                                                  final LocalInspectionTool inspectionTool,
                                                                                  final HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
-    for (CommonProblemDescriptor descriptor : CleanupInspectionIntention.runInspectionOnFile(file, inspectionTool)) {
+    for (CommonProblemDescriptor descriptor : InspectionRunningUtil.runInspectionOnFile(file, inspectionTool)) {
       if (descriptor instanceof ProblemDescriptor) {
         problemsMap.put((ProblemDescriptor)descriptor, level);
       }

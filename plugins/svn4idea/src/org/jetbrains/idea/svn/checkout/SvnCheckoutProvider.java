@@ -91,6 +91,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         client.setIgnoreExternals(ignoreExternals);
         try {
           progressIndicator.setText(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
+          if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())) {
+            client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
+          }
           client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, depth, true);
           progressIndicator.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);

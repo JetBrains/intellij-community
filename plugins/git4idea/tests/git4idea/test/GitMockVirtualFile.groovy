@@ -122,4 +122,15 @@ class GitMockVirtualFile extends VirtualFile {
     myPath;
   }
 
+  boolean equals(o) {
+    if (this.is(o)) return true
+    if (getClass() != o.class) return false
+    GitMockVirtualFile file = (GitMockVirtualFile)o
+    if (myPath != file.myPath) return false
+    return true
+  }
+
+  int hashCode() {
+    return (myPath != null ? myPath.hashCode() : 0)
+  }
 }

@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
+package git4idea.test;
 
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 
 /**
- * 
  * @author Kirill Likhodedov
  */
-class GitGTestUtil {
+class GitMockVcs extends AbstractVcs {
 
-  static String toAbsolute(String relPath, Project project) {
-    toAbsolute(Collections.singletonList(relPath), project)[0]
+  public GitMockVcs(final Project project) {
+    super(project, "Git", AbstractVcs.createKey("Git"));
   }
 
-  static Collection<String> toAbsolute(Collection<String> relPaths, Project project) {
-    relPaths.collect { FileUtil.toSystemIndependentName new File(project.baseDir.path + "/" + it).getCanonicalPath() }
+  @Override
+  public String getDisplayName() {
+    throw new UnsupportedOperationException();
   }
 
-  static String stripLineBreaksAndHtml(String s) {
-    StringUtil.stripHtml(s, true).replace('\n', '');
+  @Override
+  public Configurable getConfigurable() {
+    throw new UnsupportedOperationException();
   }
-
 }
