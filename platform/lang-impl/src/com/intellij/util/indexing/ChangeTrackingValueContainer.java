@@ -152,15 +152,17 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       });
       myRemoved.forEach(new ContainerAction<Value>() {
         @Override
-        public void perform(final int id, final Value value) {
+        public boolean perform(final int id, final Value value) {
           newMerged.removeValue(id, value);
+          return true;
         }
       });
       myAdded.forEach(new ContainerAction<Value>() {
         @Override
-        public void perform(final int id, final Value value) {
+        public boolean perform(final int id, final Value value) {
           newMerged.removeAssociatedValue(id); // enforcing "one-value-per-file for particular key" invariant
           newMerged.addValue(id, value);
+          return true;
         }
       });
       setNeedsCompacting(fromDisk.needsCompacting());
@@ -171,7 +173,7 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
   }
 
   public boolean isDirty() {
-    return myAdded.size() > 0 || myRemoved.size() > 0 || myInvalidated.size() > 0 || needsCompacting();
+    return myAdded.size() > 0 || myRemoved.size() > 0 || !myInvalidated.isEmpty() || needsCompacting();
   }
 
   public ValueContainer<Value> getAddedDelta() {

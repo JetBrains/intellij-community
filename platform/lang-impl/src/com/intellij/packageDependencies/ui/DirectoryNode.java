@@ -238,7 +238,10 @@ public class DirectoryNode extends PackageDependenciesNode {
   @Override
   public String getComment() {
     if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
-      return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(getPsiDirectory());
+      final PsiDirectory directory = getPsiDirectory();
+      if (directory != null) {
+        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
+      }
     }
     return super.getComment();
   }

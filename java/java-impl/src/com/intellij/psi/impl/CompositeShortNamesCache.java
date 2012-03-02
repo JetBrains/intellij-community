@@ -23,6 +23,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -122,7 +123,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       }
     }
     PsiMethod[] result = merger == null ? null : merger.getResult();
-    return result != null ? result : PsiMethod.EMPTY_ARRAY;
+    return result == null ? PsiMethod.EMPTY_ARRAY : result;
   }
 
   @Override
@@ -130,14 +131,25 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
     Merger<PsiMethod> merger = null;
     for (PsiShortNamesCache cache : myCacheArray) {
-      PsiMethod[] classes = cache.getMethodsByNameIfNotMoreThan(name, scope, maxCount);
-      if (classes.length != 0) {
+      PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, maxCount);
+      if (methods.length == maxCount) return methods;
+      if (methods.length != 0) {
         if (merger == null) merger = new Merger<PsiMethod>();
-        merger.add(classes);
+        merger.add(methods);
       }
     }
     PsiMethod[] result = merger == null ? null : merger.getResult();
-    return result != null ? result : PsiMethod.EMPTY_ARRAY;
+    return result == null ? PsiMethod.EMPTY_ARRAY : result;
+  }
+
+  @Override
+  public boolean processMethodsWithName(@NonNls @NotNull String name,
+                                        @NotNull GlobalSearchScope scope,
+                                        @NotNull Processor<PsiMethod> processor) {
+    for (PsiShortNamesCache cache : myCacheArray) {
+      if (!cache.processMethodsWithName(name, scope, processor)) return false;
+    }
+    return true;
   }
 
   @Override
@@ -195,8 +207,8 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     private T[] mySingleItem = null;
     private Set<T> myAllItems = null;
 
-    public void add(T[] items) {
-      if (items == null || items.length == 0) return;
+    public void add(@NotNull T[] items) {
+      if (items.length == 0) return;
       if (mySingleItem == null) {
         mySingleItem = items;
         return;

@@ -17,6 +17,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,4 +53,8 @@ public abstract class Executor {
 
   @NonNls
   public abstract String getHelpId();
+
+  public String getStartActionText(String configurationName) {
+    return getStartActionText() + " '" + StringUtil.first(configurationName, 30, true) + "'";
+  }
 }

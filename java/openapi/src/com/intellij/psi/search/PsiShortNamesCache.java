@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * Allows to retrieve files and Java classes, methods and fields in a project by
  * non-qualified names.
  *
- * @see JavaPsiFacade#getShortNamesCache()
  */
 public abstract class PsiShortNamesCache {
   /**
@@ -104,6 +104,8 @@ public abstract class PsiShortNamesCache {
 
   @NotNull
   public abstract PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount);
+
+  public abstract boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiMethod> processor);
 
   /**
    * Returns the list of names of all methods in the project and

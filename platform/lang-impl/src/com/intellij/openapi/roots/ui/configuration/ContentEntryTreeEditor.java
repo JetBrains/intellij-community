@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.util.Comparator;
 
 /**
@@ -99,7 +99,7 @@ public class ContentEntryTreeEditor {
   protected void createEditingActions() {
     if (myCanMarkSources) {
       ToggleSourcesStateAction markSourcesAction = new ToggleSourcesStateAction(myTree, this, false);
-      markSourcesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.ALT_MASK)), myTree);
+      markSourcesAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.ALT_MASK)), myTree);
       myEditingActionsGroup.add(markSourcesAction);
     }
 
@@ -117,7 +117,7 @@ public class ContentEntryTreeEditor {
   /**
    * @param contentEntryEditor : null means to clear the editor
    */
-  public void setContentEntryEditor(ContentEntryEditor contentEntryEditor) {
+  public void setContentEntryEditor(final ContentEntryEditor contentEntryEditor) {
     if (myContentEntryEditor != null && myContentEntryEditor.equals(contentEntryEditor)) {
       return;
     }
@@ -140,26 +140,17 @@ public class ContentEntryTreeEditor {
     myTreePanel.setVisible(true);
     myContentEntryEditor = contentEntryEditor;
     myContentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
-    final VirtualFile file = contentEntryEditor.getContentEntry().getFile();
-    myDescriptor.setRoot(file);
-    if (file != null) {
-      myDescriptor.setTitle(file.getPresentableUrl());
-    }
-    else {
-      final String url = contentEntryEditor.getContentEntry().getUrl();
-      myDescriptor.setTitle(VirtualFileManager.extractPath(url).replace('/', File.separatorChar));
-    }
 
+    final String path = VirtualFileManager.extractPath(contentEntryEditor.getContentEntryUrl());
+    myDescriptor.setRoots(path);
 
     final Runnable init = new Runnable() {
       public void run() {
+        //noinspection ConstantConditions
         myFileSystemTree.updateTree();
-        if (file != null) {
-          select(file);
-        }
+        myFileSystemTree.select(null, path);
       }
     };
-
 
     myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer(), init, null) {
       protected AbstractTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure,
@@ -169,18 +160,14 @@ public class ContentEntryTreeEditor {
       }
     };
     myFileSystemTree.showHiddens(true);
-
-
     Disposer.register(myProject, myFileSystemTree);
 
-
     final NewFolderAction newFolderAction = new MyNewFolderAction();
-    DefaultActionGroup mousePopupGroup = new DefaultActionGroup();
+    final DefaultActionGroup mousePopupGroup = new DefaultActionGroup();
     mousePopupGroup.add(myEditingActionsGroup);
     mousePopupGroup.addSeparator();
     mousePopupGroup.add(newFolderAction);
     myFileSystemTree.registerMouseListener(mousePopupGroup);
-
   }
 
   public ContentEntryEditor getContentEntryEditor() {
@@ -254,7 +241,12 @@ public class ContentEntryTreeEditor {
   }
 
   private static class MyFileTreeBuilder extends FileTreeBuilder {
-    public MyFileTreeBuilder(JTree tree, DefaultTreeModel treeModel, AbstractTreeStructure treeStructure, Comparator<NodeDescriptor> comparator, FileChooserDescriptor descriptor, @Nullable Runnable onInitialized) {
+    public MyFileTreeBuilder(JTree tree,
+                             DefaultTreeModel treeModel,
+                             AbstractTreeStructure treeStructure,
+                             Comparator<NodeDescriptor> comparator,
+                             FileChooserDescriptor descriptor,
+                             @Nullable Runnable onInitialized) {
       super(tree, treeModel, treeStructure, comparator, descriptor, onInitialized);
     }
 
@@ -279,14 +271,14 @@ public class ContentEntryTreeEditor {
 
   protected void setupTestsAction() {
     ToggleSourcesStateAction markTestsAction = new ToggleSourcesStateAction(myTree, this, true);
-    markTestsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.ALT_MASK)), myTree);
+    markTestsAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.ALT_MASK)), myTree);
     myEditingActionsGroup.add(markTestsAction);
   }
 
   protected void setupExcludedAction() {
     ToggleExcludedStateAction toggleExcludedAction = new ToggleExcludedStateAction(myTree, this);
     myEditingActionsGroup.add(toggleExcludedAction);
-    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.ALT_MASK)), myTree);
+    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK)), myTree);
   }
 
 }

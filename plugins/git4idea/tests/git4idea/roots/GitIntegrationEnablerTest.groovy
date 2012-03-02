@@ -58,13 +58,13 @@ class GitIntegrationEnablerTest {
   }
 
   @Test
-  void "Simplest case - 1 root for the whole project => just add VCS root"() {
+  void "1 root for the whole project, then just add VCS root"() {
     doTest given(["."]),
            expect(git_init:  [])
   }
 
   @Test
-  void "No Git roots => init & notify"() {
+  void "No Git roots, then init & notify"() {
     doTest given( [], false ),
            expect( git_init: ["."],
                    vcs_roots: ["."],
@@ -72,28 +72,28 @@ class GitIntegrationEnablerTest {
   }
 
   @Test
-  void "Below Git, no inside => notify"() {
+  void "Below Git, no inside, then notify"() {
     doTest given([".."], true, true),
            expect( git_init: [],
                    notification("Added Git root: ${path("..")}"))
   }
 
   @Test
-  void "Git for project, some inside => notify"() {
+  void "Git for project, some inside, then notify"() {
     doTest given( [".", "community"]),
            expect(git_init: [],
                   notification("Added Git roots: ${path(".")}, ${path("community")}"))
   }
 
   @Test
-  void "Below Git, some inside => notify"() {
+  void "Below Git, some inside, then notify"() {
     doTest given(["..", "community"], true, true),
            expect(git_init: [],
                   notification("Added Git roots: ${path("..")}, ${path("community")}"))
   }
 
   @Test
-  void "Not under Git, some inside => notify"() {
+  void "Not under Git, some inside, then notify"() {
     doTest given( ["community", "contrib"], false, false),
            expect(git_init: [],
                   notification("Added Git roots: ${path("community")}, ${path("contrib")}"))

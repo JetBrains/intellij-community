@@ -193,6 +193,18 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     },progress);
   }
 
+  @Override
+  public <T> T runProcess(@NotNull final Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException {
+    final Ref<T> ref = new Ref<T>();
+    runProcess(new Runnable() {
+      @Override
+      public void run() {
+        ref.set(process.compute());
+      }
+    }, progress);
+    return ref.get();
+  }
+
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     ProgressIndicator oldIndicator = myThreadIndicator.get();
 

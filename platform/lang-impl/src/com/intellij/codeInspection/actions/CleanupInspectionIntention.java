@@ -22,18 +22,16 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -63,7 +61,12 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
-    final List<CommonProblemDescriptor> descriptions = runInspectionOnFile(file, myTool);
+    final List<CommonProblemDescriptor> descriptions = ProgressManager.getInstance().runProcess(new Computable<List<CommonProblemDescriptor>>() {
+      @Override
+      public List<CommonProblemDescriptor> compute() {
+        return InspectionRunningUtil.runInspectionOnFile(file, myTool);
+      }
+    }, new EmptyProgressIndicator());
 
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
@@ -85,27 +88,6 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
           }
         }
       }
-    }
-  }
-
-  public static List<CommonProblemDescriptor> runInspectionOnFile(final PsiFile file,
-                                                                   final LocalInspectionTool inspectionTool) {
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
-    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
-    final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(inspectionTool);
-    tool.initialize(context);
-    ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-    try {
-      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
-        public void run() {
-          tool.processFile(file, true, managerEx, true);
-        }
-      }, new EmptyProgressIndicator());
-      return new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
-    }
-    finally {
-      ((RefManagerImpl)context.getRefManager()).inspectionReadActionFinished();
-      context.cleanup(managerEx);
     }
   }
 

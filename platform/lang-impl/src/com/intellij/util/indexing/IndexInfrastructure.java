@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import gnu.trove.TObjectLongHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -42,19 +43,19 @@ public class IndexInfrastructure {
   private IndexInfrastructure() {
   }
 
-  public static File getVersionFile(final ID<?, ?> indexName) {
+  public static File getVersionFile(@NotNull ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName + ".ver");
   }
 
-  public static File getStorageFile(final ID<?, ?> indexName) {
+  public static File getStorageFile(@NotNull ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName.toString());
   }
 
-  public static File getInputIndexStorageFile(final ID<?, ?> indexName) {
+  public static File getInputIndexStorageFile(@NotNull ID<?, ?> indexName) {
     return new File(getIndexRootDir(indexName), indexName.toString()+"_inputs");
   }
 
-  public static File getIndexRootDir(final ID<?, ?> indexName) {
+  public static File getIndexRootDir(@NotNull ID<?, ?> indexName) {
     final String dirName = indexName.toString().toLowerCase(Locale.US);
     // store StubIndices under StubUpdating index' root to ensure they are deleted 
     // when StubUpdatingIndex version is changed 

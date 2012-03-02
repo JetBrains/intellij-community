@@ -13,7 +13,6 @@ import java.io.IOException;
 *         Date: 1/8/12
 */
 public final class ProjectDescriptor {
-  public final String projectName;
   public final Project project;
   public final FSState fsState;
   public final ProjectTimestamps timestamps;
@@ -22,8 +21,7 @@ public final class ProjectDescriptor {
 
   private int myUseCounter = 1;
 
-  public ProjectDescriptor(String projectName, Project project, FSState fsState, ProjectTimestamps timestamps, BuildDataManager dataManager) {
-    this.projectName = projectName;
+  public ProjectDescriptor(Project project, FSState fsState, ProjectTimestamps timestamps, BuildDataManager dataManager) {
     this.project = project;
     this.fsState = fsState;
     this.timestamps = timestamps;

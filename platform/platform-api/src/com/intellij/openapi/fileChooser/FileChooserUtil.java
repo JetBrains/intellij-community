@@ -18,6 +18,7 @@ package com.intellij.openapi.fileChooser;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -57,6 +58,15 @@ public final class FileChooserUtil {
     return paths;
   }
 
+  @Nullable
+  public static VirtualFile pathToFile(@Nullable final String path, final boolean refresh) {
+    if (path == null) return null;
+    final String vfsPath = FileUtil.toSystemIndependentName(path);
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    final VirtualFile file = refresh ? fs.refreshAndFindFileByPath(vfsPath) : fs.findFileByPath(vfsPath);
+    return file != null && file.isValid() ? file : null;
+  }
+
   @NotNull
   public static List<VirtualFile> pathsToFiles(@Nullable final List<String> paths, final boolean refresh) {
     if (paths == null || paths.size() == 0) return Collections.emptyList();
@@ -64,7 +74,8 @@ public final class FileChooserUtil {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
     final List<VirtualFile> files = Lists.newArrayListWithExpectedSize(paths.size());
     for (String path : paths) {
-      final VirtualFile file = refresh ? fs.refreshAndFindFileByPath(path) : fs.findFileByPath(path);
+      final String vfsPath = FileUtil.toSystemIndependentName(path);
+      final VirtualFile file = refresh ? fs.refreshAndFindFileByPath(vfsPath) : fs.findFileByPath(vfsPath);
       if (file != null && file.isValid()) {
         files.add(file);
       }

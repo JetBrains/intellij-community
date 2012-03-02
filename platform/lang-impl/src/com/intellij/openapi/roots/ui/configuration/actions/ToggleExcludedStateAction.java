@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.ProjectBundle;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Oct 14 2003
+ * @since Oct 14, 2003
  */
 public class ToggleExcludedStateAction extends ContentEntryEditingAction {
   private final ContentEntryTreeEditor myEntryTreeEditor;
@@ -43,23 +43,25 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     templatePresentation.setIcon(IconSet.EXCLUDE_FOLDER);
   }
 
-  public boolean isSelected(AnActionEvent e) {
-    final VirtualFile[] selectedFiles = getSelectedFiles();
-    if (selectedFiles == null || selectedFiles.length == 0) {
-      return false;
-    }
-    final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
-    return contentEntryEditor.isExcluded(selectedFiles[0]) || contentEntryEditor.isUnderExcludedDirectory(selectedFiles[0]);
+  @Override
+  public boolean isSelected(final AnActionEvent e) {
+    final List<String> selectedPaths = getSelectedPaths();
+    if (selectedPaths.size() == 0) return false;
+
+    final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
+    return editor.isExcluded(selectedPaths.get(0)) || editor.isUnderExcludedDirectory(selectedPaths.get(0));
   }
 
-  public void setSelected(AnActionEvent e, boolean isSelected) {
-    final VirtualFile[] selectedFiles = getSelectedFiles();
-    assert selectedFiles != null && selectedFiles.length > 0;
-    for (VirtualFile selectedFile : selectedFiles) {
-      final ExcludeFolder excludeFolder = myEntryTreeEditor.getContentEntryEditor().getExcludeFolder(selectedFile);
+  @Override
+  public void setSelected(final AnActionEvent e, final boolean isSelected) {
+    final List<String> selectedPaths = getSelectedPaths();
+    assert selectedPaths.size() != 0;
+
+    for (String selectedPath : selectedPaths) {
+      final ExcludeFolder excludeFolder = myEntryTreeEditor.getContentEntryEditor().getExcludeFolder(selectedPath);
       if (isSelected) {
         if (excludeFolder == null) { // not excluded yet
-          myEntryTreeEditor.getContentEntryEditor().addExcludeFolder(selectedFile);
+          myEntryTreeEditor.getContentEntryEditor().addExcludeFolder(selectedPath);
         }
       }
       else {
@@ -70,10 +72,10 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(final AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setText(ProjectBundle.message("module.toggle.excluded.action"));
   }
-
 }

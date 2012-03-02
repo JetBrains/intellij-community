@@ -17,6 +17,7 @@ package git4idea.test
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.io.FileUtil
 
 /**
  * 
@@ -29,7 +30,7 @@ class GitGTestUtil {
   }
 
   static Collection<String> toAbsolute(Collection<String> relPaths, Project project) {
-    relPaths.collect { new File(project.baseDir.path + "/" + it).getCanonicalPath() }
+    relPaths.collect { FileUtil.toSystemIndependentName new File(project.baseDir.path + "/" + it).getCanonicalPath() }
   }
 
   static String stripLineBreaksAndHtml(String s) {

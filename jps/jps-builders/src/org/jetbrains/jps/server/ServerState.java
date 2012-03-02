@@ -126,7 +126,6 @@ class ServerState {
   public void startBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts,
                          Map<String, String> builderParams, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
 
-    final String projectName = getProjectName(projectPath);
 
     ProjectDescriptor pd;
     synchronized (myConfigurationLock) {
@@ -136,9 +135,10 @@ class ServerState {
         final FSState fsState = new FSState(false);
         ProjectTimestamps timestamps = null;
         BuildDataManager dataManager = null;
+        final File dataStorageRoot = Paths.getDataStorageRoot(project);
         try {
-          timestamps = new ProjectTimestamps(projectName);
-          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+          timestamps = new ProjectTimestamps(dataStorageRoot);
+          dataManager = new BuildDataManager(dataStorageRoot, myKeepTempCachesInMemory);
         }
         catch (Exception e) {
           // second try
@@ -150,14 +150,14 @@ class ServerState {
             dataManager.close();
           }
           buildType = BuildType.PROJECT_REBUILD; // force project rebuild
-          FileUtil.delete(Paths.getDataStorageRoot(projectName));
-          timestamps = new ProjectTimestamps(projectName);
-          dataManager = new BuildDataManager(projectName, myKeepTempCachesInMemory);
+          FileUtil.delete(dataStorageRoot);
+          timestamps = new ProjectTimestamps(dataStorageRoot);
+          dataManager = new BuildDataManager(dataStorageRoot, myKeepTempCachesInMemory);
           // second attempt succeded
           msgHandler.processMessage(new CompilerMessage("compile-server", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
         }
 
-        pd = new ProjectDescriptor(projectName, project, fsState, timestamps, dataManager);
+        pd = new ProjectDescriptor(project, fsState, timestamps, dataManager);
         myProjects.put(projectPath, pd);
       }
       pd.incUsageCounter();
@@ -282,15 +282,6 @@ class ServerState {
     }
   }
 
-  private static String getProjectName(String projectPath) {
-    final File path = new File(projectPath);
-    final String name = path.getName().toLowerCase(Locale.US);
-    if (!isDirectoryBased(path) && name.endsWith(".ipr")) {
-      return name.substring(0, name.length() - ".ipr".length());
-    }
-    return name;
-  }
-
   private Project loadProject(String projectPath) {
     final Project project = new Project();
     // setup JDKs and global libraries
@@ -322,7 +313,7 @@ class ServerState {
           lib.setClasspath(library.getPaths());
         }
         else {
-          LOG.info("Failed to load global library " + lib.getName());
+          LOG.info("Failed to load global library " + library.getName());
         }
       }
     }

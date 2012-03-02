@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -147,7 +148,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         if (project == null) {
           return null;
         }
-        runConfigurators = false;
+        final Module[] modules = ModuleManager.getInstance(project).getModules();
+        if (modules.length > 0) {
+          runConfigurators = false;
+        }
       }
       catch (Exception e) {
         // ignore

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.android.dom;
+package com.intellij.diagnostic.errordialog;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
+import com.intellij.diagnostic.Developer;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 
-/**
- * @author yole
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface ResourceType {
-    String value();
+import javax.swing.*;
+
+class DeveloperRenderer extends ListCellRendererWrapper {
+  DeveloperRenderer(ListCellRenderer listCellRenderer) {
+    super(listCellRenderer);
+  }
+
+  @Override
+  public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    setText(value == null ? "<unavailable>" : ((Developer) value).getDisplayText());
+  }
 }

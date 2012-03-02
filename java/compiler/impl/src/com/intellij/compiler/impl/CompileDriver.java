@@ -2065,10 +2065,6 @@ public class CompileDriver {
         try {
           for (FileProcessingCompiler.ProcessingItem item : items) {
             final VirtualFile file = item.getFile();
-            if (file == null) {
-              LOG.error("FileProcessingCompiler.ProcessingItem.getFile() must not return null: compiler " + adapter.getCompiler().getDescription());
-              continue;
-            }
             final String url = file.getUrl();
             allUrls.add(url);
             if (!forceCompile && cache.getTimestamp(url) == file.getTimeStamp()) {

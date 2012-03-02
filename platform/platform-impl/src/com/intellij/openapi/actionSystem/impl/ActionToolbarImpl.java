@@ -870,6 +870,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
+  @Override
+  public boolean hasVisibleActions() {
+    return !myVisibleActions.isEmpty();
+  }
+
   public void setTargetComponent(final JComponent component) {
     myTargetComponent = component;
 

@@ -91,31 +91,37 @@ public class CopiesPanel {
     final Runnable refreshView = new Runnable() {
       public void run() {
         final List<WCInfo> infoList = myVcs.getAllWcInfos();
-        if (myCurrentInfoList != null) {
-          final List<OverrideEqualsWrapper<WCInfo>> newList =
-            ObjectsConvertor.convert(infoList, new Convertor<WCInfo, OverrideEqualsWrapper<WCInfo>>() {
-              public OverrideEqualsWrapper<WCInfo> convert(WCInfo o) {
-                return new OverrideEqualsWrapper<WCInfo>(InfoEqualityPolicy.getInstance(), o);
-              }
-            }, ObjectsConvertor.NOT_NULL);
+        Runnable runnable = new Runnable() {
+          public void run() {
+            if (myCurrentInfoList != null) {
+              final List<OverrideEqualsWrapper<WCInfo>> newList =
+                ObjectsConvertor.convert(infoList, new Convertor<WCInfo, OverrideEqualsWrapper<WCInfo>>() {
+                  public OverrideEqualsWrapper<WCInfo> convert(WCInfo o) {
+                    return new OverrideEqualsWrapper<WCInfo>(InfoEqualityPolicy.getInstance(), o);
+                  }
+                }, ObjectsConvertor.NOT_NULL);
 
-          if (Comparing.haveEqualElements(newList, myCurrentInfoList)) {
+              if (Comparing.haveEqualElements(newList, myCurrentInfoList)) {
+                myRefreshLabel.setEnabled(true);
+                return;
+              }
+              myCurrentInfoList = newList;
+            }
+            Collections.sort(infoList, WCComparator.getInstance());
+            updateList(infoList);
             myRefreshLabel.setEnabled(true);
-            return;
+            SwingUtilities.invokeLater(focus);
           }
-          myCurrentInfoList = newList;
-        }
-        Collections.sort(infoList, WCComparator.getInstance());
-        updateList(infoList);
-        myRefreshLabel.setEnabled(true);
-        SwingUtilities.invokeLater(focus);
+        };
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
       }
     };
-    myConnection.subscribe(SvnVcs.ROOTS_RELOADED, new Runnable() {
+    final Runnable refreshOnPooled = new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().invokeLater(refreshView, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().executeOnPooledThread(refreshView);
       }
-    });
+    };
+    myConnection.subscribe(SvnVcs.ROOTS_RELOADED, refreshOnPooled);
 
     final JPanel holderPanel = new JPanel(new BorderLayout());
     FontMetrics fm = holderPanel.getFontMetrics(holderPanel.getFont());
@@ -135,7 +141,7 @@ public class CopiesPanel {
     myHolder = ScrollPaneFactory.createScrollPane(holderPanel);
     myHolder.setBorder(null);
     setFocusableForLinks(myRefreshLabel);
-    refreshView.run();
+    refreshOnPooled.run();
     initView();
   }
 

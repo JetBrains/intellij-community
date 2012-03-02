@@ -195,7 +195,7 @@ public class JUnitUtil {
   }
 
   public static boolean isTestMethodOrConfig(@NotNull PsiMethod psiMethod) {
-    if (getTestMethod(psiMethod, false) != null) {
+    if (isTestMethod(PsiLocation.fromPsiElement(psiMethod), false)) {
       final PsiClass containingClass = psiMethod.getContainingClass();
       assert containingClass != null : psiMethod + "; " + psiMethod.getClass() + "; " + psiMethod.getParent();
       if (containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

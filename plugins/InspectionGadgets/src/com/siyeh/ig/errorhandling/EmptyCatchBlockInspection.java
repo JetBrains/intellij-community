@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -128,25 +126,15 @@ public class EmptyCatchBlockInspection extends BaseInspection {
   private class EmptyCatchBlockVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTryStatement(
-      @NotNull PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
       if (JspPsiUtil.isInJspFile(statement.getContainingFile())) {
         return;
       }
-      if (m_ignoreTestCases) {
-        if (TestUtils.isPartOfJUnitTestMethod(statement)) {
-          return;
-        }
-        final PsiClass containingClass =
-          PsiTreeUtil.getParentOfType(statement, PsiClass.class);
-        if (containingClass != null &&
-            TestFrameworks.getInstance().isTestClass(containingClass)) {
-          return;
-        }
+      if (m_ignoreTestCases && TestUtils.isInTestCode(statement)) {
+        return;
       }
-      final PsiCatchSection[] catchSections =
-        statement.getCatchSections();
+      final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (final PsiCatchSection section : catchSections) {
         checkCatchSection(section);
       }
