@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class GradleProjectStructureChangesDetector extends AbstractProjectComponent {
   
-  private static final int REFRESH_DELAY_MILLIS = (int)TimeUnit.SECONDS.toMillis(2);
+  private static final int REFRESH_DELAY_MILLIS = (int)500;
 
   private final Alarm          myAlarm            = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final AtomicLong     myStartRefreshTime = new AtomicLong();
@@ -78,7 +78,7 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
     }
     myStartRefreshTime.set(System.currentTimeMillis() + REFRESH_DELAY_MILLIS);
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(myRequest, REFRESH_DELAY_MILLIS + 16);
+    myAlarm.addRequest(myRequest, REFRESH_DELAY_MILLIS);
   }
   
   private class RefreshRequest implements Runnable {

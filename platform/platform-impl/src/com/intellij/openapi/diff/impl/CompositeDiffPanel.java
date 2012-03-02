@@ -66,10 +66,14 @@ public class CompositeDiffPanel implements DiffViewer {
     for (Map.Entry<String, DiffRequest> entry : requestMap.entrySet()) {
       final String key = entry.getKey();
       final DiffRequest diffRequest = entry.getValue();
+      diffRequest.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), this);
       final DiffViewer viewer = copy.remove(key);
-      if (viewer != null) {
+      if (viewer != null && viewer.acceptsType(diffRequest.getType())) {
         viewer.setDiffRequest(diffRequest);
       } else {
+        if (viewer != null) {
+          removeTab(myUi.getContentManager().getContents(), key);
+        }
         final DiffViewer newViewer = myRequest.viewerForRequest(myWindow, myParentDisposable, key, diffRequest);
         if (newViewer == null) continue;
         myMap.put(key, newViewer);
@@ -82,12 +86,16 @@ public class CompositeDiffPanel implements DiffViewer {
     }
     final Content[] contents = myUi.getContentManager().getContents();
     for (String s : copy.keySet()) {
-      myMap.remove(s);
-      for (Content content : contents) {
-        if (s.equals(content.getTabName())) {
-          myUi.getContentManager().removeContent(content, false);
-          break;
-        }
+      removeTab(contents, s);
+    }
+  }
+
+  private void removeTab(Content[] contents, String s) {
+    myMap.remove(s);
+    for (Content content : contents) {
+      if (s.equals(content.getDisplayName())) {
+        myUi.getContentManager().removeContent(content, false);
+        break;
       }
     }
   }
@@ -110,7 +118,7 @@ public class CompositeDiffPanel implements DiffViewer {
   }
 
   @Override
-  public DiffViewerType getType() {
-    return DiffViewerType.multiLayer;
+  public boolean acceptsType(DiffViewerType type) {
+    return DiffViewerType.multiLayer.equals(type) || DiffViewerType.contents.equals(type) || DiffViewerType.merge.equals(type);
   }
 }

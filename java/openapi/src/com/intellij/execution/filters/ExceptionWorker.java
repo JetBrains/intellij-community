@@ -28,22 +28,18 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
-* Created by IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 8/5/11
-* Time: 8:36 PM
-* To change this template use File | Settings | File Templates.
-*/
+ * User: Irina.Chernushina
+ * Date: 8/5/11
+ * Time: 8:36 PM
+ */
 public class ExceptionWorker {
-  @NonNls private static final String AT = "at";
-  private static final String AT_PREFIX = AT + " ";
 
   private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager
     .getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
@@ -54,7 +50,7 @@ public class ExceptionWorker {
   private PsiClass myClass;
   private PsiFile myFile;
   private String myMethod;
-  private Trinity<TextRange,TextRange,TextRange> myInfo;
+  private Trinity<TextRange, TextRange, TextRange> myInfo;
 
   public ExceptionWorker(Project project, final GlobalSearchScope searchScope) {
     myProject = project;
@@ -71,31 +67,32 @@ public class ExceptionWorker {
     myMethod = myInfo.getSecond().substring(line);
     String className = myInfo.first.substring(line).trim();
     final int dollarIndex = className.indexOf('$');
-    if (dollarIndex >= 0){
+    if (dollarIndex >= 0) {
       className = className.substring(0, dollarIndex);
     }
 
     final int lparenthIndex = myInfo.third.getStartOffset();
     final int rparenthIndex = myInfo.third.getEndOffset();
-    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
+    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex);
 
     final int colonIndex = fileAndLine.lastIndexOf(':');
-    if (colonIndex < 0) return;
+    if (colonIndex <= 0) return;
 
-    final String lineString = fileAndLine.substring(colonIndex + 1);
-    try{
+    final String lineString = fileAndLine.substring(colonIndex + 1).trim();
+    try {
       final int lineNumber = Integer.parseInt(lineString);
       final PsiManager manager = PsiManager.getInstance(myProject);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(manager.getProject());
       myClass = psiFacade.findClass(className, mySearchScope);
-      if (myClass == null) {
-        myClass = psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
-        /*if (myClass == null) {//try to find class according to all dollars in package name
-          myClass = psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
-        }*/
-        if (myClass == null) return;
+      myClass = myClass != null ? myClass : psiFacade.findClass(className, GlobalSearchScope.allScope(myProject));
+      myFile = myClass == null ? null : (PsiFile)myClass.getContainingFile().getNavigationElement();
+      if (myFile == null) {
+        // try find the file with the required name
+        PsiFile[] files = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
+        if (files.length > 0) {
+          myFile = files[0];
+        }
       }
-      myFile = (PsiFile) myClass.getContainingFile().getNavigationElement();
       if (myFile == null) return;
 
       /*
@@ -120,7 +117,7 @@ public class ExceptionWorker {
       }
       myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
     }
-    catch(NumberFormatException e){
+    catch (NumberFormatException e) {
       //
     }
   }
@@ -147,34 +144,27 @@ public class ExceptionWorker {
 
   @Nullable
   static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
-    int atIndex = line.indexOf(AT_PREFIX);
-    if (atIndex < 0) return null;
+    int lparenIdx = line.indexOf('(');
+    int rparenIdx = line.indexOf(')', lparenIdx + 1);
+    if (lparenIdx < 0 || rparenIdx <= lparenIdx) return null;
 
-    final int lparenthIndex = line.indexOf('(', atIndex);
-    if (lparenthIndex < 0) return null;
-    final int lastDotIndex = line.lastIndexOf('.', lparenthIndex);
-    if (lastDotIndex < 0 || lastDotIndex < atIndex) return null;
-
-    final int rparenthIndex = line.indexOf(')', lparenthIndex);
-    if (rparenthIndex < 0) return null;
+    int dotIdx = line.lastIndexOf('.', lparenIdx);
+    int startIdx = handleSpaces(line, dotIdx, -1, false);
+    if (startIdx == dotIdx) return null;
 
     // class, method, link
-    return Trinity.create(adjustedRange(line, atIndex + AT_PREFIX.length(), lastDotIndex),
-                          adjustedRange(line, lastDotIndex + 1, lparenthIndex), new TextRange(lparenthIndex, rparenthIndex));
+    return Trinity.create(new TextRange(startIdx + 1, handleSpaces(line, dotIdx, -1, true)),
+                          new TextRange(handleSpaces(line, dotIdx + 1, 1, true), handleSpaces(line, lparenIdx + 1, -1, true)),
+                          new TextRange(lparenIdx, rparenIdx));
   }
 
-  private static TextRange adjustedRange(final String line, final int start, final int end) {
-    String sub = line.substring(start, end);
-    return new TextRange(start, end - spacesEnd(sub));
-  }
-
-  private static int spacesEnd(final String s) {
-    int cnt = 0;
-    for (int i = s.length() - 1; i >= 0; i--) {
-      final char c = s.charAt(i);
-      if (! Character.isSpaceChar(c)) return cnt;
-      ++ cnt;
+  private static int handleSpaces(String line, int pos, int delta, boolean skip) {
+    int len = line.length();
+    while (pos >= 0 && pos < len) {
+      final char c = line.charAt(pos);
+      if (skip != Character.isSpaceChar(c)) break;
+      pos += delta;
     }
-    return 0;
+    return pos;
   }
 }

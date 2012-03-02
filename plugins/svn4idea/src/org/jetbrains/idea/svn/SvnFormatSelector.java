@@ -46,14 +46,15 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
       return factories;
     }
 
-    final WorkingCopyFormat format = getWorkingCopyFormat(path);
-    Collection result = format2Factories(format, factories);
+    Collection result = null;
+    final WorkingCopyFormat presetFormat = SvnWorkingCopyFormatHolder.getPresetFormat();
+    if (presetFormat != null) {
+      result = format2Factories(presetFormat, factories);
+    }
 
     if (result == null) {
-      final WorkingCopyFormat presetFormat = SvnWorkingCopyFormatHolder.getPresetFormat();
-      if (presetFormat != null) {
-        result = format2Factories(presetFormat, factories);
-      }
+      final WorkingCopyFormat format = getWorkingCopyFormat(path);
+      result = format2Factories(format, factories);
     }
 
     if (result == null) {

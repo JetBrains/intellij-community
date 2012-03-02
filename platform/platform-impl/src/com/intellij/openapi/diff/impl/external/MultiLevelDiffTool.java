@@ -161,7 +161,8 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     AbstractProperty.AbstractPropertyContainer config = DiffManagerImpl.getInstanceEx().getProperties();
     if (isFile && DiffManagerImpl.ENABLE_FILES.value(config)) return false;
     if (! isFile && DiffManagerImpl.ENABLE_FOLDERS.value(config)) return false;
-    return request.haveMultipleLayers();
+    return true;
+    //return request.haveMultipleLayers();
   }
 
   @Override

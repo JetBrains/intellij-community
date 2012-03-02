@@ -96,7 +96,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     return Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
   }
 
-  private void checkValid() {
+  protected void checkValid() {
     String projectName = myProjectNameTextField.getText();
     if (projectName.trim().isEmpty()) {
       setOKActionEnabled(false);
