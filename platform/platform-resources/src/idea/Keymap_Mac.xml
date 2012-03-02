@@ -15,6 +15,7 @@
 
     <action id="EditorBackSpace">
       <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+      <keyboard-shortcut first-keystroke="shift BACK_SPACE"/>
     </action>
 
     <action id="NextSplitter">
