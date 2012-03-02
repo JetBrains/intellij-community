@@ -15,14 +15,15 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
-import git4idea.DialogManager;
 import git4idea.GitBranch;
+import git4idea.PlatformFacade;
 import git4idea.history.browser.GitCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -76,7 +77,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
                                          @NotNull List<String> mergedToBranches, 
                                          @Nullable String currentBranch) {
     GitBranchIsNotFullyMergedDialog dialog = new GitBranchIsNotFullyMergedDialog(project, commits, branchToDelete, currentBranch, mergedToBranches);
-    DialogManager.getInstance(project).showDialog(dialog);
+    ServiceManager.getService(project, PlatformFacade.class).showDialog(dialog);
     return dialog.isOK();
   }
 

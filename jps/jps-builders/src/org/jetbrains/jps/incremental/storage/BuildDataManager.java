@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.incremental.Paths;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
 import java.io.File;
@@ -24,7 +23,6 @@ public class BuildDataManager {
   private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String MAPPINGS_STORAGE = "mappings";
-  private final String myProjectName;
 
   private final Object mySourceToOutputLock = new Object();
   private final Map<String, SourceToOutputMapping> myProductionSourceToOutputs = new HashMap<String, SourceToOutputMapping>();
@@ -33,13 +31,13 @@ public class BuildDataManager {
   private final SourceToFormMapping mySrcToFormMap;
   private final ArtifactsBuildData myArtifactsBuildData;
   private final Mappings myMappings;
+  private final File myDataStorageRoot;
 
-  public BuildDataManager(String projectName, final boolean useMemoryTempCaches) throws IOException {
-    myProjectName = projectName;
+  public BuildDataManager(final File dataStorageRoot, final boolean useMemoryTempCaches) throws IOException {
     mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
-    final File artifactsDataDir = new File(Paths.getDataStorageRoot(projectName), "artifacts");
-    myArtifactsBuildData = new ArtifactsBuildData(artifactsDataDir);
+    myDataStorageRoot = dataStorageRoot;
+    myArtifactsBuildData = new ArtifactsBuildData(new File(myDataStorageRoot, "artifacts"));
   }
 
   public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws IOException {
@@ -204,7 +202,7 @@ public class BuildDataManager {
   }
 
   public File getSourceToFormsRoot() {
-    return new File(Paths.getDataStorageRoot(myProjectName), SRC_TO_FORM_STORAGE);
+    return new File(myDataStorageRoot, SRC_TO_FORM_STORAGE);
   }
 
   public File getSourceToOutputRoot(String moduleName, boolean forTests) {
@@ -212,15 +210,15 @@ public class BuildDataManager {
   }
 
   private File getSourceToOutputsRoot() {
-    return new File(Paths.getDataStorageRoot(myProjectName), SRC_TO_OUTPUTS_STORAGE);
+    return new File(myDataStorageRoot, SRC_TO_OUTPUTS_STORAGE);
   }
 
   public File getMappingsRoot() {
-    return new File(Paths.getDataStorageRoot(myProjectName), MAPPINGS_STORAGE);
+    return new File(myDataStorageRoot, MAPPINGS_STORAGE);
   }
 
   public File getDataStorageRoot() {
-    return Paths.getDataStorageRoot(myProjectName);
+    return myDataStorageRoot;
   }
 
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {

@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,7 +49,7 @@ public class UntrackedFilesNotifier {
     final String notificationDesc = createUntrackedFilesOverwrittenDescription(operation, false);
     final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, true);
 
-    NotificationManager.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, notificationTitle, notificationDesc, NotificationType.ERROR, new NotificationListener() {
+    Notificator.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, notificationTitle, notificationDesc, NotificationType.ERROR, new NotificationListener() {
       @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
                                                       StringUtil.stripHtml(dialogDesc, true), null, false, false) {

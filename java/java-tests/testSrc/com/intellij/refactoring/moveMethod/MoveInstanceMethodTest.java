@@ -33,6 +33,8 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testQualifyThisHierarchy() throws Exception {doTest(true, 0);}
 
+  public void testQualifyField() throws Exception {doTest(false, 0);}
+
   public void testAnonymousHierarchy() throws Exception {doTest(true, 0);}
 
   public void testTwoParams() throws Exception { doTest(true, 0); }

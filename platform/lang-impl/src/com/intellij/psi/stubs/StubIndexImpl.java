@@ -41,6 +41,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -104,7 +106,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return (StubIndexImpl)getInstance();
   }
   
-  private <K> boolean registerIndexer(final StubIndexExtension<K, ?> extension, final boolean forceClean) throws IOException {
+  private <K> boolean registerIndexer(@NotNull StubIndexExtension<K, ?> extension, final boolean forceClean) throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
     myIndexIdToVersionMap.put(indexKey, version);
@@ -142,7 +144,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   private static class StubIdExternalizer implements DataExternalizer<TIntArrayList> {
     @Override
-    public void save(final DataOutput out, final TIntArrayList value) throws IOException {
+    public void save(final DataOutput out, @NotNull final TIntArrayList value) throws IOException {
       int size = value.size();
       if (size == 0) {
         DataInputOutputUtil.writeSINT(out, Integer.MAX_VALUE);
@@ -158,6 +160,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
 
+    @NotNull
     @Override
     public TIntArrayList read(final DataInput in) throws IOException {
       int size = DataInputOutputUtil.readSINT(in);
@@ -179,17 +182,28 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  @NotNull
   @Override
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull final StubIndexKey<Key, Psi> indexKey,
                                                            @NotNull final Key key,
                                                            @NotNull final Project project,
                                                            final GlobalSearchScope scope) {
+    final List<Psi> result = new SmartList<Psi>();
+    process(indexKey, key, project, scope, new CommonProcessors.CollectProcessor<Psi>(result));
+    return result;
+  }
+
+  @Override
+  public <Key, Psi extends PsiElement> boolean process(@NotNull final StubIndexKey<Key, Psi> indexKey,
+                                                       @NotNull final Key key,
+                                                       @NotNull final Project project,
+                                                       @Nullable final GlobalSearchScope scope,
+                                                       @NotNull final Processor<? super Psi> processor) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
-    final List<Psi> result = new SmartList<Psi>();
     final MyIndex<Key> index = (MyIndex<Key>)myIndices.get(indexKey);
 
     try {
@@ -201,14 +215,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
         final FileBasedIndex.ProjectIndexableFilesFilter projectFilesFilter = FileBasedIndex.getInstance().projectIndexableFiles(project);
 
-        container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
+        return container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           @Override
-          public void perform(final int id, final TIntArrayList value) {
+          public boolean perform(final int id, @NotNull final TIntArrayList value) {
             ProgressManager.checkCanceled();
-            if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return;
+            if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {
-              return;
+              return true;
             }
             StubTree stubTree = null;
 
@@ -226,12 +240,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             }
 
             if (stubTree == null && psiFile == null) {
-              return;
+              return true;
             }
             if (stubTree == null) {
               stubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
               if (stubTree == null) {
-                return;
+                return true;
               }
               final List<StubElement<?>> plained = stubTree.getPlainList();
               for (int i = 0; i < value.size(); i++) {
@@ -240,7 +254,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
                 if (tree != null) {
                   if (tree.getElementType() == stubType(stub)) {
-                    result.add((Psi)tree.getPsi());
+                    Psi psi = (Psi)tree.getPsi();
+                    if (!processor.process(psi)) return false;
                   }
                   else {
                     String persistedStubTree = ((PsiFileStubImpl)stubTree.getRoot()).printTree();
@@ -275,9 +290,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             else {
               final List<StubElement<?>> plained = stubTree.getPlainList();
               for (int i = 0; i < value.size(); i++) {
-                result.add((Psi)plained.get(value.get(i)).getPsi());
+                Psi psi = (Psi)plained.get(value.get(i)).getPsi();
+                if (!processor.process(psi)) return false;
               }
             }
+            return true;
           }
         });
       }
@@ -299,10 +316,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       }
     }
 
-    return result;
+    return true;
   }
 
-  private static IElementType stubType(final StubElement<?> stub) {
+  private static IElementType stubType(@NotNull final StubElement<?> stub) {
     if (stub instanceof PsiFileStub) {
       return ((PsiFileStub)stub).getType();
     }
@@ -310,7 +327,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return stub.getStubType();
   }
 
-  private static void forceRebuild(Throwable e) {
+  private static void forceRebuild(@NotNull Throwable e) {
     LOG.info(e);
     requestRebuild();
     FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
@@ -321,7 +338,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   @Override
-  public <K> Collection<K> getAllKeys(final StubIndexKey<K, ?> indexKey, @NotNull Project project) {
+  @NotNull
+  public <K> Collection<K> getAllKeys(@NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
 
     final MyIndex<K> index = (MyIndex<K>)myIndices.get(indexKey);
@@ -408,6 +426,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
+  @NotNull
   @Override
   public StubIndexState getState() {
     return new StubIndexState(myIndices.keySet());
@@ -431,7 +450,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     index.flush();
   }
 
-  public <K> void updateIndex(StubIndexKey key, int fileId, final Map<K, TIntArrayList> oldValues, Map<K, TIntArrayList> newValues) {
+  public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, TIntArrayList> oldValues, @NotNull Map<K, TIntArrayList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
       index.updateWithMap(fileId, newValues, new Callable<Collection<K>>() {
@@ -453,16 +472,16 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
 
     @Override
-    public void updateWithMap(final int inputId, final Map<K, TIntArrayList> newData, Callable<Collection<K>> oldKeysGetter) throws StorageException {
+    public void updateWithMap(final int inputId, @NotNull final Map<K, TIntArrayList> newData, @NotNull Callable<Collection<K>> oldKeysGetter) throws StorageException {
       super.updateWithMap(inputId, newData, oldKeysGetter);
     }
   }
 
   public static <Key, Psi extends PsiElement> Collection<Psi> safeGet(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                       @NotNull Key key,
-                                                                      final Project project,
+                                                                      @NotNull final Project project,
                                                                       final GlobalSearchScope scope,
-                                                                      Class<Psi> requiredClass) {
+                                                                      @NotNull Class<Psi> requiredClass) {
     Collection<Psi> collection = getInstance().get(indexKey, key, project, scope);
     for (Iterator<Psi> iterator = collection.iterator(); iterator.hasNext(); ) {
       Psi psi = iterator.next();

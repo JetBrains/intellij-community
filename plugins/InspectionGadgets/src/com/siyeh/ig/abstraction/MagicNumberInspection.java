@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,16 +26,19 @@ import com.siyeh.ig.fixes.IntroduceConstantFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MagicNumberInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreInHashCode = true;
+  public boolean ignoreInHashCode = true;
+
+  public boolean ignoreInTestCode = false;
 
   @Override
   @NotNull
@@ -46,16 +49,15 @@ public class MagicNumberInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "magic.number.problem.descriptor");
+    return InspectionGadgetsBundle.message("magic.number.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "magic.number.ignore.option"),
-      this, "m_ignoreInHashCode");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("magic.number.ignore.option"), "ignoreInHashCode");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
+    return panel;
   }
 
   @Override
@@ -76,8 +78,7 @@ public class MagicNumberInspection extends BaseInspection {
   private class MagicNumberVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
       final PsiType type = expression.getType();
       if (!ClassUtils.isPrimitiveNumericType(type)) {
@@ -92,13 +93,14 @@ public class MagicNumberInspection extends BaseInspection {
       if (ExpressionUtils.isDeclaredConstant(expression)) {
         return;
       }
-      if (m_ignoreInHashCode) {
-        final PsiMethod containingMethod =
-          PsiTreeUtil.getParentOfType(expression,
-                                      PsiMethod.class);
+      if (ignoreInHashCode) {
+        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
         if (MethodUtils.isHashCode(containingMethod)) {
           return;
         }
+      }
+      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
+        return;
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiPrefixExpression) {
@@ -110,8 +112,7 @@ public class MagicNumberInspection extends BaseInspection {
     }
 
     private boolean isSpecialCaseLiteral(PsiLiteralExpression expression) {
-      final Object object =
-        ExpressionUtils.computeConstantExpression(expression);
+      final Object object = ExpressionUtils.computeConstantExpression(expression);
       if (object instanceof Integer) {
         final int i = ((Integer)object).intValue();
         return i >= 0 && i <= 10 || i == 100 || i == 1000;

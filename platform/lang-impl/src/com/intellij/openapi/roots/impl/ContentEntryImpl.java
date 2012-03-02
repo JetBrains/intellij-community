@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -229,7 +228,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   private void assertFolderUnderMe(String url) {
     final String rootUrl = getUrl();
-    if (!FileUtil.isAncestor(new File(rootUrl), new File(url), false)) {
+    if (!FileUtil.isAncestor(rootUrl, url, false)) {
       LOG.error("The file " + url + " is not under content entry root " + rootUrl);
     }
   }

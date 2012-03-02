@@ -19,26 +19,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
-import com.intellij.openapi.vcs.changes.ChangeProvider;
-import com.intellij.openapi.vcs.changes.ChangelistBuilder;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.VcsDirtyScope;
-import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
+import git4idea.commands.Git;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
@@ -54,12 +43,15 @@ import java.util.Set;
 public class GitChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance(GitChangeProvider.class);
   private final Project myProject;
+  @NotNull private final Git myGit;
   private final ChangeListManager myChangeListManager;
   private FileDocumentManager myFileDocumentManager;
   private final ProjectLevelVcsManager myVcsManager;
 
-  public GitChangeProvider(@NotNull Project project, ChangeListManager changeListManager, FileDocumentManager fileDocumentManager, ProjectLevelVcsManager vcsManager) {
+  public GitChangeProvider(@NotNull Project project, @NotNull Git git, ChangeListManager changeListManager,
+                           @NotNull FileDocumentManager fileDocumentManager, @NotNull ProjectLevelVcsManager vcsManager) {
     myProject = project;
+    myGit = git;
     myChangeListManager = changeListManager;
     myFileDocumentManager = fileDocumentManager;
     myVcsManager = vcsManager;
@@ -86,7 +78,7 @@ public class GitChangeProvider implements ChangeProvider {
                                                                myFileDocumentManager, myVcsManager);
       for (VirtualFile root : roots) {
         GitChangesCollector collector = isNewGitChangeProviderAvailable()
-                                        ? GitNewChangesCollector.collect(myProject, myChangeListManager, dirtyScope, root)
+                                        ? GitNewChangesCollector.collect(myProject, myGit, myChangeListManager, dirtyScope, root)
                                         : GitOldChangesCollector.collect(myProject, myChangeListManager, dirtyScope, root);
         holder.changed(collector.getChanges());
         for (Change file : collector.getChanges()) {

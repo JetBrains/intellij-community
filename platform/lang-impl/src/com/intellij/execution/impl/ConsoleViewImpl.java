@@ -365,10 +365,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void addFlushRequest(MyFlushRunnable flushRunnable, final int millis) {
     synchronized (myCurrentRequests) {
-      myCurrentRequests.add(flushRunnable);
-      myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
+      if (myCurrentRequests.add(flushRunnable)) {
+        myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
+      }
     }
   }
+
 
   private static void assertIsDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -659,7 +661,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void cancelHeavyAlarm() {
-    if (myHeavyAlarm != null) {
+    if (myHeavyAlarm != null && !myHeavyAlarm.isDisposed()) {
       myHeavyAlarm.cancelAllRequests();
       ++myHeavyUpdateTicket;
     }
@@ -1697,6 +1699,23 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     public boolean isValid() {
       return myValid;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      MyFlushRunnable runnable = (MyFlushRunnable)o;
+
+      if (myValid != runnable.myValid) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return (myValid ? 1 : 0);
     }
   }
   

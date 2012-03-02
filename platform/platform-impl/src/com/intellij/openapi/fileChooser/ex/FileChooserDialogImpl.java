@@ -495,9 +495,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       text = getFilePath(selection.get(0));
     }
     else {
-      List<VirtualFile> roots = myChooserDescriptor.getRoots();
-      if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
-        text = getFilePath(roots.get(0));
+      final List<String> rootPaths = myChooserDescriptor.getRootPaths();
+      if (!myFileSystemTree.getTree().isRootVisible() && rootPaths.size() == 1) {
+        text = rootPaths.get(0);
       }
     }
 

@@ -17,6 +17,7 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -75,8 +76,9 @@ public class GitInit extends DumbAwareAction {
     }
 
     GitVcs vcs = GitVcs.getInstance(project);
+    Git git = ServiceManager.getService(Git.class);
     try {
-      Git.init(project, root);
+      git.init(project, root);
     } catch (VcsException ex) {
       if (vcs == null || vcs.getExecutableValidator().isExecutableValid()) {
         GitUIUtil.showOperationErrors(project, Collections.singleton(ex), "git init");

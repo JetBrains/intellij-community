@@ -23,7 +23,7 @@ public class LayoutDevice {
 
   private final Type myType;
 
-  LayoutDevice(@NotNull String name, @NotNull Type type) {
+  public LayoutDevice(@NotNull String name, @NotNull Type type) {
     myName = name;
     myType = type;
   }
@@ -247,7 +247,7 @@ public class LayoutDevice {
     return myType;
   }
 
-  static enum Type {
+  public static enum Type {
     PLATFORM, ADD_ON, CUSTOM
   }
 }

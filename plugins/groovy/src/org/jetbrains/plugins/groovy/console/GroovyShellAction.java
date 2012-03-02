@@ -40,18 +40,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathsList;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
-import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
-import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.*;
 
@@ -78,40 +71,35 @@ public class GroovyShellAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project != null && !getGroovyCompatibleModules(project).isEmpty()) {
-      e.getPresentation().setEnabled(true);
-      e.getPresentation().setVisible(true);
-      return;
-    }
 
-    e.getPresentation().setEnabled(false);
-    e.getPresentation().setVisible(false);
+    boolean enabled = project != null && !getGroovyCompatibleModules(project).isEmpty();
+
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setVisible(enabled);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
-    List<Module> modules = getGroovyCompatibleModules(project);
+
+    List<Module> modules = new ArrayList<Module>();
+    final Map<Module, String> versions = new HashMap<Module, String>();
+
+    for (Module module : getGroovyCompatibleModules(project)) {
+      GroovyShellRunner runner = GroovyShellRunner.getAppropriateRunner(module);
+      if (runner != null) {
+        modules.add(module);
+        versions.put(module, runner.getTitle(module));
+      }
+    }
+
     if (modules.size() == 1) {
       runShell(modules.get(0));
       return;
     }
 
     Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
-
-    final Map<Module, String> versions = new HashMap<Module, String>();
-    for (Module module : modules) {
-      String homePath = LibrariesUtil.getGroovyHomePath(module);
-      boolean bundled = false;
-      if (homePath == null) {
-        homePath = GroovyUtils.getBundledGroovyJar().getParentFile().getParent();
-        bundled = true;
-      }
-      String version = GroovyConfigUtils.getInstance().getSDKVersion(homePath);
-      versions.put(module, version == AbstractConfigUtils.UNDEFINED_VERSION
-                           ? "" : " (" + (bundled ? "Bundled " : "") + "Groovy " + version + ")");
-    }
 
     BaseListPopupStep<Module> step =
       new BaseListPopupStep<Module>("Which module to use classpath of?", modules, PlatformIcons.CONTENT_ROOT_ICON_CLOSED) {
@@ -149,27 +137,27 @@ public class GroovyShellAction extends DumbAwareAction {
   }
 
   private static void runShell(final Module module) {
-    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    final String workingDir = contentRoots.length == 0 ? null : contentRoots[0].getPath();
+    final GroovyShellRunner shellRunner = GroovyShellRunner.getAppropriateRunner(module);
+    if (shellRunner == null) return;
+
     AbstractConsoleRunnerWithHistory<GroovyConsoleView> runner =
-      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", workingDir) {
+      new AbstractConsoleRunnerWithHistory<GroovyConsoleView>(module.getProject(), "Groovy Shell", shellRunner.getWorkingDirectory(module)) {
 
         @Override
         protected GroovyConsoleView createConsoleView() {
-          return new GroovyConsoleView(getProject());
+          GroovyConsoleView res = new GroovyConsoleView(getProject());
+
+          GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
+          assert file.getContext() == null;
+
+          file.setContext(shellRunner.getContext(module));
+
+          return res;
         }
 
         @Override
         protected Process createProcess() throws ExecutionException {
-          final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-          DefaultGroovyScriptRunner.configureGenericGroovyRunner(javaParameters, module, "groovy.ui.GroovyMain", true);
-          PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, javaParameters, true);
-          if (list != null) {
-            javaParameters.getClassPath().addAll(list.getPathList());
-          }
-          javaParameters.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
-          //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
-          javaParameters.setWorkingDirectory(getWorkingDir());
+          JavaParameters javaParameters = shellRunner.createJavaParameters(module);
 
           final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
           assert sdk != null;
@@ -191,7 +179,7 @@ public class GroovyShellAction extends DumbAwareAction {
           ConsoleExecuteActionHandler handler = new ConsoleExecuteActionHandler(getProcessHandler(), false) {
             @Override
             public void processLine(String line) {
-              super.processLine(StringUtil.replace(line, "\n", "###\\n"));
+              super.processLine(shellRunner.transformUserInput(line));
             }
 
             @Override

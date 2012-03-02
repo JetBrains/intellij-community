@@ -19,8 +19,6 @@ import com.android.ddmlib.IDevice;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.DebuggerSessionTab;
-import com.intellij.diagnostic.logging.LogConsoleBase;
-import com.intellij.diagnostic.logging.LogConsoleListener;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -33,26 +31,17 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.android.dom.manifest.Instrumentation;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.logcat.AndroidLogcatUtil;
-import org.jetbrains.android.logcat.AndroidLoggingReader;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.util.AndroidBundle;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 
 import static com.intellij.execution.process.ProcessOutputTypes.STDERR;
 
@@ -243,54 +232,6 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
           sessionTab.setEnvironment(myEnvironment);
           RunProfile profile = myEnvironment.getRunProfile();
           assert profile instanceof AndroidRunConfigurationBase;
-          final Reader[] readerWrapper = new Reader[1];
-          final Writer[] writerWrapper = new Writer[1];
-          String logcatTabTitle = AndroidBundle.message("android.logcat.tab.title");
-
-          LogConsoleBase console = sessionTab.addLogConsole(logcatTabTitle, new AndroidLoggingReader() {
-            @NotNull
-            protected Object getLock() {
-              return myReaderLock;
-            }
-
-            protected Reader getReader() {
-              return readerWrapper[0];
-            }
-          }, 0, AndroidUtils.ANDROID_ICON);
-
-          console.addListener(new LogConsoleListener() {
-            @Override
-            public void loggingWillBeStopped() {
-              final Writer writer = writerWrapper[0];
-              if (writer != null) {
-                try {
-                  writer.close();
-                }
-                catch (IOException e) {
-                  LOG.error(e);
-                }
-              }
-            }
-          });
-
-          synchronized (myReaderLock) {
-            final Pair<Reader,Writer> pair =
-              AndroidLogcatUtil.startLoggingThread(myProject, device, ((AndroidRunConfigurationBase)profile).CLEAR_LOGCAT, console);
-            if (pair != null) {
-              readerWrapper[0] = pair.first;
-              writerWrapper[0] = pair.second;
-            }
-            else {
-              readerWrapper[0] = null;
-              writerWrapper[0] = null;
-            }
-          }
-          if (!(profile instanceof AndroidTestRunConfiguration)) {
-            String logcatContentId = DebuggerSessionTab.getLogContentId(logcatTabTitle);
-            if (logcatContentId != null) {
-              sessionTab.getUi().getDefaults().initFocusContent(logcatContentId, LayoutViewOptions.STARTUP);
-            }
-          }
           RunContentManager runContentManager = ExecutionManager.getInstance(myProject).getContentManager();
           runContentManager.showRunContent(myExecutor, debugDescriptor);
           newProcessHandler.startNotify();

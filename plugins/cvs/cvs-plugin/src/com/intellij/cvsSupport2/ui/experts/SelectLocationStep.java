@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -260,15 +260,9 @@ public abstract class SelectLocationStep extends WizardStep {
       }
     }
     else {
-      final List<VirtualFile> roots = myChooserDescriptor.getRoots();
-      if (!myFileSystemTree.getTree().isRootVisible() && roots.size() == 1) {
-        final VirtualFile vFile = roots.get(0);
-        if (vFile.isInLocalFileSystem()) {
-          text = vFile.getPresentableUrl();
-        }
-        else {
-          text = vFile.getUrl();
-        }
+      final List<String> rootPaths = myChooserDescriptor.getRootPaths();
+      if (!myFileSystemTree.getTree().isRootVisible() && rootPaths.size() == 1) {
+        text = rootPaths.get(0);
       }
     }
 

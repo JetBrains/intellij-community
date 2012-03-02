@@ -28,11 +28,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Kirill Likhodedov
  */
-public class NotificationManager {
+  public class Notificator {
 
   @NotNull private final Project myProject;
 
-  public NotificationManager(@NotNull Project project) {
+  public Notificator(@NotNull Project project) {
     myProject = project;
   }
 
@@ -47,8 +47,8 @@ public class NotificationManager {
     createNotification(notificationGroup, title, message, type, listener).notify(myProject);
   }
 
-  public static NotificationManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, NotificationManager.class);
+  public static Notificator getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, Notificator.class);
   }
 
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message, @NotNull NotificationType type) {
@@ -57,6 +57,10 @@ public class NotificationManager {
 
   public void notifyError(String title, String message) {
     notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, null);
+  }
+
+  public void notifySuccess(@NotNull String title, @NotNull String message) {
+    notify(GitVcs.NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION,  null);
   }
 
   protected static Notification createNotification(NotificationGroup notificationGroup, String title, String message,

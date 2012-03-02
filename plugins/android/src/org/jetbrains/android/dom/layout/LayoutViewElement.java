@@ -21,7 +21,7 @@ import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.DefinesXml;
-import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.AndroidResourceType;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
 import org.jetbrains.android.dom.converters.ViewClassConverter;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -38,7 +38,7 @@ import java.util.List;
 @DefinesXml
 public interface LayoutViewElement extends LayoutElement {
   @Convert(ResourceReferenceConverter.class)
-  @ResourceType("style")
+  @AndroidResourceType("style")
   GenericAttributeValue<ResourceValue> getStyle();
 
   @Attribute("class")

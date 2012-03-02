@@ -134,12 +134,22 @@ public class RadViewComponent extends RadComponent {
 
         @Override
         public Object getValue(RadComponent component) throws Exception {
-          return component.getClientProperty(this);
+          return component.getClientProperty(getName());
         }
 
         @Override
         public void setValue(RadComponent component, Object value) throws Exception {
-          component.putClientProperty(this, value);
+          component.putClientProperty(getName(), value);
+        }
+
+        @Override
+        public boolean isDefaultValue(RadComponent component) throws Exception {
+          return getValue(component) == null;
+        }
+
+        @Override
+        public void setDefaultValue(RadComponent component) throws Exception {
+          component.putClientProperty(getName(), null);
         }
 
         @NotNull

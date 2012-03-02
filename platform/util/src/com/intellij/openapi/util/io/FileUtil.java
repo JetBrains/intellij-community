@@ -118,6 +118,10 @@ public class FileUtil {
     return new File(path).isAbsolute();
   }
 
+  public static boolean isAncestor(@NotNull final String ancestor, @NotNull final String descendant, final boolean strict) {
+    return isAncestor(new File(toSystemDependentName(ancestor)), new File(toSystemDependentName(descendant)), strict);
+  }
+
   /**
    * Check if the {@code ancestor} is an ancestor of {@code file}.
    *

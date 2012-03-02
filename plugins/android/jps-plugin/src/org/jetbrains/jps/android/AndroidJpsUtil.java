@@ -46,6 +46,10 @@ class AndroidJpsUtil {
       return "jar".equals(ext) || "class".equals(ext);
     }
   };
+  @NonNls public static final String GENERATED_AIDL_DIR_NAME = "generated-aidl";
+  @NonNls public static final String GENERATED_RENDER_SCRIPT_DIR_NAME = "generated-rs";
+  @NonNls public static final String GENERATED_RESOURCES_DIR_NAME = "generated-resources";
+  @NonNls public static final String GENERATED_AAPT_DIR_NAME = "generated-aapt";
 
   private AndroidJpsUtil() {
   }

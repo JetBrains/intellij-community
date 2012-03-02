@@ -43,6 +43,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class GitCheckoutProvider implements CheckoutProvider {
 
+  private final Git myGit;
+
+  public GitCheckoutProvider(@NotNull Git git) {
+    myGit = git;
+  }
+
   public String getVcsName() {
     return "_Git";
   }
@@ -67,21 +73,17 @@ public class GitCheckoutProvider implements CheckoutProvider {
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
     final String directoryName = dialog.getDirectoryName();
     final String parentDirectory = dialog.getParentDirectory();
-    clone(project, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
+    clone(project, myGit, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
   }
 
-  public static void clone(final Project project,
-                           final Listener listener,
-                           final VirtualFile destinationParent,
-                           final String sourceRepositoryURL,
-                           final String directoryName,
-                           final String parentDirectory) {
+  public static void clone(final Project project, @NotNull final Git git, final Listener listener, final VirtualFile destinationParent,
+                    final String sourceRepositoryURL, final String directoryName, final String parentDirectory) {
 
     final AtomicBoolean cloneResult = new AtomicBoolean();
     new Task.Backgroundable(project, GitBundle.message("cloning.repository", sourceRepositoryURL)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        cloneResult.set(doClone(project, directoryName, parentDirectory, sourceRepositoryURL));
+        cloneResult.set(doClone(project, git, directoryName, parentDirectory, sourceRepositoryURL));
       }
 
       @Override
@@ -104,19 +106,20 @@ public class GitCheckoutProvider implements CheckoutProvider {
     }.queue();
   }
 
-  private static boolean doClone(@NotNull Project project, @NotNull String directoryName, @NotNull String parentDirectory, @NotNull String sourceRepositoryURL) {
+  private static boolean doClone(@NotNull Project project, @NotNull Git git, @NotNull String directoryName, @NotNull String parentDirectory,
+                                 @NotNull String sourceRepositoryURL) {
     if (GitHttpAdapter.shouldUseJGit(sourceRepositoryURL)) {
       GitFetchResult result = GitHttpAdapter.cloneRepository(project, new File(parentDirectory, directoryName), sourceRepositoryURL);
       GitFetcher.displayFetchResult(project, result, "Clone failed", result.getErrors());
       return result.isSuccess();
     }
     else {
-      return cloneNatively(project, new File(parentDirectory), sourceRepositoryURL, directoryName);
+      return cloneNatively(project, git, new File(parentDirectory), sourceRepositoryURL, directoryName);
     }
   }
 
-  private static boolean cloneNatively(Project project, File directory, String url, String cloneDirectoryName) {
-    GitCommandResult result = Git.clone(project, directory, url, cloneDirectoryName);
+  private static boolean cloneNatively(Project project, @NotNull Git git, File directory, String url, String cloneDirectoryName) {
+    GitCommandResult result = git.clone(project, directory, url, cloneDirectoryName);
     if (result.success()) {
       return true;
     }

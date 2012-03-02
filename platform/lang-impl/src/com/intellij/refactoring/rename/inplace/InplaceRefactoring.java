@@ -593,7 +593,7 @@ public abstract class InplaceRefactoring {
                                                        final int offset) {
     if (nameIdentifier != null) {
       final TextRange range = nameIdentifier.getTextRange();
-      if (contains(range, offset)) return nameIdentifier;
+      if (range != null && contains(range, offset)) return nameIdentifier;
     }
 
     for (PsiReference ref : refs) {

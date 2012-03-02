@@ -122,11 +122,9 @@ class OptimizedFileManager extends DefaultFileManager {
     final File[] children = directory.listFiles();
     if (children != null) {
       for (File child : children) {
-        if (!child.isDirectory()) {
-          if (isValidFile(child.getName(), fileKinds)) {
-            final JavaFileObject fe = getRegularFile(child);
-            result.append(fe);
-          }
+        if (isValidFile(child.getName(), fileKinds) && !child.isDirectory()) {
+          final JavaFileObject fe = getRegularFile(child);
+          result.append(fe);
         }
       }
     }

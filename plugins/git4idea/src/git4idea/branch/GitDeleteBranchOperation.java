@@ -52,9 +52,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
   private final String myCurrentBranch;
 
-  GitDeleteBranchOperation(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
                            @NotNull String branchName, @NotNull String currentBranch, @NotNull ProgressIndicator indicator) {
-    super(project, repositories, currentBranch, indicator);
+    super(project, git, repositories, currentBranch, indicator);
     myBranchName = branchName;
     myCurrentBranch = currentBranch;
   }
@@ -66,7 +66,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       final GitRepository repository = next();
 
       GitSimpleEventDetector notFullyMergedDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.BRANCH_NOT_FULLY_MERGED);
-      GitCommandResult result = Git.branchDelete(repository, myBranchName, false, notFullyMergedDetector);
+      GitCommandResult result = myGit.branchDelete(repository, myBranchName, false, notFullyMergedDetector);
 
       if (result.success()) {
         refresh(repository);
@@ -113,7 +113,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
-      GitCommandResult res = Git.branchCreate(repository, myBranchName);
+      GitCommandResult res = myGit.branchCreate(repository, myBranchName);
       result.append(repository, res);
       refresh(repository);
     }
@@ -152,7 +152,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private GitCompoundResult forceDelete(@NotNull String branchName, @NotNull Collection<GitRepository> possibleFailedRepositories) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     for (GitRepository repository : possibleFailedRepositories) {
-      GitCommandResult res = Git.branchDelete(repository, branchName, true);
+      GitCommandResult res = myGit.branchDelete(repository, branchName, true);
       compoundResult.append(repository, res);
     }
     return compoundResult;
@@ -220,7 +220,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
    * except the given branch itself.
    */
   @NotNull
-  private static List<String> getMergedToBranches(@NotNull GitRepository repository, @NotNull String branchName) {
+  private List<String> getMergedToBranches(@NotNull GitRepository repository, @NotNull String branchName) {
     String tip = tip(repository, branchName);
     if (tip == null) {
       return Collections.emptyList();
@@ -229,8 +229,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @Nullable
-  private static String tip(GitRepository repository, @NotNull String branchName) {
-    GitCommandResult result = Git.tip(repository, branchName);
+  private String tip(GitRepository repository, @NotNull String branchName) {
+    GitCommandResult result = myGit.tip(repository, branchName);
     if (result.success() && result.getOutput().size() == 1) {
       return result.getOutput().get(0).trim();
     }
@@ -240,8 +240,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
-  private static List<String> branchContainsCommit(@NotNull GitRepository repository, @NotNull String tip, @NotNull String branchName) {
-    GitCommandResult result = Git.branchContains(repository, tip);
+  private List<String> branchContainsCommit(@NotNull GitRepository repository, @NotNull String tip, @NotNull String branchName) {
+    GitCommandResult result = myGit.branchContains(repository, tip);
     if (result.success()) {
       List<String> branches = new ArrayList<String>();
       for (String s : result.getOutput()) {

@@ -259,7 +259,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
       else {
         VisibilityUtil.escalateVisibility((PsiField)myTargetVariable, expression);
-        newQualifier = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(myTargetVariable.getName(), null);
+        String newQualifierName = myTargetVariable.getName();
+        if (myTargetVariable instanceof PsiField && oldQualifier != null) {
+          final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(oldQualifier.getType());
+          if (aClass == ((PsiField)myTargetVariable).getContainingClass()) {
+            newQualifierName = oldQualifier.getText() + "." + newQualifierName;
+          }
+        }
+        newQualifier = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(newQualifierName, null);
       }
 
       PsiExpression newArgument = null;

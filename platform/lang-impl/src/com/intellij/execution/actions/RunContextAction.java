@@ -58,7 +58,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
   }
 
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
-    presentation.setText(myExecutor.getStartActionText() + actionText, true);
+    presentation.setText(myExecutor.getStartActionText(actionText), true);
 
     RunnerAndConfigurationSettings configuration = context.findExisting();
     if (configuration == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class SdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
   protected void doCustomize(final JList list, final Sdk sdk, final int index, final boolean selected, final boolean hasFocus) {
     if (sdk != null) {
       // icon
-      setIcon(sdk.getSdkType().getIcon());
+      setIcon(getSdkIcon(sdk));
       // text
       append(sdk.getName());
       if (myShowHomePath) {
@@ -59,5 +59,9 @@ public class SdkListCellRenderer extends HtmlListCellRenderer<Sdk> {
     else {
       append(myNullText);
     }
+  }
+
+  protected Icon getSdkIcon(Sdk sdk) {
+    return sdk.getSdkType().getIcon();
   }
 }

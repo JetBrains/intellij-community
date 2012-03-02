@@ -56,6 +56,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -788,7 +789,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                                                                     false);
           final Module originalModule = moduleEditor.getModule();
           if (originalModule != null) {
-            component.setPath(PathUtil.getParentPath(originalModule.getModuleFilePath()));
+            component.setPath(FileUtil.toSystemDependentName(PathUtil.getParentPath(originalModule.getModuleFilePath())));
           }
 
           final DialogBuilder dialogBuilder = new DialogBuilder(myTree);

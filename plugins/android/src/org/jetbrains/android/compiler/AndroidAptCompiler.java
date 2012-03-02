@@ -211,7 +211,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         AndroidFacet facet = AndroidFacet.getInstance(module);
         if (facet != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
-          if (!isToCompileModule(module, configuration)) {
+          if (!isToCompileModule(module, configuration) || hasBadCircularDependencies(facet)) {
             continue;
           }
 
@@ -259,6 +259,40 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         }
       }
       return items.toArray(new GenerationItem[items.size()]);
+    }
+
+
+    // see IDEA-79737 for details
+    private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet) {
+      final List<AndroidFacet> dependencies = AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true);
+
+      final Manifest manifest = facet.getManifest();
+      if (manifest == null) {
+        return false;
+      }
+
+      final String aPackage = manifest.getPackage().getValue();
+      if (aPackage == null || aPackage.length() == 0) {
+        return false;
+      }
+
+      for (AndroidFacet depFacet : dependencies) {
+        final Manifest depManifest = depFacet.getManifest();
+
+        if (depManifest != null) {
+          if (!aPackage.equals(depManifest.getPackage().getValue())) {
+            continue;
+          }
+        }
+        final List<AndroidFacet> depDependencies = AndroidSdkUtils.getAllAndroidDependencies(depFacet.getModule(), true);
+
+        if (depDependencies.contains(facet) &&
+            dependencies.contains(depFacet) &&
+            depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @NotNull

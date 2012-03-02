@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,31 +256,42 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
+  @Override
+  @NotNull
+  public List<String> getContentRootUrls() {
+    final List<String> result = new ArrayList<String>();
+    for (Module module : getModuleManager().getModules()) {
+      final String[] urls = ModuleRootManager.getInstance(module).getContentRootUrls();
+      ContainerUtil.addAll(result, urls);
+    }
+    return result;
+  }
+
+  @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = getModuleManager().getModules();
-    for (Module module : modules) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       ContainerUtil.addAll(result, contentRoots);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @Override
   public VirtualFile[] getContentSourceRoots() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = getModuleManager().getModules();
-    for (Module module : modules) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
       ContainerUtil.addAll(result, sourceRoots);
     }
     return VfsUtil.toVirtualFileArray(result);
   }
 
+  @Override
   public VirtualFile[] getFilesFromAllModules(OrderRootType type) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    final Module[] modules = getModuleManager().getSortedModules();
-    for (Module module : modules) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    for (Module module : getModuleManager().getSortedModules()) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getFiles(type);
       ContainerUtil.addAll(result, files);
     }

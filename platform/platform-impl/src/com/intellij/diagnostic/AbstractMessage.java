@@ -28,6 +28,7 @@ public abstract class AbstractMessage {
   private SubmittedReportInfo mySubmissionInfo;
   private String myAdditionalInfo;
   private Notification myNotification;
+  private Integer myAssigneeId;
 
   private final Date myDate;
 
@@ -90,4 +91,11 @@ public abstract class AbstractMessage {
     return myDate;
   }
 
+  public Integer getAssigneeId() {
+    return myAssigneeId;
+  }
+
+  public void setAssigneeId(Integer assigneeId) {
+    myAssigneeId = assigneeId;
+  }
 }

@@ -451,8 +451,15 @@ public class MavenIndex {
         String artifactId = id.getArtifactId();
         String version = id.getVersion();
 
+        myData.hasGroupCache.put(groupId, true);
+
+        String groupWithArtifact = groupId + ":" + artifactId;
+
+        myData.hasArtifactCache.put(groupWithArtifact, true);
+        myData.hasVersionCache.put(groupWithArtifact + ':' + version, true);
+
         addToCache(myData.groupToArtifactMap, groupId, artifactId);
-        addToCache(myData.groupWithArtifactToVersionMap, groupId + ":" + artifactId, version);
+        addToCache(myData.groupWithArtifactToVersionMap, groupWithArtifact, version);
         myData.flush();
 
         return null;
@@ -494,29 +501,46 @@ public class MavenIndex {
   }
 
   public synchronized boolean hasGroupId(String groupId) {
-    return hasValue(myData.groupToArtifactMap, groupId);
+    return hasValue(myData.groupToArtifactMap, myData.hasGroupCache, groupId);
   }
 
   public synchronized boolean hasArtifactId(String groupId, String artifactId) {
-    return hasValue(myData.groupWithArtifactToVersionMap, groupId + ":" + artifactId);
+    return hasValue(myData.groupWithArtifactToVersionMap, myData.hasArtifactCache, groupId + ":" + artifactId);
   }
 
-  public synchronized boolean hasVersion(final String groupId, final String artifactId, final String version) {
-    return doIndexTask(new IndexTask<Boolean>() {
-      @Override
-      public Boolean doTask() throws Exception {
-        Set<String> set = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
-        return set != null && set.contains(version);
-      }
-    }, false);
+  public synchronized boolean hasVersion(String groupId, String artifactId, final String version) {
+    final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
+
+    Boolean res = myData.hasVersionCache.get(groupWithArtifactWithVersion);
+    if (res == null) {
+      res = doIndexTask(new IndexTask<Boolean>() {
+        @Override
+        public Boolean doTask() throws Exception {
+          String groupWithVersion = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
+          Set<String> set = myData.groupWithArtifactToVersionMap.get(groupWithVersion);
+          return set != null && set.contains(version);
+        }
+      }, false);
+
+      myData.hasVersionCache.put(groupWithArtifactWithVersion, res);
+    }
+
+    return res;
   }
 
-  private boolean hasValue(final PersistentHashMap<String, ?> map, final String value) {
-    return doIndexTask(new IndexTask<Boolean>() {
-      public Boolean doTask() throws Exception {
-        return map.tryEnumerate(value) != 0;
-      }
-    }, false).booleanValue();
+  private boolean hasValue(final PersistentHashMap<String, ?> map, Map<String, Boolean> cache, final String value) {
+    Boolean res = cache.get(value);
+    if (res == null) {
+      res = doIndexTask(new IndexTask<Boolean>() {
+        public Boolean doTask() throws Exception {
+          return map.tryEnumerate(value) != 0;
+        }
+      }, false).booleanValue();
+
+      cache.put(value, res);
+    }
+
+    return res;
   }
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {
@@ -564,6 +588,10 @@ public class MavenIndex {
   private class IndexData {
     final PersistentHashMap<String, Set<String>> groupToArtifactMap;
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
+
+    final Map<String, Boolean> hasGroupCache = new THashMap<String, Boolean>();
+    final Map<String, Boolean> hasArtifactCache = new THashMap<String, Boolean>();
+    final Map<String, Boolean> hasVersionCache = new THashMap<String, Boolean>();
 
     private final int indexId;
 

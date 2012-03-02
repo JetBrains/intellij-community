@@ -32,7 +32,7 @@ public abstract class ValueContainer<Value> {
     int size();
   }
 
-  static abstract class IntPredicate {
+  abstract static class IntPredicate {
     abstract boolean contains(int id);
   }
   
@@ -50,16 +50,17 @@ public abstract class ValueContainer<Value> {
 
 
   public interface ContainerAction<T> {
-    void perform(int id, T value);
+    boolean perform(int id, T value);
   }
 
-  public final void forEach(final ContainerAction<Value> action) {
+  public final boolean forEach(final ContainerAction<Value> action) {
     for (final Iterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       final Value value = valueIterator.next();
       for (final IntIterator intIterator = getInputIdsIterator(value); intIterator.hasNext();) {
-        action.perform(intIterator.next(), value);
+        if (!action.perform(intIterator.next(), value)) return false;
       }
     }
+    return true;
   }
 
   private volatile boolean myNeedsCompacting = false;

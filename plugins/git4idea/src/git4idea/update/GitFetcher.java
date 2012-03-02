@@ -24,7 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
-import git4idea.NotificationManager;
+import git4idea.Notificator;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.jgit.GitHttpAdapter;
@@ -205,7 +205,7 @@ public class GitFetcher {
 
     String addInfo = makeAdditionalInfoByRoot(additionalInfo);
     if (!StringUtil.isEmptyOrSpaces(addInfo)) {
-        NotificationManager.getInstance(myProject).notify(GitVcs.MINOR_NOTIFICATION, "Fetch details", addInfo, NotificationType.INFORMATION);
+        Notificator.getInstance(myProject).notify(GitVcs.MINOR_NOTIFICATION, "Fetch details", addInfo, NotificationType.INFORMATION);
     }
 
     return true;

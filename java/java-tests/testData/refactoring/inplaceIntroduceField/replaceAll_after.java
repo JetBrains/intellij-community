@@ -15,9 +15,10 @@
  */
 class Test {
 
-    private final String x = "";
+    private String x;
 
     void simpleMethod() {
+        x = "";
         System.out.println(x);
         System.out.println(x);
     }
