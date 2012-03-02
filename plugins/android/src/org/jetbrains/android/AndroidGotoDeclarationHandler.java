@@ -17,6 +17,7 @@ package org.jetbrains.android;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -102,5 +103,10 @@ public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
       }
     }
     return wrappedResources.length > 0 ? wrappedResources : null;
+  }
+
+  @Override
+  public String getActionText(DataContext context) {
+    return null;
   }
 }
