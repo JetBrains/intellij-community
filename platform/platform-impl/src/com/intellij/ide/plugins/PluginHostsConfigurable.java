@@ -28,23 +28,22 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class PluginHostsConfigurable extends BaseConfigurable  {
+public class PluginHostsConfigurable extends BaseConfigurable {
   private CustomPluginRepositoriesPanel myUpdatesSettingsPanel;
 
   public JComponent createComponent() {
@@ -66,10 +65,9 @@ public class PluginHostsConfigurable extends BaseConfigurable  {
 
   public void apply() throws ConfigurationException {
     UpdateSettings settings = UpdateSettings.getInstance();
-    
+
     settings.myPluginHosts.clear();
     settings.myPluginHosts.addAll(myUpdatesSettingsPanel.getPluginsHosts());
-    
   }
 
   public void reset() {
@@ -91,76 +89,56 @@ public class PluginHostsConfigurable extends BaseConfigurable  {
   }
 
   public static class CustomPluginRepositoriesPanel {
-  
-    private JButton myAddButton;
-    private JButton myDeleteButton;
     private JBList myUrlsList;
-    private JButton myEditButton;
     private JPanel myPanel;
 
     public CustomPluginRepositoriesPanel() {
-
+      myUrlsList = new JBList(new DefaultListModel());
       myUrlsList.getEmptyText().setText(IdeBundle.message("update.no.update.hosts"));
-      myUrlsList.setModel(new DefaultListModel());
       myUrlsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-      myUrlsList.addListSelectionListener(new ListSelectionListener() {
-        public void valueChanged(final ListSelectionEvent e) {
-          myDeleteButton.setEnabled(ListUtil.canRemoveSelectedItems(myUrlsList));
-          myEditButton.setEnabled(ListUtil.canRemoveSelectedItems(myUrlsList));
-        }
-      });
-
-      myAddButton.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
-                                                                                    IdeBundle.message("update.plugin.host.url.message"),
-                                                                                    IdeBundle.message("update.add.new.plugin.host.title"),
-                                                                                    Messages.getQuestionIcon(), "",
-                                                                                    new NonEmptyInputValidator());
-          dlg.show();
-          String input = dlg.getInputString();
-          if (input != null) {
-            ((DefaultListModel)myUrlsList.getModel()).addElement(correctRepositoryRule(input));
+      myPanel = ToolbarDecorator.createDecorator(myUrlsList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            final HostMessages.InputHostDialog dlg =
+              new HostMessages.InputHostDialog(myPanel,
+                                               IdeBundle.message("update.plugin.host.url.message"),
+                                               IdeBundle.message("update.add.new.plugin.host.title"),
+                                               Messages.getQuestionIcon(), "",
+                                               new NonEmptyInputValidator());
+            dlg.show();
+            String input = dlg.getInputString();
+            if (input != null) {
+              ((DefaultListModel)myUrlsList.getModel()).addElement(correctRepositoryRule(input));
+            }
           }
-        }
-      });
+        }).setEditAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            final HostMessages.InputHostDialog dlg =
+              new HostMessages.InputHostDialog(myPanel,
+                                               IdeBundle.message("update.plugin.host.url.message"),
+                                               IdeBundle.message("update.edit.plugin.host.title"),
+                                               Messages.getQuestionIcon(),
+                                               (String)myUrlsList.getSelectedValue(),
+                                               new InputValidator() {
+                                                 public boolean checkInput(final String inputString) {
+                                                   return inputString.length() > 0;
+                                                 }
 
-      myEditButton.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          final HostMessages.InputHostDialog dlg = new HostMessages.InputHostDialog(myPanel,
-                                                                                    IdeBundle.message("update.plugin.host.url.message"),
-                                                                                    IdeBundle.message("update.edit.plugin.host.title"),
-                                                                                    Messages.getQuestionIcon(),
-                                                                                    (String)myUrlsList.getSelectedValue(),
-                                                                                    new InputValidator() {
-                                                                                      public boolean checkInput(final String inputString) {
-                                                                                        return inputString.length() > 0;
-                                                                                      }
-
-                                                                                      public boolean canClose(final String inputString) {
-                                                                                        return checkInput(inputString);
-                                                                                      }
-                                                                                    });
-          dlg.show();
-          final String input = dlg.getInputString();
-          if (input != null) {
-            ((DefaultListModel)myUrlsList.getModel()).set(myUrlsList.getSelectedIndex(), input);
+                                                 public boolean canClose(final String inputString) {
+                                                   return checkInput(inputString);
+                                                 }
+                                               });
+            dlg.show();
+            final String input = dlg.getInputString();
+            if (input != null) {
+              ((DefaultListModel)myUrlsList.getModel()).set(myUrlsList.getSelectedIndex(), input);
+            }
           }
-        }
-      });
-
-      myDeleteButton.addActionListener(new ActionListener() {
-        public void actionPerformed(final ActionEvent e) {
-          ListUtil.removeSelectedItems(myUrlsList);
-        }
-      });
-      myEditButton.setEnabled(false);
-      myDeleteButton.setEnabled(false);
-
-
+        }).disableUpDownActions().createPanel();
     }
-
 
 
     public List<String> getPluginsHosts() {
@@ -204,13 +182,14 @@ public class PluginHostsConfigurable extends BaseConfigurable  {
         final Action[] actions = super.createActions();
         final AbstractAction checkNowAction = new AbstractAction("Check Now") {
           public void actionPerformed(final ActionEvent e) {
-            final boolean [] result = new boolean[1];
-            final Exception [] ex = new Exception[1];
+            final boolean[] result = new boolean[1];
+            final Exception[] ex = new Exception[1];
             if (ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
               @Override
               public void run() {
                 try {
-                  result[0] = UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new ArrayList<PluginDownloader>());
+                  result[0] =
+                    UpdateChecker.checkPluginsHost(correctRepositoryRule(getTextField().getText()), new ArrayList<PluginDownloader>());
                 }
                 catch (Exception e1) {
                   ex[0] = e1;
