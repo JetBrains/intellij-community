@@ -18,17 +18,19 @@ import java.util.Set;
  */
 public class PythonEnvUtil {
   public static final String PYTHONPATH = "PYTHONPATH";
+  public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
+  public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
 
   private PythonEnvUtil() {
   }
 
   public static Map<String, String> setPythonUnbuffered(@NotNull Map<String, String> envs) {
-    envs.put("PYTHONUNBUFFERED", "1");
+    envs.put(PYTHONUNBUFFERED, "1");
     return envs;
   }
 
   public static Map<String, String> setPythonIOEncoding(@NotNull Map<String, String> envs, @NotNull String encoding) {
-    envs.put("PYTHONIOENCODING", encoding);
+    envs.put(PYTHONIOENCODING, encoding);
     return envs;
   }
 
