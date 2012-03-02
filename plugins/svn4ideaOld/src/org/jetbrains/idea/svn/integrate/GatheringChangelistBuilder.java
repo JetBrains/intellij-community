@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
@@ -30,6 +31,7 @@ import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -102,7 +104,7 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   }
 
   public void processLocallyDeletedFile(LocallyDeletedChange locallyDeletedChange) {
-    
+
   }
 
   public void processModifiedWithoutCheckout(final VirtualFile file) {
