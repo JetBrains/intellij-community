@@ -17,7 +17,7 @@ public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenc
    * Goes through a chain of assignment statements until a non-assignment expression is encountered.
    * Starts at this, expecting it to resolve to a target of an assignment.
    * <i>Note: currently limited to non-branching definite assignments.</i>
-   * @return value that is assigned to this element via a chain of definite assignments, or null.
+   * @return value that is assigned to this element via a chain of definite assignments, or an empty resolve result.
    * <i>Note: will return null if the assignment chain ends in a target of a non-assignment statement such as 'for'.</i>
    *
    * @param resolveContext the resolve context
