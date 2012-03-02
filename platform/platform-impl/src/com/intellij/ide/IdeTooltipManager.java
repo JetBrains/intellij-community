@@ -176,6 +176,17 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
     int shift = centerStrict ? 0 : (centerDefault ? 4 : 0);
 
+    // Balloon may appear exactly above useful content, such behavior is rather annoying.
+    if (c instanceof JTree) {
+      javax.swing.tree.TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
+      if (path != null) {
+        Rectangle pathBounds = ((JTree)c).getPathBounds(path);
+        if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
+          shift += me.getY() - pathBounds.y - 4;
+        }
+      }
+    }
+
     queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
   }
 
@@ -199,16 +210,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
 
-    // Balloon may appear exactly above useful content, such behavior is rather annoying.
-    if (tooltip.getPreferredPosition() == Balloon.Position.above && c instanceof JTree) {
-      javax.swing.tree.TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
-      if (path != null) {
-        Rectangle pathBounds = ((JTree)c).getPathBounds(path);
-        if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
-          tooltip.setPositionChangeShift(tooltip.getPositionChangeX(), tooltip.getPositionChangeY() - ((me.getY() - pathBounds.y - 4)));
-        }
-      }
-    }
     show(tooltip, false);
   }
 
