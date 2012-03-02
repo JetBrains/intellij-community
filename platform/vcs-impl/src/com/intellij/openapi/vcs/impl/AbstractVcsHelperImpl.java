@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -215,7 +216,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private String[] getExceptionMessages(VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
-    return messages;
+    final List<String> list = new ArrayList<String>();
+    for (String message : messages) {
+      list.addAll(StringUtil.split(StringUtil.convertLineSeparators(message), "\n"));
+    }
+    return list.toArray(new String[list.size()]);
   }
 
   private void showErrorsImpl(final boolean isEmpty, final Getter<VcsException> firstGetter, @NotNull final String tabDisplayName,
