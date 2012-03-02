@@ -44,10 +44,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -233,29 +230,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   //Yes, it's possible to move focus to the hint. It's inconvenient, it doesn't make sense, but it's possible.
   // This fix is for those jerks
   private void fixMouseCheaters() {
-    new AnAction() {
+    getComponent().addFocusListener(new FocusAdapter() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        final InputEvent event = e.getInputEvent();
-        if (! (event instanceof KeyEvent)) return;
-        final char keyChar = ((KeyEvent)event).getKeyChar();
-        if (keyChar == KeyEvent.VK_ENTER || keyChar == KeyEvent.VK_TAB) {
-          IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true).doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                final Robot robot = new Robot();
-                final int code = ((KeyEvent)event).getKeyCode();
-                robot.keyPress(code);
-                robot.keyRelease(code);
-              }
-              catch (AWTException ignored) {
-              }
+      public void focusGained(FocusEvent e) {
+        final ActionCallback done = IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), true);
+        IdeFocusManager.getInstance(myProject).typeAheadUntil(done);
+        new Alarm(LookupImpl.this).addRequest(new Runnable() {
+          @Override
+          public void run() {
+            if (!done.isDone()) {
+              done.setDone();
             }
-          });
-        }
+          }
+        }, 300);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyboardShortcut.fromString("ENTER"), KeyboardShortcut.fromString("TAB")), getComponent(), this);
+    });
   }
 
   private void updateSorting() {
