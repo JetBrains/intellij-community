@@ -22,6 +22,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -77,6 +79,13 @@ public class PythonReferenceImporter implements ReferenceImporter {
     if (module != null && PythonSdkType.findPythonSdk(module) == null) {
       return null;
     }
+
+    // don't show auto-import fix if we're trying to reference a variable which is defined below in the same scope
+    ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(node, ScopeOwner.class);
+    if (scopeOwner != null && ControlFlowCache.getScope(scopeOwner).containsDeclaration(refText)) {
+      return null;
+    }
+
     PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
     AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, refText, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
