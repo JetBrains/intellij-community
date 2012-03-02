@@ -24,7 +24,6 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -223,8 +222,8 @@ public class InspectionValidatorWrapper implements Validator {
         @Override
         public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
           if (getHighlightDisplayLevel(inspectionTool, inspectionProfile, file) != HighlightDisplayLevel.DO_NOT_SHOW) {
-            return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file),
-                                     context.getProgressIndicator());
+            return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file)
+            );
           }
           return Collections.emptyMap();
         }
@@ -281,10 +280,9 @@ public class InspectionValidatorWrapper implements Validator {
 
   private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(final PsiFile file,
                                                                                  final LocalInspectionTool inspectionTool,
-                                                                                 final HighlightDisplayLevel level,
-                                                                                 ProgressIndicator progress) {
+                                                                                 final HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
-    for (CommonProblemDescriptor descriptor : CleanupInspectionIntention.runInspectionOnFile(file, inspectionTool, progress)) {
+    for (CommonProblemDescriptor descriptor : CleanupInspectionIntention.runInspectionOnFile(file, inspectionTool, null)) {
       if (descriptor instanceof ProblemDescriptor) {
         problemsMap.put((ProblemDescriptor)descriptor, level);
       }

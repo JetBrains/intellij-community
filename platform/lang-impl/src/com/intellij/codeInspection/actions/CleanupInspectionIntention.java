@@ -33,6 +33,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -90,18 +91,23 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   }
 
   public static List<CommonProblemDescriptor> runInspectionOnFile(final PsiFile file,
-                                                                  final LocalInspectionTool inspectionTool, ProgressIndicator progress) {
+                                                                  final LocalInspectionTool inspectionTool, @Nullable ProgressIndicator progress) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(inspectionTool);
     tool.initialize(context);
     ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
     try {
-      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+      Runnable process = new Runnable() {
         public void run() {
           tool.processFile(file, true, managerEx, true);
         }
-      }, progress);
+      };
+      if (progress != null) {
+        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(process, progress);
+      } else {
+        process.run();
+      }
       return new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
     }
     finally {
