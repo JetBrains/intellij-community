@@ -58,6 +58,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -84,7 +85,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private ChangeListWorker myWorker;
   private VcsException myUpdateException = null;
-  private List<String> myAdditionalInfo;
+  private Factory<JComponent> myAdditionalInfo;
 
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
 
@@ -123,7 +124,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
     myFreezeName = new AtomicReference<String>(null);
-    myAdditionalInfo = new ArrayList<String>();
+    myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
@@ -402,7 +403,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         myModifier.enterUpdate();
         if (wasEverythingDirty) {
           myUpdateException = null;
-          myAdditionalInfo.clear();
+          myAdditionalInfo = null;
         }
       }
       final String scopeInString = (! LOG.isDebugEnabled()) ? "" : StringUtil.join(scopes, new Function<VcsDirtyScope, String>() {
@@ -535,7 +536,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (myUpdateException != null) break;
     }
     synchronized (myDataLock) {
-      myAdditionalInfo.addAll(builder.getAdditionalInfo());
+      if (myAdditionalInfo == null) {
+        myAdditionalInfo = builder.getAdditionalInfo();
+      }
     }
   }
 
@@ -763,9 +766,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
   
-  public List<String> getAdditionalUpdateInfo() {
+  public Factory<JComponent> getAdditionalUpdateInfo() {
     synchronized (myDataLock) {
-      return new ArrayList<String>(myAdditionalInfo);
+      return myAdditionalInfo;
     }
   }
 

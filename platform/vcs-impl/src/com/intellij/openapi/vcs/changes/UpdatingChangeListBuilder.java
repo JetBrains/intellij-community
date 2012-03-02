@@ -20,15 +20,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import javax.swing.*;
 
 class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdatingChangeListBuilder");
@@ -41,7 +41,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final IgnoredFilesComponent myIgnoredFilesComponent;
   private final FileIndexFacade myIndex;
   private final ChangeListManagerGate myGate;
-  private List<String> myAdditionalInfo;
+  private Factory<JComponent> myAdditionalInfo;
 
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
                             final FileHolderComposite composite,
@@ -53,7 +53,6 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     myIgnoredFilesComponent = ignoredFilesComponent;
     myGate = gate;
     myIndex = PeriodicalTasksCloser.getInstance().safeGetService(changeListWorker.getProject(), FileIndexFacade.class);
-    myAdditionalInfo = new SmartList<String>();
   }
 
   private void checkIfDisposed() {
@@ -213,10 +212,17 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
   @Override
   public void reportAdditionalInfo(String text) {
-    myAdditionalInfo.add(text);
+    reportAdditionalInfo(ChangesViewManager.createTextStatusFactory(text, true));
   }
 
-  public List<String> getAdditionalInfo() {
+  @Override
+  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
+    if (myAdditionalInfo == null) {
+      myAdditionalInfo = infoComponent;
+    }
+  }
+
+  public Factory<JComponent> getAdditionalInfo() {
     return myAdditionalInfo;
   }
 }

@@ -16,10 +16,13 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Builder for the changes list in the file system. The instances of
@@ -108,4 +111,6 @@ public interface ChangelistBuilder {
   boolean reportChangesOutsideProject();
   
   void reportAdditionalInfo(final String text);
+
+  void reportAdditionalInfo(final Factory<JComponent> infoComponent);
 }
