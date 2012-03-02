@@ -134,6 +134,10 @@ public class GatheringChangelistBuilder implements ChangelistBuilder {
   public void reportAdditionalInfo(final String text) {
   }
 
+  @Override
+  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
+  }
+
   public void reportWarningMessage(final String message) {
     // todo maybe, use further
   }
