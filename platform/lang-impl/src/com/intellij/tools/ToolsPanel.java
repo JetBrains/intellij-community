@@ -17,13 +17,12 @@
 package com.intellij.tools;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.CheckboxTree;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +31,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -44,18 +41,21 @@ class ToolsPanel extends JPanel {
       public boolean isAvailable(final int index, final int childCount) {
         return index != 0;
       }
+
       public int newIndex(final int index) {
         return index - 1;
       }
-    }, DOWN{
-    @Override
-    public boolean isAvailable(final int index, final int childCount) {
-      return index < childCount - 1;
-    }
-    public int newIndex(final int index) {
-      return index + 1;
-    }
-  };
+    },
+    DOWN {
+      @Override
+      public boolean isAvailable(final int index, final int childCount) {
+        return index < childCount - 1;
+      }
+
+      public int newIndex(final int index) {
+        return index + 1;
+      }
+    };
 
     public abstract boolean isAvailable(final int index, final int childCount);
 
@@ -64,12 +64,12 @@ class ToolsPanel extends JPanel {
 
   private final CheckboxTree myTree;
 
-  private final JButton myAddButton = new JButton(ToolsBundle.message("tools.add.button"));
-  private final JButton myCopyButton = new JButton(ToolsBundle.message("tools.copy.button"));
-  private final JButton myEditButton = new JButton(ToolsBundle.message("tools.edit.button"));
-  private final JButton myMoveUpButton = new JButton(ToolsBundle.message("tools.move.up.button"));
-  private final JButton myMoveDownButton = new JButton(ToolsBundle.message("tools.move.down.button"));
-  private final JButton myRemoveButton = new JButton(ToolsBundle.message("tools.remove.button"));
+  private final AnActionButton myAddButton;
+  private final AnActionButton myCopyButton;
+  private final AnActionButton myEditButton;
+  private final AnActionButton myMoveUpButton;
+  private final AnActionButton myMoveDownButton;
+  private final AnActionButton myRemoveButton;
   private boolean myIsModified = false;
 
   ToolsPanel() {
@@ -77,12 +77,12 @@ class ToolsPanel extends JPanel {
     myTree = new CheckboxTree(
       new CheckboxTree.CheckboxTreeCellRenderer() {
         public void customizeRenderer(final JTree tree,
-                                          final Object value,
-                                          final boolean selected,
-                                          final boolean expanded,
-                                          final boolean leaf,
-                                          final int row,
-                                          final boolean hasFocus) {
+                                      final Object value,
+                                      final boolean selected,
+                                      final boolean expanded,
+                                      final boolean leaf,
+                                      final int row,
+                                      final boolean hasFocus) {
           if (!(value instanceof CheckedTreeNode)) return;
           Object object = ((CheckedTreeNode)value).getUserObject();
 
@@ -114,66 +114,85 @@ class ToolsPanel extends JPanel {
 
     myTree.setRootVisible(false);
     myTree.getEmptyText().setText(ToolsBundle.message("tools.not.configured"));
-
-    JScrollPane tableScrollPane = ScrollPaneFactory.createScrollPane(myTree);
-
-
-    setLayout(new GridBagLayout());
-    GridBagConstraints constr;
-
-    // tools list
-    constr = new GridBagConstraints();
-    constr.gridx = 0;
-    constr.gridy = 0;
-    constr.weightx = 1;
-    constr.weighty = 1;
-    constr.insets = new Insets(0, 2, 0, 0);
-    constr.fill = GridBagConstraints.BOTH;
-    constr.anchor = GridBagConstraints.WEST;
-    add(tableScrollPane, constr);
-
     myTree.setSelectionModel(new DefaultTreeSelectionModel());
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
 
+    setLayout(new BorderLayout());
+    add(ToolbarDecorator.createDecorator(myTree).setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
+        Tool tool = new Tool();
+        tool.setUseConsole(true);
+        tool.setFilesSynchronizedAfterRun(true);
+        tool.setShownInMainMenu(true);
+        tool.setShownInEditor(true);
+        tool.setShownInProjectViews(true);
+        tool.setShownInSearchResultsPopup(true);
+        tool.setEnabled(true);
+        dlg.setData(tool, getGroups());
+        dlg.show();
+        if (dlg.isOK()) {
+          insertNewTool(dlg.getData(), true);
+        }
+        myTree.requestFocus();
+      }
+    }).setRemoveAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        removeSelected();
+      }
+    }).setEditAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        editSelected();
+        myTree.requestFocus();
+      }
+    }).setUpAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        moveNode(Direction.UP);
+        myIsModified = true;
+      }
+    }).setDownAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        moveNode(Direction.DOWN);
+        myIsModified = true;
+      }
+    }).addExtraAction(myCopyButton = new AnActionButton(ToolsBundle.message("tools.copy.button"), PlatformIcons.DUPLICATE_ICON) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Tool originalTool = getSelectedTool();
 
-    // right side buttons
-    constr = new GridBagConstraints();
-    constr.gridx = 1;
-    constr.gridy = 0;
-    constr.anchor = GridBagConstraints.NORTH;
-    add(createRightButtonPane(), constr);
+        if (originalTool != null) {
+          ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
+          Tool toolCopy = new Tool();
+          toolCopy.copyFrom(originalTool);
+          dlg.setData(toolCopy, getGroups());
+          dlg.show();
+          if (dlg.isOK()) {
+            insertNewTool(dlg.getData(), true);
+          }
+          myTree.requestFocus();
+        }
+      }
+    }).setButtonComparator("Add", "Copy", "Edit", "Remove", "Up", "Down")
+          .createPanel(), BorderLayout.CENTER);
 
-//    // for align
-//    constr = new GridBagConstraints();
-//    constr.gridx = 2;
-//    constr.weightx = 1;
-//    constr.fill = GridBagConstraints.HORIZONTAL;
-//    add(new JPanel(), constr);
+    myAddButton = ToolbarDecorator.findAddButton(this);
+    myEditButton = ToolbarDecorator.findEditButton(this);
+    myRemoveButton = ToolbarDecorator.findRemoveButton(this);
+    myMoveUpButton = ToolbarDecorator.findUpButton(this);
+    myMoveDownButton = ToolbarDecorator.findDownButton(this);
 
-    addListeners();
+    //TODO check edit and delete
 
-  }
-
-  // add/edit/remove buttons
-  private JPanel createRightButtonPane() {
-    JPanel pane = new JPanel(new GridBagLayout());
-    GridBagConstraints constr = new GridBagConstraints();
-    constr.insets = new Insets(0, 5, 5, 5);
-    constr.fill = GridBagConstraints.HORIZONTAL;
-    constr.weightx = 1.0;
-    constr.gridy = 0;
-    pane.add(myAddButton, constr);
-    constr.gridy = 1;
-    pane.add(myCopyButton, constr);
-    constr.gridy = 2;
-    pane.add(myEditButton, constr);
-    constr.gridy = 3;
-    pane.add(myRemoveButton, constr);
-    constr.gridy = 4;
-    pane.add(myMoveUpButton, constr);
-    constr.gridy = 5;
-    pane.add(myMoveDownButton, constr);
-    return pane;
+    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      public void valueChanged(TreeSelectionEvent e) {
+        update();
+      }
+    });
   }
 
   void reset() {
@@ -182,7 +201,7 @@ class ToolsPanel extends JPanel {
     for (ToolsGroup group : groups) {
       insertNewGroup((ToolsGroup)group.copy());
     }
-    
+
     if ((getTreeRoot()).getChildCount() > 0) {
       myTree.setSelectionInterval(0, 0);
     }
@@ -222,7 +241,7 @@ class ToolsPanel extends JPanel {
     return (CheckedTreeNode)myTree.getModel().getRoot();
   }
 
-  void apply() throws IOException{
+  void apply() throws IOException {
     // unregister removed tools
     ToolManager toolManager = ToolManager.getInstance();
 
@@ -236,7 +255,7 @@ class ToolsPanel extends JPanel {
     for (int i = 0; i < root.getChildCount(); i++) {
       final CheckedTreeNode node = (CheckedTreeNode)root.getChildAt(i);
       for (int j = 0; j < node.getChildCount(); j++) {
-        final CheckedTreeNode toolNode = (CheckedTreeNode) node.getChildAt(j);
+        final CheckedTreeNode toolNode = (CheckedTreeNode)node.getChildAt(j);
         ((Tool)toolNode.getUserObject()).setEnabled(toolNode.isChecked());
       }
 
@@ -248,85 +267,6 @@ class ToolsPanel extends JPanel {
 
   boolean isModified() {
     return myIsModified;
-  }
-
-  private void addListeners() {
-    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        update();
-      }
-    });
-
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
-        Tool tool = new Tool();
-        tool.setUseConsole(true);
-        tool.setFilesSynchronizedAfterRun(true);
-        tool.setShownInMainMenu(true);
-        tool.setShownInEditor(true);
-        tool.setShownInProjectViews(true);
-        tool.setShownInSearchResultsPopup(true);
-        tool.setEnabled(true);
-        dlg.setData(tool, getGroups());
-        dlg.show();
-        if (dlg.isOK()) {
-          insertNewTool(dlg.getData(), true);
-        }
-        myTree.requestFocus();
-      }
-    });
-
-    myCopyButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          Tool originalTool = getSelectedTool();
-
-          if (originalTool != null) {
-            ToolEditorDialog dlg = new ToolEditorDialog(ToolsPanel.this);
-            Tool toolCopy = new Tool();
-            toolCopy.copyFrom(originalTool);
-            dlg.setData(toolCopy, getGroups());
-            dlg.show();
-            if (dlg.isOK()) {
-              insertNewTool(dlg.getData(), true);
-            }
-            myTree.requestFocus();
-          }
-        }
-      }
-    );
-
-    myEditButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        editSelected();
-        myTree.requestFocus();
-      }
-    });
-
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        removeSelected();
-      }
-    });
-
-
-    myMoveUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        moveNode(Direction.UP);
-        myIsModified = true;
-      }
-    });
-
-    myMoveDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        moveNode(Direction.DOWN);
-        myIsModified = true;
-      }
-    });
-
-
-    //TODO check edit and delete
   }
 
   private void moveNode(final Direction direction) {
@@ -354,7 +294,6 @@ class ToolsPanel extends JPanel {
     else {
       group.moveElementDown(tool);
     }
-
   }
 
   private void moveNode(final CheckedTreeNode toolNode, Direction dir) {
@@ -399,7 +338,7 @@ class ToolsPanel extends JPanel {
     for (int i = 0; i < getTreeRoot().getChildCount(); i++) {
       CheckedTreeNode node = (CheckedTreeNode)getTreeRoot().getChildAt(i);
       ToolsGroup g = (ToolsGroup)node.getUserObject();
-      if (Comparing.equal(group,g.getName())) return node;
+      if (Comparing.equal(group, g.getName())) return node;
     }
 
     return null;
@@ -439,7 +378,6 @@ class ToolsPanel extends JPanel {
       myMoveDownButton.setEnabled(isMovingAvailable(node, Direction.DOWN));
       myMoveUpButton.setEnabled(isMovingAvailable(node, Direction.UP));
       myRemoveButton.setEnabled(true);
-
     }
     else {
       myAddButton.setEnabled(true);
@@ -506,7 +444,7 @@ class ToolsPanel extends JPanel {
         if (dlg.isOK()) {
           selected.copyFrom(dlg.getData());
           String newGroupName = selected.getGroup();
-          if (!Comparing.equal(oldGroupName,newGroupName)) {
+          if (!Comparing.equal(oldGroupName, newGroupName)) {
             CheckedTreeNode oldGroupNode = (CheckedTreeNode)node.getParent();
             removeNodeFromParent(node);
             ((ToolsGroup)oldGroupNode.getUserObject()).removeElement(selected);
