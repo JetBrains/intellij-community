@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -99,9 +102,15 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
 
     @Override
     public void updatePresentation(@Nullable Collection<GradleProjectStructureNode<?>> nodes, @NotNull Presentation presentation) {
-      boolean active = nodes != null && !nodes.isEmpty();
-      presentation.setVisible(active);
-      presentation.setEnabled(active);
+      boolean visible = nodes != null && !nodes.isEmpty();
+      presentation.setVisible(visible);
+
+      boolean enabled = visible;
+      if (enabled) {
+        final GradleTaskManager taskManager = ServiceManager.getService(GradleTaskManager.class);
+        enabled = taskManager == null || !taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT);
+      }
+      presentation.setEnabled(enabled);
     }
   }
 }
