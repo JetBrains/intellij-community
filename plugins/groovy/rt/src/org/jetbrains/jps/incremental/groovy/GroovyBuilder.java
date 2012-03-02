@@ -92,7 +92,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           }
         });
 
-        if (myForStubs && handler.shouldRetry()) {
+        if (handler.shouldRetry()) {
           if (CHUNK_REBUILD_ORDERED.get(context) != null) {
             CHUNK_REBUILD_ORDERED.set(context, null);
           } else {
