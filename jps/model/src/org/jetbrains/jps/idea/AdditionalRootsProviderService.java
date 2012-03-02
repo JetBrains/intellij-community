@@ -14,9 +14,4 @@ public abstract class AdditionalRootsProviderService {
   public List<String> getAdditionalSourceRoots(@NotNull Module module) {
     return Collections.emptyList();
   }
-
-  @NotNull
-  public List<String> getAdditionalTestSourceRoots(@NotNull Module module) {
-    return Collections.emptyList();
-  }
 }
