@@ -106,7 +106,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (event != null && GradleConstants.SYNC_TREE_FLOATING_TOOLBAR_PLACE.equals(event.getPlace())) {
-          hideHind();
+          hideHint();
         }
       }
     }, getProject());
@@ -129,6 +129,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
       public void mouseMoved(MouseEvent e) {
         final TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         if (path == null) {
+          hideHint();
           return;
         }
         final Object node = path.getLastPathComponent();
@@ -137,7 +138,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         if (node == activeNode && hint.isVisible()) {
           return;
         }
-        hideHind();
+        hideHint();
         if (!actionManager.isActionPopupStackEmpty()) {
           return;
         }
@@ -172,10 +173,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     myTree.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-        // Hide hint on context menu opening.
-        if (e.isPopupTrigger()) {
-          hideHind();
-        }
+        hideHint();
       }
     });
   }
@@ -195,13 +193,13 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           myToolbarAlarm.addRequest(this, delayMillis);
         }
         else {
-          hideHind();
+          hideHint();
         }
       }
     }, delayMillis);
   }
   
-  private void hideHind() {
+  private void hideHint() {
     final LightweightHint hint = myHint;
     if (hint != null && hint.isVisible()) {
       hint.hide();
