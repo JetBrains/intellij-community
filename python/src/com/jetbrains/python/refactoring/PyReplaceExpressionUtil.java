@@ -16,6 +16,9 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
   public static boolean isNeedParenthesis(@NotNull final PyElement oldExpr, @NotNull final PyElement newExpr) {
     final PyElement parentExpr = (PyElement)oldExpr.getParent();
+    if (parentExpr instanceof PyArgumentList) {
+      return newExpr instanceof PyTupleExpression;
+    }
     if (!(parentExpr instanceof PyExpression)) {
       return false;
     }

@@ -61,4 +61,8 @@ public class PyInlineLocalTest extends PyTestCase {
   public void testPy1585() {
     doTest();
   }
+
+  public void testPy5832() {
+    doTest();
+  }
 }
