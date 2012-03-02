@@ -404,7 +404,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     final Map<String, RootModelImpl> nameToModel = new HashMap<String, RootModelImpl>();
     for (final RootModelImpl rootModel : rootModels) {
       final String name = rootModel.getModule().getName();
-      LOG.assertTrue(!nameToModel.containsKey(name));
+      LOG.assertTrue(!nameToModel.containsKey(name), name);
       nameToModel.put(name, rootModel);
     }
     final Module[] modules = moduleModel.getModules();
