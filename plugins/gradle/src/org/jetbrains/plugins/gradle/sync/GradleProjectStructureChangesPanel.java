@@ -9,6 +9,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -38,12 +39,14 @@ import java.util.List;
  * @since 11/3/11 3:58 PM
  */
 public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
-
+  
+  private final Alarm myToolbarAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  
   private Tree                            myTree;
   private GradleProjectStructureTreeModel myTreeModel;
   private GradleProjectStructureContext   myContext;
   private Object                          myNodeUnderMouse;
-  private LightweightHint                 myHint;
+  private LightweightHint                 myToolbar;
 
   public GradleProjectStructureChangesPanel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
@@ -129,7 +132,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         }
         final Object node = path.getLastPathComponent();
         myNodeUnderMouse = node;
-        LightweightHint hint = myHint;
+        LightweightHint hint = myToolbar;
         if (node == activeNode && hint.isVisible()) {
           return;
         }
@@ -158,15 +161,38 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           xAdjustment = icon.getIconWidth();
         }
         lightweightHint.show(myTree, bounds.x + xAdjustment, bounds.y + bounds.height, myTree, new HintHint(e));
-        myHint = lightweightHint;
+        myToolbar = lightweightHint;
+        startToolbarTracking();
       }
     });
   }
 
+  private void startToolbarTracking() {
+    myToolbarAlarm.cancelAllRequests();
+    final int delayMillis = 300;
+    myToolbarAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (myToolbar == null) {
+          return;
+        }
+        final Point location = MouseInfo.getPointerInfo().getLocation();
+        SwingUtilities.convertPointFromScreen(location, GradleProjectStructureChangesPanel.this);
+        if (GradleProjectStructureChangesPanel.this.contains(location)) {
+          myToolbarAlarm.addRequest(this, delayMillis);
+        }
+        else {
+          hideFloatingToolbar();
+        }
+      }
+    }, delayMillis);
+  }
+  
   private void hideFloatingToolbar() {
-    final LightweightHint hint = myHint;
+    final LightweightHint hint = myToolbar;
     if (hint != null && hint.isVisible()) {
       hint.hide();
+      myToolbarAlarm.cancelAllRequests();
     }
   }
   
