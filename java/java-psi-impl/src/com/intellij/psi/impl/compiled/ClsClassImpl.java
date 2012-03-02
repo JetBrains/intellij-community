@@ -18,6 +18,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -576,6 +577,13 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
+    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+      PsiElement navigationElement = customNavigationPolicy.getNavigationElement(this);
+      if (navigationElement != null) {
+        return navigationElement;
+      }
+    }
+
     PsiClass aClass = getSourceMirrorClass();
     return aClass != null && aClass != this ? aClass.getNavigationElement() : this;
   }

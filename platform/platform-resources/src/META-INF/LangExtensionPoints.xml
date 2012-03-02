@@ -529,7 +529,10 @@
   <extensionPoint name="psi.treeChangePreprocessor"
                   interface="com.intellij.psi.impl.PsiTreeChangePreprocessor"
                   area="IDEA_PROJECT"/>
-  
+
+  <extensionPoint name="psi.clsCustomNavigationPolicy"
+                  interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy" />
+
   <extensionPoint name="codeBlockProvider"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
