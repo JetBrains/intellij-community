@@ -117,7 +117,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
       symbols.addAll(PyFunctionNameIndex.find(refText, project, scope));
     }
     symbols.addAll(PyVariableNameIndex.find(refText, project, scope));
-    if (!isCall(node)) {
+    if (isPossibleModuleReference(node)) {
       symbols.addAll(findImportableModules(node.getContainingFile(), refText, project, scope));
     }
     if (symbols.size() > 0) {
@@ -153,11 +153,20 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return false;
   }
 
-  private static boolean isCall(PyElement node) {
-    if (node.getParent() instanceof PyCallExpression) {
-      return node == ((PyCallExpression) node.getParent()).getCallee();
+  private static boolean isPossibleModuleReference(PyElement node) {
+    if (node.getParent() instanceof PyCallExpression && node == ((PyCallExpression) node.getParent()).getCallee()) {
+      return false;
     }
-    return false;
+    if (node.getParent() instanceof PyArgumentList) {
+      final PyArgumentList argumentList = (PyArgumentList)node.getParent();
+      if (argumentList.getParent() instanceof PyClass) {
+        final PyClass pyClass = (PyClass)argumentList.getParent();
+        if (pyClass.getSuperClassExpressionList() == argumentList) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
