@@ -243,9 +243,9 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   }
 
   private void _requestDefaultFocus() {
-    final TabbedPaneWrapper.TabWrapper selectedComponent = (TabbedPaneWrapper.TabWrapper)getSelectedComponent();
-    if (selectedComponent != null) {
-      selectedComponent.requestDefaultFocus();
+    final Component selectedComponent = getSelectedComponent();
+    if (selectedComponent instanceof TabbedPaneWrapper.TabWrapper) {
+      ((TabbedPaneWrapper.TabWrapper)selectedComponent).requestDefaultFocus();
     }
     else {
       super.requestDefaultFocus();

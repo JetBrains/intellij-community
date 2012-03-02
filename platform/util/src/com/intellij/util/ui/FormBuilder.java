@@ -100,16 +100,19 @@ public class FormBuilder {
       c.weightx = 1.0;
       c.fill = GridBagConstraints.NONE;
       c.anchor = GridBagConstraints.WEST;
-      c.insets = new Insets(verticalInset, 0, this.indent, 0);
+      c.insets = new Insets(verticalInset, this.indent, this.indent, 0);
 
       if (label != null) panel.add(label, c);
 
       c.gridx = 0;
       c.gridy = line + 1;
       c.weightx = 1.0;
-      c.fill = value instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
+
+      c.fill = getFill(value);
+      c.weighty = getWeightY(value);
+
       c.anchor = GridBagConstraints.WEST;
-      c.insets = new Insets(0, 0, 0, this.indent);
+      c.insets = new Insets(0, this.indent, 0, this.indent);
 
       panel.add(value, c);
 
@@ -134,7 +137,7 @@ public class FormBuilder {
         }
       }
       
-      c.insets = new Insets(verticalInset, 0, 0, fillLabel ? 0 : this.indent);
+      c.insets = new Insets(verticalInset, this.indent, 0, fillLabel ? 0 : this.indent);
 
       if (fillLabel) c.fill = GridBagConstraints.HORIZONTAL;
 
@@ -142,16 +145,28 @@ public class FormBuilder {
 
       c.gridx = 1;
       c.gridy = line;
-      c.fill = value instanceof JComboBox ? GridBagConstraints.NONE : GridBagConstraints.HORIZONTAL;
+      c.fill = getFill(value);
+      c.weighty = getWeightY(value);
       c.anchor = GridBagConstraints.WEST;
       c.weightx = 1;
-      c.insets = new Insets(verticalInset, 0, 0, 0);
+      c.insets = new Insets(verticalInset, this.indent, 0, this.indent);
       panel.add(value, c);
 
       line++;
     }
 
     return this;
+  }
+
+  private static int getFill(JComponent value) {
+    if (value instanceof JComboBox) return GridBagConstraints.NONE;
+    else if (value instanceof JScrollPane) return GridBagConstraints.BOTH;
+    return GridBagConstraints.HORIZONTAL;
+  }
+
+  private static int getWeightY(JComponent value) {
+    if (value instanceof JScrollPane) return 1;
+    return 0;
   }
 
   public JPanel getPanel() {

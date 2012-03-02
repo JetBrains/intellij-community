@@ -16,12 +16,14 @@
 
 package com.intellij.testFramework.vcs;
 
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -98,6 +100,10 @@ public class MockChangelistBuilder implements ChangelistBuilder {
 
   @Override
   public void reportAdditionalInfo(final String text) {
+  }
+
+  @Override
+  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
   }
 
   public void reportWarningMessage(final String message) {

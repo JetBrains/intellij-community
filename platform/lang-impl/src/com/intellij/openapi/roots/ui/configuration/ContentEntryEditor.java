@@ -372,7 +372,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
     for (final ExcludeFolder excludeFolder : contentEntry.getExcludeFolders()) {
       final String excludedPath = VfsUtil.urlToPath(excludeFolder.getUrl());
-      if (excludedPath.equals(path)) {
+      if (FileUtil.pathsEqual(excludedPath, path, true)) {
         return excludeFolder;
       }
     }
@@ -407,7 +407,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
     for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
       final String sourcePath = VfsUtil.urlToPath(sourceFolder.getUrl());
-      if (sourcePath.equals(path)) {
+      if (FileUtil.pathsEqual(sourcePath, path, true)) {
         return sourceFolder;
       }
     }

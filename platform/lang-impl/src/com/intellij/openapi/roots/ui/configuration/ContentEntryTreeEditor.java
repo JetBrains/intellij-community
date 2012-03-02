@@ -39,6 +39,8 @@ import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAc
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
@@ -141,7 +143,7 @@ public class ContentEntryTreeEditor {
     myContentEntryEditor = contentEntryEditor;
     myContentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
 
-    final String path = VirtualFileManager.extractPath(contentEntryEditor.getContentEntryUrl());
+    final String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(contentEntryEditor.getContentEntryUrl()));
     myDescriptor.setRoots(path);
 
     final Runnable init = new Runnable() {

@@ -76,7 +76,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private boolean SHOW_IGNORED_MODE = false;
 
   private final ChangesListView myView;
-  private JLabel myProgressLabel;
+  private JPanel myProgressLabel;
 
   private final Alarm myRepaintAlarm;
 
@@ -274,7 +274,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     myView.setShowFlatten(SHOW_FLATTEN_MODE);
 
-    myProgressLabel = new JLabel();
+    myProgressLabel = new JPanel(new BorderLayout());
 
     panel.setToolbar(toolbarPanel);
 
@@ -326,15 +326,30 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     return actionToolbar.getComponent();
   }
 
-  public void updateProgressText(final String text, final boolean isError) {
-    if (myProgressLabel != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myProgressLabel.setText(text);
-          myProgressLabel.setForeground(isError ? Color.red : UIUtil.getLabelForeground());
+  public void updateProgressComponent(final Factory<JComponent> progress) {
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (myProgressLabel != null) {
+          myProgressLabel.removeAll();
+          myProgressLabel.add(progress.create());
         }
-      });
-    }
+      }
+    });
+  }
+  public void updateProgressText(final String text, final boolean isError) {
+    updateProgressComponent(createTextStatusFactory(text, isError));
+  }
+
+  public static Factory<JComponent> createTextStatusFactory(final String text, final boolean isError) {
+    return new Factory<JComponent>() {
+      @Override
+      public JComponent create() {
+        JLabel label = new JLabel(text);
+        label.setForeground(isError ? Color.red : UIUtil.getLabelForeground());
+        return label;
+      }
+    };
   }
 
   @Override
@@ -456,9 +471,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       VcsException updateException = changeListManager.getUpdateException();
       if (updateException == null) {
         updateProgressText("", false);
-        final List<String> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
-        if (! additionalUpdateInfo.isEmpty()) {
-          updateProgressText(additionalUpdateInfo.get(0), true);
+        final Factory<JComponent> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
+        if (additionalUpdateInfo != null) {
+          updateProgressComponent(additionalUpdateInfo);
         }
       }
       else {

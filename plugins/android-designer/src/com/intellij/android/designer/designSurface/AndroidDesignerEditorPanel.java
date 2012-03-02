@@ -39,13 +39,10 @@ import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
 import com.intellij.designer.utils.Position;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -76,15 +73,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
-
-    myActionPanel.getActionGroup()
-      .add(new AnAction("Android", "Description", IconLoader.getIcon("/com/intellij/android/designer/icons/DeviceScreen.png")) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          System.out.println("Action: " + e);
-        }
-      });
-    myActionPanel.update();
 
     myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override

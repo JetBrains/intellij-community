@@ -51,7 +51,7 @@ public class LayoutDeviceConfigurationsDialog extends DialogWrapper {
   private final Project myProject;
   private DefaultMutableTreeNode myCustomCategoryRoot;
 
-  protected LayoutDeviceConfigurationsDialog(@NotNull Project project,
+  public LayoutDeviceConfigurationsDialog(@NotNull Project project,
                                              @Nullable LayoutDeviceConfiguration selectedConfig,
                                              @NotNull LayoutDeviceManager layoutDeviceManager) {
     super(project, true);

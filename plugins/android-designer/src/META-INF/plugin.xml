@@ -13,6 +13,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider implementation="com.intellij.android.designer.AndroidDesignerEditorProvider"/>
 
+    <projectService serviceInterface="com.intellij.android.designer.profile.ProfileList"
+                    serviceImplementation="com.intellij.android.designer.profile.ProfileList"/>
+
     <projectService serviceInterface="com.intellij.android.designer.model.ViewsMetaManager"
                     serviceImplementation="com.intellij.android.designer.model.ViewsMetaManager"/>
 

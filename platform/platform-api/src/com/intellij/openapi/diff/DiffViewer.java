@@ -29,5 +29,5 @@ public interface DiffViewer {
 
   int getContentsNumber();
 
-  DiffViewerType getType();
+  boolean acceptsType(DiffViewerType type);
 }

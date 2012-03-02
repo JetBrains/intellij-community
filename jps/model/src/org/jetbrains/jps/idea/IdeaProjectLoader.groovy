@@ -523,10 +523,9 @@ public class IdeaProjectLoader {
 
         rootsProviderLoader.each {AdditionalRootsProviderService service ->
           def sourceRoots = service.getAdditionalSourceRoots(currentModule)
-          def testSourceRoots = service.getAdditionalTestSourceRoots(currentModule)
           currentModule.sourceRoots.addAll(sourceRoots)
-          currentModule.testRoots.addAll(testSourceRoots)
-          if (!sourceRoots.isEmpty() || !testSourceRoots.isEmpty()) {
+          currentModule.generatedSourceRoots.addAll(sourceRoots)
+          if (!sourceRoots.isEmpty()) {
             srcFolderExists = true
           }
         }

@@ -80,11 +80,11 @@ public class MavenProjectsTree {
     }
   };
 
+  @Nullable
   public static MavenProjectsTree read(File file) throws IOException {
-    FileInputStream fs = new FileInputStream(file);
-    DataInputStream in = new DataInputStream(fs);
-
     MavenProjectsTree result = new MavenProjectsTree();
+
+    DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
     try {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
@@ -93,7 +93,7 @@ public class MavenProjectsTree {
         result.myIgnoredFilesPatterns = readList(in);
         result.myExplicitProfiles = readCollection(in, new Function<Integer, Set<String>>() {
           public Set<String> fun(Integer integer) {
-            return new THashSet<String>(integer);
+            return new THashSet<String>();
           }
         });
         result.myRootProjects.addAll(readProjectsRecursively(in, result));
@@ -106,7 +106,6 @@ public class MavenProjectsTree {
     }
     finally {
       in.close();
-      fs.close();
     }
     return result;
   }
@@ -155,8 +154,7 @@ public class MavenProjectsTree {
       readLock();
       try {
         file.getParentFile().mkdirs();
-        FileOutputStream fs = new FileOutputStream(file);
-        DataOutputStream out = new DataOutputStream(fs);
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         try {
           out.writeUTF(STORAGE_VERSION);
           writeCollection(out, myManagedFilesPaths);
@@ -167,7 +165,6 @@ public class MavenProjectsTree {
         }
         finally {
           out.close();
-          fs.close();
         }
       }
       finally {

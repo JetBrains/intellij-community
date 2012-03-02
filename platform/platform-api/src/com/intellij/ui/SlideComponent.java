@@ -1,0 +1,230 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.ui;
+
+import com.intellij.util.Consumer;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+* @author Alexey Pegov
+* @author Konstantin Bulenkov
+*/
+class SlideComponent extends JComponent {
+  private static final int OFFSET = 11;
+  private int myPointerValue = 0;
+  private int myValue = 0;
+  private final boolean myVertical;
+  private final String myTitle;
+
+  private CopyOnWriteArrayList<Consumer<Integer>> myListeners = new CopyOnWriteArrayList<Consumer<Integer>>();
+
+  SlideComponent(String title, boolean vertical) {
+    myTitle = title;
+    myVertical = vertical;
+
+    addMouseMotionListener(new MouseAdapter() {
+      @Override
+      public void mouseDragged(MouseEvent e) {
+        processMouse(e);
+      }
+    });
+
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        processMouse(e);
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+      }
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+      }
+    });
+
+    addMouseWheelListener(new MouseWheelListener() {
+      @Override
+      public void mouseWheelMoved(MouseWheelEvent e) {
+        final int amount = e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
+                           e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
+        int pointerValue = myPointerValue + amount;
+        pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
+        int size = myVertical ? getHeight() : getWidth();
+        pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
+
+        myPointerValue = pointerValue;
+        myValue = pointerValueToValue(myPointerValue);
+        updateBalloonText();
+
+        repaint();
+        fireValueChanged();
+      }
+    });
+
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        setValue(getValue());
+        fireValueChanged();
+        repaint();
+      }
+    });
+  }
+
+  private void updateBalloonText() {
+    setToolTipText(myTitle + ": " + myValue);
+  }
+
+  private void processMouse(MouseEvent e) {
+    int pointerValue = myVertical ? e.getY() : e.getX();
+    pointerValue = pointerValue < OFFSET ? OFFSET : pointerValue;
+    int size = myVertical ? getHeight() : getWidth();
+    pointerValue = pointerValue > (size - 12) ? size - 12 : pointerValue;
+
+    myPointerValue = pointerValue;
+
+    myValue = pointerValueToValue(myPointerValue);
+
+    repaint();
+    fireValueChanged();
+  }
+
+  public void addListener(Consumer<Integer> listener) {
+    myListeners.add(listener);
+  }
+
+  private void fireValueChanged() {
+    for (Consumer<Integer> listener : myListeners) {
+      listener.consume(myValue);
+    }
+  }
+
+  // 0 - 255
+  public void setValue(int value) {
+    myPointerValue = valueToPointerValue(value);
+    myValue = value;
+  }
+
+  public int getValue() {
+    return myValue;
+  }
+
+  private int pointerValueToValue(int pointerValue) {
+    pointerValue -= OFFSET;
+    final int size = myVertical ? getHeight() : getWidth();
+    float proportion = (size - 23) / 256f;
+    return (int)(pointerValue / proportion);
+  }
+
+  private int valueToPointerValue(int value) {
+    final int size = myVertical ? getHeight() : getWidth();
+    float proportion = (size - 23) / 256f;
+    return OFFSET + (int)(value * proportion);
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return myVertical ? new Dimension(22, 100) : new Dimension(100, 22);
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    return myVertical ? new Dimension(22, 50) : new Dimension(50, 22);
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    final Graphics2D g2d = (Graphics2D)g;
+
+    if (myVertical) {
+      g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, 0f, getHeight(), Color.BLACK));
+      g.fillRect(7, 10, 12, getHeight() - 20);
+
+      g.setColor(Gray._150);
+      g.drawRect(7, 10, 12, getHeight() - 20);
+
+      g.setColor(Gray._250);
+      g.drawRect(8, 11, 10, getHeight() - 22);
+    }
+    else {
+      g2d.setPaint(new GradientPaint(0f, 0f, Color.WHITE, getWidth(), 0f, Color.BLACK));
+      g.fillRect(10, 7, getWidth() - 20, 12);
+
+      g.setColor(Gray._150);
+      g.drawRect(10, 7, getWidth() - 20, 12);
+
+      g.setColor(Gray._250);
+      g.drawRect(11, 8, getWidth() - 22, 10);
+
+
+    }
+
+    drawKnob(g2d, myVertical ? 7 : myPointerValue, myVertical ? myPointerValue : 7, myVertical);
+  }
+
+  private static void drawKnob(Graphics2D g2d, int x, int y, boolean vertical) {
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+    if (vertical) {
+      y -= 6;
+
+      Polygon arrowShadow = new Polygon();
+      arrowShadow.addPoint(x - 5, y + 1);
+      arrowShadow.addPoint(x + 7, y + 7);
+      arrowShadow.addPoint(x - 5, y + 13);
+
+      g2d.setColor(new Color(0, 0, 0, 70));
+      g2d.fill(arrowShadow);
+
+      Polygon arrowHead = new Polygon();
+      arrowHead.addPoint(x - 6, y);
+      arrowHead.addPoint(x + 6, y + 6);
+      arrowHead.addPoint(x - 6, y + 12);
+
+      g2d.setColor(new Color(153, 51, 0));
+      g2d.fill(arrowHead);
+    }
+    else {
+      x -= 6;
+
+      Polygon arrowShadow = new Polygon();
+      arrowShadow.addPoint(x + 1, y - 5);
+      arrowShadow.addPoint(x + 13, y - 5);
+      arrowShadow.addPoint(x + 7, y + 7);
+
+      g2d.setColor(new Color(0, 0, 0, 70));
+      g2d.fill(arrowShadow);
+
+      Polygon arrowHead = new Polygon();
+      arrowHead.addPoint(x, y - 6);
+      arrowHead.addPoint(x + 12, y - 6);
+      arrowHead.addPoint(x + 6, y + 6);
+
+      g2d.setColor(new Color(153, 51, 0));
+      g2d.fill(arrowHead);
+    }
+  }
+}

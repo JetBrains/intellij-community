@@ -269,7 +269,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public static boolean isTooLarge(@NotNull VirtualFile vFile) {
     if (!checkFileSizeLimit(vFile)) return false;
-    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.MAX_INTELLISENSE_FILESIZE);
+    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.getMaxIntellisenseFileSize());
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
@@ -281,7 +281,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public static boolean isTooLarge(@NotNull VirtualFile vFile, final long contentSize) {
     if (!checkFileSizeLimit(vFile)) return false;
-    return contentSize > PersistentFSConstants.MAX_INTELLISENSE_FILESIZE;
+    return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
   private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
