@@ -366,7 +366,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         else if (f2 instanceof DisplayPrioritySortable) {
           return -1;
         }
-        return f1.getPanelDisplayName().compareTo(f2.getPanelDisplayName());
+        return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
       }
     });
     result.addAll(extensions);
