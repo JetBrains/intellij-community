@@ -10,8 +10,8 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
-import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -22,10 +22,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -280,52 +277,16 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
     public boolean startInWriteAction() {
       return true;
     }
-
-    @NotNull
-    public AndroidLintQuickFix getQuickFix() {
-      return myQuickFix;
-    }
   }
 
-  private static class MyEditInspectionToolsSettingsAction implements IntentionAction, Iconable {
-    private final EditInspectionToolsSettingsAction myEditInspectionToolsSettingsAction;
-    private final AndroidLintInspectionBase myInspection;
-
+  private static class MyEditInspectionToolsSettingsAction extends CustomEditInspectionToolsSettingsAction {
     private MyEditInspectionToolsSettingsAction(@NotNull HighlightDisplayKey key, @NotNull final AndroidLintInspectionBase inspection) {
-      myEditInspectionToolsSettingsAction = new EditInspectionToolsSettingsAction(key);
-      myInspection = inspection;
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return "Edit '" + myInspection.getDisplayName() + "' inspection settings";
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return myEditInspectionToolsSettingsAction.getFamilyName();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myEditInspectionToolsSettingsAction.invoke(project, editor, file);
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return myEditInspectionToolsSettingsAction.startInWriteAction();
-    }
-
-    @Override
-    public Icon getIcon(@IconFlags int flags) {
-      return myEditInspectionToolsSettingsAction.getIcon(flags);
+      super(key, new Computable<String>() {
+        @Override
+        public String compute() {
+          return "Edit '" + inspection.getDisplayName() + "' inspection settings";
+        }
+      });
     }
   }
 }
