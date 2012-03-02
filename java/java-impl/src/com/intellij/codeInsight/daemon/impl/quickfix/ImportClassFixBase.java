@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,7 +200,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
 
     if (doShow && canImportHere) {
       String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
-      if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
         HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(),
                                                                       myRef.getTextRange().getEndOffset(), action);
       }
