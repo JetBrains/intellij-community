@@ -126,6 +126,10 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testClassNameFromVarNameChained() {  // PY-5629
+    doTest();
+  }
+
   public void testPropertyType() {
     doTest();
   }
