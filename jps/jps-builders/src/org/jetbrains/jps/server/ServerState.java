@@ -313,7 +313,7 @@ class ServerState {
           lib.setClasspath(library.getPaths());
         }
         else {
-          LOG.info("Failed to load global library " + lib.getName());
+          LOG.info("Failed to load global library " + library.getName());
         }
       }
     }

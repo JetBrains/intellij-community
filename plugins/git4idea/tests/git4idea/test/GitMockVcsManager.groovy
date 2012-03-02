@@ -34,6 +34,10 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
 
   Collection<String> myRoots = []
 
+  void addRoots(String... roots) {
+    roots.each { myRoots << it }
+  }
+
   @Override
   VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
     myRoots.collect { new GitMockVirtualFile(it) }

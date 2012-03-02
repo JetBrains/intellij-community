@@ -16,20 +16,18 @@
 package git4idea.roots
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.test.GitMockVirtualFile
+import git4idea.test.GitGTestUtil
 import org.junit.Before
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
-import git4idea.test.GitGTestUtil
 
 /**
  * @author Kirill Likhodedov
  */
-class GitRootDetectorTest {
+class GitRootDetectorTest extends AbstractGitRootTest {
 
   Project myProject
 
@@ -126,7 +124,7 @@ class GitRootDetectorTest {
    * @param map
    */
   private void doTest(Map map) {
-    initProject(map.gits, map.project)
+    myProject = initProject(map.gits, map.project)
     testInfo empty: map.expected.empty,
              full : map.full,
              roots: map.expected,
@@ -142,65 +140,6 @@ class GitRootDetectorTest {
            expected: roots.toList(),
            full:     true,
            below:    false
-  }
-
-  /**
-   * Creates the necessary temporary directories in the filesystem with empty ".git" directories for given roots.
-   * And creates an instance of the project.
-   * @param gitRoots path to actual .git roots, relative to the project dir.
-   */
-  private void initProject(Collection<String> gitRoots, Collection<String> projectStructure) {
-    String projectDir = createDirs(gitRoots)
-    myProject = [
-      getBaseDir: { new GitMockVirtualFile(projectDir) }
-    ] as Project
-    createProjectStructure(projectStructure);
-  }
-
-  void createProjectStructure(Collection<String> paths) {
-    paths.each { String path ->
-      File file = new File(myProject.baseDir.path + "/" + path)
-      file.mkdir()
-    }
-  }
-
-  /**
-   * @return path to the project
-   */
-  private static String createDirs(Collection<String> gitRoots) {
-    if (gitRoots.empty) {
-      return FileUtil.createTempDirectory("grdt", null);
-    }
-
-    File baseDir = createBaseTempDir()
-    int maxDepth = findMaxDepthAboveProject(gitRoots)
-    File projectDir = createChild(baseDir, maxDepth)
-    gitRoots.each { String path ->
-      File file = new File(projectDir.path + "/" + path)
-      file.mkdirs()
-      file.deleteOnExit()
-
-      File gitDir = new File(file, ".git")
-      gitDir.mkdir()
-      gitDir.deleteOnExit()
-    }
-    return projectDir.path
-  }
-
-  private static File createBaseTempDir() {
-    FileUtil.createTempDirectory("pref", null)
-  }
-
-  private static File createChild(File base, int depth) {
-    File dir = base
-    depth.times { dir = FileUtil.createTempDirectory(dir, "grdt", null)}
-    dir
-  }
-
-  // Assuming that there are no ".." inside the path - only in the beginning
-  static int findMaxDepthAboveProject(Collection<String> paths) {
-    def len = { String path -> path.split("/").count("..") }
-    len(paths.max(len))
   }
 
   void testInfo(Map expected) {

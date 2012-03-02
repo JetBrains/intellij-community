@@ -39,6 +39,6 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
 
   @Override
   protected void doActionPerformed(@NotNull final Project project, @NotNull final String linkedProjectPath) {
-    GradleUtil.refreshProject(project); 
+    GradleUtil.refreshProject(project);
   }
 }
