@@ -41,63 +41,63 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   }
 
   @Test
-  void "No roots => no errors"() {
+  void "No roots, then no errors"() {
     doTest git:    [],
            roots:  [],
            errors: []
   }
   
   @Test
-  void "Same 1 root in both => no errors"() {
+  void "Same 1 root in both, then no errors"() {
     doTest git:    ["."],
            roots:  ["."],
            errors: []
   }
   
   @Test
-  void "Same 2 roots in both => no errors"() {
+  void "Same 2 roots in both, then no errors"() {
     doTest git:    ["..", "community"],
            roots:  ["..", "community"],
            errors: []
   }
   
   @Test
-  void "One git, no VCS roots => error"() {
+  void "One git, no VCS roots, then error"() {
     doTest git:    ["."],
            roots:  [],
            errors: [unreg : ["."]]
   }
   
   @Test
-  void "One VCS root, no gits => error"() {
+  void "One VCS root, no gits, then error"() {
     doTest git:    [],
            roots:  ["."],
            errors: [extra: ["."]]
   }
 
   @Test
-  void "One root, but different => 2 errors"() {
+  void "One root, but different, then 2 errors"() {
     doTest git:    ["."],
            roots:  ["community"],
            errors: [unreg: ["."], extra: ["community"]]
   }
 
   @Test
-  void "Two roots, one matching, one different => 2 errors"() {
+  void "Two roots, one matching, one different, then 2 errors"() {
     doTest git:    [".", "community"],
            roots:  [".", "contrib"],
            errors: [unreg: ["community"], extra: ["contrib"]]
   }
 
   @Test
-  void "Two roots in git, one matching in VCS => error"() {
+  void "Two roots in git, one matching in VCS, then error"() {
     doTest git:    [".", "community"],
            roots:  ["."],
            errors: [unreg: ["community"]]
   }
 
   @Test
-  void "Two roots, both not matching => 4 errors"() {
+  void "Two roots, both not matching, then 4 errors"() {
     doTest git:    ["..", "community"],
            roots:  [".", "contrib"],
            errors: [unreg: ["..", "community"], extra: [".", "contrib"]]
