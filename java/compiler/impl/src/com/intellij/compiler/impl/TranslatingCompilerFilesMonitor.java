@@ -63,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Eugene Zhuravlev
@@ -83,7 +84,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public static boolean ourDebugMode = false;
   @NonNls
   private static final String PATHS_TO_DELETE_FILENAME = "paths_to_delete.dat";
-  private static final String SUSPENDED_PROJECTS_FILENAME = "suspended.dat";
   private static final String OUTPUT_ROOTS_FILENAME = "output_roots.dat";
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
@@ -95,7 +95,45 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
-  private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
+  private PersistentStringEnumerator myProjectIdTable;
+  
+  //private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
+  private final SLRUCache<Integer, Outputs> myOutputsToDelete = new SLRUCache<Integer, Outputs>(3, 3) {
+    @Override
+    public Outputs getIfCached(Integer key) {
+      final Outputs value = super.getIfCached(key);
+      if (value != null) {
+        value.allocate();
+      }
+      return value;
+    }
+
+    @NotNull
+    @Override
+    public Outputs get(Integer key) {
+      final Outputs value = super.get(key);
+      value.allocate();
+      return value;
+    }
+
+    @NotNull
+    @Override
+    public Outputs createValue(Integer key) {
+      try {
+        final String dirName = myProjectIdTable.valueOf(key);
+        final File storeFile = new File(CompilerPaths.getCacheStoreDirectory(dirName), PATHS_TO_DELETE_FILENAME);
+        return new Outputs(storeFile, loadPathsToDelete(storeFile));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    protected void onDropFromCache(Integer key, Outputs value) {
+      value.release();
+    }
+  };
   private final SLRUCache<Project, File> myGeneratedDataPaths = new SLRUCache<Project, File>(8, 8) {
     @NotNull
     public File createValue(final Project project) {
@@ -264,14 +302,15 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
       // it is important that files to delete are collected after the files to compile (see what happens if forceCompile == true)
       if (!isRebuild) {
-        final Map<String, SourceUrlClassNamePair> outputsToDelete = myOutputsToDelete.get(projectId);
-        if (outputsToDelete != null) {
+        final Outputs outputs = myOutputsToDelete.get(projectId);
+        try {
           final VirtualFileManager vfm = VirtualFileManager.getInstance();
           final LocalFileSystem lfs = LocalFileSystem.getInstance();
           final List<String> zombieEntries = new ArrayList<String>();
           final Map<String, VirtualFile> srcFileCache = getFileCache(context);
-          for (String outputPath : outputsToDelete.keySet()) {
-            final SourceUrlClassNamePair classNamePair = outputsToDelete.get(outputPath);
+          for (Map.Entry<String, SourceUrlClassNamePair> entry : outputs.getEntries()) {
+            final String outputPath = entry.getKey();
+            final SourceUrlClassNamePair classNamePair = entry.getValue();
             final String sourceUrl = classNamePair.getSourceUrl();
 
             final VirtualFile srcFile;
@@ -327,8 +366,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
             }
           }
           for (String path : zombieEntries) {
-            unmarkOutputPathForDeletion(path);
+            unmarkOutputPathForDeletion(projectId, path);
           }
+        }
+        finally {
+          outputs.release();
         }
       }
     }
@@ -465,72 +507,45 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public void initComponent() {
-    loadSuspendedProjects();
-    loadPathsToDelete();
+    final File tableFile = getIdTableFile();
+    try {
+      FileUtil.createIfDoesntExist(tableFile);
+      myProjectIdTable = new PersistentStringEnumerator(tableFile);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      deleteIdTaleFiles(tableFile);
+    }
     ensureOutputStorageInitialized();
   }
 
-  private void loadSuspendedProjects() {
-    final File file = new File(CompilerPaths.getCompilerSystemDirectory(), SUSPENDED_PROJECTS_FILENAME);
-    try {
-      final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-      try {
-        final int projectsCount = is.readInt();
-        synchronized (myDataLock) {
-          for (int idx = 0; idx < projectsCount; idx++) {
-            mySuspendedProjects.add(is.readInt());
-          }
+  private static File getIdTableFile() {
+    return new File(CompilerPaths.getCompilerSystemDirectory(), "id_table");
+  }
+
+  private static void deleteIdTaleFiles(File tableFile) {
+    final File[] files = tableFile.getParentFile().listFiles();
+    if (files != null) {
+      final String name = tableFile.getName();
+      for (File file : files) {
+        if (file.getName().startsWith(name)) {
+          FileUtil.delete(file);
         }
       }
-      finally {
-        is.close();
-      }
-    }
-    catch (FileNotFoundException ignored) {
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      FileUtil.delete(file);
     }
   }
 
-  private void loadPathsToDelete() {
-    final File file = new File(CompilerPaths.getCompilerSystemDirectory(), PATHS_TO_DELETE_FILENAME);
+  private static Map<String, SourceUrlClassNamePair> loadPathsToDelete(final File file) {
+    final Map<String, SourceUrlClassNamePair> map = new HashMap<String, SourceUrlClassNamePair>();
     try {
       final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
       try {
-        final int projectsCount = is.readInt();
-        synchronized (myDataLock) {
-          for (int idx = 0; idx < projectsCount; idx++) {
-            final int projectId = is.readInt();
-            final int size = is.readInt();
-            if (size > 0) {
-              final Map<String, SourceUrlClassNamePair> map;
-              if (mySuspendedProjects.contains(projectId)) {
-                map = null;
-              }
-              else {
-                map = new HashMap<String, SourceUrlClassNamePair>();
-                myOutputsToDelete.put(projectId, map);
-              }
-              for (int i = 0; i < size; i++) {
-                final String _outputPath = CompilerIOUtil.readString(is);
-                final String srcUrl = CompilerIOUtil.readString(is);
-                final String className = CompilerIOUtil.readString(is);
-                if (map == null) {
-                  continue;
-                }
-                if (LOG.isDebugEnabled() || ourDebugMode) {
-                  final String message = "INIT path to delete: " + FileUtil.toSystemIndependentName(_outputPath);
-                  LOG.debug(message);
-                  if (ourDebugMode) {
-                    System.out.println(message);
-                  }
-                }
-                map.put(FileUtil.toSystemIndependentName(_outputPath), new SourceUrlClassNamePair(srcUrl, className));
-              }
-            }
-          }
+        final int size = is.readInt();
+        for (int i = 0; i < size; i++) {
+          final String _outputPath = CompilerIOUtil.readString(is);
+          final String srcUrl = CompilerIOUtil.readString(is);
+          final String className = CompilerIOUtil.readString(is);
+          map.put(FileUtil.toSystemIndependentName(_outputPath), new SourceUrlClassNamePair(srcUrl, className));
         }
       }
       finally {
@@ -541,11 +556,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     catch (IOException e) {
       LOG.info(e);
-      synchronized (myDataLock) {
-        myOutputsToDelete.clear();
-      }
-      FileUtil.delete(file);
     }
+    return map;
   }
 
   private void ensureOutputStorageInitialized() {
@@ -568,7 +580,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private static TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(ProjectRef projRef) {
+  private TIntObjectHashMap<Pair<Integer, Integer>> buildOutputRootsLayout(ProjectRef projRef) {
     final TIntObjectHashMap<Pair<Integer, Integer>> map = new TIntObjectHashMap<Pair<Integer, Integer>>();
     for (Module module : ModuleManager.getInstance(projRef.get()).getModules()) {
       final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
@@ -610,72 +622,35 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public void disposeComponent() {
-    saveSuspendedProjects();
-    savePathsToDelete();
-  }
-
-  private void saveSuspendedProjects() {
-    final File file = new File(CompilerPaths.getCompilerSystemDirectory(), SUSPENDED_PROJECTS_FILENAME);
     try {
-      FileUtil.createParentDirs(file);
-      final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-      try {
-        synchronized (myDataLock) {
-          os.writeInt(mySuspendedProjects.size());
-          for (int projectId : mySuspendedProjects.toArray()) {
-            os.writeInt(projectId);
-          }
-        }
-      }
-      finally {
-        os.close();
-      }
+      myProjectIdTable.close();
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
+      deleteIdTaleFiles(getIdTableFile());
     }
   }
 
-  private void savePathsToDelete() {
-    final File file = new File(CompilerPaths.getCompilerSystemDirectory(), PATHS_TO_DELETE_FILENAME);
+  private static void savePathsToDelete(final File file, final Map<String, SourceUrlClassNamePair> outputs) {
     try {
       FileUtil.createParentDirs(file);
       final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
       try {
-        synchronized (myDataLock) {
-          mySuspendedProjects.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int projectId) {
-              myOutputsToDelete.remove(projectId);
-              return true;
-            }
-          });
-          final int[] keys = myOutputsToDelete.keys();
-          os.writeInt(keys.length);
-          for (int projectId : keys) {
-            final Map<String, SourceUrlClassNamePair> projectOutputs = myOutputsToDelete.get(projectId);
-            os.writeInt(projectId);
-            if (projectOutputs != null) {
-              os.writeInt(projectOutputs.size());
-              for (Map.Entry<String, SourceUrlClassNamePair> entry : projectOutputs.entrySet()) {
-                CompilerIOUtil.writeString(entry.getKey(), os);
-                final SourceUrlClassNamePair pair = entry.getValue();
-                CompilerIOUtil.writeString(pair.getSourceUrl(), os);
-                CompilerIOUtil.writeString(pair.getClassName(), os);
-              }
-            }
-            else {
-              os.writeInt(0);
-            }
+        if (outputs != null) {
+          os.writeInt(outputs.size());
+          for (Map.Entry<String, SourceUrlClassNamePair> entry : outputs.entrySet()) {
+            CompilerIOUtil.writeString(entry.getKey(), os);
+            final SourceUrlClassNamePair pair = entry.getValue();
+            CompilerIOUtil.writeString(pair.getSourceUrl(), os);
+            CompilerIOUtil.writeString(pair.getClassName(), os);
           }
+        }
+        else {
+          os.writeInt(0);
         }
       }
       finally {
         os.close();
-        synchronized (myProjectOutputRoots) {
-          myProjectOutputRoots.clear();
-        }
-        myOutputRootsStorage.close();
       }
     }
     catch (IOException e) {
@@ -773,9 +748,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private static int getProjectId(Project project) {
+  private int getProjectId(Project project) {
     try {
-      return FSRecords.getNames().enumerate(project.getLocationHash());
+      return myProjectIdTable.enumerate(CompilerPaths.getCompilerSystemDirectoryName(project));
     }
     catch (IOException e) {
       LOG.info(e);
@@ -783,9 +758,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return -1;
   }
 
-  private static int getModuleId(Module module) {
+  private int getModuleId(Module module) {
     try {
-      return FSRecords.getNames().enumerate(module.getName());
+      return myProjectIdTable.enumerate(module.getName().toLowerCase(Locale.US));
     }
     catch (IOException e) {
       LOG.info(e);
@@ -1016,7 +991,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  public static List<String> getCompiledClassNames(VirtualFile srcFile, Project project) {
+  public List<String> getCompiledClassNames(VirtualFile srcFile, Project project) {
     final SourceFileInfo info = loadSourceInfo(srcFile);
     if (info == null) {
       return Collections.emptyList();
@@ -1407,6 +1382,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       myConnections.remove(project).disconnect();
       synchronized (myDataLock) {
         mySourcesToRecompile.remove(projectId);
+        myOutputsToDelete.remove(projectId);  // drop cache to save memory
       }
     }
   }
@@ -1475,9 +1451,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final Set<String> pathsToMark = new HashSet<String>();
 
       processRecursively(eventFile, true, new FileProcessor() {
+        private final TIntArrayList myAssociatedProjectIds = new TIntArrayList();
+        
         public void execute(final VirtualFile file) {
           final String filePath = file.getPath();
           pathsToMark.add(filePath);
+          myAssociatedProjectIds.clear();
           try {
             final OutputFileInfo outputInfo = loadOutputInfo(file);
             if (outputInfo != null) {
@@ -1492,6 +1471,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                       continue;
                     }
                     if (srcInfo.isAssociated(projectId, filePath)) {
+                      myAssociatedProjectIds.add(projectId);
                       if (srcWillBeDeleted) {
                         if (LOG.isDebugEnabled() || ourDebugMode) {
                           final String message = "Unschedule recompilation because of deletion " + srcFile.getPresentableUrl();
@@ -1522,6 +1502,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                   if (isSuspended(projectId)) {
                     continue;
                   }
+                  if (srcInfo.isAssociated(projectId, filePath)) {
+                    myAssociatedProjectIds.add(projectId);
+                  }
                   // mark associated outputs for deletion
                   srcInfo.processOutputPaths(projectId, deletionProc);
                   if (LOG.isDebugEnabled() || ourDebugMode) {
@@ -1539,7 +1522,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           finally {
             // it is important that update of myOutputsToDelete is done at the end
             // otherwise the filePath of the file that is about to be deleted may be re-scheduled for deletion in addSourceForRecompilation()
-            unmarkOutputPathForDeletion(filePath);
+            myAssociatedProjectIds.forEach(new TIntProcedure() {
+              public boolean execute(int projectId) {
+                unmarkOutputPathForDeletion(projectId, filePath);
+                return true;
+              }
+            });
           }
         }
       });
@@ -1715,7 +1703,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       final VirtualFile outFile = myFileSystem.findFileByPath(outputPath);
       if (outFile != null) { // not deleted yet
         if (myRootBeingDeleted != null && VfsUtil.isAncestor(myRootBeingDeleted, outFile, false)) {
-          unmarkOutputPathForDeletion(outputPath);
+          unmarkOutputPathForDeletion(projectId, outputPath);
         }
         else {
           final OutputFileInfo outputInfo = loadOutputInfo(outFile);
@@ -1730,41 +1718,40 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private void markOutputPathForDeletion(final int projectId, final String outputPath, final String classname, final String srcUrl) {
     final SourceUrlClassNamePair pair = new SourceUrlClassNamePair(srcUrl, classname);
     synchronized (myDataLock) {
-      Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
-      if (map == null) {
-        map = new HashMap<String, SourceUrlClassNamePair>();
-        myOutputsToDelete.put(projectId, map);
-      }
-      map.put(outputPath, pair);
-      if (LOG.isDebugEnabled() || ourDebugMode) {
-        final String message = "ADD path to delete: " + outputPath + "; source: " + srcUrl;
-        LOG.debug(message);
-        if (ourDebugMode) {
-          System.out.println(message);
+      final Outputs outputs = myOutputsToDelete.get(projectId);
+      try {
+        outputs.put(outputPath, pair);
+        if (LOG.isDebugEnabled() || ourDebugMode) {
+          final String message = "ADD path to delete: " + outputPath + "; source: " + srcUrl;
+          LOG.debug(message);
+          if (ourDebugMode) {
+            System.out.println(message);
+          }
         }
+      }
+      finally {
+        outputs.release();
       }
     }
   }
 
-  private void unmarkOutputPathForDeletion(String outputPath) {
+  private void unmarkOutputPathForDeletion(final int projectId, String outputPath) {
     synchronized (myDataLock) {
-      for (int projectId : myOutputsToDelete.keys()) {
-        final Map<String, SourceUrlClassNamePair> map = myOutputsToDelete.get(projectId);
-        if (map != null) {
-          final SourceUrlClassNamePair val = map.remove(outputPath);
-          if (val != null) {
-            if (LOG.isDebugEnabled() || ourDebugMode) {
-              final String message = "REMOVE path to delete: " + outputPath;
-              LOG.debug(message);
-              if (ourDebugMode) {
-                System.out.println(message);
-              }
-            }
-            if (map.isEmpty()) {
-              myOutputsToDelete.remove(projectId);
+      final Outputs outputs = myOutputsToDelete.get(projectId);
+      try {
+        final SourceUrlClassNamePair val = outputs.remove(outputPath);
+        if (val != null) {
+          if (LOG.isDebugEnabled() || ourDebugMode) {
+            final String message = "REMOVE path to delete: " + outputPath;
+            LOG.debug(message);
+            if (ourDebugMode) {
+              System.out.println(message);
             }
           }
         }
+      }
+      finally {
+        outputs.release();
       }
     }
   }
@@ -1783,6 +1770,50 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
         throw new ProjectClosedException();
       }
       return project;
+    }
+  }
+  
+  private static class Outputs {
+    private boolean myIsDirty = false;
+    private final File myStoreFile;
+    private final Map<String, SourceUrlClassNamePair> myMap;
+    private final AtomicInteger myRefCount = new AtomicInteger(1);
+    
+    Outputs(File storeFile, Map<String, SourceUrlClassNamePair> map) {
+      myStoreFile = storeFile;
+      myMap = map;
+    }
+
+    public Set<Map.Entry<String, SourceUrlClassNamePair>> getEntries() {
+      return Collections.unmodifiableSet(myMap.entrySet());
+    }
+    
+    public void put(String outputPath, SourceUrlClassNamePair pair) {
+      if (pair == null) {
+        remove(outputPath);
+      }
+      else {
+        final SourceUrlClassNamePair prev = myMap.put(outputPath, pair);
+        myIsDirty = true;
+      }
+    }
+    
+    public SourceUrlClassNamePair remove(String outputPath) {
+      final SourceUrlClassNamePair removed = myMap.remove(outputPath);
+      myIsDirty |= removed != null;
+      return removed;
+    }
+    
+    void allocate() {
+      myRefCount.incrementAndGet();
+    }
+    
+    public void release() {
+      if (myRefCount.decrementAndGet() == 0) {
+        if (myIsDirty) {
+          savePathsToDelete(myStoreFile, myMap);
+        }
+      }
     }
   }
   
