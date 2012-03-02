@@ -109,6 +109,13 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     }
   }
 
+  public void markDeleted(File file) throws IOException {
+    final RootDescriptor descriptor = getModuleAndRoot(file);
+    if (descriptor != null) {
+      myFsState.registerDeleted(descriptor.module, file, descriptor.isTestRoot, myTsStorage);
+    }
+  }
+
   public void markDirty(final ModuleChunk chunk) throws IOException {
     myFsState.clearContextRoundData();
     final Set<Module> modules = chunk.getModules();
