@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -199,13 +198,5 @@ public class VfsUtilCore {
     }
 
     return false;
-  }
-
-  @NotNull
-  public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
-    int size = files.size();
-    if (size == 0) return VirtualFile.EMPTY_ARRAY;
-    //noinspection SSBasedInspection
-    return files.toArray(new VirtualFile[size]);
   }
 }
