@@ -581,9 +581,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private static void addAutoImportFix(PyElement node, PsiReference reference, List<LocalQuickFix> actions) {
       AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference);
       if (importFix != null) {
-        // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
-        // as a quickfix but no popup balloon (PY-2312)
-        if ((isCall(node) || !importFix.hasOnlyFunctions()) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
+        if (!suppressHintForAutoImport(node, importFix) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
           final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);
           actions.add(autoImportHintAction);
         }
@@ -591,6 +589,22 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           actions.add(importFix);
         }
       }
+    }
+
+    private static boolean suppressHintForAutoImport(PyElement node, AutoImportQuickFix importFix) {
+        // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
+        // as a quickfix but no popup balloon (PY-2312)
+      if (!isCall(node) && importFix.hasOnlyFunctions()) {
+        return true;
+      }
+      // if we're in a class context and the class defines a variable with the same name, offer auto-import only as quickfix,
+      // not as popup
+      PyClass containingClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+      if (containingClass != null && (containingClass.findMethodByName(importFix.getNameToImport(), true) != null ||
+                                      containingClass.findInstanceAttribute(importFix.getNameToImport(), true) != null)) {
+        return true;
+      }
+      return false;
     }
 
     private void addCreateClassFix(String refText, PsiElement element, List<LocalQuickFix> actions) {
