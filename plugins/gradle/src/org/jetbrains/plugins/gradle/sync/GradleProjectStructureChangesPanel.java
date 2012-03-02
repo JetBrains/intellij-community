@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.sync;
 
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredSideBorder;
@@ -46,7 +47,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   private GradleProjectStructureTreeModel myTreeModel;
   private GradleProjectStructureContext   myContext;
   private Object                          myNodeUnderMouse;
-  private LightweightHint                 myToolbar;
+  private LightweightHint                 myHint;
 
   public GradleProjectStructureChangesPanel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
@@ -100,18 +101,18 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   }
 
   private void setupActionHint() {
-    final ActionManager manager = ActionManager.getInstance();
-    manager.addAnActionListener(new AnActionListener.Adapter() {
+    final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    actionManager.addAnActionListener(new AnActionListener.Adapter() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         if (event != null && GradleConstants.SYNC_TREE_FLOATING_TOOLBAR_PLACE.equals(event.getPlace())) {
-          hideFloatingToolbar();
+          hideHind();
         }
       }
     }, getProject());
     
-    final ActionGroup actionGroup = (ActionGroup)manager.getAction(GradleConstants.ACTION_GROUP_SYNC_TREE);
-    final ActionToolbar toolbar = manager.createActionToolbar(GradleConstants.SYNC_TREE_FLOATING_TOOLBAR_PLACE, actionGroup, true);
+    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(GradleConstants.ACTION_GROUP_SYNC_TREE);
+    final ActionToolbar toolbar = actionManager.createActionToolbar(GradleConstants.SYNC_TREE_FLOATING_TOOLBAR_PLACE, actionGroup, true);
     toolbar.setTargetComponent(this);
     final JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(true);
@@ -132,11 +133,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         }
         final Object node = path.getLastPathComponent();
         myNodeUnderMouse = node;
-        LightweightHint hint = myToolbar;
+        LightweightHint hint = myHint;
         if (node == activeNode && hint.isVisible()) {
           return;
         }
-        hideFloatingToolbar();
+        hideHind();
+        if (!actionManager.isActionPopupStackEmpty()) {
+          return;
+        }
         toolbar.updateActionsImmediately();
         if (!toolbar.hasVisibleActions()) {
           activeNode = null;
@@ -161,8 +165,17 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           xAdjustment = icon.getIconWidth();
         }
         lightweightHint.show(myTree, bounds.x + xAdjustment, bounds.y + bounds.height, myTree, new HintHint(e));
-        myToolbar = lightweightHint;
+        myHint = lightweightHint;
         startToolbarTracking();
+      }
+    });
+    myTree.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        // Hide hint on context menu opening.
+        if (e.isPopupTrigger()) {
+          hideHind();
+        }
       }
     });
   }
@@ -173,7 +186,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     myToolbarAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (myToolbar == null) {
+        if (myHint == null) {
           return;
         }
         final Point location = MouseInfo.getPointerInfo().getLocation();
@@ -182,14 +195,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           myToolbarAlarm.addRequest(this, delayMillis);
         }
         else {
-          hideFloatingToolbar();
+          hideHind();
         }
       }
     }, delayMillis);
   }
   
-  private void hideFloatingToolbar() {
-    final LightweightHint hint = myToolbar;
+  private void hideHind() {
+    final LightweightHint hint = myHint;
     if (hint != null && hint.isVisible()) {
       hint.hide();
       myToolbarAlarm.cancelAllRequests();
