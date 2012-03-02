@@ -32,6 +32,7 @@ import java.awt.event.ActionListener;
 public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurable {
   private JCheckBox myIgnoreGroovyMethods;
   private JPanel myPanel;
+  private JCheckBox myEnableHotSwap;
   private boolean isModified = false;
   private final GroovyDebuggerSettings mySettings;
 
@@ -39,12 +40,16 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
     mySettings = settings;
     final Boolean flag = settings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
     myIgnoreGroovyMethods.setSelected(flag == null || flag.booleanValue());
+    myIgnoreGroovyMethods.setSelected(mySettings.ENABLE_GROOVY_HOTSWAP);
 
-    myIgnoreGroovyMethods.addActionListener(new ActionListener() {
+    ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        isModified = mySettings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS.booleanValue() != myIgnoreGroovyMethods.isSelected();
+        isModified = mySettings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS.booleanValue() != myIgnoreGroovyMethods.isSelected() ||
+                     mySettings.ENABLE_GROOVY_HOTSWAP != myEnableHotSwap.isSelected();
       }
-    });
+    };
+    myIgnoreGroovyMethods.addActionListener(listener);
+    myEnableHotSwap.addActionListener(listener);
   }
 
   @Nls
@@ -80,6 +85,7 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
   public void apply() throws ConfigurationException {
     if (isModified) {
       mySettings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS = myIgnoreGroovyMethods.isSelected();
+      mySettings.ENABLE_GROOVY_HOTSWAP = myEnableHotSwap.isSelected();
     }
     isModified = false;
   }
@@ -87,6 +93,7 @@ public class GroovyDebuggerSettingsConfigurable implements SearchableConfigurabl
   public void reset() {
     final Boolean flag = mySettings.DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS;
     myIgnoreGroovyMethods.setSelected(flag == null || flag.booleanValue());
+    myEnableHotSwap.setSelected(mySettings.ENABLE_GROOVY_HOTSWAP);
   }
 
   public void disposeUIResources() {

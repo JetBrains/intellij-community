@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.debugger.filters;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSettings> {
 
   public Boolean DEBUG_DISABLE_SPECIFIC_GROOVY_METHODS = true;
+  public boolean ENABLE_GROOVY_HOTSWAP = Registry.is("enable.groovy.hotswap");
 
   public GroovyDebuggerSettings() {
     super("groovy_debugger");

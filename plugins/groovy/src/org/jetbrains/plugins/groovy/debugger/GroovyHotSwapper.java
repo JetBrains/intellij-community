@@ -17,13 +17,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
+import org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -82,7 +82,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       return;
     }
 
-    if (!Registry.is("enable.groovy.hotswap")) {
+    if (!GroovyDebuggerSettings.getInstance().ENABLE_GROOVY_HOTSWAP) {
       return;
     }
 
