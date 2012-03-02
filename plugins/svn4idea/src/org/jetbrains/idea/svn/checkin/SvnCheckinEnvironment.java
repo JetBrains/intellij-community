@@ -42,13 +42,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
@@ -166,6 +164,40 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
                         boolean force,
                         boolean recursive,
                         List<VcsException> exception, final Set<String> feedback) {
+    final Collection<Collection<File>> collections = splitIntoWc(committables);
+    for (Collection<File> collection : collections) {
+      doCommitOneWc(collection, progress, committer, comment, force, recursive, exception, feedback);
+    }
+  }
+
+  private Collection<Collection<File>> splitIntoWc(Collection<File> committables) {
+    if (committables.size() == 1) {
+      return Collections.singletonList(committables);
+    }
+
+    final MultiMap<File, File> result = new MultiMap<File, File>();
+    for (File committable : committables) {
+      final RootUrlInfo path = mySvnVcs.getSvnFileUrlMapping().getWcRootForFilePath(committable);
+      result.putValue(path == null ? null : path.getIoFile(), committable);
+    }
+
+    if (result.size() == 1) {
+      return Collections.singletonList(committables);
+    }
+    final Collection<Collection<File>> result2 = new ArrayList<Collection<File>>();
+    for (Map.Entry<File, Collection<File>> entry : result.entrySet()) {
+      result2.add(entry.getValue());
+    }
+    return result2;
+  }
+
+  private void doCommitOneWc(Collection<File> committables,
+                          ProgressIndicator progress,
+                          SVNCommitClient committer,
+                          String comment,
+                          boolean force,
+                          boolean recursive,
+                          List<VcsException> exception, final Set<String> feedback) {
     if (committables.isEmpty()) {
       return;
     }
