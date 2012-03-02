@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,19 +55,16 @@ public class TestCaseLoader {
   private final TestClassesFilter myTestClassesFilter;
   private boolean myIsPerformanceTestsRun;
 
-  public TestCaseLoader(String classFilterName) {
-    this(classFilterName, false);
-  }
-
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public TestCaseLoader(String classFilterName, boolean isPerformanceTestsRun) {
     myIsPerformanceTestsRun = isPerformanceTestsRun;
     InputStream excludedStream = StringUtil.isEmpty(classFilterName) ? null : getClass().getClassLoader().getResourceAsStream(classFilterName);
-    String preconfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
+    String preConfiguredGroup = System.getProperty(TARGET_TEST_GROUP);
     String testGroupName;
-    if (preconfiguredGroup == null || preconfiguredGroup.trim().isEmpty()) {
+    if (preConfiguredGroup == null || preConfiguredGroup.trim().isEmpty()) {
       testGroupName = "";
     } else {
-      testGroupName = preconfiguredGroup.trim();
+      testGroupName = preConfiguredGroup.trim();
     }
     if (excludedStream != null) {
       try {
@@ -96,7 +93,7 @@ public class TestCaseLoader {
   }
 
   /*
-   * Adds <code>testCaseClass</code> to the list of classdes
+   * Adds <code>testCaseClass</code> to the list of classes
    * if the class is a test case we wish to load. Calls
    * <code>shouldLoadTestCase ()</code> to determine that.
    */
@@ -121,7 +118,7 @@ public class TestCaseLoader {
   /**
    * Determine if we should load this test case.
    */
-  private boolean shouldAddTestCase(final Class testCaseClass, boolean testForExcluded) {
+  private boolean shouldAddTestCase(final Class<?> testCaseClass, boolean testForExcluded) {
     if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
     if (testForExcluded && shouldExcludeTestClass(testCaseClass)) return false;
 
@@ -180,42 +177,46 @@ public class TestCaseLoader {
         Class candidateClass = Class.forName(className);
         addClassIfTestCase(candidateClass);
       }
-      catch (UnsatisfiedLinkError e) {
-        //ignore
-      }
       catch (ClassNotFoundException e) {
+        System.err.println("Cannot load class " + className + ": " + e.getMessage());
         e.printStackTrace();
-        System.err.println("Cannot load class: " + className + " " + e.getMessage());
-      }
-      catch (NoClassDefFoundError e) {
-        e.printStackTrace();
-        System.err.println("Cannot load class that " + className + " is dependant on");
       }
       catch (ExceptionInInitializerError e) {
+        System.err.println("Cannot initialize class " + className + ": " + e.getException().getMessage());
         e.printStackTrace();
+        System.err.println("Root cause:");
         e.getException().printStackTrace();
-        System.err.println("Cannot load class: " + className + " " + e.getException().getMessage());
+      }
+      catch (LinkageError e) {
+        System.err.println("Cannot load class " + className + ": " + e.getMessage());
+        e.printStackTrace();
       }
     }
   }
-  
-  private static final List<String> ourRanklist = getTeamCityRankList();
+
+  private static final List<String> ourRankList = getTeamCityRankList();
+
   private static List<String> getTeamCityRankList() {
-    final String filepath = System.getProperty("teamcity.tests.recentlyFailedTests.file", null);
-    if (filepath == null) {
+    final String filePath = System.getProperty("teamcity.tests.recentlyFailedTests.file", null);
+    if (filePath == null) {
       return Collections.emptyList();
     }
 
-    List<String> result = new ArrayList<String>();
     try {
-      BufferedReader reader = new BufferedReader(new FileReader(filepath));
-      do {
-        final String classname = reader.readLine();
-        if (classname == null) break;
-        result.add(classname);
+      final List<String> result = new ArrayList<String>();
+      final BufferedReader reader = new BufferedReader(new FileReader(filePath));
+      try {
+        do {
+          final String className = reader.readLine();
+          if (className == null) break;
+          result.add(className);
+        }
+        while (true);
+        return result;
       }
-      while (true);
-      return result;
+      finally {
+        reader.close();
+      }
     }
     catch (IOException e) {
       return Collections.emptyList();
@@ -225,12 +226,12 @@ public class TestCaseLoader {
   private int getRank(Class aClass) {
     final String name = aClass.getName();
     if (aClass == myFirstTestClass) return -1;
-    if (aClass == myLastTestClass) return myClassList.size() + ourRanklist.size();
-    int i = ourRanklist.indexOf(name);
+    if (aClass == myLastTestClass) return myClassList.size() + ourRankList.size();
+    int i = ourRankList.indexOf(name);
     if (i != -1) {
       return i;
     }
-    return ourRanklist.size();
+    return ourRankList.size();
   }
 
   public List<Class> getClasses() {
@@ -243,7 +244,7 @@ public class TestCaseLoader {
       result.add(myLastTestClass);
     }
 
-    if (!ourRanklist.isEmpty()) {
+    if (!ourRankList.isEmpty()) {
       Collections.sort(result, new Comparator<Class>() {
         @Override
         public int compare(final Class o1, final Class o2) {
