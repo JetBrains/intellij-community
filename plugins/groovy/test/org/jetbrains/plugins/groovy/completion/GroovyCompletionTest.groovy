@@ -191,6 +191,8 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doBasicTest();
   }
 
+  public void testWhileInstanceof() throws Throwable { doBasicTest() }
+
   public void testCompletionInParameterListInClosableBlock() throws Throwable { doBasicTest(); }
   public void testCompletionInParameterListInClosableBlock3() throws Throwable { doBasicTest(); }
 

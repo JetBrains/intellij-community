@@ -1,0 +1,1 @@
+while (foo instanceof <caret>)

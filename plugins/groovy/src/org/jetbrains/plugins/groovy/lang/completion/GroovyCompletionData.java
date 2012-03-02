@@ -517,12 +517,6 @@ public class GroovyCompletionData {
         GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling())) {
       return true;
     }
-    if (context.getParent() instanceof PsiErrorElement) {
-      PsiElement leftSibling = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
-      if (leftSibling != null && leftSibling.getLastChild() instanceof GrExpression) {
-        return true;
-      }
-    }
     if (context.getParent() instanceof GrReferenceExpression &&
         GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
         GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling())) {

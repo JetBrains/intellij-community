@@ -94,6 +94,9 @@ public class GroovyCompletionUtil {
     while (statement != null &&
            !(statement instanceof GrExpression)) {
       statement = statement.getLastChild();
+      if (statement instanceof PsiErrorElement) {
+        statement = nearestLeftSibling(statement);
+      }
     }
     return statement != null;
   }
