@@ -35,7 +35,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String SCRIPT_NAME = "SCRIPT_NAME";
   public static final String PARAMETERS = "PARAMETERS";
   public static final String MULTIPROCESS = "MULTIPROCESS";
-  private static final String REMOTE_DEBUG_RUN_CONFIGURATION = "REMOTE_DEBUG_RUN_CONFIGURATION";
   private String myScriptName;
   private String myScriptParameters;
   private boolean myMultiprocessMode;
