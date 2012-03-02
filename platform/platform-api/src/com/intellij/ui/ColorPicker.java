@@ -172,14 +172,17 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private void validateAndUpdatePreview(JTextField src) {
-    final Color color;
+    Color color;
     if (myHex.hasFocus()) {
       Color c = ColorUtil.fromHex(myHex.getText(), null);
-      color = c != null ? new Color(c.getRed(), c.getGreen(), c.getBlue(), myColorWheelPanel.myColorWheel.myOpacity) : null;
+      color = c != null ? ColorUtil.toAlpha(c, myColorWheelPanel.myColorWheel.myOpacity) : null;
     } else {
       color = gatherRGB();
     }
     if (color != null) {
+      if (myColorWheelPanel.myOpacityComponent != null) {
+        color = ColorUtil.toAlpha(color, myColorWheelPanel.myOpacityComponent.getValue());
+      }
       updatePreview(color, src == myHex);
     }
   }
@@ -348,15 +351,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       myBrightnessComponent.repaint();
 
       myColorWheel.dropImage();
-      if (myOpacityComponent != null) {
+      if (myOpacityComponent != null && source instanceof ColorPicker) {
         myOpacityComponent.setValue(color.getAlpha());
         myOpacityComponent.repaint();
+      }
 
-        myColorWheel.setColor(color, source);
-      }
-      else {
-        myColorWheel.setColor(color, source);
-      }
+      myColorWheel.setColor(color, source);
     }
   }
 
@@ -424,7 +424,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     private void setHSBValue(float h, float s, float b, int opacity) {
       Color rgb = new Color(Color.HSBtoRGB(h, s, b));
-      setColor(new Color(rgb.getRed(), rgb.getGreen(), rgb.getBlue(), opacity), this);
+      setColor(ColorUtil.toAlpha(rgb, opacity), this);
     }
 
     private void setColor(Color color, Object source) {
