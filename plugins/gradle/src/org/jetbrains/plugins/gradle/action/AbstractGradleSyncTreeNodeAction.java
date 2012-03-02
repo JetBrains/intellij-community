@@ -44,6 +44,12 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
       filterNodes(nodes);
     }
     helper.updatePresentation(nodes, e.getPresentation());
+    if (e.getPresentation().isEnabled()) {
+      final GradleTaskManager taskManager = ServiceManager.getService(GradleTaskManager.class);
+      if (taskManager != null && taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT)) {
+        e.getPresentation().setEnabled(false);
+      }
+    }
   }
 
   @Override
@@ -102,15 +108,9 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
 
     @Override
     public void updatePresentation(@Nullable Collection<GradleProjectStructureNode<?>> nodes, @NotNull Presentation presentation) {
-      boolean visible = nodes != null && !nodes.isEmpty();
-      presentation.setVisible(visible);
-
-      boolean enabled = visible;
-      if (enabled) {
-        final GradleTaskManager taskManager = ServiceManager.getService(GradleTaskManager.class);
-        enabled = taskManager == null || !taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT);
-      }
-      presentation.setEnabled(enabled);
+      boolean active = nodes != null && !nodes.isEmpty();
+      presentation.setVisible(active);
+      presentation.setEnabled(active);
     }
   }
 }
