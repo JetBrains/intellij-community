@@ -27,7 +27,6 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -367,7 +366,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       if (navigationElement != null) {
         element = navigationElement;
 
-        if (element.getContainingFile() instanceof ClsFileImpl) {
+        if (element.getContainingFile() instanceof PsiCompiledFile) {
           navigationElement = element.getNavigationElement();
           if (navigationElement != null) {
             element = navigationElement;

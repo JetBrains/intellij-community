@@ -22,7 +22,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
@@ -64,9 +64,9 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private void renewFile() {
     if (myFile == null || !myFile.isValid()) {
       myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      myCompiled = myFile instanceof PsiCompiledElement;
+      myCompiled = myFile instanceof PsiCompiledFile;
       if (myCompiled) {
-        myFile = (PsiFile)((PsiCompiledElement)myFile).getMirror();
+        myFile = ((PsiCompiledFile)myFile).getDecompiledPsiFile();
       }
       if (myFile != null && !myFile.isValid()) {
         myFile = null;

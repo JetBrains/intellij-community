@@ -99,8 +99,8 @@ public class TargetElementUtilBase {
 
     offset = adjustOffset(document, offset);
 
-    if (file instanceof PsiCompiledElement) {
-      return ((PsiCompiledElement)file).getMirror().findReferenceAt(offset);
+    if (file instanceof PsiCompiledFile) {
+      return ((PsiCompiledFile) file).getDecompiledPsiFile().findReferenceAt(offset);
     }
 
     return file.findReferenceAt(offset);

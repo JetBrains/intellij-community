@@ -26,6 +26,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -88,7 +90,9 @@ public class FoldingUpdate {
                                                                       final boolean applyDefaultState) {
 
     final FoldingMap elementsToFoldMap = new FoldingMap();
-    getFoldingsFor(file instanceof PsiCompiledElement ? (PsiFile)((PsiCompiledElement)file).getMirror() : file, document, elementsToFoldMap, quick);
+    if (!isContentSubstituted(file, project)) {
+      getFoldingsFor(file instanceof PsiCompiledFile ? ((PsiCompiledFile)file).getDecompiledPsiFile() : file, document, elementsToFoldMap, quick);
+    }
 
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFoldMap, applyDefaultState, false);
     Runnable runnable = new Runnable() {
@@ -102,6 +106,16 @@ public class FoldingUpdate {
       dependencies.addAll(descriptor.getDependencies());
     }
     return CachedValueProvider.Result.create(runnable, ArrayUtil.toObjectArray(dependencies));
+  }
+
+  private static boolean isContentSubstituted(PsiFile file, Project project) {
+    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
+    for (ContentBasedFileSubstitutor processor : processors) {
+      if (processor.isApplicable(project, file.getVirtualFile())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static final Key<Object> LAST_UPDATE_INJECTED_STAMP_KEY = Key.create("LAST_UPDATE_INJECTED_STAMP_KEY");

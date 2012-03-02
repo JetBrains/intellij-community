@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,7 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
 
     TextEditorImpl oldEditor = findSinglePsiAwareEditor(editorWithProviderComposite.getEditors());
     if (oldEditor != null) {
-      ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(project).findFile(file);
+      PsiCompiledFile clsFile = (PsiCompiledFile)PsiManager.getInstance(project).findFile(file);
       assert clsFile != null;
 
       int offset = oldEditor.getEditor().getCaretModel().getOffset();
@@ -79,7 +78,7 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
   @Nullable
   public static VirtualFile findSourceFile(Project project, VirtualFile eachFile) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(eachFile);
-    if (!(psiFile instanceof ClsFileImpl)) return null;
+    if (!(psiFile instanceof PsiCompiledFile)) return null;
 
     String fqn = getFQN(psiFile);
     if (fqn == null) return null;

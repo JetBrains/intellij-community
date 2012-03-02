@@ -124,7 +124,7 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
   public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
     PsiElement target = getElement();
 
-    if (file instanceof PsiCompiledElement) file = (PsiFile)((PsiCompiledElement)file).getMirror();
+    if (file instanceof PsiCompiledFile) file = ((PsiCompiledFile)file).getDecompiledPsiFile();
 
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);

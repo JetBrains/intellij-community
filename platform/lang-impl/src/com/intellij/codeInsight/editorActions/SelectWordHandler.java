@@ -79,8 +79,8 @@ public class SelectWordHandler extends EditorActionHandler {
   }
 
   private static void doAction(@NotNull Editor editor, @NotNull PsiFile file) {
-    if (file instanceof PsiCompiledElement) {
-      file = (PsiFile)((PsiCompiledElement)file).getMirror();
+    if (file instanceof PsiCompiledFile) {
+      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
       if (file == null) return;
     }
 
