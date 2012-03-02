@@ -522,7 +522,7 @@ class Indirect {
     assert findClassFile('Used2') == null
   }
 
-  public void testAbstractMethod() {
+  public void testClassLoadingDuringBytecodeGeneration() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', '''
 abstract class Java {
@@ -540,6 +540,24 @@ class Main {
 
     touch(used.virtualFile)
     touch(main)
+    assertEmpty make()
+  }
+
+  public void _testMakeInDependentModuleAfterChunkRebuild() {
+    def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
+    def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
+    def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
+
+    addGroovyLibrary(addDependentModule())
+
+    def dep = myFixture.addFileToProject("dependent/Dep.java", "class Dep { }")
+
+    assertEmpty make()
+
+    setFileText(used, 'class Used { String prop }')
+    touch(main)
+    setFileText(dep, 'class Dep { String prop = new Used().getProp(); }')
+
     assertEmpty make()
   }
 
