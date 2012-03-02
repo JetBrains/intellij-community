@@ -20,15 +20,11 @@ import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.tools.*;
-import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.palette.Item;
-import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -44,11 +40,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -298,6 +294,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public abstract String getPlatformTarget();
+
+  @NotNull
+  public Module getModule() {
+    return myModule;
+  }
 
   public Project getProject() {
     return myModule.getProject();
