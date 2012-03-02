@@ -36,6 +36,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -68,10 +70,24 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     assert project != null;
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiNameHelper helper = psiFacade.getNameHelper();
-    final PackageChooserDialog dialog = new PackageChooserDialog("Choose Visitor Name, Package and Parent Class", project) {
-      {
-        updateOKAction();
+    final PackageChooserDialog dialog = new PackageChooserDialog("Choose Target Package and Hierarchy Root Class", project) {
+
+      @Override
+      protected ValidationInfo doValidate() {
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        if (!helper.isQualifiedName(visitorNameRef.get())) {
+          return new ValidationInfo("Visitor class name is not valid");
+        }
+        else if (parentClassRef.isNull()) {
+          return new ValidationInfo("Hierarchy root class should be specified");
+        }
+        else if (parentClassRef.get().isAnnotationType() || parentClassRef.get().isEnum()) {
+          return new ValidationInfo("Hierarchy root class should be an interface or a class");
+        }
+        return super.doValidate();
       }
+
+
       protected JComponent createCenterPanel() {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(super.createCenterPanel(), BorderLayout.CENTER);
@@ -81,26 +97,26 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       }
 
       private JComponent createNamePanel() {
-        final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new JLabel("Visitor Name"), BorderLayout.WEST);
+        LabeledComponent<JTextField> labeledComponent = new LabeledComponent<JTextField>();
+        labeledComponent.setText("Visitor class");
         final JTextField nameField = new JTextField(visitorNameRef.get());
+        labeledComponent.setComponent(nameField);
         nameField.getDocument().addDocumentListener(new DocumentAdapter() {
           protected void textChanged(final DocumentEvent e) {
             visitorNameRef.set(nameField.getText());
-            updateOKAction();
           }
         });
-        panel.add(nameField, BorderLayout.CENTER);
-        return panel;
+        return labeledComponent;
       }
 
       private JComponent createBaseClassPanel() {
-        final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new JLabel("Hierarchy Base Class"), BorderLayout.WEST);
+        LabeledComponent<EditorTextField> labeledComponent = new LabeledComponent<EditorTextField>();
+        labeledComponent.setText("Hierarchy root class");
         final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
         final PsiTypeCodeFragment codeFragment = factory.createTypeCodeFragment("", null, true, JavaCodeFragmentFactory.ALLOW_VOID);
         final Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
         final EditorTextField editorTextField = new EditorTextField(document, project, StdFileTypes.JAVA);
+        labeledComponent.setComponent(editorTextField);
         editorTextField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
           public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
             parentClassRef.set(null);
@@ -112,30 +128,10 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
             catch (PsiTypeCodeFragment.IncorrectTypeException e1) {
               // ok
             }
-            updateOKAction();
           }
         });
-        panel.add(editorTextField.getComponent(), BorderLayout.CENTER);
-        return panel;
+        return labeledComponent;
       }
-
-      private void updateOKAction() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        final String message;
-        if (!helper.isQualifiedName(visitorNameRef.get())) {
-          message = "Visitor name is not valid";
-        }
-        else if (parentClassRef.isNull()) {
-          message = "Hierarchy parent should be specified";
-        }
-        else if (parentClassRef.get().isAnnotationType() || parentClassRef.get().isEnum()) {
-          message = "Hierarchy parent should be interface or class";
-        }
-        else message = null;
-        setErrorText(message);
-        setOKActionEnabled(message == null);
-      }
-
     };
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     if (element instanceof PsiPackage) {
