@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="InspectionGadgetsPlugin" scope="TEST" />
+    <orderEntry type="module" module-name="junit" scope="TEST" />
   </component>
 </module>
 

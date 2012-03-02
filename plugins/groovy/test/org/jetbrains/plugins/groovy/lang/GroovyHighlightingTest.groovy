@@ -669,6 +669,11 @@ List<?> list2
     doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
   }
 
+  public void testGloballyUnusedInnerMethods() {
+    myFixture.addClass 'package junit.framework; public class TestCase {}'
+    doTest(new GroovyUnusedDeclarationInspection(), new UnusedDeclarationInspection())
+  }
+
   public void testAliasInParameterType() {
     myFixture.configureByText('a_.groovy', '''\
 import java.awt.event.ActionListener
