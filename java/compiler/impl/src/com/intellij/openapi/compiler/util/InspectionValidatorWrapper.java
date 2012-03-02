@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.StdLanguages;
@@ -282,7 +281,7 @@ public class InspectionValidatorWrapper implements Validator {
                                                                                  final LocalInspectionTool inspectionTool,
                                                                                  final HighlightDisplayLevel level) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
-    for (CommonProblemDescriptor descriptor : CleanupInspectionIntention.runInspectionOnFile(file, inspectionTool, null)) {
+    for (CommonProblemDescriptor descriptor : InspectionRunningUtil.runInspectionOnFile(file, inspectionTool)) {
       if (descriptor instanceof ProblemDescriptor) {
         problemsMap.put((ProblemDescriptor)descriptor, level);
       }
