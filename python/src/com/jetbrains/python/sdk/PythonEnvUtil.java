@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,8 @@ public class PythonEnvUtil {
    */
   @NotNull
   public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
-    if (source != null) {
+    if (StringUtil.isEmpty(source)) {
+      assert source != null;
       Set<String> vals = Sets.newHashSet(source.split(File.pathSeparator));
       if (!vals.contains(value)) {
         return value + File.pathSeparatorChar + source;
