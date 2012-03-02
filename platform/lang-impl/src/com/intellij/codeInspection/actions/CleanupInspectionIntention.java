@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -63,7 +64,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
-    final List<CommonProblemDescriptor> descriptions = runInspectionOnFile(file, myTool);
+    final List<CommonProblemDescriptor> descriptions = runInspectionOnFile(file, myTool, new EmptyProgressIndicator());
 
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
@@ -89,7 +90,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   }
 
   public static List<CommonProblemDescriptor> runInspectionOnFile(final PsiFile file,
-                                                                   final LocalInspectionTool inspectionTool) {
+                                                                  final LocalInspectionTool inspectionTool, ProgressIndicator progress) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(file.getProject());
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
     final LocalInspectionToolWrapper tool = new LocalInspectionToolWrapper(inspectionTool);
@@ -100,7 +101,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
         public void run() {
           tool.processFile(file, true, managerEx, true);
         }
-      }, new EmptyProgressIndicator());
+      }, progress);
       return new ArrayList<CommonProblemDescriptor>(tool.getProblemDescriptors());
     }
     finally {

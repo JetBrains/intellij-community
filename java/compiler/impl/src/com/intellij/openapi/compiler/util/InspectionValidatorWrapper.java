@@ -24,6 +24,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +42,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -192,7 +196,7 @@ public class InspectionValidatorWrapper implements Validator {
     return processedItems.toArray(new ProcessingItem[processedItems.size()]);
   }
 
-  private boolean checkFile(List<LocalInspectionTool> inspections, final PsiFile file, CompileContext context) {
+  private boolean checkFile(List<LocalInspectionTool> inspections, final PsiFile file, final CompileContext context) {
     if (!checkUnderReadAction(file, context, new Computable<Map<ProblemDescriptor, HighlightDisplayLevel>>() {
       @Override
       public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
@@ -219,7 +223,8 @@ public class InspectionValidatorWrapper implements Validator {
         @Override
         public Map<ProblemDescriptor, HighlightDisplayLevel> compute() {
           if (getHighlightDisplayLevel(inspectionTool, inspectionProfile, file) != HighlightDisplayLevel.DO_NOT_SHOW) {
-            return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file));
+            return runInspectionTool(file, inspectionTool, getHighlightDisplayLevel(inspectionTool, inspectionProfile, file),
+                                     context.getProgressIndicator());
           }
           return Collections.emptyMap();
         }
@@ -276,9 +281,10 @@ public class InspectionValidatorWrapper implements Validator {
 
   private static Map<ProblemDescriptor, HighlightDisplayLevel> runInspectionTool(final PsiFile file,
                                                                                  final LocalInspectionTool inspectionTool,
-                                                                                 final HighlightDisplayLevel level) {
+                                                                                 final HighlightDisplayLevel level,
+                                                                                 ProgressIndicator progress) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<ProblemDescriptor, HighlightDisplayLevel>();
-    for (CommonProblemDescriptor descriptor : CleanupInspectionIntention.runInspectionOnFile(file, inspectionTool)) {
+    for (CommonProblemDescriptor descriptor : CleanupInspectionIntention.runInspectionOnFile(file, inspectionTool, progress)) {
       if (descriptor instanceof ProblemDescriptor) {
         problemsMap.put((ProblemDescriptor)descriptor, level);
       }
