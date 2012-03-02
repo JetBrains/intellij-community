@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,19 +71,19 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
 
   private boolean isCompilerOutput(final String path) {
     final String compilerOutputPath = VfsUtil.urlToPath(myCompilerExtension.getCompilerOutputUrl());
-    if (compilerOutputPath.equals(path)) {
+    if (FileUtil.pathsEqual(compilerOutputPath, path, true)) {
       return true;
     }
 
     final String compilerOutputPathForTests = VfsUtil.urlToPath(myCompilerExtension.getCompilerOutputUrlForTests());
-    if (compilerOutputPathForTests.equals(path)) {
+    if (FileUtil.pathsEqual(compilerOutputPathForTests, path, true)) {
       return true;
     }
 
     if (myCompilerExtension.isCompilerOutputPathInherited()) {
       final ProjectStructureConfigurable instance = ProjectStructureConfigurable.getInstance(getModel().getModule().getProject());
       final String compilerOutput = VfsUtil.urlToPath(instance.getProjectConfig().getCompilerOutputUrl());
-      if (compilerOutput.equals(path)) {
+      if (FileUtil.pathsEqual(compilerOutput, path, true)) {
         return true;
       }
     }
@@ -92,6 +93,6 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
 
   private boolean isExplodedDirectory(final String path) {
     final String explodedUrl = getModel().getExplodedDirectoryUrl();
-    return explodedUrl != null && VfsUtil.urlToPath(explodedUrl).equals(path);
+    return explodedUrl != null && FileUtil.pathsEqual(VfsUtil.urlToPath(explodedUrl), path, true);
   }
 }

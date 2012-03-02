@@ -906,6 +906,14 @@ public class FileUtil {
   }
 
   public static boolean pathsEqual(@NotNull String path1, @NotNull String path2) {
+    return pathsEqual(path1, path2, false);
+  }
+
+  public static boolean pathsEqual(@NotNull String path1, @NotNull String path2, boolean convertSeparators) {
+    if (convertSeparators) {
+      path1 = toSystemIndependentName(path1);
+      path2 = toSystemIndependentName(path2);
+    }
     return SystemInfo.isFileSystemCaseSensitive ? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 

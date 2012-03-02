@@ -66,9 +66,9 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
   }
 
   private static String getPrefix(final ContentEntry entry, final String path) {
-    final String url = VfsUtil.pathToUrl(path);
     for (final SourceFolder sourceFolder : entry.getSourceFolders()) {
-      if (url.equals(sourceFolder.getUrl())) {
+      final String sourcePath = VfsUtil.urlToPath(sourceFolder.getUrl());
+      if (FileUtil.pathsEqual(sourcePath, path, true)) {
         return sourceFolder.getPackagePrefix();
       }
     }
@@ -86,7 +86,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
       final String sourcePath = VfsUtil.urlToPath(sourceFolder.getUrl());
-      if (sourcePath.equals(path)) {
+      if (FileUtil.pathsEqual(sourcePath, path, true)) {
         return IconSet.getSourceRootIcon(sourceFolder.isTestSource(), expanded);
       }
     }
