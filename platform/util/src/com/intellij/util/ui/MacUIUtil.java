@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import org.jetbrains.annotations.NotNull;
 
@@ -151,11 +152,11 @@ public class MacUIUtil {
   public static void paintTextFieldFocusRing(@NotNull final Graphics2D g2d, @NotNull final Rectangle bounds) {
     final Color color = getFocusRingColor();
     final Color[] colors = new Color[]{
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 180),
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 120),
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 70),
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 100),
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 50)
+      ColorUtil.toAlpha(color, 180),
+      ColorUtil.toAlpha(color, 120),
+      ColorUtil.toAlpha(color, 70),
+      ColorUtil.toAlpha(color, 100),
+      ColorUtil.toAlpha(color, 50)
     };
 
     final Object oldAntialiasingValue = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -191,10 +192,10 @@ public class MacUIUtil {
   public static void paintComboboxFocusRing(@NotNull final Graphics2D g2d, @NotNull final Rectangle bounds) {
     final Color color = getFocusRingColor();
     final Color[] colors = new Color[]{
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 180),
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 130),
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 80),
-      new Color(color.getRed(), color.getGreen(), color.getBlue(), 80)
+      ColorUtil.toAlpha(color, 180),
+      ColorUtil.toAlpha(color, 130),
+      ColorUtil.toAlpha(color, 80),
+      ColorUtil.toAlpha(color, 80)
     };
 
     final Object oldAntialiasingValue = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);

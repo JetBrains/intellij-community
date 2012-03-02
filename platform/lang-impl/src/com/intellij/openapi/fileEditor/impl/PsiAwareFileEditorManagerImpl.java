@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +69,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   public Color getFileColor(@NotNull final VirtualFile file) {
     Color color = super.getFileColor(file);
     if (myProblemSolver.isProblemFile(file)) {
-      return new Color(color.getRed(), color.getGreen(), color.getBlue(), WaverGraphicsDecorator.WAVE_ALPHA_KEY);
+      return ColorUtil.toAlpha(color, WaverGraphicsDecorator.WAVE_ALPHA_KEY);
     }
     return color;
   }

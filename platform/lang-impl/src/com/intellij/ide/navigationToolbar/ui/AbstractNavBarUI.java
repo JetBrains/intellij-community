@@ -19,9 +19,10 @@ import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.SameColor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -220,7 +221,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (!floating || !item.isLastElement()) {
       if (toolbarVisible || floating) {
         if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
-          Color hl = UIUtil.isUnderAlloyLookAndFeel() ? new Color(255, 255, 255, 200) : new SameColor(205);
+          Color hl = UIUtil.isUnderAlloyLookAndFeel() ? new Color(255, 255, 255, 200) : Gray._205;
           drawArrow(g2, new Color(0, 0, 0, 70), hl, off, h, !selected && !floating, false);
         }
       } else {
@@ -240,12 +241,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     
     g2d.setColor(c);
     if (gradient) {
-      g2d.setPaint(new GradientPaint(0, 0, new Color(c.getRed(), c.getGreen(), c.getBlue(), 10), 0, h / 2, c));
+      g2d.setPaint(new GradientPaint(0, 0, ColorUtil.toAlpha(c, 10), 0, h / 2, c));
     }
     g2d.drawLine(0, 0, off, h / 2);
 
     if (gradient) {
-      g2d.setPaint(new GradientPaint(0, h / 2, c, 0, h, new Color(c.getRed(), c.getGreen(), c.getBlue(), 10)));
+      g2d.setPaint(new GradientPaint(0, h / 2, c, 0, h, ColorUtil.toAlpha(c, 10)));
     }
     g2d.drawLine(off, h / 2, 0, h);
 
@@ -254,13 +255,13 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       g2d.setColor(light);
       
       if (gradient) {
-        g2d.setPaint(new GradientPaint(0, 0, new Color(light.getRed(), light.getGreen(), light.getBlue(), 10), 0, h / 2, light));
+        g2d.setPaint(new GradientPaint(0, 0, ColorUtil.toAlpha(light, 10), 0, h / 2, light));
       }
       g2d.drawLine(0, 0, off, h / 2);
 
 
       if (gradient) {
-        g2d.setPaint(new GradientPaint(0, h / 2, light, 0, h, new Color(light.getRed(), light.getGreen(), light.getBlue(), 10)));
+        g2d.setPaint(new GradientPaint(0, h / 2, light, 0, h, ColorUtil.toAlpha(light, 10)));
       }
       g2d.drawLine(off, h / 2, 0, h);
     }

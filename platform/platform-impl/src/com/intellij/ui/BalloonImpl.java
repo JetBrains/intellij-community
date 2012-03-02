@@ -818,7 +818,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
 
         Color fgColor = UIManager.getColor("Label.foreground");
-        fgColor = new Color(fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue(), 140);
+        fgColor = ColorUtil.toAlpha(fgColor, 140);
         g.setColor(fgColor);
         g.fill(area);
 

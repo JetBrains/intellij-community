@@ -26,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.CaptionPanel;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -1649,8 +1650,8 @@ public class JBTabsImpl extends JComponent
         bgPreFill = bgColor;
         alpha = 255;
         paintBottomY = shapeInfo.labelTopY + shapeInfo.labelPath.deltaY(getArcSize() - 2);
-        shapeInfo.from = UIUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
-        shapeInfo.to = UIUtil.toAlpha(getActiveTabFillIn(), alpha);
+        shapeInfo.from = ColorUtil.toAlpha(UIUtil.getFocusedFillColor(), alpha);
+        shapeInfo.to = ColorUtil.toAlpha(getActiveTabFillIn(), alpha);
       }
     }
     else {
@@ -1658,20 +1659,20 @@ public class JBTabsImpl extends JComponent
       if (isPaintFocus()) {
         if (bgColor == null) {
           alpha = 150;
-          shapeInfo.from = UIUtil.toAlpha(UIUtil.getPanelBackground().brighter(), alpha);
-          shapeInfo.to = UIUtil.toAlpha(UIUtil.getPanelBackground(), alpha);
+          shapeInfo.from = ColorUtil.toAlpha(UIUtil.getPanelBackground().brighter(), alpha);
+          shapeInfo.to = ColorUtil.toAlpha(UIUtil.getPanelBackground(), alpha);
         }
         else {
           alpha = 255;
-          shapeInfo.from = UIUtil.toAlpha(bgColor, alpha);
-          shapeInfo.to = UIUtil.toAlpha(bgColor, alpha);
+          shapeInfo.from = ColorUtil.toAlpha(bgColor, alpha);
+          shapeInfo.to = ColorUtil.toAlpha(bgColor, alpha);
         }
       }
       else {
         alpha = 255;
         final Color tabColor = getActiveTabColor(null);
-        shapeInfo.from = UIUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
-        shapeInfo.to = UIUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
+        shapeInfo.from = ColorUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
+        shapeInfo.to = ColorUtil.toAlpha(tabColor == null ? Color.white : tabColor, alpha);
       }
     }
 

@@ -105,7 +105,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
             Component component = original.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (!table.isCellEditable(row, table.convertColumnIndexToModel(column))) {
               Color bg = table.getBackground().darker();
-              component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
+              component.setBackground(ColorUtil.toAlpha(bg, 230));
             }
 
             if (component instanceof SimpleColoredComponent) {

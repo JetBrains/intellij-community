@@ -39,6 +39,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
@@ -838,7 +839,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(content);
     final Color bg = UIManager.getColor("Panel.background");
     final Color borderOriginal = Color.darkGray;
-    final Color border = new Color(borderOriginal.getRed(), borderOriginal.getGreen(), borderOriginal.getBlue(), 75);
+    final Color border = ColorUtil.toAlpha(borderOriginal, 75);
     builder
       .setDialogMode(true)
       .setTitle(title)

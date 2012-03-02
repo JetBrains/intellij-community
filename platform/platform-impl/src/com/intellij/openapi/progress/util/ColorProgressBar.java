@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -163,7 +164,7 @@ public class ColorProgressBar extends JComponent {
         UIUtil.drawLine(g2, startXOffset, y_center, startXOffset + BRICK_WIDTH - 1, y_center);
 
         for (int j = 0; j < y_steps; j++) {
-          Color color = new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 255 - alpha_step * (j + 1));
+          Color color = ColorUtil.toAlpha(myColor, 255 - alpha_step * (j + 1));
           g2.setPaint(color);
           UIUtil.drawLine(g2, startXOffset, y_center - 1 - j, startXOffset + BRICK_WIDTH - 1, y_center - 1 - j);
 
@@ -172,7 +173,7 @@ public class ColorProgressBar extends JComponent {
           }
         }
         g2.setColor(
-          new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 255 - alpha_step * (y_steps / 2 + 1)));
+          ColorUtil.toAlpha(myColor, 255 - alpha_step * (y_steps / 2 + 1)));
         g2.drawRect(startXOffset, y_center - y_steps, BRICK_WIDTH - 1, size.height - 7);
       }
 
@@ -181,7 +182,7 @@ public class ColorProgressBar extends JComponent {
         g2.setPaint(myColor);
         UIUtil.drawLine(g2, x_offset, y_center, x_offset + BRICK_WIDTH - 1, y_center);
         for (int j = 0; j < y_steps; j++) {
-          Color color = new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 255 - alpha_step * (j + 1));
+          Color color = ColorUtil.toAlpha(myColor, 255 - alpha_step * (j + 1));
           g2.setPaint(color);
           UIUtil.drawLine(g2, x_offset, y_center - 1 - j, x_offset + BRICK_WIDTH - 1, y_center - 1 - j);
           if (!(y_center % 2 != 0 && j == y_steps - 1)) {
@@ -189,7 +190,7 @@ public class ColorProgressBar extends JComponent {
           }
         }
         g2.setColor(
-          new Color(myColor.getRed(), myColor.getGreen(), myColor.getBlue(), 255 - alpha_step * (y_steps / 2 + 1)));
+          ColorUtil.toAlpha(myColor, 255 - alpha_step * (y_steps / 2 + 1)));
         g2.drawRect(x_offset, y_center - y_steps, BRICK_WIDTH - 1, size.height - 7);
         x_offset += BRICK_WIDTH + BRICK_SPACE;
       }
