@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.IntentionWrapper;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -297,9 +298,16 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     else if (a instanceof LowPriorityAction) {
       return group - 3;
     }
-    else {
-      return group;
+    else if (a instanceof QuickFixWrapper) {
+      final LocalQuickFix quickFix = ((QuickFixWrapper)a).getFix();
+      if (quickFix instanceof HighPriorityAction) {
+        return group + 3;
+      }
+      if (quickFix instanceof LowPriorityAction) {
+        return group - 3;
+      }
     }
+    return group;
   }
 
   private int getGroup(IntentionActionWithTextCaching action) {
