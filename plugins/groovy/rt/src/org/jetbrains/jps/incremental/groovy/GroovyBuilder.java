@@ -46,15 +46,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    ExitCode exitCode = ExitCode.OK;
     try {
       final List<File> toCompile = collectChangedFiles(context, chunk);
       if (toCompile.isEmpty()) {
-        return exitCode;
+        return ExitCode.OK;
       }
 
       String moduleOutput = getModuleOutput(context, chunk);
-      String compilerOutput = getCompilerOutput(context, moduleOutput);
+      String compilerOutput = getCompilerOutput(moduleOutput);
 
       final Set<String> toCompilePaths = new LinkedHashSet<String>();
       for (File file : toCompile) {
@@ -83,40 +82,33 @@ public class GroovyBuilder extends ModuleLevelBuilder {
                               tempFile.getPath())
       );
 
-      List<GroovycOSProcessHandler.OutputItem> successfullyCompiled = Collections.emptyList();
-      try {
-        final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
-        GroovycOSProcessHandler handler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
-          public void consume(String s) {
-            context.processMessage(new ProgressMessage(s));
-          }
-        });
-
-        if (handler.shouldRetry()) {
-          if (CHUNK_REBUILD_ORDERED.get(context) != null) {
-            CHUNK_REBUILD_ORDERED.set(context, null);
-          } else {
-            CHUNK_REBUILD_ORDERED.set(context, Boolean.TRUE);
-            exitCode = ExitCode.CHUNK_REBUILD_REQUIRED;
-            return exitCode;
-          }
+      final Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(cmd));
+      GroovycOSProcessHandler handler = GroovycOSProcessHandler.runGroovyc(process, new Consumer<String>() {
+        public void consume(String s) {
+          context.processMessage(new ProgressMessage(s));
         }
+      });
 
-        successfullyCompiled = handler.getSuccessfullyCompiled();
-
-        for (CompilerMessage message : handler.getCompilerMessages()) {
-          context.processMessage(message);
-        }
-      }
-      finally {
-        if (!myForStubs) {
-          if (updateDependencies(context, chunk, toCompile, moduleOutput, successfullyCompiled)) {
-            exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-          }
+      if (handler.shouldRetry()) {
+        if (CHUNK_REBUILD_ORDERED.get(context) != null) {
+          CHUNK_REBUILD_ORDERED.set(context, null);
+        } else {
+          CHUNK_REBUILD_ORDERED.set(context, Boolean.TRUE);
+          return ExitCode.CHUNK_REBUILD_REQUIRED;
         }
       }
 
-      return exitCode;
+      if (myForStubs) {
+        JavaBuilder.addTempSourcePathRoot(context, new File(compilerOutput));
+      }
+
+      for (CompilerMessage message : handler.getCompilerMessages()) {
+        context.processMessage(message);
+      }
+      if (!myForStubs && updateDependencies(context, chunk, toCompile, moduleOutput, handler.getSuccessfullyCompiled())) {
+        return ExitCode.ADDITIONAL_PASS_REQUIRED;
+      }
+      return ExitCode.OK;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
@@ -139,12 +131,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return moduleOutputPath.endsWith("/") ? moduleOutputPath : moduleOutputPath + "/";
   }
 
-  private String getCompilerOutput(CompileContext context, String moduleOutputDir) throws IOException {
-    final File dir = myForStubs ? FileUtil.createTempDirectory("groovyStubs", null) : new File(moduleOutputDir);
-    if (myForStubs) {
-      JavaBuilder.addTempSourcePathRoot(context, dir);
-    }
-    return FileUtil.toCanonicalPath(dir.getPath());
+  private String getCompilerOutput(String moduleOutputDir) throws IOException {
+    return FileUtil.toCanonicalPath((myForStubs ? FileUtil.createTempDirectory("groovyStubs", null) : new File(moduleOutputDir)).getPath());
   }
 
   private static List<File> collectChangedFiles(CompileContext context, ModuleChunk chunk) throws IOException {
@@ -233,6 +221,13 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
     }
     return class2Src;
+  }
+
+  @Override
+  public String toString() {
+    return "GroovyBuilder{" +
+           "myForStubs=" + myForStubs +
+           '}';
   }
 
   public String getDescription() {

@@ -274,6 +274,14 @@ public class GroovycOSProcessHandler extends BaseOSProcessHandler {
       this.outputPath = outputPath;
       sourcePath = sourceFileName;
     }
+
+    @Override
+    public String toString() {
+      return "OutputItem{" +
+             "outputPath='" + outputPath + '\'' +
+             ", sourcePath='" + sourcePath + '\'' +
+             '}';
+    }
   }
 
 }
