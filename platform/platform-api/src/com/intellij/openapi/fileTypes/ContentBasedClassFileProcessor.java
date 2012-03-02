@@ -17,7 +17,9 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Perfroms additional analyses on file with {@link com.intellij.openapi.fileTypes.StdFileTypes#CLASS} filetype (e. g. classfile,
@@ -32,4 +34,13 @@ public interface ContentBasedClassFileProcessor extends ContentBasedFileSubstitu
    */
   @NotNull
   SyntaxHighlighter createHighlighter(Project project, VirtualFile vFile);
+
+  /**
+   * Returns decompiled PSI associated with this classfile
+   *
+   * @param clsFile instance of ClsFile
+   * @return decompiled PSI file
+   */
+  @Nullable
+  PsiFile getDecompiledPsiFile(PsiFile clsFile);
 }
