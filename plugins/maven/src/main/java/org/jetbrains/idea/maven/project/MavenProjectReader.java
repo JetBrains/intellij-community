@@ -504,9 +504,9 @@ public class MavenProjectReader {
     }
   }
 
-  private Element readXml(final VirtualFile file,
-                          final Collection<MavenProjectProblem> problems,
-                          final MavenProjectProblem.ProblemType type) {
+  private static Element readXml(final VirtualFile file,
+                                 final Collection<MavenProjectProblem> problems,
+                                 final MavenProjectProblem.ProblemType type) {
     return MavenJDOMUtil.read(file, new MavenJDOMUtil.ErrorHandler() {
       public void onReadError(IOException e) {
         MavenLog.LOG.warn("Cannot read the pom file: " + e);
