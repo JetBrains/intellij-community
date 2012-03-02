@@ -23,6 +23,9 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor;
+import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -54,7 +57,7 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 
 public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub> implements PsiJavaFile, PsiFileWithStubSupport, PsiFileEx,
-                                                                                            Queryable, PsiClassOwnerEx {
+                                                                                            Queryable, PsiClassOwnerEx, PsiCompiledFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsFileImpl");
 
   /** YOU absolutely MUST NOT hold PsiLock under the MIRROR_LOCK */
@@ -314,6 +317,19 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   @Override
+  public PsiFile getDecompiledPsiFile() {
+    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
+      if (processor instanceof ContentBasedClassFileProcessor && processor.isApplicable(getProject(), getVirtualFile())) {
+        PsiFile decompiledPsiFile = ((ContentBasedClassFileProcessor)processor).getDecompiledPsiFile(this);
+        if (decompiledPsiFile != null) {
+          return decompiledPsiFile;
+        }
+      }
+    }
+    return (PsiFile) getMirror();
+  }
+
+  @Override
   public long getModificationStamp() {
     return getVirtualFile().getModificationStamp();
   }
@@ -365,7 +381,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     ClsFileImpl psiFile = null;
     if (provider != null) {
       final PsiFile psi = provider.getPsi(provider.getBaseLanguage());
-      if (psi instanceof ClsFileImpl) {
+      if (psi instanceof PsiCompiledFile) {
         psiFile = (ClsFileImpl)psi;
       }
     }
