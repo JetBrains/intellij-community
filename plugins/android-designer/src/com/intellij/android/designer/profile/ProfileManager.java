@@ -40,12 +40,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
+ * @author Eugene.Kudelevsky
  * @author Alexander Lobas
  */
 public class ProfileManager {
-  private static final LayoutDevice CUSTOM_DEVICE = new LayoutDevice("Edit...", LayoutDevice.Type.CUSTOM);
+  private static final LayoutDevice CUSTOM_DEVICE = new LayoutDevice("Edit Devices", LayoutDevice.Type.CUSTOM);
 
   private final Module myModule;
+  private final Runnable myRefreshAction;
 
   private final AbstractComboBoxAction<LayoutDevice> myDeviceAction;
   private final AbstractComboBoxAction<LayoutDeviceConfiguration> myDeviceConfigurationAction;
@@ -53,16 +55,19 @@ public class ProfileManager {
   private final AbstractComboBoxAction<LocaleData> myLocaleAction;
   private final AbstractComboBoxAction<UiMode> myDockModeAction;
   private final AbstractComboBoxAction<NightMode> myNightModeAction;
-  private final AbstractComboBoxAction<ThemeData> myThemeDataAction;
+  private final AbstractComboBoxAction<ThemeData> myThemeAction;
 
-  private LayoutDeviceManager myLayoutDeviceManager = new LayoutDeviceManager();
+  private final LayoutDeviceManager myLayoutDeviceManager;
   private List<LayoutDevice> myDevices;
-  private List<LayoutDeviceConfiguration> myDeviceConfigurations;
+  private ThemeManager myThemeManager;
 
   private Profile myProfile;
 
-  public ProfileManager(Module module) {
+  public ProfileManager(Module module, Runnable refreshAction) {
     myModule = module;
+    myRefreshAction = refreshAction;
+
+    myLayoutDeviceManager = ProfileList.getInstance(module.getProject()).getLayoutDeviceManager();
 
     myDeviceAction = new MyComboBoxAction<LayoutDevice>() {
       @Override
@@ -113,6 +118,7 @@ public class ProfileManager {
           updateDevice(item);
         }
 
+        myRefreshAction.run();
         return item != CUSTOM_DEVICE;
       }
     };
@@ -130,6 +136,7 @@ public class ProfileManager {
       protected boolean selectionChanged(IAndroidTarget item) {
         updateTarget(item);
         updateThemes();
+        myRefreshAction.run();
         return true;
       }
     };
@@ -138,6 +145,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(LocaleData item) {
         updateLocale(item);
+        myRefreshAction.run();
         return true;
       }
     };
@@ -145,7 +153,8 @@ public class ProfileManager {
     myDockModeAction = new MyComboBoxAction<UiMode>() {
       @Override
       protected boolean selectionChanged(UiMode item) {
-        updateDockMode(item);
+        myProfile.setDockMode(item.getResourceValue());
+        myRefreshAction.run();
         return true;
       }
     };
@@ -154,21 +163,48 @@ public class ProfileManager {
     myNightModeAction = new MyComboBoxAction<NightMode>() {
       @Override
       protected boolean selectionChanged(NightMode item) {
-        updateNightMode(item);
+        myProfile.setNightMode(item.getResourceValue());
+        myRefreshAction.run();
         return true;
       }
     };
     myNightModeAction.setItems(Arrays.asList(NightMode.values()), null);
 
-    myThemeDataAction = new MyComboBoxAction<ThemeData>() {
+    myThemeAction = new AbstractComboBoxAction<ThemeData>() {
       @Override
       protected boolean addSeparator(DefaultActionGroup actionGroup, ThemeData item) {
-        return super.addSeparator(actionGroup, item);    //To change body of overridden methods use File | Settings | File Templates.
+        if (item == ThemeManager.FRAMEWORK || item == ThemeManager.PROJECT) {
+          actionGroup.addSeparator(item.getName());
+          return true;
+        }
+        return false;
+      }
+
+      @Override
+      protected void update(ThemeData theme, Presentation presentation, boolean popup) {
+        presentation.setEnabled(theme != null);
+
+        if (theme != null) {
+          if (popup) {
+            presentation.setText("      " + theme.getName());
+          }
+          else if (!theme.isProjectTheme() && myThemeManager.getAddedThemes().contains(new ThemeData(theme.getName(), true))) {
+            presentation.setText(theme.getName() + " (framework)");
+          }
+          else {
+            presentation.setText(theme.getName());
+          }
+        }
+        else {
+          presentation.setText("[None]");
+        }
       }
 
       @Override
       protected boolean selectionChanged(ThemeData item) {
-        return false;  // TODO: Auto-generated method stub
+        updateTheme(item);
+        myRefreshAction.run();
+        return true;
       }
     };
   }
@@ -192,6 +228,68 @@ public class ProfileManager {
       updatePlatform(platform);
       updateThemes();
     }
+  }
+
+  public Module getModule() {
+    return myModule;
+  }
+
+  @Nullable
+  public LayoutDeviceConfiguration getSelectedDeviceConfiguration() {
+    return myDeviceConfigurationAction.getSelection();
+  }
+
+  @Nullable
+  public IAndroidTarget getSelectedTarget() {
+    return myTargetAction.getSelection();
+  }
+
+  @Nullable
+  public UiMode getSelectedDockMode() {
+    return myDockModeAction.getSelection();
+  }
+
+  @Nullable
+  public NightMode getSelectedNightMode() {
+    return myNightModeAction.getSelection();
+  }
+
+  @Nullable
+  public LocaleData getSelectedLocale() {
+    return myLocaleAction.getSelection();
+  }
+
+  @Nullable
+  public ThemeData getSelectedTheme() {
+    return myThemeAction.getSelection();
+  }
+
+  public AbstractComboBoxAction<LayoutDevice> getDeviceAction() {
+    return myDeviceAction;
+  }
+
+  public AbstractComboBoxAction<LayoutDeviceConfiguration> getDeviceConfigurationAction() {
+    return myDeviceConfigurationAction;
+  }
+
+  public AbstractComboBoxAction<IAndroidTarget> getTargetAction() {
+    return myTargetAction;
+  }
+
+  public AbstractComboBoxAction<LocaleData> getLocaleAction() {
+    return myLocaleAction;
+  }
+
+  public AbstractComboBoxAction<UiMode> getDockModeAction() {
+    return myDockModeAction;
+  }
+
+  public AbstractComboBoxAction<NightMode> getNightModeAction() {
+    return myNightModeAction;
+  }
+
+  public AbstractComboBoxAction<ThemeData> getThemeAction() {
+    return myThemeAction;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -320,7 +418,12 @@ public class ProfileManager {
       }
     }
     if (newDevice == null && !myDevices.isEmpty()) {
-      newDevice = myDevices.get(0);
+      for (LayoutDevice device : myDevices) {
+        if (device != CUSTOM_DEVICE) {
+          newDevice = device;
+          break;
+        }
+      }
     }
     myDeviceAction.setItems(myDevices, newDevice);
     updateDevice(newDevice, myProfile.getDeviceConfiguration());
@@ -372,11 +475,11 @@ public class ProfileManager {
   private void updateDevice(@Nullable LayoutDevice device, @Nullable String configurationName) {
     myProfile.setDevice(device == null ? null : device.getName());
 
-    List<LayoutDeviceConfiguration> configurations = Collections.emptyList();
+    List<LayoutDeviceConfiguration> configurations =
+      device == null ? Collections.<LayoutDeviceConfiguration>emptyList() : device.getConfigurations();
     LayoutDeviceConfiguration newConfiguration = null;
 
-    if (device != null && configurationName != null) {
-      configurations = device.getConfigurations();
+    if (configurationName != null) {
       for (LayoutDeviceConfiguration configuration : configurations) {
         if (configurationName.equals(configuration.getName())) {
           newConfiguration = configuration;
@@ -405,16 +508,41 @@ public class ProfileManager {
     myProfile.setLocaleRegion(locale == null ? null : locale.getRegion());
   }
 
-  private void updateDockMode(UiMode mode) {
-    myProfile.setDockMode(mode.getResourceValue());
-  }
-
-  private void updateNightMode(NightMode mode) {
-    myProfile.setNightMode(mode.getResourceValue());
-  }
-
   private void updateThemes() {
-    // TODO: Auto-generated method stub
+    myThemeManager = new ThemeManager(this);
+    myThemeManager.loadThemes(new Runnable() {
+      @Override
+      public void run() {
+        List<ThemeData> themes = myThemeManager.getThemes();
+
+        ThemeData newTheme = null;
+        String themeName = myProfile.getTheme();
+        if (themeName != null) {
+          for (ThemeData theme : themes) {
+            if (themeName.equals(theme.getName())) {
+              newTheme = theme;
+              break;
+            }
+          }
+        }
+        if (newTheme == null && !themes.isEmpty()) {
+          for (ThemeData theme : themes) {
+            if (theme != ThemeManager.FRAMEWORK && theme != ThemeManager.PROJECT) {
+              newTheme = theme;
+              break;
+            }
+          }
+        }
+
+        myThemeAction.setItems(themes, newTheme);
+        updateTheme(newTheme);
+        myRefreshAction.run();
+      }
+    });
+  }
+
+  private void updateTheme(@Nullable ThemeData theme) {
+    myProfile.setTheme(theme == null ? null : theme.getName());
   }
 
   @Nullable
@@ -431,9 +559,11 @@ public class ProfileManager {
 
   private static abstract class MyComboBoxAction<T> extends AbstractComboBoxAction<T> {
     @Override
-    protected void update(T item, Presentation presentation) {
+    protected void update(T item, Presentation presentation, boolean popup) {
+      presentation.setEnabled(item != null);
+
       if (item == null) {
-        presentation.setText("<html><font color='red'>[None]</font></html>");
+        presentation.setText("[None]");
       }
       else if (item instanceof LayoutDevice) {
         LayoutDevice device = (LayoutDevice)item;
@@ -457,11 +587,6 @@ public class ProfileManager {
       else if (item instanceof NightMode) {
         NightMode mode = (NightMode)item;
         presentation.setText(mode.getLongDisplayValue());
-      }
-      else if (item instanceof ThemeData) {
-        // TODO
-        ThemeData theme = (ThemeData)item;
-        presentation.setText(theme.getName());
       }
     }
   }

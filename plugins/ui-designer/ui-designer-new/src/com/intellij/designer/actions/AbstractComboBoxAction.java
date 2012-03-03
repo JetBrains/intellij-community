@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,8 +55,12 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
     myPresentation = presentation;
-    update(mySelection, presentation);
-    return super.createCustomComponent(presentation);
+    update(mySelection, presentation, false);
+
+    JPanel panel = new JPanel(new GridBagLayout());
+    panel.add(createComboBoxButton(presentation),
+              new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 1, 2, 1), 0, 0));
+    return panel;
   }
 
   @NotNull
@@ -71,13 +76,13 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
       AnAction action = new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          if (selectionChanged(item)) {
+          if (mySelection != item && selectionChanged(item)) {
             mySelection = item;
-            AbstractComboBoxAction.this.update(item, myPresentation);
+            AbstractComboBoxAction.this.update(item, myPresentation, false);
           }
         }
       };
-      update(item, action.getTemplatePresentation());
+      update(item, action.getTemplatePresentation(), true);
       actionGroup.add(action);
     }
 
@@ -88,7 +93,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
     return false;
   }
 
-  protected abstract void update(T item, Presentation presentation);
+  protected abstract void update(T item, Presentation presentation, boolean popup);
 
   protected abstract boolean selectionChanged(T item);
 }

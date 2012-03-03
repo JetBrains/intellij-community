@@ -24,6 +24,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.android.uipreview.LayoutDeviceManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,10 @@ import java.util.List;
 @State(name = "AndroidDesignerProfile", storages = {@Storage(file = "$WORKSPACE_FILE$")})
 public class ProfileList implements PersistentStateComponent<ProfileList> {
   private List<Profile> myProfiles = new ArrayList<Profile>();
+  private Profile myFullProfile = new Profile();
   private String mySelection = "";
+  @Transient
+  private final LayoutDeviceManager myLayoutDeviceManager = new LayoutDeviceManager();
 
   public static ProfileList getInstance(Project project) {
     return ServiceManager.getService(project, ProfileList.class);
@@ -58,6 +63,20 @@ public class ProfileList implements PersistentStateComponent<ProfileList> {
     mySelection = selection;
   }
 
+  public Profile getFullProfile() {
+    return myFullProfile;
+  }
+
+  public void setFullProfile(Profile fullProfile) {
+    myFullProfile = fullProfile;
+  }
+
+  @Transient
+  public LayoutDeviceManager getLayoutDeviceManager() {
+    return myLayoutDeviceManager;
+  }
+
+  @Nullable
   @Transient
   public Profile getProfile() {
     for (Profile profile : myProfiles) {
@@ -65,26 +84,19 @@ public class ProfileList implements PersistentStateComponent<ProfileList> {
         return profile;
       }
     }
-
-    Profile profile = new Profile();
-    mySelection = profile.getName();
-    myProfiles.add(profile);
-
-    return profile;
-  }
-
-  @Transient
-  public void setProfile(Profile profile) {
-    mySelection = profile.getName();
+    return myFullProfile;
   }
 
   @Override
   public ProfileList getState() {
+    System.out.println("Save state: " + System.currentTimeMillis());
     return this;
   }
 
   @Override
   public void loadState(ProfileList state) {
+    // TODO: notify event to manager's
+    System.out.println("Load state: " + state.getSelection() + " | " + state.getProfiles());
     XmlSerializerUtil.copyBean(state, this);
   }
 }

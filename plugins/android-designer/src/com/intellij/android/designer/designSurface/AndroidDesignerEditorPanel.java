@@ -22,6 +22,7 @@ import com.android.ide.common.resources.configuration.*;
 import com.android.resources.NightMode;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
+import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.ViewsMetaManager;
@@ -69,10 +70,19 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final TreeComponentDecorator myTreeDecorator = new AndroidTreeDecorator();
   private final XmlFile myXmlFile;
   private final ExternalPSIChangeListener myPSIChangeListener;
+  private final ProfileAction myProfileAction;
   private volatile RenderSession mySession;
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
+
+    myProfileAction = new ProfileAction(this, new Runnable() {
+      @Override
+      public void run() {
+        myActionPanel.update();
+        // TODO: Auto-generated method stub
+      }
+    });
 
     myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
