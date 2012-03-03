@@ -49,8 +49,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -75,7 +73,6 @@ public class ActivateTaskDialog extends DialogWrapper {
   private final Project myProject;
   private Task mySelectedTask;
   private boolean myVcsEnabled;
-  private boolean myMarkAsInProgress;
   private AsyncProcessIcon myUpdateIcon;
   private JLabel myUpdateLabel;
 
@@ -113,14 +110,15 @@ public class ActivateTaskDialog extends DialogWrapper {
 
     myVcsEnabled = manager.isVcsEnabled();
 
-    myMarkAsInProgress = manager.getState().markAsInProgress;
-    myMarkAsInProgressBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        if (isMarkAsInProgressApplicable()) {
-          myMarkAsInProgress = myMarkAsInProgressBox.isSelected();
-        }
+    myMarkAsInProgressBox.setSelected(manager.getState().markAsInProgress);
+    myMarkAsInProgressBox.setVisible(false);
+    for (TaskRepository repository : manager.getAllRepositories()) {
+      if (repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
+        myMarkAsInProgressBox.setVisible(true);
+        break;
       }
-    });
+    }
+
     taskChanged();
 
     init();
@@ -162,14 +160,6 @@ public class ActivateTaskDialog extends DialogWrapper {
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
     Task task = getSelectedTask();
 
-    myMarkAsInProgressBox.setVisible(false);
-    for (TaskRepository repository : taskManager.getAllRepositories()) {
-      if (repository.getRepositoryType().getPossibleTaskStates().contains(TaskState.IN_PROGRESS)) {
-        myMarkAsInProgressBox.setVisible(true);
-        break;
-      }
-    }
-
     if (myMarkAsInProgressBox.isVisible()) {
       myMarkAsInProgressBox.setEnabled(false);
       if (task != null) {
@@ -179,7 +169,6 @@ public class ActivateTaskDialog extends DialogWrapper {
         }
       }
     }
-    myMarkAsInProgressBox.setSelected(myMarkAsInProgress);
 
     // refresh change lists
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -247,9 +236,7 @@ public class ActivateTaskDialog extends DialogWrapper {
         mySelectedTask = manager.createLocalTask(taskName);
       }
     }
-    if (isMarkAsInProgressApplicable()) {
-      manager.getState().markAsInProgress = myMarkAsInProgress;
-    }
+    manager.getState().markAsInProgress = myMarkAsInProgressBox.isSelected();
     super.doOKAction();
   }
 
@@ -267,11 +254,7 @@ public class ActivateTaskDialog extends DialogWrapper {
   }
 
   boolean isMarkAsInProgress() {
-    return isMarkAsInProgressApplicable() && myMarkAsInProgressBox.isEnabled();
-  }
-
-  private boolean isMarkAsInProgressApplicable() {
-    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible();
+    return myMarkAsInProgressBox.isSelected() && myMarkAsInProgressBox.isVisible() && myMarkAsInProgressBox.isEnabled();
   }
 
   @NonNls
