@@ -188,7 +188,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   public void testIdHighlighting1() throws Throwable {
     VirtualFile virtualFile = copyFileToProject("idh.xml", "res/layout-large/idh.xml");
     myFixture.configureFromExistingVirtualFile(virtualFile);
-    myFixture.checkHighlighting(false, false, false);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   public void testIdReferenceCompletion() throws Throwable {
@@ -363,13 +363,13 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   public void testXsdFile1() throws Throwable {
     final VirtualFile virtualFile = copyFileToProject("XsdFile.xsd", "res/raw/XsdFile.xsd");
     myFixture.configureFromExistingVirtualFile(virtualFile);
-    myFixture.checkHighlighting(false, false, false);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   public void testXsdFile2() throws Throwable {
     final VirtualFile virtualFile = copyFileToProject("XsdFile.xsd", "res/assets/XsdFile.xsd");
     myFixture.configureFromExistingVirtualFile(virtualFile);
-    myFixture.checkHighlighting(false, false, false);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   private void copyOnClickClasses() throws IOException {

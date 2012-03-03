@@ -26,6 +26,8 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomFileDescription;
+import com.intellij.xml.XmlAttributeDescriptor;
+import org.jetbrains.android.dom.AndroidAnyAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
@@ -116,9 +118,10 @@ public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
     public void visitXmlAttribute(XmlAttribute attribute) {
       if (!"xmlns".equals(attribute.getNamespacePrefix())) {
         String namespace = attribute.getNamespace();
-        if (SdkConstants.NS_RESOURCES.equals(namespace) || "".equals(namespace)) {
-          AttributeDefinition attributeDefinition = AndroidDomUtil.getAttributeDefinition(myFacet, attribute);
-          if (attributeDefinition == null) {
+        if (SdkConstants.NS_RESOURCES.equals(namespace) || namespace.isEmpty()) {
+
+          final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+          if (descriptor instanceof AndroidAnyAttributeDescriptor) {
             final ASTNode node = attribute.getNode();
             assert node != null;
             ASTNode nameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);

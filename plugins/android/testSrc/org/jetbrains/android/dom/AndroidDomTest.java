@@ -6,6 +6,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.inspections.AndroidDomInspection;
+import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ abstract class AndroidDomTest extends AndroidTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.copyFileToProject("dom/R.java", "gen/p1/p2/R.java");
-    myFixture.enableInspections(AndroidDomInspection.class/*, AndroidUnknownAttributeInspection.class*/);
+    myFixture.enableInspections(AndroidDomInspection.class, AndroidUnknownAttributeInspection.class);
   }
 
   @Override
@@ -59,7 +60,7 @@ abstract class AndroidDomTest extends AndroidTestCase {
   protected void doTestHighlighting(String file) throws Throwable {
     VirtualFile virtualFile = copyFileToProject(file);
     myFixture.configureFromExistingVirtualFile(virtualFile);
-    myFixture.checkHighlighting(false, false, false);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   protected void doTestCompletion() throws Throwable {

@@ -35,13 +35,13 @@ import org.jetbrains.annotations.Nullable;
  * Time: 7:34:33 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AndroidClassTagDescriptor implements XmlElementDescriptor {
+public class AndroidXmlTagDescriptor implements XmlElementDescriptor {
   private final XmlElementDescriptor myParentDescriptor;
-  private final PsiClass myClass;
+  private final PsiClass myDeclarationClass;
 
-  public AndroidClassTagDescriptor(@Nullable PsiClass aClass, @NotNull XmlElementDescriptor parentDescriptor) {
+  public AndroidXmlTagDescriptor(@Nullable PsiClass declarationClass, @NotNull XmlElementDescriptor parentDescriptor) {
     myParentDescriptor = parentDescriptor;
-    myClass = aClass;
+    myDeclarationClass = declarationClass;
   }
 
   public String getQualifiedName() {
@@ -49,8 +49,11 @@ public class AndroidClassTagDescriptor implements XmlElementDescriptor {
   }
 
   public String getDefaultName() {
-    String qualifiedName = myClass.getQualifiedName();
-    return qualifiedName != null ? qualifiedName : myClass.getName();
+    if (myDeclarationClass == null) {
+      return myParentDescriptor.getDefaultName();
+    }
+    String qualifiedName = myDeclarationClass.getQualifiedName();
+    return qualifiedName != null ? qualifiedName : myDeclarationClass.getName();
   }
 
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
@@ -66,11 +69,13 @@ public class AndroidClassTagDescriptor implements XmlElementDescriptor {
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, @Nullable XmlTag context) {
-    return myParentDescriptor.getAttributeDescriptor(attributeName, context);
+    final XmlAttributeDescriptor descriptor = myParentDescriptor.getAttributeDescriptor(attributeName, context);
+    return descriptor != null ? descriptor : new AndroidAnyAttributeDescriptor(attributeName);
   }
 
   public XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute) {
-    return myParentDescriptor.getAttributeDescriptor(attribute);
+    final XmlAttributeDescriptor descriptor = myParentDescriptor.getAttributeDescriptor(attribute);
+    return descriptor != null ? descriptor : new AndroidAnyAttributeDescriptor(attribute.getName());
   }
 
   public XmlNSDescriptor getNSDescriptor() {
@@ -92,7 +97,7 @@ public class AndroidClassTagDescriptor implements XmlElementDescriptor {
   }
 
   public PsiElement getDeclaration() {
-    return myClass;
+    return myDeclarationClass != null ? myDeclarationClass : myParentDescriptor.getDeclaration();
   }
 
   public String getName(PsiElement context) {

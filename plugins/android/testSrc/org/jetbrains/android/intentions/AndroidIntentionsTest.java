@@ -38,7 +38,7 @@ public class AndroidIntentionsTest extends AndroidTestCase {
 
     final VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".java", "src/p1/p2/Class.java");
     myFixture.configureFromExistingVirtualFile(file);
-    myFixture.checkHighlighting(false, false, false);
+    myFixture.checkHighlighting(true, false, false);
 
     final IntentionAction quickFix = myFixture.getAvailableIntention(quickFixName);
     if (available) {
