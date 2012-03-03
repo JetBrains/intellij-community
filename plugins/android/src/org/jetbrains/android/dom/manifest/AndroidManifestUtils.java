@@ -79,7 +79,7 @@ public class AndroidManifestUtils {
       Collections.addAll(strings, "application", "instrumentation", "permission", "permission-group", "permission-tree", "uses-permission");
     }
     else if (element instanceof Application) {
-      Collections.addAll(strings, "activity", "service", "provider", "receiver", "uses-library");
+      Collections.addAll(strings, "activity", "activity-alias", "service", "provider", "receiver", "uses-library");
     }
     else if (element instanceof Activity || element instanceof ActivityAlias || element instanceof Receiver || element instanceof Service) {
       strings.add("intent-filter");

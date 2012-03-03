@@ -153,6 +153,10 @@
                      key="android.inspections.unknown.attribute.name" groupKey="android.inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.android.inspections.AndroidUnknownAttributeInspection"/>
 
+    <localInspection language="XML" shortName="AndroidElementNotAllowed" bundle="messages.AndroidBundle"
+                     key="android.inspections.element.not.allowed.name" groupKey="android.inspections.group.name" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.jetbrains.android.inspections.AndroidElementNotAllowedInspection"/>
+
     <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle" key="android.inspections.group.name"
                          groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
                          implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>

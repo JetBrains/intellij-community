@@ -1,6 +1,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import org.jetbrains.android.inspections.AndroidElementNotAllowedInspection;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
 
 /**
@@ -79,6 +80,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
 
   public void testSoftTagsAndAttrs() throws Throwable {
     myFixture.disableInspections(new AndroidUnknownAttributeInspection());
+    myFixture.disableInspections(new AndroidElementNotAllowedInspection());
     doTestHighlighting("soft.xml");
   }
 
@@ -164,5 +166,25 @@ public class AndroidManifestDomTest extends AndroidDomTest {
 
   public void testCompletionInManifestTag() throws Throwable {
     doTestCompletion();
+  }
+
+  public void testActivityAlias() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    doTestHighlighting();
+  }
+
+  public void testActivityAlias1() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    doTestHighlighting();
+  }
+
+  public void testActivityAlias2() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    doTestHighlighting();
+  }
+
+  public void testActivityAlias3() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    doTestHighlighting();
   }
 }

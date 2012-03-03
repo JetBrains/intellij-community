@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.hash.*;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
@@ -123,11 +122,6 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
         }
       }
     }
-  }
-
-  private static boolean shouldValidateAttributes(DomElement element) {
-    //return element instanceof DrawableDomElement;
-    return false;
   }
 
   private static boolean mustBeSoft(@NotNull Converter converter, Collection<AttributeFormat> formats) {
@@ -306,6 +300,14 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       registerSubtags("reset-password", XmlResourceElement.class, registrar, registeredSubtags);
       registerSubtags("force-lock", XmlResourceElement.class, registrar, registeredSubtags);
       registerSubtags("wipe-data", XmlResourceElement.class, registrar, registeredSubtags);
+      registerSubtags("expire-password", XmlResourceElement.class, registrar, registeredSubtags);
+      registerSubtags("encrypted-storage", XmlResourceElement.class, registrar, registeredSubtags);
+      registerSubtags("disable-camera", XmlResourceElement.class, registrar, registeredSubtags);
+    }
+
+    // DevicePolicyManager API
+    if (tagName.equals("preference-headers")) {
+      registerSubtags("header", PreferenceElement.class, registrar, registeredSubtags);
     }
 
     // for preferences
@@ -556,13 +558,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     if (facet == null) return;
     XmlTag tag = element.getXmlTag();
 
-    final Set<XmlName> skippedAttributes;
-    if (!shouldValidateAttributes(element)) {
-      skippedAttributes = registerExistingAttributes(facet, tag, registrar, element);
-    }
-    else {
-      skippedAttributes = Collections.emptySet();
-    }
+    final Set<XmlName> skippedAttributes = registerExistingAttributes(facet, tag, registrar, element);
 
     String tagName = tag.getName();
     Set<String> registeredSubtags = new HashSet<String>();
@@ -593,7 +589,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     }
     Collections.addAll(registeredSubtags, AndroidDomUtil.getStaticallyDefinedSubtags(element));
 
-    if (!(element instanceof LayoutElement) &&
+    /*if (!(element instanceof LayoutElement) &&
         !(element instanceof ColorDomElement) &&
         !(element instanceof DrawableDomElement)) {
       Processor<String> existingSubtagsFilter = element instanceof XmlResourceElement ?
@@ -603,7 +599,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                   }
                                                 } : null;
       registerExistingSubtags(tag, registrar, registeredSubtags, existingSubtagsFilter);
-    }
+    }*/
   }
 
   private static void registerExtensionsForDrawable(AndroidFacet facet,

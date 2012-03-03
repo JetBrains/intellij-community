@@ -125,4 +125,13 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
     copyFileToProject("MyWidgetConfigurable.java", "src/p1/p2/MyWidgetConfigurable.java");
     doTestCompletion();
   }
+
+  public void testPreferenceHeaders() throws Throwable {
+    copyFileToProject("MyFragmentActivity.java", "src/p1/p2/MyFragmentActivity.java");
+    doTestHighlighting();
+  }
+
+  public void testPreferenceHeaders1() throws Throwable {
+    doTestCompletion();
+  }
 }

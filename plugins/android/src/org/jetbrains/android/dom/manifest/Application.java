@@ -35,6 +35,8 @@ public interface Application extends ManifestElement {
 
   List<Activity> getActivities();
 
+  List<ActivityAlias> getActivityAliass();
+
   Activity addActivity();
 
   List<Provider> getProviders();

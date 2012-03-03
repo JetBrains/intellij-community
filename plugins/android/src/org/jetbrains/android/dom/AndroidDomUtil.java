@@ -62,6 +62,7 @@ public class AndroidDomUtil {
   public static final Map<String, String> SPECIAL_RESOURCE_TYPES = new HashMap<String, String>();
   private static final PackageClassConverter ACTIVITY_CONVERTER = new PackageClassConverter(AndroidUtils.ACTIVITY_BASE_CLASS_NAME);
   private static final OnClickConverter ON_CLICK_CONVERTER = new OnClickConverter();
+  private static final FragmentClassConverter FRAGMENT_CLASS_CONVERTER = new FragmentClassConverter();
 
   static {
     addSpecialResourceType("string", "label", "description", "title");
@@ -170,6 +171,9 @@ public class AndroidDomUtil {
     if (context instanceof XmlResourceElement) {
       if ("configure".equals(localName) && "appwidget-provider".equals(tagName)) {
         return ACTIVITY_CONVERTER;
+      }
+      else if ("fragment".equals(localName)) {
+        return FRAGMENT_CLASS_CONVERTER;
       }
     }
     else if (context instanceof LayoutViewElement) {
@@ -298,7 +302,7 @@ public class AndroidDomUtil {
       return new String[]{"b", "i", "u"};
     }
     if (element instanceof PreferenceElement) {
-      return new String[]{"intent"};
+      return new String[]{"intent", "extra"};
     }
 
     return ArrayUtil.EMPTY_STRING_ARRAY;

@@ -4,5 +4,5 @@
 
     <uses-permission android:name="android.permission.READ_CONTACTS" <warning>someAttr</warning>="hello" />
 
-  <someTag/>
+  <<warning>someTag</warning>/>
 </manifest>

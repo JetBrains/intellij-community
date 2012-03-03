@@ -24,13 +24,13 @@ import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidAnyAttributeDescriptor;
-import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
-import org.jetbrains.android.dom.attrs.AttributeDefinition;
+import org.jetbrains.android.dom.AndroidXmlTagDescriptor;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
-  private volatile Set<String> mySupportedResourceTypes;
+  private static volatile Set<String> ourSupportedResourceTypes;
 
   @Nls
   @NotNull
@@ -78,26 +78,26 @@ public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
     if (isMyFile(facet, file)) {
-      MyVisitor visitor = new MyVisitor(facet, manager, isOnTheFly);
+      MyVisitor visitor = new MyVisitor(manager, isOnTheFly);
       file.accept(visitor);
       return visitor.myResult.toArray(new ProblemDescriptor[visitor.myResult.size()]);
     }
     return ProblemDescriptor.EMPTY_ARRAY;
   }
 
-  private boolean isMyFile(AndroidFacet facet, PsiFile file) {
+  static boolean isMyFile(AndroidFacet facet, PsiFile file) {
     String resourceType = facet.getLocalResourceManager().getFileResourceType(file);
     if (resourceType != null) {
-      if (mySupportedResourceTypes == null) {
-        mySupportedResourceTypes = new HashSet<String>();
+      if (ourSupportedResourceTypes == null) {
+        ourSupportedResourceTypes = new HashSet<String>();
         for (DomFileDescription description : DomFileDescription.EP_NAME.getExtensions()) {
           if (description instanceof AndroidResourceDomFileDescription) {
             String[] resourceTypes = ((AndroidResourceDomFileDescription)description).getResourceTypes();
-            Collections.addAll(mySupportedResourceTypes, resourceTypes);
+            Collections.addAll(ourSupportedResourceTypes, resourceTypes);
           }
         }
       }
-      return mySupportedResourceTypes.contains(resourceType);
+      return ourSupportedResourceTypes.contains(resourceType);
     }
     return ManifestDomFileDescription.isManifestFile((XmlFile)file);
   }
@@ -105,11 +105,9 @@ public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
   private static class MyVisitor extends XmlRecursiveElementVisitor {
     private final InspectionManager myInspectionManager;
     private final boolean myOnTheFly;
-    private final AndroidFacet myFacet;
     final List<ProblemDescriptor> myResult = new ArrayList<ProblemDescriptor>();
 
-    private MyVisitor(AndroidFacet facet, InspectionManager inspectionManager, boolean onTheFly) {
-      myFacet = facet;
+    private MyVisitor(InspectionManager inspectionManager, boolean onTheFly) {
       myInspectionManager = inspectionManager;
       myOnTheFly = onTheFly;
     }
@@ -118,10 +116,13 @@ public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
     public void visitXmlAttribute(XmlAttribute attribute) {
       if (!"xmlns".equals(attribute.getNamespacePrefix())) {
         String namespace = attribute.getNamespace();
-        if (SdkConstants.NS_RESOURCES.equals(namespace) || namespace.isEmpty()) {
 
-          final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
-          if (descriptor instanceof AndroidAnyAttributeDescriptor) {
+        if (SdkConstants.NS_RESOURCES.equals(namespace) || namespace.isEmpty()) {
+          final XmlTag tag = attribute.getParent();
+
+          if (tag != null &&
+              tag.getDescriptor() instanceof AndroidXmlTagDescriptor &&
+              attribute.getDescriptor() instanceof AndroidAnyAttributeDescriptor) {
             final ASTNode node = attribute.getNode();
             assert node != null;
             ASTNode nameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);

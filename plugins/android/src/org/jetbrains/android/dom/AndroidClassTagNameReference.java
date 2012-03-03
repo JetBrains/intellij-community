@@ -41,4 +41,9 @@ public class AndroidClassTagNameReference extends TagNameReference {
     String tagName = ArrayUtil.getFirstElement(SimpleClassMapConstructor.getInstance().getTagNamesByClass((PsiClass)element));
     return tagElement.setName(tagName != null ? tagName : "");
   }
+
+  @Override
+  public boolean isSoft() {
+    return true;
+  }
 }

@@ -17,5 +17,5 @@
           android:dashWidth="integer"
           android:dashGap="integer"
           <warning>android:aba</warning>=""/>
-  <<error>aba</error>/>
+  <<warning>aba</warning>/>
 </shape>

@@ -27,4 +27,6 @@ import java.util.List;
  */
 public interface PreferenceElement extends XmlResourceElement {
   List<Intent> getIntents();
+
+  List<Extra> getExtras();
 }

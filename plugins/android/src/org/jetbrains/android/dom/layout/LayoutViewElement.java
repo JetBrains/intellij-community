@@ -41,11 +41,9 @@ public interface LayoutViewElement extends LayoutElement {
   @AndroidResourceType("style")
   GenericAttributeValue<ResourceValue> getStyle();
 
-  @Attribute("class")
-  @Convert(ViewClassConverter.class)
-  GenericAttributeValue<PsiClass> getViewClass();
-
   List<Include> getIncludes();
 
   List<Fragment> getFragments();
+
+  List<View> getViews();
 }

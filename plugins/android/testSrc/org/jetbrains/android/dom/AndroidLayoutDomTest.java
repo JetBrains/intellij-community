@@ -207,6 +207,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion("viewclass.xml", "viewclass_after.xml");
   }
 
+  public void testViewElementHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testPrimitiveValues() throws Throwable {
     doTestHighlighting("primValues.xml");
   }

@@ -6,6 +6,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.inspections.AndroidDomInspection;
+import org.jetbrains.android.inspections.AndroidElementNotAllowedInspection;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
 
 import java.io.IOException;
@@ -28,7 +29,9 @@ abstract class AndroidDomTest extends AndroidTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.copyFileToProject("dom/R.java", "gen/p1/p2/R.java");
-    myFixture.enableInspections(AndroidDomInspection.class, AndroidUnknownAttributeInspection.class);
+    myFixture.enableInspections(AndroidDomInspection.class,
+                                AndroidUnknownAttributeInspection.class,
+                                AndroidElementNotAllowedInspection.class);
   }
 
   @Override

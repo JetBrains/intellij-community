@@ -61,7 +61,13 @@ public class AndroidXmlTagDescriptor implements XmlElementDescriptor {
   }
 
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
-    return myParentDescriptor.getElementDescriptor(childTag, contextTag);
+    final XmlElementDescriptor descriptor = myParentDescriptor.getElementDescriptor(childTag, contextTag);
+    if (descriptor != null) {
+      return descriptor;
+    }
+
+    final XmlNSDescriptor nsDescriptor = getNSDescriptor();
+    return nsDescriptor != null ? new AndroidAnyTagDescriptor(nsDescriptor) : null;
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {

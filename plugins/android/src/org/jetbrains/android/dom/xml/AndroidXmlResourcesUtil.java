@@ -19,11 +19,10 @@ package org.jetbrains.android.dom.xml;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.AndroidDomExtender;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,19 +32,34 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class AndroidXmlResourcesUtil {
+  @NonNls public static final String APPWIDGET_PROVIDER_TAG_NAME = "appwidget-provider";
+  @NonNls public static final String SEARCHABLE_TAG_NAME = "searchable";
+  @NonNls public static final String KEYBOARD_TAG_NAME = "Keyboard";
+  @NonNls public static final String DEVICE_ADMIN_TAG_NAME = "device-admin";
+  @NonNls public static final String ACCOUNT_AUTHENTICATOR_TAG_NAME = "account-authenticator";
+  @NonNls public static final String PREFERENCE_HEADERS_TAG_NAME = "preference-headers";
+
   public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
   public static final String PREFERENCE_CLASS_NAME = "android.preference.Preference";
+  private static final String[] ROOT_TAGS =
+    {APPWIDGET_PROVIDER_TAG_NAME, SEARCHABLE_TAG_NAME, KEYBOARD_TAG_NAME, DEVICE_ADMIN_TAG_NAME, ACCOUNT_AUTHENTICATOR_TAG_NAME,
+      PREFERENCE_HEADERS_TAG_NAME};
+
+  private static final Set<String> ROOT_TAGS_SET;
 
   static {
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("appwidget-provider", "AppWidgetProviderInfo");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("searchable", "Searchable");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("actionkey", "SearchableActionKey");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("intent", "Intent");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("Keyboard", "Keyboard");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("Row", "Keyboard_Row");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("Key", "Keyboard_Key");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("device-admin", "DeviceAdmin");
-    AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.put("account-authenticator", "AccountAuthenticator");
+    SPECIAL_STYLEABLE_NAMES.put(APPWIDGET_PROVIDER_TAG_NAME, "AppWidgetProviderInfo");
+    SPECIAL_STYLEABLE_NAMES.put(SEARCHABLE_TAG_NAME, "Searchable");
+    SPECIAL_STYLEABLE_NAMES.put("actionkey", "SearchableActionKey");
+    SPECIAL_STYLEABLE_NAMES.put("intent", "Intent");
+    SPECIAL_STYLEABLE_NAMES.put(KEYBOARD_TAG_NAME, "Keyboard");
+    SPECIAL_STYLEABLE_NAMES.put("Row", "Keyboard_Row");
+    SPECIAL_STYLEABLE_NAMES.put("Key", "Keyboard_Key");
+    SPECIAL_STYLEABLE_NAMES.put(DEVICE_ADMIN_TAG_NAME, "DeviceAdmin");
+    SPECIAL_STYLEABLE_NAMES.put(ACCOUNT_AUTHENTICATOR_TAG_NAME, "AccountAuthenticator");
+    SPECIAL_STYLEABLE_NAMES.put("header", "PreferenceHeader");
+
+    ROOT_TAGS_SET = new HashSet<String>(Arrays.asList(ROOT_TAGS));
   }
 
   private AndroidXmlResourcesUtil() {
@@ -55,8 +69,13 @@ public class AndroidXmlResourcesUtil {
   public static List<String> getPossibleRoots(@NotNull AndroidFacet facet) {
     List<String> result = new ArrayList<String>();
     result.addAll(AndroidDomExtender.getPreferencesClassMap(facet).keySet());
-    result.addAll(SPECIAL_STYLEABLE_NAMES.keySet());
-    result.add("Keyboard");
+    result.addAll(Arrays.asList(ROOT_TAGS));
+
     return result;
+  }
+
+  public static boolean isSupportedRootTag(@NotNull AndroidFacet facet, @NotNull String rootTagName) {
+    return ROOT_TAGS_SET.contains(rootTagName) ||
+           AndroidDomExtender.getPreferencesClassMap(facet).keySet().contains(rootTagName);
   }
 }
