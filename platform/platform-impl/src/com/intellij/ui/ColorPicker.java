@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
@@ -51,6 +52,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
   public static final Icon PICK = IconLoader.findIcon("/ide/pipette.png");
+  public static final Icon PICK_ROLLOVER = IconLoader.findIcon("/ide/pipette_rollover.png");
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
 
   private Color myColor;
@@ -64,6 +66,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   private RecentColorsComponent myRecentColorsComponent;
   private final ColorPipette myPicker;
+  private final JRadioButton myRGB;
+  private final JRadioButton myHSB;
 
   private ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
     this(parent, color, true, enableOpacity);
@@ -79,6 +83,14 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
     myColorWheelPanel = new ColorWheelPanel(this, enableOpacity);
+
+    myRGB = new JRadioButton("RGB", true);
+    myHSB = new JRadioButton("HSB", false);
+    final ButtonGroup group = new ButtonGroup();
+    myRGB.getModel().setGroup(group);
+    myHSB.getModel().setGroup(group);
+
+
     myPicker = new ColorPipette(this, getColor());
     myPicker.setListener(new ColorListener() {
       @Override
@@ -252,7 +264,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     final JPanel previewPanel = new JPanel(new BorderLayout());
     if (enablePipette && ColorPipette.isAvailable()) {
-      final JButton pipette = new JButton(PICK);
+      final JButton pipette = new JButton();
+      pipette.setUI(new BasicButtonUI());
+      pipette.setRolloverEnabled(true);
+      pipette.setIcon(PICK);
+      pipette.setBorder(IdeBorderFactory.createEmptyBorder(0));
+      pipette.setRolloverIcon(PICK_ROLLOVER);
       pipette.setFocusable(false);
       pipette.addActionListener(new ActionListener() {
         @Override
