@@ -213,6 +213,10 @@
 
   <applicationService serviceInterface="com.intellij.psi.search.scope.packageSet.PackageSetFactory"
                       serviceImplementation="com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl"/>
+
+  <applicationService serviceInterface="com.intellij.ui.ColorChooserService"
+                      serviceImplementation="com.intellij.ui.ColorChooserServiceImpl"/>
+
   <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
   <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
