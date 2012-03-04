@@ -175,6 +175,17 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
     myProjectManager = projectManager;
 
+    // init id table
+    final File tableFile = getIdTableFile();
+    try {
+      FileUtil.createIfDoesntExist(tableFile);
+      myProjectIdTable = new PersistentStringEnumerator(tableFile);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      deleteIdTaleFiles(tableFile);
+    }
+
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
     vfsManager.addVirtualFileListener(new MyVfsListener(), application);
   }
@@ -507,15 +518,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
 
   public void initComponent() {
-    final File tableFile = getIdTableFile();
-    try {
-      FileUtil.createIfDoesntExist(tableFile);
-      myProjectIdTable = new PersistentStringEnumerator(tableFile);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      deleteIdTaleFiles(tableFile);
-    }
     ensureOutputStorageInitialized();
   }
 
@@ -538,18 +540,20 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static Map<String, SourceUrlClassNamePair> loadPathsToDelete(final File file) {
     final Map<String, SourceUrlClassNamePair> map = new HashMap<String, SourceUrlClassNamePair>();
     try {
-      final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-      try {
-        final int size = is.readInt();
-        for (int i = 0; i < size; i++) {
-          final String _outputPath = CompilerIOUtil.readString(is);
-          final String srcUrl = CompilerIOUtil.readString(is);
-          final String className = CompilerIOUtil.readString(is);
-          map.put(FileUtil.toSystemIndependentName(_outputPath), new SourceUrlClassNamePair(srcUrl, className));
+      if (file.length() > 0) {
+        final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+        try {
+          final int size = is.readInt();
+          for (int i = 0; i < size; i++) {
+            final String _outputPath = CompilerIOUtil.readString(is);
+            final String srcUrl = CompilerIOUtil.readString(is);
+            final String className = CompilerIOUtil.readString(is);
+            map.put(FileUtil.toSystemIndependentName(_outputPath), new SourceUrlClassNamePair(srcUrl, className));
+          }
         }
-      }
-      finally {
-        is.close();
+        finally {
+          is.close();
+        }
       }
     }
     catch (FileNotFoundException ignored) {
