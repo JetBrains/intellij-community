@@ -543,7 +543,7 @@ class Main {
     assertEmpty make()
   }
 
-  public void _testMakeInDependentModuleAfterChunkRebuild() {
+  public void testMakeInDependentModuleAfterChunkRebuild() {
     def used = myFixture.addFileToProject('Used.groovy', 'class Used { }')
     def java = myFixture.addFileToProject('Java.java', 'class Java { void foo(Used used) {} }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Java {  }').virtualFile
