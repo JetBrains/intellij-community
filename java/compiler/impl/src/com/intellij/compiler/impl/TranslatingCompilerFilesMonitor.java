@@ -97,7 +97,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
   private PersistentStringEnumerator myProjectIdTable;
   
-  //private final TIntObjectHashMap<Map<String, SourceUrlClassNamePair>> myOutputsToDelete = new TIntObjectHashMap<Map<String, SourceUrlClassNamePair>>(); // Map: projectId -> Map{output path -> [sourceUrl; classname]}
+  // Map: projectId -> Map{output path -> [sourceUrl; classname]}
   private final SLRUCache<Integer, Outputs> myOutputsToDelete = new SLRUCache<Integer, Outputs>(3, 3) {
     @Override
     public Outputs getIfCached(Integer key) {
