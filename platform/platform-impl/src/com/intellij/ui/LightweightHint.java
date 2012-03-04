@@ -169,7 +169,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setExplicitClose(hintHint.isExplicitClose());
 
         myComponent.validate();
-        myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, false);
+        myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately());
       } else {
         final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
         myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);

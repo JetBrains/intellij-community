@@ -56,7 +56,7 @@ import java.util.*;
 public class CompilerConfigurationImpl extends CompilerConfiguration implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerConfiguration");
   @NonNls public static final String TESTS_EXTERNAL_COMPILER_HOME_PROPERTY_NAME = "tests.external.compiler.home";
-  public static final int DEPENDENCY_FORMAT_VERSION = 54;
+  public static final int DEPENDENCY_FORMAT_VERSION = 55;
 
   @SuppressWarnings({"WeakerAccess"}) public String DEFAULT_COMPILER;
   @NotNull private BackendCompiler myDefaultJavaCompiler;

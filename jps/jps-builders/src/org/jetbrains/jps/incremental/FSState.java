@@ -113,7 +113,7 @@ public class FSState {
         if (!excludes.isExcluded(file)) {
           if (scope.isAffected(rd.module, file)) {
             final long stamp = file.lastModified();
-            if (stamp > compilationStartStamp) {
+            if (!rd.isGeneratedSources && stamp > compilationStartStamp) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
               delta.markRecompile(rd.root, rd.isTestRoot, file);

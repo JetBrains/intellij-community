@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,12 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 /**
- * Utility wrapper around JColorChooser. Helps to avoid memory leak through JColorChooser.ColorChooserDialog.cancelButton.
- *
- * @author max
  * @author Konstantin Bulenkov
  */
-public class ColorChooser {
+public class ColorChooserServiceImpl extends ColorChooserService {
   @Nullable
-  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity) {
-    return ColorChooserService.getInstance().showDialog(parent, caption, preselectedColor, enableOpacity);
-  }
-
-  @Nullable
-  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor) {
-    return chooseColor(parent, caption, preselectedColor, false);
+  @Override
+  public Color showDialog(Component parent, String caption, Color preselectedColor, boolean enableOpacity) {
+    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity);
   }
 }

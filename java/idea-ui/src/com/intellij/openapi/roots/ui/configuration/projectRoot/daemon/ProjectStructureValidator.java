@@ -16,6 +16,14 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
+import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -46,6 +54,37 @@ public abstract class ProjectStructureValidator {
     }
     element.check(problemsHolder);
   }
+
+  public static void showDialogAndAddLibraryToDependencies(final Library library, final Project project) {
+    for (ProjectStructureValidator validator : EP_NAME.getExtensions()) {
+      if (validator.addLibraryToDependencies(library, project)) {
+        return;
+      }
+    }
+
+    final ModuleStructureConfigurable moduleStructureConfigurable = ModuleStructureConfigurable.getInstance(project);
+    final List<Module> modules = LibraryEditingUtil.getSuitableModules(moduleStructureConfigurable, ((LibraryEx)library).getType(), library);
+    if (modules.isEmpty()) return;
+    final ChooseModulesDialog
+      dlg = new ChooseModulesDialog(moduleStructureConfigurable.getProject(), modules, ProjectBundle.message("choose.modules.dialog.title"),
+                                    ProjectBundle
+                                      .message("choose.modules.dialog.description", library.getName()));
+    dlg.show();
+    if (dlg.isOK()) {
+      final List<Module> chosenModules = dlg.getChosenElements();
+      for (Module module : chosenModules) {
+        moduleStructureConfigurable.addLibraryOrderEntry(module, library);
+      }
+    }
+  }
+
+  /**
+   * @return <code>true</code> if handled
+   */
+  protected boolean addLibraryToDependencies(final Library library, final Project project) {
+    return false;
+  }
+
 
   /**
    * @return <code>true</code> if it handled this element

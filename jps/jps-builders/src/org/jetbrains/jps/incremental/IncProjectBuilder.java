@@ -401,7 +401,6 @@ public class IncProjectBuilder {
     int buildersPassed = 0;
     boolean nextPassRequired;
 
-    CHUNK_BUILD_START:
     do {
       nextPassRequired = false;
       context.beforeCompileRound(chunk);
@@ -410,6 +409,7 @@ public class IncProjectBuilder {
         syncOutputFiles(context, chunk);
       }
 
+      BUILDER_CATEGORY_LOOP:
       for (BuilderCategory category : BuilderCategory.values()) {
         final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
         if (builders.isEmpty()) {
@@ -443,7 +443,8 @@ public class IncProjectBuilder {
                 myModulesProcessed -= (buildersPassed * modulesInChunk) / stageCount;
                 stageCount = myTotalModuleLevelBuilderCount;
                 buildersPassed = 0;
-                break CHUNK_BUILD_START;
+                nextPassRequired = true;
+                break BUILDER_CATEGORY_LOOP;
               }
               catch (Exception e) {
                 throw new ProjectBuildException(e);
