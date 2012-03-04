@@ -15,7 +15,11 @@
  */
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,6 +38,8 @@ class SlideComponent extends JComponent {
   private final String myTitle;
 
   private CopyOnWriteArrayList<Consumer<Integer>> myListeners = new CopyOnWriteArrayList<Consumer<Integer>>();
+  private LightweightHint myTooltipHint;
+  private JLabel myLabel = new JLabel();
 
   SlideComponent(String title, boolean vertical) {
     myTitle = title;
@@ -54,14 +60,20 @@ class SlideComponent extends JComponent {
 
       @Override
       public void mouseEntered(MouseEvent e) {
+        updateBalloonText();
       }
 
       @Override
       public void mouseMoved(MouseEvent e) {
+        updateBalloonText();
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
+        if (myTooltipHint != null) {
+          myTooltipHint.hide();
+          myTooltipHint = null;
+        }
       }
     });
 
@@ -77,7 +89,6 @@ class SlideComponent extends JComponent {
 
         myPointerValue = pointerValue;
         myValue = pointerValueToValue(myPointerValue);
-        updateBalloonText();
 
         repaint();
         fireValueChanged();
@@ -95,7 +106,31 @@ class SlideComponent extends JComponent {
   }
 
   private void updateBalloonText() {
-    setToolTipText(myTitle + ": " + myValue);
+    final Point point = myVertical ? new Point(0, myPointerValue) : new Point(myPointerValue, 0);
+    myLabel.setText(myTitle + ": " + myValue);
+    if (myTooltipHint == null) {
+      myTooltipHint = new LightweightHint(myLabel);
+      myTooltipHint.setCancelOnClickOutside(false);
+      myTooltipHint.setCancelOnOtherWindowOpen(false);
+
+      final HintHint hint = new HintHint(this, point)
+        .setPreferredPosition(myVertical ? Balloon.Position.atLeft : Balloon.Position.above)
+        .setBorderColor(Color.BLACK)
+        .setAwtTooltip(true)
+        .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+        .setTextBg(HintUtil.INFORMATION_COLOR)
+        .setShowImmediately(true);
+
+      myTooltipHint.show(this, point.x, point.y, (JComponent)KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(), hint);
+    } else {
+      myTooltipHint.setLocation(new RelativePoint(this, point));
+    }
+  }
+
+  @Override
+  protected void processMouseMotionEvent(MouseEvent e) {
+    super.processMouseMotionEvent(e);
+    updateBalloonText();
   }
 
   private void processMouse(MouseEvent e) {
@@ -135,13 +170,13 @@ class SlideComponent extends JComponent {
   private int pointerValueToValue(int pointerValue) {
     pointerValue -= OFFSET;
     final int size = myVertical ? getHeight() : getWidth();
-    float proportion = (size - 23) / 256f;
+    float proportion = (size - 23) / 255f;
     return (int)(pointerValue / proportion);
   }
 
   private int valueToPointerValue(int value) {
     final int size = myVertical ? getHeight() : getWidth();
-    float proportion = (size - 23) / 256f;
+    float proportion = (size - 23) / 255f;
     return OFFSET + (int)(value * proportion);
   }
 
@@ -153,6 +188,11 @@ class SlideComponent extends JComponent {
   @Override
   public Dimension getMinimumSize() {
     return myVertical ? new Dimension(22, 50) : new Dimension(50, 22);
+  }
+
+  @Override
+  public final void setToolTipText(String text) {
+    //disable tooltips
   }
 
   @Override
