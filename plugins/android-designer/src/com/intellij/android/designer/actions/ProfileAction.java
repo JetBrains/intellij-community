@@ -23,6 +23,7 @@ import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.ui.DialogWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,6 @@ public class ProfileAction {
   private final AbstractComboBoxAction<Profile> myProfileAction;
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private final ProfileList myProfileList;
-  private final Profile myFullProfile;
 
   public ProfileAction(AndroidDesignerEditorPanel designer, Runnable refreshAction) {
     myDesigner = designer;
@@ -51,7 +51,7 @@ public class ProfileAction {
     myProfileAction = new AbstractComboBoxAction<Profile>() {
       @Override
       protected boolean addSeparator(DefaultActionGroup actionGroup, Profile item) {
-        if (item == myFullProfile || item == EDIT_PROFILE) {
+        if (item == EDIT_PROFILE) {
           actionGroup.addSeparator();
         }
         return false;
@@ -75,27 +75,31 @@ public class ProfileAction {
     };
 
     myProfileList = ProfileList.getInstance(myDesigner.getProject());
-    myFullProfile = myProfileList.getFullProfile();
-
-    List<Profile> profiles = new ArrayList<Profile>(myProfileList.getProfiles());
-    profiles.add(myFullProfile);
-    profiles.add(EDIT_PROFILE);
-
-    Profile profile = myProfileList.getProfile();
-
-    myProfileAction.setItems(profiles, profile);
 
     DefaultActionGroup designerActionGroup = myDesigner.getActionPanel().getActionGroup();
     designerActionGroup.add(myProfileAction);
     designerActionGroup.add(myActionGroup);
-    updateActions(profile);
+
+    updateActions();
   }
 
   public ProfileManager getProfileManager() {
     return myProfileManager;
   }
 
+  private void updateActions() {
+    List<Profile> profiles = new ArrayList<Profile>(myProfileList.getProfiles());
+    profiles.add(myProfileList.getFullProfile());
+    profiles.add(EDIT_PROFILE);
+
+    Profile profile = myProfileList.getProfile();
+    myProfileAction.setItems(profiles, profile);
+    updateActions(profile);
+  }
+
   private void updateActions(Profile profile) {
+    // TODO: send event to manager's
+
     myProfileManager.setProfile(profile);
     myProfileList.setSelection(profile.getName());
     myActionGroup.removeAll();
@@ -126,7 +130,14 @@ public class ProfileAction {
   }
 
   private void editProfiles() {
-    ProfileDialog dialog = new ProfileDialog(myDesigner.getModule());
+    ProfileDialog dialog = new ProfileDialog(myDesigner.getModule(), myProfileList.getProfiles());
     dialog.show();
+
+    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+      // TODO: send event to manager's
+
+      myProfileList.setProfiles(dialog.getResult());
+      updateActions();
+    }
   }
 }

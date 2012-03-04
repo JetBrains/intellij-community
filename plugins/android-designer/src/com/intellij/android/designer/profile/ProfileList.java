@@ -89,14 +89,13 @@ public class ProfileList implements PersistentStateComponent<ProfileList> {
 
   @Override
   public ProfileList getState() {
-    System.out.println("Save state: " + System.currentTimeMillis());
     return this;
   }
 
   @Override
   public void loadState(ProfileList state) {
-    // TODO: notify event to manager's
-    System.out.println("Load state: " + state.getSelection() + " | " + state.getProfiles());
+    // TODO: send event to manager's
+
     XmlSerializerUtil.copyBean(state, this);
   }
 }

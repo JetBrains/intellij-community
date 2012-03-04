@@ -22,7 +22,9 @@ import com.intellij.util.xmlb.annotations.Tag;
  */
 @Tag("profile")
 public class Profile {
-  private String myName = "[Full]";
+  public static final String FULL = "[Full]";
+
+  protected String myName = FULL;
 
   private boolean myShowDevice = true;
   private boolean myShowDeviceConfiguration = true;
@@ -32,14 +34,14 @@ public class Profile {
   private boolean myShowNightMode = true;
   private boolean myShowTheme = true;
 
-  private String myDevice;
-  private String myDeviceConfiguration;
-  private String myTargetHashString;
-  private String myLocaleLanguage;
-  private String myLocaleRegion;
-  private String myDockMode;
-  private String myNightMode;
-  private String myTheme;
+  protected String myDevice;
+  protected String myDeviceConfiguration;
+  protected String myTargetHashString;
+  protected String myLocaleLanguage;
+  protected String myLocaleRegion;
+  protected String myDockMode;
+  protected String myNightMode;
+  protected String myTheme;
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //

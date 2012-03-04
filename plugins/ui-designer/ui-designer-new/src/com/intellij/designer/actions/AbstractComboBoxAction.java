@@ -52,15 +52,24 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
     }
   }
 
+  public void clearSelection() {
+    mySelection = null;
+    update();
+  }
+
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
     myPresentation = presentation;
-    update(mySelection, presentation, false);
+    update();
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(createComboBoxButton(presentation),
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 1, 2, 1), 0, 0));
     return panel;
+  }
+
+  public void update() {
+    update(mySelection, myPresentation, false);
   }
 
   @NotNull

@@ -22,6 +22,8 @@ import com.android.resources.NightMode;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.designer.actions.AbstractComboBoxAction;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
@@ -121,6 +123,11 @@ public class ProfileManager {
         myRefreshAction.run();
         return item != CUSTOM_DEVICE;
       }
+
+      @Override
+      protected int getMaxRows() {
+        return 20;
+      }
     };
 
     myDeviceConfigurationAction = new MyComboBoxAction<LayoutDeviceConfiguration>() {
@@ -158,7 +165,6 @@ public class ProfileManager {
         return true;
       }
     };
-    myDockModeAction.setItems(Arrays.asList(UiMode.values()), null);
 
     myNightModeAction = new MyComboBoxAction<NightMode>() {
       @Override
@@ -168,12 +174,17 @@ public class ProfileManager {
         return true;
       }
     };
-    myNightModeAction.setItems(Arrays.asList(NightMode.values()), null);
 
     myThemeAction = new AbstractComboBoxAction<ThemeData>() {
       @Override
       protected boolean addSeparator(DefaultActionGroup actionGroup, ThemeData item) {
         if (item == ThemeManager.FRAMEWORK || item == ThemeManager.PROJECT) {
+          // TODO: ???????
+          actionGroup.add(new AnAction("") {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+            }
+          });
           actionGroup.addSeparator(item.getName());
           return true;
         }
@@ -185,10 +196,7 @@ public class ProfileManager {
         presentation.setEnabled(theme != null);
 
         if (theme != null) {
-          if (popup) {
-            presentation.setText("      " + theme.getName());
-          }
-          else if (!theme.isProjectTheme() && myThemeManager.getAddedThemes().contains(new ThemeData(theme.getName(), true))) {
+          if (!theme.isProjectTheme() && myThemeManager.getAddedThemes().contains(new ThemeData(theme.getName(), true))) {
             presentation.setText(theme.getName() + " (framework)");
           }
           else {
@@ -206,6 +214,11 @@ public class ProfileManager {
         myRefreshAction.run();
         return true;
       }
+
+      @Override
+      protected int getMaxRows() {
+        return 20;
+      }
     };
   }
 
@@ -217,9 +230,31 @@ public class ProfileManager {
 
   public void setProfile(Profile profile) {
     myProfile = profile;
-    update(getPlatform());
-    myDockModeAction.setSelection(UiMode.getEnum(myProfile.getDockMode()));
-    myNightModeAction.setSelection(NightMode.getEnum(myProfile.getNightMode()));
+
+    if (myProfile == null) {
+      myDeviceAction.clearSelection();
+      myDeviceConfigurationAction.clearSelection();
+      myTargetAction.clearSelection();
+      myLocaleAction.clearSelection();
+      myDockModeAction.clearSelection();
+      myNightModeAction.clearSelection();
+      myThemeAction.clearSelection();
+    }
+    else {
+      update(getPlatform());
+      myDockModeAction.setItems(Arrays.asList(UiMode.values()), UiMode.getEnum(myProfile.getDockMode()));
+      myNightModeAction.setItems(Arrays.asList(NightMode.values()), NightMode.getEnum(myProfile.getNightMode()));
+    }
+  }
+
+  public void updateActions() {
+    myDeviceAction.update();
+    myDeviceConfigurationAction.update();
+    myTargetAction.update();
+    myLocaleAction.update();
+    myDockModeAction.update();
+    myNightModeAction.update();
+    myThemeAction.update();
   }
 
   public void update(@Nullable AndroidPlatform platform) {
