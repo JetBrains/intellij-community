@@ -42,6 +42,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -57,7 +58,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,9 +82,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   public static boolean ourDebugMode = false;
-  @NonNls
-  private static final String PATHS_TO_DELETE_FILENAME = "paths_to_delete.dat";
-  private static final String OUTPUT_ROOTS_FILENAME = "output_roots.dat";
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
   private static final Key<Map<String, VirtualFile>> SOURCE_FILES_CACHE = Key.create("_source_url_to_vfile_cache_");
@@ -95,7 +92,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
-  private PersistentStringEnumerator myProjectIdTable;
   
   // Map: projectId -> Map{output path -> [sourceUrl; classname]}
   private final SLRUCache<Integer, Outputs> myOutputsToDelete = new SLRUCache<Integer, Outputs>(3, 3) {
@@ -120,12 +116,20 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     @Override
     public Outputs createValue(Integer key) {
       try {
-        final String dirName = myProjectIdTable.valueOf(key);
-        final File storeFile = new File(CompilerPaths.getCacheStoreDirectory(dirName), PATHS_TO_DELETE_FILENAME);
+        final String dirName = FSRecords.getNames().valueOf(key);
+        final File storeFile;
+        if (StringUtil.isEmpty(dirName)) {
+          storeFile = null;
+        }
+        else {
+          final File compilerCacheDir = CompilerPaths.getCacheStoreDirectory(dirName);
+          storeFile = compilerCacheDir.exists()? new File(compilerCacheDir, "paths_to_delete.dat") : null;
+        }
         return new Outputs(storeFile, loadPathsToDelete(storeFile));
       }
       catch (IOException e) {
-        throw new RuntimeException(e);
+        LOG.info(e);
+        return new Outputs(null, new HashMap<String, SourceUrlClassNamePair>());
       }
     }
 
@@ -175,17 +179,6 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
     myProjectManager = projectManager;
 
-    // init id table
-    final File tableFile = getIdTableFile();
-    try {
-      FileUtil.createIfDoesntExist(tableFile);
-      myProjectIdTable = new PersistentStringEnumerator(tableFile);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      deleteIdTaleFiles(tableFile);
-    }
-
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
     vfsManager.addVirtualFileListener(new MyVfsListener(), application);
   }
@@ -206,6 +199,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       mySourcesToRecompile.remove(projectId);
       myOutputsToDelete.remove(projectId);
       myGeneratedDataPaths.remove(project);
+    }
+    synchronized (myProjectOutputRoots) {
       myProjectOutputRoots.remove(projectId);
     }
 
@@ -507,8 +502,9 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public void updateOutputRootsLayout(Project project) {
     final TIntObjectHashMap<Pair<Integer, Integer>> map = buildOutputRootsLayout(new ProjectRef(project));
+    final int projectId = getProjectId(project);
     synchronized (myProjectOutputRoots) {
-      myProjectOutputRoots.put(getProjectId(project), map);
+      myProjectOutputRoots.put(projectId, map);
     }
   }
 
@@ -521,11 +517,11 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     ensureOutputStorageInitialized();
   }
 
-  private static File getIdTableFile() {
-    return new File(CompilerPaths.getCompilerSystemDirectory(), "id_table");
+  private static File getOutputRootsFile() {
+    return new File(CompilerPaths.getCompilerSystemDirectory(), "output_roots.dat");
   }
 
-  private static void deleteIdTaleFiles(File tableFile) {
+  private static void deleteStorageFiles(File tableFile) {
     final File[] files = tableFile.getParentFile().listFiles();
     if (files != null) {
       final String name = tableFile.getName();
@@ -537,10 +533,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  private static Map<String, SourceUrlClassNamePair> loadPathsToDelete(final File file) {
+  private static Map<String, SourceUrlClassNamePair> loadPathsToDelete(@Nullable final File file) {
     final Map<String, SourceUrlClassNamePair> map = new HashMap<String, SourceUrlClassNamePair>();
     try {
-      if (file.length() > 0) {
+      if (file != null && file.length() > 0) {
         final DataInputStream is = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
         try {
           final int size = is.readInt();
@@ -568,13 +564,13 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     if (myOutputRootsStorage != null) {
       return;
     }
-    final File rootsFile = new File(CompilerPaths.getCompilerSystemDirectory(), OUTPUT_ROOTS_FILENAME);
+    final File rootsFile = getOutputRootsFile();
     try {
       initOutputRootsFile(rootsFile);
     }
     catch (IOException e) {
       LOG.info(e);
-      FileUtil.delete(rootsFile);
+      deleteStorageFiles(rootsFile);
       try {
         initOutputRootsFile(rootsFile);
       }
@@ -627,11 +623,22 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   public void disposeComponent() {
     try {
-      myProjectIdTable.close();
+      synchronized (myProjectOutputRoots) {
+        myProjectOutputRoots.clear();
+      }
+    }
+    finally {
+      synchronized (myDataLock) {
+        myOutputsToDelete.clear();
+      }
+    }
+    
+    try {
+      myOutputRootsStorage.close();
     }
     catch (IOException e) {
       LOG.info(e);
-      deleteIdTaleFiles(getIdTableFile());
+      deleteStorageFiles(getOutputRootsFile());
     }
   }
 
@@ -754,7 +761,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   private int getProjectId(Project project) {
     try {
-      return myProjectIdTable.enumerate(CompilerPaths.getCompilerSystemDirectoryName(project));
+      return FSRecords.getNames().enumerate(CompilerPaths.getCompilerSystemDirectoryName(project));
     }
     catch (IOException e) {
       LOG.info(e);
@@ -764,7 +771,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   private int getModuleId(Module module) {
     try {
-      return myProjectIdTable.enumerate(module.getName().toLowerCase(Locale.US));
+      return FSRecords.getNames().enumerate(module.getName().toLowerCase(Locale.US));
     }
     catch (IOException e) {
       LOG.info(e);
@@ -1779,11 +1786,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   
   private static class Outputs {
     private boolean myIsDirty = false;
+    @Nullable
     private final File myStoreFile;
     private final Map<String, SourceUrlClassNamePair> myMap;
     private final AtomicInteger myRefCount = new AtomicInteger(1);
     
-    Outputs(File storeFile, Map<String, SourceUrlClassNamePair> map) {
+    Outputs(@Nullable File storeFile, Map<String, SourceUrlClassNamePair> map) {
       myStoreFile = storeFile;
       myMap = map;
     }
@@ -1793,16 +1801,22 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
     
     public void put(String outputPath, SourceUrlClassNamePair pair) {
+      if (myStoreFile == null) {
+        return;
+      }
       if (pair == null) {
         remove(outputPath);
       }
       else {
-        final SourceUrlClassNamePair prev = myMap.put(outputPath, pair);
+        myMap.put(outputPath, pair);
         myIsDirty = true;
       }
     }
     
     public SourceUrlClassNamePair remove(String outputPath) {
+      if (myStoreFile == null) {
+        return null;
+      }
       final SourceUrlClassNamePair removed = myMap.remove(outputPath);
       myIsDirty |= removed != null;
       return removed;
@@ -1814,7 +1828,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     
     public void release() {
       if (myRefCount.decrementAndGet() == 0) {
-        if (myIsDirty) {
+        if (myIsDirty && myStoreFile != null) {
           savePathsToDelete(myStoreFile, myMap);
         }
       }
