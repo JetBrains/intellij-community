@@ -68,7 +68,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   /**
    * Kill whole process tree.
    * @param process Process
-   * @param forceKill If failed to kill process tree - try to kill it using Java API
    * @return True if process tree has been successfully killed.
    */
   protected boolean killProcessTree(final Process process) {
