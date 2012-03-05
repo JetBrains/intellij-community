@@ -27,7 +27,7 @@ public class VirtualFileMoveEvent extends VirtualFileEvent {
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;
 
-  public VirtualFileMoveEvent(Object requestor, VirtualFile file, VirtualFile oldParent, VirtualFile newParent){
+  public VirtualFileMoveEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile oldParent, @NotNull VirtualFile newParent){
     super(requestor, file, file.getName(), file.getParent());
     myOldParent = oldParent;
     myNewParent = newParent;

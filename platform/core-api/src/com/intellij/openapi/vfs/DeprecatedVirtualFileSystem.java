@@ -48,7 +48,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void firePropertyChanged(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
+  protected void firePropertyChanged(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -59,7 +59,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireContentsChanged(Object requestor, VirtualFile file, long oldModificationStamp) {
+  protected void fireContentsChanged(Object requestor, @NotNull VirtualFile file, long oldModificationStamp) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -70,7 +70,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireFileCreated(@Nullable Object requestor, VirtualFile file) {
+  protected void fireFileCreated(@Nullable Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -81,7 +81,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
+  protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -92,7 +92,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireFileMoved(Object requestor, VirtualFile file, VirtualFile oldParent) {
+  protected void fireFileMoved(Object requestor, @NotNull VirtualFile file, VirtualFile oldParent) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -119,7 +119,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireBeforePropertyChange(Object requestor, VirtualFile file, String propertyName, Object oldValue, Object newValue) {
+  protected void fireBeforePropertyChange(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -130,7 +130,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireBeforeContentsChange(Object requestor, VirtualFile file) {
+  protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -141,7 +141,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireBeforeFileDeletion(Object requestor, VirtualFile file) {
+  protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
@@ -152,7 +152,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireBeforeFileMovement(Object requestor, VirtualFile file, VirtualFile newParent) {
+  protected void fireBeforeFileMovement(Object requestor, @NotNull VirtualFile file, VirtualFile newParent) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {

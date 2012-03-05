@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -92,7 +93,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
-      public boolean visitFile(VirtualFile file) {
+      public boolean visitFile(@NotNull VirtualFile file) {
 
         if (!isInSet(file)) return false;
         if (!file.isDirectory()) {

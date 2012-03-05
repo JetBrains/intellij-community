@@ -458,7 +458,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         scope.iterateExistingInsideScope(new Processor<VirtualFile>() {
           @Override
           public boolean process(VirtualFile file) {
-            file.putUserData(LastUnchangedContentTracker.VCS_INVALID_FILE_STATUS, null); //todo what if it has become dirty again during update?
+            LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
             return true;
           }
         });

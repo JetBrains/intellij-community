@@ -863,9 +863,15 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @Override
   public boolean isValid() {
+    PsiLanguageInjectionHost.Shred[] shreds;
     synchronized (myLock) {
-      return myShreds.isValid();
+      shreds = myShreds.toArray(new PsiLanguageInjectionHost.Shred[myShreds.size()]);
     }
+    // can grab PsiLock in SmartPsiPointer.restore()
+    for (PsiLanguageInjectionHost.Shred shred : shreds) {
+      if (!shred.isValid()) return false;
+    }
+    return true;
   }
 
   public boolean equals(Object o) {

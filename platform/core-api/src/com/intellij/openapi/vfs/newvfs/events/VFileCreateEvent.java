@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -78,6 +79,7 @@ public class VFileCreateEvent extends VFileEvent {
     return myParent.findChild(myChildName);
   }
 
+  @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
     return myParent.getFileSystem();
