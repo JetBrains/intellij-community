@@ -31,6 +31,7 @@ import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,6 +44,7 @@ public class CommitMessage extends JPanel implements Disposable {
   public static final Key<DataContext> DATA_CONTEXT_KEY = Key.create("commit message data context");
   private final EditorTextField myEditorField;
   private final Project         myProject;
+  private Consumer<String> myMessageConsumer;
 
   public CommitMessage(Project project) {
     super(new BorderLayout());
@@ -107,7 +109,11 @@ public class CommitMessage extends JPanel implements Disposable {
   }
 
   public void setText(final String initialMessage) {
-    myEditorField.setText(initialMessage == null ? "" : initialMessage);
+    final String text = initialMessage == null ? "" : initialMessage;
+    myEditorField.setText(text);
+    if (myMessageConsumer != null) {
+      myMessageConsumer.consume(text);
+    }
   }
 
   public String getComment() {
@@ -145,5 +151,9 @@ public class CommitMessage extends JPanel implements Disposable {
   }
   
   public void dispose() {
+  }
+
+  public void setMessageConsumer(Consumer<String> messageConsumer) {
+    myMessageConsumer = messageConsumer;
   }
 }

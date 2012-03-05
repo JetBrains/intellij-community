@@ -45,6 +45,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.OnOffListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1243,11 +1244,21 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(dialog.getProject());
       getEditorField().setText(dialog.getCommitMessage());
       myCommitDialog = dialog;
+      myCommitDialog.setMessageConsumer(new Consumer<String>() {
+        @Override
+        public void consume(String s) {
+          getEditorField().setText(s);
+        }
+      });
     }
 
     public void dispose() {
       if (myCommitDialog != null) {
-        myCommitDialog.setCommitMessageText(getEditorField().getText());
+        myCommitDialog.setMessageConsumer(null);
+        final String text = getEditorField().getText();
+        if (! Comparing.equal(myCommitDialog.getCommitMessage(), text)) {
+          myCommitDialog.setCommitMessage(text);
+        }
         myCommitDialog = null;
       }
     }
@@ -1256,5 +1267,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       // we don't want to be squeezed to one line
       return new Dimension(400, 120);
     }
+  }
+
+  public void setMessageConsumer(Consumer<String> messageConsumer) {
+    myCommitMessageArea.setMessageConsumer(messageConsumer);
   }
 }
