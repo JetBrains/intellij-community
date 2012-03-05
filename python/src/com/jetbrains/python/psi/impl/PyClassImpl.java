@@ -639,9 +639,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       myPropertyCache = initializePropertyCache();
     }
     for (Property property : myPropertyCache.values()) {
-      if (property.getGetter().value() == function ||
-          property.getSetter().value() == function ||
-          property.getDeleter().value() == function) {
+      if (property.getGetter().valueOrNull() == function ||
+          property.getSetter().valueOrNull() == function ||
+          property.getDeleter().valueOrNull() == function) {
         return property;
       }
     }
