@@ -415,9 +415,12 @@ public class AndroidCompileUtil {
         contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
       }
     });
-    generate(module, mode, contextWrapper[0]);
-
-    return contextWrapper[0].getMessages(CompilerMessageCategory.ERROR).length == 0;
+    CompileContext context = contextWrapper[0];
+    if (context == null) {
+      return false;
+    }
+    generate(module, mode, context);
+    return context.getMessages(CompilerMessageCategory.ERROR).length == 0;
   }
 
   public static boolean isModuleAffected(CompileContext context, Module module) {

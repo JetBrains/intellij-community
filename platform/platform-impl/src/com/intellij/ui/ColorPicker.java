@@ -54,6 +54,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   public static final Icon PICK = IconLoader.findIcon("/ide/pipette.png");
   public static final Icon PICK_ROLLOVER = IconLoader.findIcon("/ide/pipette_rollover.png");
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
+  private static final String HSB_PROPERTY = "color.picker.is.hsb";
 
   private Color myColor;
   private ColorPreviewComponent myPreviewComponent;
@@ -66,8 +67,13 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
   private RecentColorsComponent myRecentColorsComponent;
   private final ColorPipette myPicker;
-  private final JRadioButton myRGB;
-  private final JRadioButton myHSB;
+  private final JLabel myR = new JLabel("R:");
+  private final JLabel myG = new JLabel("G:");
+  private final JLabel myB = new JLabel("B:");
+  private final JLabel myR_after = new JLabel("");
+  private final JLabel myG_after = new JLabel("");
+  private final JLabel myB_after = new JLabel("");
+  private final JComboBox myFormat = new JComboBox(new String[]{"RGB", "HSB"});
 
   private ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
     this(parent, color, true, enableOpacity);
@@ -84,12 +90,20 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     myColorWheelPanel = new ColorWheelPanel(this, enableOpacity);
 
-    myRGB = new JRadioButton("RGB", true);
-    myHSB = new JRadioButton("HSB", false);
-    final ButtonGroup group = new ButtonGroup();
-    myRGB.getModel().setGroup(group);
-    myHSB.getModel().setGroup(group);
 
+    myFormat.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        PropertiesComponent.getInstance().setValue(HSB_PROPERTY, String.valueOf(!isRGBMode()));
+        myR.setText(isRGBMode() ? "R:" : "H:");
+        myG.setText(isRGBMode() ? "G:" : "S:");
+        myR_after.setText(isRGBMode() ? "" : "\u00B0");
+        myG.setText(isRGBMode() ? "G:" : "S:");
+        myG_after.setText(isRGBMode() ? "" : "%");
+        myB_after.setText(isRGBMode() ? "" : "%");
+        applyColor(myColor);
+      }
+    });
 
     myPicker = new ColorPipette(this, getColor());
     myPicker.setListener(new ColorListener() {
@@ -121,20 +135,30 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     setColor(c, this);
 
     setSize(300, 350);
+
+    final boolean hsb = PropertiesComponent.getInstance().getBoolean(HSB_PROPERTY, false);
+    if (hsb) {
+      myFormat.setSelectedIndex(1);
+    }
+  }
+
+  private boolean isRGBMode() {
+    return myFormat.getSelectedIndex() == 0;
   }
 
   private JTextField createColorField(boolean hex) {
     final NumberDocument doc = new NumberDocument(hex);
-    final JTextField filed = new JTextField(doc, "", hex ? 6 : 3);
-    doc.setSource(filed);
-    filed.getDocument().addDocumentListener(this);
-    filed.addFocusListener(new FocusAdapter() {
+    final JTextField field = new JTextField(doc, "", hex ? 5:2);
+    field.setSize(50, -1);
+    doc.setSource(field);
+    field.getDocument().addDocumentListener(this);
+    field.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(final FocusEvent e) {
-        filed.selectAll();
+        field.selectAll();
       }
     });
-    return filed;
+    return field;
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -207,9 +231,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
 
       if (fromHex) {
-        applyColorToRGB(color);
-      }
-      else {
+        applyColor(color);
+      } else {
         applyColorToHEX(color);
       }
     }
@@ -219,7 +242,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   public void colorChanged(Color color, Object source) {
     if (color != null && !color.equals(myColor)) {
       myColor = color;
-      applyColorToRGB(color);
+
+      applyColor(color);
+
       if (source != myHex) {
         applyColorToHEX(color);
       }
@@ -230,9 +255,11 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   @Nullable
   private Color gatherRGB() {
     try {
-      return new Color(Integer.parseInt(myRed.getText()),
-                       Integer.parseInt(myGreen.getText()),
-                       Integer.parseInt(myBlue.getText()));
+      final int r = Integer.parseInt(myRed.getText());
+      final int g = Integer.parseInt(myGreen.getText());
+      final int b = Integer.parseInt(myBlue.getText());
+
+      return isRGBMode() ? new Color(r, g, b) : new Color(Color.HSBtoRGB(((float)r) / 360f, ((float)g) / 100f, ((float)b) / 100f));
     } catch (Exception ignore) {      
     }
     return null;
@@ -246,6 +273,21 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     myRed.setText(String.valueOf(color.getRed()));
     myGreen.setText(String.valueOf(color.getGreen()));
     myBlue.setText(String.valueOf(color.getBlue()));
+  }
+
+  private void applyColorToHSB(final Color c) {
+    final float[] hbs = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), null);
+    myRed.setText(String.valueOf(((int)(360f * hbs[0]))));
+    myGreen.setText(String.valueOf(((int)(100f * hbs[1]))));
+    myBlue.setText(String.valueOf(((int)(100f * hbs[2]))));
+  }
+
+  private void applyColor(final Color color) {
+    if (isRGBMode()) {
+      applyColorToRGB(color);
+    } else {
+      applyColorToHSB(color);
+    }
   }
 
   @Nullable
@@ -292,26 +334,30 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     final JPanel rgbPanel = new JPanel();
     rgbPanel.setLayout(new BoxLayout(rgbPanel, BoxLayout.X_AXIS));
+    myR_after.setPreferredSize(new Dimension(14, -1));
+    myG_after.setPreferredSize(new Dimension(14, -1));
+    myB_after.setPreferredSize(new Dimension(14, -1));
     rgbPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    rgbPanel.add(new JLabel("R:"));
-    rgbPanel.add(Box.createHorizontalStrut(2));
+    rgbPanel.add(myR);
     rgbPanel.add(myRed);
-    rgbPanel.add(Box.createHorizontalStrut(5));
-    rgbPanel.add(new JLabel("G:"));
+    rgbPanel.add(myR_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
+    rgbPanel.add(myG);
     rgbPanel.add(myGreen);
-    rgbPanel.add(Box.createHorizontalStrut(5));
-    rgbPanel.add(new JLabel("B:"));
+    rgbPanel.add(myG_after);
     rgbPanel.add(Box.createHorizontalStrut(2));
+    rgbPanel.add(myB);
     rgbPanel.add(myBlue);
+    rgbPanel.add(myB_after);
+    rgbPanel.add(Box.createHorizontalStrut(2));
+    rgbPanel.add(myFormat);
 
     result.add(rgbPanel, BorderLayout.WEST);
 
     final JPanel hexPanel = new JPanel();
     hexPanel.setLayout(new BoxLayout(hexPanel, BoxLayout.X_AXIS));
     hexPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-    hexPanel.add(new JLabel("#:"));
-    hexPanel.add(Box.createHorizontalStrut(3));
+    hexPanel.add(new JLabel("Hex:"));
     hexPanel.add(myHex);
 
     result.add(hexPanel, BorderLayout.EAST);
@@ -579,7 +625,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  public static class NumberDocument extends PlainDocument {
+  public class NumberDocument extends PlainDocument {
 
     private final boolean myHex;
     private JTextField mySrc;
@@ -592,6 +638,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       mySrc = field;
     }
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
+      final boolean rgb = isRGBMode();
       char[] source = str.toCharArray();
       if (mySrc != null) {
         final int selected = mySrc.getSelectionEnd() - mySrc.getSelectionStart();
@@ -614,9 +661,20 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       final String toInsert = new String(result, 0, j).toUpperCase();
       final String res = new StringBuilder(mySrc.getText()).insert(offs, toInsert).toString();
       try {
-        if (!myHex && Integer.parseInt(res) > 255) {
-          Toolkit.getDefaultToolkit().beep();
-          return;
+        if (!myHex) {
+          final int num = Integer.parseInt(res);
+          if (rgb) {
+            if (num > 255) {
+              Toolkit.getDefaultToolkit().beep();
+              return;
+            }
+          } else {
+            if ((mySrc == myRed && num > 359)
+              || ((mySrc == myGreen || mySrc == myBlue) && num > 100)) {
+              Toolkit.getDefaultToolkit().beep();
+              return;
+            }
+          }
         }
       }
       catch (NumberFormatException ignore) {

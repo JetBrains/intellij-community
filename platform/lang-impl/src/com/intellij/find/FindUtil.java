@@ -85,11 +85,32 @@ public class FindUtil {
     }
   }
 
-  public static void configureFindModel(boolean replace, @Nullable String selectedText, FindModel model, boolean firstSearch) {
+  private static boolean isMultilineSelection(Editor editor) {
+    SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
+    if (selectionModel != null) {
+      String selectedText = selectionModel.getSelectedText();
+      if (selectedText != null) {
+        if (selectedText.indexOf("\n") != -1) {
+          return true;
+        }
+        final Document document = editor.getDocument();
+        final int line = document.getLineNumber(selectionModel.getSelectionStart());
+        final String lineText = document.getText(new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
+        if (lineText.trim().equals(selectedText)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static void configureFindModel(boolean replace, @Nullable Editor editor, FindModel model, boolean firstSearch) {
     boolean isGlobal = true;
     String stringToFind = null;
+    final SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
+    String selectedText = selectionModel != null ? selectionModel.getSelectedText() : null;
     if (!StringUtil.isEmpty(selectedText)) {
-      if (selectedText.indexOf('\n') >= 0) {
+      if (isMultilineSelection(editor)) {
         if (replace){
           isGlobal = false;
           stringToFind = model.getStringToFind();
