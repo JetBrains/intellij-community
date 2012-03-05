@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.net.NetUtils;
@@ -48,7 +49,7 @@ import java.util.List;
 
 /**
  * @author anna
- * Date: 10-Aug-2007
+ * @since 10-Aug-2007
  */
 public class PluginDownloader {
   private static final Logger LOG = Logger.getInstance("#" + PluginDownloader.class.getName());
@@ -222,7 +223,7 @@ public class PluginDownloader {
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw new IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp));
     }
-    final File file = FileUtil.createTempFile(pluginsTemp, "plugin", "download", true, false);
+    final File file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false);
 
     pi.setText(IdeBundle.message("progress.connecting"));
 
@@ -253,7 +254,7 @@ public class PluginDownloader {
       }
 
       if (myFileName == null) {
-        guessFileName(connection, file);
+        myFileName = guessFileName(connection, file);
       }
 
       final File newFile = new File(file.getParentFile(), myFileName);
@@ -267,7 +268,7 @@ public class PluginDownloader {
     }
   }
 
-  private URLConnection openConnection(String url) throws IOException {
+  private URLConnection openConnection(final String url) throws IOException {
     final URLConnection connection = new URL(url).openConnection();
     if (connection instanceof HttpURLConnection) {
       final int responseCode = ((HttpURLConnection)connection).getResponseCode();
@@ -278,8 +279,9 @@ public class PluginDownloader {
         }
         if (location == null) {
           throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
-        } else {
-          setPluginUrl(location);
+        }
+        else {
+          myPluginUrl = location;
           ((HttpURLConnection)connection).disconnect();
           return openConnection(location);
         }
@@ -288,36 +290,38 @@ public class PluginDownloader {
     return connection;
   }
 
-  private void setPluginUrl(String location) {
-    myPluginUrl = location;
-  }
+  @NotNull
+  private String guessFileName(final URLConnection connection, final File file) throws IOException {
+    String fileName = null;
 
-  private void guessFileName(final URLConnection connection, final File file) throws IOException {
-    String contentDisposition = connection.getHeaderField("Content-Disposition");
-    if (contentDisposition == null || !contentDisposition.contains(FILENAME)) {
-      // try to find filename in URL
-      String usedURL = connection.getURL().toString();
-      int startPos = usedURL.lastIndexOf("/");
-      myFileName = usedURL.substring(startPos + 1);
-      if (myFileName.length() == 0 || myFileName.contains("?")) {
-        myFileName = myPluginUrl.substring(myPluginUrl.lastIndexOf("/") + 1);
+    final String contentDisposition = connection.getHeaderField("Content-Disposition");
+    LOG.debug("header: " + contentDisposition);
+
+    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
+      final int startIdx = contentDisposition.indexOf(FILENAME);
+      final int endIdx = contentDisposition.indexOf(';', startIdx);
+      fileName = contentDisposition.substring(startIdx + FILENAME.length(), endIdx > 0 ? endIdx : contentDisposition.length());
+
+      if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
+        fileName = fileName.substring(1, fileName.length() - 1);
       }
     }
-    else {
-      int startIdx = contentDisposition.indexOf(FILENAME);
-      myFileName = contentDisposition.substring(startIdx + FILENAME.length(), contentDisposition.length());
-      // according to the HTTP spec, the filename is a quoted string, but some servers don't quote it
-      // for example: http://www.jspformat.com/Download.do?formAction=d&id=8
-      if (myFileName.startsWith("\"") && myFileName.endsWith("\"")) {
-        myFileName = myFileName.substring(1, myFileName.length() - 1);
-      }
-      if (myFileName.indexOf('\\') >= 0 || myFileName.indexOf('/') >= 0 || myFileName.indexOf(File.separatorChar) >= 0 ||
-          myFileName.indexOf('\"') >= 0) {
-        // invalid path name passed by the server - fail to download
-        FileUtil.delete(file);
-        throw new IOException("Invalid filename returned by server");
+
+    if (fileName == null) {
+      // try to find a filename in an URL
+      final String usedURL = connection.getURL().toString();
+      fileName = usedURL.substring(usedURL.lastIndexOf("/") + 1);
+      if (fileName.length() == 0 || fileName.contains("?")) {
+        fileName = myPluginUrl.substring(myPluginUrl.lastIndexOf("/") + 1);
       }
     }
+
+    if (fileName == null || !PathUtil.isValidFileName(fileName)) {
+      FileUtil.delete(file);
+      throw new IOException("Invalid filename returned by a server");
+    }
+
+    return fileName;
   }
 
   public String getPluginId() {
