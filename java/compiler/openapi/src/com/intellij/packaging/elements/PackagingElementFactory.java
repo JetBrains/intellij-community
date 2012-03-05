@@ -46,6 +46,8 @@ public abstract class PackagingElementFactory {
   @NotNull
   public abstract CompositePackagingElement<?> createArchive(@NotNull @NonNls String archiveFileName);
 
+  public abstract PackagingElement<?> createFileCopy(@NotNull String filePath, @Nullable String outputFileName);
+
   @NotNull
   public abstract PackagingElement<?> createModuleOutput(@NotNull String moduleName, @NotNull Project project);
 
