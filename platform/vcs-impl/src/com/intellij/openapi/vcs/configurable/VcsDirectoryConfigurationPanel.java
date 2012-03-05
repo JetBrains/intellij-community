@@ -374,44 +374,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     return panelForTable;
   }
 
-  private static class VcsRootErrorLabel extends JPanel {
-
-    private final LinkLabel myAddLabel;
-
-    VcsRootErrorLabel(String title) {
-      super(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-
-      setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
-                                         BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker())));
-      setOpaque(true);
-      Color COLOR = new Color(255, 186, 192);
-
-      setBackground(COLOR);
-
-      JBLabel label = new JBLabel(title);
-
-      myAddLabel = new LinkLabel("Add root", null);
-
-      myAddLabel.setOpaque(false);
-
-      JPanel actionsPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
-      actionsPanel.setOpaque(false);
-      actionsPanel.add(myAddLabel, BorderLayout.CENTER);
-
-      add(label, BorderLayout.WEST);
-      add(actionsPanel, BorderLayout.EAST);
-    }
-
-    void setAddRootLinkHandler(final Runnable handler) {
-      myAddLabel.setListener(new LinkListener() {
-        @Override
-        public void linkSelected(LinkLabel aSource, Object aLinkData) {
-          handler.run();
-        }
-      }, null);
-    }
-  }
-
   private JComponent createErrorList() {
     Box box = Box.createVerticalBox();
     for (Map.Entry<String, VcsRootChecker> entry : myCheckers.entrySet()) {
@@ -525,4 +487,41 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   public void disposeUIResources() {
   }
+
+  private static class VcsRootErrorLabel extends JPanel {
+
+    private final LinkLabel myAddLabel;
+
+    VcsRootErrorLabel(String title) {
+      super(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
+
+      setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
+                                                   BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker())));
+      setOpaque(true);
+      setBackground(new Color(255, 186, 192));
+
+      JBLabel label = new JBLabel(title);
+
+      myAddLabel = new LinkLabel("Add root", null);
+
+      myAddLabel.setOpaque(false);
+
+      JPanel actionsPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
+      actionsPanel.setOpaque(false);
+      actionsPanel.add(myAddLabel, BorderLayout.CENTER);
+
+      add(label, BorderLayout.WEST);
+      add(actionsPanel, BorderLayout.EAST);
+    }
+
+    void setAddRootLinkHandler(final Runnable handler) {
+      myAddLabel.setListener(new LinkListener() {
+        @Override
+        public void linkSelected(LinkLabel aSource, Object aLinkData) {
+          handler.run();
+        }
+      }, null);
+    }
+  }
+
 }
