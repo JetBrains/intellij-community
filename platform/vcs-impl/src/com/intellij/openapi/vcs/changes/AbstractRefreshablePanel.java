@@ -129,7 +129,7 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
     @Override
     protected void doInAwtIfFail(Exception e) {
       final Exception cause;
-      if (e instanceof MyRuntime) {
+      if (e instanceof MyRuntime && e.getCause() != null) {
         cause = (Exception) e.getCause();
       } else {
         cause = e;
