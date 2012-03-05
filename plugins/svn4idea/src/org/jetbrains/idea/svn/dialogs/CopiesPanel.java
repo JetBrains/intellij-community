@@ -138,7 +138,11 @@ public class CopiesPanel {
         }
       }
     });
-    myHolder = ScrollPaneFactory.createScrollPane(holderPanel);
+    final JScrollPane pane = ScrollPaneFactory.createScrollPane(holderPanel);
+    myHolder = pane;
+    final JScrollBar vBar = pane.getVerticalScrollBar();
+    vBar.setBlockIncrement(vBar.getBlockIncrement() * 5);
+    vBar.setUnitIncrement(vBar.getUnitIncrement() * 5);
     myHolder.setBorder(null);
     setFocusableForLinks(myRefreshLabel);
     refreshOnPooled.run();
