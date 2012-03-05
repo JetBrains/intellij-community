@@ -34,12 +34,6 @@ public class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
   }
 
   public String getPresentableName() {
-    String s = "";
-    String ss = "";
-    if (ss instanceof Object) {
-      Object o = (Object)ss;
-
-    }
     return CodeInsightBundle.message("macro.suggest.first.variable.name");
   }
 
