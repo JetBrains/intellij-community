@@ -500,11 +500,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return in;
   }
 
-  @Override
-  public RootsConvertor getCustomConvertor() {
-    return GitRootConverter.INSTANCE;
-  }
-
   public static VcsKey getKey() {
     return ourKey;
   }
