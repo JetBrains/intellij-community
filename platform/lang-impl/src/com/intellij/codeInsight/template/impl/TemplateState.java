@@ -651,33 +651,20 @@ public class TemplateState implements Disposable {
     String oldValue = getExpressionString(segmentNumber);
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    ExpressionContext context = createExpressionContext(start);
-    Result result;
-    if (isQuick) {
-      result = expressionNode.calculateQuickResult(context);
-    }
-    else {
-      result = expressionNode.calculateResult(context);
-      if (expressionNode instanceof ConstantNode) {
-        if (result instanceof TextResult) {
-          TextResult text = (TextResult)result;
-          if (text.getText().length() == 0 && defaultValue != null) {
-            result = defaultValue.calculateResult(context);
-          }
-        }
-      }
-      if (result == null && defaultValue != null) {
-        result = defaultValue.calculateResult(context);
-      }
-    }
-    if (result == null) return;
 
+    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     PsiElement element = psiFile.findElementAt(start);
-    if (result.equalsToText(oldValue, element)) return;
 
-    String newValue = result.toString();
-    if (newValue == null) newValue = "";
+    ExpressionContext context = createExpressionContext(start);
+    Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
+    if ((result == null || result.equalsToText("", element)) && defaultValue != null) {
+      result = defaultValue.calculateResult(context);
+    }
+    assert element == null || element.isValid();
+    if (result == null || result.equalsToText(oldValue, element)) return;
+
+    String newValue = StringUtil.notNullize(result.toString());
 
     if (element != null && !(expressionNode instanceof SelectionNode)) {
       newValue = LanguageLiteralEscapers.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(psiFile, start)).getEscapedText(element, newValue);
