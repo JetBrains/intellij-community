@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 
 import java.util.Collection;
@@ -86,6 +87,11 @@ public class AlienDirtyScope extends VcsDirtyScope {
   }
 
   public boolean belongsTo(final FilePath path) {
+    return false;
+  }
+
+  @Override
+  public boolean belongsTo(FilePath path, Consumer<AbstractVcs> vcsConsumer) {
     return false;
   }
 
