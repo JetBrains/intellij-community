@@ -548,6 +548,15 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
 
     @Override
+    protected String getFileExt() {
+      if (myProvider != null) {
+        String ext = myProvider.getFileExt();
+        if (ext != null) return ext;
+      }
+      return super.getFileExt();
+    }
+
+    @Override
     public void apply(CodeStyleSettings settings) {
       CommonCodeStyleSettings.IndentOptions indentOptions = getIndentOptions(settings);
       if (indentOptions == null) return;
