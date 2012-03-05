@@ -92,7 +92,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
 
     invokeLater(new Runnable() {
       public void run() {
-        if (myStopped.get()) return;
+        if (myStopped.get() || usages == null) return;
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("updating usages for " + element);

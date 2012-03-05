@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.diff;
 
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -10,13 +9,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,12 +69,6 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @NotNull
   @Override
   public String getLocalFileSystemPath(@NotNull VirtualFile file) {
-    if (file.getFileType() == FileTypes.ARCHIVE) {
-      final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
-      if (jar != null) {
-        return jar.getPath();
-      }
-    }
-    return file.getPath();
+    return GradleUtil.getLocalFileSystemPath(file);
   }
 }

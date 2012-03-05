@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Restarter;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -35,11 +37,17 @@ import java.util.List;
 public class Main {
   private static boolean isHeadless;
 
-  private Main() {
-  }
+  private Main() { }
 
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(final String[] args) {
-    /// preload class before installing the patch to prevent class loader problems
+    // force using bundled JNA dispatcher (if not explicitly stated)
+    if (SystemInfo.isUnix && System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
+      System.setProperty("jna.nosys", "true");
+      System.setProperty("jna.nounpack", "false");
+    }
+
+    // pre-load class before installing the patch to prevent class loader problems
     Restarter.isSupported();
 
     if (installPatch()) {
@@ -58,19 +66,13 @@ public class Main {
       }
 
       if (!restarted && restartCode == 0) {
-        try {
-          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-        catch (Exception ignore) {
-        }
-        JOptionPane.showMessageDialog(null,
-                                      "The application cannot start right away since some critical files have been changed.\n" +
-                                      "Please restart it manually.",
-                                      "Update",
-                                      JOptionPane.INFORMATION_MESSAGE);
+        UIUtil.initDefaultLAF();
+        String msg = "The application cannot start right away since some critical files have been changed.\nPlease restart it manually.";
+        JOptionPane.showMessageDialog(null, msg, "Update", JOptionPane.INFORMATION_MESSAGE);
       }
 
       final int finalRestartCode = restartCode;
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {

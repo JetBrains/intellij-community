@@ -706,7 +706,8 @@ public class AbstractPopup implements JBPopup {
 
     myRequestorComponent = owner;
 
-    boolean forcedDialog = (SystemInfo.isMac && !(myOwner instanceof IdeFrame)) || myMayBeParent;
+    boolean forcedDialog = myMayBeParent
+      || (SystemInfo.isMac && !(myOwner instanceof IdeFrame) && (myOwner != null && myOwner.isShowing()));
 
     PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
     myNativePopup = factory.isNativePopup();
