@@ -121,7 +121,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   private final ColumnInfo<VcsDirectoryMapping, String> VCS_SETTING =
-    new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("comumn.name.configure.vcses.vcs")) {
+    new ColumnInfo<VcsDirectoryMapping, String>(VcsBundle.message("column.name.configure.vcses.vcs")) {
       public String valueOf(final VcsDirectoryMapping object) {
         return object.getVcs();
       }
@@ -352,20 +352,28 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
         }
       }).disableUpDownActions().createPanel();
 
-    ToolbarDecorator.findAddButton(panelForTable).addCustomUpdater(new AnActionButtonUpdater() {
+    AnActionButton addButton = ToolbarDecorator.findAddButton(panelForTable);
+    assert addButton != null;
+    addButton.addCustomUpdater(new AnActionButtonUpdater() {
       @Override
       public boolean isEnabled(AnActionEvent e) {
         return !myIsDisabled;
       }
     });
-    ToolbarDecorator.findEditButton(panelForTable).addCustomUpdater(new AnActionButtonUpdater() {
+
+    AnActionButton editButton = ToolbarDecorator.findEditButton(panelForTable);
+    assert editButton != null;
+    editButton.addCustomUpdater(new AnActionButtonUpdater() {
       @Override
       public boolean isEnabled(AnActionEvent e) {
         final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
         return (!myIsDisabled) && hasSelection;
       }
     });
-    ToolbarDecorator.findRemoveButton(panelForTable).addCustomUpdater(new AnActionButtonUpdater() {
+
+    AnActionButton removeButton = ToolbarDecorator.findRemoveButton(panelForTable);
+    assert removeButton != null;
+    removeButton.addCustomUpdater(new AnActionButtonUpdater() {
       @Override
       public boolean isEnabled(AnActionEvent e) {
         final boolean hasSelection = myDirectoryMappingTable.getSelectedObject() != null;
