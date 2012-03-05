@@ -68,22 +68,12 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
       }
     }
     else if (element instanceof NameDefiner) {
-      boolean handled_as_imported = false;
+      boolean handledAsImported = false;
       if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)element;
-        final PyQualifiedName qName = importElement.getImportedQName();
-        if (qName != null && qName.getComponentCount() == 1) {
-          String name = importElement.getAsName() != null ? importElement.getAsName() : qName.getLastComponent();
-          if (name != null && nameIsAcceptable(name)) {
-            final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement);
-            if (resolved instanceof PsiNamedElement) {
-              handled_as_imported = true;
-              addElement(name, resolved);
-            }
-          }
-        }
+        handledAsImported = handleImportElement(importElement);
       }
-      if (! handled_as_imported) {
+      if (! handledAsImported) {
         final NameDefiner definer = (NameDefiner)element;
         for (PyElement expr : definer.iterateNames()) {
           if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
@@ -97,6 +87,21 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     }
 
     return true;
+  }
+
+  protected boolean handleImportElement(PyImportElement importElement) {
+    final PyQualifiedName qName = importElement.getImportedQName();
+    if (qName != null && qName.getComponentCount() == 1) {
+      String name = importElement.getAsName() != null ? importElement.getAsName() : qName.getLastComponent();
+      if (name != null && nameIsAcceptable(name)) {
+        final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement);
+        if (resolved instanceof PsiNamedElement) {
+          addElement(name, resolved);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   protected void addElement(String name, PsiElement psiNamedElement) {

@@ -759,6 +759,7 @@
                     interface="com.jetbrains.django.run.PythonJavaScriptDebuggerStarter" />
     <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager" interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"/>
+    <extensionPoint qualifiedName="Pythonid.keywordArgumentProvider" interface="com.jetbrains.python.psi.impl.PyKeywordArgumentProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -809,6 +810,9 @@
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
+
+    <!-- Packaging -->
+    <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
   </extensions>
 
   <project-components>

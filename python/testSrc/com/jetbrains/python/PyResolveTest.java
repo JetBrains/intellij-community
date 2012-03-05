@@ -445,4 +445,9 @@ public class PyResolveTest extends PyResolveTestCase {
     PyExpression value = target.findAssignedValue();
     assertInstanceOf(value, PyNumericLiteralExpression.class);
   }
+
+  public void testMetaclass() {
+    final PyFunction function = assertResolvesTo(PyFunction.class, "getStore");
+    assertEquals("PluginMetaclass", function.getContainingClass().getName());
+  }
 }

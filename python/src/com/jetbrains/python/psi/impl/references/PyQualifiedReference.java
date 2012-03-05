@@ -292,16 +292,16 @@ public class PyQualifiedReference extends PyReferenceImpl {
     final PyExpression qualifierElement = myElement.getQualifier();
     if (qualifierElement instanceof PyReferenceExpression) {
       PyReferenceExpression qualifier = (PyReferenceExpression)qualifierElement;
-      if (qualifier.getQualifier() == null) {
-        final String className = qualifier.getText();
+      final String className = qualifier.getReferencedName();
+      if (className != null) {
         Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
         classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
           final PyClassType classType = new PyClassType(classes.iterator().next(), false);
           return getTypeCompletionVariants(myElement, classType);
         }
-        return collectSeenMembers(qualifier.getText());
       }
+      return collectSeenMembers(qualifier.getText());
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

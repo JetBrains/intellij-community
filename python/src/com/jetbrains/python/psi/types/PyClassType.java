@@ -177,7 +177,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       }
     }
     if (isDefinition() && myClass.isNewStyleClass()) {
-      PyClassType typeType = PyBuiltinCache.getInstance(myClass).getObjectType("type");
+      PyClassType typeType = getMetaclassType();
       if (typeType != null) {
         List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
         if (typeMembers != null && !typeMembers.isEmpty()) {
@@ -186,6 +186,20 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       }
     }
     return Collections.emptyList();
+  }
+
+  private PyClassType getMetaclassType() {
+    final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.METACLASS, true);
+    if (metaClassAttribute != null) {
+      final PyExpression metaclass = metaClassAttribute.findAssignedValue();
+      if (metaclass instanceof PyReferenceExpression) {
+        final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
+        if (result.getElement() instanceof PyClass) {
+          return new PyClassType((PyClass) result.getElement(), false);
+        }
+      }
+    }
+    return PyBuiltinCache.getInstance(myClass).getObjectType("type");
   }
 
   @Override
@@ -265,7 +279,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     }
 
     if (isDefinition() && myClass.isNewStyleClass()) {
-      PyClassType typeType = PyBuiltinCache.getInstance(myClass).getObjectType("type");
+      PyClassType typeType = getMetaclassType();
       if (typeType != null) {
         Collections.addAll(ret, typeType.getCompletionVariants(prefix, location, context));
       }

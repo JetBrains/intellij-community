@@ -1,12 +1,15 @@
 package com.jetbrains.python.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * QuickFix to add self to unresolved reference
  */
-public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix {
+public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPriorityAction {
   private PyReferenceExpression myElement;
 
   public UnresolvedReferenceAddSelfQuickFix(PyReferenceExpression element) {
@@ -34,7 +37,7 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyExpression expression = elementGenerator.createExpressionFromText("self." + myElement.getText());
+      PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myElement), "self." + myElement.getText());
       myElement.replace(expression);
   }
 }

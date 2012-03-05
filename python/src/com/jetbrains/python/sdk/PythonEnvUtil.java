@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,17 +18,19 @@ import java.util.Set;
  */
 public class PythonEnvUtil {
   public static final String PYTHONPATH = "PYTHONPATH";
+  public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
+  public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
 
   private PythonEnvUtil() {
   }
 
   public static Map<String, String> setPythonUnbuffered(@NotNull Map<String, String> envs) {
-    envs.put("PYTHONUNBUFFERED", "1");
+    envs.put(PYTHONUNBUFFERED, "1");
     return envs;
   }
 
   public static Map<String, String> setPythonIOEncoding(@NotNull Map<String, String> envs, @NotNull String encoding) {
-    envs.put("PYTHONIOENCODING", encoding);
+    envs.put(PYTHONIOENCODING, encoding);
     return envs;
   }
 
@@ -55,7 +58,8 @@ public class PythonEnvUtil {
    */
   @NotNull
   public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
-    if (source != null) {
+    if (StringUtil.isEmpty(source)) {
+      assert source != null;
       Set<String> vals = Sets.newHashSet(source.split(File.pathSeparator));
       if (!vals.contains(value)) {
         return value + File.pathSeparatorChar + source;

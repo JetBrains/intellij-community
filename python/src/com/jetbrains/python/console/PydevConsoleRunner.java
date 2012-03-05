@@ -104,9 +104,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static PydevConsoleRunner createAndRun(@NotNull final Project project,
                                                 @NotNull final Sdk sdk,
                                                 final PyConsoleType consoleType,
-                                                final String projectRoot,
+                                                final String workingDirectory,
                                                 final String... statements2execute) {
-    return createAndRun(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk), statements2execute);
+    return createAndRun(project, sdk, consoleType, workingDirectory, createDefaultEnvironmentVariables(sdk), statements2execute);
   }
 
   public static Map<String, String> createDefaultEnvironmentVariables(Sdk sdk) {
@@ -133,10 +133,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static PydevConsoleRunner createAndRun(@NotNull final Project project,
                                                 @NotNull final Sdk sdk,
                                                 @NotNull final PyConsoleType consoleType,
-                                                @Nullable final String projectRoot,
+                                                @Nullable final String workingDirectory,
                                                 @NotNull final Map<String, String> environmentVariables,
                                                 final String... statements2execute) {
-    final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, projectRoot, environmentVariables);
+    final PydevConsoleRunner consoleRunner = create(project, sdk, consoleType, workingDirectory, environmentVariables);
     if (consoleRunner == null) return null;
     consoleRunner.run(statements2execute);
     return consoleRunner;
@@ -160,14 +160,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static PydevConsoleRunner create(Project project,
                                           Sdk sdk,
                                           PyConsoleType consoleType,
-                                          String projectRoot) {
-    return create(project, sdk, consoleType, projectRoot, createDefaultEnvironmentVariables(sdk));
+                                          String workingDirectory) {
+    return create(project, sdk, consoleType, workingDirectory, createDefaultEnvironmentVariables(sdk));
   }
 
   private static PydevConsoleRunner create(@NotNull Project project,
                                            @NotNull Sdk sdk,
                                            @NotNull PyConsoleType consoleType,
-                                           @Nullable String projectRoot,
+                                           @Nullable String workingDirectory,
                                            @NotNull final Map<String, String> environmentVariables) {
     final int[] ports;
     try {
@@ -203,7 +203,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       }
     };
 
-    return new PydevConsoleRunner(project, sdk, consoleType, provider, projectRoot, ports);
+    return new PydevConsoleRunner(project, sdk, consoleType, provider, workingDirectory, ports);
   }
 
   @Override
@@ -220,54 +220,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         try {
-          PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)mySdk.getSdkAdditionalData();
-
-          GeneralCommandLine commandLine = new GeneralCommandLine(myCommandLineArgumentsProvider.getArguments());
-
-          commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getPyCharmHelpersPath(),
-                                                                                                           PYDEV_PYDEVCONSOLE_PY)
-                                                                                                    .getPath(),
-                                                                                                  PySourcePosition.isWindowsPath(
-                                                                                                    data.getInterpreterPath())));
-          commandLine.getParametersList().set(2, "0");
-          commandLine.getParametersList().set(3, "0");
-
-          myCommandLine = commandLine.getCommandLineString();
-
-
-          PyRemoteSshProcess remoteProcess =
-            manager.createRemoteProcess(getProject(), data, commandLine);
-
-
-          Scanner s = new Scanner(remoteProcess.getInputStream());
-          boolean received = false;
-          long started = System.currentTimeMillis();
-          while (!received && (System.currentTimeMillis() - started < 2000)) {
-            try {
-              int port = s.nextInt();
-              int port2 = s.nextInt();
-              received = true;
-              remoteProcess.addLocalTunnel(myPorts[0], data.getHost(), port);
-              remoteProcess.addRemoteTunnel(port2, "localhost", myPorts[1]);
-            }
-            catch (Exception e) {
-              try {
-                Thread.sleep(200);
-              }
-              catch (InterruptedException e1) {
-              }
-            }
-          }
-          if (!received) {
-            throw new ExecutionException("Couldn't get remote ports for console connection.");
-          }
-          try {
-            myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
-            return remoteProcess;
-          }
-          catch (Exception e) {
-            throw new ExecutionException(e.getMessage());
-          }
+          return createRemoteConsoleProcess(manager);
         }
         catch (final PyRemoteInterpreterException e) {
           throw new ExecutionException(e.getMessage(), e);
@@ -286,6 +239,58 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         throw new ExecutionException(e.getMessage());
       }
       return server;
+    }
+  }
+
+  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager)
+    throws PyRemoteInterpreterException, ExecutionException {
+    PythonRemoteSdkAdditionalData data = (PythonRemoteSdkAdditionalData)mySdk.getSdkAdditionalData();
+
+    GeneralCommandLine commandLine = new GeneralCommandLine(myCommandLineArgumentsProvider.getArguments());
+
+    commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getPyCharmHelpersPath(),
+                                                                                                     PYDEV_PYDEVCONSOLE_PY)
+                                                                                              .getPath(),
+                                                                                            PySourcePosition.isWindowsPath(
+                                                                                              data.getInterpreterPath())));
+    commandLine.getParametersList().set(2, "0");
+    commandLine.getParametersList().set(3, "0");
+
+    myCommandLine = commandLine.getCommandLineString();
+
+
+    PyRemoteSshProcess remoteProcess =
+      manager.createRemoteProcess(getProject(), data, commandLine);
+
+
+    Scanner s = new Scanner(remoteProcess.getInputStream());
+    boolean received = false;
+    long started = System.currentTimeMillis();
+    while (!received && (System.currentTimeMillis() - started < 2000)) {
+      try {
+        int port = s.nextInt();
+        int port2 = s.nextInt();
+        received = true;
+        remoteProcess.addLocalTunnel(myPorts[0], data.getHost(), port);
+        remoteProcess.addRemoteTunnel(port2, "localhost", myPorts[1]);
+      }
+      catch (Exception e) {
+        try {
+          Thread.sleep(200);
+        }
+        catch (InterruptedException e1) {
+        }
+      }
+    }
+    if (!received) {
+      throw new ExecutionException("Couldn't get remote ports for console connection.");
+    }
+    try {
+      myPydevConsoleCommunication = new PydevConsoleCommunication(getProject(), myPorts[0], remoteProcess, myPorts[1]);
+      return remoteProcess;
+    }
+    catch (Exception e) {
+      throw new ExecutionException(e.getMessage());
     }
   }
 

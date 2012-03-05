@@ -39,7 +39,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   private final PsiReference myReference;
 
   private final List<ImportCandidateHolder> myImports; // from where and what to import
-  String myName;
+  private final String myName;
 
   boolean myUseQualifiedImport;
   private boolean myExpended;
@@ -106,7 +106,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     if (ImportFromExistingAction.isResolved(myReference)) {
       return false;
     }
-    if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) {
+    if (HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       return false;
     }
     if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified
@@ -162,5 +162,9 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
       }
     }
     return true;
+  }
+
+  public String getNameToImport() {
+    return myName;
   }
 }

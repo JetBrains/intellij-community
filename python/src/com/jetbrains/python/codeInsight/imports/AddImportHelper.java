@@ -84,6 +84,9 @@ public class AddImportHelper {
     PsiElement source;
     if (relativeTo instanceof PyFromImportStatement) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)relativeTo;
+      if (fromImportStatement.isFromFuture()) {
+        return false;
+      }
       relativeToName = fromImportStatement.getImportSourceQName();
       source = fromImportStatement.resolveImportSource();
     }
