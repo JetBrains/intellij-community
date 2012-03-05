@@ -54,6 +54,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   public static final Icon PICK = IconLoader.findIcon("/ide/pipette.png");
   public static final Icon PICK_ROLLOVER = IconLoader.findIcon("/ide/pipette_rollover.png");
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
+  private static final String HSB_PROPERTY = "color.picker.is.hsb";
 
   private Color myColor;
   private ColorPreviewComponent myPreviewComponent;
@@ -93,6 +94,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     myFormat.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        PropertiesComponent.getInstance().setValue(HSB_PROPERTY, String.valueOf(!isRGBMode()));
         myR.setText(isRGBMode() ? "R:" : "H:");
         myG.setText(isRGBMode() ? "G:" : "S:");
         myR_after.setText(isRGBMode() ? "" : "\u00B0");
@@ -133,6 +135,11 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     setColor(c, this);
 
     setSize(300, 350);
+
+    final boolean hsb = PropertiesComponent.getInstance().getBoolean(HSB_PROPERTY, false);
+    if (hsb) {
+      myFormat.setSelectedIndex(1);
+    }
   }
 
   private boolean isRGBMode() {
