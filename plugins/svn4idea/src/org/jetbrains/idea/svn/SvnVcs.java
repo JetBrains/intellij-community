@@ -579,7 +579,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
     final boolean keep;
     if (StringUtil.isEmptyOrSpaces(property)) {
-      keep = true;  // default
+      keep = ! ApplicationManager.getApplication().isUnitTestMode();  // default
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
     }
