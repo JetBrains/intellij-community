@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -71,18 +70,21 @@ import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
-import git4idea.roots.*;
+import git4idea.roots.GitIntegrationEnabler;
+import git4idea.roots.GitRootChecker;
+import git4idea.roots.GitRootDetectInfo;
+import git4idea.roots.GitRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
-import git4idea.vfs.GitRootTracker;
-import git4idea.vfs.GitRootsListener;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -125,8 +127,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
-  private GitRootTracker myRootTracker; // The tracker that checks validity of git roots
-  private final EventDispatcher<GitRootsListener> myRootListeners = EventDispatcher.create(GitRootsListener.class);
   private final BackgroundTaskQueue myTaskQueue; // The queue that is used to schedule background task from actions
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
   private final TreeDiffProvider myTreeDiffProvider;
@@ -326,9 +326,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
 
-    if (!myProject.isDefault() && myRootTracker == null) {
-      myRootTracker = new GitRootTracker(this, myProject, myRootListeners.getMulticaster());
-    }
     if (myVFSListener == null) {
       myVFSListener = new GitVFSListener(myProject, this, myGit);
     }
@@ -347,10 +344,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   protected void deactivate() {
-    if (myRootTracker != null) {
-      myRootTracker.dispose();
-      myRootTracker = null;
-    }
     if (myVFSListener != null) {
       Disposer.dispose(myVFSListener);
       myVFSListener = null;
