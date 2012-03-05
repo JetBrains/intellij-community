@@ -15,5 +15,3 @@ class A(object):
   v2 = property(fset=setter, fdel=deleter, fget=getter, doc="doc of v2")
   v3 = property(lambda self: self._v, None, (deleter))
   v4 = otherworldly # NOTE: not supported yet
-
-<caret>a = A()

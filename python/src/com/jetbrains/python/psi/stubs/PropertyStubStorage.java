@@ -30,28 +30,6 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
     return name;
   }
 
-  @NotNull
-  @Override
-  public Maybe<String> getGetter() {
-    return myGetter;
-  }
-
-  @NotNull
-  @Override
-  public Maybe<String> getSetter() {
-    return mySetter;
-  }
-
-  @NotNull
-  @Override
-  public Maybe<String> getDeleter() {
-    return myDeleter;
-  }
-
-  public String getDoc() {
-    return myDoc;
-  }
-
   private static final String IMPOSSIBLE_NAME = "#";
 
   private static void writeOne(Maybe<String> what, StubOutputStream stream) throws IOException {

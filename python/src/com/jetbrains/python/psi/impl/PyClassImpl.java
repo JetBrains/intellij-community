@@ -579,37 +579,37 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
-  private Maybe<PyFunction> fromPacked(Maybe<String> maybe_name) {
-    if (maybe_name.isDefined()) {
-      PyFunction method = findMethodByName(maybe_name.value(), true);
+  private Maybe<PyFunction> fromPacked(Maybe<String> maybeName) {
+    if (maybeName.isDefined()) {
+      final String value = maybeName.value();
+      if (value == null || PyNames.NONE.equals(value)) {
+        return NONE;
+      }
+      PyFunction method = findMethodByName(value, true);
       if (method != null) return new Maybe<PyFunction>(method);
     }
     return UNKNOWN_CALL;
   }
 
   @Nullable
-  private Property lookInStubProperties(@Nullable String name, @Nullable Processor<Property> property_filter) {
-    Maybe<PyFunction> getter = NONE;
-    Maybe<PyFunction> setter = NONE;
-    Maybe<PyFunction> deleter = NONE;
-    String doc = null;
+  private Property lookInStubProperties(@Nullable String name, @Nullable Processor<Property> propertyProcessor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
       for (StubElement substub : stub.getChildrenStubs()) {
         if (substub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
-          final PyTargetExpressionStub target_stub = (PyTargetExpressionStub)substub;
-          PropertyStubStorage prop = target_stub.getCustomStub(PropertyStubStorage.class);
-          if (prop != null && (name == null || name.equals(target_stub.getName()))) {
-            getter = fromPacked(prop.getGetter());
-            setter = fromPacked(prop.getSetter());
-            deleter = fromPacked(prop.getDeleter());
-            doc = prop.getDoc();
+          final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)substub;
+          PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
+          if (prop != null && (name == null || name.equals(targetStub.getName()))) {
+            Maybe<PyFunction> getter = fromPacked(prop.getGetter());
+            Maybe<PyFunction> setter = fromPacked(prop.getSetter());
+            Maybe<PyFunction> deleter = fromPacked(prop.getDeleter());
+            String doc = prop.getDoc();
+            if (getter != NONE || setter != NONE || deleter != NONE) {
+              final PropertyImpl property = new PropertyImpl(getter, setter, deleter, doc, targetStub.getPsi());
+              if (propertyProcessor == null || propertyProcessor.process(property)) return property;
+            }
           }
         }
-      }
-      if (getter != NONE || setter != NONE || deleter != NONE) {
-        final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
-        if (property_filter == null || property_filter.process(prop)) return prop;
       }
     }
     return null;
