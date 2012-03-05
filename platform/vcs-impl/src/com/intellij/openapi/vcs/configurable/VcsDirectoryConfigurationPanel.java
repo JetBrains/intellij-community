@@ -101,7 +101,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
             return;
           }
           String relativePath = FileUtil.getRelativePath(ioBase, directoryFile);
-          if (".".equals(relativePath)) {
+          if (".".equals(relativePath) || relativePath == null) {
             append(ioBase.getPath());
           }
           else {
