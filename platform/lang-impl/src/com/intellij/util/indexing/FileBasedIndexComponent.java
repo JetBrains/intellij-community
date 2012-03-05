@@ -39,7 +39,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.util.containers.HashMap;
@@ -66,7 +68,8 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
                                  FileBasedIndexTransactionMap transactionMap,
                                  FileBasedIndexLimitsChecker limitsChecker,
                                  SerializationManager sm) throws IOException {
-    super(vfManager, fdm, bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker, sm);
+    super(vfManager, fdm, bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker,
+          new PersistentVfsAdapter((PersistentFS)ManagingFS.getInstance()), sm);
 
     final MessageBusConnection connection = bus.connect();
     final FileTypeManager fileTypeManager_ = fileTypeManager;

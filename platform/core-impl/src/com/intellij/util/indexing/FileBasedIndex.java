@@ -22,7 +22,6 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -32,7 +31,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -43,15 +41,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -110,6 +105,7 @@ public class FileBasedIndex {
   private FileBasedIndexIndicesManager myIndexIndicesManager;
   private FileBasedIndexTransactionMap myTransactionMap;
   private FileBasedIndexLimitsChecker myLimitsChecker;
+  private final AbstractVfsAdapter myVfsAdapter;
 
   private static final int ALREADY_PROCESSED = 0x02;
   @Nullable private final String myConfigPath;
@@ -132,6 +128,7 @@ public class FileBasedIndex {
                         FileBasedIndexIndicesManager indexIndicesManager,
                         FileBasedIndexTransactionMap transactionMap,
                         FileBasedIndexLimitsChecker limitsChecker,
+                        AbstractVfsAdapter vfsAdapter,
                         SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
@@ -139,6 +136,7 @@ public class FileBasedIndex {
     myIndexIndicesManager = indexIndicesManager;
     myTransactionMap = transactionMap;
     myLimitsChecker = limitsChecker;
+    myVfsAdapter = vfsAdapter;
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     myConfigPath = calcConfigPath(PathManager.getConfigPath());
     mySystemPath = calcConfigPath(PathManager.getSystemPath());
@@ -836,12 +834,11 @@ public class FileBasedIndex {
           }
         }
         else {
-          final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
           VALUES_LOOP: for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext();) {
             final V value = valueIt.next();
             for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext();) {
               final int id = inputIdsIterator.next();
-              VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+              VirtualFile file = myVfsAdapter.findFileByIdIfCached(id);
               if (file != null && filter.accept(file)) {
                 shouldContinue = processor.process(file, value);
                 if (!shouldContinue) {
@@ -917,13 +914,12 @@ public class FileBasedIndex {
     return processExceptions(indexId, null, filter, convertor);
   }
 
-  private static boolean processVirtualFiles(TIntHashSet ids, final GlobalSearchScope filter, final Processor<VirtualFile> processor) {
-    final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+  private boolean processVirtualFiles(TIntHashSet ids, final GlobalSearchScope filter, final Processor<VirtualFile> processor) {
     return ids.forEach(new TIntProcedure() {
       @Override
       public boolean execute(int id) {
         ProgressManager.checkCanceled();
-        VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+        VirtualFile file = myVfsAdapter.findFileByIdIfCached( id);
         if (file != null && filter.accept(file)) {
           return processor.process(file);
         }
@@ -977,12 +973,11 @@ public class FileBasedIndex {
           }
         });
 
-        final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
         TIntIterator ids = join(locals).iterator();
         while (ids.hasNext()) {
           int id = ids.next();
           //VirtualFile file = IndexInfrastructure.findFileById(fs, id);
-          VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+          VirtualFile file = myVfsAdapter.findFileByIdIfCached(id);
           if (file != null && filter.accept(file)) {
             if (!processor.process(file)) {
               return false;
@@ -1125,11 +1120,11 @@ public class FileBasedIndex {
     }
   }
 
-  public static void requestRebuild(ID<?, ?> indexId) {
+  public void requestRebuild(ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
 
-  public static void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
+  public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
     LOG.info("Rebuild requested for index " + indexId, throwable);
     ourRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
@@ -1291,7 +1286,6 @@ public class FileBasedIndex {
     private final Set<VirtualFile> myFilesToUpdate = new ConcurrentHashSet<VirtualFile>();
     private final Queue<InvalidationTask> myFutureInvalidations = new ConcurrentLinkedQueue<InvalidationTask>();
 
-    private final ManagingFS myManagingFS = ManagingFS.getInstance();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     @Override
@@ -1394,9 +1388,8 @@ public class FileBasedIndex {
         return;
       }
       if (file.isDirectory()) {
-        if (isMock(file) || myManagingFS.wereChildrenAccessed(file)) {
-          final Iterable<VirtualFile> children = file instanceof NewVirtualFile
-                                                 ? ((NewVirtualFile)file).iterInDbChildren() : Arrays.asList(file.getChildren());
+        if (isMock(file) ||  myVfsAdapter.wereChildrenAccessed(file)) {
+          final Iterable<VirtualFile> children = myVfsAdapter.getChildren(file);
           for (VirtualFile child : children) {
             invalidateIndices(child, markForReindex);
           }
@@ -1619,7 +1612,7 @@ public class FileBasedIndex {
     @Override
     public boolean processFile(final VirtualFile file) {
       if (!file.isDirectory()) {
-        if (file instanceof NewVirtualFile && ((NewVirtualFile)file).getFlag(ALREADY_PROCESSED)) {
+        if (myVfsAdapter.getFlag(file, ALREADY_PROCESSED)) {
           return true;
         }
 
@@ -1667,8 +1660,8 @@ public class FileBasedIndex {
             }
             IndexingStamp.flushCache();
 
-            if (oldStuff && file instanceof NewVirtualFile) {
-              ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);
+            if (oldStuff) {
+              myVfsAdapter.setFlag(file, ALREADY_PROCESSED, true);
             }
           }
           finally {
@@ -1734,24 +1727,15 @@ public class FileBasedIndex {
     }
   }
 
-  protected static void cleanupProcessedFlag() {
-    final VirtualFile[] roots = ManagingFS.getInstance().getRoots();
-    for (VirtualFile root : roots) {
-      cleanProcessedFlag(root);
-    }
-  }
-
-  private static void cleanProcessedFlag(final VirtualFile file) {
-    if (!(file instanceof NewVirtualFile)) return;
-    
-    final NewVirtualFile nvf = (NewVirtualFile)file;
-    if (file.isDirectory()) {
-      for (VirtualFile child : nvf.getCachedChildren()) {
-        cleanProcessedFlag(child);
+  protected void cleanupProcessedFlag() {
+    myVfsAdapter.iterateCachedFilesRecursively(new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(VirtualFile file) {
+        if (!file.isDirectory()) {
+          myVfsAdapter.setFlag(file, ALREADY_PROCESSED, false);
+        }
+        return true;
       }
-    }
-    else {
-      nvf.setFlag(ALREADY_PROCESSED, false);
-    }
+    });
   }
 }

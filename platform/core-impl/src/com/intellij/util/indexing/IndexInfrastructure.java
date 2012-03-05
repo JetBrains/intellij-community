@@ -37,7 +37,6 @@ import java.util.Locale;
 public class IndexInfrastructure {
   private static final int VERSION = 9;
   private static final TObjectLongHashMap<ID<?, ?>> ourIndexIdToCreationStamp = new TObjectLongHashMap<ID<?, ?>>();
-  private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   private IndexInfrastructure() {
   }
@@ -113,41 +112,5 @@ public class IndexInfrastructure {
     }
   }
 
-  @Nullable
-  public static VirtualFile findFileById(final PersistentFS fs, final int id) {
-    if (ourUnitTestMode) {
-      final VirtualFile testFile = findTestFile(id);
-      if (testFile != null) {
-        return testFile;
-      }
-    }
 
-    return fs.findFileById(id);
-
-    /*
-
-    final boolean isDirectory = fs.isDirectory(id);
-    final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
-    if (directoryInfo != null && (directoryInfo.contentRoot != null || directoryInfo.sourceRoot != null || directoryInfo.libraryClassRoot != null)) {
-      return isDirectory? directoryInfo.directory : directoryInfo.directory.findChild(fs.getName(id));
-    }
-    return null;
-    */
-  }
-
-  @Nullable
-  public static VirtualFile findFileByIdIfCached(final PersistentFS fs, final int id) {
-    if (ourUnitTestMode) {
-      final VirtualFile testFile = findTestFile(id);
-      if (testFile != null) {
-        return testFile;
-      }
-    }
-    return fs.findFileByIdIfCached(id);
-  }
-
-  @Nullable
-  private static VirtualFile findTestFile(final int id) {
-    return DummyFileSystem.getInstance().findById(id);
-  }
 }
