@@ -26,8 +26,11 @@ import java.util.List;
  * @author yole
  */
 public abstract class DefaultRollbackEnvironment implements RollbackEnvironment {
+
+  public static final String ROLLBACK_OPERATION_NAME = VcsBundle.message("changes.action.rollback.text");
+
   public String getRollbackOperationName() {
-    return VcsBundle.message("changes.action.rollback.text");
+    return ROLLBACK_OPERATION_NAME;
   }
 
   public void rollbackModifiedWithoutCheckout(final List<VirtualFile> files, final List<VcsException> exceptions,
