@@ -19,7 +19,9 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 
 import java.util.Collection;
@@ -103,6 +105,8 @@ public abstract class VcsDirtyScope {
    * @return true if path belongs to the dirty scope.
    */
   public abstract boolean belongsTo(final FilePath path);
+
+  public abstract boolean belongsTo(final FilePath path, final Consumer<AbstractVcs> vcsConsumer);
 
   public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
     return getAffectedContentRoots();
