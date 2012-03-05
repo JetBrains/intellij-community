@@ -163,23 +163,6 @@ public class FileBasedIndex {
       }
     });
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void before(List<? extends VFileEvent> events) {
-        for (VFileEvent event : events) {
-          final Object requestor = event.getRequestor();
-          if (requestor instanceof FileDocumentManager || requestor instanceof PsiManager || requestor == LocalHistory.VFS_EVENT_REQUESTOR) {
-            cleanupMemoryStorage();
-            break;
-          }
-        }
-      }
-
-      @Override
-      public void after(List<? extends VFileEvent> events) {
-      }
-    });
-
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void fileContentReloaded(VirtualFile file, Document document) {
@@ -1128,7 +1111,7 @@ public class FileBasedIndex {
     }
   }
 
-  private void cleanupMemoryStorage() {
+  protected void cleanupMemoryStorage() {
     myIndexIndicesManager.cleanupMemoryStorage();
   }
 
@@ -1769,87 +1752,6 @@ public class FileBasedIndex {
     }
     else {
       nvf.setFlag(ALREADY_PROCESSED, false);
-    }
-  }
-
-  public static void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator) {
-    if (project.isDisposed()) {
-      return;
-    }
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // iterate project content
-    projectFileIndex.iterateContent(processor);
-
-    if (project.isDisposed()) {
-      return;
-    }
-
-    Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
-    for (IndexedRootsProvider provider : Extensions.getExtensions(IndexedRootsProvider.EP_NAME)) {
-      //important not to depend on project here, to support per-project background reindex
-      // each client gives a project to FileBasedIndex
-      if (project.isDisposed()) {
-        return;
-      }
-      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(provider)) {
-        if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator);
-        }
-      }
-      for (VirtualFile root : IndexableSetContributor.getProjectRootsToIndex(provider, project)) {
-        if (visitedRoots.add(root)) {
-          iterateRecursively(root, processor, indicator);
-        }
-      }
-    }
-
-    if (project.isDisposed()) {
-      return;
-    }
-    // iterate associated libraries
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (module.isDisposed()) {
-        return;
-      }
-      OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
-          if (orderEntry.isValid()) {
-            final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
-            final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
-            for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
-              for (VirtualFile root : roots) {
-                if (visitedRoots.add(root)) {
-                  iterateRecursively(root, processor, indicator);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
-    if (root != null) {
-      if (indicator != null) {
-        indicator.checkCanceled();
-        indicator.setText2(root.getPresentableUrl());
-      }
-
-      if (root.isDirectory()) {
-        for (VirtualFile file : root.getChildren()) {
-          if (file.isDirectory()) {
-            iterateRecursively(file, processor, indicator);
-          }
-          else {
-            processor.processFile(file);
-          }
-        }
-      }
-      else {
-        processor.processFile(root);
-      }
     }
   }
 }
