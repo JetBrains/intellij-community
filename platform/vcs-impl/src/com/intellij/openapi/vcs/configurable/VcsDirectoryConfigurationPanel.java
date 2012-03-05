@@ -192,17 +192,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
 
     myCheckers = new HashMap<String, VcsRootChecker>();
-    for (VcsDescriptor descriptor : vcsDescriptors) {
-      String name = descriptor.getName();
-      AbstractVcs vcs = myVcsManager.findVcsByName(name);
-      if (vcs == null) {
-        continue;
-      }
-      VcsRootChecker checker = vcs.getRootChecker();
-      if (checker != null) {
-        myCheckers.put(name, checker);
-      }
-    }
+    updateRootCheckers();
 
     initPanel();
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
@@ -237,6 +227,21 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myDirectoryMappingTable.setRowHeight(myVcsComboBox.getPreferredSize().height);
     if (myIsDisabled) {
       myDirectoryMappingTable.setEnabled(false);
+    }
+  }
+
+  private void updateRootCheckers() {
+    myCheckers.clear();
+    for (VcsDescriptor descriptor : myVcsManager.getAllVcss()) {
+      String name = descriptor.getName();
+      AbstractVcs vcs = myVcsManager.findVcsByName(name);
+      if (vcs == null) {
+        continue;
+      }
+      VcsRootChecker checker = vcs.getRootChecker();
+      if (checker != null) {
+        myCheckers.put(name, checker);
+      }
     }
   }
 
@@ -339,16 +344,19 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
         @Override
         public void run(AnActionButton button) {
           addMapping();
+          updateRootCheckers();
         }
       }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           editMapping();
+          updateRootCheckers();
         }
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           removeMapping();
+          updateRootCheckers();
         }
       }).disableUpDownActions().createPanel();
 
