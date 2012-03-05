@@ -149,7 +149,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public void testInitializerMatters() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
     complete();
-    assertStringItems("foo", "fS");
+    assertStringItems("foo");
   }
 
   public void testFieldInitializerMatters() throws Exception {
@@ -159,13 +159,37 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testNoKeywordsInForLoopVariableName() throws Throwable {
-    configureByFile(FILE_PREFIX + getTestName(false) + ".java");
+    configure()
     assertStringItems("stringBuffer", "buffer");
   }
 
   public void testDuplicateSuggestionsFromUsage() {
-    configureByFile(FILE_PREFIX + getTestName(false) + ".java");
+    configure();
     assertStringItems("preferencePolicy", "policy");
+  }
+
+  public void configure() {
+    configureByFile(FILE_PREFIX + getTestName(false) + ".java")
+  }
+
+  public void testConstructorParameterName() {
+    configure()
+    assertStringItems("color");
+  }
+
+  public void testConstructorParameterNameWithPrefix() {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    String oldField = settings.FIELD_NAME_PREFIX;
+    String oldParam = settings.PARAMETER_NAME_PREFIX;
+    settings.FIELD_NAME_PREFIX = "my";
+    settings.PARAMETER_NAME_PREFIX = "p";
+
+    configure()
+
+    settings.FIELD_NAME_PREFIX = oldField
+    settings.PARAMETER_NAME_PREFIX = oldParam
+
+    assertStringItems("pColor");
   }
 
 }

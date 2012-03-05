@@ -137,6 +137,9 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
     if(parent == null) parent = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     addLookupItems(set, suggestedNameInfo, matcher, project, getUnresolvedReferences(parent, false));
+    if (var instanceof PsiParameter && parent instanceof PsiMethod) {
+      addSuggestionsInspiredByFieldNames(set, matcher, var, project, codeStyleManager);
+    }
 
     PsiExpression initializer = var.getInitializer();
     if (initializer != null) {
@@ -145,11 +148,33 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     }
   }
 
+  private static void addSuggestionsInspiredByFieldNames(Set<LookupElement> set,
+                                                         PrefixMatcher matcher,
+                                                         PsiVariable var,
+                                                         Project project,
+                                                         JavaCodeStyleManager codeStyleManager) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(var, PsiClass.class);
+    if (psiClass == null) {
+      return;
+    }
+
+    for (PsiField field : psiClass.getFields()) {
+      if (field.getType().isAssignableFrom(var.getType())) {
+        String prop = codeStyleManager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+        addLookupItems(set, null, matcher, project, codeStyleManager.propertyNameToVariableName(prop, VariableKind.PARAMETER));
+      }
+    }
+  }
+
   private static String[] getOverlappedNameVersions(final String prefix, final String[] suggestedNames, String suffix) {
     final List<String> newSuggestions = new ArrayList<String>();
     int longestOverlap = 0;
 
     for (String suggestedName : suggestedNames) {
+      if (suggestedName.length() < 3) {
+        continue;
+      }
+
       if (suggestedName.toUpperCase().startsWith(prefix.toUpperCase())) {
         newSuggestions.add(suggestedName);
         longestOverlap = prefix.length();
