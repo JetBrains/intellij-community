@@ -344,43 +344,9 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public SdkAdditionalData loadAdditionalData(final Sdk currentSdk, final Element additional) {
-    // try to upgrade from previous version(s)
-    String sdk_path = currentSdk.getHomePath();
-
-    if (PythonRemoteSdkAdditionalData.isRemoteSdk(sdk_path)) {
+    if (PythonRemoteSdkAdditionalData.isRemoteSdk(currentSdk.getHomePath())) {
       return PythonRemoteSdkAdditionalData.loadRemote(currentSdk, additional);
     }
-
-    if (sdk_path != null) {
-      // in versions up to 94.239, path points to lib dir; later it points to the interpreter itself
-      if (!isValidSdkHome(sdk_path)) {
-        if (SystemInfo.isWindows) {
-          switchPathToInterpreter(currentSdk, "python.exe", "jython.bat"); // can't be in the same dir, safe to try
-        }
-        else if (SystemInfo.isMac) {
-          // NOTE: not sure about jython
-          switchPathToInterpreter(currentSdk, "bin/python", "bin/jython", "jython"); // can't be in the same dir, safe to try
-        }
-        else if (SystemInfo.isUnix) {
-          String sdk_name = currentSdk.getName().toLowerCase();
-          if (sdk_name.contains("jython")) {
-            // NOTE: can't distinguish different installations in /usr/bin
-            switchPathToInterpreter(currentSdk, "jython", "/usr/bin/jython", "/usr/local/bin/jython");
-          }
-          else if (sdk_name.contains("python")) {
-            String sdk_home = new File(sdk_path).getName().toLowerCase(); // usually /usr/blahblah/pythonX.Y
-            if (sdk_home.contains("python")) {
-              String version = sdk_home.substring("python".length());
-              switchPathToInterpreter(currentSdk, "python" + version, "/usr/bin/python" + version, "/usr/local/bin/python" + version);
-            }
-          }
-        }
-      }
-    }
-
-    // Don't fix skeletons here, PythonSdkUpdater will take care of that (see PY-1226 - no progress will be displayed if skeletons
-    // generation is invoked from here
-
     return PythonSdkAdditionalData.load(currentSdk, additional);
   }
 
