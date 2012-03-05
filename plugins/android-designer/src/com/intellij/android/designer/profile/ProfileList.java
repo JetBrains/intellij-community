@@ -94,8 +94,6 @@ public class ProfileList implements PersistentStateComponent<ProfileList> {
 
   @Override
   public void loadState(ProfileList state) {
-    // TODO: send event to manager's
-
     XmlSerializerUtil.copyBean(state, this);
   }
 }

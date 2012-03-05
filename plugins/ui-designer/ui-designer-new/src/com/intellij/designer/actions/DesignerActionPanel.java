@@ -26,6 +26,10 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +43,7 @@ public class DesignerActionPanel implements DataProvider {
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private final DefaultActionGroup myStaticGroup = new DefaultActionGroup();
   private final DefaultActionGroup myDynamicGroup = new DefaultActionGroup();
-  private final ActionToolbar myToolbar;
+  private JComponent myToolbar;
   private final CommonEditActionsProvider myCommonEditActionsProvider;
   private final JComponent myShortcuts;
 
@@ -49,8 +53,13 @@ public class DesignerActionPanel implements DataProvider {
 
     myActionGroup.add(myStaticGroup);
     myActionGroup.add(myDynamicGroup);
-    myToolbar = ActionManager.getInstance().createActionToolbar(TOOLBAR, myActionGroup, true);
-    myToolbar.setMiniMode(true);
+
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(TOOLBAR, myActionGroup, true);
+    actionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
+
+    myToolbar = actionToolbar.getComponent();
+    myToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+    myToolbar.setVisible(false);
 
     registerAction(new SelectAllAction(designer.getSurfaceArea()), "$SelectAll");
 
@@ -72,7 +81,7 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   public JComponent getToolbarComponent() {
-    return myToolbar.getComponent();
+    return myToolbar;
   }
 
   public DefaultActionGroup getActionGroup() {
@@ -80,14 +89,7 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   public void update() {
-    boolean isEmpty = myActionGroup.getChildrenCount() == 0;
-
-    myToolbar.updateActionsImmediately();
-    myToolbar.setMiniMode(isEmpty);
-
-    if (!isEmpty) {
-      myToolbar.getComponent().setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-    }
+    myToolbar.setVisible(myActionGroup.getChildrenCount() > 0);
   }
 
   private void updateSelectionActions(List<RadComponent> selection) {

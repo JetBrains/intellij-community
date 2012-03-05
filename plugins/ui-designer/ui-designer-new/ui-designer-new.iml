@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="spellchecker" />
   </component>
 </module>

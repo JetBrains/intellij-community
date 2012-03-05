@@ -98,8 +98,6 @@ public class ProfileAction {
   }
 
   private void updateActions(Profile profile) {
-    // TODO: send event to manager's
-
     myProfileManager.setProfile(profile);
     myProfileList.setSelection(profile.getName());
     myActionGroup.removeAll();

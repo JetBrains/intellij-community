@@ -41,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -104,23 +106,23 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private void createDesignerCard() {
-    myDesignerCard = new JPanel(new GridBagLayout());
-    add(myDesignerCard, DESIGNER_CARD);
+    JPanel content = new JPanel(new GridBagLayout());
 
     GridBagConstraints gbc = new GridBagConstraints();
 
     gbc.gridx = 0;
-    gbc.gridy = 2;
-    gbc.fill = GridBagConstraints.BOTH;
+    gbc.gridy = 1;
+    gbc.fill = GridBagConstraints.VERTICAL;
 
     myVerticalCaption = new CaptionPanel(this, false);
-    myDesignerCard.add(myVerticalCaption, gbc);
+    content.add(myVerticalCaption, gbc);
 
     gbc.gridx = 1;
-    gbc.gridy = 1;
+    gbc.gridy = 0;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
 
     myHorizontalCaption = new CaptionPanel(this, true);
-    myDesignerCard.add(myHorizontalCaption, gbc);
+    content.add(myHorizontalCaption, gbc);
 
     myLayeredPane = new MyLayeredPane();
 
@@ -223,23 +225,21 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myLayeredPane.add(myFeedbackLayer, LAYER_FEEDBACK);
 
     gbc.gridx = 1;
-    gbc.gridy = 2;
+    gbc.gridy = 1;
     gbc.weightx = 1;
     gbc.weighty = 1;
+    gbc.fill = GridBagConstraints.BOTH;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
     myScrollPane.setBackground(Color.WHITE);
-    myDesignerCard.add(myScrollPane, gbc);
-
-    gbc.gridx = 0;
-    gbc.gridy = 0;
-    gbc.gridwidth = 2;
-    gbc.weightx = 0;
-    gbc.weighty = 0;
-    gbc.fill = GridBagConstraints.HORIZONTAL;
+    content.add(myScrollPane, gbc);
 
     myActionPanel = new DesignerActionPanel(this, myGlassLayer);
-    myDesignerCard.add(myActionPanel.getToolbarComponent(), gbc);
+
+    myDesignerCard = new JPanel(new FillLayout());
+    myDesignerCard.add(myActionPanel.getToolbarComponent());
+    myDesignerCard.add(content);
+    add(myDesignerCard, DESIGNER_CARD);
 
     PaletteManager.getInstance(getProject()).addSelectionListener(myPaletteListener);
   }
@@ -362,6 +362,65 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public abstract TreeComponentDecorator getTreeDecorator();
+
+  private static final class FillLayout implements LayoutManager2 {
+    @Override
+    public void addLayoutComponent(Component comp, Object constraints) {
+    }
+
+    @Override
+    public float getLayoutAlignmentX(Container target) {
+      return 0.5f;
+    }
+
+    @Override
+    public float getLayoutAlignmentY(Container target) {
+      return 0.5f;
+    }
+
+    @Override
+    public void invalidateLayout(Container target) {
+    }
+
+    @Override
+    public void addLayoutComponent(String name, Component comp) {
+    }
+
+    @Override
+    public void removeLayoutComponent(Component comp) {
+    }
+
+    @Override
+    public Dimension maximumLayoutSize(Container target) {
+      return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public Dimension preferredLayoutSize(Container parent) {
+      Component toolbar = parent.getComponent(0);
+      Dimension toolbarSize = toolbar.isVisible() ? toolbar.getPreferredSize() : new Dimension();
+      Dimension contentSize = parent.getComponent(1).getPreferredSize();
+      return new Dimension(Math.max(toolbarSize.width, contentSize.width), toolbarSize.height + contentSize.height);
+    }
+
+    @Override
+    public Dimension minimumLayoutSize(Container parent) {
+      Component toolbar = parent.getComponent(0);
+      Dimension toolbarSize = toolbar.isVisible() ? toolbar.getMinimumSize() : new Dimension();
+      Dimension contentSize = parent.getComponent(1).getMinimumSize();
+      return new Dimension(Math.max(toolbarSize.width, contentSize.width), toolbarSize.height + contentSize.height);
+    }
+
+    @Override
+    public void layoutContainer(Container parent) {
+      int width = parent.getWidth();
+      int height = parent.getHeight();
+      Component toolbar = parent.getComponent(0);
+      Dimension toolbarSize = toolbar.isVisible() ? toolbar.getPreferredSize() : new Dimension();
+      toolbar.setBounds(0, 0, width, toolbarSize.height);
+      parent.getComponent(1).setBounds(0, toolbarSize.height, width, height - toolbarSize.height);
+    }
+  }
 
   private final class MyLayeredPane extends JLayeredPane implements Scrollable {
     public void doLayout() {
