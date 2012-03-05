@@ -182,5 +182,4 @@ public class IndexingStamp {
       myTimestampsCache.clear();
     }
   }
-
 }

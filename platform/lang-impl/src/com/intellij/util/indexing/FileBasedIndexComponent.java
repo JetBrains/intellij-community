@@ -21,6 +21,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.history.LocalHistory;
+import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -33,7 +34,9 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -52,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -156,6 +160,33 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
     if(!ApplicationManager.getApplication().isHeadlessEnvironment())
       new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
         .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
+  }
+
+  @Override
+  protected boolean isDumb(@Nullable Project project) {
+    if (project != null) {
+      return DumbServiceImpl.getInstance(project).isDumb();
+    }
+    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
+      if (DumbServiceImpl.getInstance(proj).isDumb()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  protected void scheduleIndexRebuild(boolean forceDumbMode) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
+      final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
+      if (forceDumbMode) {
+        service.queueCacheUpdateInDumbMode(updatersToRun);
+      }
+      else {
+        service.queueCacheUpdate(updatersToRun);
+      }
+    }
   }
 
   @Override

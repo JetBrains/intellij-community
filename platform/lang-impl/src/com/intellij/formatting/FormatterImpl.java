@@ -34,7 +34,6 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

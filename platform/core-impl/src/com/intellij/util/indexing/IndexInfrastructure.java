@@ -19,16 +19,11 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import gnu.trove.TObjectLongHashMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Locale;

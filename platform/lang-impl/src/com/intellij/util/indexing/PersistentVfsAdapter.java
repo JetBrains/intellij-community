@@ -92,11 +92,21 @@ public class PersistentVfsAdapter extends AbstractVfsAdapter {
   }
 
   @Override
-  public void iterateCachedFilesRecursively(VirtualFileVisitor visitor) {
-    final VirtualFile[] roots =  myFs.getRoots();
-    for (VirtualFile root : roots) {
-      iterate(root, visitor);
+  public void iterateCachedFilesRecursively(VirtualFile root, VirtualFileVisitor visitor) {
+    final VirtualFile[] roots =  root == null ? myFs.getRoots() : new VirtualFile[] { root };
+    for (VirtualFile file : roots) {
+      iterate(file, visitor);
     }
+  }
+
+  @Override
+  public boolean isMock(VirtualFile file) {
+    return !(file instanceof NewVirtualFile);
+  }
+
+  @Override
+  public IndexableFileSet getAdditionalIndexableFileSet() {
+    return new AdditionalIndexableFileSet();
   }
 
   private static void iterate(final VirtualFile file, VirtualFileVisitor visitor) {

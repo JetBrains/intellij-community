@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn17.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;

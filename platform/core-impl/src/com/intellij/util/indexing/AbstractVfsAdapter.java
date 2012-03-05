@@ -40,5 +40,10 @@ public abstract class AbstractVfsAdapter {
 
   public abstract VirtualFile[] getRoots();
 
-  public abstract void iterateCachedFilesRecursively(VirtualFileVisitor visitor);
+  public abstract void iterateCachedFilesRecursively(VirtualFile root, VirtualFileVisitor visitor);
+
+  public abstract boolean isMock(VirtualFile file);
+
+  @Nullable
+  public abstract IndexableFileSet getAdditionalIndexableFileSet();
 }

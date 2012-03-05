@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;

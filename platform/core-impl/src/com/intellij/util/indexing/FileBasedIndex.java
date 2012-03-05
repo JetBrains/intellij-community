@@ -41,10 +41,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
@@ -81,7 +78,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *         Date: Dec 20, 2007
  */
 
-public class FileBasedIndex {
+public abstract class FileBasedIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   @NonNls
   private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
@@ -233,7 +230,9 @@ public class FileBasedIndex {
 
       myVfManager.addVirtualFileListener(myChangedFilesCollector);
 
-      registerIndexableSet(new AdditionalIndexableFileSet(), null);
+      IndexableFileSet additionalIndexableFileSet = myVfsAdapter.getAdditionalIndexableFileSet();
+      if(additionalIndexableFileSet != null)
+        registerIndexableSet(additionalIndexableFileSet, null);
     }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
@@ -696,11 +695,11 @@ public class FileBasedIndex {
     }
   }
 
-  private static void handleDumbMode(@Nullable Project project) {
-    ProgressManager.checkCanceled(); // DumbModeAction.CANCEL
+  private void handleDumbMode(@Nullable Project project) {
+    checkCanceled(); // DumbModeAction.CANCEL
 
     if (project != null) {
-      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      final ProgressIndicator progressIndicator = getProgressIndicator();
       if (progressIndicator instanceof BackgroundableProcessIndicator) {
         final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
         if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
@@ -714,17 +713,7 @@ public class FileBasedIndex {
     throw new IndexNotReadyException();
   }
 
-  private static boolean isDumb(@Nullable Project project) {
-    if (project != null) {
-      return DumbServiceImpl.getInstance(project).isDumb();
-    }
-    for (Project proj : ProjectManager.getInstance().getOpenProjects()) {
-      if (DumbServiceImpl.getInstance(proj).isDumb()) {
-        return true;
-      }
-    }
-    return false;
-  }
+  protected abstract boolean isDumb(@Nullable Project project);
 
   @NotNull
   public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
@@ -883,7 +872,7 @@ public class FileBasedIndex {
           TIntHashSet mainIntersection = null;
 
           for (K dataKey : dataKeys) {
-            ProgressManager.checkCanceled();
+            checkCanceled();
             TIntHashSet copy = new TIntHashSet();
             final ValueContainer<V> container = index.getData(dataKey);
 
@@ -918,7 +907,7 @@ public class FileBasedIndex {
     return ids.forEach(new TIntProcedure() {
       @Override
       public boolean execute(int id) {
-        ProgressManager.checkCanceled();
+        checkCanceled();
         VirtualFile file = myVfsAdapter.findFileByIdIfCached( id);
         if (file != null && filter.accept(file)) {
           return processor.process(file);
@@ -926,6 +915,10 @@ public class FileBasedIndex {
         return true;
       }
     });
+  }
+
+  private void checkCanceled() {
+    ProgressManager.checkCanceled();
   }
 
   public static @Nullable Throwable getCauseToRebuildIndex(RuntimeException e) {
@@ -1036,7 +1029,7 @@ public class FileBasedIndex {
     final AtomicInteger status = ourRebuildStatus.get(indexId);
     if (status.get() == OK) return;
     if (status.compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
-      cleanupProcessedFlag();
+      cleanupProcessedFlag(null);
 
       final Runnable rebuildRunnable = new Runnable() {
         @Override
@@ -1081,18 +1074,7 @@ public class FileBasedIndex {
     }
   }
 
-  protected void scheduleIndexRebuild(boolean forceDumbMode) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
-      final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
-      if (forceDumbMode) {
-        service.queueCacheUpdateInDumbMode(updatersToRun);
-      }
-      else {
-        service.queueCacheUpdate(updatersToRun);
-      }
-    }
-  }
+  protected abstract void scheduleIndexRebuild(boolean forceDumbMode);
 
   protected void clearIndex(final ID<?, ?> indexId) throws StorageException {
     final UpdatableIndex<?, ?, FileContent> index = myIndexIndicesManager.getIndex(indexId);
@@ -1125,7 +1107,7 @@ public class FileBasedIndex {
   }
 
   public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
-    cleanupProcessedFlag();
+    cleanupProcessedFlag(null);
     LOG.info("Rebuild requested for index " + indexId, throwable);
     ourRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
@@ -1188,7 +1170,7 @@ public class FileBasedIndex {
         }
 
         try {
-          ProgressManager.checkCanceled();
+          checkCanceled();
           updateSingleIndex(indexId, file, fc);
         }
         catch (ProcessCanceledException e) {
@@ -1343,7 +1325,7 @@ public class FileBasedIndex {
 
     private void markDirty(final VirtualFileEvent event) {
       final VirtualFile eventFile = event.getFile();
-      cleanProcessedFlag(eventFile);
+      cleanupProcessedFlag(eventFile);
       iterateIndexableFiles(eventFile, new Processor<VirtualFile>() {
         @Override
         public boolean process(final VirtualFile file) {
@@ -1396,7 +1378,7 @@ public class FileBasedIndex {
         }
       }
       else {
-        cleanProcessedFlag(file);
+        cleanupProcessedFlag(file);
         IndexingStamp.flushCache();
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndexIndicesManager.size());
 
@@ -1495,8 +1477,7 @@ public class FileBasedIndex {
       if (size == 0) {
         return;
       }
-      final ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
-      final ProgressIndicator indicator = current != null ? current : new EmptyProgressIndicator();
+      final ProgressIndicator indicator = getProgressIndicator();
       indicator.setText("");
       int count = 0;
       while (true) {
@@ -1601,7 +1582,7 @@ public class FileBasedIndex {
     private final ProgressIndicator myProgressIndicator;
 
     private UnindexedFilesFinder() {
-      myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      myProgressIndicator = getProgressIndicator();
     }
 
     @Override
@@ -1679,6 +1660,11 @@ public class FileBasedIndex {
     }
   }
 
+  private ProgressIndicator getProgressIndicator() {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    return indicator != null ? indicator : new EmptyProgressIndicator();
+  }
+
   private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
     return myIndexIndicesManager.getInputFilter(indexId).acceptInput(file) &&
            (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
@@ -1695,8 +1681,8 @@ public class FileBasedIndex {
            mySystemPath != null && FileUtil.startsWith(filePath, mySystemPath);
   }
 
-  private static boolean isMock(final VirtualFile file) {
-    return !(file instanceof NewVirtualFile);
+  private boolean isMock(final VirtualFile file) {
+    return myVfsAdapter.isMock(file);
   }
 
   public CollectingContentIterator createContentIterator() {
@@ -1727,8 +1713,8 @@ public class FileBasedIndex {
     }
   }
 
-  protected void cleanupProcessedFlag() {
-    myVfsAdapter.iterateCachedFilesRecursively(new VirtualFileVisitor() {
+  protected void cleanupProcessedFlag(VirtualFile root) {
+    myVfsAdapter.iterateCachedFilesRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(VirtualFile file) {
         if (!file.isDirectory()) {

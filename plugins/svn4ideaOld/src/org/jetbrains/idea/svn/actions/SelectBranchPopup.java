@@ -15,20 +15,16 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;

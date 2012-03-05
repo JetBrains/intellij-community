@@ -45,7 +45,6 @@ import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcsUtil.Rethrow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.util.LocaleServiceProviderPool;
 
 import java.util.*;
 

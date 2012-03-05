@@ -50,7 +50,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNAdminAreaInfo;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNReporter;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
-import org.tmatesoft.svn.core.internal.wc17.SVNBaseClient17;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCClient17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
