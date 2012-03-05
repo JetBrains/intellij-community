@@ -45,7 +45,7 @@ public class GitRootErrorsFinder {
   public Collection<VcsRootError> find() {
     ProjectLevelVcsManager vcsManager = myPlatformFacade.getVcsManager(myProject);
     Collection<VirtualFile> vcsRoots = Arrays.asList(vcsManager.getRootsUnderVcs(myPlatformFacade.getVcs(myProject)));
-    Collection<VirtualFile> gitRoots = new GitRootDetector(myProject).detect().getRoots();
+    Collection<VirtualFile> gitRoots = new GitRootDetector(myProject, myPlatformFacade).detect().getRoots();
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     for (VirtualFile vcsRoot : vcsRoots) {
       if (!gitRoots.contains(vcsRoot)) {

@@ -105,7 +105,7 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   }
 
   private void doTest(Map map) {
-    myProject = initProject(map.git, [])
+    myProject = initProject(map.git, [], [])
     myVcsManager = (GitMockVcsManager) myPlatformFacade.getVcsManager(myProject)
 
     addVcsRoots(map.roots)
