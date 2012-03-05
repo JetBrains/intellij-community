@@ -18,7 +18,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SoftHashMap;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -58,7 +57,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
   };
 
-  private final SoftHashMap<String, Property> myPropertyCache = new SoftHashMap<String, Property>();
+  private volatile Map<String, Property> myPropertyCache;
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context) {
@@ -507,12 +506,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
    * @return the first property that both filters accepted.
    */
   @Nullable
-  private Property findPropertyLocally(@Nullable String name, @Nullable Processor<Property> property_filter, boolean advanced) {
+  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter, boolean advanced) {
     // NOTE: fast enough to be rerun every time
-    Property prop = lookInDecoratedProperties(name, property_filter, advanced);
+    Property prop = processDecoratedProperties(name, property_filter, advanced);
     if (prop != null) return prop;
     if (getStub() != null) {
-      prop = lookInStubProperties(name, property_filter);
+      prop = processStubProperties(name, property_filter);
       if (prop != null) return prop;
     }
     else {
@@ -530,7 +529,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private Property lookInDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean useAdvancedSyntax) {
+  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean useAdvancedSyntax) {
     // look at @property decorators
     Map<String, List<PyFunction>> grouped = new HashMap<String, List<PyFunction>>();
     // group suitable same-named methods, each group defines a property
@@ -572,7 +571,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         if (getter != NONE && setter != NONE && deleter != NONE) break; // can't improve
       }
       if (getter != NONE || setter != NONE || deleter != NONE) {
-        final PropertyImpl prop = new PropertyImpl(getter, setter, deleter, doc, null);
+        final PropertyImpl prop = new PropertyImpl(decoratorName, getter, setter, deleter, doc, null);
         if (filter == null || filter.process(prop)) return prop;
       }
     }
@@ -592,7 +591,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private Property lookInStubProperties(@Nullable String name, @Nullable Processor<Property> propertyProcessor) {
+  private Property processStubProperties(@Nullable String name, @Nullable Processor<Property> propertyProcessor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
       for (StubElement substub : stub.getChildrenStubs()) {
@@ -605,7 +604,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
             Maybe<PyFunction> deleter = fromPacked(prop.getDeleter());
             String doc = prop.getDoc();
             if (getter != NONE || setter != NONE || deleter != NONE) {
-              final PropertyImpl property = new PropertyImpl(getter, setter, deleter, doc, targetStub.getPsi());
+              final PropertyImpl property = new PropertyImpl(targetStub.getName(), getter, setter, deleter, doc, targetStub.getPsi());
               if (propertyProcessor == null || propertyProcessor.process(property)) return property;
             }
           }
@@ -618,26 +617,49 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Nullable
   @Override
   public Property findProperty(@NotNull final String name) {
-    synchronized (myPropertyCache) {
-      if (myPropertyCache.containsKey(name)) {
-        return myPropertyCache.get(name);
+    Property property = findLocalProperty(name);
+    if (property != null) {
+      return property;
+    }
+    if (findMethodByName(name, false) != null || findClassAttribute(name, false) != null) {
+      return null;
+    }
+    for (PyClass aClass : iterateAncestorClasses()) {
+      final Property ancestorProperty = ((PyClassImpl)aClass).findLocalProperty(name);
+      if (ancestorProperty != null) {
+        return ancestorProperty;
       }
     }
-    final Property result = scanProperties(name, null, true);
-    synchronized (myPropertyCache) {
-      myPropertyCache.put(name, result);
+    return null;
+  }
+
+  private Property findLocalProperty(String name) {
+    if (myPropertyCache == null) {
+      myPropertyCache = initializePropertyCache();
     }
+    return myPropertyCache.get(name);
+  }
+
+  private Map<String, Property> initializePropertyCache() {
+    final Map<String, Property> result = new HashMap<String, Property>();
+    processProperties(null, new Processor<Property>() {
+      @Override
+      public boolean process(Property property) {
+        result.put(property.getName(), property);
+        return false;
+      }
+    }, false);
     return result;
   }
 
   @Nullable
   @Override
   public Property scanProperties(@Nullable Processor<Property> filter, boolean inherited) {
-    return scanProperties(null, filter, inherited);
+    return processProperties(null, filter, inherited);
   }
 
   @Nullable
-  private Property scanProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
+  private Property processProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
     if (!isValid()) {
       return null;
     }
@@ -651,7 +673,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     final boolean useAdvancedSyntax = level.isAtLeast(LanguageLevel.PYTHON26);
-    final Property local = findPropertyLocally(name, filter, useAdvancedSyntax);
+    final Property local = processPropertiesInClass(name, filter, useAdvancedSyntax);
     if (local != null) {
       return local;
     }
@@ -660,7 +682,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         return null;
       }
       for (PyClass cls : iterateAncestorClasses()) {
-        final Property property = ((PyClassImpl)cls).findPropertyLocally(name, filter, useAdvancedSyntax);
+        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter, useAdvancedSyntax);
         if (property != null) {
           return property;
         }
@@ -670,7 +692,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   private static class PropertyImpl extends PropertyBunch<PyFunction> implements Property {
-    private PropertyImpl(Maybe<PyFunction> getter, Maybe<PyFunction> setter, Maybe<PyFunction> deleter, String doc, PyTargetExpression site) {
+    private final String myName;
+
+    private PropertyImpl(String name, Maybe<PyFunction> getter, Maybe<PyFunction> setter, Maybe<PyFunction> deleter, String doc, PyTargetExpression site) {
+      myName = name;
       myDeleter = deleter;
       myGetter = getter;
       mySetter = setter;
@@ -678,25 +703,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       mySite = site;
     }
 
-    @NotNull
-    public Maybe<PyFunction> getDeleter() {
-      return myDeleter;
-    }
-
-    @Override
-    @NotNull
-    public Maybe<PyFunction> getSetter() {
-      return mySetter;
-    }
-
-    @Override
-    @NotNull
-    public Maybe<PyFunction> getGetter() {
-      return myGetter;
-    }
-
-    public String getDoc() {
-      return myDoc;
+    public String getName() {
+      return myName;
     }
 
     public PyTargetExpression getDefinitionSite() {
@@ -724,26 +732,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return null;
     }
 
-    private static String nvl(Object s) {
-      return s == null? "null" : s.toString();
-    }
-
     public String toString() {
-      // for debug
-      return
-        new StringBuilder("property(")
-         .append(nvl(myGetter)).append(", ")
-         .append(nvl(mySetter)).append(", ")
-         .append(nvl(myDeleter)).append(", ")
-         .append(nvl(myDoc)).append(")")
-         .toString()
-      ;
+      return "property(" + myGetter + ", " + mySetter + ", " + myDeleter + ", " + myDoc + ")";
     }
 
     @Nullable
     public static PropertyImpl fromTarget(PyTargetExpression target) {
       PyExpression expr = target.findAssignedValue();
-      final PropertyImpl prop = new PropertyImpl(null, null, null, null, target);
+      final PropertyImpl prop = new PropertyImpl(target.getName(), null, null, null, null, target);
       final boolean success = fillFromCall(expr, prop);
       return success? prop : null;
     }
@@ -1058,9 +1054,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (myInstanceAttributes != null) {
       myInstanceAttributes = null;
     }
-    synchronized (myPropertyCache) {
-      myPropertyCache.clear();
-    }
+    myPropertyCache = null;
   }
 
   @NotNull
