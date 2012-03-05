@@ -28,12 +28,12 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.LinkLabel;
+import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -46,6 +46,11 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
+import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 /**
  * @author yole
@@ -66,8 +71,9 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
   private final boolean myIsDisabled;
   private final VcsConfiguration myVcsConfiguration;
+  private final @NotNull Map<String, VcsRootChecker> myCheckers;
 
-  private static class MyDirectoryRenderer extends ColoredTableCellRenderer {
+  private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
 
     public MyDirectoryRenderer(Project project) {
@@ -77,11 +83,14 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     @Override
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       if (value instanceof VcsDirectoryMapping) {
-        if (((VcsDirectoryMapping)value).isDefaultMapping()) {
+        VcsDirectoryMapping mapping = (VcsDirectoryMapping)value;
+        if (mappingIsError(mapping)) {
+          setForeground(Color.RED);
+        }
+        if (mapping.isDefaultMapping()) {
           append(VcsDirectoryMapping.PROJECT_CONSTANT);
           return;
         }
-        final VcsDirectoryMapping mapping = (VcsDirectoryMapping)value;
         String directory = mapping.getDirectory();
         VirtualFile baseDir = myProject.getBaseDir();
         if (baseDir != null) {
@@ -101,6 +110,12 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
           }
         }
       }
+    }
+
+    private boolean mappingIsError(VcsDirectoryMapping mapping) {
+      String vcs = mapping.getVcs();
+      VcsRootChecker checker = myCheckers.get(vcs);
+      return checker != null && checker.isInvalidRoot(mapping.getDirectory());
     }
   }
 
@@ -161,7 +176,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
   public VcsDirectoryConfigurationPanel(final Project project) {
     myProject = project;
-    myVcsConfiguration = VcsConfiguration.getInstance(myProject);
+    myVcsConfiguration = getInstance(myProject);
     myProjectMessage = "<html>" + StringUtil.escapeXml(VcsDirectoryMapping.PROJECT_CONSTANT) + " - " +
                        DefaultVcsRootPolicy.getInstance(myProject).getProjectConfigurationMessage(myProject).replace('\n', ' ') + "</html>";
     myIsDisabled = myProject.isDefault();
@@ -174,6 +189,20 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
 
     myDirectoryMappingTable = new TableView<VcsDirectoryMapping>();
     myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
+
+    myCheckers = new HashMap<String, VcsRootChecker>();
+    for (VcsDescriptor descriptor : vcsDescriptors) {
+      String name = descriptor.getName();
+      AbstractVcs vcs = myVcsManager.findVcsByName(name);
+      if (vcs == null) {
+        continue;
+      }
+      VcsRootChecker checker = vcs.getRootChecker();
+      if (checker != null) {
+        myCheckers.put(name, checker);
+      }
+    }
+
     initPanel();
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
     DIRECTORY = new ColumnInfo<VcsDirectoryMapping, VcsDirectoryMapping>(VcsBundle.message("column.info.configure.vcses.directory")) {
@@ -239,7 +268,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   private void addMapping() {
-    Collection<AbstractVcs> activeVcses = getActiveVcses();
     VcsMappingConfigurationDialog dlg = new VcsMappingConfigurationDialog(myProject, VcsBundle.message("directory.mapping.add.title"));
     // due to wonderful UI designer bug
     dlg.initProjectMessage();
@@ -247,11 +275,15 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     if (dlg.isOK()) {
       VcsDirectoryMapping mapping = new VcsDirectoryMapping();
       dlg.saveToMapping(mapping);
-      List<VcsDirectoryMapping> items = new ArrayList<VcsDirectoryMapping>(myModel.getItems());
-      items.add(mapping);
-      myModel.setItems(items);
-      checkNotifyListeners(activeVcses);
+      addMapping(mapping);
     }
+  }
+
+  private void addMapping(VcsDirectoryMapping mapping) {
+    List<VcsDirectoryMapping> items = new ArrayList<VcsDirectoryMapping>(myModel.getItems());
+    items.add(mapping);
+    myModel.setItems(items);
+    checkNotifyListeners(getActiveVcses());
   }
 
   private void editMapping() {
@@ -284,8 +316,23 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   }
 
   protected JComponent createMainComponent() {
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new GridBagLayout());
+    GridBag gb = new GridBag()
+      .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
+      .setDefaultWeightX(1)
+      .setDefaultWeightY(0.1)
+      .setDefaultFill(GridBagConstraints.BOTH);
 
+    panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1));
+    panel.add(createProjectMappingDescription(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createErrorList(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createStoreBaseRevisionOption(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createShowChangedOption(), gb.nextLine().next().fillCellHorizontally());
+
+    return panel;
+  }
+
+  private JComponent createMappingsTable() {
     JPanel panelForTable = ToolbarDecorator.createDecorator(myDirectoryMappingTable, null)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
@@ -303,7 +350,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
           removeMapping();
         }
       }).disableUpDownActions().createPanel();
-    panel.add(panelForTable, BorderLayout.CENTER);
+
     ToolbarDecorator.findAddButton(panelForTable).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
       public boolean isEnabled(AnActionEvent e) {
@@ -324,36 +371,95 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
         return (!myIsDisabled) && hasSelection;
       }
     });
+    return panelForTable;
+  }
 
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
+  private static class VcsRootErrorLabel extends JPanel {
 
+    private final LinkLabel myAddLabel;
+
+    VcsRootErrorLabel(String title) {
+      super(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
+
+      setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
+                                         BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker())));
+      setOpaque(true);
+      Color COLOR = new Color(255, 186, 192);
+
+      setBackground(COLOR);
+
+      JBLabel label = new JBLabel(title);
+
+      myAddLabel = new LinkLabel("Add root", null);
+
+      myAddLabel.setOpaque(false);
+
+      JPanel actionsPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
+      actionsPanel.setOpaque(false);
+      actionsPanel.add(myAddLabel, BorderLayout.CENTER);
+
+      add(label, BorderLayout.WEST);
+      add(actionsPanel, BorderLayout.EAST);
+    }
+
+    void setAddRootLinkHandler(final Runnable handler) {
+      myAddLabel.setListener(new LinkListener() {
+        @Override
+        public void linkSelected(LinkLabel aSource, Object aLinkData) {
+          handler.run();
+        }
+      }, null);
+    }
+  }
+
+  private JComponent createErrorList() {
+    Box box = Box.createVerticalBox();
+    for (Map.Entry<String, VcsRootChecker> entry : myCheckers.entrySet()) {
+      VcsRootChecker checker = entry.getValue();
+      for (final VirtualFile root : checker.getUnregisteredRoots()) {
+        final String vcs = entry.getKey();
+        String title = "Unregistered " + vcs + " root: " + FileUtil.toSystemDependentName(root.getPresentableUrl());
+        final VcsRootErrorLabel vcsRootErrorLabel = new VcsRootErrorLabel(title);
+        vcsRootErrorLabel.setAddRootLinkHandler(new Runnable() {
+          @Override
+          public void run() {
+            addMapping(new VcsDirectoryMapping(root.getPath(), vcs));
+            vcsRootErrorLabel.setVisible(false);
+          }
+        });
+        box.add(vcsRootErrorLabel);
+      }
+    }
+    return box;
+  }
+
+  private JComponent createProjectMappingDescription() {
     final JBLabel label = new JBLabel(myProjectMessage);
     label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     label.setFontColor(UIUtil.FontColor.BRIGHTER);
     label.setBorder(BorderFactory.createEmptyBorder(2, 5, 2, 0));
-    wrapper.add(label, BorderLayout.CENTER);
+    return label;
+  }
 
-    final JBLabel noteLabel =
-      new JBLabel("File texts bigger than " + VcsConfiguration.ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
+  private JComponent createStoreBaseRevisionOption() {
+    final JBLabel noteLabel = new JBLabel("File texts bigger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
     noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
     noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 25, 5, 0));
 
-    final JPanel twoPanel = new JPanel(new BorderLayout());
-    twoPanel.add(myBaseRevisionTexts, BorderLayout.NORTH);
-    twoPanel.add(noteLabel, BorderLayout.SOUTH);
-    final JPanel wr2 = new JPanel(new BorderLayout());
-    wr2.add(twoPanel, BorderLayout.WEST);
-
     myBaseRevisionTexts.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 
-    final JPanel wr3 = new JPanel(new BorderLayout());
-    wr3.add(wr2, BorderLayout.NORTH);
-    wr3.add(myRecentlyChangedConfigurable.createComponent(), BorderLayout.SOUTH);
-    wrapper.add(wr3, BorderLayout.SOUTH);
-    panel.add(wrapper, BorderLayout.SOUTH);
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(myBaseRevisionTexts, BorderLayout.NORTH);
+    panel.add(noteLabel, BorderLayout.SOUTH);
     return panel;
+  }
+
+  private JComponent createShowChangedOption() {
+    myRecentlyChangedConfigurable = new VcsContentAnnotationConfigurable(myProject);
+    JComponent component = myRecentlyChangedConfigurable.createComponent();
+    assert component != null;
+    return component;
   }
 
   public void reset() {

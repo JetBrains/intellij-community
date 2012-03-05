@@ -24,6 +24,7 @@ import org.junit.Test
 import static git4idea.test.GitGTestUtil.toAbsolute
 import static junit.framework.Assert.assertEquals
 import git4idea.test.GitMockVirtualFile
+import com.intellij.openapi.vcs.VcsRootError
 
 /**
  * 
@@ -109,11 +110,11 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
 
     addVcsRoots(map.roots)
 
-    Collection<GitRootError> expected = new ArrayList<GitRootError>();
+    Collection<VcsRootError> expected = new ArrayList<VcsRootError>();
     expected.addAll map.errors.unreg.collect { unreg(it) }
     expected.addAll map.errors.extra.collect { extra(it) }
 
-    Collection<GitRootError> actual = new GitRootErrorsFinder(myProject, myPlatformFacade).find()
+    Collection<VcsRootError> actual = new GitRootErrorsFinder(myProject, myPlatformFacade).find()
     assertEquals expected.toSet(), actual.toSet()
   }
 
@@ -124,12 +125,12 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
     }
   }
 
-  GitRootError unreg(String path) {
-    return new GitRootError(GitRootError.Type.UNREGISTERED_ROOT, new GitMockVirtualFile(toAbsolute(path, myProject)))
+  VcsRootError unreg(String path) {
+    return new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, new GitMockVirtualFile(toAbsolute(path, myProject)))
   }
 
-  GitRootError extra(String path) {
-    return new GitRootError(GitRootError.Type.EXTRA_ROOT, new GitMockVirtualFile(toAbsolute(path, myProject)))
+  VcsRootError extra(String path) {
+    return new VcsRootError(VcsRootError.Type.EXTRA_ROOT, new GitMockVirtualFile(toAbsolute(path, myProject)))
   }
 
   

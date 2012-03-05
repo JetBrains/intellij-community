@@ -71,9 +71,7 @@ import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
-import git4idea.roots.GitIntegrationEnabler;
-import git4idea.roots.GitRootDetectInfo;
-import git4idea.roots.GitRootDetector;
+import git4idea.roots.*;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
@@ -84,9 +82,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -307,6 +303,11 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null;
+  }
+
+  @Override
+  public VcsRootChecker getRootChecker() {
+    return new MyVcsRootChecker();
   }
 
   @Override
@@ -556,4 +557,34 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     });
   }
 
+  private class MyVcsRootChecker implements VcsRootChecker {
+
+    private final Collection<VcsRootError> myErrors;
+
+    MyVcsRootChecker() {
+      myErrors = new GitRootErrorsFinder(myProject, myPlatformFacade).find();
+    }
+
+    @NotNull
+    @Override
+    public Collection<VirtualFile> getUnregisteredRoots() {
+      Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
+      for (VcsRootError error : myErrors) {
+        if (error.getType() == VcsRootError.Type.UNREGISTERED_ROOT) {
+          roots.add(error.getRoot());
+        }
+      }
+      return roots;
+    }
+
+    @Override
+    public boolean isInvalidRoot(@NotNull String directory) {
+      for (VcsRootError error : myErrors) {
+        if (error.getType() == VcsRootError.Type.EXTRA_ROOT && error.getRoot().getPath().equals(directory)) {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
 }
