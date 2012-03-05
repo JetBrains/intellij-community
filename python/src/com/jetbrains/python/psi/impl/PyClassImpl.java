@@ -633,6 +633,21 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
+  @Override
+  public Property findPropertyByFunction(PyFunction function) {
+    if (myPropertyCache == null) {
+      myPropertyCache = initializePropertyCache();
+    }
+    for (Property property : myPropertyCache.values()) {
+      if (property.getGetter().value() == function ||
+          property.getSetter().value() == function ||
+          property.getDeleter().value() == function) {
+        return property;
+      }
+    }
+    return null;
+  }
+
   private Property findLocalProperty(String name) {
     if (myPropertyCache == null) {
       myPropertyCache = initializePropertyCache();

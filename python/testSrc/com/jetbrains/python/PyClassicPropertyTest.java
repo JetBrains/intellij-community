@@ -108,4 +108,12 @@ public class PyClassicPropertyTest extends PyTestCase {
   }
   */
 
+  public void testGetProperty() {
+    final PyFunction getter = myClass.findMethodByName("v5getter", false);
+    assertNotNull(getter.getProperty());
+
+    final PyFunction setter = myClass.findMethodByName("v5setter", false);
+    assertNotNull(setter.getProperty());
+  }
+
 }
