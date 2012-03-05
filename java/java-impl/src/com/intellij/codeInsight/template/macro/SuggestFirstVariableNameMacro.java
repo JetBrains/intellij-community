@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +48,7 @@ public class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
         result.add(variable);
       }
     }
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 }
 
