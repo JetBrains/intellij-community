@@ -226,6 +226,13 @@ public abstract class VcsVFSListener implements Disposable {
   protected void beforeContentsChange(VirtualFileEvent event, VirtualFile file) {
   }
 
+  protected void fileAdded(VirtualFileEvent event, VirtualFile file) {
+    if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(file) &&
+        (isDirectoryVersioningSupported() || !file.isDirectory())) {
+      myAddedFiles.add(event.getFile());
+    }
+  }
+
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
     if (file.isDirectory() && !isDirectoryVersioningSupported()) {
       VirtualFile[] children = file.getChildren();
@@ -301,10 +308,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
     public void fileCreated(final VirtualFileEvent event) {
-      if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(event.getFile()) &&
-          (isDirectoryVersioningSupported() || !event.getFile().isDirectory())) {
-        myAddedFiles.add(event.getFile());
-      }
+      VcsVFSListener.this.fileAdded(event, event.getFile());
     }
 
     public void fileCopied(final VirtualFileCopyEvent event) {

@@ -36,10 +36,10 @@ public class LastUnchangedContentTracker {
   private static final Key<Long> LAST_TS_KEY = Key.create("LAST_TS_KEY");
   private static final FileAttribute LAST_TS_ATTR = new FileAttribute("LAST_TS_ATTR", 0, true);
   private static final FileAttribute ACQUIRED_CONTENT_ATTR = new FileAttribute("ACQUIRED_CONTENT_ATTR", 1, true);
-  public static final Key<Boolean> VCS_INVALID_FILE_STATUS = Key.create("VCS_INVALID_FILE_STATUS");
+  private static final Key<Boolean> VCS_INVALID_FILE_STATUS = Key.create("VCS_INVALID_FILE_STATUS");
 
   public static void updateLastUnchangedContent(@NotNull VirtualFile file) {
-    if (Boolean.TRUE.equals(file.getUserData(VCS_INVALID_FILE_STATUS))) {
+    if (isTouched(file)) {
       return;
     }
 
@@ -55,10 +55,22 @@ public class LastUnchangedContentTracker {
     }
 
     saveContentReference(file, getFS().acquireContent(file));
+    markTouched(file);
+  }
+
+  private static boolean isTouched(VirtualFile file) {
+    return Boolean.TRUE.equals(file.getUserData(VCS_INVALID_FILE_STATUS));
+  }
+
+  public static void markTouched(VirtualFile file) {
     file.putUserData(VCS_INVALID_FILE_STATUS, Boolean.TRUE);
   }
 
-  @Nullable 
+  public static void markUntouched(VirtualFile file) {
+    file.putUserData(VCS_INVALID_FILE_STATUS, null);
+  }
+
+  @Nullable
   public static byte[] getLastUnchangedContent(@NotNull VirtualFile file) {
     final Integer id = getSavedContentId(file);
     try {
