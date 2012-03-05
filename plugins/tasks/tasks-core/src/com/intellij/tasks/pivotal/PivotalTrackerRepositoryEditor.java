@@ -14,8 +14,6 @@ import java.awt.*;
 public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<PivotalTrackerRepository> {
   private final JTextField myProjectId;
   private final JTextField myAPIKey;
-  private final JCheckBox myShouldFormatCommit;
-  private final JTextField myCommitMessageFormat;
 
   public PivotalTrackerRepositoryEditor(final Project project,
                                     final PivotalTrackerRepository repository,
@@ -49,29 +47,13 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
         return new Dimension(oldSize.width, size.height);
       }
     }, BorderLayout.CENTER);
-
-    myCommitMessageFormat = new JTextField();
-    myCommitMessageFormat.setText(repository.getCommitMessageFormat());
-    myCommitMessageFormat.setEnabled(repository.isShouldFormatCommitMessage());
-    installListener(myCommitMessageFormat);
-    myCustomPanel.add(myCommitMessageFormat, BorderLayout.SOUTH);
-
-    myShouldFormatCommit = new JCheckBox("Add commit message:");
-    myShouldFormatCommit.setSelected(repository.isShouldFormatCommitMessage());
-    installListener(myShouldFormatCommit);
-    myShouldFormatCommit.setHorizontalAlignment(SwingConstants.RIGHT);
-    myShouldFormatCommit.setBorder(BorderFactory.createLineBorder(Color.RED)); 
-    myCustomLabel.add(myShouldFormatCommit, BorderLayout.SOUTH);
   }
 
   @Override
   public void apply() {
-    myCommitMessageFormat.setEnabled(myShouldFormatCommit.isSelected());
+    super.apply();
     myRepository.setProjectId(myProjectId.getText().trim());
     myRepository.setAPIKey(myAPIKey.getText().trim());
-    myRepository.setShouldFormatCommitMessage(myShouldFormatCommit.isSelected());
-    myRepository.setCommitMessageFormat(myCommitMessageFormat.getText());
     myUseHTTPAuthentication.setSelected(!StringUtil.isEmpty(myPasswordText.getText()));
-    super.apply();
   }
 }

@@ -501,7 +501,7 @@ public class JDOMUtil {
     XMLOutputter xmlOutputter = new MyXMLOutputter();
     Format format = Format.getCompactFormat().
       setIndent("  ").
-      setTextMode(Format.TextMode.NORMALIZE).
+      setTextMode(Format.TextMode.TRIM).
       setEncoding(ENCODING).
       setOmitEncoding(false).
       setOmitDeclaration(false).

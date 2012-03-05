@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
@@ -53,6 +54,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private Splitter mySplitter;
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
+  private final List<TaskRepositoryEditor> myEditors = new ArrayList<TaskRepositoryEditor>();
   private final Project myProject;
 
   private final Consumer<TaskRepository> myChangeListener;
@@ -183,6 +185,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
   private void addRepositoryEditor(TaskRepository repository, boolean requestFocus) {
     TaskRepositoryEditor editor = repository.getRepositoryType().createEditor(repository, myProject, myChangeListener);
+    myEditors.add(editor);
     JComponent component = editor.createComponent();
     String name = myRepoNames.get(repository);
     myRepositoryEditor.add(component, name);
@@ -264,5 +267,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   }
 
   public void disposeUIResources() {
+    for (TaskRepositoryEditor editor : myEditors) {
+      Disposer.dispose(editor);
+    }
   }
 }

@@ -47,8 +47,6 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   private Pattern myPattern;
   private String myProjectId;
   private String myAPIKey;
-  private boolean myShouldFormatCommitMessage;
-  private String myCommitMessageFormat = "[fixes #{id}]";
 
   //private boolean myTasksSupport = false;
 
@@ -60,7 +58,9 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
 
   /** for serialization */
   @SuppressWarnings({"UnusedDeclaration"})
-  public PivotalTrackerRepository() {}
+  public PivotalTrackerRepository() {
+    myCommitMessageFormat = "[fixes #{number}] {summary}";
+  }
 
   public PivotalTrackerRepository(final PivotalTrackerRepositoryType type) {
     super(type);
@@ -70,8 +70,6 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     super(other);
     setProjectId(other.myProjectId);
     setAPIKey(other.myAPIKey);
-    setShouldFormatCommitMessage(other.myShouldFormatCommitMessage);
-    setCommitMessageFormat(other.myCommitMessageFormat);
   }
 
   @Override
@@ -335,23 +333,6 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
              null;
     }
     return super.getTaskComment(task);
-  }
-
-  public boolean isShouldFormatCommitMessage() {
-    return myShouldFormatCommitMessage;
-  }
-
-  public void setShouldFormatCommitMessage(final boolean shouldFormatCommitMessage) {
-    myShouldFormatCommitMessage = shouldFormatCommitMessage;
-  }
-
-  @Tag("commitMessageFormat")
-  public String getCommitMessageFormat() {
-    return myCommitMessageFormat;
-  }
-
-  public void setCommitMessageFormat(final String commitMessageFormat) {
-    myCommitMessageFormat = commitMessageFormat;
   }
 
   @Override

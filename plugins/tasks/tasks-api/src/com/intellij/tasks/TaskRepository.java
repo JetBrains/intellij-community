@@ -108,6 +108,8 @@ public abstract class TaskRepository  {
     myType = other.myType;
     myShared = other.isShared();
     myUrl = other.getUrl();
+    setShouldFormatCommitMessage(other.myShouldFormatCommitMessage);
+    setCommitMessageFormat(other.myCommitMessageFormat);
   }
 
   private boolean myShared;
@@ -123,8 +125,8 @@ public abstract class TaskRepository  {
     if (!Comparing.equal(myType, that.myType)) return false;
     if (isShared() != that.isShared()) return false;
     if (getUrl() != null ? !getUrl().equals(that.getUrl()) : that.getUrl() != null) return false;
-
-    return true;
+    if (getCommitMessageFormat() != null ? !getCommitMessageFormat().equals(that.getCommitMessageFormat()) : that.getCommitMessageFormat() != null) return false;
+    return isShouldFormatCommitMessage() == that.isShouldFormatCommitMessage();
   }
 
   @Transient
@@ -134,6 +136,36 @@ public abstract class TaskRepository  {
 
   public void setRepositoryType(TaskRepositoryType type) {
     myType = type;
+  }
+
+  public boolean isShouldFormatCommitMessage() {
+    return myShouldFormatCommitMessage;
+  }
+
+  public void setShouldFormatCommitMessage(final boolean shouldFormatCommitMessage) {
+    myShouldFormatCommitMessage = shouldFormatCommitMessage;
+  }
+
+  @Tag("commitMessageFormat")
+  public String getCommitMessageFormat() {
+    return myCommitMessageFormat;
+  }
+
+  public void setCommitMessageFormat(final String commitMessageFormat) {
+    myCommitMessageFormat = commitMessageFormat;
+  }
+
+  protected boolean myShouldFormatCommitMessage;
+  protected String myCommitMessageFormat = "{id} {summary}";
+  protected String myChangelistNameFormat = "{id} {summary}";
+
+  @Tag("changelistNameFormat")
+  public String getChangelistNameFormat() {
+    return myChangelistNameFormat;
+  }
+
+  public void setChangelistNameFormat(String changelistNameFormat) {
+    myChangelistNameFormat = changelistNameFormat;
   }
 
   private static String trimTrailingSlashes(String url) {
@@ -148,7 +180,13 @@ public abstract class TaskRepository  {
 
   @Nullable
   public String getTaskComment(Task task) {
-    return null;
+    return isShouldFormatCommitMessage()
+           ? myCommitMessageFormat.replace("{id}", task.getId()).replace("{summary}", task.getSummary())
+           : null;
+  }
+
+  public String getComment() {
+    return "{id} (e.g. FOO-001), {summary}, {number} (e.g. 001), {project} (e.g. FOO)";
   }
 
   public abstract class CancellableConnection implements Callable<Exception> {

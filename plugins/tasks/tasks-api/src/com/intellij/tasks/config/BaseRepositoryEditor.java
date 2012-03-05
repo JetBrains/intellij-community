@@ -16,16 +16,23 @@
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.HttpConfigurable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -50,10 +57,16 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
   protected JPanel myCustomPanel;
   protected JPanel myCustomLabel;
+  private JTextField myChangelistNameFormat;
+  private JBCheckBox myAddCommitMessage;
+  private JLabel myComment;
+  private JPanel myEditorPanel;
 
   private boolean myApplying;
   protected final T myRepository;
   private final Consumer<T> myChangeListener;
+  private final Document myDocument;
+  private final Editor myEditor;
 
   public BaseRepositoryEditor(final Project project, final T repository, Consumer<T> changeListener) {
     myRepository = repository;
@@ -80,6 +93,22 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
     myUseHTTPAuthentication.setSelected(repository.isUseHttpAuthentication());
     myUseHTTPAuthentication.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.BASIC_HTTP_AUTHORIZATION));
+
+    myChangelistNameFormat.setText(repository.getChangelistNameFormat());
+    myAddCommitMessage.setSelected(repository.isShouldFormatCommitMessage());
+    myDocument = EditorFactory.getInstance().createDocument(repository.getCommitMessageFormat());
+    myEditor = EditorFactory.getInstance().createEditor(myDocument);
+    myEditorPanel.add(ScrollPaneFactory.createScrollPane(myEditor.getComponent(), SideBorder.NONE), BorderLayout.CENTER);
+    myComment.setText("Available placeholders: " + repository.getComment());
+
+    installListener(myChangelistNameFormat);
+    installListener(myAddCommitMessage);
+    myDocument.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        doApply();
+      }
+    });
 
     installListener(myURLText);
     installListener(myUserNameText);
@@ -141,6 +170,11 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     return myURLText;
   }
 
+  @Override
+  public void dispose() {
+    EditorFactory.getInstance().releaseEditor(myEditor);
+  }
+
   public void apply() {
 
     myRepository.setUrl(myURLText.getText().trim());
@@ -150,6 +184,10 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setShared(myShareURL.isSelected());
     myRepository.setUseProxy(myUseProxy.isSelected());
     myRepository.setUseHttpAuthentication(myUseHTTPAuthentication.isSelected());
+
+    myRepository.setChangelistNameFormat(myChangelistNameFormat.getText());
+    myRepository.setShouldFormatCommitMessage(myAddCommitMessage.isSelected());
+    myRepository.setCommitMessageFormat(myDocument.getText());
 
     myChangeListener.consume(myRepository);
   }

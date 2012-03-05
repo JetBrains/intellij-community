@@ -102,4 +102,16 @@ public abstract class Task {
   public final int hashCode() {
     return getId().hashCode();
   }
+
+  @Nullable
+  public String getNumber() {
+    String[] split = getId().split("\\-");
+    return split.length > 1 ? split[1] : null;
+  }
+
+  @Nullable
+  public String getProject() {
+    String[] split = getId().split("\\-");
+    return split.length > 1 ? split[0] : null;
+  }
 }
