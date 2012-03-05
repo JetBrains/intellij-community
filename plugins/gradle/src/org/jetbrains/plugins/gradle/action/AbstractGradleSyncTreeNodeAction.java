@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.task.GradleTaskManager;
@@ -63,10 +64,15 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
     if (nodes == null || nodes.isEmpty()) {
       return;
     }
-    doActionPerformed(nodes, project);
+    final Tree tree = GradleDataKeys.SYNC_TREE.getData(e.getDataContext());
+    if (tree != null) {
+      doActionPerformed(nodes, project, tree);
+    }
   }
 
-  protected abstract void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project);
+  protected abstract void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes,
+                                            @NotNull Project project,
+                                            @NotNull Tree tree);
   
   protected void filterNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
   }

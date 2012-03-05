@@ -4,6 +4,7 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,8 +18,10 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,14 +29,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
+import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
@@ -226,10 +232,44 @@ public class GradleUtil {
     }
   }
 
+  @NotNull
   public static <T extends GradleEntityId> GradleProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T id, @NotNull String name) {
     return new GradleProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());
   }
+  
+  @NotNull
+  public static GradleProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text) {
+    return buildSyntheticDescriptor(text, null);
+  }
+  
+  public static GradleProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text, @Nullable Icon icon) {
+    return new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
+  }
 
+  @NotNull
+  public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
+    if (file.getFileType() == FileTypes.ARCHIVE) {
+      final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      if (jar != null) {
+        return jar.getPath();
+      }
+    }
+    return file.getPath();
+  }
+  
+  // TODO den add doc about relative coordinates
+  @NotNull
+  public static Point getHintPosition(@NotNull GradleProjectStructureNode<?> node, @NotNull Tree tree) {
+    final Rectangle bounds = tree.getPathBounds(new TreePath(node.getPath()));
+    assert bounds != null;
+    final Icon icon = ((GradleProjectStructureNode)node).getDescriptor().getOpenIcon();
+    int xAdjustment = 0;
+    if (icon != null) {
+      xAdjustment = icon.getIconWidth();
+    }
+    return new Point(bounds.x + xAdjustment, bounds.y + bounds.height);
+  }
+  
   private interface TaskUnderProgress {
     void execute(@NotNull ProgressIndicator indicator);
   }

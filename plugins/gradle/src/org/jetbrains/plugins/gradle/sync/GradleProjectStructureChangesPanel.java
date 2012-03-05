@@ -1,14 +1,15 @@
 package org.jetbrains.plugins.gradle.sync;
 
+import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.ColoredSideBorder;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.HintListener;
-import com.intellij.ui.LightweightHint;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,15 +23,17 @@ import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EventObject;
 import java.util.List;
 
 /**
@@ -47,7 +50,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   private GradleProjectStructureTreeModel myTreeModel;
   private GradleProjectStructureContext   myContext;
   private Object                          myNodeUnderMouse;
-  private LightweightHint                 myHint;
+  private Balloon                         myToolbar;
 
   public GradleProjectStructureChangesPanel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
@@ -119,7 +122,6 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     final Color foreground = myTree.getForeground();
     toolbarComponent.setForeground(foreground);
     toolbarComponent.setBackground(myTree.getBackground());
-    toolbarComponent.setBorder(new ColoredSideBorder(foreground, foreground, foreground, foreground, 1));
     
     myTree.addMouseMotionListener(new MouseMotionAdapter() {
       
@@ -132,10 +134,15 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           hideHint();
           return;
         }
+        Balloon activeToolbar = myToolbar;
+        
+        // Do nothing if the toolbar action selection is in progress.
+        if (activeToolbar instanceof IdeTooltip.Ui && ((IdeTooltip.Ui)(activeToolbar)).isInside(new RelativePoint(e))) {
+          return;
+        }
         final Object node = path.getLastPathComponent();
         myNodeUnderMouse = node;
-        LightweightHint hint = myHint;
-        if (node == activeNode && hint.isVisible()) {
+        if (node == activeNode && activeToolbar != null && !activeToolbar.isDisposed()) {
           return;
         }
         hideHint();
@@ -148,25 +155,13 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           return;
         }
         activeNode = node;
-        final LightweightHint lightweightHint = new LightweightHint(toolbarComponent);
-        lightweightHint.addHintListener(new HintListener() {
-          @Override
-          public void hintHidden(EventObject event) {
-            activeNode = null;
-          }
-        });
-        final Rectangle bounds = myTree.getPathBounds(path);
-        if (bounds == null) {
-          assert false;
-          return;
-        }
-        final Icon icon = ((GradleProjectStructureNode)node).getDescriptor().getOpenIcon();
-        int xAdjustment = 0;
-        if (icon != null) {
-          xAdjustment = icon.getIconWidth();
-        }
-        lightweightHint.show(myTree, bounds.x + xAdjustment, bounds.y + bounds.height, myTree, new HintHint(e));
-        myHint = lightweightHint;
+        final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(toolbarComponent)
+          .setFillColor(myTree.getBackground())
+          .createBalloon();
+        Disposer.register(getProject(), balloon);
+        Point hintPosition = GradleUtil.getHintPosition((GradleProjectStructureNode<?>)node, myTree);
+        myToolbar = balloon;
+        balloon.show(new RelativePoint(myTree, hintPosition), Balloon.Position.below);
         startToolbarTracking();
       }
     });
@@ -184,7 +179,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     myToolbarAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (myHint == null) {
+        if (myToolbar == null) {
           return;
         }
         final Point location = MouseInfo.getPointerInfo().getLocation();
@@ -200,9 +195,10 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   }
   
   private void hideHint() {
-    final LightweightHint hint = myHint;
-    if (hint != null && hint.isVisible()) {
-      hint.hide();
+    final Balloon toolbar = myToolbar;
+    if (toolbar != null && !toolbar.isDisposed()) {
+      toolbar.hide();
+      myToolbar = null;
       myToolbarAlarm.cancelAllRequests();
     }
   }
@@ -210,7 +206,10 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (GradleDataKeys.SYNC_TREE_SELECTED_NODE.is(dataId)) {
+    if (GradleDataKeys.SYNC_TREE.is(dataId)) {
+      return myTree;
+    }
+    else if (GradleDataKeys.SYNC_TREE_SELECTED_NODE.is(dataId)) {
       TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
         return null;
