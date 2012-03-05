@@ -75,6 +75,7 @@ public class PyNames {
   public static final String HASH = "__hash__";
   public static final String ITER = "__iter__";
   public static final String NEXT = "next";
+  public static final String DUNDER_NEXT = "__next__";
   public static final String LEN = "__len__";
   public static final String CALL = "__call__";
   public static final String GETITEM = "__getitem__";
