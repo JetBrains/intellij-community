@@ -216,6 +216,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return PROTOCOL;
   }
 
+  @NotNull
   @Override
   public String extractPresentableUrl(@NotNull String path) {
     return super.extractPresentableUrl(StringUtil.trimEnd(path, JAR_SEPARATOR));

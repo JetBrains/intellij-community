@@ -69,6 +69,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     myConnection = project.getMessageBus().connect(project);
 
     startupManager.registerPreStartupActivity(new Runnable() {
+      @Override
       public void run() {
         initialize();
       }
@@ -77,24 +78,30 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     myState = new IndexState();
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DirectoryIndex";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     myDisposed = true;
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @TestOnly
   public void checkConsistency() {
     doCheckConsistency(false);
@@ -133,6 +140,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
+  @Override
   public boolean isInitialized() {
     return myInitialized;
   }
@@ -158,18 +166,22 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private void subscribeToFileChanges() {
     myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+      @Override
       public void beforeFileTypesChanged(FileTypeEvent event) {
       }
 
+      @Override
       public void fileTypesChanged(FileTypeEvent event) {
         doInitialize();
       }
     });
 
     myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(ModuleRootEvent event) {
       }
 
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         doInitialize();
       }
@@ -203,6 +215,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     return FileTypeManager.getInstance().isFileIgnored(f);
   }
 
+  @Override
   public DirectoryInfo getInfoForDirectory(VirtualFile dir) {
     checkAvailability();
     dispatchPendingEvents();
@@ -219,6 +232,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private final PackageSink mySink = new PackageSink();
 
   private static final Condition<VirtualFile> IS_VALID = new Condition<VirtualFile>() {
+    @Override
     public boolean value(final VirtualFile virtualFile) {
       return virtualFile.isValid();
     }
@@ -227,6 +241,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private class PackageSink extends QueryFactory<VirtualFile, Pair<IndexState, List<VirtualFile>>> {
     private PackageSink() {
       registerExecutor(new QueryExecutor<VirtualFile, Pair<IndexState, List<VirtualFile>>>() {
+        @Override
         public boolean execute(@NotNull final Pair<IndexState, List<VirtualFile>> stateAndDirs,
                                @NotNull final Processor<VirtualFile> consumer) {
           for (VirtualFile dir : stateAndDirs.second) {
@@ -256,6 +271,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
   }
 
+  @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return mySink.search(packageName, includeLibrarySources);
@@ -290,6 +306,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private class MyVirtualFileListener extends VirtualFileAdapter {
     private final Key<List<VirtualFile>> FILES_TO_RELEASE_KEY = Key.create("DirectoryIndexImpl.MyVirtualFileListener.FILES_TO_RELEASE_KEY");
 
+    @Override
     public void fileCreated(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
 
@@ -360,6 +377,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       return state;
     }
 
+    @Override
     public void beforeFileDeletion(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       if (!file.isDirectory()) return;
@@ -373,6 +391,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       myState = state;
     }
 
+    @Override
     public void fileDeleted(VirtualFileEvent event) {
       VirtualFile file = event.getFile();
       List<VirtualFile> list = file.getUserData(FILES_TO_RELEASE_KEY);
@@ -393,6 +412,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
+    @Override
     public void fileMoved(VirtualFileMoveEvent event) {
       VirtualFile file = event.getFile();
       if (file.isDirectory()) {
@@ -400,6 +420,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
+    @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
         VirtualFile file = event.getFile();
@@ -461,7 +482,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       private final Stack<DirectoryInfo> myDirectoryInfoStack = new Stack<DirectoryInfo>();
       
       @Override
-      public boolean visitFile(VirtualFile file) {
+      public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) return false;
         DirectoryInfo info = updateInfo(file);
         if (info != null) {
@@ -472,7 +493,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
 
       @Override
-      public void afterChildrenVisited(VirtualFile file) {
+      public void afterChildrenVisited(@NotNull VirtualFile file) {
         afterChildrenVisited(myDirectoryInfoStack.pop());
       }
 

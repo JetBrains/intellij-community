@@ -33,58 +33,72 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem {
     return (VcsFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
+  @Override
   @NotNull
   public String getProtocol() {
     return PROTOCOL;
   }
 
+  @Override
   public VirtualFile findFileByPath(@NotNull String path) {
     return null;
   }
 
+  @Override
   public void refresh(boolean asynchronous) {
   }
 
+  @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return null;
   }
 
-  public void fireContentsChanged(Object requestor, VirtualFile file, long oldModificationStamp) {
+  @Override
+  public void fireContentsChanged(Object requestor, @NotNull VirtualFile file, long oldModificationStamp) {
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
-  protected void fireBeforeFileDeletion(Object requestor, VirtualFile file) {
+  @Override
+  protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
     super.fireBeforeFileDeletion(requestor, file);
   }
 
-  protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
+  @Override
+  protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
     super.fireFileDeleted(requestor, file, fileName, parent);
   }
 
-  protected void fireBeforeContentsChange(Object requestor, VirtualFile file) {
+  @Override
+  protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
     super.fireBeforeContentsChange(requestor, file);
   }
 
+  @Override
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @Override
   public void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @Override
   public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull final String copyName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @Override
   public void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);
   }
 
+  @Override
   @NotNull
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
     throw new RuntimeException(COULD_NOT_IMPLEMENT_MESSAGE);

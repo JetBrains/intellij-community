@@ -22,6 +22,8 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class VFilePropertyChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
@@ -29,7 +31,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
   private final Object myOldValue;
   private final Object myNewValue;
 
-  public VFilePropertyChangeEvent(Object requestor, final VirtualFile file, String propertyName, Object oldValue, Object newValue, boolean isFromRefresh) {
+  public VFilePropertyChangeEvent(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue, boolean isFromRefresh) {
     super(requestor, isFromRefresh);
     myFile = file;
     myPropertyName = propertyName;
@@ -50,10 +52,12 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return myOldValue;
   }
 
+  @NotNull
   public String getPropertyName() {
     return myPropertyName;
   }
 
+  @NotNull
   @NonNls
   public String toString() {
     return "VfsEvent[property( " + myPropertyName + ") changed for '" + myFile + "': oldValue = " + myOldValue + ", newValue = " + myNewValue + "]";
@@ -64,6 +68,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return myFile.getPath();
   }
 
+  @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
@@ -74,7 +79,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     return myFile.isValid();
   }
 
-  public boolean equals(final Object o) {
+  public boolean equals(@Nullable final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 

@@ -158,12 +158,12 @@ public class VfsUtilCore {
     return stream;
   }
 
-  public static void visitChildrenRecursively(@NotNull VirtualFile file, VirtualFileVisitor visitor) {
+  public static void visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) {
     visitChildrenRecursively(file, visitor, null);
   }
 
   private static void visitChildrenRecursively(@NotNull VirtualFile file,
-                                               VirtualFileVisitor visitor,
+                                               @NotNull VirtualFileVisitor visitor,
                                                @Nullable Set<VirtualFile> visitedSymlinks) {
 
     if (!visitor.visitFile(file)) return;
@@ -183,6 +183,7 @@ public class VfsUtilCore {
     visitor.afterChildrenVisited(file);
   }
 
+  @NotNull
   public static String loadText(@NotNull VirtualFile file) throws IOException{
     InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset());
     try {

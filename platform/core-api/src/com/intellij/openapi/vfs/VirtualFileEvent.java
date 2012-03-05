@@ -34,7 +34,7 @@ public class VirtualFileEvent extends EventObject {
   private long myOldModificationStamp;
   private long myNewModificationStamp;
 
-  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, String fileName, VirtualFile parent){
+  public VirtualFileEvent(@Nullable Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent){
     super(file);
     myRequestor = requestor != null ? requestor : file.getUserData(VirtualFile.REQUESTOR_MARKER);
     myFile = file;
