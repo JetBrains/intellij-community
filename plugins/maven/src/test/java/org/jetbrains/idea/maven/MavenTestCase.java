@@ -48,9 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 public abstract class MavenTestCase extends UsefulTestCase {
@@ -487,28 +485,16 @@ public abstract class MavenTestCase extends UsefulTestCase {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }
 
-  protected static <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
-    assertUnorderedElementsAreEqual(actual, expected.toArray());
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
+    assertEquals(new HashSet<T>(expected), new HashSet<T>(actual));
   }
 
-  protected static <T, U> void assertUnorderedElementsAreEqual(U[] actual, T... expected) {
+  protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {
     assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
-  protected static <T, U> void assertUnorderedElementsAreEqual(Collection<U> actual, T... expected) {
-    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + new ArrayList<U>(actual);
-    assertEquals(s, expected.length, actual.size());
-
-    for (T eachExpected : expected) {
-      boolean found = false;
-      for (U eachActual : actual) {
-        if (eachExpected.equals(eachActual)) {
-          found = true;
-          break;
-        }
-      }
-      assertTrue(s, found);
-    }
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, T... expected) {
+    assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
   }
 
   protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, T... expected) {
