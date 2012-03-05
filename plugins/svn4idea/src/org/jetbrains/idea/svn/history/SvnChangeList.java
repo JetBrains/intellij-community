@@ -210,7 +210,7 @@ public class SvnChangeList implements CommittedChangeList {
       if (copiedAddedChanges.containsKey(path)) {
         final ExternallyRenamedChange addedChange = copiedAddedChanges.get(path);
         final FilePath source = addedChange.getAfterRevision().getFile();
-        deletedChange = new ExternallyRenamedChange(myListsHolder.createDeletedItemRevision(path, true), null, source.getPresentableUrl());
+        deletedChange = new ExternallyRenamedChange(myListsHolder.createDeletedItemRevision(path, true), null, path);
         ((ExternallyRenamedChange) deletedChange).setCopied(false);
         //noinspection ConstantConditions
         //addedChange.setRenamedOrMovedTarget(deletedChange.getBeforeRevision().getFile());
