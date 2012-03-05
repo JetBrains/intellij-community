@@ -202,7 +202,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         final String completionBase = getCompletionBase();
         if (completionBase != null) {
           final LookupFile file = myFinder.find(completionBase);
-          if (file != null && !file.isDirectory()) {
+          if (file != null && file.exists() && !file.isDirectory()) {
             // we've entered a complete path already, no need to autopopup completion again (IDEA-78996)
             return;
           }
@@ -244,7 +244,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   public String getAdText(CompletionResult result) {
     if (result.myCompletionBase == null) return null;
     if (result.myCompletionBase.length() == result.myFieldText.length()) return null;
-    
+
     String strokeText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(
             "EditorChooseLookupItemReplace"));
     return IdeBundle.message("file.chooser.completion.ad.text", strokeText);
@@ -462,9 +462,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     result.myToComplete = new ArrayList<LookupFile>();
     result.mySiblings = new ArrayList<LookupFile>();
     result.myKidsAfterSeparator = new ArrayList<LookupFile>();
-    String typed = result.myCompletionBase;
+    final String typed = result.myCompletionBase;
 
-    if (typed == null || typed.length() == 0) return;
+    if (typed == null) return;
 
     addMacroPaths(result, typed);
 
@@ -516,7 +516,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
             }
           }));
 
-          if (result.currentParentMatch && !result.closedPath) {
+          if (result.currentParentMatch && !result.closedPath && !typed.isEmpty()) {
             result.myKidsAfterSeparator.addAll(result.myToComplete);
           }
 
@@ -607,6 +607,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     if (typed == null) return null;
     LookupFile lastFound = myFinder.find(typed);
     if (lastFound == null) return null;
+    if (typed.isEmpty()) return lastFound;
     if (lastFound.exists()) {
       if (typed.charAt(typed.length() - 1) != File.separatorChar) return lastFound.getParent();
       return lastFound;
