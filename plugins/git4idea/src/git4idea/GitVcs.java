@@ -32,7 +32,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
@@ -72,10 +71,7 @@ import git4idea.history.wholeTree.GitCommitsSequentially;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
-import git4idea.roots.GitIntegrationEnabler;
-import git4idea.roots.GitRootDetectInfo;
-import git4idea.roots.GitRootDetector;
-import git4idea.roots.GitRootErrorsFinder;
+import git4idea.roots.*;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
@@ -85,7 +81,6 @@ import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -312,7 +307,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public VcsRootChecker getRootChecker() {
-    return new MyVcsRootChecker();
+    return new GitRootChecker(myProject, myPlatformFacade);
   }
 
   @Override
@@ -555,35 +550,5 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
       }
     });
-  }
-
-  private class MyVcsRootChecker implements VcsRootChecker {
-
-    private final Collection<VcsRootError> myErrors;
-
-    MyVcsRootChecker() {
-      myErrors = new GitRootErrorsFinder(myProject, myPlatformFacade).find();
-    }
-
-    @NotNull
-    @Override
-    public Collection<VirtualFile> getUnregisteredRoots() {
-      Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
-      for (VcsRootError error : myErrors) {
-        if (error.getType() == VcsRootError.Type.UNREGISTERED_ROOT) {
-          roots.add(error.getRoot());
-        }
-      }
-      return roots;
-    }
-
-    @Override
-    public boolean isInvalidRoot(@NotNull String directory) {
-      // this information is available in myErrors,
-      // but the method may be called in VcsDirectoryConfigurationPanel after adding a mapping (to highlight errors right away)
-      // in which case ProjectLevelVcsManager#getAllVcsRoots() is not aware of new roots yet,
-      // while GitRootErrorsFinder relies on the set of roots returned from ProjectLevelVcsManager.
-      return !new File(FileUtil.toSystemDependentName(directory), ".git").exists();
-    }
   }
 }
