@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -14,11 +13,12 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 /**
  * @author peter
  */
-public class HeavyNormalCompletionTest extends CompletionTestCase{
+public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
@@ -26,50 +26,51 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
   }
 
   public void testPackagePrefix() throws Throwable {
-    configureByFileNoCompletion("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(getModule()).getModifiableModel();
+        final ModifiableRootModel model = ModuleRootManager.getInstance(myFixture.getModule()).getModifiableModel();
         model.getContentEntries()[0].getSourceFolders()[0].setPackagePrefix("foo.bar.goo");
         model.commit();
       }
     }.execute().throwException();
 
-    complete();
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
-    assertTrue(JavaPsiFacade.getInstance(myProject).findPackage("foo").isValid());
-    assertTrue(JavaPsiFacade.getInstance(myProject).findPackage("foo.bar").isValid());
-    assertTrue(JavaPsiFacade.getInstance(myProject).findPackage("foo.bar.goo").isValid());
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    assertTrue(JavaPsiFacade.getInstance(getProject()).findPackage("foo").isValid());
+    assertTrue(JavaPsiFacade.getInstance(getProject()).findPackage("foo.bar").isValid());
+    assertTrue(JavaPsiFacade.getInstance(getProject()).findPackage("foo.bar.goo").isValid());
   }
-
+  
   public void testAllClassesWhenNothingIsFound() throws Throwable {
-    createClass("package foo.bar; public class AxBxCxDxEx {}");
+    myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}");
 
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    ((LookupImpl)LookupManager.getActiveLookup(myEditor)).finishLookup(Lookup.NORMAL_SELECT_CHAR);
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
+    myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
   }
 
   public void testAllClassesOnSecondBasicCompletion() throws Throwable {
-    createClass("package foo.bar; public class AxBxCxDxEx {}");
+    myFixture.addClass("package foo.bar; public class AxBxCxDxEx {}");
 
-    configureByFileNoCompletion("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor(), 2, false);
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-    myItems = lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
+    myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), myFixture.getEditor(), 2, false);
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myFixture.getEditor());
+    LookupElement[] myItems = lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
     assertEquals(2, myItems.length);
     assertEquals("AxBxCxDxEx", myItems[1].getLookupString());
     assertEquals("AyByCyDyEy", myItems[0].getLookupString());
   }
 
   public void testMapsInvalidation() throws Exception {
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    assert myFile.getVirtualFile().getFileSystem() instanceof LocalFileSystem; // otherwise the completion copy won't be preserved which is critical here
-    assertStringItems("gAnInt", "getAaa", "getBbb");
-    myEditor.getCaretModel().moveToOffset(myEditor.getCaretModel().getOffset() + 2);
-    complete();
-    assertNull(myItems);
+    myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    assertInstanceOf(myFixture.getFile().getVirtualFile().getFileSystem(), LocalFileSystem.class); // otherwise the completion copy won't be preserved which is critical here
+    myFixture.completeBasic();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "gAnInt", "getAaa", "getBbb");
+    myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getCaretModel().getOffset() + 2);
+    assertNull(myFixture.completeBasic());
   }
 
 }
