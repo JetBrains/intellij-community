@@ -67,6 +67,7 @@ public class NoScrollPaneInspection extends BaseFormInspection {
     public void run() {
       String scrollPane = JScrollPane.class.getName();
       ComponentItem item = Palette.getInstance(myEditor.getProject()).getItem(scrollPane);
+
       SurroundAction action = new SurroundAction(item == null ? JBScrollPane.class.getName() : scrollPane);
 
       ArrayList<RadComponent> targetList = new ArrayList<RadComponent>(Collections.singletonList(myComponent));
