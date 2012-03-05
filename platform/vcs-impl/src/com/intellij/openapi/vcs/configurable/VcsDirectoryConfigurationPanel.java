@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -495,8 +496,10 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     VcsRootErrorLabel(String title) {
       super(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
 
-      setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
-                                                   BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker())));
+      CompoundBorder outsideBorder = BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(5, 0, 5, 0, UIUtil.getPanelBackground()),
+                                                                 BorderFactory.createLineBorder(UIUtil.getPanelBackground().darker()));
+      setBorder(BorderFactory.createCompoundBorder(outsideBorder, BorderFactory.createEmptyBorder(DEFAULT_VGAP, DEFAULT_HGAP,
+                                                                                                  DEFAULT_VGAP, DEFAULT_HGAP)));
       setOpaque(true);
       setBackground(new Color(255, 186, 192));
 
