@@ -48,7 +48,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
 
   @Before
   public void setUp() throws Exception {
-    System.setProperty("svnkit.wc.17", "false");
+    //System.setProperty("svnkit.wc.17", "false");
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
