@@ -267,7 +267,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void invokeTestRunnable(final Runnable runnable) throws Exception {
-    if ("testNavigationActionsDontTerminateTemplate".equals(getName()) || "testTemplateWithEnd".equals(getName())) {
+    if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar"]) {
       runnable.run();
       return;
     }
@@ -373,6 +373,25 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     edt {
       getEditor().getCaretModel().moveToOffset(offset);
     }
+  }
+
+  public void testUseDefaultValueForQuickResultCalculation() {
+    myFixture.configureByText 'a.txt', '<caret>'
+
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("vn", "user", '$V1$ var = $V2$;');
+    template.addVariable("V1", "", "", true);
+    template.addVariable("V2", "", '"239"', true);
+
+    writeCommand { manager.startTemplate(editor, template) }
+
+    myFixture.checkResult '<caret> var = 239;'
+
+    myFixture.type 'O'
+    myFixture.checkResult 'O<caret> var = 239;'
+
+    myFixture.type '\t'
+    myFixture.checkResult 'O var = <selection>239</selection>;'
   }
 
 }

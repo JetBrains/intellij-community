@@ -294,10 +294,21 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("MUp", "MavenUmlProvider", "MarkUp");
     assertPreference("MUP", "MarkUp", "MavenUmlProvider");
     assertPreference("CertificateExce", "CertificateEncodingException", "CertificateException");
+    assertPreference("boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
-  private static void assertPreference(@NonNls String pattern, @NonNls String less, @NonNls String more) {
-    NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+  private static void assertPreference(@NonNls String pattern,
+                                       @NonNls String less,
+                                       @NonNls String more) {
+    assertPreference(pattern, less, more, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+  }
+
+  private static void assertPreference(@NonNls String pattern,
+                                       @NonNls String less,
+                                       @NonNls String more,
+                                       NameUtil.MatchingCaseSensitivity sensitivity) {
+    NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(pattern, sensitivity);
     assertTrue(less + ">=" + more, matcher.matchingDegree(less) < matcher.matchingDegree(more));
   }
 

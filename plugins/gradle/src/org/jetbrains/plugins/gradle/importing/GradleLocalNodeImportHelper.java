@@ -17,6 +17,7 @@ import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleLog;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.*;
 
@@ -243,6 +244,7 @@ public class GradleLocalNodeImportHelper {
         }
       });
     }
+    GradleUtil.refreshProject(myProjectStructureHelper.getProject());
   }
   
   private class Context {
