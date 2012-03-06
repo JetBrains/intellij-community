@@ -18,6 +18,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -162,6 +163,18 @@ public class PythonSdkType extends SdkType {
 
   public boolean isValidSdkHome(final String path) {
     return PythonSdkFlavor.getFlavor(path) != null;
+  }
+
+  public static boolean isInvalid(@NotNull Sdk sdk) {
+    if (isRemote(sdk)) {
+      return false;
+    }
+    final VirtualFile interpreter = sdk.getHomeDirectory();
+    return interpreter == null || !interpreter.exists();
+  }
+
+  public static boolean isRemote(@NotNull Sdk sdk) {
+    return sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData;
   }
 
   @Override
@@ -434,15 +447,41 @@ public class PythonSdkType extends SdkType {
       // TODO: make this a backgroundable task. see #setupSdkPaths(final Sdk sdk) and its modificator handling
       public void run(@NotNull final ProgressIndicator indicator) {
         sdkModificator.removeAllRoots();
-        updateSdkRootsFromSysPath(sdkModificator, indicator);
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          refreshSkeletonsOfSDK(sdk, getSkeletonsPath(sdk.getHomePath()), null);
-          PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
+        try {
+          updateSdkRootsFromSysPath(sdkModificator, indicator);
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            refreshSkeletonsOfSDK(sdk, getSkeletonsPath(sdk.getHomePath()), null);
+            PythonSdkUpdater.getInstance().markAlreadyUpdated(sdk.getHomePath());
+          }
+        }
+        catch (InvalidSdkException e) {
+          if (!isInvalid(sdk)) {
+            final Notification notification = PythonSdkType.createInvalidSdkNotification(myProject);
+            notification.notify(myProject);
+          }
         }
       }
     };
     progman.run(setupTask);
     return success.get();
+  }
+
+  @NotNull
+  public static Notification createInvalidSdkNotification(@NotNull final Project project) {
+    return new Notification("xxx",
+                            "Invalid Project Interpreter",
+                            "Cannot run the project interpreter. <a href=\"xxx\">Configure...</a>",
+                            NotificationType.ERROR,
+                            new NotificationListener() {
+                              @Override
+                              public void hyperlinkUpdate(@NotNull Notification notification,
+                                                          @NotNull HyperlinkEvent event) {
+                                final ShowSettingsUtil settings = ShowSettingsUtil.getInstance();
+                                settings.showSettingsDialog(project, "Project Interpreter");
+                                notification.expire();
+                              }
+                            });
+
   }
 
   /**
@@ -452,7 +491,7 @@ public class PythonSdkType extends SdkType {
 
   private final static Pattern PYTHON_NN_RE = Pattern.compile("python\\d\\.\\d.*");
 
-  public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator) {
+  public static void updateSdkRootsFromSysPath(SdkModificator sdkModificator, ProgressIndicator indicator) throws InvalidSdkException {
     Application application = ApplicationManager.getApplication();
     boolean not_in_unit_test_mode = (application != null && !application.isUnitTestMode());
 
@@ -546,7 +585,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @NotNull
-  public static List<String> getSysPath(String bin_path) {
+  public static List<String> getSysPath(String bin_path) throws InvalidSdkException {
     String working_dir = new File(bin_path).getParent();
     Application application = ApplicationManager.getApplication();
     if (application != null && !application.isUnitTestMode()) {
@@ -560,7 +599,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @NotNull
-  protected static List<String> getSysPathsFromScript(String bin_path) {
+  protected static List<String> getSysPathsFromScript(String bin_path) throws InvalidSdkException {
     String scriptFile = PythonHelpersLocator.getHelperPath("syspath.py");
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
@@ -648,11 +687,11 @@ public class PythonSdkType extends SdkType {
     return type == OrderRootType.CLASSES;
   }
 
-  static void refreshSkeletonsOfSDK(Sdk sdk) {
+  static void refreshSkeletonsOfSDK(Sdk sdk) throws InvalidSdkException {
     refreshSkeletonsOfSDK(sdk, findSkeletonsPath(sdk), new Ref<Boolean>(false));
   }
 
-  static void refreshSkeletonsOfSDK(Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag) {
+  static void refreshSkeletonsOfSDK(Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failed_sdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -663,23 +702,17 @@ public class PythonSdkType extends SdkType {
     }
     else {
       LOG.info("Refreshing skeletons for " + homePath);
-      try {
-        SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-        sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migrationFlag);
-        if (sdk_errors.size() > 0) {
-          String sdk_name = sdk.getName();
-          List<String> known_errors = errors.get(sdk_name);
-          if (known_errors == null) {
-            errors.put(sdk_name, sdk_errors);
-          }
-          else {
-            known_errors.addAll(sdk_errors);
-          }
+      SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
+      sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migrationFlag);
+      if (sdk_errors.size() > 0) {
+        String sdk_name = sdk.getName();
+        List<String> known_errors = errors.get(sdk_name);
+        if (known_errors == null) {
+          errors.put(sdk_name, sdk_errors);
         }
-      }
-      catch (InvalidSdkException ex) {
-        failed_sdks.add(sdk.getName());
-        LOG.warn("Problems with SDK " + sdk.getHomePath(), ex);
+        else {
+          known_errors.addAll(sdk_errors);
+        }
       }
     }
     if (failed_sdks.size() > 0 || errors.size() > 0) {

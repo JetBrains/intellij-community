@@ -128,8 +128,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       super.visitPyFile(node);
       if (PlatformUtils.isPyCharm()) {
         final Module module = ModuleUtil.findModuleForPsiElement(node);
-        if (module != null && PythonSdkType.findPythonSdk(module) == null && PlatformUtils.isPyCharm()) {
-          registerProblem(node, "No Python interpreter configured for the project", new ConfigureInterpreterFix());
+        if (module != null) {
+          final Sdk sdk = PythonSdkType.findPythonSdk(module);
+          if (sdk == null) {
+            registerProblem(node, "No Python interpreter configured for the project", new ConfigureInterpreterFix());
+          }
+          else if (PythonSdkType.isInvalid(sdk)) {
+            registerProblem(node, "Invalid Python interpreter selected for the project", new ConfigureInterpreterFix());
+          }
         }
       }
     }
