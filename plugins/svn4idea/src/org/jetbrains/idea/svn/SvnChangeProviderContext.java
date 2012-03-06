@@ -256,7 +256,9 @@ class SvnChangeProviderContext implements StatusReceiver {
       svnInfo = myVcs.createWCClient().doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
     }
     catch (SVNException e) {
-      if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(e.getErrorMessage().getErrorCode())) {
+      final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
+      if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
+          SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode)) {
         return;
       }
       throw e;
