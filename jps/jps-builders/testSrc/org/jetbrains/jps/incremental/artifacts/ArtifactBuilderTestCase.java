@@ -29,6 +29,7 @@ import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
@@ -143,7 +144,8 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
       final File dataStorageRoot = Paths.getDataStorageRoot(myProject);
       ProjectTimestamps timestamps = new ProjectTimestamps(dataStorageRoot);
       BuildDataManager dataManager = new BuildDataManager(dataStorageRoot, true);
-      return new ProjectDescriptor(myProject, new FSState(true), timestamps, dataManager, new BuildLoggingManager(myArtifactBuilderLogger));
+      return new ProjectDescriptor(myProject, new FSState(true), timestamps, dataManager, new BuildLoggingManager(myArtifactBuilderLogger,
+                                                                                                                  new JavaBuilderLoggerImpl()));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
