@@ -101,11 +101,12 @@ public class UnixProcessManager {
 
     final int our_pid = C_LIB.getpid();
     final int process_pid = getProcessPid(process);
+
     final Ref<Integer> foundPid = new Ref<Integer>();
     final ProcessInfo processInfo = new ProcessInfo();
     final List<Integer> childrenPids = new ArrayList<Integer>();
 
-    processPSOutput(new Processor<String>() {
+    processPSOutput(getPSCmd(false), new Processor<String>() {
       @Override
       public boolean process(String s) {
         StringTokenizer st = new StringTokenizer(s, " ");
@@ -129,54 +130,58 @@ public class UnixProcessManager {
         }
         return false;
       }
-    }, getPSCmd(false));
+    });
 
     boolean result;
     if (!foundPid.isNull()) {
-      processInfo.killProcTree(foundPid.get(), signal);
+      processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
       result = true;
     }
     else {
       for (Integer pid : childrenPids) {
-        processInfo.killProcTree(pid, signal);
+        processInfo.killProcTree(pid, signal, UNIX_KILLER);
       }
       result = false;
     }
     return result;
   }
 
-  public static void processPSOutput(Processor<String> processor, String[] cmd) {
+  public static void processPSOutput(String[] cmd, Processor<String> processor) {
     try {
       Process p = Runtime.getRuntime().exec(cmd);
 
-      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-      BufferedReader stdOutput = new BufferedReader(new
-                                                    InputStreamReader(p.getInputStream()));
-      BufferedReader stdError = new BufferedReader(new
-                                                   InputStreamReader(p.getErrorStream()));
-
-      try {
-        String s;
-        stdOutput.readLine(); //ps output header
-        while ((s = stdOutput.readLine()) != null) {
-          processor.process(s);
-        }
-
-        StringBuilder errorStr = new StringBuilder();
-        while ((s = stdError.readLine()) != null) {
-          errorStr.append(s).append("\n");
-        }
-        if (errorStr.length() > 0) {
-          throw new IllegalStateException("error:" + errorStr.toString());
-        }
-      }
-      finally {
-        stdOutput.close();
-        stdError.close();
-      }
+      processPSOutput(p, processor);
     }
     catch (IOException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  public static void processPSOutput(Process psProcess, Processor<String> processor) throws IOException {
+    @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
+    BufferedReader stdOutput = new BufferedReader(new
+                                                  InputStreamReader(psProcess.getInputStream()));
+    BufferedReader stdError = new BufferedReader(new
+                                                 InputStreamReader(psProcess.getErrorStream()));
+
+    try {
+      String s;
+      stdOutput.readLine(); //ps output header
+      while ((s = stdOutput.readLine()) != null) {
+        processor.process(s);
+      }
+
+      StringBuilder errorStr = new StringBuilder();
+      while ((s = stdError.readLine()) != null) {
+        errorStr.append(s).append("\n");
+      }
+      if (errorStr.length() > 0) {
+        throw new IllegalStateException("error:" + errorStr.toString());
+      }
+    }
+    finally {
+      stdOutput.close();
+      stdError.close();
     }
   }
 
@@ -218,7 +223,7 @@ public class UnixProcessManager {
     int kill(int pid, int signal);
   }
 
-  private static class ProcessInfo {
+  public static class ProcessInfo {
     private Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
@@ -228,12 +233,23 @@ public class UnixProcessManager {
       BY_PARENT.put(parentPid, children);
     }
 
-    void killProcTree(int pid, int signal) {
+    public void killProcTree(int pid, int signal, ProcessKiller killer) {
       List<Integer> children = BY_PARENT.get(pid);
       if (children != null) {
-        for (int child : children) killProcTree(child, signal);
+        for (int child : children) killProcTree(child, signal, killer);
       }
-      sendSignal(pid, signal);
+      killer.kill(pid, signal);
     }
   }
+
+  public interface ProcessKiller {
+    void kill(int pid, int signal);
+  }
+
+  private final static ProcessKiller UNIX_KILLER = new ProcessKiller() {
+    @Override
+    public void kill(int pid, int signal) {
+      sendSignal(pid, signal);
+    }
+  };
 }
