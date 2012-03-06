@@ -15,11 +15,14 @@
  */
 package git4idea.repo;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -28,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.messages.MessageBus;
 import git4idea.PlatformFacade;
 import git4idea.roots.GitRootProblemNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +73,10 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   @Override
   public void initComponent() {
-    myProject.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new MyRepositoryCreationDeletionListener());
+    MessageBus messageBus = myProject.getMessageBus();
+    MyRepositoryCreationDeletionListener rootChangeListener = new MyRepositoryCreationDeletionListener();
+    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, rootChangeListener);
+    messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, rootChangeListener);
     Disposer.register(myProject, this);
     updateRepositoriesCollection();
   }
@@ -211,7 +218,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     return "GitRepositoryManager{myRepositories: " + myRepositories + '}';
   }
 
-  private class MyRepositoryCreationDeletionListener implements BulkFileListener {
+  private class MyRepositoryCreationDeletionListener implements BulkFileListener, ModuleRootListener {
     @Override
     public void before(@NotNull List<? extends VFileEvent> events) {
     }
@@ -224,6 +231,15 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
           updateRepositoriesCollection();
         }
       }
+    }
+
+    @Override
+    public void beforeRootsChange(ModuleRootEvent event) {
+    }
+
+    @Override
+    public void rootsChanged(ModuleRootEvent event) {
+      updateRepositoriesCollection();
     }
   }
 }
