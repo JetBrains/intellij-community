@@ -160,7 +160,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     //}
 
     synchronized (this) {
-      if (!myComponentsRegistry.containsInterface(interfaceClass)) {
+      if (myComponentsRegistry == null || !myComponentsRegistry.containsInterface(interfaceClass)) {
         return null;
       }
 
