@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -56,6 +57,8 @@ import java.util.regex.Pattern;
 
 public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create(MavenResourceCompiler.class.getSimpleName() + ".FILES_TO_DELETE");
+
+  private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = CollectionFactory.newSet("jpg", "jpeg", "gif", "bmp", "png");
 
   private Map<String, Set<String>> myOutputItemsCache = new THashMap<String, Set<String>>();
 
@@ -152,7 +155,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
         Properties properties = loadPropertiesAndFilters(context, mavenProject);
 
-        List<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
+        Set<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
         String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
                                                                                                      "maven-resources-plugin"),
                                                                  "escapeString", "\\");
@@ -183,14 +186,17 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return allItemsToProcess.toArray(new ProcessingItem[allItemsToProcess.size()]);
   }
 
-  private static List<String> collectNonFilteredExtensions(MavenProject mavenProject) {
-    List<String> result = new ArrayList<String>(Arrays.asList("jpg", "jpeg", "gif", "bmp", "png"));
+  private static Set<String> collectNonFilteredExtensions(MavenProject mavenProject) {
     Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-    if (config == null) return result;
+    if (config == null) return DEFAULT_NON_FILTERED_EXTENSIONS;
 
-    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension")) {
-      result.add(each);
-    }
+    List<String> customNonFilteredExtensions = MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
+    if (customNonFilteredExtensions.isEmpty()) return DEFAULT_NON_FILTERED_EXTENSIONS;
+
+    Set<String> result = new HashSet<String>();
+    result.addAll(DEFAULT_NON_FILTERED_EXTENSIONS);
+    result.addAll(customNonFilteredExtensions);
+
     return result;
   }
 
@@ -224,15 +230,15 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return properties;
   }
 
-  private void collectProcessingItems(Module module,
-                                      MavenProject mavenProject,
-                                      CompileContext context,
-                                      Properties properties,
-                                      long propertiesHashCode,
-                                      List<String> nonFilteredExtensions,
-                                      String escapeString,
-                                      boolean tests,
-                                      List<ProcessingItem> result) {
+  private static void collectProcessingItems(Module module,
+                                             MavenProject mavenProject,
+                                             CompileContext context,
+                                             Properties properties,
+                                             long propertiesHashCode,
+                                             Set<String> nonFilteredExtensions,
+                                             String escapeString,
+                                             boolean tests,
+                                             List<ProcessingItem> result) {
     String outputDir = CompilerPaths.getModuleOutputPath(module, tests);
     if (outputDir == null) {
       context.addMessage(CompilerMessageCategory.ERROR, "Maven: Module '" + module.getName() + "'output is not specified", null, -1, -1);
@@ -280,19 +286,19 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return result;
   }
 
-  private void collectProcessingItems(Module module,
-                                      VirtualFile sourceRoot,
-                                      VirtualFile currentDir,
-                                      String outputDir,
-                                      List<Pattern> includes,
-                                      List<Pattern> excludes,
-                                      boolean isSourceRootFiltered,
-                                      Properties properties,
-                                      long propertiesHashCode,
-                                      List<String> nonFilteredExtensions,
-                                      String escapeString,
-                                      List<ProcessingItem> result,
-                                      ProgressIndicator indicator) {
+  private static void collectProcessingItems(Module module,
+                                             VirtualFile sourceRoot,
+                                             VirtualFile currentDir,
+                                             String outputDir,
+                                             List<Pattern> includes,
+                                             List<Pattern> excludes,
+                                             boolean isSourceRootFiltered,
+                                             Properties properties,
+                                             long propertiesHashCode,
+                                             Set<String> nonFilteredExtensions,
+                                             String escapeString,
+                                             List<ProcessingItem> result,
+                                             ProgressIndicator indicator) {
     indicator.checkCanceled();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     for (VirtualFile eachSourceFile : currentDir.getChildren()) {
