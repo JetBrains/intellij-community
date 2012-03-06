@@ -54,6 +54,7 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.uipreview.*;
+import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -247,8 +248,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
 
   private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) throws Exception {
-    // TODO: (profile|device|target|...|theme) panel
-
     if (mySession == null) {
       ApplicationManager.getApplication().invokeLater(
         new Runnable() {
@@ -273,29 +272,33 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
-        IAndroidTarget target = platform.getTarget();
-        AndroidFacet facet = AndroidFacet.getInstance(myModule);
-
-        LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
-        layoutDeviceManager.loadDevices(platform.getSdkData());
-        LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
-
-        LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
-
-        FolderConfiguration config = new FolderConfiguration();
-        config.set(deviceConfiguration.getConfiguration());
-        config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
-        config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
-        config.setLanguageQualifier(new LanguageQualifier());
-        config.setRegionQualifier(new RegionQualifier());
-
-        float xdpi = deviceConfiguration.getDevice().getXDpi();
-        float ydpi = deviceConfiguration.getDevice().getYDpi();
-
-        ThemeData theme = new ThemeData("Theme", false);
-
         try {
+          AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+          if (platform == null) {
+            throw new AndroidSdkNotConfiguredException();
+          }
+
+          IAndroidTarget target = platform.getTarget();
+          AndroidFacet facet = AndroidFacet.getInstance(myModule);
+
+          LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
+          layoutDeviceManager.loadDevices(platform.getSdkData());
+          LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
+
+          LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
+
+          FolderConfiguration config = new FolderConfiguration();
+          config.set(deviceConfiguration.getConfiguration());
+          config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
+          config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
+          config.setLanguageQualifier(new LanguageQualifier());
+          config.setRegionQualifier(new RegionQualifier());
+
+          float xdpi = deviceConfiguration.getDevice().getXDpi();
+          float ydpi = deviceConfiguration.getDevice().getYDpi();
+
+          ThemeData theme = new ThemeData("Theme", false);
+
           mySession = RenderUtil.createRenderSession(getProject(), layoutXmlText, myFile, target, facet, config, xdpi, ydpi, theme);
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -334,6 +337,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public void showError(@NonNls String message, Throwable e) {
     removeNativeRoot();
     super.showError(message, e);
+  }
+
+  public ProfileAction getProfileAction() {
+    return myProfileAction;
+  }
+
+  @Override
+  public void activate() {
+    myProfileAction.externalUpdate();
   }
 
   @Override

@@ -26,10 +26,6 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.Set;
 
@@ -89,11 +85,34 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   public void update() {
-    myToolbar.setVisible(myActionGroup.getChildrenCount() > 0);
+    boolean oldVisible = myToolbar.isVisible();
+    boolean newVisible = isVisible(myActionGroup);
+    myToolbar.setVisible(newVisible);
+    if (oldVisible && newVisible) {
+      ((JComponent)myToolbar.getParent()).revalidate();
+    }
+  }
+
+  private static boolean isVisible(DefaultActionGroup group) {
+    if (group.getChildrenCount() == 0) {
+      return false;
+    }
+
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof DefaultActionGroup) {
+        if (isVisible((DefaultActionGroup)action)) {
+          return true;
+        }
+      }
+      else {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void updateSelectionActions(List<RadComponent> selection) {
-    boolean update = myDynamicGroup.getChildrenCount() > 0;
+    boolean update = isVisible(myDynamicGroup);
 
     for (AnAction action : myDynamicGroup.getChildActionsOrStubs()) {
       action.unregisterCustomShortcutSet(myShortcuts);
@@ -114,7 +133,7 @@ public class DesignerActionPanel implements DataProvider {
     for (RadComponent component : selection) {
       component.addSelectionActions(myDynamicGroup, myShortcuts, selection);
     }
-    update |= myDynamicGroup.getChildrenCount() > 0;
+    update |= isVisible(myDynamicGroup);
 
     if (update) {
       update();

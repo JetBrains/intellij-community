@@ -75,6 +75,7 @@ public class ProfileDialog extends DialogWrapper {
       myProfileModel.add(new ProfileWrapper(profile));
     }
 
+    // TODO: DND reorder elements
     myProfileList = new JBList();
     myProfileList.setModel(myProfileModel);
     myProfileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
