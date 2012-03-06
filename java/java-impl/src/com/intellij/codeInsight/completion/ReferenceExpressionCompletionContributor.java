@@ -49,9 +49,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
@@ -126,8 +124,15 @@ public class ReferenceExpressionCompletionContributor {
 
       final Set<LookupElement> base =
         JavaSmartCompletionContributor.completeReference(element, reference, filter, false, true, parameters.getParameters(), null);
-      for (final LookupElement item : base) {
-        addSingleArrayElementAccess(element, item, parameters, result);
+      for (final LookupElement item : new LinkedHashSet<LookupElement>(base)) {
+        ExpressionLookupItem access = getSingleArrayElementAccess(element, item);
+        if (access != null) {
+          base.add(access);
+          PsiType type = access.getType();
+          if (type != null && parameters.getExpectedType().isAssignableFrom(type)) {
+            result.consume(access);
+          }
+        }
       }
 
       if (secondTime) {
@@ -218,24 +223,25 @@ public class ReferenceExpressionCompletionContributor {
     return used;
   }
 
-  private static void addSingleArrayElementAccess(PsiElement element, LookupElement item, JavaSmartCompletionParameters parameters,
-                                           Consumer<LookupElement> result) {
+  @Nullable
+  private static ExpressionLookupItem getSingleArrayElementAccess(PsiElement element, LookupElement item) {
     if (item.getObject() instanceof PsiLocalVariable) {
       final PsiLocalVariable variable = (PsiLocalVariable)item.getObject();
       final PsiType type = variable.getType();
-      if (type instanceof PsiArrayType && parameters.getExpectedType().isAssignableFrom(((PsiArrayType)type).getComponentType())) {
-        final PsiExpression expression = variable.getInitializer();
-        if (expression instanceof PsiNewExpression) {
-          final PsiNewExpression newExpression = (PsiNewExpression)expression;
-          final PsiExpression[] dimensions = newExpression.getArrayDimensions();
-          if (dimensions.length == 1 && "1".equals(dimensions[0].getText()) && newExpression.getArrayInitializer() == null) {
-            final String text = variable.getName() + "[0]";
-            final PsiExpression conversion = createExpression(text, element);
-            result.consume(new ExpressionLookupItem(conversion).setIcon(variable.getIcon(Iconable.ICON_FLAG_VISIBILITY)));
-          }
+      final PsiExpression expression = variable.getInitializer();
+      if (type instanceof PsiArrayType && expression instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)expression;
+        final PsiExpression[] dimensions = newExpression.getArrayDimensions();
+        if (dimensions.length == 1 && "1".equals(dimensions[0].getText()) && newExpression.getArrayInitializer() == null) {
+          final String text = variable.getName() + "[0]";
+          final PsiExpression conversion = createExpression(text, element);
+          ExpressionLookupItem result = new ExpressionLookupItem(conversion);
+          result.setIcon(variable.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+          return result;
         }
       }
     }
+    return null;
   }
 
   private static PsiExpression createExpression(String text, PsiElement element) {
