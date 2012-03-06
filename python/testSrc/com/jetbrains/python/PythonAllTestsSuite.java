@@ -73,8 +73,8 @@ public class PythonAllTestsSuite {
     PyIntroduceConstantTest.class,
     PyClassNameCompletionTest.class,
     PySuppressInspectionsTest.class,
-    PyPropertyTestSuite.PyClassicPropertyTest.class,
-    PyPropertyTestSuite.PyDecoratedPropertyTest.class,
+    PyClassicPropertyTest.class,
+    PyDecoratedPropertyTest.class,
     PythonRunConfigurationTest.class,
     PyFoldingTest.class,
     EpydocStringTest.class,
@@ -91,6 +91,7 @@ public class PythonAllTestsSuite {
     PythonHighlightingLexerTest.class,
     PyOldStyleClassInspectionTest.class,
     PyMissingConstructorTest.class,
+    PyPropertyAccessInspectionTest.class,
     Jinja2ParserTest.class,
     DjangoTemplateParserTest.class
   };

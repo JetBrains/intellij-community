@@ -450,10 +450,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   public Property getProperty() {
     final PyClass containingClass = getContainingClass();
-    final String name = getName();
-    if (containingClass != null && name != null) {
-      // TODO find property which uses property call, rather than annotation (function name will be different in that case)
-      return containingClass.findProperty(name);
+    if (containingClass != null) {
+      return containingClass.findPropertyByFunction(this);
     }
     return null;
   }

@@ -245,11 +245,6 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
-  public void testPyPropertyAccessInspection() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doHighlightingTest(PyPropertyAccessInspection.class);
-  }
-
   public void testPyPropertyDefinitionInspection25() {
     doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON25);
   }

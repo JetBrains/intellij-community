@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: May 31, 2010 5:18:10 PM
  */
 public interface Property {
+  String getName();
 
   /**
    * @return the setter: a method or null if defined, or something else callable if undefined.

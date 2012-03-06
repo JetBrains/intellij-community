@@ -25,5 +25,3 @@ class A(object):
     self._v = v
 
   # deleter absent
-
-<caret>a = A()
