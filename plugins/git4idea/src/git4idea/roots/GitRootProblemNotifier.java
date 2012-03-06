@@ -15,6 +15,7 @@
  */
 package git4idea.roots;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -71,7 +72,7 @@ public class GitRootProblemNotifier {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("configure")) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "Version Control");
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
         }
       }
     });
