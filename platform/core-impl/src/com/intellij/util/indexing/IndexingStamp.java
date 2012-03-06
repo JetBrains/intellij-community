@@ -36,14 +36,16 @@ import java.io.IOException;
  *         Date: Dec 25, 2007
  */
 public class IndexingStamp {
-  private IndexingStamp() {
+  private AbstractVfsAdapter myVfsAdapter;
+
+  public IndexingStamp(AbstractVfsAdapter vfsAdapter) {
+    myVfsAdapter = vfsAdapter;
   }
 
   /**
    * The class is meant to be accessed from synchronized block only 
    */
   private static class Timestamps {
-    private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 1, false);
     private TObjectLongHashMap<ID<?, ?>> myIndexStamps;
     private boolean myIsDirty = false;
 
@@ -112,12 +114,12 @@ public class IndexingStamp {
     }
   }
 
-  private static final SLRUCache<VirtualFile, Timestamps> myTimestampsCache = new SLRUCache<VirtualFile, Timestamps>(5, 5) {
+  private final SLRUCache<VirtualFile, Timestamps> myTimestampsCache = new SLRUCache<VirtualFile, Timestamps>(5, 5) {
     @Override
     @NotNull
     public Timestamps createValue(final VirtualFile key) {
       try {
-        final DataInputStream stream = Timestamps.PERSISTENCE.readAttribute(key);
+        final DataInputStream stream = myVfsAdapter.readTimeStampAttribute(key);
         return new Timestamps(stream);
       }
       catch (IOException e) {
@@ -129,7 +131,7 @@ public class IndexingStamp {
     protected void onDropFromCache(final VirtualFile key, final Timestamps value) {
       try {
         if (value.isDirty()) {
-          final DataOutputStream sink = Timestamps.PERSISTENCE.writeAttribute(key);
+          final DataOutputStream sink = myVfsAdapter.writeTimeStampAttribute(key);
           value.writeToStream(sink);
           sink.close();
         }
@@ -142,7 +144,7 @@ public class IndexingStamp {
     }
   };
 
-  public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
+  public boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
       return getIndexStamp(file, indexName) == indexCreationStamp;
     }
@@ -156,7 +158,7 @@ public class IndexingStamp {
     return false;
   }
 
-  public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
+  public long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
     if (file instanceof NewVirtualFile && file.isValid()) {
       synchronized (myTimestampsCache) {
         return myTimestampsCache.get(file).get(indexName);
@@ -165,7 +167,7 @@ public class IndexingStamp {
     return 0L;
   }
 
-  public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
+  public void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
     try {
       if (file instanceof NewVirtualFile && file.isValid()) {
         synchronized (myTimestampsCache) {
@@ -177,7 +179,7 @@ public class IndexingStamp {
     }
   }
 
-  public static void flushCache() {
+  public void flushCache() {
     synchronized (myTimestampsCache) {
       myTimestampsCache.clear();
     }

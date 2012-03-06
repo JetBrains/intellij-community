@@ -29,8 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -75,8 +73,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
 
   private StubIndexState myPreviouslyRegistered;
+  private FileBasedIndex myFileBasedIndex;
 
   public StubIndexImpl(FileBasedIndex fileBasedIndex /* need this to ensure initialization order*/ ) throws IOException {
+    myFileBasedIndex = fileBasedIndex;
     final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
 
     final StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
@@ -184,9 +184,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                            @NotNull final Key key,
                                                            @NotNull final Project project,
                                                            final GlobalSearchScope scope) {
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
+    myFileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
-    final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final List<Psi> result = new SmartList<Psi>();
@@ -203,7 +202,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           @Override
           public void perform(final int id, final TIntArrayList value) {
             ProgressManager.checkCanceled();
-            final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
+            final VirtualFile file = myFileBasedIndex.getVFSAdapter().findFileByIdIfCached(id);
             if (file == null || scope != null && !scope.contains(file)) {
               return;
             }
@@ -262,7 +261,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
                       @Override
                       public void run() {
-                        FileBasedIndex.getInstance().requestReindex(file);
+                        myFileBasedIndex.requestReindex(file);
                       }
                     }, ModalityState.NON_MODAL);
                   }
@@ -314,7 +313,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
   }
 
   private static void requestRebuild() {
-    FileBasedIndex.requestRebuild(StubUpdatingIndex.INDEX_ID);
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 
   @Override

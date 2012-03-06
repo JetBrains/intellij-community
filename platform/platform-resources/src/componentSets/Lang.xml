@@ -12,6 +12,15 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.util.indexing.AbstractVfsAdapter</interface-class>
+      <implementation-class>com.intellij.util.indexing.PersistentVfsAdapter</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.util.indexing.IndexingStamp</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexComponent</implementation-class>
     </component>

@@ -21,6 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+
 public abstract class AbstractVfsAdapter {
   protected static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -46,4 +49,8 @@ public abstract class AbstractVfsAdapter {
 
   @Nullable
   public abstract IndexableFileSet getAdditionalIndexableFileSet();
+
+  public abstract DataInputStream readTimeStampAttribute(VirtualFile key);
+
+  public abstract DataOutputStream writeTimeStampAttribute(VirtualFile key);
 }

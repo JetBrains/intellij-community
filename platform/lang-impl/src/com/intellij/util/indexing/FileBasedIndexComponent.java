@@ -42,9 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.util.containers.HashMap;
@@ -71,9 +69,10 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
                                  FileBasedIndexIndicesManager indexIndicesManager,
                                  FileBasedIndexTransactionMap transactionMap,
                                  FileBasedIndexLimitsChecker limitsChecker,
+                                 AbstractVfsAdapter vfsAdapter,
+                                 IndexingStamp indexingStamp,
                                  SerializationManager sm) throws IOException {
-    super(vfManager, fdm, bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker,
-          new PersistentVfsAdapter((PersistentFS)ManagingFS.getInstance()), sm);
+    super(vfManager, fdm, bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker, vfsAdapter, indexingStamp, sm);
 
     final MessageBusConnection connection = bus.connect();
     final FileTypeManager fileTypeManager_ = fileTypeManager;
@@ -83,7 +82,7 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
       private Map<FileType, Set<String>> myTypeToExtensionMap;
       @Override
       public void beforeFileTypesChanged(final FileTypeEvent event) {
-        cleanupProcessedFlag();
+        cleanupProcessedFlag(null);
         myTypeToExtensionMap = new HashMap<FileType, Set<String>>();
         for (FileType type : fileTypeManager_.getRegisteredFileTypes()) {
           myTypeToExtensionMap.put(type, getExtensions(type));
@@ -178,7 +177,7 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
   @Override
   protected void scheduleIndexRebuild(boolean forceDumbMode) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this));
+      final Set<CacheUpdater> updatersToRun = Collections.<CacheUpdater>singleton(new UnindexedFilesUpdater(project, this, getIndexingStamp()));
       final DumbServiceImpl service = DumbServiceImpl.getInstance(project);
       if (forceDumbMode) {
         service.queueCacheUpdateInDumbMode(updatersToRun);

@@ -68,7 +68,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl");
   private static final int VERSION = 11;
-  private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
 
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
@@ -299,10 +298,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public FileType getFileTypeByFileName(@NotNull String fileName) {
     FileType type = myPatternsTable.findAssociatedFileType(fileName);
     return type == null ? UnknownFileType.INSTANCE : type;
-  }
-
-  public static void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    file.putUserData(FILE_TYPE_KEY, fileType);
   }
 
   @Override

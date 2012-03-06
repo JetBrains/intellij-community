@@ -35,11 +35,13 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.UnindexedFilesUpdater");
   private final FileBasedIndex myIndex;
   private final Project myProject;
+  private IndexingStamp myIndexingStamp;
   private long myStarted;
 
-  public UnindexedFilesUpdater(final Project project, FileBasedIndex index) {
+  public UnindexedFilesUpdater(final Project project, FileBasedIndex index, IndexingStamp indexingStamp) {
     myIndex = index;
     myProject = project;
+    myIndexingStamp = indexingStamp;
   }
 
   @Override
@@ -62,7 +64,7 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   @Override
   public void processFile(final FileContent fileContent) {
     myIndex.indexFileContent(myProject, fileContent);
-    IndexingStamp.flushCache();
+    myIndexingStamp.flushCache();
   }
 
   @Override

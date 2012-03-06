@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -108,6 +109,7 @@ public abstract class FileBasedIndex {
   private final boolean myIsUnitTestMode;
   private ScheduledFuture<?> myFlushingFuture;
   private volatile int myLocalModCount;
+  private IndexingStamp myIndexingStamp;
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, true);
@@ -124,6 +126,7 @@ public abstract class FileBasedIndex {
                         FileBasedIndexTransactionMap transactionMap,
                         FileBasedIndexLimitsChecker limitsChecker,
                         AbstractVfsAdapter vfsAdapter,
+                        IndexingStamp indexingStamp,
                         SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
     myVfManager = vfManager;
     myFileDocumentManager = fdm;
@@ -132,6 +135,7 @@ public abstract class FileBasedIndex {
     myTransactionMap = transactionMap;
     myLimitsChecker = limitsChecker;
     myVfsAdapter = vfsAdapter;
+    myIndexingStamp = indexingStamp;
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     myConfigPath = calcConfigPath(PathManager.getConfigPath());
     mySystemPath = calcConfigPath(PathManager.getSystemPath());
@@ -267,6 +271,10 @@ public abstract class FileBasedIndex {
       LOG.info(e);
       return null;
     }
+  }
+
+  public AbstractVfsAdapter getVFSAdapter() {
+    return myVfsAdapter;
   }
 
   private static class FileBasedIndexHolder {
@@ -548,7 +556,7 @@ public abstract class FileBasedIndex {
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
       return;
     }
-    IndexingStamp.flushCache();
+    myIndexingStamp.flushCache();
     for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndexIndicesManager.keySet())) {
       if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
         return; // do not interfere with 'main' jobs
@@ -1223,11 +1231,11 @@ public abstract class FileBasedIndex {
         public void run() {
           if (file.isValid()) {
             if (currentFC != null) {
-              IndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
+              myIndexingStamp.update(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId));
             }
             else {
               // mark the file as unindexed
-              IndexingStamp.update(file, indexId, -1L);
+              myIndexingStamp.update(file, indexId, -1L);
             }
           }
         }
@@ -1356,7 +1364,7 @@ public abstract class FileBasedIndex {
           return true;
         }
       });
-      IndexingStamp.flushCache();
+      myIndexingStamp.flushCache();
     }
 
     public void scheduleForUpdate(VirtualFile file) {
@@ -1377,7 +1385,7 @@ public abstract class FileBasedIndex {
       }
       else {
         cleanupProcessedFlag(file);
-        IndexingStamp.flushCache();
+        myIndexingStamp.flushCache();
         final List<ID<?, ?>> affectedIndices = new ArrayList<ID<?, ?>>(myIndexIndicesManager.size());
 
         for (final ID<?, ?> indexId : myIndexIndicesManager.keySet()) {
@@ -1406,7 +1414,7 @@ public abstract class FileBasedIndex {
               @Override
               public void run() {
                 for (ID<?, ?> indexId : affectedIndices) {
-                  IndexingStamp.update(file, indexId, -2L);
+                  myIndexingStamp.update(file, indexId, -2L);
                 }
               }
             });
@@ -1436,8 +1444,8 @@ public abstract class FileBasedIndex {
             });
           }
         }
-        
-        IndexingStamp.flushCache();
+
+        myIndexingStamp.flushCache();
       }
     }
 
@@ -1460,7 +1468,7 @@ public abstract class FileBasedIndex {
           }
         }
       }
-      IndexingStamp.flushCache();
+      myIndexingStamp.flushCache();
       if (unexpectedError != null) {
         LOG.error(unexpectedError);
       }
@@ -1570,7 +1578,7 @@ public abstract class FileBasedIndex {
         else {
           indexFileContent(project, fileContent);
         }
-        IndexingStamp.flushCache();
+        myIndexingStamp.flushCache();
       }
     }
   }
@@ -1597,7 +1605,7 @@ public abstract class FileBasedIndex {
 
         if (file instanceof VirtualFileWithId) {
           try {
-            FileTypeManagerImpl.cacheFileType(file, file.getFileType());
+            FileTypeRegistry.cacheFileType(file, file.getFileType());
 
             boolean oldStuff = true;
             if (!myLimitsChecker.isTooLarge(file)) {
@@ -1637,14 +1645,14 @@ public abstract class FileBasedIndex {
                 }
               }
             }
-            IndexingStamp.flushCache();
+            myIndexingStamp.flushCache();
 
             if (oldStuff) {
               myVfsAdapter.setFlag(file, ALREADY_PROCESSED, true);
             }
           }
           finally {
-            FileTypeManagerImpl.cacheFileType(file, null);
+            FileTypeRegistry.cacheFileType(file, null);
           }
         }
       }
@@ -1665,12 +1673,12 @@ public abstract class FileBasedIndex {
 
   private boolean shouldUpdateIndex(final VirtualFile file, final ID<?, ?> indexId) {
     return myIndexIndicesManager.getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+           (isMock(file) || myIndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
   private boolean shouldIndexFile(final VirtualFile file, final ID<?, ?> indexId) {
     return myIndexIndicesManager.getInputFilter(indexId).acceptInput(file) &&
-           (isMock(file) || !IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
+           (isMock(file) || !myIndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId)));
   }
 
   private boolean isUnderConfigOrSystem(VirtualFile file) {
@@ -1721,5 +1729,9 @@ public abstract class FileBasedIndex {
         return true;
       }
     });
+  }
+
+  public IndexingStamp getIndexingStamp() {
+    return myIndexingStamp;
   }
 }

@@ -18,13 +18,18 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.Arrays;
 
 public class PersistentVfsAdapter extends AbstractVfsAdapter {
+  private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 1, false);
+
   private final PersistentFS myFs;
 
   public PersistentVfsAdapter(PersistentFS fs) {
@@ -107,6 +112,16 @@ public class PersistentVfsAdapter extends AbstractVfsAdapter {
   @Override
   public IndexableFileSet getAdditionalIndexableFileSet() {
     return new AdditionalIndexableFileSet();
+  }
+
+  @Override
+  public DataInputStream readTimeStampAttribute(VirtualFile key) {
+    return PERSISTENCE.readAttribute(key);
+  }
+
+  @Override
+  public DataOutputStream writeTimeStampAttribute(VirtualFile key) {
+    return PERSISTENCE.writeAttribute(key);
   }
 
   private static void iterate(final VirtualFile file, VirtualFileVisitor visitor) {

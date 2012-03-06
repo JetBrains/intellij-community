@@ -17,6 +17,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class FileTypeRegistry {
   public static Getter<FileTypeRegistry> ourInstanceGetter;
+  protected static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
 
   public abstract boolean isFileIgnored(@NonNls @NotNull VirtualFile file);
 
@@ -41,6 +43,13 @@ public abstract class FileTypeRegistry {
    * @return The list of file types.
    */
   public abstract FileType[] getRegisteredFileTypes();
+
+  /**
+
+  **/
+  public static void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
+    file.putUserData(FILE_TYPE_KEY, fileType);
+  }
 
   /**
    * Returns the file type for the specified file.

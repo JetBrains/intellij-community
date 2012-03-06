@@ -106,6 +106,4 @@ public class IndexInfrastructure {
       return true;
     }
   }
-
-
 }

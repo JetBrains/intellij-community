@@ -35,6 +35,11 @@ import java.util.List;
  */
 public class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubTreeLoaderImpl");
+  private IndexingStamp myIndexingStamp;
+
+  public StubTreeLoaderImpl(IndexingStamp indexingStamp) {
+    myIndexingStamp = indexingStamp;
+  }
 
   @Override
   @Nullable
@@ -107,7 +112,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   public long getStubTreeTimestamp(VirtualFile vFile) {
-    return IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID);
+    return myIndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID);
   }
 
   @Override

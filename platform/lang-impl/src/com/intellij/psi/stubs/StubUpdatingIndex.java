@@ -78,7 +78,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
       return elementType instanceof IStubFileElementType &&
-            (((IStubFileElementType)elementType).shouldBuildStubFor(file) || IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
+            (((IStubFileElementType)elementType).shouldBuildStubFor(file) || myIndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
     }
     if (fileType.isBinary()) {
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
@@ -224,7 +224,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       }
       catch (StorageException e) {
         LOG.info(e);
-        FileBasedIndex.requestRebuild(INDEX_ID);
+        FileBasedIndex.getInstance().requestRebuild(INDEX_ID);
       }
     }
 
