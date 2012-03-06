@@ -16,7 +16,6 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.io.TestFileSystemBuilder;
@@ -163,21 +162,21 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     }
     myArtifactBuilderLogger.clear();
     IncProjectBuilder builder = new IncProjectBuilder(myDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL);
-    final Ref<BuildMessage> errorMessage = Ref.create(null);
+    final List<BuildMessage> errorMessages = new ArrayList<BuildMessage>();
     builder.addMessageHandler(new MessageHandler() {
       @Override
       public void processMessage(BuildMessage msg) {
-        if (msg.getKind() == BuildMessage.Kind.ERROR && errorMessage.isNull()) {
-          errorMessage.set(msg);
+        if (msg.getKind() == BuildMessage.Kind.ERROR) {
+          errorMessages.add(msg);
         }
       }
     });
     builder.build(new AllProjectScope(myDescriptor.project, new HashSet<Artifact>(Arrays.asList(artifacts)), force), !force, false);
     if (shouldFail) {
-      assertFalse("Build not failed as expected", errorMessage.isNull());
+      assertFalse("Build not failed as expected", errorMessages.isEmpty());
     }
     else {
-      assertNull("Build failed: " + errorMessage.get(), errorMessage.get());
+      assertTrue("Build failed: " + errorMessages, errorMessages.isEmpty());
     }
   }
 
