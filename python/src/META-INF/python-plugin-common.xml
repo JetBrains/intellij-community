@@ -889,8 +889,8 @@
       </action>
 
       <action id="Django.RunManageTaskAction" class="com.jetbrains.django.actions.RunManageTaskAction"
-              text="Run manage.py task..."
-              description="Runs manage.py task">
+              text="Run manage.py Task..."
+              description="Runs manage.py Task">
 
         <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt R"/>
         <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt R"/>
