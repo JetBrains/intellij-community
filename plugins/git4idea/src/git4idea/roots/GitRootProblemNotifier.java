@@ -56,7 +56,7 @@ public class GitRootProblemNotifier {
   }
 
   public void rescanAndNotifyIfNeeded() {
-    Collection<VcsRootError> errors = new GitRootErrorsFinder(myProject, myPlatformFacade).find();
+    Collection<VcsRootError> errors = scan();
     if (errors.isEmpty()) {
       return;
     }
@@ -73,9 +73,18 @@ public class GitRootProblemNotifier {
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("configure")) {
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
+          Collection<VcsRootError> errorsAfterPossibleFix = scan();
+          if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+            notification.expire();
+          }
         }
       }
     });
+  }
+
+  @NotNull
+  private Collection<VcsRootError> scan() {
+    return new GitRootErrorsFinder(myProject, myPlatformFacade).find();
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
@@ -90,11 +99,11 @@ public class GitRootProblemNotifier {
     StringBuilder description = new StringBuilder();
     if (!invalidRoots.isEmpty()) {
       if (invalidRoots.size() == 1) {
-        description.append("The directory " + invalidRoots.iterator().next() + " is registered as a Git root, " +
-                           "but it doesn't have .git directory inside.");
+        description.append("The directory " + rootToString.fun(invalidRoots.iterator().next()) + " is registered as a Git root, " +
+                           "but it is not.");
       }
       else {
-        description.append("The following directories are registered as Git roots, but they don't have .git directotires inside: <br/>" +
+        description.append("The following directories are registered as Git roots, but they are not: <br/>" +
                            StringUtil.join(invalidRoots, rootToString, ", "));
       }
       description.append("<br/>");
@@ -102,7 +111,7 @@ public class GitRootProblemNotifier {
 
     if (!unregisteredRoots.isEmpty()) {
       if (unregisteredRoots.size() == 1) {
-        description.append("The directory " + unregisteredRoots.iterator().next() + " is under Git, " +
+        description.append("The directory " + rootToString.fun(unregisteredRoots.iterator().next()) + " is under Git, " +
                            "but is not registered in the Settings.");
       }
       else {
@@ -119,12 +128,11 @@ public class GitRootProblemNotifier {
 
   private static String makeTitle(Collection<VirtualFile> unregisteredRoots, Collection<VirtualFile> invalidRoots) {
     String title;
-    String roots = pluralize("root", invalidRoots.size());
     if (unregisteredRoots.isEmpty()) {
-      title = "Invalid Git " + roots;
+      title = "Invalid Git " + pluralize("root", invalidRoots.size());
     }
     else if (invalidRoots.isEmpty()) {
-      title = "Unregistered Git " + roots + " detected";
+      title = "Unregistered Git " + pluralize("root", unregisteredRoots.size()) + " detected";
     }
     else {
       title = "Git root configuration problems";
