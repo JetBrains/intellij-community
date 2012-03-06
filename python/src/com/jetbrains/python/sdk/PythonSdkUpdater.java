@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -91,8 +92,16 @@ public class PythonSdkUpdater implements StartupActivity {
                 @Override
                 public void run(@NotNull ProgressIndicator indicator) {
                   for (final Sdk sdk : sdksToUpdate) {
-                    updateSdk(sdk);
-
+                    try {
+                      updateSdk(sdk);
+                    }
+                    catch (InvalidSdkException e) {
+                      if (!PythonSdkType.isInvalid(sdk)) {
+                        LOG.error(e);
+                        final Notification notification = PythonSdkType.createInvalidSdkNotification(myProject);
+                        notification.notify(myProject);
+                      }
+                    }
                     myAlreadyUpdated.add(sdk.getHomePath());
                   }
                 }
@@ -104,7 +113,7 @@ public class PythonSdkUpdater implements StartupActivity {
     }
   }
 
-  private void updateSdk(final Sdk sdk) {
+  private static void updateSdk(final Sdk sdk) throws InvalidSdkException {
     if (sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
       return; //TODO: implement updating for remote interpreter
     }
