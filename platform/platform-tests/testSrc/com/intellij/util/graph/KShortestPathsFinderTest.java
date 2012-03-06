@@ -18,7 +18,6 @@ package com.intellij.util.graph;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.graph.impl.KShortestPathsFinder;
 
 import java.util.*;
 

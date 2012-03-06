@@ -25,7 +25,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.idea.svn17.SvnFileUrlMapping17;
 import org.jetbrains.idea.svn17.SvnFileUrlMappingImpl17;
 import org.jetbrains.idea.svn17.SvnVcs17;
 import org.junit.After;
