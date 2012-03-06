@@ -18,10 +18,12 @@ package com.intellij.execution.junit2.segments;
 import com.intellij.execution.junit.SegmentedInputStreamReader;
 import com.intellij.execution.junit2.SegmentedInputStream;
 import com.intellij.execution.testframework.Printable;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -30,16 +32,20 @@ import java.nio.charset.Charset;
 /**
  * @author dyoma
  */
-public class Extractor {
+public class Extractor implements Disposable {
   private DeferredActionsQueue myFulfilledWorkGate = null;
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
-  private MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT, this);
 
-  public Extractor(final InputStream stream, final Charset charset) {
+  public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
     myQueue.setPassThrough(false);//should be updated in awt thread
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public void setDispatchListener(final DispatchListener listener) {
@@ -48,6 +54,7 @@ public class Extractor {
 
   public void setPacketDispatcher(final PacketProcessor packetProcessor, final DeferredActionsQueue queue) {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
+      @Override
       public void addLast(final Runnable runnable) {
         myQueue.queue(new Update(runnable) {
           @Override
@@ -57,13 +64,16 @@ public class Extractor {
         });
       }
 
+      @Override
       public void setDispactchListener(final DispatchListener listener) {
         queue.setDispactchListener(listener);
       }
     };
     myEventsDispatcher = new OutputPacketProcessor() {
+      @Override
       public void processPacket(final String packet) {
         myFulfilledWorkGate.addLast(new Runnable() {
+          @Override
           public void run() {
             packetProcessor.processPacket(packet);
           }
@@ -74,6 +84,7 @@ public class Extractor {
       public void processOutput(final Printable printable) {
         LOG.assertTrue(packetProcessor instanceof OutputPacketProcessor);
         myFulfilledWorkGate.addLast(new Runnable() {
+          @Override
           public void run() {
             ((OutputPacketProcessor)packetProcessor).processOutput(printable);
           }

@@ -122,10 +122,12 @@ public abstract class TestObject implements JavaCommandLine {
 
   public abstract String suggestActionName();
 
+  @Override
   public RunnerSettings getRunnerSettings() {
     return myRunnerSettings;
   }
 
+  @Override
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myConfigurationSettings;
   }
@@ -145,6 +147,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   private static final TestObject NOT_CONFIGURED = new TestObject(null, null, null, null) {
+    @Override
     public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
       return null;
     }
@@ -233,6 +236,7 @@ public abstract class TestObject implements JavaCommandLine {
     }
   }
 
+  @Override
   public JavaParameters getJavaParameters() throws ExecutionException {
     if (myJavaParameters == null) {
       myJavaParameters = new JavaParameters();
@@ -246,6 +250,7 @@ public abstract class TestObject implements JavaCommandLine {
     return myJavaParameters;
   }
 
+  @Override
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final JUnitProcessHandler handler = createHandler();
     final RunnerSettings runnerSettings = getRunnerSettings();
@@ -269,6 +274,7 @@ public abstract class TestObject implements JavaCommandLine {
         if (model != null) {
           handler.getOut().setDispatchListener(model.getNotifier());
           Disposer.register(model, new Disposable() {
+            @Override
             public void dispose() {
               handler.getOut().setDispatchListener(DispatchListener.DEAF);
             }
@@ -293,16 +299,19 @@ public abstract class TestObject implements JavaCommandLine {
           FileUtil.delete(myListenersFile);
         }
         IJSwingUtilities.invoke(new Runnable() {
+          @Override
           public void run() {
-            unboundOutputRoot.flush();
-            packetsReceiver.checkTerminated();
-            final JUnitRunningModel model = packetsReceiver.getModel();
-            notifyByBalloon(model, consoleProperties);
-
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              Disposer.dispose(consoleView);
+            try {
+              unboundOutputRoot.flush();
+              packetsReceiver.checkTerminated();
+              final JUnitRunningModel model = packetsReceiver.getModel();
+              notifyByBalloon(model, consoleProperties);
             }
-
+            finally {
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                Disposer.dispose(consoleView);
+              }
+            }
           }
         });
       }
@@ -312,6 +321,7 @@ public abstract class TestObject implements JavaCommandLine {
         final String text = event.getText();
         final ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(outputType);
         final Printable printable = new Printable() {
+          @Override
           public void printOn(final Printer printer) {
             printer.print(text, consoleViewType);
           }
@@ -335,6 +345,7 @@ public abstract class TestObject implements JavaCommandLine {
     final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
     rerunFailedTestsAction.init(consoleProperties, myRunnerSettings, myConfigurationSettings);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
+      @Override
       public TestFrameworkRunningModel get() {
         return packetsReceiver.getModel();
       }
