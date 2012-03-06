@@ -18,8 +18,8 @@ package org.jetbrains.idea.maven.compiler;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -140,44 +140,47 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     final Project project = context.getProject();
     final MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
     if (!mavenProjectManager.isMavenizedProject()) return ProcessingItem.EMPTY_ARRAY;
-    return new ReadAction<ProcessingItem[]>() {
-      protected void run(Result<ProcessingItem[]> resultObject) throws Throwable {
-        // make sure null reference will not be returned. By default return empty array 
-        resultObject.setResult(ProcessingItem.EMPTY_ARRAY);
-        List<ProcessingItem> allItemsToProcess = new ArrayList<ProcessingItem>();
-        List<String> filesToDelete = new ArrayList<String>();
 
-        for (Module eachModule : context.getCompileScope().getAffectedModules()) {
-          MavenProject mavenProject = mavenProjectManager.findProject(eachModule);
-          if (mavenProject == null) continue;
+    List<ProcessingItem> allItemsToProcess = new ArrayList<ProcessingItem>();
+    List<String> filesToDelete = new ArrayList<String>();
 
-          Properties properties = loadPropertiesAndFilters(context, mavenProject);
+    AccessToken accessToken = ReadAction.start();
+    try {
+      for (Module eachModule : context.getCompileScope().getAffectedModules()) {
+        MavenProject mavenProject = mavenProjectManager.findProject(eachModule);
+        if (mavenProject == null) continue;
 
-          List<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
-          String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
-                                                                                                       "maven-resources-plugin"),
-                                                                   "escapeString", "\\");
+        Properties properties = loadPropertiesAndFilters(context, mavenProject);
 
-          long propertiesHashCode = calculateHashCode(mavenProject, properties);
+        List<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
+        String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
+                                                                                                     "maven-resources-plugin"),
+                                                                 "escapeString", "\\");
 
-          List<ProcessingItem> moduleItemsToProcess = new ArrayList<ProcessingItem>();
-          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
-                                 nonFilteredExtensions, escapeString, false, moduleItemsToProcess);
-          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
-                                 nonFilteredExtensions, escapeString, true, moduleItemsToProcess);
-          collectItemsToDelete(eachModule, moduleItemsToProcess, filesToDelete);
-          allItemsToProcess.addAll(moduleItemsToProcess);
-        }
+        long propertiesHashCode = calculateHashCode(mavenProject, properties);
 
-        if (!filesToDelete.isEmpty()) {
-          allItemsToProcess.add(new FakeProcessingItem());
-        }
-        context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
-        resultObject.setResult(allItemsToProcess.toArray(new ProcessingItem[allItemsToProcess.size()]));
-        removeObsoleteModulesFromCache(project);
-        saveCache(project);
+        List<ProcessingItem> moduleItemsToProcess = new ArrayList<ProcessingItem>();
+        collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
+                               nonFilteredExtensions, escapeString, false, moduleItemsToProcess);
+        collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
+                               nonFilteredExtensions, escapeString, true, moduleItemsToProcess);
+        collectItemsToDelete(eachModule, moduleItemsToProcess, filesToDelete);
+        allItemsToProcess.addAll(moduleItemsToProcess);
       }
-    }.execute().getResultObject();
+
+      if (!filesToDelete.isEmpty()) {
+        allItemsToProcess.add(new FakeProcessingItem());
+      }
+      context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
+
+      removeObsoleteModulesFromCache(project);
+      saveCache(project);
+    }
+    finally {
+      accessToken.finish();
+    }
+
+    return allItemsToProcess.toArray(new ProcessingItem[allItemsToProcess.size()]);
   }
 
   private static List<String> collectNonFilteredExtensions(MavenProject mavenProject) {
