@@ -62,6 +62,10 @@ public class ResourcesValidityState implements ValidityState {
     if (resourcesDir != null) {
       collectFiles(resourcesDir);
     }
+    VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
+    if (assetsDir != null) {
+      collectFiles(assetsDir);
+    }
     for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
       VirtualFile depManifest = AndroidRootUtil.getManifestFile(depFacet);
       if (depManifest != null) {
@@ -71,10 +75,10 @@ public class ResourcesValidityState implements ValidityState {
       if (depResDir != null) {
         collectFiles(depResDir);
       }
-    }
-    VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
-    if (assetsDir != null) {
-      collectFiles(assetsDir);
+      final VirtualFile depAssetDir = AndroidRootUtil.getAssetsDir(depFacet);
+      if (depAssetDir != null) {
+        collectFiles(depAssetDir);
+      }
     }
   }
 

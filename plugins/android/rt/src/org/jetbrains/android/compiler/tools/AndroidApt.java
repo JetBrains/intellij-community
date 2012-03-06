@@ -234,11 +234,12 @@ public final class AndroidApt {
                                                                                int platformToolsRevision,
                                                                                @NotNull String manifestPath,
                                                                                @NotNull String[] resPaths,
-                                                                               @Nullable String osAssetsPath,
+                                                                               @NotNull String[] osAssetDirPaths,
                                                                                @NotNull String outputPath,
                                                                                @Nullable String configFilter,
                                                                                boolean debugMode,
-                                                                               int versionCode) throws IOException {
+                                                                               int versionCode,
+                                                                               FileFilter assetsFilter) throws IOException {
     final ArrayList<String> args = new ArrayList<String>();
 
     //noinspection deprecation
@@ -278,18 +279,57 @@ public final class AndroidApt {
     args.add("-M");
     args.add(manifestPath);
 
-    if (osAssetsPath != null) {
-      args.add("-A");
-      args.add(osAssetsPath);
+    File tempDir = null;
+    try {
+      if (osAssetDirPaths.length > 0) {
+        final String[] nonEmptyAssetDirs = getNonEmptyExistingDirs(osAssetDirPaths);
+
+        if (nonEmptyAssetDirs.length > 0) {
+          if (nonEmptyAssetDirs.length == 1) {
+            args.add("-A");
+            args.add(nonEmptyAssetDirs[0]);
+          }
+          else {
+            tempDir = FileUtil.createTempDirectory("android_combined_assets", "tmp");
+            for (String assetDir : nonEmptyAssetDirs) {
+              FileUtil.copyDir(new File(assetDir), tempDir, assetsFilter);
+            }
+            args.add("-A");
+            args.add(tempDir.getPath());
+          }
+        }
+      }
+
+      args.add("-I");
+      args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
+
+      args.add("-F");
+      args.add(outputPath);
+
+      LOG.info(AndroidCommonUtils.command2string(args));
+      return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
     }
+    finally {
+      if (tempDir != null) {
+        FileUtil.delete(tempDir);
+      }
+    }
+  }
 
-    args.add("-I");
-    args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
+  @NotNull
+  private static String[] getNonEmptyExistingDirs(@NotNull String[] dirs) {
+    final List<String> result = new ArrayList<String>();
+    for (String dirPath : dirs) {
+      final File dir = new File(dirPath);
 
-    args.add("-F");
-    args.add(outputPath);
+      if (dir.isDirectory()) {
+        final File[] children = dir.listFiles();
 
-    LOG.info(AndroidCommonUtils.command2string(args));
-    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(args));
+        if (children != null && children.length > 0) {
+          result.add(dirPath);
+        }
+      }
+    }
+    return ArrayUtil.toStringArray(result);
   }
 }
