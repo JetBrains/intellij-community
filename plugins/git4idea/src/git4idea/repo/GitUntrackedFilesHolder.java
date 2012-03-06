@@ -79,7 +79,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private final Project myProject;
   private final VirtualFile myRoot;
   private final ChangeListManager myChangeListManager;
-  private final GitRepositoryManager myRepositoryManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final GitRepositoryFiles myRepositoryFiles;
   private final Git myGit;
@@ -95,7 +94,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myRoot = root;
     myRepositoryFiles = GitRepositoryFiles.getInstance(root);
     myChangeListManager = ChangeListManager.getInstance(project);
-    myRepositoryManager = GitRepositoryManager.getInstance(project);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     myGit = ServiceManager.getService(Git.class);
   }
@@ -297,7 +295,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
-    final GitRepository repository = myRepositoryManager.getRepositoryForFile(file);
+    final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
     return repository != null && repository.getRoot().equals(myRoot);
   }
   

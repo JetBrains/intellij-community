@@ -29,6 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -351,12 +352,21 @@ public class CompleteReferenceExpression {
       myMatcher = matcher;
       myParameters = parameters;
       myPreferredFieldNames = addAllRestrictedProperties(place);
-      mySkipPackages = PsiImplUtil.getRuntimeQualifier(place) == null;
+      mySkipPackages = shouldSkipPackages(place);
       myEventListener = JavaPsiFacade.getInstance(place.getProject()).findClass("java.util.EventListener", place.getResolveScope());
       myPropertyNames.addAll(addAllRestrictedProperties(place));
 
       myFieldPointerOperator = place.hasAt();
       myMethodPointerOperator = place.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
+    }
+
+    private static boolean shouldSkipPackages(GrReferenceExpression place) {
+      if (PsiImplUtil.getRuntimeQualifier(place) != null) {
+        return false;
+      }
+
+      PsiElement parent = place.getParent();
+      return parent == null || parent.getLanguage().isKindOf(GroovyFileType.GROOVY_LANGUAGE); //don't skip in Play!
     }
 
     @Override

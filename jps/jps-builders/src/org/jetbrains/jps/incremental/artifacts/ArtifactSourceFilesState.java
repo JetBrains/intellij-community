@@ -44,7 +44,7 @@ public class ArtifactSourceFilesState {
     myRootsIndex = rootsIndex;
     myTimestampStorage = timestampStorage;
     myArtifactId = artifactId;
-    myMappingsFile = new File(mappingsDir, String.valueOf(artifactId));
+    myMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "src-out");
   }
 
   public ArtifactSourceToOutputMapping getOrCreateMapping() throws IOException {
@@ -97,10 +97,6 @@ public class ArtifactSourceFilesState {
     }
   }
 
-  public ArtifactSourceTimestampStorage getTimestampStorage() {
-    return myTimestampStorage;
-  }
-
   private void processRecursively(File file, SourceFileFilter filter, Set<String> currentPaths) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
     if (!filter.accept(filePath)) return;
@@ -148,24 +144,27 @@ public class ArtifactSourceFilesState {
     return instructionsBuilder;
   }
 
-  public void updateTimestamps(Set<String> deletedFiles, Set<String> changedFiles) throws IOException {
-    for (String filePath : deletedFiles) {
+  public void updateTimestamps() throws IOException {
+    for (String filePath : myDeletedFiles) {
       final ArtifactSourceTimestampStorage.PerArtifactTimestamp[] state = myTimestampStorage.getState(filePath);
       if (state == null) continue;
       for (int i = 0, length = state.length; i < length; i++) {
         if (state[i].myArtifactId == myArtifactId) {
-          ArrayUtil.remove(state, i);
-          myTimestampStorage.update(filePath, state);
+          final ArtifactSourceTimestampStorage.PerArtifactTimestamp[] newState = ArrayUtil.remove(state, i);
+          myTimestampStorage.update(filePath, newState.length > 0 ? newState : null);
           break;
         }
       }
     }
-    for (String filePath : changedFiles) {
+    for (String filePath : myChangedFiles) {
       final ArtifactSourceTimestampStorage.PerArtifactTimestamp[] state = myTimestampStorage.getState(filePath);
       File file = new File(FileUtil.toSystemDependentName(filePath));
       final long timestamp = file.lastModified();
       myTimestampStorage.update(filePath, updateTimestamp(state, timestamp));
     }
+  }
+
+  public void markUpToDate() {
     myDeletedFiles.clear();
     myChangedFiles.clear();
   }

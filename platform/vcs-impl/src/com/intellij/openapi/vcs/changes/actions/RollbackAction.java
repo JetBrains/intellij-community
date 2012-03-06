@@ -32,7 +32,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -45,9 +44,14 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.vcsUtil.RollbackUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static com.intellij.openapi.ui.Messages.showYesNoDialog;
+import static java.util.Arrays.*;
 
 public class RollbackAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
@@ -77,14 +81,9 @@ public class RollbackAction extends AnAction implements DumbAware {
     }
     e.getPresentation().setEnabled(isEnabled);
     if (isEnabled) {
-      final AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-      for (AbstractVcs vcs : vcss) {
-        final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
-        if (rollbackEnvironment != null) {
-          e.getPresentation().setText(rollbackEnvironment.getRollbackOperationName());
-          return;
-        }
-      }
+      String operationName = RollbackUtil.getRollbackOperationName(project);
+      e.getPresentation().setText(operationName);
+      e.getPresentation().setDescription(operationName + " selected changes");
     }
   }
 
@@ -93,7 +92,9 @@ public class RollbackAction extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
-    final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace()) ? null : "Can not rollback now";
+    final String title = ActionPlaces.CHANGES_VIEW_TOOLBAR.equals(e.getPlace())
+                         ? null
+                         : "Can not " + RollbackUtil.getRollbackOperationName(project) + " now";
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -187,7 +188,7 @@ public class RollbackAction extends AnAction implements DumbAware {
 
     final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
-      LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>(Arrays.asList(virtualFiles));
+      LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>(asList(virtualFiles));
       result.retainAll(ChangeListManager.getInstance(project).getModifiedWithoutEditing());
       return result;
     }
@@ -196,10 +197,13 @@ public class RollbackAction extends AnAction implements DumbAware {
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final LinkedHashSet<VirtualFile> modifiedWithoutEditing) {
+    final String operationName = RollbackUtil.getRollbackOperationName(project);
     String message = (modifiedWithoutEditing.size() == 1)
-      ? VcsBundle.message("rollback.modified.without.editing.confirm.single", modifiedWithoutEditing.iterator().next().getPresentableUrl())
-      : VcsBundle.message("rollback.modified.without.editing.confirm.multiple", modifiedWithoutEditing.size());
-    int rc = Messages.showYesNoDialog(project, message, VcsBundle.message("changes.action.rollback.title"), Messages.getQuestionIcon());
+                     ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
+                                         modifiedWithoutEditing.iterator().next().getPresentableUrl(), operationName)
+                     : VcsBundle.message("rollback.modified.without.editing.confirm.multiple",
+                                         modifiedWithoutEditing.size(), operationName);
+    int rc = showYesNoDialog(project, message, VcsBundle.message("changes.action.rollback.title", operationName), getQuestionIcon());
     if (rc != 0) {
       return;
     }
@@ -215,10 +219,12 @@ public class RollbackAction extends AnAction implements DumbAware {
               final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
               if (rollbackEnvironment != null) {
                 if (indicator != null) {
-                  indicator.setText(vcs.getDisplayName() + ": performing rollback...");
+                  indicator.setText(vcs.getDisplayName() +
+                                    ": performing " + rollbackEnvironment.getRollbackOperationName().toLowerCase() + "...");
                   indicator.setIndeterminate(false);
                 }
-                rollbackEnvironment.rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
+                rollbackEnvironment
+                  .rollbackModifiedWithoutCheckout(items, exceptions, new RollbackProgressModifier(items.size(), indicator));
                 if (indicator != null) {
                   indicator.setText2("");
                 }
@@ -230,17 +236,18 @@ public class RollbackAction extends AnAction implements DumbAware {
           // for files refresh  
         }
         if (!exceptions.isEmpty()) {
-          AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab"));
+          AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab",
+                                                            operationName));
         }
         VirtualFileManager.getInstance().refresh(true, new Runnable() {
           public void run() {
-            for(VirtualFile virtualFile: modifiedWithoutEditing) {
+            for (VirtualFile virtualFile : modifiedWithoutEditing) {
               VcsDirtyScopeManager.getInstance(project).fileDirty(virtualFile);
             }
           }
         });
       }
     };
-    progressManager.runProcessWithProgressSynchronously(action, VcsBundle.message("changes.action.rollback.text"), true, project);
+    progressManager.runProcessWithProgressSynchronously(action, operationName, true, project);
   }
 }

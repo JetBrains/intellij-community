@@ -244,13 +244,14 @@ public class AndroidCompileUtil {
     return GEN_MODULE_PREFIX + module.getName();
   }
 
-  public static void createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
+  @Nullable
+  public static VirtualFile createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final File rootFile = new File(path);
     final boolean created;
     if (!rootFile.exists()) {
-      if (!rootFile.mkdirs()) return;
+      if (!rootFile.mkdirs()) return null;
       created = true;
     }
     else {
@@ -266,7 +267,7 @@ public class AndroidCompileUtil {
     }
 
     if (project.isDisposed() || module.isDisposed()) {
-      return;
+      return null;
     }
 
     final VirtualFile root;
@@ -295,9 +296,8 @@ public class AndroidCompileUtil {
           }
         });
       }
-
-      excludeFromCompilation(project, root);
     }
+    return root;
   }
 
   private static void excludeFromCompilation(@NotNull Project project, @NotNull VirtualFile dir) {
@@ -636,27 +636,37 @@ public class AndroidCompileUtil {
 
   public static void createGenModulesAndSourceRoots(@NotNull final AndroidFacet facet) {
     final Module module = facet.getModule();
-    String sourceRootPath;
-
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
 
-    if (FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0) {
-      sourceRootPath = AndroidRootUtil.getRenderscriptGenSourceRootPath(facet);
-      if (sourceRootPath != null) {
-        createSourceRootIfNotExist(sourceRootPath, module);
+    initializeGenSourceRoot(module,
+                            AndroidRootUtil.getRenderscriptGenSourceRootPath(facet),
+                            FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0);
+
+
+    initializeGenSourceRoot(module, AndroidRootUtil.getAptGenSourceRootPath(facet), true);
+
+    initializeGenSourceRoot(module,
+                            AndroidRootUtil.getAidlGenSourceRootPath(facet),
+                            FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0);
+  }
+
+  private static void initializeGenSourceRoot(@NotNull Module module, @Nullable String sourceRootPath, boolean createIfNotExist) {
+    if (sourceRootPath == null) {
+      return;
+    }
+    VirtualFile sourceRoot = null;
+
+    if (createIfNotExist) {
+      final VirtualFile root = createSourceRootIfNotExist(sourceRootPath, module);
+      if (root != null) {
+        sourceRoot = root;
       }
     }
-
-    sourceRootPath = AndroidRootUtil.getAptGenSourceRootPath(facet);
-    if (sourceRootPath != null) {
-      createSourceRootIfNotExist(sourceRootPath, module);
+    if (sourceRoot == null) {
+      sourceRoot = LocalFileSystem.getInstance().findFileByPath(sourceRootPath);
     }
-
-    if (FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0) {
-      sourceRootPath = AndroidRootUtil.getAidlGenSourceRootPath(facet);
-      if (sourceRootPath != null) {
-        createSourceRootIfNotExist(sourceRootPath, module);
-      }
+    if (sourceRoot != null) {
+      excludeFromCompilation(module.getProject(), sourceRoot);
     }
   }
 

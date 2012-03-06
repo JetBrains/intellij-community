@@ -57,7 +57,6 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
 
   protected JPanel myCustomPanel;
   protected JPanel myCustomLabel;
-  private JTextField myChangelistNameFormat;
   private JBCheckBox myAddCommitMessage;
   private JLabel myComment;
   private JPanel myEditorPanel;
@@ -94,14 +93,12 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myUseHTTPAuthentication.setSelected(repository.isUseHttpAuthentication());
     myUseHTTPAuthentication.setVisible(repository.getRepositoryType().isSupported(TaskRepositoryType.BASIC_HTTP_AUTHORIZATION));
 
-    myChangelistNameFormat.setText(repository.getChangelistNameFormat());
     myAddCommitMessage.setSelected(repository.isShouldFormatCommitMessage());
     myDocument = EditorFactory.getInstance().createDocument(repository.getCommitMessageFormat());
     myEditor = EditorFactory.getInstance().createEditor(myDocument);
     myEditorPanel.add(ScrollPaneFactory.createScrollPane(myEditor.getComponent(), SideBorder.NONE), BorderLayout.CENTER);
     myComment.setText("Available placeholders: " + repository.getComment());
 
-    installListener(myChangelistNameFormat);
     installListener(myAddCommitMessage);
     myDocument.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
       @Override
@@ -185,7 +182,6 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
     myRepository.setUseProxy(myUseProxy.isSelected());
     myRepository.setUseHttpAuthentication(myUseHTTPAuthentication.isSelected());
 
-    myRepository.setChangelistNameFormat(myChangelistNameFormat.getText());
     myRepository.setShouldFormatCommitMessage(myAddCommitMessage.isSelected());
     myRepository.setCommitMessageFormat(myDocument.getText());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.vfs;
+package com.intellij.ide.util;
 
-import com.intellij.openapi.vfs.VirtualFile;
-
-import java.util.EventListener;
+import java.lang.annotation.*;
 
 /**
- * The listener for reference changes
+ * Allows to pass property name of field
+ *
+ * @author Konstantin Bulenkov
  */
-public interface GitReferenceListener extends EventListener {
-  /**
-   * This method is invoked when some references changed. The events do not describe which ones.
-   *
-   * @param root the root for which references might have changed, null if all roots might have been affected
-   */
-  void referencesChanged(VirtualFile root);
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD})
+public @interface PropertyName {
+  String value();
+  String defaultValue() default "";
 }

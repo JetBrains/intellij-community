@@ -40,7 +40,7 @@ public class ArtifactCompilerPersistentData {
   public ArtifactCompilerPersistentData(File cacheStoreDirectory) throws IOException {
     myFile = new File(cacheStoreDirectory, "info");
     if (!myFile.exists()) {
-      LOG.info("Artifacts compiler info file doesn't exist: " + myFile.getAbsolutePath());
+      LOG.debug("Artifacts compiler info file doesn't exist: " + myFile.getAbsolutePath());
       myVersionChanged = true;
       return;
     }
@@ -49,7 +49,7 @@ public class ArtifactCompilerPersistentData {
     try {
       final int version = input.readInt();
       if (version != VERSION) {
-        LOG.info("Artifacts compiler version changed (" + myFile.getAbsolutePath() + "): " + version + " -> " + VERSION);
+        LOG.debug("Artifacts compiler version changed (" + myFile.getAbsolutePath() + "): " + version + " -> " + VERSION);
         myVersionChanged = true;
         return;
       }

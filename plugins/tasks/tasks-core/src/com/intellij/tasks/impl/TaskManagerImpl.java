@@ -41,6 +41,7 @@ import javax.swing.Timer;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -320,7 +321,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
       if (createChangelist) {
         if (changeLists.isEmpty()) {
-          String name = TaskUtil.getChangeListName(task);
+          String name = getChangelistName(task);
           String comment = TaskUtil.getChangeListComment(this, origin);
           createChangeList(task, name, comment);
         } else {
@@ -332,6 +333,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       }
     }
+  }
+
+  public String getChangelistName(Task task) {
+    TaskRepository repository = task.getRepository();
+    if (repository != null) {
+      return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
+    }
+    return task.getSummary();
   }
 
   private void saveActiveTask() {
@@ -397,38 +406,43 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         indicator.setText("Connecting to " + repository.getUrl() + "...");
         indicator.setFraction(0);
         indicator.setIndeterminate(true);
-        myConnection = repository.createCancellableConnection();
-        if (myConnection != null) {
-          Future<Exception> future = ApplicationManager.getApplication().executeOnPooledThread(myConnection);
-          while (true) {
-            try {
-              myException = future.get(100, TimeUnit.MILLISECONDS);
-              return;
-            }
-            catch (TimeoutException ignore) {
+        try {
+          myConnection = repository.createCancellableConnection();
+          if (myConnection != null) {
+            Future<Exception> future = ApplicationManager.getApplication().executeOnPooledThread(myConnection);
+            while (true) {
               try {
-                indicator.checkCanceled();
+                myException = future.get(100, TimeUnit.MILLISECONDS);
+                return;
               }
-              catch (ProcessCanceledException e) {
+              catch (TimeoutException ignore) {
+                try {
+                  indicator.checkCanceled();
+                }
+                catch (ProcessCanceledException e) {
+                  myException = e;
+                  myConnection.cancel();
+                  return;
+                }
+              }
+              catch (Exception e) {
                 myException = e;
-                myConnection.cancel();
                 return;
               }
             }
+          }
+          else {
+            try {
+              repository.testConnection();
+            }
             catch (Exception e) {
+              LOG.info(e);
               myException = e;
-              return;
             }
           }
         }
-        else {
-          try {
-            repository.testConnection();
-          }
-          catch (Exception e) {
-            LOG.info(e);
-            myException = e;
-          }
+        catch (Exception e) {
+          myException = e;
         }
       }
     };
@@ -439,7 +453,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       Messages.showMessageDialog(myProject, "Connection is successful", "Connection", Messages.getInformationIcon());
     }
     else if (!(e instanceof ProcessCanceledException)) {
-      Messages.showErrorDialog(myProject, e.getMessage(), "Error");
+      String message = e.getMessage();
+      if (e instanceof UnknownHostException) {
+        message = "Unknown host: " + message;
+      }
+      if (message == null) {
+        LOG.error(e);
+        message = "Unknown error";
+      }
+      Messages.showErrorDialog(myProject, message, "Error");
     }
     return e == null;
   }
@@ -817,6 +839,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = true;
     public boolean markAsInProgress = false;
+    public String changelistNameFormat = "{id} {summary}";
 
     @Tag("servers")
     public Element servers = new Element("servers");

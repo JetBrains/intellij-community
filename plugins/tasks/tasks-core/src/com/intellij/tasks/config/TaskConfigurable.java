@@ -44,6 +44,9 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   @BindControl("saveContextOnCommit")
   private JCheckBox mySaveContextOnCommit;
 
+  @BindControl("changelistNameFormat")
+  private JTextField myChangelistNameFormat;
+
   private final Project myProject;
   private Configurable[] myConfigurables;
   private final NotNullLazyValue<ControlBinder> myControlBinder = new NotNullLazyValue<ControlBinder>() {

@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.java;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,8 +45,6 @@ import java.util.concurrent.TimeUnit;
  *         Date: 9/21/11
  */
 public class JavaBuilder extends ModuleLevelBuilder {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");
-
   public static final String BUILDER_NAME = "java";
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";
@@ -185,9 +182,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
 
-      if (LOG.isDebugEnabled()) {
+      final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
+      if (logger.isEnabled()) {
         if (filesToCompile.size() > 0 && context.isMake()) {
-          LOG.info("Compiling files:");
+          logger.log("Compiling files:");
           final String[] buffer = new String[filesToCompile.size()];
           int i = 0;
           for (final File f : filesToCompile) {
@@ -195,9 +193,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
           }
           Arrays.sort(buffer);
           for (final String s : buffer) {
-            LOG.info(s);
+            logger.log(s);
           }
-          LOG.info("End of files");
+          logger.log("End of files");
         }
       }
 

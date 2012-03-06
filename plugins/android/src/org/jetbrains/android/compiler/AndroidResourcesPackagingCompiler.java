@@ -22,9 +22,11 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
@@ -32,14 +34,12 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +61,11 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
-        VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
+
+        final ArrayList<String> assetDirPathsList = new ArrayList<String>();
+        collectAssetDirs(facet, assetDirPathsList);
+        final String[] assetDirPaths = ArrayUtil.toStringArray(assetDirPathsList);
+        
         if (manifestFile == null) {
           context.addMessage(CompilerMessageCategory.ERROR, AndroidBundle.message("android.compilation.error.manifest.not.found"),
                              null, -1, -1);
@@ -75,7 +79,6 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
           final AndroidPlatform platform = configuration.getAndroidPlatform();
           
           if (platform != null) {
-            String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
             String[] resourcesDirPaths = AndroidCompileUtil.collectResourceDirs(facet, true, context);
             final IAndroidTarget target = platform.getTarget();
             final int platformToolsRevision = platform.getSdkData().getPlatformToolsRevision();
@@ -85,7 +88,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                  null, -1, -1);
             }
 
-            items.add(new MyItem(module, target, platformToolsRevision, manifestFile, resourcesDirPaths, assetsDirPath, outputPath,
+            items.add(new MyItem(module, target, platformToolsRevision, manifestFile, resourcesDirPaths, assetDirPaths, outputPath,
                                  configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context)));
             //items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
@@ -93,6 +96,20 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       }
     }
     return items.toArray(new ProcessingItem[items.size()]);
+  }
+  
+  private static void collectAssetDirs(@NotNull AndroidFacet facet, @NotNull List<String> result) {
+    final VirtualFile assetsDir = AndroidRootUtil.getAssetsDir(facet);
+    if (assetsDir != null) {
+      result.add(FileUtil.toSystemDependentName(assetsDir.getPath()));
+    }
+    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+      final VirtualFile depAssetsDir = AndroidRootUtil.getAssetsDir(depFacet);
+
+      if (depAssetsDir != null) {
+        result.add(FileUtil.toSystemDependentName(depAssetsDir.getPath()));
+      }
+    }
   }
 
   static File getOutputFile(Module module, VirtualFile outputDir) {
@@ -157,8 +174,14 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                     item.myPlatformToolsRevision,
                                     preprocessedManifestFile.getPath(),
                                     item.myResourceDirPaths,
-                                    item.myAssetsDirPath,
-                                    outputPath, null, !releasePackage, 0));
+                                    item.myAssetsDirPaths,
+                                    outputPath, null, !releasePackage, 0, new FileFilter() {
+          @Override
+          public boolean accept(File file) {
+            final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+            return vFile != null && !ProjectRootManager.getInstance(context.getProject()).getFileIndex().isIgnored(vFile);
+          }
+        }));
 
       AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
     }
@@ -245,7 +268,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     final VirtualFile myManifestFile;
     final IAndroidTarget myAndroidTarget;
     final String[] myResourceDirPaths;
-    final String myAssetsDirPath;
+    final String[] myAssetsDirPaths;
     final String myOutputPath;
 
     private final boolean myFileExists;
@@ -258,7 +281,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                    int platformToolsRevision,
                    VirtualFile manifestFile,
                    String[] resourceDirPaths,
-                   String assetsDirPath,
+                   String[] assetsDirPath,
                    String outputPath,
                    boolean generateUnsignedApk,
                    boolean releaseBuild) {
@@ -267,7 +290,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       myPlatformToolsRevision = platformToolsRevision;
       myManifestFile = manifestFile;
       myResourceDirPaths = resourceDirPaths;
-      myAssetsDirPath = assetsDirPath;
+      myAssetsDirPaths = assetsDirPath;
       myOutputPath = outputPath;
       myFileExists = new File(outputPath).exists();
       myGenerateUnsignedApk = generateUnsignedApk;

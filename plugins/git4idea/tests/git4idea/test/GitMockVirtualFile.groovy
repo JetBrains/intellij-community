@@ -15,12 +15,13 @@
  */
 package git4idea.test
 
+import com.intellij.mock.MockVirtualFileSystem
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import com.intellij.mock.MockVirtualFileSystem
 
 /**
  * VirtualFile test implementation based on {@link java.io.File}.
@@ -30,6 +31,16 @@ import com.intellij.mock.MockVirtualFileSystem
 class GitMockVirtualFile extends VirtualFile {
 
   private String myPath;
+
+  @NotNull
+  static VirtualFile fromPath(@NotNull String absolutePath) {
+    return new GitMockVirtualFile(FileUtil.toSystemIndependentName(absolutePath))
+  }
+
+  @NotNull
+  static VirtualFile fromPath(@NotNull String relativePath, @NotNull Project project) {
+    return fromPath(new File(project.getBaseDir().getPath() + "/" + relativePath).getCanonicalPath())
+  }
 
   GitMockVirtualFile(@NotNull String path) {
     myPath = FileUtil.toSystemIndependentName(path);
@@ -133,4 +144,5 @@ class GitMockVirtualFile extends VirtualFile {
   int hashCode() {
     return (myPath != null ? myPath.hashCode() : 0)
   }
+
 }

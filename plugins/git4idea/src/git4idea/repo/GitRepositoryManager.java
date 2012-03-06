@@ -18,13 +18,18 @@ package git4idea.repo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
-import git4idea.GitVcs;
+import git4idea.PlatformFacade;
+import git4idea.roots.GitRootProblemNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,31 +42,36 @@ import static git4idea.GitUtil.sortRepositories;
  * GitRepositoryManager initializes and stores {@link GitRepository GitRepositories} for Git roots defined in the project.
  * @author Kirill Likhodedov
  */
-public final class GitRepositoryManager extends AbstractProjectComponent implements Disposable, VcsListener {
+public final class GitRepositoryManager extends AbstractProjectComponent implements Disposable {
 
-  private final GitVcs myVcs;
-  private final ProjectLevelVcsManager myVcsManager;
+  private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
+
+  private final @NotNull AbstractVcs myVcs;
+  private final @NotNull ProjectLevelVcsManager myVcsManager;
+  private final @NotNull PlatformFacade myPlatformFacade;
 
   private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
   private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
   private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
+  @NotNull
   public static GitRepositoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 
-  public GitRepositoryManager(@NotNull Project project) {
+  public GitRepositoryManager(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     super(project);
+    myPlatformFacade = platformFacade;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myVcs = GitVcs.getInstance(myProject);
-    assert myVcs != null;
+    myVcs = myPlatformFacade.getVcs(myProject);
   }
 
   @Override
   public void initComponent() {
-    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    myProject.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new MyRepositoryCreationDeletionListener());
     Disposer.register(myProject, this);
+    updateRepositoriesCollection();
   }
 
   @Override
@@ -152,8 +162,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   }
 
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
-  @Override
-  public void directoryMappingChanged() {
+  private void updateRepositoriesCollection() {
     try {
       REPO_LOCK.writeLock().lock();
       final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(myVcs);
@@ -166,14 +175,27 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
       // add GitRepositories for all roots that don't have correspondent GitRepositories yet.
       for (VirtualFile root : roots) {
         if (!myRepositories.containsKey(root)) {
-          GitRepository repository = createGitRepository(root);
-          myRepositories.put(root, repository);
+          if (gitRootOK(root)) {
+            GitRepository repository = createGitRepository(root);
+            myRepositories.put(root, repository);
+          }
+          else {
+            LOG.info("Invalid Git root: " + root);
+          }
         }
       }
+
+      GitRootProblemNotifier.getInstance(myProject, myPlatformFacade).rescanAndNotifyIfNeeded();
+
     }
     finally {
         REPO_LOCK.writeLock().unlock();
     }
+  }
+
+  private static boolean gitRootOK(@NotNull VirtualFile root) {
+    VirtualFile gitDir = root.findChild(".git");
+    return gitDir != null && gitDir.exists();
   }
 
   private GitRepository createGitRepository(VirtualFile root) {
@@ -187,5 +209,21 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   @Override
   public String toString() {
     return "GitRepositoryManager{myRepositories: " + myRepositories + '}';
+  }
+
+  private class MyRepositoryCreationDeletionListener implements BulkFileListener {
+    @Override
+    public void before(@NotNull List<? extends VFileEvent> events) {
+    }
+
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) {
+      for (VFileEvent event : events) {
+        VirtualFile file = event.getFile();
+        if (file != null && file.getName().equalsIgnoreCase(".git") && file.isDirectory()) {
+          updateRepositoriesCollection();
+        }
+      }
+    }
   }
 }

@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -49,5 +50,8 @@ public interface PlatformFacade {
   Notificator getNotificator(@NotNull Project project);
 
   void showDialog(@NotNull DialogWrapper dialog);
+
+  @NotNull
+  ProjectRootManager getProjectRootManager(@NotNull Project project);
 
 }
