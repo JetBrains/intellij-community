@@ -72,13 +72,15 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     String self_path_append = constructPythonPathCommand(pythonPath);
 
-    String customStartScript = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings().getCustomStartScript();
+    PyConsoleOptionsProvider.PyConsoleSettings settingsProvider = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
+
+    String customStartScript = settingsProvider.getCustomStartScript();
 
     if (customStartScript.trim().length() > 0) {
       self_path_append += "\n" + customStartScript.trim();
     }
 
-    String workingDir = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings().getWorkingDirectory();
+    String workingDir = settingsProvider.getWorkingDirectory();
     if (StringUtil.isEmpty(workingDir)) {
       if (module != null && ModuleRootManager.getInstance(module).getContentRoots().length > 0) {
         workingDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getPath();
@@ -104,7 +106,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       setup_fragment = new String[]{self_path_append};
     }
 
-    return PydevConsoleRunner.createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, setup_fragment);
+    return PydevConsoleRunner.createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, settingsProvider.getEnvs(), setup_fragment);
   }
 
   @NotNull

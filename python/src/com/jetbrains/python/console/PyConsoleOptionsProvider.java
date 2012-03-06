@@ -160,6 +160,10 @@ public class PyConsoleOptionsProvider implements PersistentStateComponent<PyCons
     public boolean isUseModuleSdk() {
       return myUseModuleSdk;
     }
+
+    public Map<String, String> getEnvs() {
+      return myEnvs;
+    }
   }
 }
 
