@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,15 +64,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return false;
   }
 
-  /**
-   * Attempts to resolve a symbolic link represented by given file and returns link target.
-   *
-   * @since 11.0
-   * @param file a file to resolve.
-   * @return <code>this</code> if the file isn't a symbolic link;
-   *         instance of <code>VirtualFile</code> if the link was successfully resolved;
-   *         <code>null</code> otherwise
-   */
+  /** @deprecated use {@linkplain com.intellij.openapi.vfs.VirtualFile#getCanonicalFile()} (to remove in IDEA 12) */
   @Nullable
   public VirtualFile getRealFile(@NotNull final VirtualFile file) {
     return file;

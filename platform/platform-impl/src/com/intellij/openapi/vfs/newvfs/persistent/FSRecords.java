@@ -21,6 +21,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -52,7 +53,7 @@ import java.util.concurrent.ScheduledFuture;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 13;
+  private static final int VERSION = 14;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -60,15 +61,15 @@ public class FSRecords implements Forceable {
   private static final int NAME_SIZE = 4;
   private static final int FLAGS_OFFSET = NAME_OFFSET + NAME_SIZE;
   private static final int FLAGS_SIZE = 4;
-  private static final int ATTREF_OFFSET = FLAGS_OFFSET + FLAGS_SIZE;
-  private static final int ATTREF_SIZE = 4;
-  private static final int CONTENT_OFFSET = ATTREF_OFFSET + ATTREF_SIZE;
+  private static final int ATTR_REF_OFFSET = FLAGS_OFFSET + FLAGS_SIZE;
+  private static final int ATTR_REF_SIZE = 4;
+  private static final int CONTENT_OFFSET = ATTR_REF_OFFSET + ATTR_REF_SIZE;
   private static final int CONTENT_SIZE = 4;
   private static final int TIMESTAMP_OFFSET = CONTENT_OFFSET + CONTENT_SIZE;
   private static final int TIMESTAMP_SIZE = 8;
-  private static final int MODCOUNT_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_SIZE;
-  private static final int MODCOUNT_SIZE = 4;
-  private static final int LENGTH_OFFSET = MODCOUNT_OFFSET + MODCOUNT_SIZE;
+  private static final int MOD_COUNT_OFFSET = TIMESTAMP_OFFSET + TIMESTAMP_SIZE;
+  private static final int MOD_COUNT_SIZE = 4;
+  private static final int LENGTH_OFFSET = MOD_COUNT_OFFSET + MOD_COUNT_SIZE;
   private static final int LENGTH_SIZE = 8;
 
   private static final int RECORD_SIZE = LENGTH_OFFSET + LENGTH_SIZE;
@@ -76,8 +77,8 @@ public class FSRecords implements Forceable {
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
   private static final int HEADER_VERSION_OFFSET = 0;
-  private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // Reserved
-  private static final int HEADER_GLOBAL_MODCOUNT_OFFSET = 8;
+  //private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // reserved
+  private static final int HEADER_GLOBAL_MOD_COUNT_OFFSET = 8;
   private static final int HEADER_CONNECTION_STATUS_OFFSET = 12;
   private static final int HEADER_TIMESTAMP_OFFSET = 16;
   private static final int HEADER_SIZE = HEADER_TIMESTAMP_OFFSET + 8;
@@ -143,22 +144,30 @@ public class FSRecords implements Forceable {
     }
 
     private static void createBrokenMarkerFile(@Nullable Throwable reason) {
-      File brokenMarker = getCorruptionMarkerFile();
+      final File brokenMarker = getCorruptionMarkerFile();
 
       try {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         final PrintStream stream = new PrintStream(out);
-        new Exception().printStackTrace(stream);
-        if (reason != null) {
-          stream.print("\nReason:\n");
-          reason.printStackTrace(stream);
+        try {
+          new Exception().printStackTrace(stream);
+          if (reason != null) {
+            stream.print("\nReason:\n");
+            reason.printStackTrace(stream);
+          }
         }
-        stream.close();
+        finally {
+          stream.close();
+        }
         LOG.info("Creating VFS corruption marker; Trace=\n" + out.toString());
 
         final FileWriter writer = new FileWriter(brokenMarker);
-        writer.write("These files are corrupted and must be rebuilt from the scratch on next startup");
-        writer.close();
+        try {
+          writer.write("These files are corrupted and must be rebuilt from the scratch on next startup");
+        }
+        finally {
+          writer.close();
+        }
       }
       catch (IOException e) {
         // No luck.
@@ -216,8 +225,7 @@ public class FSRecords implements Forceable {
         try {
           closeFiles();
 
-          boolean deleted = true;
-          deleted &= FileUtil.delete(getCorruptionMarkerFile());
+          boolean deleted = FileUtil.delete(getCorruptionMarkerFile());
           deleted &= deleteWithSubordinates(namesFile);
           deleted &= AbstractStorage.deleteFiles(attributesFile.getCanonicalPath());
           deleted &= AbstractStorage.deleteFiles(contentsFile.getCanonicalPath());
@@ -231,15 +239,20 @@ public class FSRecords implements Forceable {
           final Runnable warnAndShutdown = new Runnable() {
             @Override
             public void run() {
-              boolean unitTest = ApplicationManager.getApplication().isUnitTestMode();
-              if (!(unitTest || ApplicationManager.getApplication().isHeadlessEnvironment())) {
-                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                                              "Files in " + basePath.getPath() + " are locked. IntelliJ IDEA will not be able to start up",
-                                              "Fatal Error",
-                                              JOptionPane.ERROR_MESSAGE);
-              }
-              if (unitTest) {
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                //noinspection CallToPrintStackTrace
                 e1.printStackTrace();
+              }
+              else {
+                final String message = "Files in " + basePath.getPath() + " are locked.\n" +
+                                       ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
+                if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+                  JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, "Fatal Error", JOptionPane.ERROR_MESSAGE);
+                }
+                else {
+                  //noinspection UseOfSystemOutOrSystemErr
+                  System.err.println(message);
+                }
               }
               Runtime.getRuntime().halt(1);
             }
@@ -772,7 +785,7 @@ public class FSRecords implements Forceable {
     DbConnection.markDirty();
     ourLocalModificationCount++;
     final int count = getModCount() + 1;
-    getRecords().putInt(HEADER_GLOBAL_MODCOUNT_OFFSET, count);
+    getRecords().putInt(HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
 
     int parent = id;
     while (parent != 0) {
@@ -787,7 +800,7 @@ public class FSRecords implements Forceable {
 
   public static int getModCount() {
     synchronized (lock) {
-      return getRecords().getInt(HEADER_GLOBAL_MODCOUNT_OFFSET);
+      return getRecords().getInt(HEADER_GLOBAL_MOD_COUNT_OFFSET);
     }
   }
 
@@ -907,12 +920,12 @@ public class FSRecords implements Forceable {
 
   public static int getModCount(int id) {
     synchronized (lock) {
-      return getRecordInt(id, MODCOUNT_OFFSET);
+      return getRecordInt(id, MOD_COUNT_OFFSET);
     }
   }
 
   private static void setModCount(int id, int value) {
-    putRecordInt(id, MODCOUNT_OFFSET, value);
+    putRecordInt(id, MOD_COUNT_OFFSET, value);
   }
 
   private static int getContentRecordId(int fileId) {
@@ -924,11 +937,11 @@ public class FSRecords implements Forceable {
   }
 
   private static int getAttributeRecordId(int id) {
-    return getRecordInt(id, ATTREF_OFFSET);
+    return getRecordInt(id, ATTR_REF_OFFSET);
   }
 
   private static void setAttributeRecordId(int id, int value) {
-    putRecordInt(id, ATTREF_OFFSET, value);
+    putRecordInt(id, ATTR_REF_OFFSET, value);
   }
 
   private static int getRecordInt(int id, int offset) {
