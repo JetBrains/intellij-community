@@ -11,4 +11,6 @@ abstract public class PyRemoteSshProcess extends Process {
   public abstract void addLocalTunnel(int localPort, String host, int remotePort) throws PyRemoteInterpreterException;
 
   public abstract Pair<String, Integer> obtainRemoteSocket(String interpreterPath) throws PyRemoteInterpreterException;
+
+  public abstract PyRemoteSshProcess exec(String command) throws PyRemoteInterpreterException;
 }
