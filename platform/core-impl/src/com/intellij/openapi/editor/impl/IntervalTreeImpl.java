@@ -516,15 +516,17 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   @NotNull
   DisposableIterator<T> overlappingIterator(final int startOffset, final int endOffset) {
     ProperTextRange.assertProperRange(startOffset, endOffset, "");
+
+    l.readLock().lock();
+
     final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
     if (firstOverlap == null) {
+      l.readLock().unlock();
       return DisposableIterator.EMPTY;
     }
     final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
     final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
     final int modCountBefore = modCount;
-
-    l.readLock().lock();
 
     return new DisposableIterator<T>() {
       private IntervalNode<T> currentNode = firstOverlap;
