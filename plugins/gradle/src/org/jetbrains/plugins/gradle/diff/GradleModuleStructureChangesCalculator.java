@@ -56,7 +56,6 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
                         @NotNull Module intellijEntity,
                         @NotNull GradleChangesCalculationContext context)
   {
-    //TODO den process module-local settings
     // Content roots.
     final Collection<GradleContentRoot> gradleContentRoots = gradleEntity.getContentRoots();
     final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(intellijEntity);

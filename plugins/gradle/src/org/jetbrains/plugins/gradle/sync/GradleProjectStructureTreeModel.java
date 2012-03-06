@@ -241,11 +241,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   private void processNewProjectRenameChange(@NotNull GradleProjectRenameChange change) {
-    // TODO den implement
   }
 
   private void processNewLanguageLevelChange(@NotNull GradleLanguageLevelChange change) {
-    // TODO den implement
   }
 
   private void processNewMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
@@ -325,11 +323,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
   
   private void processObsoleteProjectRenameChange(@NotNull GradleProjectRenameChange change) {
-    // TODO den implement
   }
   
   private void processObsoleteLanguageLevelChange(@NotNull GradleLanguageLevelChange change) {
-    // TODO den implement
   }
   
   private void processObsoleteMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
