@@ -16,11 +16,15 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
 * User: cdr
@@ -31,10 +35,31 @@ class JavaIoFile extends SimpleJavaFileObject {
   @Nullable
   private final String myEncoding;
 
-  JavaIoFile(File file, Kind kind, @Nullable String encoding) {
-    super(file.toURI(), kind);
+  JavaIoFile(@NotNull File file, @NotNull Kind kind, @Nullable String encoding) {
+    super(convertToURI(file.getPath()), kind);
     myFile = file;
     myEncoding = encoding;
+  }
+
+  // File.toURI() asks for File.isDirectory which is too expensive
+  @NotNull
+  private static URI convertToURI(@NotNull String path) {
+    if (File.separatorChar != '/') {
+      path = path.replace(File.separatorChar, '/');
+    }
+    if (!StringUtil.startsWithChar(path, '/')) {
+      path = "/" + path;
+    }
+
+    if (path.startsWith("//")) {
+      path = "//" + path;
+    }
+    try {
+      return new URI("file", null, path, null);
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
