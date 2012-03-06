@@ -64,8 +64,6 @@ import java.util.*;
  * @author max
  */
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
-  public static final boolean ALT_SYMLINK_HANDLING = "true".equalsIgnoreCase(System.getProperty("idea.io.alt.symlink"));
-
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42) {
     public String toString() {
       return "NULL";
@@ -171,8 +169,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
     if (PersistentFS.isDirectory(id)) {
-      child = ALT_SYMLINK_HANDLING && PersistentFS.isSymLink(id) ? new SymlinkDirectory(name, this, fs, id)
-                                                                 : new VirtualDirectoryImpl(name, this, fs, id);
+      child = new VirtualDirectoryImpl(name, this, fs, id);
     }
     else {
       child = new VirtualFileImpl(name, this, id);
@@ -207,8 +204,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (IS_UNIT_TESTS &&
         IS_UNDER_TEAMCITY &&
         ApplicationManager.getApplication() instanceof ApplicationImpl &&
-        ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()
-        &&
+        ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated() &&
         SHOULD_PERFORM_ACCESS_CHECK) {
       NewVirtualFileSystem fileSystem = child.getFileSystem();
       if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {

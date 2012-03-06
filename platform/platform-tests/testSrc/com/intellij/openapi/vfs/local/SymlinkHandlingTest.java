@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,12 +44,17 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     super.tearDown();
   }
 
-  public void testBadLinksAreIgnored() throws Exception {
-    if (!SystemInfo.areSymLinksSupported) {
-      System.out.println("Test not passed");
-      return;
+  @Override
+  protected void runTest() throws Throwable {
+    if (SystemInfo.areSymLinksSupported) {
+      super.runTest();
     }
+    else {
+      System.err.println("Skipped: " + getName());
+    }
+  }
 
+  public void testBadLinksAreIgnored() throws Exception {
     final File missingFile = new File(FileUtil.getTempDirectory(), "missing_file");
     assertTrue(missingFile.getAbsolutePath(), !missingFile.exists() || missingFile.delete());
     final File missingLinkFile = createTempLink(missingFile.getAbsolutePath(), "missing_link");
@@ -76,16 +80,11 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertNotNull(circularLink2VFile);
     assertEquals(1, circularLink1VFile.getChildren().length);
     assertEquals(1, circularLink2VFile.getChildren().length);
-    if (!VirtualDirectoryImpl.ALT_SYMLINK_HANDLING) {
-      // todo[r.sh] deal with cross-circular links
-      assertEquals(0, circularLink1VFile.getChildren()[0].getChildren().length);
-      assertEquals(0, circularLink2VFile.getChildren()[0].getChildren().length);
-    }
+    assertEquals(0, circularLink1VFile.getChildren()[0].getChildren().length);
+    assertEquals(0, circularLink2VFile.getChildren()[0].getChildren().length);
   }
 
   public void testTargetIsWritable() throws Exception {
-    if (!SystemInfo.areSymLinksSupported) return;
-
     final File targetFile = FileUtil.createTempFile("target", "");
     final File linkFile = createTempLink(targetFile.getAbsolutePath(), "link");
     final VirtualFile linkVFile = refreshAndFind(linkFile);
@@ -117,8 +116,6 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   public void testLinkDeleteIsSafe() throws Exception {
-    if (!SystemInfo.areSymLinksSupported) return;
-
     final File targetFile = FileUtil.createTempFile("target", "");
     final File linkFile = createTempLink(targetFile.getAbsolutePath(), "link");
     final VirtualFile linkVFile = refreshAndFind(linkFile);
@@ -157,8 +154,6 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   public void testTransGenderRefresh() throws Exception {
-    if (!SystemInfo.areSymLinksSupported) return;
-
     final File targetFile = FileUtil.createTempFile("target", "");
     final File targetDir = FileUtil.createTempDirectory("targetDir", "");
 
@@ -196,8 +191,6 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   public void testLinkSwitch() throws Exception {
-    if (!SystemInfo.areSymLinksSupported) return;
-
     final File targetDir1 = FileUtil.createTempDirectory("targetDir1", "");
     final File targetDir2 = FileUtil.createTempDirectory("targetDir2", "");
     assertTrue(new File(targetDir1, "child1.txt").createNewFile());
