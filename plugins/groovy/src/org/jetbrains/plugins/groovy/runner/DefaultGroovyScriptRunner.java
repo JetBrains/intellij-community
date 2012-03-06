@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
@@ -100,6 +101,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     final String confPath = getConfPath(groovyHome);
     params.getVMParametersList().add("-Dgroovy.starter.conf=" + confPath);
+    params.getVMParametersList().addAll(HttpConfigurable.getProxyCmdLineProperties());
 
     params.setMainClass("org.codehaus.groovy.tools.GroovyStarter");
 
