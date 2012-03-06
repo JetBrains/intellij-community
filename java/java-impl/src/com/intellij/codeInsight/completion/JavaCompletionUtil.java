@@ -677,23 +677,6 @@ public class JavaCompletionUtil {
     return containsMethodCalls(getQualifier(qualifier));
   }
 
-  @Nullable
-  static ElementFilter recursionFilter(PsiElement element) {
-    if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.RETURN).inside(PsiReturnStatement.class).accepts(element)) {
-      return new ExcludeDeclaredFilter(ElementClassFilter.METHOD);
-    }
-
-    if (PsiJavaPatterns.psiElement().inside(
-        PsiJavaPatterns.or(
-            PsiJavaPatterns.psiElement(PsiAssignmentExpression.class),
-            PsiJavaPatterns.psiElement(PsiVariable.class))).
-        andNot(PsiJavaPatterns.psiElement().afterLeaf(".")).accepts(element)) {
-      return new AndFilter(new ExcludeSillyAssignment(),
-                                                   new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));
-    }
-    return null;
-  }
-
   public static void insertClassReference(@NotNull PsiClass psiClass, @NotNull PsiFile file, int offset) {
     insertClassReference(psiClass, file, offset, offset);
   }

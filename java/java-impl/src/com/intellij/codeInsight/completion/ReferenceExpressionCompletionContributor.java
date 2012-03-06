@@ -97,7 +97,7 @@ public class ReferenceExpressionCompletionContributor {
     }
 
     if (!allowRecursion) {
-      final ElementFilter filter = JavaCompletionUtil.recursionFilter(element);
+      final ElementFilter filter = RecursionWeigher.recursionFilter(element);
       if (filter != null) {
         return new ElementExtractorFilter(filter);
       }
