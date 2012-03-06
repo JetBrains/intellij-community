@@ -270,13 +270,29 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     final MavenId artifactMavenId = artifact.getMavenId();
 
     final String genModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(artifactMavenId);
+    String genExternalApklibsDirPath = null;
+    String targetDirPath = null;
 
-    final String genExternalApklibsDirPath =
-      AndroidMavenUtil.computePathForGenExternalApklibsDir(artifactMavenId, mavenProject, mavenTree.getProjects());
-    
-    final String targetDirPath = genExternalApklibsDirPath != null
-                              ? genExternalApklibsDirPath + '/' + AndroidMavenUtil.getMavenIdStringForFileName(artifactMavenId)
-                              : null;
+    if (apklibModule == null) {
+      genExternalApklibsDirPath =
+        AndroidMavenUtil.computePathForGenExternalApklibsDir(artifactMavenId, mavenProject, mavenTree.getProjects());
+
+      targetDirPath = genExternalApklibsDirPath != null
+                      ? genExternalApklibsDirPath + '/' + AndroidMavenUtil.getMavenIdStringForFileName(artifactMavenId)
+                      : null;
+    }
+    else {
+      final VirtualFile[] contentRoots = ModuleRootManager.getInstance(apklibModule).getContentRoots();
+      if (contentRoots.length == 1) {
+        targetDirPath = contentRoots[0].getPath();
+      }
+      else {
+        final String moduleDir = new File(apklibModule.getModuleFilePath()).getParent();
+        if (moduleDir != null) {
+          targetDirPath = moduleDir + '/' + AndroidMavenUtil.getMavenIdStringForFileName(artifactMavenId);
+        }
+      }
+    }
 
     if (targetDirPath == null) {
       return null;

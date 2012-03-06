@@ -157,7 +157,7 @@ class ServerState {
           msgHandler.processMessage(new CompilerMessage("compile-server", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
         }
 
-        pd = new ProjectDescriptor(project, fsState, timestamps, dataManager);
+        pd = new ProjectDescriptor(project, fsState, timestamps, dataManager, BuildLoggingManager.DEFAULT);
         myProjects.put(projectPath, pd);
       }
       pd.incUsageCounter();

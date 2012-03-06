@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLogger;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -160,10 +161,12 @@ public class JarsBuilder {
       final THashSet<String> writtenPaths = new THashSet<String>();
       for (Pair<String, ArtifactSourceRoot> pair : jar.getPackedRoots()) {
         final ArtifactSourceRoot root = pair.getSecond();
+        final ArtifactBuilderLogger logger = myContext.getLoggingManager().getArtifactBuilderLogger();
         if (root instanceof FileBasedArtifactSourceRoot) {
           addFileToJar(jarOutputStream, jarFile, root.getRootFile(), pair.getFirst(), writtenPaths);
         }
         else {
+          logger.fileCopied(FileUtil.toSystemIndependentName(root.getRootFile().getAbsolutePath()));
           extractFileAndAddToJar(jarOutputStream, (JarBasedArtifactSourceRoot)root, pair.getFirst(), writtenPaths);
         }
       }
@@ -184,24 +187,23 @@ public class JarsBuilder {
   }
 
   private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactSourceRoot root,
-                                             final String relativeOutputPath, final THashSet<String> writtenPaths)
+                                             final String relativeOutputPath, final Set<String> writtenPaths)
     throws IOException {
     final long timestamp = root.getRootFile().lastModified();
     root.processEntries(new JarBasedArtifactSourceRoot.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
         String pathInJar = addParentDirectories(jarOutputStream, writtenPaths, PathUtil.appendToPath(relativeOutputPath, relativePath));
-        if (!writtenPaths.add(pathInJar)) return;
 
-        if (inputStream != null) {
+        if (inputStream == null) {
+          addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);
+        }
+        else if (writtenPaths.add(pathInJar)) {
           ZipEntry entry = new ZipEntry(pathInJar);
           entry.setTime(timestamp);
           jarOutputStream.putNextEntry(entry);
           FileUtil.copy(inputStream, jarOutputStream);
           jarOutputStream.closeEntry();
-        }
-        else {
-          addDirectoryEntry(jarOutputStream, pathInJar + "/");
         }
       }
     });
@@ -209,32 +211,56 @@ public class JarsBuilder {
   }
 
   private void addFileToJar(final @NotNull JarOutputStream jarOutputStream, final @NotNull File jarFile, @NotNull File file,
-                            @NotNull String relativePath, final @NotNull THashSet<String> writtenPaths) throws IOException {
-    if (!file.exists()) {
+                            @NotNull String relativePath, final @NotNull Set<String> writtenPaths) throws IOException {
+    if (!file.exists() || FileUtil.isAncestor(file, jarFile, false)) {
       return;
     }
 
     relativePath = addParentDirectories(jarOutputStream, writtenPaths, relativePath);
-    ZipUtil.addFileOrDirRecursively(jarOutputStream, jarFile, file, relativePath, myFileFilter, writtenPaths);
+    addFileOrDirRecursively(jarOutputStream, file, relativePath, writtenPaths);
   }
 
-  private static String addParentDirectories(JarOutputStream jarOutputStream, THashSet<String> writtenPaths, String relativePath) throws IOException {
+  private void addFileOrDirRecursively(@NotNull ZipOutputStream jarOutputStream, @NotNull File file, @NotNull String relativePath,
+                                       @NotNull Set<String> writtenItemRelativePaths) throws IOException {
+    if (file.isDirectory()) {
+      final String directoryPath = relativePath.length() == 0 ? "" : relativePath + "/";
+      if (!directoryPath.isEmpty()) {
+        addDirectoryEntry(jarOutputStream, directoryPath, writtenItemRelativePaths);
+      }
+      final File[] children = file.listFiles();
+      if (children != null) {
+        for (File child : children) {
+          addFileOrDirRecursively(jarOutputStream, child, directoryPath + child.getName(), writtenItemRelativePaths);
+        }
+      }
+      return;
+    }
+
+    final boolean added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, myFileFilter);
+    if (added) {
+      myContext.getLoggingManager().getArtifactBuilderLogger().fileCopied(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+    }
+  }
+
+
+  private static String addParentDirectories(JarOutputStream jarOutputStream, Set<String> writtenPaths, String relativePath) throws IOException {
     while (StringUtil.startsWithChar(relativePath, '/')) {
       relativePath = relativePath.substring(1);
     }
     int i = relativePath.indexOf('/');
     while (i != -1) {
       String prefix = relativePath.substring(0, i+1);
-      if (!writtenPaths.contains(prefix) && prefix.length() > 1) {
-        addDirectoryEntry(jarOutputStream, prefix);
-        writtenPaths.add(prefix);
+      if (prefix.length() > 1) {
+        addDirectoryEntry(jarOutputStream, prefix, writtenPaths);
       }
       i = relativePath.indexOf('/', i + 1);
     }
     return relativePath;
   }
 
-  private static void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath) throws IOException {
+  private static void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath, Set<String> writtenPaths) throws IOException {
+    if (!writtenPaths.add(relativePath)) return;
+
     ZipEntry e = new ZipEntry(relativePath);
     e.setMethod(ZipEntry.STORED);
     e.setSize(0);

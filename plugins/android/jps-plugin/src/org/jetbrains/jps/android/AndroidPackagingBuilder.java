@@ -25,6 +25,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -464,8 +465,17 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final String outputPath = releasePackage
                                 ? outputFilePath + RELEASE_SUFFIX
                                 : outputFilePath;
+
+      // todo: pass assets from apklib, filter ignored files
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
-        .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPath, outputPath, null, !releasePackage, 0);
+        .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths,
+                          assetsDirPath != null ? new String[]{assetsDirPath} : ArrayUtil.EMPTY_STRING_ARRAY, outputPath, null,
+                          !releasePackage, 0, new FileFilter() {
+          @Override
+          public boolean accept(File pathname) {
+            return true;
+          }
+        });
 
       AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);
       return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;

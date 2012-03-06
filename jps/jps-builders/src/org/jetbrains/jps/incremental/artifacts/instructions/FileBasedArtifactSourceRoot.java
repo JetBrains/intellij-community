@@ -61,6 +61,6 @@ public class FileBasedArtifactSourceRoot extends ArtifactSourceRoot {
     }
     final File targetFile = new File(FileUtil.toSystemDependentName(targetPath));
     FileUtil.copyContent(file, targetFile);
-    outputs.add(outputPath);
+    outputs.add(targetPath);
   }
 }

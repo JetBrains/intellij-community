@@ -67,7 +67,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     }
   }
 
-  private static void buildArtifact(Artifact artifact, CompileContext context) throws ProjectBuildException {
+  private static void buildArtifact(Artifact artifact, final CompileContext context) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getDataManager();
     try {
       final ArtifactSourceFilesState state = dataManager.getArtifactsBuildData().getOrCreateState(artifact,
@@ -96,10 +96,11 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws IOException {
             for (DestinationInfo destination : destinations) {
               if (destination instanceof ExplodedDestinationInfo) {
+                context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
                 root.copyFromRoot(filePath, destination.getOutputPath(), outputs);
               }
               else {
-                outputs.add(destination.getOutputFilePath());
+                outputs.add(destination.getOutputFilePath() + JarPathUtil.JAR_SEPARATOR);
                 changedJars.add(((JarDestinationInfo)destination).getJarInfo());
               }
             }
@@ -114,10 +115,14 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         return;
       }
 
-      state.updateTimestamps(deletedFiles, changedFiles);
-      for (Map.Entry<String, String[]> entry : updatedMappings.entrySet()) {
-        mapping.appendData(entry.getKey(), entry.getValue());
+      state.updateTimestamps();
+      for (String filePath : deletedFiles) {
+        mapping.remove(filePath);
       }
+      for (Map.Entry<String, String[]> entry : updatedMappings.entrySet()) {
+        mapping.update(entry.getKey(), entry.getValue());
+      }
+      state.markUpToDate();
       context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
     }
     catch (IOException e) {
@@ -158,6 +163,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       }
 
       if (deleted) {
+        context.getLoggingManager().getArtifactBuilderLogger().fileDeleted(filePath);
         if (isJar) {
           deletedJars.add(filePath);
         }

@@ -10,7 +10,6 @@ import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.RequestFuture;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -101,7 +100,7 @@ public class IncProjectBuilder {
           );
           flushContext(context);
           if (isMake || isProjectRebuild) {
-            context = createContext(new AllProjectScope(scope.getProject(), Collections.<Artifact>emptySet(), true), false, true);
+            context = createContext(new AllProjectScope(scope.getProject(), scope.getArtifacts(), true), false, true);
           }
           else {
             //in case of forced compilation keep the scope, but remove all caches
@@ -208,7 +207,7 @@ public class IncProjectBuilder {
     final BuildDataManager dataManager = myProjectDescriptor.dataManager;
     return new CompileContext(
       scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, dataManager, tsStorage, myMessageDispatcher, rootsIndex,
-      myBuilderParams, myCancelStatus
+      myProjectDescriptor.getLoggingManager(), myBuilderParams, myCancelStatus
     );
   }
 
