@@ -591,41 +591,58 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public SVNUpdateClient createUpdateClient() {
-    return new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNUpdateClient client = new SVNUpdateClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNStatusClient createStatusClient() {
     SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
     client.setIgnoreExternals(true);
     return client;
   }
 
   public SVNWCClient createWCClient() {
-    return new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNWCClient client = new SVNWCClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNCopyClient createCopyClient() {
-    return new SVNCopyClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNCopyClient client = new SVNCopyClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNMoveClient createMoveClient() {
-    return new SVNMoveClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNMoveClient client = new SVNMoveClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNLogClient createLogClient() {
-    return new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNLogClient client = new SVNLogClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNCommitClient createCommitClient() {
-    return new SVNCommitClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNCommitClient client = new SVNCommitClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNDiffClient createDiffClient() {
-    return new SVNDiffClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNDiffClient client = new SVNDiffClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNChangelistClient createChangelistClient() {
-    return new SVNChangelistClient(getPool(), myConfiguration.getOptions(myProject));
+    final SVNChangelistClient client = new SVNChangelistClient(getPool(), myConfiguration.getOptions(myProject));
+    client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
+    return client;
   }
 
   public SVNWCAccess createWCAccess() {
