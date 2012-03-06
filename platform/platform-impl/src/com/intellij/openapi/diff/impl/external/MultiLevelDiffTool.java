@@ -21,10 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffContent;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.CompositeDiffPanel;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -161,8 +158,17 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     AbstractProperty.AbstractPropertyContainer config = DiffManagerImpl.getInstanceEx().getProperties();
     if (isFile && DiffManagerImpl.ENABLE_FILES.value(config)) return false;
     if (! isFile && DiffManagerImpl.ENABLE_FOLDERS.value(config)) return false;
-    return true;
+    return ! (DiffViewerType.merge.equals(request.getType()) && contentsWriteable(request));
     //return request.haveMultipleLayers();
+  }
+
+  private boolean contentsWriteable(DiffRequest request) {
+    final DiffContent[] contents = request.getContents();
+
+    for (DiffContent content : contents) {
+      if (content != null && content.getDocument().isWritable()) return true;
+    }
+    return false;
   }
 
   @Override
