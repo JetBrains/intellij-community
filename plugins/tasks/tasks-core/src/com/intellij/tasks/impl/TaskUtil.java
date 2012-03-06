@@ -27,15 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class TaskUtil {
 
-  public static String getChangeListName(Task task) {
-    TaskRepository repository = task.getRepository();
-    if (repository != null) {
-      return formatTask(task, repository.getChangelistNameFormat());
-    }
-    return task.getSummary();
-  }
-
-  private static String formatTask(Task task, String format) {
+  public static String formatTask(Task task, String format) {
     return format.replace("{id}", task.getId()).replace("{number}", task.getNumber())
       .replace("{project}", task.getProject()).replace("{summary}", task.getSummary());
   }

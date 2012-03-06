@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.tasks.impl.TaskUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +57,7 @@ public class TaskVcsTest extends TaskManagerTestCase {
 
   private ChangeListInfo createChangelist(LocalTaskImpl task) {
     clearChangeLists();
-    myManager.createChangeList(task, TaskUtil.getChangeListName(task));
+    myManager.createChangeList(task, myManager.getChangelistName(task));
     List<ChangeListInfo> list = myManager.getOpenChangelists(task);
     assertEquals(1, list.size());
     ChangeListInfo info = list.get(0);

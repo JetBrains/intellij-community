@@ -157,16 +157,6 @@ public abstract class TaskRepository  {
 
   protected boolean myShouldFormatCommitMessage;
   protected String myCommitMessageFormat = "{id} {summary}";
-  protected String myChangelistNameFormat = "{id} {summary}";
-
-  @Tag("changelistNameFormat")
-  public String getChangelistNameFormat() {
-    return myChangelistNameFormat;
-  }
-
-  public void setChangelistNameFormat(String changelistNameFormat) {
-    myChangelistNameFormat = changelistNameFormat;
-  }
 
   private static String trimTrailingSlashes(String url) {
     if (url == null) return "";

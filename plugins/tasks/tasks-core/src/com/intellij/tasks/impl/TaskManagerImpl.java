@@ -321,7 +321,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
       if (createChangelist) {
         if (changeLists.isEmpty()) {
-          String name = TaskUtil.getChangeListName(task);
+          String name = getChangelistName(task);
           String comment = TaskUtil.getChangeListComment(this, origin);
           createChangeList(task, name, comment);
         } else {
@@ -333,6 +333,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
       }
     }
+  }
+
+  public String getChangelistName(Task task) {
+    TaskRepository repository = task.getRepository();
+    if (repository != null) {
+      return TaskUtil.formatTask(task, myConfig.changelistNameFormat);
+    }
+    return task.getSummary();
   }
 
   private void saveActiveTask() {
@@ -831,6 +839,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = true;
     public boolean markAsInProgress = false;
+    public String changelistNameFormat = "{id} {summary}";
 
     @Tag("servers")
     public Element servers = new Element("servers");
