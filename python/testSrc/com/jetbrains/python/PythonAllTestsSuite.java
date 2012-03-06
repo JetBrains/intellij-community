@@ -39,6 +39,7 @@ public class PythonAllTestsSuite {
     CythonResolveTest.class,
     PyAssignmentMappingTest.class,
     PythonCompletionTest.class,
+    Py3CompletionTest.class,
     PyInheritorsSearchTest.class,
     PyParameterInfoTest.class,
     PyDecoratorTest.class,
