@@ -456,6 +456,7 @@ public class PythonSdkType extends SdkType {
         }
         catch (InvalidSdkException e) {
           if (!isInvalid(sdk)) {
+            LOG.error(e);
             final Notification notification = PythonSdkType.createInvalidSdkNotification(myProject);
             notification.notify(myProject);
           }
