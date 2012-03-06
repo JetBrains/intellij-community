@@ -62,6 +62,10 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
   }
 
   public UpdateSettings() {
+    updateDefaultChannel();
+  }
+
+  private void updateDefaultChannel() {
     if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
       UPDATE_CHANNEL_TYPE = ChannelStatus.EAP_CODE;
     }
@@ -85,6 +89,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
     catch (InvalidDataException e) {
       LOG.info(e);
     }
+    updateDefaultChannel();
   }
 
   @NotNull
