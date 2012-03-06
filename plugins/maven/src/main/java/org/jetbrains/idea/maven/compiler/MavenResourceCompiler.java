@@ -43,6 +43,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -79,7 +80,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         while (modulesSize-- > 0) {
           String module = CompilerIOUtil.readString(in);
           int pathsSize = in.readInt();
-          Set<String> paths = createPathsSet(pathsSize);
+          Set<String> paths = createPathsSet();
           while (pathsSize-- > 0) {
             paths.add(CompilerIOUtil.readString(in));
           }
@@ -96,10 +97,10 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  private static Set<String> createPathsSet(int size) {
+  private static Set<String> createPathsSet() {
     return SystemInfo.isFileSystemCaseSensitive
-           ? new THashSet<String>(size)
-           : new THashSet<String>(size, CaseInsensitiveStringHashingStrategy.INSTANCE);
+           ? new THashSet<String>()
+           : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   private void saveCache(final Project project) {
@@ -162,7 +163,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
         long propertiesHashCode = calculateHashCode(mavenProject, properties);
 
-        List<ProcessingItem> moduleItemsToProcess = new ArrayList<ProcessingItem>();
+        List<MyProcessingItem> moduleItemsToProcess = new ArrayList<MyProcessingItem>();
         collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
                                nonFilteredExtensions, escapeString, false, moduleItemsToProcess);
         collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
@@ -238,7 +239,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                              Set<String> nonFilteredExtensions,
                                              String escapeString,
                                              boolean tests,
-                                             List<ProcessingItem> result) {
+                                             List<MyProcessingItem> result) {
     String outputDir = CompilerPaths.getModuleOutputPath(module, tests);
     if (outputDir == null) {
       context.addMessage(CompilerMessageCategory.ERROR, "Maven: Module '" + module.getName() + "'output is not specified", null, -1, -1);
@@ -274,7 +275,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  public static List<Pattern> collectPatterns(List<String> values, String defaultValue) {
+  public static List<Pattern> collectPatterns(@Nullable List<String> values, @Nullable String defaultValue) {
     List<Pattern> result = new ArrayList<Pattern>();
     if (values == null || values.isEmpty()) {
       if (defaultValue == null) return Collections.emptyList();
@@ -297,7 +298,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                              long propertiesHashCode,
                                              Set<String> nonFilteredExtensions,
                                              String escapeString,
-                                             List<ProcessingItem> result,
+                                             List<MyProcessingItem> result,
                                              ProgressIndicator indicator) {
     indicator.checkCanceled();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
@@ -346,29 +347,20 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  private void collectItemsToDelete(Module module, List<ProcessingItem> processingItems, List<String> result) {
-    Set<String> currentPaths = createPathsSet(processingItems.size());
-    for (ProcessingItem each : processingItems) {
-      if (!(each instanceof MyProcessingItem)) continue;
-      currentPaths.add(((MyProcessingItem)each).getOutputPath());
+  private void collectItemsToDelete(Module module, List<MyProcessingItem> processingItems, List<String> result) {
+    Set<String> currentPaths = createPathsSet();
+    for (MyProcessingItem each : processingItems) {
+      currentPaths.add(each.getOutputPath());
     }
 
-    Set<String> cachedPaths = null;
-    Set<String> otherModulesCachedPaths = new THashSet<String>();
-    for (Map.Entry<String, Set<String>> eachEntry : myOutputItemsCache.entrySet()) {
-      if (eachEntry.getKey().equals(module.getName())) {
-        cachedPaths = eachEntry.getValue();
+    Set<String> cachedPaths = myOutputItemsCache.put(module.getName(), currentPaths);
+    if (cachedPaths != null) {
+      for (Set<String> set : myOutputItemsCache.values()) {
+        cachedPaths.removeAll(set);
       }
-      else {
-        otherModulesCachedPaths.addAll(eachEntry.getValue());
-      }
-    }
-    myOutputItemsCache.put(module.getName(), currentPaths);
-    if (cachedPaths == null) return;
 
-    cachedPaths.removeAll(currentPaths);
-    cachedPaths.removeAll(otherModulesCachedPaths);
-    result.addAll(cachedPaths);
+      result.addAll(cachedPaths);
+    }
   }
 
   private void removeObsoleteModulesFromCache(final Project project) {
@@ -437,7 +429,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           FileUtil.copy(sourceFile, outputFile);
         }
 
-        ((MyValididtyState)each.getValidityState()).setOutputFileTimestamp(outputFile.lastModified());
+        eachItem.getValidityState().setOutputFileTimestamp(outputFile.lastModified());
         result.add(each);
         filesToRefresh.add(outputFile);
       }
@@ -454,7 +446,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return result.toArray(new ProcessingItem[result.size()]);
   }
 
-  private void deleteOutdatedFile(List<String> filesToDelete, List<File> filesToRefresh) {
+  private static void deleteOutdatedFile(List<String> filesToDelete, List<File> filesToRefresh) {
     for (String each : filesToDelete) {
       File file = new File(each);
       if (FileUtil.delete(file)) {
@@ -523,7 +515,8 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return myEscapeString;
     }
 
-    public ValidityState getValidityState() {
+    @NotNull
+    public MyValididtyState getValidityState() {
       return myState;
     }
   }
@@ -547,7 +540,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
   private static class MyValididtyState implements ValidityState {
     private final long mySourceFileTimestamp;
-    private volatile long myOutputFileTimestamp;
+    private long myOutputFileTimestamp;
     private final boolean myFiltered;
     private final long myPropertiesHashCode;
     private final String myEscapeString;
