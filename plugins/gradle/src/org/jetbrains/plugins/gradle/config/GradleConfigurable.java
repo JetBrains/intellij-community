@@ -58,7 +58,8 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
    * This property has a form of 'not-propagate' in order to default to 'propagate'.
    */
   @NonNls private static final String NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT = "gradle.not.propagate.home.to.default.project";
-
+  private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
+  
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final GradleLibraryManager myLibraryManager;
@@ -286,17 +287,25 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   private class DelayedBalloonInfo implements Runnable {
     private final MessageType myMessageType;
     private final String      myText;
+    private final long        myTriggerTime;
 
     DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType) {
       myMessageType = messageType;
       myText = settingType.getDescription();
+      myTriggerTime = System.currentTimeMillis() + BALLOON_DELAY_MILLIS;
     }
 
     @Override
     public void run() {
+      long diff = myTriggerTime - System.currentTimeMillis();
+      if (diff > 0) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(this, diff);
+        return;
+      }
       if (myGradleHomeComponent == null || !myGradleHomeComponent.getPathComponent().isShowing()) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(this, (int)TimeUnit.MILLISECONDS.toMillis(200));
+        myAlarm.addRequest(this, 200);
         return;
       }
       GradleUtil.showBalloon(myGradleHomeComponent.getPathComponent(), myMessageType, myText);
