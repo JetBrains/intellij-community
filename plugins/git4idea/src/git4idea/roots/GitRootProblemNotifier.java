@@ -88,7 +88,7 @@ public class GitRootProblemNotifier {
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  private static String makeDescription(Collection<VirtualFile> unregisteredRoots, Collection<VirtualFile> invalidRoots) {
+  private static String makeDescription(@NotNull Collection<VirtualFile> unregisteredRoots, @NotNull Collection<VirtualFile> invalidRoots) {
     Function<VirtualFile, String> rootToString = new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile virtualFile) {
@@ -126,7 +126,8 @@ public class GitRootProblemNotifier {
     return description.toString();
   }
 
-  private static String makeTitle(Collection<VirtualFile> unregisteredRoots, Collection<VirtualFile> invalidRoots) {
+  @NotNull
+  private static String makeTitle(@NotNull Collection<VirtualFile> unregisteredRoots, @NotNull Collection<VirtualFile> invalidRoots) {
     String title;
     if (unregisteredRoots.isEmpty()) {
       title = "Invalid Git " + pluralize("root", invalidRoots.size());
