@@ -389,7 +389,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       final List<PsiElement> resolvedElements = ref != null ? resolve(ref) : Collections.<PsiElement>emptyList();
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
-      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset);
+      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset, false);
       final PsiElement elementAtPointer = file.findElementAt(offset);
 
       if (targetElements != null) {
