@@ -301,7 +301,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
                                              List<MyProcessingItem> result,
                                              ProgressIndicator indicator) {
     indicator.checkCanceled();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+
     for (VirtualFile eachSourceFile : currentDir.getChildren()) {
       if (eachSourceFile.isDirectory()) {
         collectProcessingItems(module,
@@ -325,6 +325,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           continue;
         }
 
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
         if (fileIndex.isIgnored(eachSourceFile)) continue;
         if (!MavenUtil.isIncluded(relPath, includes, excludes)) continue;
 
@@ -384,14 +385,13 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
     deleteOutdatedFile(context.getUserData(FILES_TO_DELETE_KEY), filesToRefresh);
 
-    int count = 0;
-    for (final ProcessingItem each : items) {
-      if (!(each instanceof MyProcessingItem)) continue;
+    for (int i = 0; i < items.length; i++) {
+      if (!(items[i] instanceof MyProcessingItem)) continue;
 
-      context.getProgressIndicator().setFraction(((double)count) / items.length);
+      context.getProgressIndicator().setFraction(((double)i) / items.length);
       context.getProgressIndicator().checkCanceled();
 
-      MyProcessingItem eachItem = (MyProcessingItem)each;
+      MyProcessingItem eachItem = (MyProcessingItem)items[i];
       VirtualFile sourceVirtualFile = eachItem.getFile();
       File sourceFile = new File(sourceVirtualFile.getPath());
       File outputFile = new File(eachItem.getOutputPath());
@@ -411,7 +411,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           String charset = sourceVirtualFile.getCharset().name();
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
           String escapedCharacters = sourceVirtualFile.getName().endsWith(".properties") ? "\\" : null;
-          
+
           PrintWriter printWriter = new PrintWriter(outputFile, charset);
           try {
             MavenPropertyResolver.doFilterText(eachItem.getModule(),
@@ -430,7 +430,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         }
 
         eachItem.getValidityState().setOutputFileTimestamp(outputFile.lastModified());
-        result.add(each);
+        result.add(eachItem);
         filesToRefresh.add(outputFile);
       }
       catch (IOException e) {
