@@ -18,6 +18,7 @@ package com.intellij.android.designer.designSurface;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -54,18 +55,26 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     }
   }
 
-  private void update(PsiTreeChangeEvent event) {
+  private void updatePsi(PsiTreeChangeEvent event) {
     if (myRunState && myFile == event.getFile()) {
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (myRunState) {
-            myRunnable.run();
-          }
-        }
-      }, myDelayMillis, ModalityState.stateForComponent(myComponent));
+      addRequest();
     }
+  }
+
+  public void addRequest() {
+    addRequest(myRunnable);
+  }
+
+  public void addRequest(final Runnable runnable) {
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (myRunState) {
+          runnable.run();
+        }
+      }
+    }, myDelayMillis, ModalityState.stateForComponent(myComponent));
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -76,31 +85,31 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
 
   @Override
   public void childAdded(PsiTreeChangeEvent event) {
-    update(event);
+    updatePsi(event);
   }
 
   @Override
   public void childRemoved(PsiTreeChangeEvent event) {
-    update(event);
+    updatePsi(event);
   }
 
   @Override
   public void childReplaced(PsiTreeChangeEvent event) {
-    update(event);
+    updatePsi(event);
   }
 
   @Override
   public void childMoved(PsiTreeChangeEvent event) {
-    update(event);
+    updatePsi(event);
   }
 
   @Override
   public void childrenChanged(PsiTreeChangeEvent event) {
-    update(event);
+    updatePsi(event);
   }
 
   @Override
   public void propertyChanged(PsiTreeChangeEvent event) {
-    update(event);
+    updatePsi(event);
   }
 }

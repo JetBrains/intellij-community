@@ -63,6 +63,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.HttpConfigurable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
@@ -150,6 +151,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     if (profileGroovyc) {
       parameters.getVMParametersList().add("-XX:+HeapDumpOnOutOfMemoryError");
     }
+    parameters.getVMParametersList().addAll(HttpConfigurable.getProxyCmdLineProperties());
 
     //debug
     //parameters.getVMParametersList().add("-Xdebug"); parameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");

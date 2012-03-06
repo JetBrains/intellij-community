@@ -568,6 +568,10 @@ public class OverrideImplementUtil {
           }
         };
         mergeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
+
+        Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("OverrideMethods");
+        mergeAction.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myTree);
+
         group.add(mergeAction);
       }
     };

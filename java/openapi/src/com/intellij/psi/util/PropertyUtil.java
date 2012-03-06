@@ -77,7 +77,7 @@ public class PropertyUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isSimplePropertySetter(PsiMethod method) {
+  public static boolean isSimplePropertySetter(@Nullable PsiMethod method) {
     if (method == null) return false;
 
     if (method.isConstructor()) return false;

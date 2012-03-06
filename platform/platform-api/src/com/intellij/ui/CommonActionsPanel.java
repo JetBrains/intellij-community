@@ -30,7 +30,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-class CommonActionsPanel extends JPanel {
+public class CommonActionsPanel extends JPanel {
   public static enum Buttons {
     ADD, EDIT, REMOVE, UP, DOWN;
 
@@ -193,14 +193,7 @@ class CommonActionsPanel extends JPanel {
 
     @Override
     public ShortcutSet getShortcut() {
-      switch (myButton) {
-        case ADD: return CommonShortcuts.getNewForDialogs();
-        case EDIT: return CustomShortcutSet.fromString("ENTER");
-        case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
-        case UP: return CustomShortcutSet.fromString("alt UP");
-        case DOWN: return CustomShortcutSet.fromString("alt DOWN");
-      }
-      return null;
+      return getCommonShortcut(myButton);
     }
 
     @Override
@@ -242,6 +235,17 @@ class CommonActionsPanel extends JPanel {
     boolean isRemoveButton() {
       return myButton == Buttons.REMOVE;
     }
+  }
+
+  public static ShortcutSet getCommonShortcut(Buttons button) {
+    switch (button) {
+      case ADD: return CommonShortcuts.getNewForDialogs();
+      case EDIT: return CustomShortcutSet.fromString("ENTER");
+      case REMOVE: return CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "alt DELETE");
+      case UP: return CustomShortcutSet.fromString("alt UP");
+      case DOWN: return CustomShortcutSet.fromString("alt DOWN");
+    }
+    return null;
   }
 
   interface ListenerFactory {

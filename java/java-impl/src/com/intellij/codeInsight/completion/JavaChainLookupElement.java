@@ -130,7 +130,9 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       return true;
     }
 
-    if (expr instanceof PsiReferenceExpression || expr instanceof PsiMethodCallExpression) {
+    if (expr instanceof PsiJavaCodeReferenceElement ||
+        expr instanceof PsiMethodCallExpression ||
+        expr instanceof PsiArrayAccessExpression) {
       return false;
     }
 
