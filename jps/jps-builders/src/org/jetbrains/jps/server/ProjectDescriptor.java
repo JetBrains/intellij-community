@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.FSState;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -17,17 +18,27 @@ public final class ProjectDescriptor {
   public final FSState fsState;
   public final ProjectTimestamps timestamps;
   public final BuildDataManager dataManager;
+  private final BuildLoggingManager myLoggingManager;
   public ModuleRootsIndex rootsIndex;
-
   private int myUseCounter = 1;
 
-  public ProjectDescriptor(Project project, FSState fsState, ProjectTimestamps timestamps, BuildDataManager dataManager) {
+  public ProjectDescriptor(Project project,
+                           FSState fsState,
+                           ProjectTimestamps timestamps,
+                           BuildDataManager dataManager,
+                           BuildLoggingManager loggingManager) {
     this.project = project;
     this.fsState = fsState;
     this.timestamps = timestamps;
     this.dataManager = dataManager;
+    myLoggingManager = loggingManager;
     this.rootsIndex = new ModuleRootsIndex(project);
   }
+
+  public BuildLoggingManager getLoggingManager() {
+    return myLoggingManager;
+  }
+
   public synchronized void incUsageCounter() {
     myUseCounter++;
   }

@@ -42,6 +42,10 @@ public abstract class CompileScope {
     return false;
   }
 
+  public Set<Artifact> getArtifacts() {
+    return myArtifacts;
+  }
+
   @NotNull
   public final Project getProject() {
     return myProject;

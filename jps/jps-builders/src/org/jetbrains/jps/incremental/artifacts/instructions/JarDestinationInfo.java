@@ -36,7 +36,6 @@ public class JarDestinationInfo extends DestinationInfo {
 
   private static String appendPathInJar(String outputPath, String pathInJar) {
     LOG.assertTrue(outputPath.length() > 0 && outputPath.charAt(outputPath.length() - 1) != '/');
-    LOG.assertTrue(pathInJar.length() > 0 && pathInJar.charAt(0) != '/');
     return outputPath + "!/" + pathInJar;
   }
 

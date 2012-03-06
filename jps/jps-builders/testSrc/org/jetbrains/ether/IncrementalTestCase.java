@@ -320,7 +320,8 @@ public abstract class IncrementalTestCase extends TestCase {
 
     final File dataStorageRoot = Paths.getDataStorageRoot(project);
     final ProjectDescriptor projectDescriptor =
-      new ProjectDescriptor(project, new FSState(true), new ProjectTimestamps(dataStorageRoot), new BuildDataManager(dataStorageRoot, true));
+      new ProjectDescriptor(project, new FSState(true), new ProjectTimestamps(dataStorageRoot),
+                            new BuildDataManager(dataStorageRoot, true), BuildLoggingManager.DEFAULT);
     try {
 
       new IncProjectBuilder(
