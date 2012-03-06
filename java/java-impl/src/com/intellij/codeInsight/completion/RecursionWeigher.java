@@ -15,12 +15,15 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.AndFilter;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -28,6 +31,7 @@ import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ExcludeSillyAssignment;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +46,8 @@ class RecursionWeigher extends LookupElementWeigher {
   @Nullable private final PsiMethodCallExpression myExpression;
   private final PsiMethod myPositionMethod;
   private final ExpectedTypeInfo[] myExpectedInfos;
-  private final PsiExpression myQualifier;
+  private final PsiExpression myCallQualifier;
+  private final PsiExpression myPositionQualifier;
   private final boolean myDelegate;
 
   public RecursionWeigher(PsiElement position,
@@ -56,8 +61,31 @@ class RecursionWeigher extends LookupElementWeigher {
     myExpression = expression;
     myPositionMethod = PsiTreeUtil.getParentOfType(position, PsiMethod.class, false);
     myExpectedInfos = expectedInfos;
-    myQualifier = myReference.getQualifierExpression();
-    myDelegate = myQualifier != null && !(myQualifier instanceof PsiThisExpression);
+    myCallQualifier = normalizeQualifier(myReference.getQualifierExpression());
+    myPositionQualifier = normalizeQualifier(position.getParent() instanceof PsiJavaCodeReferenceElement
+                                             ? ((PsiJavaCodeReferenceElement)position.getParent()).getQualifier()
+                                             : null);
+    myDelegate = isDelegatingCall();
+  }
+
+  @Nullable
+  private static PsiExpression normalizeQualifier(PsiElement qualifier) {
+    return qualifier instanceof PsiThisExpression || !(qualifier instanceof PsiExpression) ? null : (PsiExpression)qualifier;
+  }
+
+  private boolean isDelegatingCall() {
+    if (myCallQualifier != null &&
+        myPositionQualifier != null &&
+        myCallQualifier != myPositionQualifier &&
+        CodeInsightUtil.areExpressionsEquivalent(myCallQualifier, myPositionQualifier)) {
+      return false;
+    }
+
+    if (myCallQualifier == null && myPositionQualifier == null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Nullable
@@ -98,12 +126,16 @@ class RecursionWeigher extends LookupElementWeigher {
       return Result.passingObjectToItself;
     }
 
-    if (myExpression != null && myPositionMethod != null) {
+    if (myExpression != null) {
       if (myExpectedInfos != null) {
         final PsiType itemType = JavaCompletionUtil.getLookupElementType(element);
-        if (itemType != null) {
-          for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
-            if (myPositionMethod.equals(expectedInfo.getCalledMethod()) && expectedInfo.getType().isAssignableFrom(itemType)) {
+        for (final ExpectedTypeInfo expectedInfo : myExpectedInfos) {
+          PsiMethod calledMethod = expectedInfo.getCalledMethod();
+          if (calledMethod != null && itemType != null) {
+            if (calledMethod.equals(myPositionMethod) && expectedInfo.getType().isAssignableFrom(itemType)) {
+              return myDelegate ? Result.delegation : Result.recursive;
+            }
+            if (isGetterSetterAssignment(object, calledMethod)) {
               return myDelegate ? Result.delegation : Result.recursive;
             }
           }
@@ -126,12 +158,32 @@ class RecursionWeigher extends LookupElementWeigher {
     return Result.normal;
   }
 
+  private static boolean isGetterSetterAssignment(Object lookupObject, PsiMethod calledMethod) {
+    if (!PropertyUtil.isSimplePropertySetter(calledMethod)) {
+      return false;
+    }
+
+    String prop = PropertyUtil.getPropertyName(calledMethod);
+    assert prop != null;
+    if (lookupObject instanceof PsiField &&
+        prop.equals(JavaCodeStyleManager.getInstance(calledMethod.getProject())
+                      .variableNameToPropertyName(((PsiField)lookupObject).getName(), VariableKind.FIELD))) {
+      return true;
+    }
+    if (lookupObject instanceof PsiMethod &&
+        PropertyUtil.isSimplePropertyGetter((PsiMethod)lookupObject) &&
+        prop.equals(PropertyUtil.getPropertyName((PsiMethod)lookupObject))) {
+      return true;
+    }
+    return false;
+  }
+
   private boolean isPassingObjectToItself(Object object) {
     if (object instanceof PsiThisExpression) {
-      return !myDelegate || myQualifier instanceof PsiSuperExpression;
+      return !myDelegate || myCallQualifier instanceof PsiSuperExpression;
     }
-    return myQualifier instanceof PsiReferenceExpression &&
-           object.equals(((PsiReferenceExpression)myQualifier).advancedResolve(true).getElement());
+    return myCallQualifier instanceof PsiReferenceExpression &&
+           object.equals(((PsiReferenceExpression)myCallQualifier).advancedResolve(true).getElement());
   }
 
   @NotNull
