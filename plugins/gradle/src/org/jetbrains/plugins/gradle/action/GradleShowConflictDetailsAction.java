@@ -4,12 +4,15 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import org.jetbrains.plugins.gradle.ui.GradleUiListener;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -68,6 +71,14 @@ public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeA
     }
     final Point hintPosition = GradleUtil.getHintPosition(node, tree);
     final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(control).setFillColor(tree.getBackground()).createBalloon();
+    final GradleUiListener publisher = project.getMessageBus().syncPublisher(GradleUiListener.TOPIC);
+    publisher.beforeConflictUiShown();
+    balloon.addListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        publisher.afterConflictUiShown();
+      }
+    });
     balloon.show(new RelativePoint(tree, hintPosition), Balloon.Position.below);
   }
 }

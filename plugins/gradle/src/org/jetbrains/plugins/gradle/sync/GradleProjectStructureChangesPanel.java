@@ -21,6 +21,7 @@ import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import org.jetbrains.plugins.gradle.ui.GradleUiListener;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -55,6 +56,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   private Object                          myNodeUnderMouse;
   private Object                          myNodeWithActiveToolbar;
   private Balloon                         myToolbar;
+  private boolean                         mySuppressToolbar;
 
   public GradleProjectStructureChangesPanel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
@@ -97,7 +99,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     result.setBackground(myTree.getBackground());
 
     CustomizationUtil.installPopupHandler(myTree, GradleConstants.ACTION_GROUP_SYNC_TREE, GradleConstants.SYNC_TREE_CONTEXT_MENU_PLACE);
-    setupActionHint();
+    setupToolbar();
     return result;
   }
 
@@ -107,7 +109,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     int i = 1;
   }
 
-  private void setupActionHint() {
+  private void setupToolbar() {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     actionManager.addAnActionListener(new AnActionListener.Adapter() {
       @Override
@@ -139,9 +141,16 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         scheduleToolbar(node, toolbar, toolbarComponent);
       }
     });
-    myTree.addMouseListener(new MouseAdapter() {
+    getProject().getMessageBus().connect(getProject()).subscribe(GradleUiListener.TOPIC, new GradleUiListener() {
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void beforeConflictUiShown() {
+        mySuppressToolbar = true;
+        hideToolbar();
+      }
+
+      @Override
+      public void afterConflictUiShown() {
+        mySuppressToolbar = false;
         hideToolbar();
       }
     });
@@ -164,7 +173,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
                                final @NotNull ActionToolbar toolbar,
                                final @NotNull JComponent toolbarComponent)
   {
-    if (node == myNodeWithActiveToolbar) {
+    if (mySuppressToolbar || node == myNodeWithActiveToolbar) {
       return;
     }
     myToolbarAppearanceAlarm.cancelAllRequests();
@@ -234,10 +243,10 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   
   private void hideToolbar() {
     final Balloon toolbar = myToolbar;
+    myNodeWithActiveToolbar = null;
     if (toolbar != null && !toolbar.isDisposed()) {
       toolbar.hide();
       myToolbar = null;
-      myNodeWithActiveToolbar = null;
       myToolbarAppearanceAlarm.cancelAllRequests();
       myToolbarTrackingAlarm.cancelAllRequests();
     }
