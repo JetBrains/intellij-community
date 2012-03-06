@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,25 +189,32 @@ public class PsiCopyPasteManager {
 
       int validElementsCount = 0;
 
-      for (PsiElement element : myElements) {
-        if (element.isValid()) {
-          validElementsCount++;
+      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        for (PsiElement element : myElements) {
+          if (element.isValid()) {
+            validElementsCount++;
+          }
         }
-      }
 
-      if (validElementsCount == myElements.length) {
-        return myElements;
-      }
-
-      PsiElement[] validElements = new PsiElement[validElementsCount];
-      int j=0;
-      for (PsiElement element : myElements) {
-        if (element.isValid()) {
-          validElements[j++] = element;
+        if (validElementsCount == myElements.length) {
+          return myElements;
         }
+
+        PsiElement[] validElements = new PsiElement[validElementsCount];
+        int j=0;
+        for (PsiElement element : myElements) {
+          if (element.isValid()) {
+            validElements[j++] = element;
+          }
+        }
+
+        myElements = validElements;
+      }
+      finally {
+        token.finish();
       }
 
-      myElements = validElements;
       return myElements;
     }
 

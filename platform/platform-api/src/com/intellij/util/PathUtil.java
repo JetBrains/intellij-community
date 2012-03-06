@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,6 +120,9 @@ public class PathUtil {
   }
 
   public static boolean isValidFileName(@NotNull String fileName) {
+    if (fileName.length() == 0) {
+      return false;
+    }
     for (int i = 0; i < fileName.length(); i++) {
       if (!isValidFileNameChar(fileName.charAt(i))) {
         return false;
@@ -129,7 +132,7 @@ public class PathUtil {
   }
 
   private static boolean isValidFileNameChar(char c) {
-    return c != '/' && c != '\\' && c != '\t' && c != '\n' && c != '\r' && c != ':' && c != ';' && c != '*' && c != '?'
-        && c != '"' && c != '\'' && c != '<' && c != '>';
+    return c != '/' && c != '\\' && c != '\t' && c != '\n' && c != '\r' && c != ':' && c != ';' && c != '*' && c != '?' &&
+           c != '"' && c != '\'' && c != '<' && c != '>';
   }
 }

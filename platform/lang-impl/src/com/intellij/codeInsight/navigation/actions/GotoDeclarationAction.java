@@ -179,12 +179,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return PsiElement.EMPTY_ARRAY;
     }
 
-    final PsiElement[] targets = findTargetElementsNoVS(project, editor, offset);
+    final PsiElement[] targets = findTargetElementsNoVS(project, editor, offset, true);
     return targets != null ? targets : PsiElement.EMPTY_ARRAY;
   }
 
   @Nullable
-  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset) {
+  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
     final Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
@@ -205,6 +205,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
+    if (!lookupAccepted) {
+      flags &= ~TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED;
+    }
     PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
     if (element != null) {
       return new PsiElement[] {element};
@@ -213,7 +216,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     // if no references found in injected fragment, try outer document
     if (editor instanceof EditorWindow) {
       EditorWindow window = (EditorWindow)editor;
-      return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset));
+      return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset), lookupAccepted);
     }
     return null;
   }

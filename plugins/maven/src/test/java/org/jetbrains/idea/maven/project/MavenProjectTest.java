@@ -25,6 +25,8 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +74,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    assertContain(getMavenProject().getPlugins(), p("group1", "id1"), p("org.apache.maven.plugins", "maven-compiler-plugin"));
+    assertContain(p(getMavenProject().getPlugins()), p("group1", "id1"), p("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
   public void testDefaultPluginsAsDeclared() throws Exception {
@@ -215,11 +217,11 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     assertModules("project");
 
-    assertEquals(p("group", "id"), findPlugin("group", "id"));
+    assertEquals(p("group", "id"), p(findPlugin("group", "id")));
     assertNull(findPlugin("group1", "id1"));
 
     importProjectWithProfiles("profile1");
-    assertEquals(p("group1", "id1"), findPlugin("group1", "id1"));
+    assertEquals(p("group1", "id1"), p(findPlugin("group1", "id1")));
     assertNull(findPlugin("group2", "id2"));
   }
 
@@ -259,7 +261,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertModules("project");
 
     assertEquals(p("org.apache.maven.plugins", "some.plugin.id"),
-                 findPlugin("org.apache.maven.plugins", "some.plugin.id"));
+                 p(findPlugin("org.apache.maven.plugins", "some.plugin.id")));
     assertNull(findPlugin("some.other.group.id", "some.plugin.id"));
   }
 
@@ -884,7 +886,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
   }
 
   private void assertDeclaredPlugins(PluginInfo... expected) {
-    assertUnorderedElementsAreEqual(getMavenProject().getDeclaredPlugins(), expected);
+    assertUnorderedElementsAreEqual(p(getMavenProject().getDeclaredPlugins()), expected);
   }
 
   private MavenPlugin findPlugin(String groupId, String artifactId) {
@@ -899,7 +901,20 @@ public class MavenProjectTest extends MavenImportingTestCase {
     return new PluginInfo(groupId, artifactId);
   }
 
-  private class PluginInfo {
+  private PluginInfo p(MavenPlugin mavenPlugin) {
+    return new PluginInfo(mavenPlugin.getGroupId(), mavenPlugin.getArtifactId());
+  }
+
+  private List<PluginInfo> p(Collection<MavenPlugin> mavenPlugins) {
+    List<PluginInfo> res = new ArrayList<PluginInfo>(mavenPlugins.size());
+    for (MavenPlugin mavenPlugin : mavenPlugins) {
+      res.add(p(mavenPlugin));
+    }
+
+    return res;
+  }
+
+  private static class PluginInfo {
     String groupId;
     String artifactId;
 
@@ -914,10 +929,23 @@ public class MavenProjectTest extends MavenImportingTestCase {
     }
 
     @Override
-    public boolean equals(Object obj) {
-      if (obj == null) return false;
-      MavenPlugin p = (MavenPlugin)obj;
-      return groupId.equals(p.getGroupId()) && artifactId.equals(p.getArtifactId());
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      PluginInfo info = (PluginInfo)o;
+
+      if (artifactId != null ? !artifactId.equals(info.artifactId) : info.artifactId != null) return false;
+      if (groupId != null ? !groupId.equals(info.groupId) : info.groupId != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = groupId != null ? groupId.hashCode() : 0;
+      result = 31 * result + (artifactId != null ? artifactId.hashCode() : 0);
+      return result;
     }
   }
 }

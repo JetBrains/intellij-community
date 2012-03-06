@@ -575,7 +575,13 @@ public class NameUtil {
       }
 
       int patternCaps = StringUtil.capitalsOnly(new String(myPattern)).length();
-      return -fragmentCount - Math.max(0, patternCaps - matchingCaps) * 10;
+
+      int commonStart = 0;
+      while (commonStart < name.length() && commonStart < myPattern.length && name.charAt(commonStart) == myPattern[commonStart]) {
+        commonStart++;
+      }
+
+      return -fragmentCount - Math.max(0, patternCaps - matchingCaps) * 10 + commonStart;
     }
 
     @Override

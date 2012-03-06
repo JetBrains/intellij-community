@@ -18,6 +18,8 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
+import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
@@ -43,52 +45,68 @@ public class MavenModuleNameMapper {
   private static void resolveModuleNames(Collection<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
                                          Map<MavenProject, String> mavenProjectToModuleName) {
-    List<NameItem> names = new ArrayList<NameItem>();
+    NameItem[] names = new NameItem[projects.size()];
 
+    int i = 0;
     for (MavenProject each : projects) {
-      names.add(new NameItem(each, mavenProjectToModule.get(each)));
+      names[i++] = new NameItem(each, mavenProjectToModule.get(each));
     }
 
-    Collections.sort(names, new Comparator<NameItem>() {
-      public int compare(NameItem o1, NameItem o2) {
-        return o1.project.getPath().compareToIgnoreCase(o2.project.getPath());
-      }
-    });
+    Arrays.sort(names);
 
-    for (NameItem each : names) {
-      if (each.hasDuplicatedGroup) continue;
+    Map<String, Integer> nameCounters = new HashMap<String, Integer>();
 
-      String name = each.getResultName();
-      for (NameItem other : names) {
-        if (each == other) continue;
-        if (name.equals(other.getResultName()) && each.groupId.equals(other.groupId)) {
-          each.setHasDuplicatedGroup(true);
-          other.setHasDuplicatedGroup(true);
+    for ( i = 0; i < names.length; i++) {
+      if (names[i].hasDuplicatedGroup) continue;
+
+      for (int k = i + 1; k < names.length; k++) {
+        if (names[i].originalName.equals(names[k].originalName)) {
+          nameCounters.put(names[i].originalName, 0);
+
+          if (names[i].groupId.equals(names[k].groupId)) {
+            names[i].hasDuplicatedGroup = true;
+            names[k].hasDuplicatedGroup = true;
+          }
         }
       }
     }
 
-    for (NameItem each : names) {
-      int count = each.number;
-      if (count != -1) continue;
+    Set<String> existingNames = new HashSet<String>();
 
-      count = 0;
-      String name = each.getResultName();
-      for (NameItem other : names) {
-        if (each == other) continue;
-        if (name.equals(other.getResultName())) {
-          other.setNumber(++count);
-        }
+    for (NameItem name : names) {
+      if (name.module != null) {
+        existingNames.add(name.getResultName());
       }
-      if (count > 0) each.setNumber(0);
+    }
+
+    for (NameItem nameItem : names) {
+      if (nameItem.module == null) {
+
+        Integer c = nameCounters.get(nameItem.originalName);
+
+        if (c != null) {
+          nameItem.number = c;
+          nameCounters.put(nameItem.originalName, c + 1);
+        }
+
+        do {
+          String name = nameItem.getResultName();
+          if (existingNames.add(name)) break;
+
+          nameItem.number++;
+          nameCounters.put(nameItem.originalName, nameItem.number + 1);
+        } while (true);
+      }
     }
 
     for (NameItem each : names) {
       mavenProjectToModuleName.put(each.project, each.getResultName());
     }
+
+    assert new HashSet<String>(mavenProjectToModuleName.values()).size() == mavenProjectToModuleName.size();
   }
 
-  public static class NameItem {
+  public static class NameItem implements Comparable<NameItem> {
     public final MavenProject project;
     public final Module module;
 
@@ -96,9 +114,9 @@ public class MavenModuleNameMapper {
     public final String groupId;
 
     public int number = -1; // has no duplicates
-      public boolean hasDuplicatedGroup;
+    public boolean hasDuplicatedGroup;
 
-    public NameItem(MavenProject project, Module module) {
+    public NameItem(MavenProject project, @Nullable Module module) {
       this.project = project;
       this.module = module;
       originalName = calcOriginalName();
@@ -115,14 +133,6 @@ public class MavenModuleNameMapper {
       return name;
     }
 
-    public void setNumber(int num) {
-      number = num;
-    }
-
-    public void setHasDuplicatedGroup(boolean value) {
-      hasDuplicatedGroup = value;
-    }
-
     public String getResultName() {
       if (module != null) return module.getName();
 
@@ -132,6 +142,11 @@ public class MavenModuleNameMapper {
         result += " (" + groupId + ")";
       }
       return result;
+    }
+
+    @Override
+    public int compareTo(NameItem o) {
+      return project.getPath().compareToIgnoreCase(o.project.getPath());
     }
   }
 

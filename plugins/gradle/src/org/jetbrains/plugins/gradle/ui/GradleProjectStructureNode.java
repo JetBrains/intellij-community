@@ -204,6 +204,11 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
     }
   }
 
+  @NotNull
+  public Set<GradleProjectStructureChange> getConflictChanges() {
+    return myConflictChanges;
+  }
+
   /**
    * Performs reverse operation to {@link #addConflictChange(GradleProjectStructureChange)}.
    * 

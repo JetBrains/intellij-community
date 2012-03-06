@@ -47,6 +47,8 @@ import java.io.IOException;
  * @author max
  */
 public abstract class JavaClassElementType extends JavaStubElementType<PsiClassStub, PsiClass> {
+  public static boolean DEBUG = false;
+
   public JavaClassElementType(@NotNull @NonNls final String id) {
     super(id);
   }
@@ -183,6 +185,11 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
 
   @Override
   public void indexStub(final PsiClassStub stub, final IndexSink sink) {
+    if (DEBUG) {
+      System.out.println("JavaClassElementType.indexStub");
+      System.out.println("stub.getName() = " + stub.getName());
+    }
+
     boolean isAnonymous = stub.isAnonymous();
     if (isAnonymous) {
       String baseRef = stub.getBaseClassReferenceText();

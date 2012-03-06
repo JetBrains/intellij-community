@@ -217,7 +217,7 @@ public class ProfileManager {
 
       @Override
       protected int getMaxRows() {
-        return 20;
+        return 20; // TODO: not worked
       }
     };
   }
@@ -558,6 +558,9 @@ public class ProfileManager {
               newTheme = theme;
               break;
             }
+          }
+          if (newTheme == null) {
+            System.out.println("Theme: " + themeName + " not found");
           }
         }
         if (newTheme == null && !themes.isEmpty()) {

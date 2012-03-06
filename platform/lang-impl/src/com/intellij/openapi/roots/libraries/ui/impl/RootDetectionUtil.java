@@ -29,9 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -87,14 +85,22 @@ public class RootDetectionUtil {
     }
 
     if (result.isEmpty() && allowUserToSelectRootTypeIfNothingIsDetected) {
+      List<RootDetector> sortedDetectors = new ArrayList<RootDetector>(detectors);
+      Collections.sort(sortedDetectors, new Comparator<RootDetector>() {
+        @Override
+        public int compare(final RootDetector o1, final RootDetector o2) {
+          return o1.getPresentableRootTypeName().compareToIgnoreCase(o2.getPresentableRootTypeName());
+        }
+      });
+
       List<String> names = new ArrayList<String>();
-      for (RootDetector detector : detectors) {
+      for (RootDetector detector : sortedDetectors) {
         names.add(detector.getPresentableRootTypeName());
       }
       final int i = Messages.showChooseDialog("Choose category for selected files:", "Attach Files",
                                               ArrayUtil.toStringArray(names), names.get(0), null);
       if (i != -1) {
-        final RootDetector detector = detectors.get(i);
+        final RootDetector detector = sortedDetectors.get(i);
         for (VirtualFile candidate : rootCandidates) {
           result.add(new OrderRoot(candidate, detector.getRootType(), detector.isJarDirectory()));
         }

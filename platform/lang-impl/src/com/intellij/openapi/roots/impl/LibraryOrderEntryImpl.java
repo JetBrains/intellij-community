@@ -235,6 +235,9 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
         myLibrary = newLibrary;
         myLibraryName = null;
         myLibraryLevel = null;
+        if (newLibrary instanceof LibraryEx && myLibraryType == null) {
+          myLibraryType = ((LibraryEx)newLibrary).getType();
+        }
         updateFromRootProviderAndSubscribe();
       }
     }

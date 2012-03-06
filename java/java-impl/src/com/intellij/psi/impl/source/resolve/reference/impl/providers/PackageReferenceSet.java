@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.ResolveResult;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -67,5 +69,9 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
         return (PsiPackage)resolveResult.getElement();
       }
     });
+  }
+
+  public Set<PsiPackage> getInitialContext() {
+    return Collections.singleton(JavaPsiFacade.getInstance(getElement().getProject()).findPackage(""));
   }
 }

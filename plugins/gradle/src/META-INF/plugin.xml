@@ -57,6 +57,10 @@
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.PlatformFacade"
                         serviceImplementation="org.jetbrains.plugins.gradle.diff.PlatformFacadeImpl"/>
+    
+    <!--Conflict UI components-->
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleLibraryConflictControlFactory"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleProjectState"/>
@@ -97,12 +101,14 @@
     <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="/actions/sync.png"/>
     <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="/icons/gradleNavigate.png"/>
     <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="/icons/gradleImport.png"/>
+    <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="/actions/diff.png"/>
     <group id="Gradle.ChangeActionsToolbar">
       <reference id="Gradle.RefreshProject"/>
       <reference id="Gradle.OpenScript"/>
     </group>
     <group id="Gradle.SyncTreeGroup">
       <reference id="Gradle.ImportEntity"/>
+      <reference id="Gradle.ShowConflict"/>
     </group>
   </actions>
   

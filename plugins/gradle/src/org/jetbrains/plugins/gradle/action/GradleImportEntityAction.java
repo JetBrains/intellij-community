@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.importing.GradleLocalNodeImportHelper;
@@ -38,7 +39,7 @@ public class GradleImportEntityAction extends AbstractGradleSyncTreeNodeAction {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project) {
+  protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
     final GradleLocalNodeImportHelper importHelper = project.getComponent(GradleLocalNodeImportHelper.class);
     final List<GradleProjectStructureNode<?>> interestedNodes = new ArrayList<GradleProjectStructureNode<?>>();
     for (GradleProjectStructureNode<?> node : nodes) {

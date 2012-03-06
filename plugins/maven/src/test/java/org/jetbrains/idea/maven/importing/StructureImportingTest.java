@@ -611,12 +611,12 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     updateProjectsAndImport(p2); // should not fail to map module names. 
 
-    assertModules("project1", "project2", "module", "module (2)");
+    assertModules("project1", "project2", "module", "module (1)");
 
     assertModuleGroupPath("project1", "project1 and modules");
     assertModuleGroupPath("module", "project1 and modules");
     assertModuleGroupPath("project2", "project2 and modules");
-    assertModuleGroupPath("module (2)", "project2 and modules");
+    assertModuleGroupPath("module (1)", "project2 and modules");
   }
 
   public void testLanguageLevel() throws Exception {
