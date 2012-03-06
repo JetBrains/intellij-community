@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 
 import java.util.*;
 
@@ -365,12 +366,20 @@ public class StubGenerator implements ClassItemGenerator {
       //type
       PsiType declaredType =
         typeElement == null ? PsiType.getJavaLangObject(variable.getManager(), variable.getResolveScope()) : typeElement.getType();
-       final String initializer = GroovyToJavaGenerator.getDefaultValueText(declaredType.getCanonicalText());
 
       writeType(text, declaredType, variableDeclaration, classNameProvider);
-      text.append(' ').append(name).append(" = ").append(initializer);
+      text.append(' ').append(name).append(" = ").append(getVariableInitializer(variable, declaredType));
       text.append(";\n");
     }
   }
 
+  private static String getVariableInitializer(GrVariable variable, PsiType declaredType) {
+    if (declaredType instanceof PsiPrimitiveType) {
+      Object eval = GroovyConstantExpressionEvaluator.evaluate(variable.getInitializerGroovy());
+      if (eval instanceof Number || eval instanceof Boolean) {
+        return eval.toString();
+      }
+    }
+    return GroovyToJavaGenerator.getDefaultValueText(declaredType.getCanonicalText());
+  }
 }
