@@ -32,6 +32,8 @@ import org.jdom.Element;
 import javax.swing.*;
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -168,5 +170,18 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       System.clearProperty("http.proxyPort");
       Authenticator.setDefault(null);
     }
+  }
+
+  public static List<String> getProxyCmdLineProperties() {
+    List<String> proxy = new ArrayList<String>();
+    HttpConfigurable httpConfigurable = getInstance();
+    if (httpConfigurable.USE_HTTP_PROXY) {
+      proxy.add("-DproxySet=true");
+      proxy.add("-Dhttp.proxyHost=" + httpConfigurable.PROXY_HOST);
+      proxy.add("-Dhttp.proxyPort=" + httpConfigurable.PROXY_PORT);
+      proxy.add("-Dhttps.proxyHost=" + httpConfigurable.PROXY_HOST);
+      proxy.add("-Dhttps.proxyPort=" + Integer.toString(httpConfigurable.PROXY_PORT));
+    }
+    return proxy;
   }
 }
