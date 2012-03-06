@@ -2,6 +2,7 @@ package com.jetbrains.python.actions;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
@@ -14,10 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
-import com.jetbrains.python.sdk.IronPythonSdkFlavor;
-import com.jetbrains.python.sdk.PySkeletonRefresher;
-import com.jetbrains.python.sdk.PythonSdkFlavor;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,17 +53,23 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
     return "GenerateBinaryStubs";
   }
 
-  public void applyFix(@NotNull Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
         List<String> assemblyRefs = collectAssemblyReferences(descriptor.getPsiElement().getContainingFile());
         final PySkeletonRefresher refresher = new PySkeletonRefresher(mySdk, null, null);
-        refresher.generateSkeleton(myQualifiedName, "", assemblyRefs);
-        final VirtualFile skeletonDir;
-        skeletonDir = LocalFileSystem.getInstance().findFileByPath(refresher.getSkeletonsPath());
-        if (skeletonDir != null) {
-          skeletonDir.refresh(true, true);
+        try {
+          refresher.generateSkeleton(myQualifiedName, "", assemblyRefs);
+          final VirtualFile skeletonDir;
+          skeletonDir = LocalFileSystem.getInstance().findFileByPath(refresher.getSkeletonsPath());
+          if (skeletonDir != null) {
+            skeletonDir.refresh(true, true);
+          }
+        }
+        catch (InvalidSdkException e) {
+          final Notification notification = PythonSdkType.createInvalidSdkNotification(project);
+          notification.notify(project);
         }
       }
     }, "Generating skeletons for binary module", false, project);
