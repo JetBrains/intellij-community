@@ -45,7 +45,6 @@ import java.util.concurrent.Callable;
  */
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
-
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
   private static final int VERSION = 20;
@@ -62,14 +61,19 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
-  private static final FileBasedIndexIndicesManager.InputFilter INPUT_FILTER = new FileBasedIndexIndicesManager.InputFilter() {
+  private final FileBasedIndexIndicesManager.InputFilter INPUT_FILTER = new FileBasedIndexIndicesManager.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return canHaveStub(file);
     }
   };
+  private IndexingStamp myIndexingStamp;
 
-  public static boolean canHaveStub(VirtualFile file) {
+  public StubUpdatingIndex(IndexingStamp indexingStamp) {
+    myIndexingStamp = indexingStamp;
+  }
+
+  public boolean canHaveStub(VirtualFile file) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
       Language l = ((LanguageFileType)fileType).getLanguage();
