@@ -50,6 +50,7 @@ import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
 import javax.swing.*;
@@ -175,17 +176,17 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return Collections.singletonList(committables);
     }
 
-    final MultiMap<File, File> result = new MultiMap<File, File>();
+    final MultiMap<SVNURL, File> result = new MultiMap<SVNURL, File>();
     for (File committable : committables) {
       final RootUrlInfo path = mySvnVcs.getSvnFileUrlMapping().getWcRootForFilePath(committable);
-      result.putValue(path == null ? null : path.getIoFile(), committable);
+      result.putValue(path == null ? null : path.getRepositoryUrlUrl(), committable);
     }
 
     if (result.size() == 1) {
       return Collections.singletonList(committables);
     }
     final Collection<Collection<File>> result2 = new ArrayList<Collection<File>>();
-    for (Map.Entry<File, Collection<File>> entry : result.entrySet()) {
+    for (Map.Entry<SVNURL, Collection<File>> entry : result.entrySet()) {
       result2.add(entry.getValue());
     }
     return result2;
