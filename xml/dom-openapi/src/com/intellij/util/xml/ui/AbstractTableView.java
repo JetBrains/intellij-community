@@ -127,6 +127,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     final ActionManager actionManager = ActionManager.getInstance();
     final ToolbarPosition position = getToolbarPosition();
     final ActionToolbar myActionToolbar = actionManager.createActionToolbar(ActionPlaces.PROJECT_VIEW_TOOLBAR, actionGroup, position == ToolbarPosition.TOP || position == ToolbarPosition.BOTTOM);
+    myActionToolbar.setTargetComponent(myTable);
     final JComponent toolbarComponent = myActionToolbar.getComponent();
     final MatteBorder matteBorder = BorderFactory.createMatteBorder(0, 0, position == ToolbarPosition.TOP ? 1 : 0, 0, Color.darkGray);
     toolbarComponent.setBorder(BorderFactory.createCompoundBorder(matteBorder, toolbarComponent.getBorder()));
@@ -169,14 +170,6 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     tuneTable(myTable);
   }
 
-  protected final void fireTableChanged() {
-    final int row = myTable.getSelectedRow();
-    getTableModel().fireTableDataChanged();
-    if (row >= 0 && row < myTableModel.getRowCount()) {
-      myTable.getSelectionModel().setSelectionInterval(row, row);
-    }
-  }
-
   protected void adjustColumnWidths() {
     final ColumnInfo[] columnInfos = myTableModel.getColumnInfos();
     for (int i = 0; i < columnInfos.length; i++) {
@@ -205,10 +198,6 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
   protected final void updateTooltip(final MouseEvent e) {
     final int i = myTable.columnAtPoint(e.getPoint());
-    final int k = myTable.rowAtPoint(e.getPoint());
-
-    //myTable.getTableHeader().setToolTipText(((DefaultTableCellRenderer)myTable.getCellRenderer(i,k)).getToolTipText();
-
     if (i >= 0) {
       myTable.getTableHeader().setToolTipText(myTableModel.getColumnInfos()[i].getTooltipText());
     }

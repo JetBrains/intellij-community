@@ -296,6 +296,13 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assert 'FList.emptyList' in lookup.items[5].allLookupStrings
   }
 
+  public void testDispreferGetterInSetterCall() {
+    checkPreferredItems 0, 'getZooColor', 'hashCode', 'color', 'getColor'
+  }
+  public void testPreferOtherGetterInSetterCall() {
+    checkPreferredItems 0, 'color', 'getColor', 'getZooColor', 'hashCode'
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;

@@ -987,7 +987,7 @@ public class FileUtil {
   @RegExp
   @NotNull
   public static String convertAntToRegexp(@NotNull String antPattern, boolean ignoreStartingSlash) {
-    final StringBuilder builder = new StringBuilder(antPattern.length());
+    final StringBuilder builder = new StringBuilder();
     int asteriskCount = 0;
     boolean recursive = true;
     final int start = ignoreStartingSlash && (StringUtil.startsWithChar(antPattern, '/') || StringUtil.startsWithChar(antPattern, '\\')) ? 1 : 0;

@@ -23,6 +23,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testMethodAsQualifier() throws Throwable { doTest(); }
   public void testFieldAsQualifier() throws Throwable { doTest(); }
+  public void testArrayRefAsQualifier() throws Throwable { doTest(); }
   public void testMethodWithParams() throws Throwable { doTest(); }
   public void testMergeMethods() throws Throwable { doTest(); }
 

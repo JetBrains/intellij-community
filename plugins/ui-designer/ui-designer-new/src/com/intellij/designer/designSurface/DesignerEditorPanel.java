@@ -271,9 +271,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   protected final void showProgress(String message) {
     myProgressMessage.setText(message);
-    myProgressIcon.resume();
-    myLayeredPane.add(myProgressPanel, LAYER_PROGRESS);
-    myLayeredPane.repaint();
+    if (myProgressPanel.getParent() == null) {
+      myProgressIcon.resume();
+      myLayeredPane.add(myProgressPanel, LAYER_PROGRESS);
+      myLayeredPane.repaint();
+    }
   }
 
   protected final void hideProgress() {
