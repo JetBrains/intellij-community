@@ -35,12 +35,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.util.io.fs.IFile;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -137,44 +135,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return new File(path);
   }
 
-  private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
-  private static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
-  // copied from FileSystem
-
-  static {
-    Object fs;
-    Method getBooleanAttributes;
-    try {
-      Class<?> fsClass = Class.forName("java.io.FileSystem");
-      Method getFileSystem = fsClass.getMethod("getFileSystem");
-      getFileSystem.setAccessible(true);
-      fs = getFileSystem.invoke(null);
-      getBooleanAttributes = fsClass.getDeclaredMethod("getBooleanAttributes", File.class);
-      if (fs == null || getBooleanAttributes == null) {
-        fs = null;
-        getBooleanAttributes = null;
-      }
-      else {
-        getBooleanAttributes.setAccessible(true);
-      }
-    }
-    catch (Exception e) {
-      fs = null;
-      getBooleanAttributes = null;
-    }
-    JAVA_IO_FILESYSTEM = fs;
-    JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD = getBooleanAttributes;
-  }
-
-
-
   @NotNull
   private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
 
-    int intFlags = getBooleanAttributes(ioFile);
+    int intFlags = FileUtil.getBooleanAttributes(ioFile);
     if (intFlags != -1) {
-      if ((intFlags & BA_EXISTS) != 0 && (intFlags & BA_REGULAR) == 0) {
+      if ((intFlags & FileUtil.BA_EXISTS) != 0 && (intFlags & FileUtil.BA_REGULAR) == 0) {
         throw new FileNotFoundException("Not a file: " + ioFile);
       }
       return ioFile;
@@ -184,20 +151,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     return ioFile;
-  }
-
-  // todo[r.sh] use NIO2 API after migration to JDK 7
-  // returns -1 if could not get attributes
-  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
-  private static int getBooleanAttributes(@NotNull File f) {
-    if (JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD != null) {
-      try {
-        Object flags = JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD.invoke(JAVA_IO_FILESYSTEM, f);
-        return ((Integer)flags).intValue();
-      }
-      catch (Exception ignored) { }
-    }
-    return -1;
   }
 
   @Override
@@ -246,9 +199,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static boolean isSpecialFile(@NotNull File ioFile) {
-    int flags = getBooleanAttributes(ioFile);
+    int flags = FileUtil.getBooleanAttributes(ioFile);
     if (flags != -1) {
-      return (flags & (BA_REGULAR | BA_DIRECTORY | BA_EXISTS)) == (~BA_REGULAR & ~BA_DIRECTORY & BA_EXISTS);
+      return (flags & (FileUtil.BA_REGULAR | FileUtil.BA_DIRECTORY | FileUtil.BA_EXISTS)) == (~FileUtil.BA_REGULAR & ~FileUtil.BA_DIRECTORY & FileUtil.BA_EXISTS);
     }
     return !ioFile.isFile() && !ioFile.isDirectory() && ioFile.exists();
   }
@@ -774,12 +727,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
-    int attributes = getBooleanAttributes(convertToIOFile(file));
+    int attributes = FileUtil.getBooleanAttributes(convertToIOFile(file));
     if (attributes != -1) return attributes & flags;
-    return ((flags & BA_EXISTS) != 0 && exists(file) ? BA_EXISTS : 0) |
-           ((flags & BA_DIRECTORY) != 0 && isDirectory(file) ? BA_DIRECTORY : 0) |
-           ((flags & BA_REGULAR) != 0 && !isSpecialFile(file) ? BA_REGULAR : 0) |
-           ((flags & BA_HIDDEN) != 0 && convertToIOFile(file).isHidden() ? BA_HIDDEN : 0)
+    return ((flags & FileUtil.BA_EXISTS) != 0 && exists(file) ? FileUtil.BA_EXISTS : 0) |
+           ((flags & FileUtil.BA_DIRECTORY) != 0 && isDirectory(file) ? FileUtil.BA_DIRECTORY : 0) |
+           ((flags & FileUtil.BA_REGULAR) != 0 && !isSpecialFile(file) ? FileUtil.BA_REGULAR : 0) |
+           ((flags & FileUtil.BA_HIDDEN) != 0 && convertToIOFile(file).isHidden() ? FileUtil.BA_HIDDEN : 0)
       ;
   }
 

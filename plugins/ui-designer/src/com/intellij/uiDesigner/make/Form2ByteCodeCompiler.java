@@ -59,11 +59,13 @@ import java.util.StringTokenizer;
 public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.make.Form2ByteCodeCompiler");
 
+  @Override
   @NotNull
   public String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.bytecode.compiler");
   }
 
+  @Override
   public boolean validateConfiguration(CompileScope scope) {
     return true;
   }
@@ -83,6 +85,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
   }
 
+  @Override
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     final Project project = context.getProject();
@@ -93,6 +96,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     final ArrayList<ProcessingItem> items = new ArrayList<ProcessingItem>();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         final CompileScope scope = context.getCompileScope();
         final CompileScope projectScope = context.getProjectCompileScope();
@@ -257,6 +261,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     return outerQualifiedName.replace('.','/') + _className.substring(outerQualifiedName.length()).replace('.','$');
   }
 
+  @Override
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
     final ArrayList<ProcessingItem> compiledItems = new ArrayList<ProcessingItem>();
 
@@ -298,21 +303,23 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         final VirtualFile formFile = item.getFormFile();
         context.getProgressIndicator().setText2(formFile.getPresentableUrl());
 
-        final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-          public Document compute() {
+        final String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
             if (!belongsToCompileScope(context, formFile, item.getClassToBindFQname())) {
               return null;
             }
-            return FileDocumentManager.getInstance().getDocument(formFile);
+            Document document = FileDocumentManager.getInstance().getDocument(formFile);
+            return document == null ? null : document.getText();
           }
         });
-        if (doc == null) {
+        if (text == null) {
           continue; // does not belong to current scope
         }
         
         final LwRootContainer rootContainer;
         try {
-          rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
+          rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(loader));
         }
         catch (Exception e) {
           addMessage(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile, CompilerMessageCategory.ERROR);
@@ -326,6 +333,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
                                                                     new PsiNestedFormLoader(module), false,
                                                                     new PsiClassWriter(module));
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             codeGenerator.patchFile(classFile);
           }
@@ -371,6 +379,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     }
   }
 
+  @Override
   public ValidityState createValidityState(final DataInput in) throws IOException {
     return TimestampValidityState.load(in);
   }
@@ -406,6 +415,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
       myState = new TimestampValidityState(formFile.getTimeStamp());
     }
 
+    @Override
     @NotNull
     public VirtualFile getFile() {
       return myClassFile;
@@ -419,6 +429,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
       return myClassToBindFQname;
     }
 
+    @Override
     public ValidityState getValidityState() {
       return myState;
     }

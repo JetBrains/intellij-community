@@ -368,16 +368,16 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
     int exists = 0;
     JarHandler handler = getHandler(file);
-    if ((flags & BA_EXISTS) != 0) {
-      exists = handler.exists(file) ? BA_EXISTS : 0;
+    if ((flags & FileUtil.BA_EXISTS) != 0) {
+      exists = handler.exists(file) ? FileUtil.BA_EXISTS : 0;
     }
     int isDir = 0;
-    if ((flags & BA_DIRECTORY) != 0) {
-      isDir = handler.isDirectory(file) ? BA_DIRECTORY : 0;
+    if ((flags & FileUtil.BA_DIRECTORY) != 0) {
+      isDir = handler.isDirectory(file) ? FileUtil.BA_DIRECTORY : 0;
     }
     int regular = 0;
-    if ((flags & BA_REGULAR) != 0) {
-      regular = isDir == 0 ? BA_REGULAR : 0;
+    if ((flags & FileUtil.BA_REGULAR) != 0) {
+      regular = isDir == 0 ? FileUtil.BA_REGULAR : 0;
     }
     return exists | isDir | regular;
   }

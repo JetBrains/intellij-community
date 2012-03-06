@@ -16,6 +16,8 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,7 +25,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.Alarm;
@@ -45,13 +46,12 @@ public class TipManager implements Disposable, PopupMenuListener {
   private volatile boolean myIsDisposed = false;
   private boolean myPopupShown;
   private MyAwtPreprocessor myHideCanceller;
-  private RegistryValue myTooltipProperty;
 
   private MouseEvent myLastMouseEvent;
 
   public interface TipFactory {
     JComponent createToolTip (MouseEvent e);
-    MouseEvent createTooltipEvent(MouseEvent candiateEvent);
+    MouseEvent createTooltipEvent(MouseEvent candidateEvent);
     boolean isFocusOwner();
   }
 
@@ -96,6 +96,18 @@ public class TipManager implements Disposable, PopupMenuListener {
     @Override
     public void mouseEntered(final MouseEvent e) {
       myInsideComponent = true;
+    }
+  }
+
+  private class MyFrameStateListener implements FrameStateListener {
+    @Override
+    public void onFrameDeactivated() {
+      hideTooltip(true);
+    }
+
+    @Override
+    public void onFrameActivated() {
+      //Do nothing
     }
   }
 
@@ -243,6 +255,7 @@ public class TipManager implements Disposable, PopupMenuListener {
   private final JComponent myComponent;
   private MouseListener myMouseListener = new MyMouseListener();
   private MouseMotionListener myMouseMotionListener = new MyMouseMotionListener();
+  private FrameStateListener myFrameStateListener = new MyFrameStateListener();
 
   private final Alarm myShowAlarm = new Alarm();
   private final Alarm myHideAlarm = new Alarm();
@@ -294,7 +307,8 @@ public class TipManager implements Disposable, PopupMenuListener {
     myGP.addMouseMotionPreprocessor(myMouseMotionListener, this);
 
     myHideCanceller = new MyAwtPreprocessor();
-    Toolkit.getDefaultToolkit().addAWTEventListener(myHideCanceller, MouseEvent.MOUSE_MOTION_EVENT_MASK | KeyEvent.KEY_EVENT_MASK | MouseEvent.MOUSE_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(myHideCanceller, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
+    FrameStateManager.getInstance().addListener(myFrameStateListener);
   }
 
   public void dispose() {
@@ -308,6 +322,8 @@ public class TipManager implements Disposable, PopupMenuListener {
     myShowAlarm.cancelAllRequests();
     myMouseListener = null;
     myMouseMotionListener = null;
+    FrameStateManager.getInstance().removeListener(myFrameStateListener);
+    myFrameStateListener = null;
   }
 
   private class MyAwtPreprocessor implements AWTEventListener {
