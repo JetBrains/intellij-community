@@ -128,7 +128,7 @@ public class PySkeletonRefresher {
    * @return path name of skeleton dir for the SDK, guaranteed to be already created.
    */
   @NotNull
-  public String getSkeletonsPath() {
+  public String getSkeletonsPath() throws InvalidSdkException {
     if (mySkeletonsPath == null) {
       mySkeletonsPath = PythonSdkType.getSkeletonsPath(mySdk.getHomePath());
       final File skeletonsDir = new File(mySkeletonsPath);
@@ -137,10 +137,6 @@ public class PySkeletonRefresher {
       }
     }
     return mySkeletonsPath;
-  }
-
-  List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cached_checker) {
-    return regenerateSkeletons(cached_checker, null);
   }
 
   @Nullable
@@ -153,7 +149,7 @@ public class PySkeletonRefresher {
   }
 
   List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cached_checker,
-                                   @Nullable Ref<Boolean> migration_flag) {
+                                   @Nullable Ref<Boolean> migration_flag) throws InvalidSdkException {
     final List<String> errorList = new SmartList<String>();
     final String home_path = mySdk.getHomePath();
     final String skeletonsPath = getSkeletonsPath();
@@ -268,7 +264,7 @@ public class PySkeletonRefresher {
   }
 
   @NotNull
-  private static ListBinariesResult listBinaries(Sdk sdk, String extraSysPath) {
+  private static ListBinariesResult listBinaries(Sdk sdk, String extraSysPath) throws InvalidSdkException {
     final String homePath = sdk.getHomePath();
     final String parentDir = new File(homePath).getParent();
     final long startTime = System.currentTimeMillis();
@@ -523,7 +519,7 @@ public class PySkeletonRefresher {
    * @param modules output of generator3 -L
    * @return blacklist data; whatever was not generated successfully is put here.
    */
-  private List<UpdateResult> updateOrCreateSkeletons(Map<String, File> modules) {
+  private List<UpdateResult> updateOrCreateSkeletons(Map<String, File> modules) throws InvalidSdkException {
     final List<String> names = new ArrayList<String>(modules.keySet());
     Collections.sort(names);
     final List<UpdateResult> results = new ArrayList<UpdateResult>();
@@ -557,13 +553,14 @@ public class PySkeletonRefresher {
     return new File(new File(skeletonsPath, packagePath), PyNames.INIT_DOT_PY);
   }
 
-  private boolean updateOrCreateSkeleton(String moduleName, String moduleLibName, List<UpdateResult> error_list) {
+  private boolean updateOrCreateSkeleton(String moduleName, String moduleLibName,
+                                         List<UpdateResult> error_list) throws InvalidSdkException {
     final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
     final File binary = new File(moduleLibName);
     Matcher matcher = getParseHeader(skeleton);
     boolean must_rebuild = true; // guilty unless proven fresh enough
     if (matcher != null && matcher.matches()) {
-      int file_version = SkeletonVersionChecker.fromVersionString(matcher.group(2));
+      int file_version = fromVersionString(matcher.group(2));
       int required_version = myVersionChecker.getRequiredVersion(moduleName);
       must_rebuild = file_version < required_version;
     }
@@ -596,7 +593,7 @@ public class PySkeletonRefresher {
     return false;
   }
 
-  private boolean copyPregeneratedSkeleton(String moduleName) {
+  private boolean copyPregeneratedSkeleton(String moduleName) throws InvalidSdkException {
     File targetDir;
     final String modulePath = moduleName.replace('.', '/');
     File skeletonsDir = new File(getSkeletonsPath());
@@ -698,7 +695,8 @@ public class PySkeletonRefresher {
    * @param assemblyRefs refs that generator wants to know in .net environment, if applicable
    * @return true if generation completed successfully
    */
-  public boolean generateSkeleton(@NotNull String modname, @Nullable String modfilename, @Nullable List<String> assemblyRefs) {
+  public boolean generateSkeleton(@NotNull String modname, @Nullable String modfilename,
+                                  @Nullable List<String> assemblyRefs) throws InvalidSdkException {
     boolean ret = true;
     String binaryPath = mySdk.getHomePath();
     if (myExtraSyspath == null) {
