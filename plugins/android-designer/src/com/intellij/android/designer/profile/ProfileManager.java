@@ -22,8 +22,6 @@ import com.android.resources.NightMode;
 import com.android.resources.UiMode;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.designer.actions.AbstractComboBoxAction;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
@@ -134,6 +132,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(LayoutDeviceConfiguration item) {
         updateDeviceConfiguration(item);
+        myRefreshAction.run();
         return true;
       }
     };
@@ -143,7 +142,6 @@ public class ProfileManager {
       protected boolean selectionChanged(IAndroidTarget item) {
         updateTarget(item);
         updateThemes();
-        myRefreshAction.run();
         return true;
       }
     };
@@ -177,30 +175,18 @@ public class ProfileManager {
 
     myThemeAction = new AbstractComboBoxAction<ThemeData>() {
       @Override
-      protected boolean addSeparator(DefaultActionGroup actionGroup, ThemeData item) {
-        if (item == ThemeManager.FRAMEWORK || item == ThemeManager.PROJECT) {
-          // TODO: ???????
-          actionGroup.add(new AnAction("") {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-            }
-          });
-          actionGroup.addSeparator(item.getName());
-          return true;
-        }
-        return false;
-      }
-
-      @Override
       protected void update(ThemeData theme, Presentation presentation, boolean popup) {
-        presentation.setEnabled(theme != null);
+        presentation.setEnabled(theme != null && theme != ThemeManager.FRAMEWORK && theme != ThemeManager.PROJECT);
 
         if (theme != null) {
-          if (!theme.isProjectTheme() && myThemeManager.getAddedThemes().contains(new ThemeData(theme.getName(), true))) {
+          if (!popup && !theme.isProjectTheme() && myThemeManager.getAddedThemes().contains(new ThemeData(theme.getName(), true))) {
             presentation.setText(theme.getName() + " (framework)");
           }
-          else {
+          else if (!popup || theme == ThemeManager.FRAMEWORK || theme == ThemeManager.PROJECT) {
             presentation.setText(theme.getName());
+          }
+          else {
+            presentation.setText("      " + theme.getName());
           }
         }
         else {
@@ -220,6 +206,7 @@ public class ProfileManager {
         return 20; // TODO: not worked
       }
     };
+    myThemeAction.showDisabledActions(true);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -242,8 +229,6 @@ public class ProfileManager {
     }
     else {
       update(getPlatform());
-      myDockModeAction.setItems(Arrays.asList(UiMode.values()), UiMode.getEnum(myProfile.getDockMode()));
-      myNightModeAction.setItems(Arrays.asList(NightMode.values()), NightMode.getEnum(myProfile.getNightMode()));
     }
   }
 
@@ -262,6 +247,8 @@ public class ProfileManager {
       updateLocales();
       updatePlatform(platform);
       updateThemes();
+      myDockModeAction.setItems(Arrays.asList(UiMode.values()), UiMode.getEnum(myProfile.getDockMode()));
+      myNightModeAction.setItems(Arrays.asList(NightMode.values()), NightMode.getEnum(myProfile.getNightMode()));
     }
   }
 
@@ -559,9 +546,6 @@ public class ProfileManager {
               break;
             }
           }
-          if (newTheme == null) {
-            System.out.println("Theme: " + themeName + " not found");
-          }
         }
         if (newTheme == null && !themes.isEmpty()) {
           for (ThemeData theme : themes) {
@@ -573,6 +557,7 @@ public class ProfileManager {
         }
 
         myThemeAction.setItems(themes, newTheme);
+        myThemeAction.update();
         updateTheme(newTheme);
         myRefreshAction.run();
       }

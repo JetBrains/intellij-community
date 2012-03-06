@@ -25,11 +25,12 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
@@ -63,22 +64,6 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   private List<T> myCollectionElements = new ArrayList<T>();
   private ColumnInfo<T, ?>[] myColumnInfos;
   private boolean myEditable = false;
-  private final AnAction myAddAction = new AddAction() {
-    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
-      return DomCollectionControl.this;
-    }
-  };
-
-  private final AnAction myEditAction = new EditAction() {
-    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
-      return DomCollectionControl.this;
-    }
-  };
-  private final AnAction myRemoveAction = new RemoveAction() {
-    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
-      return DomCollectionControl.this;
-    }
-  };
   public static final Icon ADD_ICON = IconLoader.getIcon("/general/add.png");
   public static final Icon EDIT_ICON = IconLoader.getIcon("/actions/editSource.png");
   public static final Icon REMOVE_ICON = IconLoader.getIcon("/general/remove.png");
@@ -169,7 +154,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     else {
       myCollectionPanel = boundComponent;
     }
-    myCollectionPanel.setToolbarActions(myAddAction, myEditAction, myRemoveAction);
+    myCollectionPanel.setToolbarActions(new AddAction(), new EditAction(), new RemoveAction());
     myCollectionPanel.installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, createPopupActionGroup());
     myCollectionPanel.initializeTable();
     myCollectionPanel.addCustomDataProvider(this);
@@ -389,8 +374,13 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   public static class AddAction extends AddDomElementAction {
+
+    public AddAction() {
+      setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
+    }
+
     protected boolean isEnabled(final AnActionEvent e) {
-      return getDomCollectionControl(e) != null || "ProjectViewToolbar".equals(e.getPlace());
+      return getDomCollectionControl(e) != null;
     }
 
     protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
@@ -428,22 +418,20 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   public static class EditAction extends AnAction {
-    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
-      return DomCollectionControl.getDomCollectionControl(e);
-    }
 
     public EditAction() {
       super(ApplicationBundle.message("action.edit"), null, DomCollectionControl.EDIT_ICON);
+      setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final DomCollectionControl control = getDomCollectionControl(e);
+      final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);
       control.doEdit();
       control.reset();
     }
 
     public void update(AnActionEvent e) {
-      final DomCollectionControl control = getDomCollectionControl(e);
+      final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);
       final boolean visible = control != null && control.isEditable();
       e.getPresentation().setVisible(visible);
       e.getPresentation().setEnabled(visible && control.getComponent().getTable().getSelectedRowCount() == 1);
@@ -453,21 +441,18 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   public static class RemoveAction extends AnAction {
     public RemoveAction() {
       super(ApplicationBundle.message("action.remove"), null, DomCollectionControl.REMOVE_ICON);
-    }
-
-    protected DomCollectionControl getDomCollectionControl(final AnActionEvent e) {
-      return DomCollectionControl.getDomCollectionControl(e);
+      setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final DomCollectionControl control = getDomCollectionControl(e);
+      final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);
       control.doRemove();
       control.reset();
     }
 
     public void update(AnActionEvent e) {
       final boolean enabled;
-      final DomCollectionControl control = getDomCollectionControl(e);
+      final DomCollectionControl control = DomCollectionControl.getDomCollectionControl(e);
       if (control != null) {
         final JTable table = control.getComponent().getTable();
         enabled = table != null && table.getSelectedRowCount() > 0;

@@ -15,11 +15,11 @@
  */
 package com.intellij.designer.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +32,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
+  private static final Icon CHECKED = IconLoader.getIcon("/actions/check.png");
+
   private List<T> myItems = Collections.emptyList();
   private T mySelection;
   private Presentation myPresentation;
+  private boolean myShowDisabledActions;
 
   public void setItems(List<T> items, @Nullable T selection) {
     myItems = items;
@@ -57,6 +60,10 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
     update();
   }
 
+  public void showDisabledActions(boolean value) {
+    myShowDisabledActions = value;
+  }
+
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
     myPresentation = presentation;
@@ -67,6 +74,23 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
       createComboBoxButton(presentation),
       new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(2, 1, 2, 1), 0, 0));
     return panel;
+  }
+
+  @Override
+  protected ComboBoxButton createComboBoxButton(Presentation presentation) {
+    if (myShowDisabledActions) {
+      return new ComboBoxButton(presentation) {
+        @Override
+        protected ListPopup createPopup(Runnable onDispose) {
+          ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+            null, createPopupActionGroup(this), getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, onDispose,
+            getMaxRows());
+          popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
+          return popup;
+        }
+      };
+    }
+    return super.createComboBoxButton(presentation);
   }
 
   public void update() {
@@ -92,8 +116,11 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
           }
         }
       };
-      update(item, action.getTemplatePresentation(), true);
       actionGroup.add(action);
+
+      Presentation presentation = action.getTemplatePresentation();
+      presentation.setIcon(mySelection == item ? CHECKED : null);
+      update(item, presentation, true);
     }
 
     return actionGroup;

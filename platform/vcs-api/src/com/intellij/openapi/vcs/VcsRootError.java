@@ -13,35 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Incorrect VCS root definition: either an unregistered, or an incorrectly registered VCS root.
+ *
+ * @see VcsRootChecker
+ * @see AbstractVcs#getRootChecker
+ *
  * @author Kirill Likhodedov
  */
-class GitRootError {
+public class VcsRootError {
 
-  private final Type myType;
-  @NotNull private final VirtualFile myRoot;
+  private final @NotNull Type myType;
+  private final @NotNull VirtualFile myRoot;
 
-  enum Type {
+  public enum Type {
     EXTRA_ROOT,
     UNREGISTERED_ROOT
   }
 
-  GitRootError(@NotNull Type type, @NotNull VirtualFile root) {
+  public VcsRootError(@NotNull Type type, @NotNull VirtualFile root) {
     myType = type;
     myRoot = root;
   }
 
+  @NotNull
+  public Type getType() {
+    return myType;
+  }
+
+  @NotNull
+  public VirtualFile getRoot() {
+    return myRoot;
+  }
+
   @Override
   public String toString() {
-    return "GitRootError{" +
-           "myType=" + myType +
-           ", myRoot=" + myRoot +
-           '}';
+    return String.format("GitRootError{myType=%s, myRoot=%s}", myType, myRoot);
   }
 
   @Override
@@ -49,7 +61,7 @@ class GitRootError {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    GitRootError error = (GitRootError)o;
+    VcsRootError error = (VcsRootError)o;
 
     if (!myRoot.equals(error.myRoot)) return false;
     if (myType != error.myType) return false;
@@ -57,6 +69,7 @@ class GitRootError {
     return true;
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Override
   public int hashCode() {
     int result = myType != null ? myType.hashCode() : 0;

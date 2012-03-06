@@ -1,0 +1,61 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package git4idea.roots;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsRootChecker;
+import com.intellij.openapi.vcs.VcsRootError;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.PlatformFacade;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+
+/**
+ * @author Kirill Likhodedov
+ */
+public class GitRootChecker implements VcsRootChecker {
+
+  private final Collection<VcsRootError> myErrors;
+
+  public GitRootChecker(Project project, PlatformFacade platformFacade) {
+    myErrors = new GitRootErrorsFinder(project, platformFacade).find();
+  }
+
+  @NotNull
+  @Override
+  public Collection<VirtualFile> getUnregisteredRoots() {
+    Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
+    for (VcsRootError error : myErrors) {
+      if (error.getType() == VcsRootError.Type.UNREGISTERED_ROOT) {
+        roots.add(error.getRoot());
+      }
+    }
+    return roots;
+  }
+
+  @Override
+  public boolean isInvalidRoot(@NotNull String directory) {
+    // this information is available in myErrors,
+    // but the method may be called in VcsDirectoryConfigurationPanel after adding a mapping (to highlight errors right away)
+    // in which case ProjectLevelVcsManager#getAllVcsRoots() is not aware of new roots yet,
+    // while GitRootErrorsFinder relies on the set of roots returned from ProjectLevelVcsManager.
+    return !new File(FileUtil.toSystemDependentName(directory), ".git").exists();
+  }
+}

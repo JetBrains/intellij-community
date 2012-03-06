@@ -12,6 +12,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -321,7 +322,8 @@ public class IncProjectBuilder {
             final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
             
             if (outputs != null) {
-              if (LOG.isDebugEnabled()) {
+              final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
+              if (logger.isEnabled()) {
                 if (outputs.size() > 0) {
                   final String[] buffer = new String[outputs.size()];
                   int i = 0;
@@ -329,11 +331,11 @@ public class IncProjectBuilder {
                     buffer[i++] = o;
                   }
                   Arrays.sort(buffer);
-                  LOG.info("Cleaning output files:");
+                  logger.log("Cleaning output files:");
                   for(final String o : buffer) {
-                    LOG.info(o);
+                    logger.log(o);
                   }
-                  LOG.info("End of files");
+                  logger.log("End of files");
                 }
               }
               
@@ -450,7 +452,8 @@ public class IncProjectBuilder {
               }
             }
             else {
-              LOG.info("Builder " + builder.getDescription() + " requested second chunk rebuild");
+              context.getLoggingManager().getJavaBuilderLogger().log(
+                "Builder " + builder.getDescription() + " requested second chunk rebuild");
             }
           }
 
@@ -490,8 +493,9 @@ public class IncProjectBuilder {
           final Collection<String> outputs = srcToOut.getState(srcPath);
 
           if (outputs != null) {
+            final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
             for (String output : outputs) {
-              if (LOG.isDebugEnabled()) {
+              if (logger.isEnabled()) {
                 allOutputs.add(output);
               }
               FileUtil.delete(new File(output));
@@ -502,9 +506,10 @@ public class IncProjectBuilder {
         }
       });
 
-      if (LOG.isDebugEnabled()) {
+      final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
+      if (logger.isEnabled()) {
         if (context.isMake() && allOutputs.size() > 0) {
-          LOG.info("Cleaning output files:");
+          logger.log("Cleaning output files:");
           final String[] buffer = new String[allOutputs.size()];
           int i = 0;
           for (String output : allOutputs) {
@@ -512,9 +517,9 @@ public class IncProjectBuilder {
           }
           Arrays.sort(buffer);
           for (String output : buffer) {
-            LOG.info(output);
+            logger.log(output);
           }
-          LOG.info("End of files");
+          logger.log("End of files");
         }
       }
     }

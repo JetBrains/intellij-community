@@ -155,7 +155,7 @@ public abstract class JBPopupFactory {
    * @param showDisabledActions if true, disabled actions are shown as disabled; if false, disabled actions are not shown
    * @return the popup instance.
    */
-  public abstract ListPopup createActionGroupPopup(String title,
+  public abstract ListPopup createActionGroupPopup(@Nullable String title,
                                                    ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,

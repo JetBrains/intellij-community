@@ -2164,6 +2164,15 @@ public class StringUtil {
         j = startNum2;
         while (i < string1Length && isDigit(string1.charAt(i))) i++;
         while (j < string2Length && isDigit(string2.charAt(j))) j++;
+        String digits1 = string1.substring(startNum1, i);
+        String digits2 = string2.substring(startNum2, j);
+        if (digits1.length() != digits2.length())
+            return digits1.length() - digits2.length();
+        int numberDiff = digits1.compareTo(digits2);
+        if (numberDiff != 0)
+          return numberDiff;
+        i--;
+        j--;
         final int lengthDiff = (i - startNum1) - (j - startNum2);
         if (lengthDiff != 0) {
           return lengthDiff;

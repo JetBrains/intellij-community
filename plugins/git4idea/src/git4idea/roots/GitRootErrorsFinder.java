@@ -17,6 +17,7 @@ package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
@@ -30,30 +31,30 @@ import java.util.Collection;
  *
  * @author Kirill Likhodedov
  */
-class GitRootErrorsFinder {
+public class GitRootErrorsFinder {
 
-  @NotNull private final Project myProject;
-  private final PlatformFacade myPlatformFacade;
+  private final @NotNull Project myProject;
+  private final @NotNull PlatformFacade myPlatformFacade;
 
-  GitRootErrorsFinder(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
+  public GitRootErrorsFinder(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     myProject = project;
     myPlatformFacade = platformFacade;
   }
 
   @NotNull
-  Collection<GitRootError> find() {
+  public Collection<VcsRootError> find() {
     ProjectLevelVcsManager vcsManager = myPlatformFacade.getVcsManager(myProject);
     Collection<VirtualFile> vcsRoots = Arrays.asList(vcsManager.getRootsUnderVcs(myPlatformFacade.getVcs(myProject)));
-    Collection<VirtualFile> gitRoots = new GitRootDetector(myProject).detect().getRoots();
-    Collection<GitRootError> errors = new ArrayList<GitRootError>();
+    Collection<VirtualFile> gitRoots = new GitRootDetector(myProject, myPlatformFacade).detect().getRoots();
+    Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     for (VirtualFile vcsRoot : vcsRoots) {
       if (!gitRoots.contains(vcsRoot)) {
-        errors.add(new GitRootError(GitRootError.Type.EXTRA_ROOT, vcsRoot));
+        errors.add(new VcsRootError(VcsRootError.Type.EXTRA_ROOT, vcsRoot));
       }
     }
     for (VirtualFile gitRoot : gitRoots) {
       if (!vcsRoots.contains(gitRoot)) {
-        errors.add(new GitRootError(GitRootError.Type.UNREGISTERED_ROOT, gitRoot));
+        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, gitRoot));
       }
     }
     return errors;

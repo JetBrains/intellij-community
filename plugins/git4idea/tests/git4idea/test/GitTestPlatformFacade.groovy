@@ -23,6 +23,7 @@ import git4idea.Notificator
 import git4idea.PlatformFacade
 import git4idea.tests.TestDialogManager
 import org.jetbrains.annotations.NotNull
+import com.intellij.openapi.roots.ProjectRootManager
 
 /**
  * 
@@ -34,10 +35,12 @@ public class GitTestPlatformFacade implements PlatformFacade {
   GitMockVcs myVcs
   TestNotificator myNotificator
   TestDialogManager myTestDialogManager
+  GitMockProjectRootManager myProjectRootManager
 
   public GitTestPlatformFacade() {
     myVcsManager = new GitMockVcsManager()
     myTestDialogManager = new TestDialogManager()
+    myProjectRootManager = new GitMockProjectRootManager()
   }
 
   @NotNull
@@ -58,6 +61,11 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Override
   void showDialog(@NotNull DialogWrapper dialog) {
     myTestDialogManager.show(dialog)
+  }
+
+  @Override
+  ProjectRootManager getProjectRootManager(Project project) {
+    myProjectRootManager
   }
 
   @NotNull

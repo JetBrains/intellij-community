@@ -18,8 +18,8 @@ package org.jetbrains.idea.maven.compiler;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -37,11 +37,13 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -56,6 +58,8 @@ import java.util.regex.Pattern;
 
 public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   private static final Key<List<String>> FILES_TO_DELETE_KEY = Key.create(MavenResourceCompiler.class.getSimpleName() + ".FILES_TO_DELETE");
+
+  private static final Set<String> DEFAULT_NON_FILTERED_EXTENSIONS = CollectionFactory.newSet("jpg", "jpeg", "gif", "bmp", "png");
 
   private Map<String, Set<String>> myOutputItemsCache = new THashMap<String, Set<String>>();
 
@@ -76,7 +80,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         while (modulesSize-- > 0) {
           String module = CompilerIOUtil.readString(in);
           int pathsSize = in.readInt();
-          Set<String> paths = createPathsSet(pathsSize);
+          Set<String> paths = createPathsSet();
           while (pathsSize-- > 0) {
             paths.add(CompilerIOUtil.readString(in));
           }
@@ -93,10 +97,10 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  private static Set<String> createPathsSet(int size) {
+  private static Set<String> createPathsSet() {
     return SystemInfo.isFileSystemCaseSensitive
-           ? new THashSet<String>(size)
-           : new THashSet<String>(size, CaseInsensitiveStringHashingStrategy.INSTANCE);
+           ? new THashSet<String>()
+           : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
   }
 
   private void saveCache(final Project project) {
@@ -140,54 +144,60 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     final Project project = context.getProject();
     final MavenProjectsManager mavenProjectManager = MavenProjectsManager.getInstance(project);
     if (!mavenProjectManager.isMavenizedProject()) return ProcessingItem.EMPTY_ARRAY;
-    return new ReadAction<ProcessingItem[]>() {
-      protected void run(Result<ProcessingItem[]> resultObject) throws Throwable {
-        // make sure null reference will not be returned. By default return empty array 
-        resultObject.setResult(ProcessingItem.EMPTY_ARRAY);
-        List<ProcessingItem> allItemsToProcess = new ArrayList<ProcessingItem>();
-        List<String> filesToDelete = new ArrayList<String>();
 
-        for (Module eachModule : context.getCompileScope().getAffectedModules()) {
-          MavenProject mavenProject = mavenProjectManager.findProject(eachModule);
-          if (mavenProject == null) continue;
+    List<ProcessingItem> allItemsToProcess = new ArrayList<ProcessingItem>();
+    List<String> filesToDelete = new ArrayList<String>();
 
-          Properties properties = loadPropertiesAndFilters(context, mavenProject);
+    AccessToken accessToken = ReadAction.start();
+    try {
+      for (Module eachModule : context.getCompileScope().getAffectedModules()) {
+        MavenProject mavenProject = mavenProjectManager.findProject(eachModule);
+        if (mavenProject == null) continue;
 
-          List<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
-          String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
-                                                                                                       "maven-resources-plugin"),
-                                                                   "escapeString", "\\");
+        Properties properties = loadPropertiesAndFilters(context, mavenProject);
 
-          long propertiesHashCode = calculateHashCode(mavenProject, properties);
+        Set<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
+        String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
+                                                                                                     "maven-resources-plugin"),
+                                                                 "escapeString", "\\");
 
-          List<ProcessingItem> moduleItemsToProcess = new ArrayList<ProcessingItem>();
-          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
-                                 nonFilteredExtensions, escapeString, false, moduleItemsToProcess);
-          collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
-                                 nonFilteredExtensions, escapeString, true, moduleItemsToProcess);
-          collectItemsToDelete(eachModule, moduleItemsToProcess, filesToDelete);
-          allItemsToProcess.addAll(moduleItemsToProcess);
-        }
+        long propertiesHashCode = calculateHashCode(mavenProject, properties);
 
-        if (!filesToDelete.isEmpty()) {
-          allItemsToProcess.add(new FakeProcessingItem());
-        }
-        context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
-        resultObject.setResult(allItemsToProcess.toArray(new ProcessingItem[allItemsToProcess.size()]));
-        removeObsoleteModulesFromCache(project);
-        saveCache(project);
+        List<MyProcessingItem> moduleItemsToProcess = new ArrayList<MyProcessingItem>();
+        collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
+                               nonFilteredExtensions, escapeString, false, moduleItemsToProcess);
+        collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
+                               nonFilteredExtensions, escapeString, true, moduleItemsToProcess);
+        collectItemsToDelete(eachModule, moduleItemsToProcess, filesToDelete);
+        allItemsToProcess.addAll(moduleItemsToProcess);
       }
-    }.execute().getResultObject();
+
+      if (!filesToDelete.isEmpty()) {
+        allItemsToProcess.add(new FakeProcessingItem());
+      }
+      context.putUserData(FILES_TO_DELETE_KEY, filesToDelete);
+
+      removeObsoleteModulesFromCache(project);
+      saveCache(project);
+    }
+    finally {
+      accessToken.finish();
+    }
+
+    return allItemsToProcess.toArray(new ProcessingItem[allItemsToProcess.size()]);
   }
 
-  private static List<String> collectNonFilteredExtensions(MavenProject mavenProject) {
-    List<String> result = new ArrayList<String>(Arrays.asList("jpg", "jpeg", "gif", "bmp", "png"));
+  private static Set<String> collectNonFilteredExtensions(MavenProject mavenProject) {
     Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-    if (config == null) return result;
+    if (config == null) return DEFAULT_NON_FILTERED_EXTENSIONS;
 
-    for (String each : MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension")) {
-      result.add(each);
-    }
+    List<String> customNonFilteredExtensions = MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
+    if (customNonFilteredExtensions.isEmpty()) return DEFAULT_NON_FILTERED_EXTENSIONS;
+
+    Set<String> result = new HashSet<String>();
+    result.addAll(DEFAULT_NON_FILTERED_EXTENSIONS);
+    result.addAll(customNonFilteredExtensions);
+
     return result;
   }
 
@@ -221,15 +231,15 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return properties;
   }
 
-  private void collectProcessingItems(Module module,
-                                      MavenProject mavenProject,
-                                      CompileContext context,
-                                      Properties properties,
-                                      long propertiesHashCode,
-                                      List<String> nonFilteredExtensions,
-                                      String escapeString,
-                                      boolean tests,
-                                      List<ProcessingItem> result) {
+  private static void collectProcessingItems(Module module,
+                                             MavenProject mavenProject,
+                                             CompileContext context,
+                                             Properties properties,
+                                             long propertiesHashCode,
+                                             Set<String> nonFilteredExtensions,
+                                             String escapeString,
+                                             boolean tests,
+                                             List<MyProcessingItem> result) {
     String outputDir = CompilerPaths.getModuleOutputPath(module, tests);
     if (outputDir == null) {
       context.addMessage(CompilerMessageCategory.ERROR, "Maven: Module '" + module.getName() + "'output is not specified", null, -1, -1);
@@ -265,7 +275,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  public static List<Pattern> collectPatterns(List<String> values, String defaultValue) {
+  public static List<Pattern> collectPatterns(@Nullable List<String> values, @Nullable String defaultValue) {
     List<Pattern> result = new ArrayList<Pattern>();
     if (values == null || values.isEmpty()) {
       if (defaultValue == null) return Collections.emptyList();
@@ -277,21 +287,21 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return result;
   }
 
-  private void collectProcessingItems(Module module,
-                                      VirtualFile sourceRoot,
-                                      VirtualFile currentDir,
-                                      String outputDir,
-                                      List<Pattern> includes,
-                                      List<Pattern> excludes,
-                                      boolean isSourceRootFiltered,
-                                      Properties properties,
-                                      long propertiesHashCode,
-                                      List<String> nonFilteredExtensions,
-                                      String escapeString,
-                                      List<ProcessingItem> result,
-                                      ProgressIndicator indicator) {
+  private static void collectProcessingItems(Module module,
+                                             VirtualFile sourceRoot,
+                                             VirtualFile currentDir,
+                                             String outputDir,
+                                             List<Pattern> includes,
+                                             List<Pattern> excludes,
+                                             boolean isSourceRootFiltered,
+                                             Properties properties,
+                                             long propertiesHashCode,
+                                             Set<String> nonFilteredExtensions,
+                                             String escapeString,
+                                             List<MyProcessingItem> result,
+                                             ProgressIndicator indicator) {
     indicator.checkCanceled();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+
     for (VirtualFile eachSourceFile : currentDir.getChildren()) {
       if (eachSourceFile.isDirectory()) {
         collectProcessingItems(module,
@@ -315,6 +325,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           continue;
         }
 
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
         if (fileIndex.isIgnored(eachSourceFile)) continue;
         if (!MavenUtil.isIncluded(relPath, includes, excludes)) continue;
 
@@ -337,29 +348,20 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     }
   }
 
-  private void collectItemsToDelete(Module module, List<ProcessingItem> processingItems, List<String> result) {
-    Set<String> currentPaths = createPathsSet(processingItems.size());
-    for (ProcessingItem each : processingItems) {
-      if (!(each instanceof MyProcessingItem)) continue;
-      currentPaths.add(((MyProcessingItem)each).getOutputPath());
+  private void collectItemsToDelete(Module module, List<MyProcessingItem> processingItems, List<String> result) {
+    Set<String> currentPaths = createPathsSet();
+    for (MyProcessingItem each : processingItems) {
+      currentPaths.add(each.getOutputPath());
     }
 
-    Set<String> cachedPaths = null;
-    Set<String> otherModulesCachedPaths = new THashSet<String>();
-    for (Map.Entry<String, Set<String>> eachEntry : myOutputItemsCache.entrySet()) {
-      if (eachEntry.getKey().equals(module.getName())) {
-        cachedPaths = eachEntry.getValue();
+    Set<String> cachedPaths = myOutputItemsCache.put(module.getName(), currentPaths);
+    if (cachedPaths != null) {
+      for (Set<String> set : myOutputItemsCache.values()) {
+        cachedPaths.removeAll(set);
       }
-      else {
-        otherModulesCachedPaths.addAll(eachEntry.getValue());
-      }
-    }
-    myOutputItemsCache.put(module.getName(), currentPaths);
-    if (cachedPaths == null) return;
 
-    cachedPaths.removeAll(currentPaths);
-    cachedPaths.removeAll(otherModulesCachedPaths);
-    result.addAll(cachedPaths);
+      result.addAll(cachedPaths);
+    }
   }
 
   private void removeObsoleteModulesFromCache(final Project project) {
@@ -383,14 +385,13 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
     deleteOutdatedFile(context.getUserData(FILES_TO_DELETE_KEY), filesToRefresh);
 
-    int count = 0;
-    for (final ProcessingItem each : items) {
-      if (!(each instanceof MyProcessingItem)) continue;
+    for (int i = 0; i < items.length; i++) {
+      if (!(items[i] instanceof MyProcessingItem)) continue;
 
-      context.getProgressIndicator().setFraction(((double)count) / items.length);
+      context.getProgressIndicator().setFraction(((double)i) / items.length);
       context.getProgressIndicator().checkCanceled();
 
-      MyProcessingItem eachItem = (MyProcessingItem)each;
+      MyProcessingItem eachItem = (MyProcessingItem)items[i];
       VirtualFile sourceVirtualFile = eachItem.getFile();
       File sourceFile = new File(sourceVirtualFile.getPath());
       File outputFile = new File(eachItem.getOutputPath());
@@ -410,7 +411,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           String charset = sourceVirtualFile.getCharset().name();
           String text = new String(FileUtil.loadFileBytes(sourceFile), charset);
           String escapedCharacters = sourceVirtualFile.getName().endsWith(".properties") ? "\\" : null;
-          
+
           PrintWriter printWriter = new PrintWriter(outputFile, charset);
           try {
             MavenPropertyResolver.doFilterText(eachItem.getModule(),
@@ -428,8 +429,8 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
           FileUtil.copy(sourceFile, outputFile);
         }
 
-        ((MyValididtyState)each.getValidityState()).setOutputFileTimestamp(outputFile.lastModified());
-        result.add(each);
+        eachItem.getValidityState().setOutputFileTimestamp(outputFile.lastModified());
+        result.add(eachItem);
         filesToRefresh.add(outputFile);
       }
       catch (IOException e) {
@@ -445,7 +446,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return result.toArray(new ProcessingItem[result.size()]);
   }
 
-  private void deleteOutdatedFile(List<String> filesToDelete, List<File> filesToRefresh) {
+  private static void deleteOutdatedFile(List<String> filesToDelete, List<File> filesToRefresh) {
     for (String each : filesToDelete) {
       File file = new File(each);
       if (FileUtil.delete(file)) {
@@ -514,7 +515,8 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       return myEscapeString;
     }
 
-    public ValidityState getValidityState() {
+    @NotNull
+    public MyValididtyState getValidityState() {
       return myState;
     }
   }
@@ -538,7 +540,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
 
   private static class MyValididtyState implements ValidityState {
     private final long mySourceFileTimestamp;
-    private volatile long myOutputFileTimestamp;
+    private long myOutputFileTimestamp;
     private final boolean myFiltered;
     private final long myPropertiesHashCode;
     private final String myEscapeString;

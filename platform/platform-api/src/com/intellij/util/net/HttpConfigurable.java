@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -180,7 +181,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       proxy.add("-Dhttp.proxyHost=" + httpConfigurable.PROXY_HOST);
       proxy.add("-Dhttp.proxyPort=" + httpConfigurable.PROXY_PORT);
       proxy.add("-Dhttps.proxyHost=" + httpConfigurable.PROXY_HOST);
-      proxy.add("-Dhttps.proxyPort=" + Integer.toString(httpConfigurable.PROXY_PORT));
+      proxy.add("-Dhttps.proxyPort=" + httpConfigurable.PROXY_PORT);
+
+      if (httpConfigurable.KEEP_PROXY_PASSWORD && StringUtil.isNotEmpty(httpConfigurable.PROXY_LOGIN)) {
+        proxy.add("-Dproxy.authentication.username=" + httpConfigurable.PROXY_LOGIN);
+        proxy.add("-Dproxy.authentication.password=" + httpConfigurable.getPlainProxyPassword());
+      }
+
     }
     return proxy;
   }

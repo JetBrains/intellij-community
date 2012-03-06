@@ -46,10 +46,10 @@ public class CreateChangelistAction extends BaseTaskAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     LocalTask activeTask = getActiveTask(e);
-    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, TaskUtil.getChangeListName(activeTask), null);
+    TaskManagerImpl manager = (TaskManagerImpl)getTaskManager(e);
+    assert manager != null;
+    String name = Messages.showInputDialog(getProject(e), "Changelist name:", "Create Changelist", null, manager.getChangelistName(activeTask), null);
     if (name != null) {
-      TaskManagerImpl manager = (TaskManagerImpl)getTaskManager(e);
-      assert manager != null;
       manager.createChangeList(activeTask, name);
     }
   }

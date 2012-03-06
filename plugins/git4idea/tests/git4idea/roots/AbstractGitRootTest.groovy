@@ -18,6 +18,7 @@ package git4idea.roots
 import git4idea.test.GitMockVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import git4idea.test.GitTestPlatformFacade
 
 /**
  * 
@@ -25,17 +26,27 @@ import com.intellij.openapi.util.io.FileUtil
  */
 class AbstractGitRootTest {
 
+  GitTestPlatformFacade myPlatformFacade
+
+  AbstractGitRootTest() {
+    myPlatformFacade = new GitTestPlatformFacade()
+  }
+
   /**
    * Creates the necessary temporary directories in the filesystem with empty ".git" directories for given roots.
    * And creates an instance of the project.
    * @param gitRoots path to actual .git roots, relative to the project dir.
    */
-  Project initProject(Collection<String> gitRoots, Collection<String> projectStructure) {
+  Project initProject(Collection<String> gitRoots, Collection<String> projectStructure, Collection<String> linkedRoots) {
     String projectDir = createDirs(gitRoots)
     Project project = [
       getBaseDir: { new GitMockVirtualFile(projectDir) }
     ] as Project
     createProjectStructure(project, projectStructure);
+    createProjectStructure(project, linkedRoots);
+
+    linkedRoots.each { myPlatformFacade.myProjectRootManager.myContentRoots << GitMockVirtualFile.fromPath(it, project)}
+
     project
   }
 

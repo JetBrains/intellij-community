@@ -19,12 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
+import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * <p>
@@ -41,9 +40,11 @@ import java.util.Collections;
 public class GitRootDetector {
 
   @NotNull private final Project myProject;
+  @NotNull private final PlatformFacade myPlatformFacade;
 
-  public GitRootDetector(@NotNull Project project) {
+  public GitRootDetector(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     myProject = project;
+    myPlatformFacade = platformFacade;
   }
 
   public GitRootDetectInfo detect() {
@@ -53,13 +54,14 @@ public class GitRootDetector {
       return new GitRootDetectInfo(Collections.<VirtualFile>emptyList(), false, false);
     }
 
-    final Collection<VirtualFile> roots = scanForRootsInsideProject(projectDir);
+    final Set<VirtualFile> roots = scanForRootsInsideDir(projectDir);
+    roots.addAll(scanForRootsInContentRoots());
 
     if (roots.contains(projectDir)) {
       return new GitRootDetectInfo(roots, true, false);
     }
 
-    VirtualFile rootAbove = scanForSingleRootAboveProject(projectDir);
+    VirtualFile rootAbove = scanForSingleRootAboveDir(projectDir);
     if (rootAbove != null) {
       roots.add(rootAbove);
       return new GitRootDetectInfo(roots, true, true);
@@ -67,9 +69,25 @@ public class GitRootDetector {
     return new GitRootDetectInfo(roots, false, false);
   }
 
+  private Set<VirtualFile> scanForRootsInContentRoots() {
+    Set<VirtualFile> gitRoots = new HashSet<VirtualFile>();
+    VirtualFile[] roots = myPlatformFacade.getProjectRootManager(myProject).getContentRoots();
+    for (VirtualFile contentRoot : roots) {
+      Set<VirtualFile> rootsInsideRoot = scanForRootsInsideDir(contentRoot);
+      if (!rootsInsideRoot.contains(contentRoot)) {
+        VirtualFile rootAbove = scanForSingleRootAboveDir(contentRoot);
+        if (rootAbove != null) {
+          rootsInsideRoot.add(rootAbove);
+        }
+      }
+      gitRoots.addAll(rootsInsideRoot);
+    }
+    return gitRoots;
+  }
+
   @NotNull
-  private static Collection<VirtualFile> scanForRootsInsideProject(@NotNull VirtualFile projectDir) {
-    final Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
+  private static Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile projectDir) {
+    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     VfsUtil.processFilesRecursively(projectDir, new Processor<VirtualFile>() {
       @Override
       public boolean process(VirtualFile virtualFile) {
@@ -83,7 +101,7 @@ public class GitRootDetector {
   }
 
   @Nullable
-  private static VirtualFile scanForSingleRootAboveProject(@NotNull VirtualFile projectDir) {
+  private static VirtualFile scanForSingleRootAboveDir(@NotNull VirtualFile projectDir) {
     VirtualFile parent = projectDir.getParent();
     while (parent != null) {
       if (hasGitDir(parent)) {

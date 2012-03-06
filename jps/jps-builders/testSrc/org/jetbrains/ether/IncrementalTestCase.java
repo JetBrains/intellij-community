@@ -16,21 +16,18 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
-import org.apache.log4j.Level;
-import org.apache.log4j.PropertyConfigurator;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
+import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.server.ClasspathBootstrap;
@@ -40,104 +37,15 @@ import java.io.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author db
  * @since 26.07.11
  */
 public abstract class IncrementalTestCase extends TestCase {
-  private static class RootStripper {
-    private String root;
-
-    void setRoot(final String root) {
-      this.root = root;
-    }
-
-    String strip(final String s) {
-      if (s.startsWith(root)) {
-        return s.substring(root.length());
-      }
-
-      return s;
-    }
-  }
-
-  static VolatileFileAppender myAppender = null;
-  
-  static void setAppender (final VolatileFileAppender app) {
-    myAppender = app;
-  } 
-  
-  static void closeAppender () {
-    if (myAppender != null) {
-      try {
-        myAppender.closeStream();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  private static class MyFactory implements Logger.Factory {
-    @Override
-    public Logger getLoggerInstance(String category) {
-      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-
-      final boolean affectedLogger = category.equals("#org.jetbrains.jps.incremental.java.JavaBuilder") ||
-                                     category.equals("#org.jetbrains.jps.incremental.IncProjectBuilder");
-
-      return new Logger() {
-        @Override
-        public boolean isDebugEnabled() {
-          return affectedLogger;
-        }
-
-        @Override
-        public void debug(@NonNls String message) {
-        }
-
-        @Override
-        public void debug(@Nullable Throwable t) {
-        }
-
-        @Override
-        public void debug(@NonNls String message, @Nullable Throwable t) {
-        }
-
-        @Override
-        public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
-        }
-
-        @Override
-        public void info(@NonNls String message) {
-          if (affectedLogger) {
-            logger.info(stripper.strip(message));
-          }
-        }
-
-        @Override
-        public void info(@NonNls String message, @Nullable Throwable t) {
-        }
-
-        @Override
-        public void warn(@NonNls String message, @Nullable Throwable t) {
-        }
-
-        @Override
-        public void setLevel(Level level) {
-        }
-      };
-    }
-  }
-
-  private static RootStripper stripper = new RootStripper();
-
   private final String groupName;
   private final String tempDir = FileUtil.toSystemDependentName(new File(System.getProperty("java.io.tmpdir")).getCanonicalPath());
 
-  private Logger.Factory oldFactory;
   private String baseDir;
   private String workDir;
 
@@ -149,9 +57,6 @@ public abstract class IncrementalTestCase extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
-    oldFactory = Logger.ourFactory;
-    Logger.setFactory(new MyFactory());
-
     super.setUp();
 
     baseDir = PathManagerEx.getTestDataPath() + File.separator + "compileServer" + File.separator + "incremental" + File.separator;
@@ -175,13 +80,7 @@ public abstract class IncrementalTestCase extends TestCase {
       super.tearDown();
     }
     finally {
-      try {
-        closeAppender();
-        delete(new File(workDir));
-      }
-      finally {
-        Logger.setFactory(oldFactory);
-      }
+      delete(new File(workDir));
     }
   }
 
@@ -289,23 +188,7 @@ public abstract class IncrementalTestCase extends TestCase {
     }
   }
 
-  private void initLoggers() {
-    final Properties properties = new Properties();
-
-    properties.setProperty("log4j.rootCategory", "INFO, A1");
-    properties.setProperty("log4j.appender.A1", "org.jetbrains.ether.VolatileFileAppender");
-    properties.setProperty("log4j.appender.A1.file", getWorkDir() + ".log");
-    properties.setProperty("log4j.appender.A1.layout", "org.apache.log4j.PatternLayout");
-    properties.setProperty("log4j.appender.A1.layout.ConversionPattern", "%m%n");
-
-    PropertyConfigurator.configure(properties);
-  }
-
   public void doTest() throws Exception {
-    stripper.setRoot(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
-
-    initLoggers();
-
     final String projectPath = getWorkDir() + File.separator + ".idea";
     final Project project = new Project();
 
@@ -319,11 +202,11 @@ public abstract class IncrementalTestCase extends TestCase {
     IdeaProjectLoader.loadFromPath(project, projectPath, "");
 
     final File dataStorageRoot = Paths.getDataStorageRoot(project);
+    final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
     final ProjectDescriptor projectDescriptor =
       new ProjectDescriptor(project, new FSState(true), new ProjectTimestamps(dataStorageRoot),
-                            new BuildDataManager(dataStorageRoot, true), BuildLoggingManager.DEFAULT);
+                            new BuildDataManager(dataStorageRoot, true), new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
-
       new IncProjectBuilder(
         projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL
       ).build(
@@ -343,11 +226,31 @@ public abstract class IncrementalTestCase extends TestCase {
       );
 
       final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBaseDir() + ".log")));
-      final String actual = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getWorkDir() + ".log")));
+      final String actual = javaBuilderLogger.myLog.toString();
       assertEquals(expected, actual);
     }
     finally {
       projectDescriptor.release();
+    }
+  }
+
+  private static class TestJavaBuilderLogger implements JavaBuilderLogger {
+    private final String myRoot;
+    private final StringBuilder myLog;
+
+    public TestJavaBuilderLogger(String root) {
+      myRoot = root;
+      myLog = new StringBuilder();
+    }
+
+    @Override
+    public void log(String line) {
+      myLog.append(StringUtil.trimStart(line, myRoot)).append('\n');
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return true;
     }
   }
 }

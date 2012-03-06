@@ -19,13 +19,11 @@ import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.*;
-import com.android.resources.NightMode;
-import com.android.resources.UiMode;
-import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.ViewsMetaManager;
+import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.ComponentDecorator;
@@ -53,7 +51,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.uipreview.*;
+import org.jetbrains.android.uipreview.LayoutDeviceConfiguration;
+import org.jetbrains.android.uipreview.LocaleData;
+import org.jetbrains.android.uipreview.RenderUtil;
+import org.jetbrains.android.uipreview.RenderingException;
+import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,11 +78,22 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
 
+    showProgress("Load configuration");
     myProfileAction = new ProfileAction(this, new Runnable() {
       @Override
       public void run() {
         myActionPanel.update();
-        // TODO: Auto-generated method stub
+        if (myRootComponent == null) {
+          myPSIChangeListener.addRequest();
+        }
+        else {
+          myPSIChangeListener.addRequest(new Runnable() {
+            @Override
+            public void run() {
+              updateRenderer();
+            }
+          });
+        }
       }
     });
 
@@ -99,21 +112,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
     // TODO: work over activate() / deactivate()
     myPSIChangeListener.start();
-
-    // TODO: save last parse result (screen image, component info) to project output
-    // TODO: and use for next open editor (no wait first long init Android RenderLib)
-
-    try {
-      parseFile(new Runnable() {
-        @Override
-        public void run() {
-          showDesignerCard();
-        }
-      });
-    }
-    catch (Throwable e) {
-      showError("Parse error: ", e);
-    }
   }
 
   private void reparseFile() {
@@ -136,7 +134,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     }
   }
 
-  private void parseFile(final Runnable runnable) throws Throwable {
+  private void parseFile(final Runnable runnable) {
     final RadViewComponent[] rootComponents = new RadViewComponent[1];
     final MetaManager metaManager = ViewsMetaManager.getInstance(getProject());
     final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
@@ -171,16 +169,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        Result result = mySession.getResult();
-        if (!result.isSuccess()) {
-          Throwable exception = result.getException();
-          if (exception != null) {
-            throw exception;
-          }
-          else {
-            throw new Exception("No session result");
-          }
-        }
+        checkRenderer();
 
         RootView rootView = new RootView(mySession.getImage(), 30, 20);
         updateRootComponent(rootComponents, mySession.getRootViews(), rootView);
@@ -198,6 +187,41 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
   }
 
+  private void updateRenderer() {
+    final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return myXmlFile.getText();
+      }
+    });
+    createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
+      @Override
+      public void run() throws Throwable {
+        checkRenderer();
+
+        RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+        RootView rootView = (RootView)rootComponent.getNativeComponent();
+        rootView.setImage(mySession.getImage());
+        updateRootComponent(rootComponent, mySession.getRootViews(), rootView);
+
+        myLayeredPane.repaint();
+      }
+    });
+  }
+
+  private void checkRenderer() throws Throwable {
+    Result result = mySession.getResult();
+    if (!result.isSuccess()) {
+      Throwable exception = result.getException();
+      if (exception != null) {
+        throw exception;
+      }
+      else {
+        throw new Exception("No session result");
+      }
+    }
+  }
+
   private void removeNativeRoot() {
     if (myRootComponent != null) {
       myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
@@ -207,8 +231,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private void updateRootComponent(RadViewComponent[] rootComponents, List<ViewInfo> views, JComponent nativeComponent) {
     RadViewComponent rootComponent = rootComponents[0];
 
-    int size = views.size();
-    if (size == 1) {
+    if (views.size() == 1) {
       RadViewComponent newRootComponent = new RadViewComponent(null);
       newRootComponent.setMetaModel(ViewsMetaManager.getInstance(getProject()).getModelByTag("<root>"));
       newRootComponent.getChildren().add(rootComponent);
@@ -216,13 +239,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
       updateComponent(rootComponent, views.get(0), nativeComponent, 0, 0);
 
-      rootComponents[0] = rootComponent = newRootComponent;
+      rootComponents[0] = newRootComponent;
+
+      newRootComponent.setNativeComponent(nativeComponent);
+      newRootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
     }
     else {
-      List<RadComponent> children = rootComponent.getChildren();
-      for (int i = 0; i < size; i++) {
-        updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, 0, 0);
-      }
+      updateRootComponent(rootComponent, views, nativeComponent);
+    }
+  }
+
+  private static void updateRootComponent(RadViewComponent rootComponent, List<ViewInfo> views, JComponent nativeComponent) {
+    int size = views.size();
+    List<RadComponent> children = rootComponent.getChildren();
+    for (int i = 0; i < size; i++) {
+      updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, 0, 0);
     }
 
     rootComponent.setNativeComponent(nativeComponent);
@@ -246,9 +277,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
 
-  private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) throws Exception {
-    // TODO: (profile|device|target|...|theme) panel
-
+  private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
     if (mySession == null) {
       ApplicationManager.getApplication().invokeLater(
         new Runnable() {
@@ -273,30 +302,38 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
-        IAndroidTarget target = platform.getTarget();
-        AndroidFacet facet = AndroidFacet.getInstance(myModule);
-
-        LayoutDeviceManager layoutDeviceManager = new LayoutDeviceManager();
-        layoutDeviceManager.loadDevices(platform.getSdkData());
-        LayoutDevice layoutDevice = layoutDeviceManager.getCombinedList().get(0);
-
-        LayoutDeviceConfiguration deviceConfiguration = layoutDevice.getConfigurations().get(0);
-
-        FolderConfiguration config = new FolderConfiguration();
-        config.set(deviceConfiguration.getConfiguration());
-        config.setUiModeQualifier(new UiModeQualifier(UiMode.NORMAL));
-        config.setNightModeQualifier(new NightModeQualifier(NightMode.NIGHT));
-        config.setLanguageQualifier(new LanguageQualifier());
-        config.setRegionQualifier(new RegionQualifier());
-
-        float xdpi = deviceConfiguration.getDevice().getXDpi();
-        float ydpi = deviceConfiguration.getDevice().getYDpi();
-
-        ThemeData theme = new ThemeData("Theme", false);
-
         try {
-          mySession = RenderUtil.createRenderSession(getProject(), layoutXmlText, myFile, target, facet, config, xdpi, ydpi, theme);
+          AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+          if (platform == null) {
+            throw new AndroidSdkNotConfiguredException();
+          }
+
+          AndroidFacet facet = AndroidFacet.getInstance(myModule);
+          ProfileManager manager = myProfileAction.getProfileManager();
+
+          LayoutDeviceConfiguration deviceConfiguration = manager.getSelectedDeviceConfiguration();
+          if (deviceConfiguration == null) {
+            throw new RenderingException("Device is not specified");
+          }
+
+          FolderConfiguration config = new FolderConfiguration();
+          config.set(deviceConfiguration.getConfiguration());
+          config.setUiModeQualifier(new UiModeQualifier(manager.getSelectedDockMode()));
+          config.setNightModeQualifier(new NightModeQualifier(manager.getSelectedNightMode()));
+
+          LocaleData locale = manager.getSelectedLocale();
+          if (locale == null) {
+            throw new RenderingException("Locale is not specified");
+          }
+          config.setLanguageQualifier(new LanguageQualifier(locale.getLanguage()));
+          config.setRegionQualifier(new RegionQualifier(locale.getRegion()));
+
+          float xdpi = deviceConfiguration.getDevice().getXDpi();
+          float ydpi = deviceConfiguration.getDevice().getYDpi();
+
+          mySession = RenderUtil
+            .createRenderSession(getProject(), layoutXmlText, myFile, manager.getSelectedTarget(), facet, config, xdpi, ydpi,
+                                 manager.getSelectedTheme());
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
@@ -310,6 +347,14 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               }
             }
           });
+        }
+        catch (RenderingException e) {
+          // TODO
+          e.printStackTrace();
+        }
+        catch (AndroidSdkNotConfiguredException e) {
+          // TODO
+          e.printStackTrace();
         }
         catch (final Throwable e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -334,6 +379,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public void showError(@NonNls String message, Throwable e) {
     removeNativeRoot();
     super.showError(message, e);
+  }
+
+  public ProfileAction getProfileAction() {
+    return myProfileAction;
+  }
+
+  @Override
+  public void activate() {
+    myProfileAction.externalUpdate();
   }
 
   @Override
@@ -415,11 +469,19 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   private static class RootView extends JComponent {
-    private final BufferedImage myImage;
+    private int myX;
+    private int myY;
+    private BufferedImage myImage;
 
     public RootView(BufferedImage image, int x, int y) {
+      myX = x;
+      myY = y;
+      setImage(image);
+    }
+
+    public void setImage(BufferedImage image) {
       myImage = image;
-      setBounds(x, y, image.getWidth(), image.getHeight());
+      setBounds(myX, myY, image.getWidth(), image.getHeight());
     }
 
     @Override

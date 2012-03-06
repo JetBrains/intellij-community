@@ -118,13 +118,40 @@ class GitRootDetectorTest extends AbstractGitRootTest {
            below:    false
   }
 
+  @Test
+  void "linked source root alone should be detected"() {
+    doTest linked_roots: ["../linked_root"],
+           gits:         ["../linked_root"],
+           expected:     ["../linked_root"],
+           full:         false,
+           below:        false
+  }
+
+  @Test
+  void "linked source root and project root should be detected"() {
+    doTest linked_roots: ["../linked_root"],
+           gits:         [".", "../linked_root"],
+           expected:     [".", "../linked_root"],
+           full:         true,
+           below:        false
+  }
+
+  @Test
+  void "linked source below Git"() {
+    doTest linked_roots: ["../linked_root/src"],
+           gits:         [".", "../linked_root"],
+           expected:     [".", "../linked_root"],
+           full:         true,
+           below:        false
+  }
+
   /**
    * Perform test. Map contains actual Git repositories to be created on disk,
    * and Git repositories expected to be detected by the GitRootDetector.
    * @param map
    */
   private void doTest(Map map) {
-    myProject = initProject(map.gits, map.project)
+    myProject = initProject(map.gits, map.project, map.linked_roots)
     testInfo empty: map.expected.empty,
              full : map.full,
              roots: map.expected,
@@ -170,7 +197,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
   }
 
   private GitRootDetectInfo detect() {
-    new GitRootDetector(myProject).detect()
+    new GitRootDetector(myProject, myPlatformFacade).detect()
   }
 
 }

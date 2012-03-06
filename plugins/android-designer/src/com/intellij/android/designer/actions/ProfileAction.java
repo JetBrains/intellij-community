@@ -132,10 +132,12 @@ public class ProfileAction {
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      // TODO: send event to manager's
-
       myProfileList.setProfiles(dialog.getResult());
       updateActions();
     }
+  }
+
+  public void externalUpdate() {
+    // TODO
   }
 }
