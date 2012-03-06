@@ -97,7 +97,7 @@ public class PythonSdkUpdater implements StartupActivity {
                     }
                     catch (InvalidSdkException e) {
                       if (!PythonSdkType.isInvalid(sdk)) {
-                        LOG.error(e);
+                        LOG.warn(e);
                         final Notification notification = PythonSdkType.createInvalidSdkNotification(myProject);
                         notification.notify(myProject);
                       }
