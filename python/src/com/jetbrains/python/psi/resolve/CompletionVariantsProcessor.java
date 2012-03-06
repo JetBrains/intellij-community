@@ -8,9 +8,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +67,13 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   private static boolean isSingleArgDecoratorCall(PsiElement elementInCall, PyFunction callee) {
+    // special case hack to avoid the need of patching generator3.py
+    PyClass containingClass = callee.getContainingClass();
+    if (containingClass != null && PyNames.PROPERTY.equals(containingClass.getName()) &&
+        PyBuiltinCache.getInstance(elementInCall).hasInBuiltins(containingClass)) {
+      return true;
+    }
+
     if (callee.getParameterList().getParameters().length > 1) {
       return false;
     }

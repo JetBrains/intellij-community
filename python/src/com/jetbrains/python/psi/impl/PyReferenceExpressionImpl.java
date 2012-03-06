@@ -306,12 +306,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
       if (file != null) return getTypeFromTarget(file, context, anchor);
     }
+    if (target instanceof PyFunction) {
+      final PyDecoratorList decoratorList = ((PyFunction)target).getDecoratorList();
+      if (decoratorList != null) {
+        final PyDecorator decorator = decoratorList.findDecorator(PyNames.PROPERTY);
+        if (decorator != null) {
+          return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
+        }
+      }
+    }
     return null;
-  }
-
-  @Nullable
-  private static PyType getTypeIfExpr(PyElement def, TypeEvalContext context) {
-    return def instanceof PyExpression ? context.getType((PyExpression)def) : null;
   }
 
   @Nullable

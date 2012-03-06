@@ -302,12 +302,23 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       else if (reference instanceof PyImportReference &&
-               target == reference.getElement().getContainingFile()) {
-        final boolean insideFromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class) != null;
-        if ((insideFromImport && PyImportStatementNavigator.getImportStatementByElement(node) != null) || !insideFromImport) {
-          registerProblem(node, "Import resolves to its containing file");
-        }
+               target == reference.getElement().getContainingFile() &&
+               !isContainingFileImportAllowed(node, (PsiFile) target)) {
+        registerProblem(node, "Import resolves to its containing file");
       }
+    }
+
+    private static boolean isContainingFileImportAllowed(PyElement node, PsiFile target) {
+      // import resolving to containing file is allowed when we're importing from the current package and the containing file
+      // is __init__.py (PY-5265)
+      final boolean insideFromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class) != null;
+      if (!insideFromImport) {
+        return false;
+      }
+      if (PyImportStatementNavigator.getImportStatementByElement(node) != null) {
+        return false;
+      }
+      return target.getName().equals(PyNames.INIT_DOT_PY);
     }
 
     private void processReferenceInImportGuard(PyElement node, PyExceptPart guard) {
