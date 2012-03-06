@@ -132,6 +132,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(LayoutDeviceConfiguration item) {
         updateDeviceConfiguration(item);
+        myRefreshAction.run();
         return true;
       }
     };
@@ -141,7 +142,6 @@ public class ProfileManager {
       protected boolean selectionChanged(IAndroidTarget item) {
         updateTarget(item);
         updateThemes();
-        myRefreshAction.run();
         return true;
       }
     };
