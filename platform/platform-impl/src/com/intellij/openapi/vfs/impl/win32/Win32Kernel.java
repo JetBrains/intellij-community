@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,21 +109,21 @@ public class Win32Kernel {
     return info;
   }
 
-  @NewVirtualFileSystem.FileBooleanAttributes
-  public int getBooleanAttributes(@NotNull String path, @NewVirtualFileSystem.FileBooleanAttributes int flags) {
+  @FileUtil.FileBooleanAttributes
+  public int getBooleanAttributes(@NotNull String path, @FileUtil.FileBooleanAttributes int flags) {
     FileInfo info = doGetInfo(path);
     int result = 0;
-    if ((flags & NewVirtualFileSystem.BA_EXISTS) != 0) {
-      result |= info == null ? 0 : NewVirtualFileSystem.BA_EXISTS;
+    if ((flags & FileUtil.BA_EXISTS) != 0) {
+      result |= info == null ? 0 : FileUtil.BA_EXISTS;
     }
-    if ((flags & NewVirtualFileSystem.BA_DIRECTORY) != 0) {
-      result |= info == null || (info.attributes & FILE_ATTRIBUTE_DIRECTORY) == 0 ? 0 : NewVirtualFileSystem.BA_DIRECTORY;
+    if ((flags & FileUtil.BA_DIRECTORY) != 0) {
+      result |= info == null || (info.attributes & FILE_ATTRIBUTE_DIRECTORY) == 0 ? 0 : FileUtil.BA_DIRECTORY;
     }
-    if ((flags & NewVirtualFileSystem.BA_REGULAR) != 0) {
-      result |= info == null || (info.attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT)) != 0 ? 0 : NewVirtualFileSystem.BA_REGULAR;
+    if ((flags & FileUtil.BA_REGULAR) != 0) {
+      result |= info == null || (info.attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT)) != 0 ? 0 : FileUtil.BA_REGULAR;
     }
-    if ((flags & NewVirtualFileSystem.BA_HIDDEN) != 0) {
-      result |= info == null || (info.attributes & FILE_ATTRIBUTE_HIDDEN) == 0 ? 0 : NewVirtualFileSystem.BA_HIDDEN;
+    if ((flags & FileUtil.BA_HIDDEN) != 0) {
+      result |= info == null || (info.attributes & FILE_ATTRIBUTE_HIDDEN) == 0 ? 0 : FileUtil.BA_HIDDEN;
     }
     return result;
   }

@@ -145,7 +145,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return pattern.regionMatches(ignoreCase, length, suffix, 0, suffix.length());
   }
 
-  private Object rawName() {
+  protected Object rawName() {
     return myName;
   }
 

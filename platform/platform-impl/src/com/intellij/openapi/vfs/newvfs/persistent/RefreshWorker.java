@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -31,8 +32,6 @@ import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import static com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem.*;
 
 /**
  * @author max
@@ -53,14 +52,14 @@ public class RefreshWorker {
   public void scan() {
     final NewVirtualFile root = (NewVirtualFile)myRefreshRoot;
     NewVirtualFileSystem delegate = root.getFileSystem();
-    final int rootAttributes = delegate.getBooleanAttributes(root, BA_EXISTS | BA_DIRECTORY);
+    final int rootAttributes = delegate.getBooleanAttributes(root, FileUtil.BA_EXISTS | FileUtil.BA_DIRECTORY);
 
-    if (root.isDirty() && (rootAttributes & BA_EXISTS) == 0) {
+    if (root.isDirty() && (rootAttributes & FileUtil.BA_EXISTS) == 0) {
       scheduleDeletion(root);
       root.markClean();
     }
     else {
-      if ((rootAttributes & BA_DIRECTORY) != 0) {
+      if ((rootAttributes & FileUtil.BA_DIRECTORY) != 0) {
         delegate = PersistentFS.replaceWithNativeFS(delegate);
       }
 
@@ -106,7 +105,7 @@ public class RefreshWorker {
           else {
             for (VirtualFile child : file.getCachedChildren()) {
               final int childAttributes = delegate.getBooleanAttributes(child, -1);
-              if ((childAttributes & BA_EXISTS) != 0) {
+              if ((childAttributes & FileUtil.BA_EXISTS) != 0) {
                 scheduleChildRefresh(file, child, delegate, childAttributes);
               }
               else {
@@ -119,9 +118,9 @@ public class RefreshWorker {
               if (name.isEmpty()) continue;
 
               final VirtualFile fake = new FakeVirtualFile(file, name);
-              final int attributes = delegate.getBooleanAttributes(fake, BA_EXISTS | BA_DIRECTORY);
-              if ((attributes & BA_EXISTS) != 0) {
-                final boolean isDir = (attributes & BA_DIRECTORY) != 0;
+              final int attributes = delegate.getBooleanAttributes(fake, FileUtil.BA_EXISTS | FileUtil.BA_DIRECTORY);
+              if ((attributes & FileUtil.BA_EXISTS) != 0) {
+                final boolean isDir = (attributes & FileUtil.BA_DIRECTORY) != 0;
                 scheduleCreation(file, name, isDir);
               }
             }
@@ -150,20 +149,20 @@ public class RefreshWorker {
     }
   }
 
-  private static final int SPECIAL_MASK = BA_REGULAR | BA_DIRECTORY | BA_EXISTS;
+  private static final int SPECIAL_MASK = FileUtil.BA_REGULAR | FileUtil.BA_DIRECTORY | FileUtil.BA_EXISTS;
 
   // todo[r.sh] compare link targets for files too
   private void scheduleChildRefresh(@NotNull VirtualFileSystemEntry parent,
                                     @NotNull VirtualFile child,
                                     @NotNull NewVirtualFileSystem delegate,
-                                    @FileBooleanAttributes int childAttributes) {
+                                    @FileUtil.FileBooleanAttributes int childAttributes) {
     final boolean currentIsDirectory = child.isDirectory();
     final boolean currentIsSymlink = child.isSymLink();
     final boolean currentIsSpecial = child.isSpecialFile();
     final String currentLinkTarget = child instanceof SymlinkDirectory ? ((SymlinkDirectory)child).getTargetPath() : null;
-    final boolean upToDateIsDirectory = (childAttributes & BA_DIRECTORY) != 0;
+    final boolean upToDateIsDirectory = (childAttributes & FileUtil.BA_DIRECTORY) != 0;
     final boolean upToDateIsSymlink = delegate.isSymLink(child);
-    final boolean upToDateIsSpecial = (childAttributes & SPECIAL_MASK) == BA_EXISTS;
+    final boolean upToDateIsSpecial = (childAttributes & SPECIAL_MASK) == FileUtil.BA_EXISTS;
     final String upToDateLinkTarget = currentLinkTarget != null ? delegate.resolveSymLink(child) : null;
 
     if (currentIsDirectory != upToDateIsDirectory ||

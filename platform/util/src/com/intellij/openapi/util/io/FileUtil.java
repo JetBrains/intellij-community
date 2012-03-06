@@ -28,6 +28,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +58,8 @@ public class FileUtil {
   private static final long CHANNELS_COPYING_LIMIT = 5L * MEGABYTE;
   private static String ourCanonicalTempPathCache = null;
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
+  public static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
+  public static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
 
   @Nullable
   public static String getRelativePath(File base, File file) {
@@ -613,7 +616,10 @@ public class FileUtil {
       String parentDirPath = file.getParent();
       if (parentDirPath != null) {
         final File parentFile = new File(parentDirPath);
-        return parentFile.exists() && parentFile.isDirectory() || parentFile.mkdirs();
+        int attributes = getBooleanAttributes(file);
+        boolean ok = attributes != -1 && (attributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
+                     || parentFile.exists() && parentFile.isDirectory();
+        return ok || parentFile.mkdirs();
       }
     }
     return true;
@@ -1326,5 +1332,54 @@ public class FileUtil {
       return false;
     }
     return firstLine.contains(marker);
+  }
+
+  // copied from FileSystem: they are package local there
+  public static final int BA_EXISTS    = 0x01;
+  public static final int BA_REGULAR   = 0x02;
+  public static final int BA_DIRECTORY = 0x04;
+  public static final int BA_HIDDEN    = 0x08;
+
+  // todo[r.sh] use NIO2 API after migration to JDK 7
+  // returns -1 if could not get attributes
+  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
+  public static int getBooleanAttributes(@NotNull File f) {
+    if (JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD != null) {
+      try {
+        Object flags = JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD.invoke(JAVA_IO_FILESYSTEM, f);
+        return ((Integer)flags).intValue();
+      }
+      catch (Exception ignored) { }
+    }
+    return -1;
+  }
+
+  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
+  public @interface FileBooleanAttributes {}
+
+
+  static {
+    Object fs;
+    Method getBooleanAttributes;
+    try {
+      Class<?> fsClass = Class.forName("java.io.FileSystem");
+      Method getFileSystem = fsClass.getMethod("getFileSystem");
+      getFileSystem.setAccessible(true);
+      fs = getFileSystem.invoke(null);
+      getBooleanAttributes = fsClass.getDeclaredMethod("getBooleanAttributes", File.class);
+      if (fs == null || getBooleanAttributes == null) {
+        fs = null;
+        getBooleanAttributes = null;
+      }
+      else {
+        getBooleanAttributes.setAccessible(true);
+      }
+    }
+    catch (Exception e) {
+      fs = null;
+      getBooleanAttributes = null;
+    }
+    JAVA_IO_FILESYSTEM = fs;
+    JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD = getBooleanAttributes;
   }
 }

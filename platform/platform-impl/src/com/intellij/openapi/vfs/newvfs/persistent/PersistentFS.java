@@ -292,7 +292,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
                                                   final int parentId,
                                                   @NotNull VirtualFile file,
                                                   @NotNull NewVirtualFileSystem delegate,
-                                                  @NewVirtualFileSystem.FileBooleanAttributes int attributes) {
+                                                  @FileUtil.FileBooleanAttributes int attributes) {
     String name = file.getName();
 
     if (!name.isEmpty() && namesEqual(delegate, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
@@ -308,11 +308,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     FSRecords.setTimestamp(id, delegate.getTimeStamp(file));
 
-    boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+    boolean isDir = (attributes & FileUtil.BA_DIRECTORY) != 0;
     FSRecords.setLength(id, isDir ? -1L : delegate.getLength(file));
 
-    boolean isSpecial = (attributes & (NewVirtualFileSystem.BA_REGULAR | NewVirtualFileSystem.BA_DIRECTORY | NewVirtualFileSystem.BA_EXISTS)) ==
-                        NewVirtualFileSystem.BA_EXISTS;
+    boolean isSpecial = (attributes & (FileUtil.BA_REGULAR | FileUtil.BA_DIRECTORY | FileUtil.BA_EXISTS)) ==
+                        FileUtil.BA_EXISTS;
     FSRecords.setFlags(id, (isDir ? IS_DIRECTORY_FLAG : 0) |
                            (delegate.isWritable(file) ? 0 : IS_READ_ONLY) |
                            (delegate.isSymLink(file) ? IS_SYMLINK : 0) |
@@ -408,7 +408,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     VirtualFile fake = new FakeVirtualFile(parent, childName);
     int attributes = delegate.getBooleanAttributes(fake, -1);
-    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+    if ((attributes & FileUtil.BA_EXISTS) != 0) {
       int child = createAndCopyRecord(delegate, fake, parentId, attributes);
       FSRecords.updateList(parentId, ArrayUtil.append(children, child));
       return child;
@@ -673,6 +673,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   };
 
+  @NotNull
   private static List<? extends VFileEvent> validateEvents(@NotNull List<? extends VFileEvent> events) {
     final List<EventWrapper> deletionEvents = Lists.newArrayList();
     for (int i = 0, size = events.size(); i < size; i++) {
@@ -756,25 +757,22 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
             };
           }
           else {
-            root = new VirtualDirectoryImpl(basePath, null, fs, rootId) {
-              @NotNull
-              @Override
-              public String getName() {
-                final String name = super.getName();
-
-                // TODO: HACK!!! Get to simpler solution.
-                if (getFileSystem() instanceof JarFileSystem) {
-                  String jarName = name.substring(0, name.length() - JarFileSystem.JAR_SEPARATOR.length());
-                  return jarName.substring(jarName.lastIndexOf('/') + 1);
-                }
-
-                return name;
-              }
-            };
+            if (fs instanceof JarFileSystem) {
+              // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
+              String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
+              final VirtualFile parentLocalFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
+              if (parentLocalFile == null) return null;
+              root = new JarRoot(fs, rootId, parentLocalFile);
+            }
+            else {
+              root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+            }
           }
-          if (!fs.exists(root)) return null;
+          if (!fs.exists(root)) {
+            return null;
+          }
 
-          int attributes = NewVirtualFileSystem.BA_DIRECTORY | NewVirtualFileSystem.BA_EXISTS;
+          int attributes = FileUtil.BA_DIRECTORY | FileUtil.BA_EXISTS;
           boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs, attributes);
           if (!newRoot) {
             if (fs.getTimeStamp(root) != FSRecords.getTimestamp(rootId)) {
@@ -964,7 +962,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     VirtualFile fake = new FakeVirtualFile(parent, name);
     int attributes = delegate.getBooleanAttributes(fake, -1);
-    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+    if ((attributes & FileUtil.BA_EXISTS) != 0) {
       final int parentId = getFileId(parent);
       int childId = createAndCopyRecord(delegate, fake, parentId, attributes);
       appendIdToParentList(parentId, childId);
@@ -973,7 +971,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     }
   }
 
-  private static int createAndCopyRecord(@NotNull NewVirtualFileSystem delegateSystem, @NotNull VirtualFile delegateFile, int parentId, @NewVirtualFileSystem.FileBooleanAttributes int attributes) {
+  private static int createAndCopyRecord(@NotNull NewVirtualFileSystem delegateSystem, @NotNull VirtualFile delegateFile, int parentId, @FileUtil.FileBooleanAttributes int attributes) {
     int childId = FSRecords.createRecord();
     copyRecordFromDelegateFS(childId, parentId, delegateFile, delegateSystem, attributes);
     return childId;
@@ -1139,5 +1137,25 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       delegate = Win32LocalFileSystem.getWin32Instance();
     }
     return delegate;
+  }
+
+  private static class JarRoot extends VirtualDirectoryImpl {
+    private final VirtualFile myParentLocalFile;
+
+    public JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
+      super("", null, fs, rootId);
+      myParentLocalFile = parentLocalFile;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myParentLocalFile.getName();
+    }
+
+    @Override
+    protected Object rawName() {
+      return myParentLocalFile.getPath() + JarFileSystem.JAR_SEPARATOR;
+    }
   }
 }

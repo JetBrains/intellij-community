@@ -321,10 +321,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {
     final NewVirtualFileSystem delegate = getFileSystem();
     VirtualFile fake = new FakeVirtualFile(this, name);
-    int attributes = delegate.getBooleanAttributes(fake, NewVirtualFileSystem.BA_EXISTS | NewVirtualFileSystem.BA_DIRECTORY);
-    if ((attributes & NewVirtualFileSystem.BA_EXISTS) != 0) {
+    int attributes = delegate.getBooleanAttributes(fake, FileUtil.BA_EXISTS | FileUtil.BA_DIRECTORY);
+    if ((attributes & FileUtil.BA_EXISTS) != 0) {
       final String realName = delegate.getCanonicallyCasedName(fake);
-      boolean isDir = (attributes & NewVirtualFileSystem.BA_DIRECTORY) != 0;
+      boolean isDir = (attributes & FileUtil.BA_DIRECTORY) != 0;
       VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDir, true);
       RefreshQueue.getInstance().processSingleEvent(event);
       return findChild(realName);
