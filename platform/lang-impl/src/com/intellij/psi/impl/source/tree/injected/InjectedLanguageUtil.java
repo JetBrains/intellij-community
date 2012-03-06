@@ -91,12 +91,7 @@ public class InjectedLanguageUtil {
         }
       }
     });
-    if (result.isEmpty()) {
-      return null;
-    }
-    else {
-      return result;
-    }
+    return result.isEmpty() ? null : result;
   }
 
   public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
@@ -206,7 +201,6 @@ public class InjectedLanguageUtil {
 
   private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
   private static final Key<ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>> INJECTED_PSI = Key.create("INJECTED_PSI");
-  private static final boolean DEBUG = false;
 
   private static MultiHostRegistrarImpl probeElementsUp(@NotNull PsiElement element, @NotNull PsiFile hostPsiFile, boolean probeUp) {
     PsiManager psiManager = hostPsiFile.getManager();
@@ -228,7 +222,6 @@ public class InjectedLanguageUtil {
       else {
         registrar = data.getValue(current);
       }
-      if (DEBUG) log(current, (registrar == null ? "!": "")+" computed result="+registrar);
 
       current = current.getParent(); // cache no injection for current
 
@@ -256,7 +249,6 @@ public class InjectedLanguageUtil {
         ProgressManager.checkCanceled();
         if (registrar == null) {
           e.putUserData(INJECTED_PSI, null);
-          if (DEBUG) log(e, "Cache .INJECTED_PSI=null");
         }
         else {
           ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
@@ -266,18 +258,10 @@ public class InjectedLanguageUtil {
           ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
 
           e.putUserData(INJECTED_PSI, cachedValue);
-
-          if (DEBUG) log(e, "Cache .INJECTED_PSI="+result);
         }
       }
     }
     return registrar;
-  }
-
-  private static void log(PsiElement e, String msg) {
-    //if (e.getClass().getName().equals("com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl")) {
-    //  System.out.println(e+": "+ msg + "  ("+Thread.currentThread()+")");
-    //}
   }
 
   public static PsiElement findInjectedElementNoCommit(@NotNull PsiFile hostFile, final int offset) {
