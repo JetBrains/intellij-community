@@ -131,6 +131,15 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   Property scanProperties(Processor<Property> processor, boolean inherited);
 
   /**
+   * Non-recursively searches for a property for which the given function is a getter, setter or deleter.
+   *
+   * @param function the function which may be an accessor
+   * @return the property, or null
+   */
+  @Nullable
+  Property findPropertyByFunction(PyFunction function);
+
+  /**
    * @param parent
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */

@@ -283,7 +283,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             }
           }
           if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
-            final PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
+            PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
+            if (next == null) {
+              next = pyClass.findMethodByName(PyNames.DUNDER_NEXT, true);
+            }
             if (next instanceof PyFunctionImpl) {
               type = ((PyFunctionImpl)next).getReturnType(context, source, new HashMap<PyExpression, PyNamedParameter>());
             }
