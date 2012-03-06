@@ -19,6 +19,8 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.io.TestFileSystemBuilder;
+import com.intellij.util.io.TestFileSystemItem;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 
@@ -197,7 +199,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
   }
 
   protected static TestFileSystemBuilder fs() {
-    return new TestFileSystemBuilder(new TestFileSystemItem("root", false, true), null);
+    return TestFileSystemItem.fs();
   }
 
   public static void assertNoOutput(Artifact artifact) {
@@ -216,7 +218,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     final VirtualFile outputFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(output);
     assertNotNull("output file not found " + output, outputFile);
     outputFile.refresh(false, true);
-    item.build().assertDirectoryEqual(outputFile);
+    item.build().assertDirectoryEqual(VfsUtil.virtualToIoFile(outputFile));
   }
 
 
