@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,8 @@ public class FileBasedIndex implements ApplicationComponent {
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
 
-  private static final int ALREADY_PROCESSED = 0x02;
+  private static final int ALREADY_PROCESSED = 0x04;
+
   @Nullable private final String myConfigPath;
   @Nullable private final String mySystemPath;
   private final boolean myIsUnitTestMode;

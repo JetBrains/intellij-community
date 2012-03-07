@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -27,7 +28,6 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NonNls;
@@ -47,19 +47,47 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
 
   private static final byte DIRTY_FLAG = 0x01;
-  private static final String EMPTY = "";
+  private static final byte HAS_SYMLINK_FLAG = 0x02;
+  private static final int INT_FLAGS_MASK = 0xe3;  // 0b11100011
+
+  @NonNls private static final String EMPTY = "";
+  @NonNls private static final String[] wellKnownSuffixes = {"$1.class", "$2.class", ".class", ".java", ".html", ".txt", ".xml"};
 
   /** Either a String or byte[]. Possibly should be concatenated with one of the entries in the {@link #wellKnownSuffixes}. */
   private volatile Object myName;
   private volatile VirtualDirectoryImpl myParent;
+  private volatile String mySymlinkTarget;
   /** Also, high three bits are used as an index into the {@link #wellKnownSuffixes} array. */
   private volatile byte myFlags = 0;
   private volatile int myId;
 
   public VirtualFileSystemEntry(@NotNull String name, final VirtualDirectoryImpl parent, int id) {
-    storeName(name);
     myParent = parent;
     myId = id;
+    storeName(name);
+    if (parent != null) {
+      calcLinkStatus();
+    }
+  }
+
+  private void storeName(@NotNull String name) {
+    myFlags &= 0x1f;
+    for (int i = 0; i < wellKnownSuffixes.length; i++) {
+      String suffix = wellKnownSuffixes[i];
+      if (name.endsWith(suffix)) {
+        name = StringUtil.trimEnd(name, suffix);
+        int mask = (i+1) << 5;
+        myFlags |= mask;
+        break;
+      }
+    }
+
+    myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
+  }
+
+  private void calcLinkStatus() {
+    mySymlinkTarget = isSymLink() ? FileSystemUtil.resolveSymLink(getPath()) : null;
+    setFlagInt(HAS_SYMLINK_FLAG, isSymLink() || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
   }
 
   private static Object encodeName(@NotNull String name) {
@@ -75,22 +103,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       bytes[i] = (byte)name.charAt(i);
     }
     return bytes;
-  }
-
-  @NonNls private static final String[] wellKnownSuffixes = { "$1.class", "$2.class", ".class", ".java", ".html", ".txt", ".xml",};
-  private void storeName(@NotNull String name) {
-    myFlags &= 0x1f;
-    for (int i = 0; i < wellKnownSuffixes.length; i++) {
-      String suffix = wellKnownSuffixes[i];
-      if (name.endsWith(suffix)) {
-        name = StringUtil.trimEnd(name, suffix);
-        int mask = (i+1) << 5;
-        myFlags |= mask;
-        break;
-      }
-    }
-
-    myName = encodeName(name.replace('\\', '/'));  // note: on Unix-style FS names may contain backslashes
   }
 
   @NotNull
@@ -160,31 +172,39 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public void setFlag(int flag_mask, boolean value) {
-    assert (flag_mask & 0xe0) == 0 : "Mask '"+ Integer.toBinaryString(flag_mask)+"' is not supported. High three bits are reserved.";
-    if (value) {
-      myFlags |= flag_mask;
-    }
-    else {
-      myFlags &= ~flag_mask;
-    }
+  public boolean getFlag(int mask) {
+    assert (mask & INT_FLAGS_MASK) == 0 : "Mask '" + Integer.toBinaryString(mask) + "' is in reserved range.";
+    return getFlagInt(mask);
+  }
+
+  private boolean getFlagInt(int mask) {
+    return (myFlags & mask) != 0;
   }
 
   @Override
-  public boolean getFlag(int flag_mask) {
-    assert (flag_mask & 0xe0) == 0 : "Mask '"+ Integer.toBinaryString(flag_mask)+"' is not supported. High three bits are reserved.";
-    return (myFlags & flag_mask) != 0;
+  public void setFlag(int mask, boolean value) {
+    assert (mask & INT_FLAGS_MASK) == 0 : "Mask '" + Integer.toBinaryString(mask) + "' is in reserved range.";
+    setFlagInt(mask, value);
+  }
+
+  private void setFlagInt(int mask, boolean value) {
+    if (value) {
+      myFlags |= mask;
+    }
+    else {
+      myFlags &= ~mask;
+    }
   }
 
   @Override
   public void markClean() {
-    setFlag(DIRTY_FLAG, false);
+    setFlagInt(DIRTY_FLAG, false);
   }
 
   @Override
   public void markDirty() {
     if (!isDirty()) {
-      setFlag(DIRTY_FLAG, true);
+      setFlagInt(DIRTY_FLAG, true);
       if (myParent != null) myParent.markDirty();
     }
   }
@@ -396,6 +416,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myParent.removeChild(this);
     myParent = (VirtualDirectoryImpl)newParent;
     myParent.addChild(this);
+    calcLinkStatus();
   }
 
   @Override
@@ -462,8 +483,27 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public VirtualFile getRealFile() {
-    final NewVirtualFileSystem fs = getFileSystem();
-    return fs instanceof LocalFileSystem ? ((LocalFileSystem)fs).getRealFile(this) : super.getRealFile();
+  public String getCanonicalPath() {
+    if (getFlagInt(HAS_SYMLINK_FLAG)) {
+      if (isSymLink()) {
+        return mySymlinkTarget;
+      }
+      else if (myParent != null) {
+        return myParent.getCanonicalPath() + "/" + getName();
+      }
+      else {
+        return getName();
+      }
+    }
+    return getPath();
+  }
+
+  @Override
+  public VirtualFile getCanonicalFile() {
+    if (getFlagInt(HAS_SYMLINK_FLAG)) {
+      final String path = getCanonicalPath();
+      return path != null ? getFileSystem().findFileByPath(path) : null;
+    }
+    return this;
   }
 }

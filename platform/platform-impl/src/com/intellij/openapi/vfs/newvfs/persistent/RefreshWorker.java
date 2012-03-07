@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.SymlinkDirectory;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.containers.Queue;
@@ -69,11 +67,7 @@ public class RefreshWorker {
         final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pullFirst();
         if (!file.isDirty()) continue;
 
-        if (file instanceof SymlinkDirectory) {
-          final int attributes = delegate.getBooleanAttributes(file, -1);
-          scheduleChildRefresh(file.getParent(), file, delegate, attributes);
-        }
-        else if (file.isDirectory()) {
+        if (file.isDirectory()) {
           final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)file;
           final boolean fullSync = dir.allChildrenLoaded();
           if (fullSync) {
@@ -159,16 +153,16 @@ public class RefreshWorker {
     final boolean currentIsDirectory = child.isDirectory();
     final boolean currentIsSymlink = child.isSymLink();
     final boolean currentIsSpecial = child.isSpecialFile();
-    final String currentLinkTarget = child instanceof SymlinkDirectory ? ((SymlinkDirectory)child).getTargetPath() : null;
+    //final String currentLinkTarget = child instanceof SymlinkDirectory ? ((SymlinkDirectory)child).getTargetPath() : null;
     final boolean upToDateIsDirectory = (childAttributes & FileUtil.BA_DIRECTORY) != 0;
     final boolean upToDateIsSymlink = delegate.isSymLink(child);
     final boolean upToDateIsSpecial = (childAttributes & SPECIAL_MASK) == FileUtil.BA_EXISTS;
-    final String upToDateLinkTarget = currentLinkTarget != null ? delegate.resolveSymLink(child) : null;
+    //final String upToDateLinkTarget = currentLinkTarget != null ? delegate.resolveSymLink(child) : null;
 
     if (currentIsDirectory != upToDateIsDirectory ||
         currentIsSymlink != upToDateIsSymlink ||
-        currentIsSpecial != upToDateIsSpecial ||
-        !Comparing.equal(currentLinkTarget, upToDateLinkTarget)) {
+        currentIsSpecial != upToDateIsSpecial /*||
+        !Comparing.equal(currentLinkTarget, upToDateLinkTarget)*/) {
       scheduleDeletion(child);
       scheduleReCreation(parent, child.getName(), upToDateIsDirectory);
     }

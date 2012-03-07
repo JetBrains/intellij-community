@@ -77,6 +77,7 @@ import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
 import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.internal.io.dav.DAVRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.fs.FSRepositoryFactory;
 import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl;
@@ -649,6 +650,14 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final SVNWCAccess access = SVNWCAccess.newInstance(null);
     access.setOptions(myConfiguration.getOptions(myProject));
     return access;
+  }
+
+  public ISVNOptions getSvnOptions() {
+    return myConfiguration.getOptions(myProject);
+  }
+
+  public ISVNAuthenticationManager getSvnAuthenticationManager() {
+    return myConfiguration.getAuthenticationManager(this);
   }
 
   void dumpFileStatus(FileStatus fs) {

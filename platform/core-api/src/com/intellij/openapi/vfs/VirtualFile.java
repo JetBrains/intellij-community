@@ -205,13 +205,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this file is a symbolic link.
    *
-   * @since 11.0
    * @return <code>true</code> if this file is a symbolic link, <code>false</code> otherwise
+   * @since 11.0
    */
   public boolean isSymLink() {
     return false;
   }
 
+  /** @deprecated use {@linkplain #getCanonicalFile()} (to remove in IDEA 12) */
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
   @Nullable
   public String resolveSymLink() {
     return null;
@@ -220,23 +222,42 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Checks whether this file is a special (e.g. FIFO or device) file.
    *
-   * @since 11.0
    * @return <code>true</code> if the file exists and is a special one, <code>false</code> otherwise
+   * @since 11.0
    */
   public boolean isSpecialFile() {
     return false;
   }
 
+  /** @deprecated use {@linkplain #getCanonicalFile()} (to remove in IDEA 12) */
+  @Nullable
+  public VirtualFile getRealFile() {
+    return isSymLink() ? getCanonicalFile() : this;
+  }
+
   /**
-   * Attempts to resolve a symbolic link represented by this file and returns link target.
+   * Resolves all symbolic links containing in a path to this file and returns a path to a link target.
    *
-   * @since 11.0
-   * @return <code>this</code> if the file isn't a symbolic link;
+   * @since 11.1
+   * @return <code>getPath()</code> if there are no symbolic links in a file's path;
+   *         <code>getCanonicalFile().getPath()</code> if the link was successfully resolved;
+   *         <code>null</code> otherwise
+   */
+  @Nullable
+  public String getCanonicalPath() {
+    return null;
+  }
+
+  /**
+   * Resolves all symbolic links containing in a path to this file and returns a link target.
+   *
+   * @since 11.1
+   * @return <code>this</code> if there are no symbolic links in a file's path;
    *         instance of <code>VirtualFile</code> if the link was successfully resolved;
    *         <code>null</code> otherwise
    */
   @Nullable
-  public VirtualFile getRealFile() {
+  public VirtualFile getCanonicalFile() {
     return this;
   }
 
@@ -452,11 +473,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     });
   }
 
-
-  public final void setBinaryContent(byte[] content) throws IOException {
-    setBinaryContent(content, -1, -1);
-  }
-
   /**
    * @return Retrieve the charset file has been loaded with (if loaded) and would be saved with (if would).
    */
@@ -489,9 +505,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return getUserData(CHARSET_KEY) != null;
   }
 
+  public final void setBinaryContent(byte[] content) throws IOException {
+    setBinaryContent(content, -1, -1);
+  }
+
   public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp) throws IOException {
     setBinaryContent(content, newModificationStamp, newTimeStamp, this);
   }
+
   public void setBinaryContent(final byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     OutputStream outputStream = null;
     try {

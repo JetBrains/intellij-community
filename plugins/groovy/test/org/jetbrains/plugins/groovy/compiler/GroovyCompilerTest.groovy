@@ -561,6 +561,25 @@ class Main {
     assertEmpty make()
   }
 
+  public void testCompileTimeConstants() {
+    myFixture.addFileToProject 'Gr.groovy', '''
+interface Gr {
+  String HELLO = "Hello"
+  int MAGIC = 239
+  Boolean BOOL = true
+  boolean bool = true
+}'''
+    myFixture.addFileToProject 'Main.java', '''
+public class Main {
+  public static void main(String[] args) {
+    System.out.println(Gr.HELLO + ", " + Gr.BOOL + Gr.bool + Gr.MAGIC);
+  }
+}
+'''
+    make()
+    assertOutput 'Main', 'Hello, truetrue239'
+  }
+
   public static class IdeaModeTest extends GroovyCompilerTest {
     @Override protected boolean useJps() { false }
   }

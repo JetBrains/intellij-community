@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -32,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.JBLock;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
@@ -324,12 +324,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         if (application == null || application.isDisposed()) break;
         
         storeRefreshStatusToFiles();
-        try {
-          sleep(PERIOD);
-        }
-        catch (InterruptedException e) {
-          //normal situation
-        }
+        TimeoutUtil.sleep(PERIOD);
       }
     }
   }
@@ -519,12 +514,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   public boolean isDirectory(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.isDirectory(file);
     else return myNativeFileSystem.isDirectory(file);
-  }
-
-  @Override
-  public VirtualFile getRealFile(@NotNull final VirtualFile file) {
-    final String realPath = FileSystemUtil.resolveSymLink(file.getPath());
-    return realPath != null ? findFileByPath(realPath) : null;
   }
 
   @Override
