@@ -30,6 +30,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
@@ -122,6 +123,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+    if (Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME).length > 0) {
+      myListenerList.add(new FileEditorManagerAdapter() {
+        @Override
+        public void selectionChanged(FileEditorManagerEvent event) {
+          EditorsSplitters splitters = getSplitters();
+          openAssociatedFile(event.getNewFile(), splitters.getCurrentWindow(), splitters);
+        }
+      });
+    }
+
     myQueue.setTrackUiActivity(true);
   }
 
@@ -597,10 +609,37 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     else {
       wndToOpenIn = getSplitters().getCurrentWindow();
     }
+
+    EditorsSplitters splitters = getSplitters();
+
     if (wndToOpenIn == null) {
-      wndToOpenIn = getSplitters().getOrCreateCurrentWindow(file);
+      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
     }
+
+    openAssociatedFile(file, wndToOpenIn, splitters);
     return openFileImpl2(wndToOpenIn, file, focusEditor);
+  }
+
+  private void openAssociatedFile(VirtualFile file, EditorWindow wndToOpenIn, EditorsSplitters splitters) {
+    EditorWindow[] windows = splitters.getWindows();
+
+    if (file != null && windows.length == 2) {
+      for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+        VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, file);
+
+        if (associatedFile != null) {
+          EditorWindow currentWindow = splitters.getCurrentWindow();
+          int idx = windows[0] == wndToOpenIn ? 1 : 0;
+          openFileImpl2(windows[idx], associatedFile, false);
+
+          if (currentWindow != null) {
+            splitters.setCurrentWindow(currentWindow, false);
+          }
+
+          break;
+        }
+      }
+    }
   }
 
   @NotNull
@@ -1309,6 +1348,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final boolean filesEqual = oldData.first == null ? newData.first == null : oldData.first.equals(newData.first);
     final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
+      if (oldData.first != null && newData.first != null) {
+        for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+          VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, oldData.first);
+
+          if (associatedFile == newData.first) {
+            return;
+          }
+        }
+      }
+
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldData.first, oldData.second, oldData.third, newData.first, newData.second, newData.third);
       final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
@@ -1581,29 +1630,43 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       EditorFileSwapper[] swappers = Extensions.getExtensions(EditorFileSwapper.EP_NAME);
 
       for (EditorWindow eachWindow : getWindows()) {
-        VirtualFile selected = eachWindow.getSelectedFile();
-        VirtualFile[] files = eachWindow.getFiles();
-        for (int i = 0; i < files.length - 1 + 1; i++) {
-          VirtualFile eachFile = files[i];
-          if (!eachFile.isValid()) continue;
+        EditorWithProviderComposite selected = eachWindow.getSelectedEditor();
+        EditorWithProviderComposite[] editors = eachWindow.getEditors();
+        for (int i = 0; i < editors.length; i++) {
+          EditorWithProviderComposite editor = editors[i];
+          VirtualFile file = editor.getFile();
+          if (!file.isValid()) continue;
 
-          VirtualFile newFile = null;
+          Pair<VirtualFile, Integer> newFilePair = null;
+
           for (EditorFileSwapper each : swappers) {
-            newFile = each.getFileToSwapTo(myProject, eachFile);
+            newFilePair = each.getFileToSwapTo(myProject, editor);
+            if (newFilePair != null) break;
           }
-          if (newFile == null) continue;
+
+          if (newFilePair == null) continue;
+
+          VirtualFile newFile = newFilePair.first;
 
           // already open
           if (eachWindow.findFileIndex(newFile) != -1) continue;
 
           try {
             newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, i);
-            openFileImpl2(eachWindow, newFile, eachFile == selected);
+            Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, editor == selected);
+
+            if (newFilePair.second != null) {
+              TextEditorImpl openedEditor = EditorFileSwapper.findSinglePsiAwareEditor(pair.first);
+              if (openedEditor != null) {
+                openedEditor.getEditor().getCaretModel().moveToOffset(newFilePair.second);
+                openedEditor.getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
+              }
+            }
           }
           finally {
             newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
           }
-          closeFile(eachFile, eachWindow);
+          closeFile(file, eachWindow);
         }
       }
     }

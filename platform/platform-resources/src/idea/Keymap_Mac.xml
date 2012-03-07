@@ -537,5 +537,8 @@
       <keyboard-shortcut first-keystroke="shift BACK_SPACE"/>
     </action>
 
+    <action id ="Refactorings.QuickListPopupAction">
+      <keyboard-shortcut first-keystroke="control T"/>
+    </action>
   </keymap>
 </component>

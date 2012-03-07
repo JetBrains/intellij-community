@@ -16,17 +16,64 @@
 package com.intellij.codeEditor;
 
 import com.intellij.openapi.fileEditor.impl.EditorFileSwapper;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaEditorFileSwapper implements EditorFileSwapper {
-  public VirtualFile getFileToSwapTo(Project project, VirtualFile original) {
-    return findSourceFile(project, original);
+public class JavaEditorFileSwapper extends EditorFileSwapper {
+
+  public Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorWithProviderComposite editorWithProviderComposite) {
+    VirtualFile file = editorWithProviderComposite.getFile();
+    VirtualFile sourceFile = findSourceFile(project, file);
+    if (sourceFile == null) return null;
+
+    Integer position = null;
+
+    TextEditorImpl oldEditor = findSinglePsiAwareEditor(editorWithProviderComposite.getEditors());
+    if (oldEditor != null) {
+      ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(project).findFile(file);
+      assert clsFile != null;
+
+      int offset = oldEditor.getEditor().getCaretModel().getOffset();
+
+      PsiElement elementAt = clsFile.findElementAt(offset);
+      PsiMember member = PsiTreeUtil.getParentOfType(elementAt, PsiMember.class, false);
+
+      if (member instanceof PsiClass) {
+        boolean isFirstMember = true;
+
+        for (PsiElement e = member.getFirstChild(); e != null; e = e.getNextSibling()) {
+          if (e instanceof PsiMember) {
+            if (offset < e.getTextRange().getEndOffset()) {
+              if (!isFirstMember) {
+                member = (PsiMember)e;
+              }
+
+              break;
+            }
+
+            isFirstMember = false;
+          }
+        }
+      }
+
+      if (member != null) {
+        PsiElement navigationElement = member.getNavigationElement();
+        if (navigationElement.getContainingFile().getVirtualFile() == sourceFile) {
+          position = navigationElement.getTextOffset();
+        }
+      }
+    }
+
+    return Pair.create(sourceFile, position);
   }
 
   @Nullable
@@ -53,8 +100,6 @@ public class JavaEditorFileSwapper implements EditorFileSwapper {
     if (!(psiFile instanceof PsiJavaFile)) return null;
     PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
     if (classes.length == 0) return null;
-    final String fqn = classes[0].getQualifiedName();
-    if (fqn == null) return null;
-    return fqn;
+    return classes[0].getQualifiedName();
   }
 }
