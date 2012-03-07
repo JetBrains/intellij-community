@@ -44,6 +44,7 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
+import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
@@ -292,6 +293,10 @@ public class JavaCompletionContributor extends CompletionContributor {
               }
             }
           }
+          return;
+        }
+        if (reference instanceof PsiLabelReference) {
+          processLabelReference(result, (PsiLabelReference)reference);
           return;
         }
 
@@ -677,5 +682,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       return ((PsiMethodCallExpression)expression).getMethodExpression();
     }
     return null;
+  }
+
+  static void processLabelReference(CompletionResultSet result, PsiLabelReference ref) {
+    for (String s : ref.getVariants()) {
+      result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SEMICOLON));
+    }
   }
 }
