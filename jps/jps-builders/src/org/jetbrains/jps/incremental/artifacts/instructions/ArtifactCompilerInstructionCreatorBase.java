@@ -18,6 +18,8 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.IgnoredFilePatterns;
+import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 
@@ -40,13 +42,15 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
 
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
     final boolean copyExcluded = myInstructionsBuilder.getRootsIndex().isExcluded(directory);
-    SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), copyExcluded);
+    SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), myInstructionsBuilder.getIgnoredFilePatterns(), copyExcluded);
     addDirectoryCopyInstructions(new FileBasedArtifactSourceRoot(directory, fileFilter));
   }
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
-    addDirectoryCopyInstructions(new JarBasedArtifactSourceRoot(jarFile, pathInJar, new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(), false)));
+    final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
+                                                                 myInstructionsBuilder.getIgnoredFilePatterns(), false);
+    addDirectoryCopyInstructions(new JarBasedArtifactSourceRoot(jarFile, pathInJar, filter));
   }
 
   protected abstract void addDirectoryCopyInstructions(ArtifactSourceRoot root);
@@ -66,11 +70,16 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
   private static class SourceFileFilterImpl extends SourceFileFilter {
     private final SourceFileFilter myBaseFilter;
     private final ModuleRootsIndex myRootsIndex;
+    private final IgnoredFilePatterns myIgnoredFilePatterns;
     private final boolean myIncludeExcluded;
 
-    private SourceFileFilterImpl(@Nullable SourceFileFilter baseFilter, @NotNull ModuleRootsIndex rootsIndex, boolean includeExcluded) {
+    private SourceFileFilterImpl(@Nullable SourceFileFilter baseFilter,
+                                 @NotNull ModuleRootsIndex rootsIndex,
+                                 IgnoredFilePatterns patterns,
+                                 boolean includeExcluded) {
       myBaseFilter = baseFilter;
       myRootsIndex = rootsIndex;
+      myIgnoredFilePatterns = patterns;
       myIncludeExcluded = includeExcluded;
     }
 
@@ -78,7 +87,10 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     public boolean accept(@NotNull String fullFilePath) {
       if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath)) return false;
 
-      //todo[nik] check FileTypeManager.isFileIgnored()
+      if (myIgnoredFilePatterns.isIgnored(PathUtil.getFileName(fullFilePath))) {
+        return false;
+      }
+
       if (!myIncludeExcluded) {
         final File file = JarPathUtil.getLocalFile(fullFilePath);
         if (myRootsIndex.isExcluded(file)) {

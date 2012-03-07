@@ -210,8 +210,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(artifact, fs().file("A.class"));
   }
 
-  //todo[nik] support ignored names
-  public void _testIgnoredFile() {
+  public void testIgnoredFile() {
     final String file = createFile("a/.svn/a.txt");
     createFile("a/svn/b.txt");
     final Artifact a = addArtifact(root().dirCopy(PathUtil.getParentPath(PathUtil.getParentPath(file))));
@@ -219,8 +218,15 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().dir("svn").file("b.txt"));
   }
 
-  //todo[nik] support ignored names
-  public void _testCopyExcludedFolder() {
+  public void testIgnoredFileInArchive() {
+    final String file = createFile("a/.svn/a.txt");
+    createFile("a/svn/b.txt");
+    final Artifact a = addArtifact(archive("a.jar").dirCopy(PathUtil.getParentPath(PathUtil.getParentPath(file))));
+    buildAll();
+    assertOutput(a, fs().archive("a.jar").dir("svn").file("b.txt"));
+  }
+
+  public void testCopyExcludedFolder() {
     //explicitly added excluded files should be copied (e.g. compile output)
     final String file = createFile("xxx/excluded/a.txt");
     createFile("xxx/excluded/CVS");
@@ -236,8 +242,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt"));
   }
 
-  //todo[nik] support ignored names
-  public void _testCopyExcludedFile() {
+  public void testCopyExcludedFile() {
     //excluded files under non-excluded directory should not be copied
     final String file = createFile("xxx/excluded/a.txt");
     createFile("xxx/b.txt");
