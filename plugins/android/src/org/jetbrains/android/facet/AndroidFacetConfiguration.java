@@ -30,9 +30,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,9 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public String CUSTOM_DEBUG_KEYSTORE_PATH = "";
 
   public boolean PACK_TEST_CODE = false;
+
+  public boolean RUN_PROGUARD = false;
+  public String PROGUARD_CFG_PATH = "/" + AndroidCompileUtil.PROGUARD_CFG_FILE_NAME;
 
   private AndroidFacet myFacet = null;
 
