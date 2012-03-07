@@ -251,6 +251,15 @@ public class Utils{
                                   insets.top + insets.bottom == 0;
               return fix ? new Insets(2, insets.left, 3, insets.right) : insets;  // workaround for Sun bug #6636964
             }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+              if (UIUtil.isUnderWindowsLookAndFeel()) {
+                g.setColor(component.getBackground());
+                g.fillRect(0, 0, getWidth(), getHeight());
+              }
+              super.paintComponent(g);
+            }
           });
         }
       }
