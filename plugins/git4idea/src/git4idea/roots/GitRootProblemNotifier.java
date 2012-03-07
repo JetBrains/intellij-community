@@ -18,7 +18,7 @@ package git4idea.roots;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,15 +26,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import git4idea.GitVcs;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static com.intellij.notification.NotificationType.ERROR;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
+import static git4idea.GitVcs.IMPORTANT_ERROR_NOTIFICATION;
+import static git4idea.Notificator.createNotification;
 
 /**
  * Searches for Git roots problems via {@link GitRootErrorsFinder} and notifies about them.
@@ -46,11 +49,16 @@ public class GitRootProblemNotifier {
   private final @NotNull Project myProject;
   private final @NotNull PlatformFacade myPlatformFacade;
 
-  public static GitRootProblemNotifier getInstance(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
-    return new GitRootProblemNotifier(project, platformFacade);
+  private @Nullable Notification myNotification;
+  private final @NotNull Object NOTIFICATION_LOCK = new Object();
+
+  public static GitRootProblemNotifier getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, GitRootProblemNotifier.class);
   }
 
-  public GitRootProblemNotifier(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
+  // registered as a project service
+  @SuppressWarnings("UnusedDeclaration")
+  private GitRootProblemNotifier(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     myProject = project;
     myPlatformFacade = platformFacade;
   }
@@ -58,6 +66,9 @@ public class GitRootProblemNotifier {
   public void rescanAndNotifyIfNeeded() {
     Collection<VcsRootError> errors = scan();
     if (errors.isEmpty()) {
+      synchronized (NOTIFICATION_LOCK) {
+        expireNotification();
+      }
       return;
     }
 
@@ -67,19 +78,18 @@ public class GitRootProblemNotifier {
     String title = makeTitle(unregisteredRoots, invalidRoots);
     String description = makeDescription(unregisteredRoots, invalidRoots);
 
-    myPlatformFacade.getNotificator(myProject).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, description,
-                                                      NotificationType.ERROR, new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("configure")) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
-          Collection<VcsRootError> errorsAfterPossibleFix = scan();
-          if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
-            notification.expire();
-          }
-        }
-      }
-    });
+    synchronized (NOTIFICATION_LOCK) {
+      expireNotification();
+      myNotification = createNotification(IMPORTANT_ERROR_NOTIFICATION, title, description, ERROR, new MyNotificationListener(myProject));
+      myPlatformFacade.getNotificator(myProject).notify(myNotification);
+    }
+  }
+
+  private void expireNotification() {
+    if (myNotification != null) {
+      myNotification.expire();
+      myNotification = null;
+    }
   }
 
   @NotNull
@@ -162,4 +172,23 @@ public class GitRootProblemNotifier {
     return roots;
   }
 
+  private static class MyNotificationListener implements NotificationListener {
+
+    private final @NotNull Project myProject;
+
+    private MyNotificationListener(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("configure")) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
+        Collection<VcsRootError> errorsAfterPossibleFix = GitRootProblemNotifier.getInstance(myProject).scan();
+        if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+          notification.expire();
+        }
+      }
+    }
+  }
 }

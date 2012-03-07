@@ -192,7 +192,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
         }
       }
 
-      GitRootProblemNotifier.getInstance(myProject, myPlatformFacade).rescanAndNotifyIfNeeded();
+      GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
 
     }
     finally {

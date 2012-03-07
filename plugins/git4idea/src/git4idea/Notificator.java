@@ -53,6 +53,10 @@ public class Notificator {
     return notificationGroup.createNotification(title, message, type, listener);
   }
 
+  public void notify(@NotNull Notification notification) {
+    notification.notify(myProject);
+  }
+
   public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
                      @NotNull NotificationType type, @Nullable NotificationListener listener) {
     createNotification(notificationGroup, title, message, type, listener).notify(myProject);

@@ -128,6 +128,8 @@
                     serviceImplementation="git4idea.Notificator"/>
     <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
                     serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
+    <projectService serviceInterface="git4idea.roots.GitRootProblemNotifier"
+                    serviceImplementation="git4idea.roots.GitRootProblemNotifier"/>
 
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
