@@ -16,13 +16,34 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-public interface EditorFileSwapper {
-  ExtensionPointName<EditorFileSwapper> EP_NAME = ExtensionPointName.create("com.intellij.editorFileSwapper");
+public abstract class EditorFileSwapper {
+  public static final ExtensionPointName<EditorFileSwapper> EP_NAME = ExtensionPointName.create("com.intellij.editorFileSwapper");
 
   @Nullable
-  VirtualFile getFileToSwapTo(Project project, VirtualFile original);
+  public abstract Pair<VirtualFile, Integer> getFileToSwapTo(Project project, EditorWithProviderComposite editorWithProviderComposite);
+
+  @Nullable
+  public static TextEditorImpl findSinglePsiAwareEditor(FileEditor[] fileEditors) {
+    TextEditorImpl res = null;
+
+    for (FileEditor fileEditor : fileEditors) {
+      if (fileEditor instanceof TextEditorImpl) {
+        if (res == null) {
+          res = (TextEditorImpl)fileEditor;
+        }
+        else {
+          return null;
+        }
+      }
+    }
+
+    return res;
+  }
 }
