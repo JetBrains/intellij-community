@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -43,7 +44,9 @@ public class MacUIUtil {
   }
 
   public static void hideCursor() {
-    Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
+    if (SystemInfo.isMac && Registry.is("ide.mac.hide.cursor.when.typing")) {
+      Foundation.invoke("NSCursor", "setHiddenUntilMouseMoves:", true);
+    }
   }
 
   public static class EditorTextFieldBorder implements Border {

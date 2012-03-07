@@ -166,8 +166,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (focusOwner instanceof ShortcutTextField) {
       return false;
     }
-    if (Registry.is("ide.mac.hide.cursor.when.typing") &&
-        (focusOwner instanceof TypingTarget ||
+    if ((focusOwner instanceof TypingTarget ||
         (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()))) {
       if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyChar() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
