@@ -21,9 +21,12 @@ import com.intellij.errorreport.bean.ErrorBean;
 import com.intellij.errorreport.error.InternalEAPException;
 import com.intellij.errorreport.error.NoSuchEAPUserException;
 import com.intellij.errorreport.error.UpdateAvailableException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -36,6 +39,7 @@ import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -63,8 +67,10 @@ public class ITNProxy {
                                                                     password,
                                                                     error,
                                                                     compilationTimestamp,
+                                                                    ApplicationManager.getApplication(),
                                                                     (ApplicationInfoEx) ApplicationInfo.getInstance(),
-                                                                    ApplicationNamesInfo.getInstance());
+                                                                    ApplicationNamesInfo.getInstance(),
+                                                                    UpdateSettings.getInstance());
 
     HttpURLConnection connection = post(new URL(NEW_THREAD_URL), join(params));
     int responseCode = connection.getResponseCode();
@@ -105,9 +111,9 @@ public class ITNProxy {
   private static List<Pair<String, String>> createParametersFor(String login,
                                                                 String password,
                                                                 ErrorBean error,
-                                                                String compilationTimestamp,
-                                                                ApplicationInfoEx appInfo,
-                                                                ApplicationNamesInfo namesInfo) {
+                                                                String compilationTimestamp, Application application, ApplicationInfoEx appInfo,
+                                                                ApplicationNamesInfo namesInfo,
+                                                                UpdateSettings updateSettings) {
     @NonNls List<Pair<String,String>> params = new ArrayList<Pair<String, String>>();
 
     params.add(Pair.create("protocol.version", "1"));
@@ -124,6 +130,7 @@ public class ITNProxy {
     params.add(Pair.create("app.name.full", namesInfo.getFullProductName()));
     params.add(Pair.create("app.name.version", appInfo.getVersionName()));
     params.add(Pair.create("app.eap", Boolean.toString(appInfo.isEAP())));
+    params.add(Pair.create("app.internal", Boolean.toString(application.isInternal())));
     params.add(Pair.create("app.build", appInfo.getBuild().asString()));
     params.add(Pair.create("app.version.major", appInfo.getMajorVersion()));
     params.add(Pair.create("app.version.minor", appInfo.getMinorVersion()));
@@ -131,6 +138,9 @@ public class ITNProxy {
     params.add(Pair.create("app.build.date.release.", format(appInfo.getMajorReleaseBuildDate())));
     params.add(Pair.create("app.update.channel", appInfo.getDefaultUpdateChannel()));
     params.add(Pair.create("app.compilation.timestamp", compilationTimestamp));
+
+    params.add(Pair.create("update.channel.status", updateSettings.getSelectedChannelStatus().getCode()));
+    params.add(Pair.create("update.ignored.builds", StringUtil.join(updateSettings.getIgnoredBuildNumbers(), ",")));
 
     params.add(Pair.create("plugin.name", error.getPluginName()));
     params.add(Pair.create("plugin.version", error.getPluginVersion()));
@@ -196,16 +206,23 @@ public class ITNProxy {
   }
 
   private static byte[] join(List<Pair<String, String>> params) throws UnsupportedEncodingException {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder builder = new StringBuilder();
 
-    for (Pair<String, String> param : params) {
+    Iterator<Pair<String, String>> it = params.iterator();
+
+    while (it.hasNext()) {
+      Pair<String, String> param = it.next();
+
       if (StringUtil.isEmpty(param.first))
         throw new IllegalArgumentException(param.toString());
 
       if (StringUtil.isNotEmpty(param.second))
-        buffer.append(param.first + "=" + URLEncoder.encode(param.second, ENCODING) + POST_DELIMITER);
+        builder.append(param.first).append("=").append(URLEncoder.encode(param.second, ENCODING));
+
+      if (it.hasNext())
+        builder.append(POST_DELIMITER);
     }
 
-    return buffer.toString().getBytes();
+    return builder.toString().getBytes();
   }
 }

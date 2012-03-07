@@ -163,7 +163,7 @@ public class JarsBuilder {
         final ArtifactSourceRoot root = pair.getSecond();
         final ArtifactBuilderLogger logger = myContext.getLoggingManager().getArtifactBuilderLogger();
         if (root instanceof FileBasedArtifactSourceRoot) {
-          addFileToJar(jarOutputStream, jarFile, root.getRootFile(), pair.getFirst(), writtenPaths);
+          addFileToJar(jarOutputStream, jarFile, root.getRootFile(), root.getFilter(), pair.getFirst(), writtenPaths);
         }
         else {
           logger.fileCopied(FileUtil.toSystemIndependentName(root.getRootFile().getAbsolutePath()));
@@ -174,7 +174,7 @@ public class JarsBuilder {
       for (Pair<String, JarInfo> nestedJar : jar.getPackedJars()) {
         File nestedJarFile = myBuiltJars.get(nestedJar.getSecond());
         if (nestedJarFile != null) {
-          addFileToJar(jarOutputStream, jarFile, nestedJarFile, nestedJar.getFirst(), writtenPaths);
+          addFileToJar(jarOutputStream, jarFile, nestedJarFile, SourceFileFilter.ALL, nestedJar.getFirst(), writtenPaths);
         }
         else {
           LOG.debug("nested jar file " + nestedJar.getFirst() + " for " + jar.getPresentableDestination() + " not found");
@@ -211,17 +211,24 @@ public class JarsBuilder {
   }
 
   private void addFileToJar(final @NotNull JarOutputStream jarOutputStream, final @NotNull File jarFile, @NotNull File file,
-                            @NotNull String relativePath, final @NotNull Set<String> writtenPaths) throws IOException {
+                            SourceFileFilter filter, @NotNull String relativePath, final @NotNull Set<String> writtenPaths) throws IOException {
     if (!file.exists() || FileUtil.isAncestor(file, jarFile, false)) {
       return;
     }
 
     relativePath = addParentDirectories(jarOutputStream, writtenPaths, relativePath);
-    addFileOrDirRecursively(jarOutputStream, file, relativePath, writtenPaths);
+    addFileOrDirRecursively(jarOutputStream, file, filter, relativePath, writtenPaths);
   }
 
-  private void addFileOrDirRecursively(@NotNull ZipOutputStream jarOutputStream, @NotNull File file, @NotNull String relativePath,
+  private void addFileOrDirRecursively(@NotNull ZipOutputStream jarOutputStream,
+                                       @NotNull File file,
+                                       SourceFileFilter filter,
+                                       @NotNull String relativePath,
                                        @NotNull Set<String> writtenItemRelativePaths) throws IOException {
+    if (!filter.accept(FileUtil.toSystemIndependentName(file.getAbsolutePath()))) {
+      return;
+    }
+
     if (file.isDirectory()) {
       final String directoryPath = relativePath.length() == 0 ? "" : relativePath + "/";
       if (!directoryPath.isEmpty()) {
@@ -230,7 +237,7 @@ public class JarsBuilder {
       final File[] children = file.listFiles();
       if (children != null) {
         for (File child : children) {
-          addFileOrDirRecursively(jarOutputStream, child, directoryPath + child.getName(), writtenItemRelativePaths);
+          addFileOrDirRecursively(jarOutputStream, child, filter, directoryPath + child.getName(), writtenItemRelativePaths);
         }
       }
       return;

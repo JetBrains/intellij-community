@@ -94,7 +94,7 @@ public class HeavyNormalCompletionTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
     assertInstanceOf(myFixture.getFile().getVirtualFile().getFileSystem(), LocalFileSystem.class); // otherwise the completion copy won't be preserved which is critical here
     myFixture.completeBasic();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "gAnInt", "getAaa", "getBbb");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "getAaa", "getBbb");
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getCaretModel().getOffset() + 2);
     assertNull(myFixture.completeBasic());
   }

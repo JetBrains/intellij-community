@@ -18,6 +18,7 @@ class Project {
   final Map<String, Artifact> artifacts = [:]
   final Map<String, RunConfiguration> runConfigurations = [:]
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
+  final IgnoredFilePatterns ignoredFilePatterns = new IgnoredFilePatterns()
 
   String projectCharset; // contains project charset, if not specified default charset will be used (used by compilers)
 

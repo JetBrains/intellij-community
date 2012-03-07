@@ -40,6 +40,7 @@ import java.util.Map;
  * Time: 1:59 PM
  */
 public class CompositeDiffPanel implements DiffViewer {
+  private final static String FICTIVE_KEY = "FICTIVE_KEY";
   private final static int ourBadHackMagicContentsNumber = 101;
   private final RunnerLayoutUi myUi;
   private final DiscloseMultiRequest myRequest;
@@ -87,6 +88,17 @@ public class CompositeDiffPanel implements DiffViewer {
     final Content[] contents = myUi.getContentManager().getContents();
     for (String s : copy.keySet()) {
       removeTab(contents, s);
+    }
+
+    if (myMap.isEmpty()) {
+      final EmptyDiffViewer emptyDiffViewer = new EmptyDiffViewer();
+      myMap.put(FICTIVE_KEY, emptyDiffViewer);
+      final Content content = myUi.createContent(FICTIVE_KEY, emptyDiffViewer.getComponent(), FICTIVE_KEY, null,
+                                                 emptyDiffViewer.getPreferredFocusedComponent());
+      content.setCloseable(false);
+      content.setPinned(true);
+      content.setDisposer(myParentDisposable);
+      myUi.addContent(content);
     }
   }
 

@@ -74,6 +74,7 @@ message Message {
       repeated KeyValuePair path_variable = 1;
       repeated GlobalLibrary global_library = 2;
       optional string global_encoding = 3;
+      optional string ignored_files_patterns = 4;
     }
 
     message ReloadProjectCommand {

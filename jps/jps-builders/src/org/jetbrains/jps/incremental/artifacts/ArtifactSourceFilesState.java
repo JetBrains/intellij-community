@@ -138,7 +138,7 @@ public class ArtifactSourceFilesState {
   private ArtifactInstructionsBuilder computeInstructions() {
     final LayoutElement rootElement = myArtifact.getRootElement();
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myProject, new ProjectPaths(myProject));
-    final ArtifactInstructionsBuilderImpl instructionsBuilder = new ArtifactInstructionsBuilderImpl(myRootsIndex);
+    final ArtifactInstructionsBuilderImpl instructionsBuilder = new ArtifactInstructionsBuilderImpl(myRootsIndex, myProject.getIgnoredFilePatterns());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(instructionsBuilder, myArtifact.getOutputPath());
     LayoutElementBuildersRegistry.getInstance().generateInstructions(rootElement, instructionCreator, context);
     return instructionsBuilder;

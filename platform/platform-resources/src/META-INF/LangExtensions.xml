@@ -566,6 +566,8 @@
                        implementationClass="com.intellij.codeInsight.editorActions.BackspaceToWordStartHandler"/>
   <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler"/>
 
+  <editorActionHandler action="EditorDuplicate" implementationClass="com.intellij.openapi.editor.actions.NamedElementDuplicateHandler"/>
+
   <!-- LookupManagerActions -->
   <editorActionHandler action="EditorUp" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpHandler"/>
   <editorActionHandler action="EditorDown" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownHandler"/>

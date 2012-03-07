@@ -138,8 +138,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public void testUnresolvedMethodName() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
     complete();
-    checkResultByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName.java");
-    assert myFixture.lookupElementStrings.containsAll(["creAnInt", "createStylesheetCombobox"])
+    checkResultByFile(FILE_PREFIX + "locals/" + "UnresolvedMethodName_after.java");
   }
 
   public void testArrayMethodName() throws Throwable {
@@ -170,6 +169,11 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
 
   public void configure() {
     configureByFile(FILE_PREFIX + getTestName(false) + ".java")
+  }
+
+  public void testAnnotationValue() {
+    configure()
+    checkResultByFile(FILE_PREFIX + getTestName(false) + "_after.java")
   }
 
   public void testConstructorParameterName() {

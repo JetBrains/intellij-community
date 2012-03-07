@@ -120,7 +120,10 @@ public class ProtoUtil {
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.PING).build();
   }
 
-  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars, List<GlobalLibrary> sdkAndLibs, @Nullable String globalEncoding) {
+  public static JpsRemoteProto.Message.Request createSetupRequest(final Map<String, String> pathVars,
+                                                                  List<GlobalLibrary> sdkAndLibs,
+                                                                  @Nullable String globalEncoding,
+                                                                  String ignoredFilesPatterns) {
     final JpsRemoteProto.Message.Request.SetupCommand.Builder cmdBuilder = JpsRemoteProto.Message.Request.SetupCommand.newBuilder();
 
     if (!pathVars.isEmpty()) {
@@ -152,6 +155,7 @@ public class ProtoUtil {
     }
 
     cmdBuilder.setGlobalEncoding(globalEncoding);
+    cmdBuilder.setIgnoredFilesPatterns(ignoredFilesPatterns);
 
     return JpsRemoteProto.Message.Request.newBuilder().setRequestType(JpsRemoteProto.Message.Request.Type.SETUP_COMMAND).setSetupCommand(cmdBuilder.build()).build();
   }
