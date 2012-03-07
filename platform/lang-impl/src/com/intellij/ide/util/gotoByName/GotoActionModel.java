@@ -300,7 +300,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         if (action instanceof ActionGroup) {
           final ActionGroup actionGroup = (ActionGroup)action;
           final String groupName = actionGroup.getTemplatePresentation().getText();
-          collectActions(result, actionGroup, groupName != null ? groupName : containingGroupName);
+          collectActions(result, actionGroup, StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName);
         } else {
           final String groupName = group.getTemplatePresentation().getText();
           result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
