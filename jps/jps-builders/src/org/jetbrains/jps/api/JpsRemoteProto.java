@@ -2743,6 +2743,10 @@ public final class JpsRemoteProto {
         // optional string global_encoding = 3;
         boolean hasGlobalEncoding();
         String getGlobalEncoding();
+        
+        // optional string ignored_files_patterns = 4;
+        boolean hasIgnoredFilesPatterns();
+        String getIgnoredFilesPatterns();
       }
       public static final class SetupCommand extends
           com.google.protobuf.GeneratedMessageLite
@@ -3558,10 +3562,43 @@ public final class JpsRemoteProto {
           }
         }
         
+        // optional string ignored_files_patterns = 4;
+        public static final int IGNORED_FILES_PATTERNS_FIELD_NUMBER = 4;
+        private java.lang.Object ignoredFilesPatterns_;
+        public boolean hasIgnoredFilesPatterns() {
+          return ((bitField0_ & 0x00000002) == 0x00000002);
+        }
+        public String getIgnoredFilesPatterns() {
+          java.lang.Object ref = ignoredFilesPatterns_;
+          if (ref instanceof String) {
+            return (String) ref;
+          } else {
+            com.google.protobuf.ByteString bs = 
+                (com.google.protobuf.ByteString) ref;
+            String s = bs.toStringUtf8();
+            if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+              ignoredFilesPatterns_ = s;
+            }
+            return s;
+          }
+        }
+        private com.google.protobuf.ByteString getIgnoredFilesPatternsBytes() {
+          java.lang.Object ref = ignoredFilesPatterns_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+            ignoredFilesPatterns_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        
         private void initFields() {
           pathVariable_ = java.util.Collections.emptyList();
           globalLibrary_ = java.util.Collections.emptyList();
           globalEncoding_ = "";
+          ignoredFilesPatterns_ = "";
         }
         private byte memoizedIsInitialized = -1;
         public final boolean isInitialized() {
@@ -3596,6 +3633,9 @@ public final class JpsRemoteProto {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
             output.writeBytes(3, getGlobalEncodingBytes());
           }
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            output.writeBytes(4, getIgnoredFilesPatternsBytes());
+          }
         }
         
         private int memoizedSerializedSize = -1;
@@ -3615,6 +3655,10 @@ public final class JpsRemoteProto {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
             size += com.google.protobuf.CodedOutputStream
               .computeBytesSize(3, getGlobalEncodingBytes());
+          }
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            size += com.google.protobuf.CodedOutputStream
+              .computeBytesSize(4, getIgnoredFilesPatternsBytes());
           }
           memoizedSerializedSize = size;
           return size;
@@ -3724,6 +3768,8 @@ public final class JpsRemoteProto {
             bitField0_ = (bitField0_ & ~0x00000002);
             globalEncoding_ = "";
             bitField0_ = (bitField0_ & ~0x00000004);
+            ignoredFilesPatterns_ = "";
+            bitField0_ = (bitField0_ & ~0x00000008);
             return this;
           }
           
@@ -3771,6 +3817,10 @@ public final class JpsRemoteProto {
               to_bitField0_ |= 0x00000001;
             }
             result.globalEncoding_ = globalEncoding_;
+            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+              to_bitField0_ |= 0x00000002;
+            }
+            result.ignoredFilesPatterns_ = ignoredFilesPatterns_;
             result.bitField0_ = to_bitField0_;
             return result;
           }
@@ -3799,6 +3849,9 @@ public final class JpsRemoteProto {
             }
             if (other.hasGlobalEncoding()) {
               setGlobalEncoding(other.getGlobalEncoding());
+            }
+            if (other.hasIgnoredFilesPatterns()) {
+              setIgnoredFilesPatterns(other.getIgnoredFilesPatterns());
             }
             return this;
           }
@@ -3851,6 +3904,11 @@ public final class JpsRemoteProto {
                 case 26: {
                   bitField0_ |= 0x00000004;
                   globalEncoding_ = input.readBytes();
+                  break;
+                }
+                case 34: {
+                  bitField0_ |= 0x00000008;
+                  ignoredFilesPatterns_ = input.readBytes();
                   break;
                 }
               }
@@ -4070,6 +4128,42 @@ public final class JpsRemoteProto {
           void setGlobalEncoding(com.google.protobuf.ByteString value) {
             bitField0_ |= 0x00000004;
             globalEncoding_ = value;
+            
+          }
+          
+          // optional string ignored_files_patterns = 4;
+          private java.lang.Object ignoredFilesPatterns_ = "";
+          public boolean hasIgnoredFilesPatterns() {
+            return ((bitField0_ & 0x00000008) == 0x00000008);
+          }
+          public String getIgnoredFilesPatterns() {
+            java.lang.Object ref = ignoredFilesPatterns_;
+            if (!(ref instanceof String)) {
+              String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+              ignoredFilesPatterns_ = s;
+              return s;
+            } else {
+              return (String) ref;
+            }
+          }
+          public Builder setIgnoredFilesPatterns(String value) {
+            if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+            ignoredFilesPatterns_ = value;
+            
+            return this;
+          }
+          public Builder clearIgnoredFilesPatterns() {
+            bitField0_ = (bitField0_ & ~0x00000008);
+            ignoredFilesPatterns_ = getDefaultInstance().getIgnoredFilesPatterns();
+            
+            return this;
+          }
+          void setIgnoredFilesPatterns(com.google.protobuf.ByteString value) {
+            bitField0_ |= 0x00000008;
+            ignoredFilesPatterns_ = value;
             
           }
           

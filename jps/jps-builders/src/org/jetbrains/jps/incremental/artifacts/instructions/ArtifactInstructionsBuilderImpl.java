@@ -4,6 +4,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.IgnoredFilePatterns;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 
 import java.io.File;
@@ -20,12 +21,18 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   private final Map<String, JarInfo> myJarByPath;
   private final MultiMap<ArtifactSourceRoot, DestinationInfo> myInstructions;
   private final ModuleRootsIndex myRootsIndex;
+  private final IgnoredFilePatterns myIgnoredFilePatterns;
 
-  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex) {
+  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, IgnoredFilePatterns patterns) {
     myRootsIndex = rootsIndex;
+    myIgnoredFilePatterns = patterns;
     mySourceByOutput = new HashMap<String, ArtifactSourceRoot>();
     myJarByPath = new HashMap<String, JarInfo>();
     myInstructions = new MultiMap<ArtifactSourceRoot, DestinationInfo>();
+  }
+
+  public IgnoredFilePatterns getIgnoredFilePatterns() {
+    return myIgnoredFilePatterns;
   }
 
   public boolean addDestination(@NotNull ArtifactSourceRoot root, @NotNull DestinationInfo destinationInfo) {

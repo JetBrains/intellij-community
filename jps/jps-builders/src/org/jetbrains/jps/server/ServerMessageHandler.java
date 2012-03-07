@@ -81,7 +81,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
             );
           }
           final String globalEncoding = setupCommand.isInitialized()? setupCommand.getGlobalEncoding() : null;
-          facade.setGlobals(libs, pathVars, globalEncoding);
+          facade.setGlobals(libs, pathVars, globalEncoding, setupCommand.getIgnoredFilesPatterns());
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
 

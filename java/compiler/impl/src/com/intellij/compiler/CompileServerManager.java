@@ -33,6 +33,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -506,7 +507,8 @@ public class CompileServerManager implements ApplicationComponent{
     fillSdks(globals);
     fillGlobalLibraries(globals);
 
-    return client.sendSetupRequest(data, globals, EncodingManager.getInstance().getDefaultCharsetName());
+    final String ignoredFilesList = FileTypeManager.getInstance().getIgnoredFilesList();
+    return client.sendSetupRequest(data, globals, EncodingManager.getInstance().getDefaultCharsetName(), ignoredFilesList);
   }
 
   private static void fillSdks(List<GlobalLibrary> globals) {
