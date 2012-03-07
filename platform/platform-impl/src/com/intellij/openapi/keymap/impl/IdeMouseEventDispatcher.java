@@ -26,7 +26,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,8 +128,6 @@ public final class IdeMouseEventDispatcher {
       // we can do better than silly triggering popup on everything but left click
       resetPopupTrigger(e);
     }
-
-    MacUIUtil.showCursor();
 
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
