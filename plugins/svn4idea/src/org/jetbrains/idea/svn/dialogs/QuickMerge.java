@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -76,6 +77,7 @@ public class QuickMerge {
   private SvnVcs myVcs;
   private final String myTitle;
   private final Continuation myContinuation;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.dialogs.QuickMerge");
 
   public QuickMerge(Project project, String sourceUrl, WCInfo wcInfo, final String branchName, final VirtualFile root) {
     myProject = project;
@@ -217,6 +219,11 @@ public class QuickMerge {
 
   @CalledInAny
   private void finishWithError(final ContinuationContext context, final String message, final List<VcsException> exceptions) {
+    if (exceptions != null) {
+      for (VcsException exception : exceptions) {
+        LOG.info(message, exception);
+      }
+    }
     context.cancelEverything();
     context.next(new TaskDescriptor(message, Where.AWT) {
       @Override
@@ -229,6 +236,7 @@ public class QuickMerge {
   // todo can be a very base class!
   @CalledInAny
   private void finishWithError(final ContinuationContext context, final String message, final boolean isError) {
+    LOG.info((isError ? "Error: " : "Info: ") + message);
     context.cancelEverything();
     context.next(new TaskDescriptor(message, Where.AWT) {
       @Override
