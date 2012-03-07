@@ -616,9 +616,9 @@ public class FileUtil {
       String parentDirPath = file.getParent();
       if (parentDirPath != null) {
         final File parentFile = new File(parentDirPath);
-        int attributes = getBooleanAttributes(file);
-        boolean ok = attributes != -1 && (attributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
-                     || parentFile.exists() && parentFile.isDirectory();
+        int parentAttributes = getBooleanAttributes(parentFile);
+        boolean ok = parentAttributes != -1 ? (parentAttributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
+                     : parentFile.exists() && parentFile.isDirectory();
         return ok || parentFile.mkdirs();
       }
     }
