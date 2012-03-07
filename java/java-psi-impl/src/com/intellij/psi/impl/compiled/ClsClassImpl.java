@@ -582,12 +582,14 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   @Override
   public ItemPresentation getPresentation() {
-    return ItemPresentationProviders.getItemPresentation(this);
+    PsiClass aClass = getSourceMirrorClass();
+    return aClass != null && aClass != this ? aClass.getPresentation() : ItemPresentationProviders.getItemPresentation(this);
   }
 
   @Override
   public Icon getElementIcon(final int flags) {
-    return PsiClassImplUtil.getClassIcon(flags, this);
+    PsiClass aClass = getSourceMirrorClass();
+    return aClass != null && aClass != this ? aClass.getIcon(flags) : PsiClassImplUtil.getClassIcon(flags, this);
   }
 
   @Override
