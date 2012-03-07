@@ -23,6 +23,8 @@ package org.jetbrains.idea.eclipse;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -42,7 +44,11 @@ public abstract class EclipseVarsTest extends IdeaTestCase {
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
     final String tempPath = getProject().getBaseDir().getPath();
-    FileUtil.copyDir(currentTestRoot, new File(tempPath));
+    final File tempDir = new File(tempPath);
+    FileUtil.copyDir(currentTestRoot, tempDir);
+    final VirtualFile virtualTestDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    assertNotNull(tempDir.getAbsolutePath(), virtualTestDir);
+    virtualTestDir.refresh(false, true);
 
     PathMacros.getInstance().setMacro(VARIABLE, new File(tempPath, VARIABLE + "idea").getPath());
     PathMacros.getInstance().setMacro(SRCVARIABLE, new File(tempPath, SRCVARIABLE + "idea").getPath());
