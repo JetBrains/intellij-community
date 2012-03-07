@@ -100,15 +100,27 @@
     <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction" icon="/general/add.png"/>
     <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="/actions/sync.png"/>
     <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="/icons/gradleNavigate.png"/>
-    <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="/icons/gradleImport.png"/>
-    <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="/actions/diff.png"/>
     <group id="Gradle.ChangeActionsToolbar">
       <reference id="Gradle.RefreshProject"/>
       <reference id="Gradle.OpenScript"/>
     </group>
+
+    <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="/icons/gradleImport.png"/>
+    <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="/actions/diff.png"/>
     <group id="Gradle.SyncTreeGroup">
       <reference id="Gradle.ImportEntity"/>
       <reference id="Gradle.ShowConflict"/>
+    </group>
+
+    <action id="Gradle.SyncTreeFilter.GradleLocal" class="org.jetbrains.plugins.gradle.action.GradleLocalSyncTreeFilterAction"/>
+    <action id="Gradle.SyncTreeFilter.IntellijLocal" class="org.jetbrains.plugins.gradle.action.IntellijLocalSyncTreeFilterAction"/>
+    <action id="Gradle.SyncTreeFilter.Conflict" class="org.jetbrains.plugins.gradle.action.GradleConflictSyncTreeFilterAction"/>
+    <action id="Gradle.SyncTreeFilter.Confirmed" class="org.jetbrains.plugins.gradle.action.GradleConfirmedSyncTreeFilterAction"/>
+    <group id="Gradle.SyncTreeFilter">
+      <reference id="Gradle.SyncTreeFilter.GradleLocal"/>
+      <reference id="Gradle.SyncTreeFilter.IntellijLocal"/>
+      <reference id="Gradle.SyncTreeFilter.Conflict"/>
+      <reference id="Gradle.SyncTreeFilter.Confirmed"/>
     </group>
   </actions>
   

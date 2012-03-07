@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +16,8 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Base class for high-level Gradle GUI controls used at the Gradle tool window. The basic idea is to encapsulate the same features in
@@ -42,14 +46,12 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   private final JPanel     myContent = new JPanel(myLayout);
 
   private final Project                      myProject;
+  private final String                       myPlace;
 
   protected GradleToolWindowPanel(@NotNull Project project, @NotNull String place) {
     super(true);
     myProject = project;
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(TOOL_WINDOW_TOOLBAR_ID);
-    ActionToolbar actionToolbar = actionManager.createActionToolbar(place, actionGroup, true);
-    setToolbar(actionToolbar.getComponent());
+    myPlace = place;
     setContent(myContent);
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
@@ -62,6 +64,22 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   }
 
   public void initContent() {
+    final ActionManager actionManager = ActionManager.getInstance();
+    final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(TOOL_WINDOW_TOOLBAR_ID);
+    ActionToolbar actionToolbar = actionManager.createActionToolbar(myPlace, actionGroup, true);
+    JPanel toolbarControl = new JPanel(new GridBagLayout());
+    GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridwidth = GridBagConstraints.REMAINDER;
+    constraints.weightx = 1;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.anchor = GridBagConstraints.WEST;
+    toolbarControl.add(actionToolbar.getComponent(), constraints);
+    for (JComponent component : getToolbarControls()) {
+      component.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      toolbarControl.add(component, constraints);
+    }
+    setToolbar(toolbarControl);
+    
     final JComponent payloadControl = buildContent();
     myContent.add(ScrollPaneFactory.createScrollPane(payloadControl), CONTENT_CARD_NAME);
     RichTextControlBuilder builder = new RichTextControlBuilder();
@@ -74,6 +92,14 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     update();
   }
 
+  /**
+   * @return    list of UI controls to be displayed vertically at the toolbar
+   */
+  @NotNull
+  protected List<JComponent> getToolbarControls() {
+    return Collections.emptyList();
+  }
+  
   /**
    * Asks current control to update its state.
    */
