@@ -21,8 +21,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -152,7 +152,7 @@ class StatusPanel extends JPanel {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final Project project = getActiveProject();
-    final Pair<Notification, Long> statusMessage = EventLog.getStatusMessage(project);
+    final Trinity<Notification, String, Long> statusMessage = EventLog.getStatusMessage(project);
     final Alarm alarm = getAlarm();
     myLogMode = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null;
 
@@ -166,10 +166,10 @@ class StatusPanel extends JPanel {
         @Override
         public void run() {
           assert statusMessage != null;
-          String text = EventLog.formatForLog(statusMessage.first, "").status;
-          if (myDirty || System.currentTimeMillis() - statusMessage.second >= DateFormatUtil.MINUTE) {
+          String text = statusMessage.second;
+          if (myDirty || System.currentTimeMillis() - statusMessage.third >= DateFormatUtil.MINUTE) {
             myTimeStart = text.length() + 1;
-            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.second)) + ")";
+            text += " (" + StringUtil.decapitalize(DateFormatUtil.formatPrettyDateTime(statusMessage.third)) + ")";
           } else {
             myTimeStart = -1;
           }

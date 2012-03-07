@@ -20,7 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -36,8 +36,7 @@ import java.util.*;
 public class LogModel implements Disposable {
   private final List<Notification> myNotifications = new ArrayList<Notification>();
   private final Map<Notification, Long> myStamps = Collections.synchronizedMap(new WeakHashMap<Notification, Long>());
-  private Notification myStatusMessage;
-  private long myStatusTime;
+  private Trinity<Notification, String, Long> myStatusMessage;
   private final Project myProject;
   final Map<Notification, Runnable> removeHandlers = new THashMap<Notification, Runnable>();
 
@@ -68,18 +67,17 @@ public class LogModel implements Disposable {
 
   void setStatusMessage(@Nullable Notification statusMessage, long stamp) {
     synchronized (myNotifications) {
-      if (myStatusMessage == statusMessage) return;
+      if (myStatusMessage != null && myStatusMessage.first == statusMessage) return;
 
-      myStatusMessage = statusMessage;
-      myStatusTime = stamp;
+      myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage, EventLog.formatForLog(statusMessage, "").status, stamp);
     }
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }
 
   @Nullable 
-  Pair<Notification, Long> getStatusMessage() {
+  Trinity<Notification, String, Long> getStatusMessage() {
     synchronized (myNotifications) {
-      return myStatusMessage == null ? null : Pair.create(myStatusMessage, myStatusTime);
+      return myStatusMessage;
     }
   }
 
@@ -113,7 +111,7 @@ public class LogModel implements Disposable {
       UIUtil.invokeLaterIfNeeded(handler);
     }
 
-    Pair<Notification, Long> oldStatus = getStatusMessage();
+    Trinity<Notification, String, Long> oldStatus = getStatusMessage();
     if (oldStatus != null && notification == oldStatus.first) {
       setStatusToImportant();
     }
