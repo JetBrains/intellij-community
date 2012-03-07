@@ -19,7 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -60,7 +60,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class MagicConstantInspection extends LocalInspectionTool {
+public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.magicConstant.MagicConstantInspection");
 
   @Nls
@@ -184,6 +184,7 @@ public class MagicConstantInspection extends LocalInspectionTool {
         @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               attachJdkAnnotations(finalJdk);
             }
