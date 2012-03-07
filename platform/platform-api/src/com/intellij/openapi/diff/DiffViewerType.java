@@ -28,5 +28,6 @@ public enum DiffViewerType {
   external_files,
   external_folders,
   multiLayer,
+  empty,
   unknown
 }
