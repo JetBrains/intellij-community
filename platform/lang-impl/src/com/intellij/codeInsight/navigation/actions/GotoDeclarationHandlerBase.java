@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class GotoDeclarationHandlerBase implements GotoDeclarationHandler {
   @Nullable
   @Override
-  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, Editor editor) {
+  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, int offset, Editor editor) {
     final PsiElement target = getGotoDeclarationTarget(sourceElement, editor);
     return target != null ? new PsiElement[] {target} : null;
   }

@@ -31,12 +31,13 @@ public interface GotoDeclarationHandler {
   /**
    * Provides an array of target declarations for given {@code sourceElement}.
    *
+   *
    * @param sourceElement input psiElement
-   * @param editor
-   * @return all target declarations as an array of  {@code PsiElement} or null if none was found
+   * @param offset offset in the file
+   *@param editor  @return all target declarations as an array of  {@code PsiElement} or null if none was found
    */
   @Nullable
-  PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, Editor editor);
+  PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, int offset, Editor editor);
 
   /**
    * Provides the custom action text

@@ -36,7 +36,7 @@ import java.util.List;
  */
 public class AndroidGotoDeclarationHandler implements GotoDeclarationHandler {
   @Override
-  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, Editor editor) {
+  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, int offset, Editor editor) {
     if (!(sourceElement instanceof PsiIdentifier)) {
       return null;
     }
