@@ -158,6 +158,6 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   }
 
   private static String replaceSeparators(final String s) {
-    return s.replace('\r', '\n').replace("\n\n", "\n");
+    return s.replace("\r\r", "\r").replace('\r', '\n').replace("\n\n", "\n");
   }
 }
