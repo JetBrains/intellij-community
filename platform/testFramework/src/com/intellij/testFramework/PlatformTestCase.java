@@ -64,6 +64,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -188,6 +189,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
       ((InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(myProject)).pushInjectors();
     }
+
+    DocumentCommitThread.getInstance().clearQueue();
   }
 
   public Project getProject() {
@@ -265,7 +268,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile("tmp_" + getName()+"_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    File tempFile = FileUtil.createTempFile(getName()+"_", ProjectFileType.DOT_DEFAULT_EXTENSION);
     myFilesToDelete.add(tempFile);
     return tempFile;
   }
@@ -470,6 +473,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private void disposeProject(@NotNull CompositeException result) /* throws nothing */ {
     try {
+      DocumentCommitThread.getInstance().clearQueue();
       UIUtil.dispatchAllInvocationEvents();
     }
     catch (Exception e) {
@@ -478,6 +482,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     try {
       if (myProject != null) {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Disposer.dispose(myProject);
             ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
@@ -717,6 +722,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   public static File createTempDir(@NonNls final String prefix) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
     myFilesToDelete.add(tempDirectory);
+    getVirtualFile(tempDirectory);
     return tempDirectory;
   }
 
