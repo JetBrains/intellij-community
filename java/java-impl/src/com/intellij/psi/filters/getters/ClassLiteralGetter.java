@@ -20,10 +20,10 @@ import com.intellij.codeInsight.completion.JavaSmartCompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -31,19 +31,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassLiteralGetter {
-  private static final Logger LOG = Logger.getInstance("com.intellij.psi.filters.getters.ClassLiteralGetter");
 
   public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
                                     @NotNull Consumer<LookupElement> result, final PrefixMatcher matcher) {
+    PsiType expectedType = parameters.getExpectedType();
+    if (!InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_CLASS)) {
+      return;
+    }
 
-    final Condition<String> shortNameCondition = new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return matcher.prefixMatches(s);
-      }
-    };
-
-    PsiType classParameter = PsiUtil.substituteTypeParameter(parameters.getExpectedType(), CommonClassNames.JAVA_LANG_CLASS, 0, false);
+    PsiType classParameter = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_LANG_CLASS, 0, false);
 
     boolean addInheritors = false;
     PsiElement position = parameters.getPosition();
@@ -59,7 +55,12 @@ public class ClassLiteralGetter {
       PsiFile file = position.getContainingFile();
       addClassLiteralLookupElement(classParameter, result, file);
       if (addInheritors) {
-        addInheritorClassLiterals(file, shortNameCondition, classParameter, result, matcher);
+        addInheritorClassLiterals(file, new Condition<String>() {
+          @Override
+          public boolean value(String s) {
+            return matcher.prefixMatches(s);
+          }
+        }, classParameter, result, matcher);
       }
     }
   }

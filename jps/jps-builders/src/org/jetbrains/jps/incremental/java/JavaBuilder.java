@@ -509,16 +509,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     urls[index++] = getResourcePath(GridConstraints.class).toURI().toURL(); // forms_rt.jar
     //urls.add(getResourcePath(CellConstraints.class).toURI().toURL());  // jgoodies-forms
     
-    final Map<String, byte[]> compiled = new HashMap<String, byte[]>();
-    for (OutputFileObject fileObject : outputSink.getFileObjects()) {
-      final String name = fileObject.getClassName();
-      if (name != null) {
-        final OutputFileObject.Content content = fileObject.getContent();
-        if (content != null) {
-          compiled.put(name, content.toByteArray());
-        }
-      }
-    }
     return new InstrumentationClassFinder(platformUrls, urls, outputSink);
   }
 

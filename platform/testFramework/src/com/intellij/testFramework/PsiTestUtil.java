@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -130,11 +131,11 @@ import java.util.Collection;
     }.execute().throwException();
   }
 
-  public static void addSourceContentToRoots(Module module, VirtualFile vDir) {
+  public static void addSourceContentToRoots(Module module, @NotNull VirtualFile vDir) {
     addSourceContentToRoots(module, vDir, false);
   }
 
-  public static void addSourceContentToRoots(final Module module, final VirtualFile vDir, final boolean testSource) {
+  public static void addSourceContentToRoots(final Module module, @NotNull final VirtualFile vDir, final boolean testSource) {
     new WriteCommandAction.Simple(module.getProject()) {
       @Override
       protected void run() throws Throwable {

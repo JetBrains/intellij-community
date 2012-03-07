@@ -180,7 +180,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
     for (int i=0;i< N;i++) {
       File file = new File(temp, i + ".txt");
       FileUtil.writeToFile(file, "xxx".getBytes());
-      VirtualFile child = fs.findFileByIoFile(file);
+      VirtualFile child = fs.refreshAndFindFileByIoFile(file);
       assertNotNull(child);
       children[i] = child;
       timestamp[i] = file.lastModified();

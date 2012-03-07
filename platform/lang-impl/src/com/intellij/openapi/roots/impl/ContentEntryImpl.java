@@ -47,7 +47,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   private final TreeSet<ExcludedOutputFolder> myExcludedOutputFolders = new TreeSet<ExcludedOutputFolder>(ContentFolderComparator.INSTANCE);
   @NonNls public static final String URL_ATTRIBUTE = "url";
 
-  ContentEntryImpl(VirtualFile file, RootModelImpl m) {
+  ContentEntryImpl(@NotNull VirtualFile file, RootModelImpl m) {
     this(file.getUrl(), m);
   }
 

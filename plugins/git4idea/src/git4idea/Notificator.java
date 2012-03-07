@@ -28,30 +28,42 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Kirill Likhodedov
  */
-  public class Notificator {
+public class Notificator {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
+
+  public static Notificator getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, Notificator.class);
+  }
 
   public Notificator(@NotNull Project project) {
     myProject = project;
   }
 
-  public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
-                     @NotNull NotificationType type, @Nullable NotificationListener listener) {
+  @NotNull
+  public static Notification createNotification(@NotNull NotificationGroup notificationGroup,
+                                                @NotNull String title, @NotNull String message, @NotNull NotificationType type,
+                                                @Nullable NotificationListener listener) {
     // title can be empty; description can't be neither null, nor empty
     if (StringUtil.isEmptyOrSpaces(message)) {
       message = title;
       title = "";
     }
     // if both title and description were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
+    return notificationGroup.createNotification(title, message, type, listener);
+  }
+
+  public void notify(@NotNull Notification notification) {
+    notification.notify(myProject);
+  }
+
+  public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
+                     @NotNull NotificationType type, @Nullable NotificationListener listener) {
     createNotification(notificationGroup, title, message, type, listener).notify(myProject);
   }
 
-  public static Notificator getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, Notificator.class);
-  }
-
-  public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message, @NotNull NotificationType type) {
+  public void notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
+                     @NotNull NotificationType type) {
     notify(notificationGroup, title, message, type, null);
   }
 
@@ -61,11 +73,6 @@ import org.jetbrains.annotations.Nullable;
 
   public void notifySuccess(@NotNull String title, @NotNull String message) {
     notify(GitVcs.NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION,  null);
-  }
-
-  protected static Notification createNotification(NotificationGroup notificationGroup, String title, String message,
-                                                   NotificationType type, NotificationListener listener) {
-    return notificationGroup.createNotification(title, message, type, listener);
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -344,37 +344,45 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static class FileTypeDetectorHolder {
     private static final FileTypeDetector[] FILE_TYPE_DETECTORS = Extensions.getExtensions(FileTypeDetector.EP_NAME);
   }
+
   private static final AtomicInteger DETECTED_COUNT = new AtomicInteger();
   private static final int DETECT_BUFFER_SIZE = 8192;
+
   @NotNull
   private static FileType detectFromContent(@NotNull final VirtualFile file) {
     try {
-      final long length = file.getLength();
+      final VirtualFile canonicalFile = file.getCanonicalFile();
+      if (canonicalFile == null) {
+        return UnknownFileType.INSTANCE;
+      }
+
+      final long length = canonicalFile.getLength();
       if (length == 0) {
         return UnknownFileType.INSTANCE;
       }
-      VirtualFileSystem fileSystem = file.getFileSystem();
+
+      final VirtualFileSystem fileSystem = canonicalFile.getFileSystem();
       if (!(fileSystem instanceof FileSystemInterface)) return UnknownFileType.INSTANCE;
 
-      InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(file);
+      final InputStream inputStream = ((FileSystemInterface)fileSystem).getInputStream(canonicalFile);
       final Ref<FileType> result;
       try {
         result = new Ref<FileType>(UnknownFileType.INSTANCE);
         FileUtil.processFirstBytes(inputStream, DETECT_BUFFER_SIZE, new Processor<ByteSequence>() {
           @Override
           public boolean process(ByteSequence byteSequence) {
-            boolean isText = guessIfText(file, byteSequence);
+            boolean isText = guessIfText(canonicalFile, byteSequence);
             CharSequence text;
             if (isText) {
               byte[] bytes = Arrays.copyOf(byteSequence.getBytes(), byteSequence.getLength());
-              text = LoadTextUtil.getTextByBinaryPresentation(bytes, file);
+              text = LoadTextUtil.getTextByBinaryPresentation(bytes, canonicalFile);
             }
             else {
               text = null;
             }
             FileType detected = null;
             for (FileTypeDetector detector : FileTypeDetectorHolder.FILE_TYPE_DETECTORS) {
-              detected = detector.detect(file, byteSequence, text);
+              detected = detector.detect(canonicalFile, byteSequence, text);
               if (detected != null) break;
             }
 
@@ -392,7 +400,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       FileType fileType = result.get();
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug(file + "; type=" + fileType.getDescription() + "; " + DETECTED_COUNT.incrementAndGet());
+        LOG.debug(canonicalFile + "; type=" + fileType.getDescription() + "; " + DETECTED_COUNT.incrementAndGet());
       }
       return fileType;
     }
