@@ -1836,10 +1836,8 @@ public class Mappings {
       // flush if you own the context
       final DependencyContext context = myContext;
       if (context != null) {
-        if (memoryCachesOnly) {
-          context.clearMemoryCaches();
-        }
-        else {
+        context.clearMemoryCaches();
+        if (!memoryCachesOnly) {
           context.flush();
         }
       }
