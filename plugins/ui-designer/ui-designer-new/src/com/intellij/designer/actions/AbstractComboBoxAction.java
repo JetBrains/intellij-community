@@ -53,6 +53,7 @@ public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
     if (selection == null && !myItems.isEmpty()) {
       mySelection = myItems.get(0);
     }
+    update();
   }
 
   public void clearSelection() {

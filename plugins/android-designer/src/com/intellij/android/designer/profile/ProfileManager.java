@@ -48,6 +48,9 @@ public class ProfileManager {
 
   private final Module myModule;
   private final Runnable myRefreshAction;
+  private final Runnable mySelectionRunnable;
+
+  private Sdk mySdk;
 
   private final AbstractComboBoxAction<LayoutDevice> myDeviceAction;
   private final AbstractComboBoxAction<LayoutDeviceConfiguration> myDeviceConfigurationAction;
@@ -63,9 +66,10 @@ public class ProfileManager {
 
   private Profile myProfile;
 
-  public ProfileManager(Module module, Runnable refreshAction) {
+  public ProfileManager(Module module, Runnable refreshAction, Runnable selectionRunnable) {
     myModule = module;
     myRefreshAction = refreshAction;
+    mySelectionRunnable = selectionRunnable;
 
     myLayoutDeviceManager = ProfileList.getInstance(module.getProject()).getLayoutDeviceManager();
 
@@ -91,7 +95,7 @@ public class ProfileManager {
             myLayoutDeviceManager.saveUserDevices();
           }
 
-          updatePlatform(getPlatform());
+          updatePlatform(getPlatform(null));
 
           String deviceName = dialog.getSelectedDeviceName();
           if (deviceName != null) {
@@ -118,6 +122,7 @@ public class ProfileManager {
           updateDevice(item);
         }
 
+        mySelectionRunnable.run();
         myRefreshAction.run();
         return item != CUSTOM_DEVICE;
       }
@@ -132,6 +137,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(LayoutDeviceConfiguration item) {
         updateDeviceConfiguration(item);
+        mySelectionRunnable.run();
         myRefreshAction.run();
         return true;
       }
@@ -142,6 +148,7 @@ public class ProfileManager {
       protected boolean selectionChanged(IAndroidTarget item) {
         updateTarget(item);
         updateThemes();
+        mySelectionRunnable.run();
         return true;
       }
     };
@@ -150,6 +157,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(LocaleData item) {
         updateLocale(item);
+        mySelectionRunnable.run();
         myRefreshAction.run();
         return true;
       }
@@ -159,6 +167,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(UiMode item) {
         myProfile.setDockMode(item.getResourceValue());
+        mySelectionRunnable.run();
         myRefreshAction.run();
         return true;
       }
@@ -168,6 +177,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(NightMode item) {
         myProfile.setNightMode(item.getResourceValue());
+        mySelectionRunnable.run();
         myRefreshAction.run();
         return true;
       }
@@ -197,6 +207,7 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(ThemeData item) {
         updateTheme(item);
+        mySelectionRunnable.run();
         myRefreshAction.run();
         return true;
       }
@@ -228,7 +239,7 @@ public class ProfileManager {
       myThemeAction.clearSelection();
     }
     else {
-      update(getPlatform());
+      update(null);
     }
   }
 
@@ -242,10 +253,11 @@ public class ProfileManager {
     myThemeAction.update();
   }
 
-  public void update(@Nullable AndroidPlatform platform) {
+  public void update(@Nullable Sdk sdk) {
+    mySdk = sdk;
     if (myProfile != null) {
       updateLocales();
-      updatePlatform(platform);
+      updatePlatform(getPlatform(sdk));
       updateThemes();
       myDockModeAction.setItems(Arrays.asList(UiMode.values()), UiMode.getEnum(myProfile.getDockMode()));
       myNightModeAction.setItems(Arrays.asList(NightMode.values()), NightMode.getEnum(myProfile.getNightMode()));
@@ -254,6 +266,11 @@ public class ProfileManager {
 
   public Module getModule() {
     return myModule;
+  }
+
+  @Nullable
+  public Sdk getSdk() {
+    return mySdk;
   }
 
   @Nullable
@@ -557,7 +574,6 @@ public class ProfileManager {
         }
 
         myThemeAction.setItems(themes, newTheme);
-        myThemeAction.update();
         updateTheme(newTheme);
         myRefreshAction.run();
       }
@@ -569,8 +585,10 @@ public class ProfileManager {
   }
 
   @Nullable
-  public AndroidPlatform getPlatform() {
-    Sdk sdk = ModuleRootManager.getInstance(myModule).getSdk();
+  private AndroidPlatform getPlatform(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      sdk = ProfileList.getInstance(myModule.getProject()).getModuleSdk(myModule);
+    }
     if (sdk != null && sdk.getSdkType() instanceof AndroidSdkType) {
       AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
       if (additionalData != null) {

@@ -50,8 +50,9 @@ import java.util.Map;
 public class ProfileList implements PersistentStateComponent<ProfileList.ProfileState> {
   private final LayoutDeviceManager myLayoutDeviceManager = new LayoutDeviceManager();
   private final Map<Module, Sdk> myModule2Sdk = new HashMap<Module, Sdk>();
-  private ProfileState myState = new ProfileState();
   private final Project myProject;
+  private ProfileState myState = new ProfileState();
+  private int myVersion;
 
   public ProfileList(Project project) {
     myProject = project;
@@ -72,7 +73,7 @@ public class ProfileList implements PersistentStateComponent<ProfileList.Profile
     return ServiceManager.getService(project, ProfileList.class);
   }
 
-  public Sdk getModuleSdk(Module module) {
+  public synchronized Sdk getModuleSdk(Module module) {
     return myModule2Sdk.get(module);
   }
 
@@ -83,20 +84,19 @@ public class ProfileList implements PersistentStateComponent<ProfileList.Profile
     }
   }
 
-  private void updatePlatform() {
+  private synchronized void updatePlatform() {
     DesignerEditorPanel designer = DesignerToolWindowManager.getInstance(myProject).getActiveDesigner();
     if (designer instanceof AndroidDesignerEditorPanel) {
       Module module = designer.getModule();
       Sdk prevSdk = myModule2Sdk.get(module);
       Sdk newSdk = ModuleRootManager.getInstance(module).getSdk();
+
       if (newSdk != null
           && (newSdk.getSdkType() instanceof AndroidSdkType ||
               (prevSdk != null && prevSdk.getSdkType() instanceof AndroidSdkType))
           && !newSdk.equals(prevSdk)) {
 
-        AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData)newSdk.getSdkAdditionalData();
-        AndroidPlatform newPlatform = additionalData != null ? additionalData.getAndroidPlatform() : null;
-        ((AndroidDesignerEditorPanel)designer).getProfileAction().getProfileManager().update(newPlatform);
+        ((AndroidDesignerEditorPanel)designer).getProfileAction().getProfileManager().update(newSdk);
       }
     }
 
@@ -131,6 +131,14 @@ public class ProfileList implements PersistentStateComponent<ProfileList.Profile
       }
     }
     return getFullProfile();
+  }
+
+  public int getVersion() {
+    return myVersion;
+  }
+
+  public void addVersion() {
+    myVersion++;
   }
 
   @Override

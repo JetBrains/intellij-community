@@ -23,6 +23,7 @@ import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 
 import java.util.ArrayList;
@@ -43,10 +44,19 @@ public class ProfileAction {
   private final AbstractComboBoxAction<Profile> myProfileAction;
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private final ProfileList myProfileList;
+  private int myVersion;
 
   public ProfileAction(AndroidDesignerEditorPanel designer, Runnable refreshAction) {
     myDesigner = designer;
-    myProfileManager = new ProfileManager(myDesigner.getModule(), refreshAction);
+
+    myProfileList = ProfileList.getInstance(myDesigner.getProject());
+
+    myProfileManager = new ProfileManager(myDesigner.getModule(), refreshAction, new Runnable() {
+      @Override
+      public void run() {
+        myProfileList.addVersion();
+      }
+    });
 
     myProfileAction = new AbstractComboBoxAction<Profile>() {
       @Override
@@ -74,8 +84,6 @@ public class ProfileAction {
       }
     };
 
-    myProfileList = ProfileList.getInstance(myDesigner.getProject());
-
     DefaultActionGroup designerActionGroup = myDesigner.getActionPanel().getActionGroup();
     designerActionGroup.add(myProfileAction);
     designerActionGroup.add(myActionGroup);
@@ -88,6 +96,8 @@ public class ProfileAction {
   }
 
   private void updateActions() {
+    myVersion = myProfileList.getVersion();
+
     List<Profile> profiles = new ArrayList<Profile>(myProfileList.getProfiles());
     profiles.add(myProfileList.getFullProfile());
     profiles.add(EDIT_PROFILE);
@@ -133,11 +143,15 @@ public class ProfileAction {
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       myProfileList.setProfiles(dialog.getResult());
+      myProfileList.addVersion();
       updateActions();
     }
   }
 
   public void externalUpdate() {
-    // TODO
+    Sdk sdk = myProfileList.getModuleSdk(myDesigner.getModule());
+    if ((sdk != null && !sdk.equals(myProfileManager.getSdk())) || myVersion != myProfileList.getVersion()) {
+      updateActions();
+    }
   }
 }
