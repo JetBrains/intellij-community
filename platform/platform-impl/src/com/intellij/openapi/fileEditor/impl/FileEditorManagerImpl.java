@@ -122,6 +122,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myDockManager = dockManager;
     myListenerList =
       new MessageListenerList<FileEditorManagerListener>(myProject.getMessageBus(), FileEditorManagerListener.FILE_EDITOR_MANAGER);
+
+    if (Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME).length > 0) {
+      myListenerList.add(new FileEditorManagerAdapter() {
+        @Override
+        public void selectionChanged(FileEditorManagerEvent event) {
+          EditorsSplitters splitters = getSplitters();
+          openAssociatedFile(event.getNewFile(), splitters.getCurrentWindow(), splitters);
+        }
+      });
+    }
+
     myQueue.setTrackUiActivity(true);
   }
 
@@ -597,10 +608,37 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     else {
       wndToOpenIn = getSplitters().getCurrentWindow();
     }
+
+    EditorsSplitters splitters = getSplitters();
+
     if (wndToOpenIn == null) {
-      wndToOpenIn = getSplitters().getOrCreateCurrentWindow(file);
+      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
     }
+
+    openAssociatedFile(file, wndToOpenIn, splitters);
     return openFileImpl2(wndToOpenIn, file, focusEditor);
+  }
+
+  private void openAssociatedFile(VirtualFile file, EditorWindow wndToOpenIn, EditorsSplitters splitters) {
+    EditorWindow[] windows = splitters.getWindows();
+
+    if (file != null && windows.length == 2) {
+      for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+        VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, file);
+
+        if (associatedFile != null) {
+          EditorWindow currentWindow = splitters.getCurrentWindow();
+          int idx = windows[0] == wndToOpenIn ? 1 : 0;
+          openFileImpl2(windows[idx], associatedFile, false);
+
+          if (currentWindow != null) {
+            splitters.setCurrentWindow(currentWindow, false);
+          }
+
+          break;
+        }
+      }
+    }
   }
 
   @NotNull
@@ -1309,6 +1347,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     final boolean filesEqual = oldData.first == null ? newData.first == null : oldData.first.equals(newData.first);
     final boolean editorsEqual = oldData.second == null ? newData.second == null : oldData.second.equals(newData.second);
     if (!filesEqual || !editorsEqual) {
+      if (oldData.first != null && newData.first != null) {
+        for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+          VirtualFile associatedFile = finder.getAssociatedFileToOpen(myProject, oldData.first);
+
+          if (associatedFile == newData.first) {
+            return;
+          }
+        }
+      }
+
       final FileEditorManagerEvent event =
         new FileEditorManagerEvent(this, oldData.first, oldData.second, oldData.third, newData.first, newData.second, newData.third);
       final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);

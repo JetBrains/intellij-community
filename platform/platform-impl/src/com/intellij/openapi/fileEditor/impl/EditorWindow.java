@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -665,6 +666,18 @@ public class EditorWindow {
           */
           // open only selected file in the new splitter instead of opening all tabs
           final VirtualFile file = selectedEditor.getFile();
+
+          if (virtualFile == null) {
+            for (FileEditorAssociateFinder finder : Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME)) {
+              VirtualFile associatedFile = finder.getAssociatedFileToOpen(fileEditorManager.getProject(), file);
+
+              if (associatedFile != null) {
+                virtualFile = associatedFile;
+                break;
+              }
+            }
+          }
+
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
           final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, false, null, true).first;
           syncCaretIfPossible(editors);
