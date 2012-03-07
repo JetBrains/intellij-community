@@ -785,7 +785,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private void updateResults(final boolean allowedToChangedEditorSelection) {
     myMatchInfoLabel.setFont(myMatchInfoLabel.getFont().deriveFont(Font.PLAIN));
-    final String text = mySearchField.getText();
+    final String text = myFindModel.getStringToFind();
     if (text.length() == 0) {
       nothingToSearchFor();
     }
