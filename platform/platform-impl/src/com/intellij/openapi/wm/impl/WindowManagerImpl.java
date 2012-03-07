@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.peer.FramePeer;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
@@ -715,6 +716,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     final IdeFrameImpl frame = getFrame(project);
     if (frame != null) {
       int extendedState = frame.getExtendedState();
+      if (SystemInfo.isMacOSLion && frame.getPeer() instanceof FramePeer) {
+        // frame.state is not updated by jdk so get it directly from peer
+        extendedState = ((FramePeer)frame.getPeer()).getState();
+      }
       boolean usePreviousBounds = extendedState == Frame.MAXIMIZED_BOTH ||
                                   SystemInfo.isMacOSLion && WindowManagerEx.getInstanceEx().isFullScreen(frame);
       final Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
