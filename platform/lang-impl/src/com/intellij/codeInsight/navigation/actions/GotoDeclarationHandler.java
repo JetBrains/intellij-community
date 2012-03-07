@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.navigation.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
@@ -30,10 +31,19 @@ public interface GotoDeclarationHandler {
   /**
    * Provides an array of target declarations for given {@code sourceElement}.
    *
+   *
    * @param sourceElement input psiElement
-   * @param editor
-   * @return all target declarations as an array of  {@code PsiElement} or null if none was found
+   * @param offset offset in the file
+   *@param editor  @return all target declarations as an array of  {@code PsiElement} or null if none was found
    */
   @Nullable
-  PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, Editor editor);
+  PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement, int offset, Editor editor);
+
+  /**
+   * Provides the custom action text
+   * @return the custom text or null to use the default text
+   * @param context the action data context
+   */
+  @Nullable
+  String getActionText(DataContext context);
 }
