@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.MembershipMap;
@@ -81,8 +82,16 @@ public class RecursiveFileHolder<T> extends AbstractIgnoredFilesHolder {
     if (o == null || getClass() != o.getClass()) return false;
 
     final RecursiveFileHolder that = (RecursiveFileHolder)o;
+    if (myMap.size() != that.myMap.size()) return false;
+    final Iterator<Map.Entry<VirtualFile, T>> it1 = myMap.entrySet().iterator();
+    final Iterator<Map.Entry<VirtualFile, T>> it2 = that.myMap.entrySet().iterator();
 
-    if (!myMap.equals(that.myMap)) return false;
+    while (it1.hasNext()) {
+      if (! it2.hasNext()) return false;
+      Map.Entry<VirtualFile, T> next1 = it1.next();
+      Map.Entry<VirtualFile, T> next2 = it2.next();
+      if (! Comparing.equal(next1.getKey(), next2.getKey()) || ! Comparing.equal(next1.getValue(), next2.getValue())) return false;
+    }
 
     return true;
   }
