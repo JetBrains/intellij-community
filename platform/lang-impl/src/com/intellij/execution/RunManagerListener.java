@@ -15,6 +15,8 @@
  */
 package com.intellij.execution;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface RunManagerListener extends EventListener {
@@ -22,9 +24,9 @@ public interface RunManagerListener extends EventListener {
 
   void beforeRunTasksChanged();
 
-  void runConfigurationAdded(RunnerAndConfigurationSettings settings);
+  void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings);
 
-  void runConfigurationRemoved(RunnerAndConfigurationSettings settings);
+  void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings);
 
-  void runConfigurationChanged(RunnerAndConfigurationSettings settings);
+  void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings);
 }

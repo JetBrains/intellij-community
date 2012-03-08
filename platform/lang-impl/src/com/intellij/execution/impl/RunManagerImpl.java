@@ -902,12 +902,12 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     fireRunConfigurationsRemoved(removed);
   }
 
-  public void fireRunConfigurationChanged(RunnerAndConfigurationSettings settings) {
+  public void fireRunConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
     invalidateConfigurationIcon(settings);
     myDispatcher.getMulticaster().runConfigurationChanged(settings);
   }
 
-  private void fireRunConfigurationsRemoved(List<RunnerAndConfigurationSettings> removed) {
+  private void fireRunConfigurationsRemoved(@NotNull List<RunnerAndConfigurationSettings> removed) {
     for (RunnerAndConfigurationSettings settings : removed) {
       myDispatcher.getMulticaster().runConfigurationRemoved(settings);
     }
