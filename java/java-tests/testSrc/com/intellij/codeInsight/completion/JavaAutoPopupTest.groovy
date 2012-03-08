@@ -45,7 +45,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-import com.intellij.util.Consumer
 
 /**
  * @author peter
@@ -1230,7 +1229,8 @@ class Foo {{
     type 'fo\n'
     myFixture.checkResult '''import foo.Util;
 
-class Foo {{ Util.foo();<caret> }}'''
+class Foo {{
+    Util.foo();<caret> }}'''
   }
 
   public void testPackageQualifier() {
