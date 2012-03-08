@@ -515,7 +515,7 @@ public interface Test {
 
     @Override
     void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
-      result.runRemainingContributors(parameters, { result.passResult(it) } as Consumer)
+      result.runRemainingContributors(parameters, true)
       Thread.sleep 1000
     }
   }

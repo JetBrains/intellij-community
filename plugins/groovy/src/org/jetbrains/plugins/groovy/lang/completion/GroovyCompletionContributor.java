@@ -349,12 +349,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final Set<String> usedWords = new THashSet<String>();
-        result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-          public void consume(CompletionResult element) {
-            result.passResult(element);
-            usedWords.add(element.getLookupElement().getLookupString());
-          }
-        });
+        for (CompletionResult element : result.runRemainingContributors(parameters, true)) {
+          usedWords.add(element.getLookupElement().getLookupString());
+        }
+
         PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
         if (reference == null || reference.isSoft()) {
           WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
