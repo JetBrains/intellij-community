@@ -435,7 +435,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
       for (String string : CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference)) {
         result.add(GroovyCompletionUtil.getLookupElement(string));
       }
-      if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null) {
+      if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
+          !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
         if (parameters.getInvocationCount() == 1) {
           showInfo();
         }

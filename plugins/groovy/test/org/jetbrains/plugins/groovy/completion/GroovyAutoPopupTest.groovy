@@ -260,4 +260,12 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     myFixture.assertPreferredCompletionItems 0, 'Boolean', 'boolean'
   }
 
+  public void testPackageQualifier() {
+    myFixture.addClass("package com.too; public class Util {}")
+    myFixture.configureByText 'a.groovy', 'void foo(Object command) { <caret> }'
+    type 'com.t'
+    assert myFixture.lookupElementStrings.containsAll(['too', 'command.toString'])
+  }
+
+
 }

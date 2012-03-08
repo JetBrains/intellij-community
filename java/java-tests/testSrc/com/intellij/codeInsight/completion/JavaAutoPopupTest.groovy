@@ -1233,4 +1233,11 @@ class Foo {{
 class Foo {{ Util.foo();<caret> }}'''
   }
 
+  public void testPackageQualifier() {
+    myFixture.addClass("package com.too; public class Util {}")
+    myFixture.configureByText 'a.java', 'class Foo { void foo(Object command) { <caret> }}'
+    type 'com.t'
+    assert myFixture.lookupElementStrings.containsAll(['too', 'command.toString'])
+  }
+
 }

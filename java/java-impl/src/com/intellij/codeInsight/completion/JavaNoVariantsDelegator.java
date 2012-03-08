@@ -35,7 +35,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
+    final boolean empty = containsOnlyPackages(result.runRemainingContributors(parameters, true));
 
     if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();
@@ -44,6 +44,15 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     if (empty) {
       delegate(parameters, result);
     }
+  }
+
+  public static boolean containsOnlyPackages(LinkedHashSet<CompletionResult> results) {
+    for (CompletionResult result : results) {
+      if (!(CompletionUtil.getTargetElement(result.getLookupElement()) instanceof PsiPackage)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static void delegate(CompletionParameters parameters, CompletionResultSet result) {
