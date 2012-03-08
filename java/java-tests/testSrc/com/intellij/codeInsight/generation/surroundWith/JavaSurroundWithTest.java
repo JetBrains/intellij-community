@@ -106,7 +106,18 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     doTest(getTestName(false), new JavaWithNotSurrounder());
   }
 
-  private void doTest(@NotNull String fileName, final Surrounder surrounder) throws Exception {
+  public void testSurroundBinaryWithCast() {
+    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
+    templateManager.setTemplateTesting(true);
+    try {
+      doTest(getTestName(false), new JavaWithCastSurrounder());
+    }
+    finally {
+      templateManager.setTemplateTesting(false);
+    }
+  }
+
+  private void doTest(@NotNull String fileName, final Surrounder surrounder) {
     configureByFile(BASE_PATH + fileName + ".java");
     SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
     checkResultByFile(BASE_PATH + fileName + "_after.java");
