@@ -36,10 +36,22 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
+public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   @Override
-  protected void delegate(CompletionParameters parameters, CompletionResultSet result, Consumer<CompletionResult> passResult) {
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
+
+    if (!empty && parameters.getInvocationCount() == 0) {
+      result.restartCompletionWhenNothingMatches();
+    }
+
+    if (empty) {
+      delegate(parameters, result);
+    }
+  }
+
+  private static void delegate(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result, false) &&

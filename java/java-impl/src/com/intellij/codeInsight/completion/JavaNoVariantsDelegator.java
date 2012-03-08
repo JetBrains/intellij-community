@@ -31,10 +31,22 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class JavaNoVariantsDelegator extends NoVariantsDelegator {
+public class JavaNoVariantsDelegator extends CompletionContributor {
 
   @Override
-  protected void delegate(CompletionParameters parameters, CompletionResultSet result, Consumer<CompletionResult> passResult) {
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
+
+    if (!empty && parameters.getInvocationCount() == 0) {
+      result.restartCompletionWhenNothingMatches();
+    }
+
+    if (empty) {
+      delegate(parameters, result);
+    }
+  }
+
+  private static void delegate(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       PsiElement position = parameters.getPosition();
       if (parameters.getInvocationCount() <= 1 &&
@@ -48,7 +60,7 @@ public class JavaNoVariantsDelegator extends NoVariantsDelegator {
     }
 
     if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
-      result.runRemainingContributors(parameters.withInvocationCount(3), passResult);
+      result.runRemainingContributors(parameters.withInvocationCount(3), true);
     }
   }
 
@@ -59,8 +71,11 @@ public class JavaNoVariantsDelegator extends NoVariantsDelegator {
     }
     PsiElement qualifier = ((PsiJavaCodeReferenceElement)parent).getQualifier();
     if (!(qualifier instanceof PsiJavaCodeReferenceElement) ||
-        ((PsiJavaCodeReferenceElement)qualifier).isQualified() ||
-        ((PsiJavaCodeReferenceElement)qualifier).resolve() != null) {
+        ((PsiJavaCodeReferenceElement)qualifier).isQualified()) {
+      return;
+    }
+    PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+    if (target != null && !(target instanceof PsiPackage)) {
       return;
     }
 

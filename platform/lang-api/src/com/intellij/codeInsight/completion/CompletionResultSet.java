@@ -6,6 +6,8 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashSet;
+
 /**
  * {@link com.intellij.codeInsight.completion.CompletionResultSet}s feed on {@link com.intellij.codeInsight.lookup.LookupElement}s,
  * match them against specified
@@ -81,6 +83,20 @@ public abstract class CompletionResultSet {
 
   public void stopHere() {
     myStopped = true;
+  }
+
+  public LinkedHashSet<CompletionResult> runRemainingContributors(CompletionParameters parameters, final boolean passResult) {
+    final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<CompletionResult>();
+    runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+      @Override
+      public void consume(CompletionResult result) {
+        if (passResult) {
+          passResult(result);
+        }
+        elements.add(result);
+      }
+    });
+    return elements;
   }
 
   public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer) {
