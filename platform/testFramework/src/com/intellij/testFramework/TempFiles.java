@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+
+import static org.junit.Assert.assertTrue;
 
 public class TempFiles {
   private final Collection<File> myFilesToDelete;
@@ -33,10 +34,12 @@ public class TempFiles {
     myFilesToDelete = filesToDelete;
   }
 
+  @Nullable
   public VirtualFile createVFile(String prefix) {
     return getVFileByFile(createTempFile(prefix));
   }
 
+  @Nullable
   public VirtualFile createVFile(String prefix, String postfix) {
     return getVFileByFile(createTempFile(prefix, postfix));
   }
@@ -49,6 +52,7 @@ public class TempFiles {
     try {
       File tempFile = FileUtil.createTempFile(prefix, postfix);
       tempFileCreated(tempFile);
+      getVFileByFile(tempFile);
       return tempFile;
     }
     catch (IOException e) {
@@ -61,18 +65,9 @@ public class TempFiles {
     tempFile.deleteOnExit();
   }
 
+  @Nullable
   public static VirtualFile getVFileByFile(File tempFile) {
-    refreshVfs();
-    return LocalFileSystem.getInstance().findFileByIoFile(tempFile);
-  }
-
-  public static void refreshVfs() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFileManager.getInstance().refresh(false);
-      }
-    });
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
   }
 
   public File createTempDir() {
@@ -83,6 +78,7 @@ public class TempFiles {
     try {
       File dir = FileUtil.createTempDirectory(prefix, "test");
       tempFileCreated(dir);
+      getVFileByFile(dir);
       return dir;
     }
     catch (IOException e) {
@@ -90,25 +86,20 @@ public class TempFiles {
     }
   }
 
+  @Nullable
   public VirtualFile createTempVDir() {
     return createTempVDir("dir");
   }
 
+  @Nullable
   public VirtualFile createTempVDir(String prefix) {
     return getVFileByFile(createTempDir(prefix));
-  }
-
-  public File createTempSubDir(File content) {
-    File subDir = new File(content, "source");
-    if (!subDir.mkdir()) throw new RuntimeException(subDir.toString());
-    tempFileCreated(subDir);
-    return subDir;
   }
 
   public String createTempPath() {
     File tempFile = createTempFile("xxx");
     String absolutePath = tempFile.getAbsolutePath();
-    tempFile.delete();
+    assertTrue(absolutePath, tempFile.delete());
     return absolutePath;
   }
 
