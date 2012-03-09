@@ -593,7 +593,7 @@ public class FileStructurePopup implements Disposable {
         myFilteringStructure.rebuild();
         
         final Object sel = selection;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        final Runnable runnable = new Runnable() {
           public void run() {
             final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
             try {
@@ -610,7 +610,12 @@ public class FileStructurePopup implements Disposable {
               token.finish();
             }
           }
-        });
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable);
+        }
       }
     });
     chkFilter.setFocusable(false);
