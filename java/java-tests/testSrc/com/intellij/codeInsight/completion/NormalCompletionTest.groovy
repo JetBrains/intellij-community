@@ -1300,4 +1300,12 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testCastVisually() {
+    configure()
+    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    assert p.itemText == 'getValue'
+    assert p.itemTextBold
+    assert p.typeText == 'Foo'
+  }
+
 }

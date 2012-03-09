@@ -85,7 +85,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       if (qualifier instanceof PsiSuperExpression) {
         final PsiJavaCodeReferenceElement qSuper = ((PsiSuperExpression)qualifier).getQualifier();
         if (qSuper == null) {
-          myQualifierClass = JavaResolveUtil.getContextClass(myElement);
+          myQualifierClass = JavaResolveUtil.getContextClass( myElement);
         } else {
           final PsiElement target = qSuper.resolve();
           myQualifierClass = target instanceof PsiClass ? (PsiClass)target : null;
