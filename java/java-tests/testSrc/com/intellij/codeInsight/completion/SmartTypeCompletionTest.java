@@ -909,9 +909,9 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testExcessiveTail() throws Exception {
-    doTest();
-  }
+  public void testExcessiveTail() throws Exception { doTest(); }
+  public void testSeveralTypeArguments() throws Exception { doTest(); }
+  public void testSeveralTypeArgumentsSomeUnknown() throws Exception { doTest(); }
 
   public void testExtendsInTypeCast() throws Exception {
     doTest();
