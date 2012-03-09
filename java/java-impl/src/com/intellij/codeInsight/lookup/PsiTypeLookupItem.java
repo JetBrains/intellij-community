@@ -46,6 +46,7 @@ public class PsiTypeLookupItem extends LookupItem {
     myBracketsCount = bracketsCount;
   }
 
+  @NotNull
   public PsiType getPsiType() {
     Object object = getObject();
     PsiType type = object instanceof PsiType ? (PsiType)object : JavaPsiFacade.getElementFactory(((PsiClass) object).getProject()).createType((PsiClass)object);

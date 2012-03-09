@@ -1002,6 +1002,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testEnumAsDefaultAnnotationParam() throws Throwable { doTest(); }
+  public void testBreakLabel() throws Throwable { doTest(); }
 
   public void testNewAbstractInsideAnonymous() throws Throwable { doTest(); }
 

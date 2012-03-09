@@ -65,7 +65,7 @@ VERSION_LOG=`mktemp -t java.version.log.XXXXXX`
 $JDK/bin/java -version 2> "$VERSION_LOG"
 grep 'OpenJDK' "$VERSION_LOG"
 OPEN_JDK=$?
-grep '64-Bit' "$VERSION_LOG"
+grep "64-Bit\|x86_64" "$VERSION_LOG"
 BITS=$?
 rm "$VERSION_LOG"
 if [ $OPEN_JDK -eq 0 ]; then

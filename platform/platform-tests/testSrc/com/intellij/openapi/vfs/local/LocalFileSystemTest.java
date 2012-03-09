@@ -66,7 +66,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
         @Override
         public void run() {
           try{
-            File dir = createTempDirectory();
+            File dir = createTempDirectory(false);
             final ManagingFS managingFS = ManagingFS.getInstance();
 
             VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getPath().replace(File.separatorChar, '/'));

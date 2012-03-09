@@ -69,12 +69,13 @@ public final class GitPusher {
   private static final String INDICATOR_TEXT = "Pushing";
   private static final int MAX_PUSH_ATTEMPTS = 10;
 
-  private final Project myProject;
-  private final ProgressIndicator myProgressIndicator;
-  private final Collection<GitRepository> myRepositories;
-  private final GitVcsSettings mySettings;
-  private final GitPushSettings myPushSettings;
-  private final Git myGit;
+  private final @NotNull Project myProject;
+  private final @NotNull GitRepositoryManager myRepositoryManager;
+  private final @NotNull ProgressIndicator myProgressIndicator;
+  private final @NotNull Collection<GitRepository> myRepositories;
+  private final @NotNull GitVcsSettings mySettings;
+  private final @NotNull GitPushSettings myPushSettings;
+  private final @NotNull Git myGit;
 
   public static void showPushDialogAndPerformPush(@NotNull final Project project) {
     final GitPushDialog dialog = new GitPushDialog(project);
@@ -121,7 +122,8 @@ public final class GitPusher {
   public GitPusher(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myProgressIndicator = indicator;
-    myRepositories = GitRepositoryManager.getInstance(project).getRepositories();
+    myRepositoryManager = GitRepositoryManager.getInstance(myProject);
+    myRepositories = myRepositoryManager.getRepositories();
     mySettings = GitVcsSettings.getInstance(myProject);
     myPushSettings = GitPushSettings.getInstance(myProject);
     myGit = ServiceManager.getService(Git.class);
@@ -241,7 +243,7 @@ public final class GitPusher {
         break;
       }
     }
-    GitRepositoryManager.getInstance(myProject).updateAllRepositories(GitRepository.TrackedTopic.BRANCHES); // new remote branch may be created
+    myRepositoryManager.updateAllRepositories(GitRepository.TrackedTopic.BRANCHES); // new remote branch may be created
     return pushResult;
   }
 

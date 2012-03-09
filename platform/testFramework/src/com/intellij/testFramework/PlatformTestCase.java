@@ -720,12 +720,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static File createTempDir(@NonNls final String prefix) throws IOException {
+    return createTempDir(prefix, true);
+  }
+
+  public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
     final File tempDirectory = FileUtil.createTempDirectory(TEST_DIR_PREFIX + prefix, null);
     myFilesToDelete.add(tempDirectory);
-    getVirtualFile(tempDirectory);
+    if (refresh) {
+      getVirtualFile(tempDirectory);
+    }
     return tempDirectory;
   }
 
+  @Nullable
   protected static VirtualFile getVirtualFile(final File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
@@ -734,6 +741,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return createTempDir(getTestName(true));
   }
 
+  protected File createTempDirectory(final boolean refresh) throws IOException {
+    return createTempDir(getTestName(true), refresh);
+  }
+
+  @Nullable
   protected PsiFile getPsiFile(final Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
   }

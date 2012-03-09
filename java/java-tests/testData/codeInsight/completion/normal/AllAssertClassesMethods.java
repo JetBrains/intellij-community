@@ -1,5 +1,5 @@
 class Foo {
   {
-    Assert.<caret>
+    if (Assert.<caret>)
   }
 }

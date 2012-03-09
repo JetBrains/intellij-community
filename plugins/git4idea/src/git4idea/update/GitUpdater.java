@@ -24,9 +24,10 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.MergeChangeCollector;
@@ -43,21 +44,18 @@ import java.util.Map;
 public abstract class GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitUpdater.class);
 
-  protected final Project myProject;
-  protected final VirtualFile myRoot;
-  protected final Map<VirtualFile, GitBranchPair> myTrackedBranches;
-  protected final ProgressIndicator myProgressIndicator;
-  protected final UpdatedFiles myUpdatedFiles;
-  protected final AbstractVcsHelper myVcsHelper;
+  protected final @NotNull Project myProject;
+  protected final @NotNull VirtualFile myRoot;
+  protected final @NotNull Map<VirtualFile, GitBranchPair> myTrackedBranches;
+  protected final @NotNull ProgressIndicator myProgressIndicator;
+  protected final @NotNull UpdatedFiles myUpdatedFiles;
+  protected final @NotNull AbstractVcsHelper myVcsHelper;
   protected final GitVcs myVcs;
 
   protected GitRevisionNumber myBefore; // The revision that was before update
 
-  protected GitUpdater(Project project,
-                       VirtualFile root,
-                       Map<VirtualFile, GitBranchPair> trackedBranches,
-                       ProgressIndicator progressIndicator,
-                       UpdatedFiles updatedFiles) {
+  protected GitUpdater(@NotNull Project project, @NotNull VirtualFile root, @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
+                       @NotNull ProgressIndicator progressIndicator, @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
     myRoot = root;
     myTrackedBranches = trackedBranches;
@@ -69,18 +67,12 @@ public abstract class GitUpdater {
 
   /**
    * Returns proper updater based on the update policy (merge or rebase) selected by user or stored in his .git/config
-   *
-   *
-   * @param gitUpdateProcess
-   * @param root
-   * @param progressIndicator
    * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
    */
-  public static GitUpdater getUpdater(Project project,
-                                      Map<VirtualFile, GitBranchPair> trackedBranches,
-                                      VirtualFile root,
-                                      ProgressIndicator progressIndicator,
-                                      UpdatedFiles updatedFiles) {
+  @NotNull
+  public static GitUpdater getUpdater(@NotNull Project project, @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
+                                      @NotNull VirtualFile root, @NotNull ProgressIndicator progressIndicator,
+                                      @NotNull UpdatedFiles updatedFiles) {
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings == null) {
       return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
@@ -97,11 +89,10 @@ public abstract class GitUpdater {
     return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
   }
 
-  private static GitUpdater getDefaultUpdaterForBranch(Project project,
-                                                       VirtualFile root,
-                                                       Map<VirtualFile, GitBranchPair> trackedBranches,
-                                                       ProgressIndicator progressIndicator,
-                                                       UpdatedFiles updatedFiles) {
+  @NotNull
+  private static GitUpdater getDefaultUpdaterForBranch(@NotNull Project project, @NotNull VirtualFile root,
+                                                       @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
+                                                       @NotNull ProgressIndicator progressIndicator, @NotNull UpdatedFiles updatedFiles) {
     try {
       final GitBranch branchName = GitBranch.current(project, root);
       final String rebase = GitConfigUtil.getValue(project, root, "branch." + branchName + ".rebase");
@@ -114,6 +105,7 @@ public abstract class GitUpdater {
     return new GitMergeUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
   }
 
+  @NotNull
   public GitUpdateResult update() throws VcsException {
     markStart(myRoot);
     try {
@@ -138,9 +130,10 @@ public abstract class GitUpdater {
   public boolean isUpdateNeeded() throws VcsException {
     GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
     String currentBranch = gitBranchPair.getBranch().getName();
-    assert gitBranchPair.getDest() != null;
-    String remoteBranch = gitBranchPair.getDest().getName();
-    if (! hasRemotelyChangedPaths(currentBranch, remoteBranch)) {
+    GitBranch dest = gitBranchPair.getDest();
+    assert dest != null;
+    String remoteBranch = dest.getName();
+    if (! hasRemoteChanges(currentBranch, remoteBranch)) {
       LOG.info("isSaveNeeded No remote changes, save is not needed");
       return false;
     }
@@ -167,7 +160,11 @@ public abstract class GitUpdater {
     }
   }
 
-  protected boolean hasRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
-    return !GitUtil.getPathsDiffBetweenRefs(currentBranch, remoteBranch, myProject, myRoot).isEmpty();
+  protected boolean hasRemoteChanges(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
+    handler.setNoSSH(true);
+    handler.addParameters(currentBranch + ".." + remoteBranch);
+    String output = handler.run();
+    return output != null && !output.isEmpty();
   }
 }

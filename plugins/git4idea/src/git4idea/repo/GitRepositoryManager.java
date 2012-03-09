@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -73,12 +74,17 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   @Override
   public void initComponent() {
-    MessageBus messageBus = myProject.getMessageBus();
-    MyRepositoryCreationDeletionListener rootChangeListener = new MyRepositoryCreationDeletionListener();
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, rootChangeListener);
-    messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, rootChangeListener);
     Disposer.register(myProject, this);
-    updateRepositoriesCollection();
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        final MessageBus messageBus = myProject.getMessageBus();
+        final MyRepositoryCreationDeletionListener rootChangeListener = new MyRepositoryCreationDeletionListener();
+        messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, rootChangeListener);
+        messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, rootChangeListener);
+        updateRepositoriesCollection();
+      }
+    });
   }
 
   @Override
@@ -191,13 +197,12 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
           }
         }
       }
-
-      GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
-
     }
     finally {
         REPO_LOCK.writeLock().unlock();
     }
+
+    GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
   }
 
   private static boolean gitRootOK(@NotNull VirtualFile root) {

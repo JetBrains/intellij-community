@@ -39,6 +39,7 @@ public class AndroidTargetData {
   private volatile AttributeDefinitions myAttrDefs;
   private volatile RenderServiceFactory myRenderServiceFactory;
   private volatile Set<String> myThemes;
+  private volatile boolean myThemesLoaded;
 
   public AndroidTargetData(@NotNull AndroidSdkData sdkData, @NotNull IAndroidTarget target) {
     mySdkData = sdkData;
@@ -76,11 +77,11 @@ public class AndroidTargetData {
   }
 
   public boolean areThemesCached() {
-    return myThemes != null;
+    return myThemesLoaded;
   }
 
   @NotNull
-  public Set<String> getThemes(@NotNull final AndroidFacet facet) {
+  public synchronized Set<String> getThemes(@NotNull final AndroidFacet facet) {
     if (myThemes == null) {
       myThemes = new HashSet<String>();
       final Module module = facet.getModule();
@@ -125,6 +126,8 @@ public class AndroidTargetData {
           }
         }
       }
+
+      myThemesLoaded = true;
     }
     return myThemes;
   }

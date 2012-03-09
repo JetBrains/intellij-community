@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -81,8 +83,8 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext matchingContext, @NotNull final CompletionResultSet result) {
         final Set<LookupElement> lookupSet = new THashSet<LookupElement>();
         final PsiField variable = (PsiField)parameters.getPosition().getParent();
-        completeFieldName(lookupSet, variable, result.getPrefixMatcher(), parameters.getInvocationCount() >= 1);
         completeMethodName(lookupSet, variable, result.getPrefixMatcher());
+        completeFieldName(lookupSet, variable, result.getPrefixMatcher(), parameters.getInvocationCount() >= 1);
         for (final LookupElement item : lookupSet) {
           result.addElement(item);
         }
@@ -248,7 +250,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     final VariableKind variableKind = JavaCodeStyleManager.getInstance(project).getVariableKind(var);
 
     final String prefix = matcher.getPrefix();
-    if (PsiType.VOID.equals(var.getType()) || psiField().inClass(psiClass().isInterface()).accepts(var)) {
+    if (PsiType.VOID.equals(var.getType()) || psiField().inClass(psiClass().isInterface().andNot(psiClass().isAnnotationType())).accepts(var)) {
       completeVariableNameForRefactoring(project, set, matcher, var.getType(), variableKind, includeOverlapped, true);
       return;
     }
@@ -340,6 +342,14 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
 
     PsiClass ourClassParent = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (ourClassParent == null) return;
+
+    if (ourClassParent.isAnnotationType() && matcher.prefixMatches(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)) {
+      set.add(LookupElementBuilder.create(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+                .setIcon(PlatformIcons.METHOD_ICON)
+                .setTailText("()")
+                .setInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
+    }
+
     addLookupItems(set, null, matcher, element.getProject(), getUnresolvedReferences(ourClassParent, true));
 
     addLookupItems(set, null, matcher, element.getProject(), getPropertiesHandlersNames(

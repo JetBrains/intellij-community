@@ -30,6 +30,7 @@ import com.intellij.psi.filters.getters.*;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
+import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -345,6 +346,18 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
 
     extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter(ConstructorInsertHandler.SMART_INSTANCE));
+
+    extend(CompletionType.SMART, psiElement().afterLeaf(PsiKeyword.BREAK, PsiKeyword.CONTINUE), new CompletionProvider<CompletionParameters>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiReference ref = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());
+        if (ref instanceof PsiLabelReference) {
+          JavaCompletionContributor.processLabelReference(result, (PsiLabelReference)ref);
+        }
+      }
+    });
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,

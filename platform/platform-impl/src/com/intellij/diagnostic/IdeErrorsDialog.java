@@ -131,9 +131,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         try {
           myDevelopers[0] = DevelopersLoader.fetchDevelopers();
         } catch (IOException e) {
-          Notifications.Bus.register("Error reporter", NotificationDisplayType.BALLOON);
-          Notifications.Bus.notify(new Notification("Error reporter", "Communication error",
-                                                    "Unable to load developers list from server.", NotificationType.WARNING));
+          //Notifications.Bus.register("Error reporter", NotificationDisplayType.BALLOON);
+          //Notifications.Bus.notify(new Notification("Error reporter", "Communication error",
+          //                                          "Unable to load developers list from server.", NotificationType.WARNING));
         }
       }
 

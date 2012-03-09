@@ -1292,10 +1292,20 @@ public class ListUtils {
   }
 
   public void testAllAssertClassesMethods() {
-    myFixture.addClass 'package foo; public class Assert { public static void foo() {} }'
-    myFixture.addClass 'package bar; public class Assert { public static void bar() {} }'
+    myFixture.addClass 'package foo; public class Assert { public static boolean foo() {} }'
+    myFixture.addClass 'package bar; public class Assert { public static boolean bar() {} }'
     configure()
     assert myFixture.lookupElementStrings == ['Assert.bar', 'Assert.foo']
+    myFixture.type '\n'
+    checkResult()
+  }
+
+  public void testCastVisually() {
+    configure()
+    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    assert p.itemText == 'getValue'
+    assert p.itemTextBold
+    assert p.typeText == 'Foo'
   }
 
 }

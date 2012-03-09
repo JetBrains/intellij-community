@@ -206,7 +206,8 @@ public class FileStructurePopup implements Disposable {
       }
     };
 
-    myAbstractTreeBuilder.getUi().getUpdater().setPassThroughMode(true);
+    //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
+    myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
     myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
     //myAbstractTreeBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myAbstractTreeBuilder);
@@ -269,9 +270,11 @@ public class FileStructurePopup implements Disposable {
       myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
     }
 
+    //final long cur = System.currentTimeMillis();
     myAbstractTreeBuilder.expandAll(new Runnable() {
       @Override
       public void run() {
+        //System.out.println(System.currentTimeMillis() - cur);
         IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
         myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
           @Override
@@ -298,21 +301,25 @@ public class FileStructurePopup implements Disposable {
 
           if (!filter.equals(prefix)) {
             filter = prefix;
-            final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-            try {
-              myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
-                @Override
-                public void run() {
-                  myTree.repaint();
-                  //if (mySpeedSearch.isPopupActive()) {
-                  //  mySpeedSearch.refreshSelection();
-                  //}
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+                try {
+                  myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
+                    @Override
+                    public void run() {
+                      myTree.repaint();
+                      //if (mySpeedSearch.isPopupActive()) {
+                      //  mySpeedSearch.refreshSelection();
+                      //}
+                    }
+                  });
                 }
-              });
-            }
-            finally {
-              token.finish();
-            }
+                finally {
+                  token.finish();
+                }
+              }
+            });
           }
           if (!alarm.isDisposed()) {
             alarm.addRequest(this, 300);
@@ -586,19 +593,28 @@ public class FileStructurePopup implements Disposable {
         myFilteringStructure.rebuild();
         
         final Object sel = selection;
-        final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          myAbstractTreeBuilder.refilter(sel, true, false).doWhenProcessed(new Runnable() {
-            @Override
-            public void run() {
-              if (mySpeedSearch.isPopupActive()) {
-                mySpeedSearch.refreshSelection();
-              }
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+            try {
+              myAbstractTreeBuilder.refilter(sel, true, false).doWhenProcessed(new Runnable() {
+                @Override
+                public void run() {
+                  if (mySpeedSearch.isPopupActive()) {
+                    mySpeedSearch.refreshSelection();
+                  }
+                }
+              });
             }
-          });
-        }
-        finally {
-          token.finish();
+            finally {
+              token.finish();
+            }
+          }
+        };
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          runnable.run();
+        } else {
+          ApplicationManager.getApplication().invokeLater(runnable);
         }
       }
     });

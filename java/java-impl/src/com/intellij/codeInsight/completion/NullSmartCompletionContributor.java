@@ -17,17 +17,17 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.openapi.util.Ref;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
-import static com.intellij.patterns.StandardPatterns.and;
-import static com.intellij.patterns.StandardPatterns.not;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.and;
+import static com.intellij.patterns.StandardPatterns.not;
 
 /**
  * @author peter
@@ -38,16 +38,10 @@ public class NullSmartCompletionContributor extends CompletionContributor{
                                                       not(psiElement().afterLeaf("."))), new ExpectedTypeBasedCompletionProvider() {
       protected void addCompletions(final CompletionParameters parameters,
                                     final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
-        final Ref<Boolean> empty = Ref.create(true);
-        result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-          public void consume(final CompletionResult lookupElement) {
-            empty.set(false);
-            result.passResult(lookupElement);
-          }
-        });
+        final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
 
         @NonNls final String prefix = result.getPrefixMatcher().getPrefix();
-        if (empty.get().booleanValue() && prefix.startsWith("n")) {
+        if (empty && StringUtil.startsWithChar(prefix, 'n')) {
           for (final ExpectedTypeInfo info : infos) {
             if (!(info.getType() instanceof PsiPrimitiveType)) {
               final LookupItem item = (LookupItem)BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);

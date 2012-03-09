@@ -78,12 +78,26 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
 
+    myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      @Override
+      public PsiFile compute() {
+        return PsiManager.getInstance(getProject()).findFile(myFile);
+      }
+    });
+    myPSIChangeListener = new ExternalPSIChangeListener(this, myXmlFile, 100, new Runnable() {
+      @Override
+      public void run() {
+        reparseFile();
+      }
+    });
+
     showProgress("Load configuration");
     myProfileAction = new ProfileAction(this, new Runnable() {
       @Override
       public void run() {
         myActionPanel.update();
         if (myRootComponent == null) {
+          myPSIChangeListener.start();
           myPSIChangeListener.addRequest();
         }
         else {
@@ -96,22 +110,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
       }
     });
-
-    myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        return PsiManager.getInstance(getProject()).findFile(myFile);
-      }
-    });
-
-    myPSIChangeListener = new ExternalPSIChangeListener(this, myXmlFile, 100, new Runnable() {
-      @Override
-      public void run() {
-        reparseFile();
-      }
-    });
-    // TODO: work over activate() / deactivate()
-    myPSIChangeListener.start();
   }
 
   private void reparseFile() {

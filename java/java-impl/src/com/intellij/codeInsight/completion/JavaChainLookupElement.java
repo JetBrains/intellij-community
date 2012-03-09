@@ -21,8 +21,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,10 +102,12 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     final Document document = context.getEditor().getDocument();
     document.replaceString(context.getStartOffset(), context.getTailOffset(), ";");
     final InsertionContext qualifierContext = CompletionUtil.emulateInsertion(context, context.getStartOffset(), myQualifier);
+    OffsetKey oldStart = context.trackOffset(context.getStartOffset(), false);
 
-    if (shouldParenthesizeQualifier(qualifierContext.getFile(), context.getStartOffset(), qualifierContext.getTailOffset())) {
+    int start = CharArrayUtil.shiftForward(context.getDocument().getCharsSequence(), context.getStartOffset(), " \t");
+    if (shouldParenthesizeQualifier(context.getFile(), start, qualifierContext.getTailOffset())) {
       final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject()).SPACE_WITHIN_PARENTHESES ? " " : "";
-      document.insertString(context.getStartOffset(), "(" + space);
+      document.insertString(start, "(" + space);
       document.insertString(qualifierContext.getTailOffset(), space + ")");
     }
 
@@ -112,6 +116,13 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     document.replaceString(context.getTailOffset() - 1, context.getTailOffset(), ".");
 
     CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);
+    context.commitDocument();
+
+    int formatStart = context.getOffset(oldStart);
+    int formatEnd = context.getTailOffset();
+    if (formatStart >= 0 && formatEnd >= 0) {
+      CodeStyleManager.getInstance(context.getProject()).reformatRange(context.getFile(), formatStart, formatEnd);
+    }
   }
 
   protected boolean shouldParenthesizeQualifier(final PsiFile file, final int startOffset, final int endOffset) {

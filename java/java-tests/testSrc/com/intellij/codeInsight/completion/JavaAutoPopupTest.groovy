@@ -45,7 +45,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-import com.intellij.util.Consumer
 
 /**
  * @author peter
@@ -515,7 +514,7 @@ public interface Test {
 
     @Override
     void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
-      result.runRemainingContributors(parameters, { result.passResult(it) } as Consumer)
+      result.runRemainingContributors(parameters, true)
       Thread.sleep 1000
     }
   }
@@ -1230,7 +1229,15 @@ class Foo {{
     type 'fo\n'
     myFixture.checkResult '''import foo.Util;
 
-class Foo {{ Util.foo();<caret> }}'''
+class Foo {{
+    Util.foo();<caret> }}'''
+  }
+
+  public void testPackageQualifier() {
+    myFixture.addClass("package com.too; public class Util {}")
+    myFixture.configureByText 'a.java', 'class Foo { void foo(Object command) { <caret> }}'
+    type 'com.t'
+    assert myFixture.lookupElementStrings.containsAll(['too', 'command.toString'])
   }
 
 }

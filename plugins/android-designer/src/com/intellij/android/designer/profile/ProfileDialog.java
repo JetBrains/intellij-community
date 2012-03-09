@@ -113,7 +113,7 @@ public class ProfileDialog extends DialogWrapper {
     decorator.setUpAction(null);
     decorator.setDownAction(null);
 
-    myProfileManager = new ProfileManager(module, EmptyRunnable.INSTANCE);
+    myProfileManager = new ProfileManager(module, EmptyRunnable.INSTANCE, EmptyRunnable.INSTANCE);
 
 
     myContentPanel = new JPanel(new GridBagLayout());

@@ -19,10 +19,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +33,22 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
+public class GroovyNoVariantsDelegator extends CompletionContributor {
 
   @Override
-  protected void delegate(CompletionParameters parameters, CompletionResultSet result, Consumer<CompletionResult> passResult) {
+  public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
+    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(result.runRemainingContributors(parameters, true));
+
+    if (!empty && parameters.getInvocationCount() == 0) {
+      result.restartCompletionWhenNothingMatches();
+    }
+
+    if (empty) {
+      delegate(parameters, result);
+    }
+  }
+
+  private static void delegate(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result, false) &&
@@ -78,8 +87,11 @@ public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
     }
     PsiElement qualifier = ((GrReferenceElement)parent).getQualifier();
     if (!(qualifier instanceof GrReferenceElement) ||
-        ((GrReferenceElement)qualifier).getQualifier() != null ||
-        ((GrReferenceElement)qualifier).resolve() != null) {
+        ((GrReferenceElement)qualifier).getQualifier() != null) {
+      return;
+    }
+    PsiElement target = ((GrReferenceElement)qualifier).resolve();
+    if (target != null && !(target instanceof PsiPackage)) {
       return;
     }
 
@@ -113,7 +125,7 @@ public class GroovyNoVariantsDelegator extends NoVariantsDelegator {
     }
 
     return factory.createReferenceExpressionFromText("xxx.xxx",
-                                                     ReferenceExpressionCompletionContributor
+                                                     JavaCompletionUtil
                                                        .createContextWithXxxVariable(place, qualifierType));
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -44,7 +45,8 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   public TextRange surroundExpression(final Project project, final Editor editor, PsiExpression expr) throws IncorrectOperationException {
     assert expr.isValid();
     PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
-    final Template template = generateTemplate(project, expr.getText(), types);
+    String exprText = expr instanceof PsiBinaryExpression ? "(" + expr.getText() + ")" : expr.getText();
+    final Template template = generateTemplate(project, exprText, types);
     TextRange range;
     if (expr.isPhysical()) {
       range = expr.getTextRange();
