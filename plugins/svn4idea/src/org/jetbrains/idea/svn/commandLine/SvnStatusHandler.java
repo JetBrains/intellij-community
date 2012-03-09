@@ -684,6 +684,47 @@ public class SvnStatusHandler extends DefaultHandler {
       if (exists) {
         status.setKind(exists, file.isDirectory() ? SVNNodeKind.DIR : SVNNodeKind.FILE);
       } else {
+        // this is a hack. This is done so because of strange svn native client output:
+        /*
+        c:\TestProjects\sortedProjects\Subversion\local\withExt82420\mod4>svn st --xml
+        <?xml version="1.0" encoding="UTF-8"?>
+        <status>
+        <target
+           path=".">
+        <entry
+           path="mod4">
+        <wc-status
+           props="none"
+           item="unversioned">
+        </wc-status>
+        </entry>
+        </target>
+        </status>
+
+        while
+
+c:\TestProjects\sortedProjects\Subversion\local\withExt82420\mod4>dir
+ Volume in drive C has no label.
+ Volume Serial Number is B4EA-B379
+
+ Directory of c:\TestProjects\sortedProjects\Subversion\local\withExt82420\mod4
+
+03/09/2012  05:30 PM    <DIR>          .
+03/09/2012  05:30 PM    <DIR>          ..
+03/09/2012  05:30 PM               437 mod4.iml
+03/09/2012  05:30 PM    <DIR>          src
+
+and no "mod4" under
+
+        */
+        final SVNStatusType ns = status.getNodeStatus();
+        if (myBase.getName().equals(path) && ! SVNStatusType.MISSING.equals(ns) &&
+            ! SVNStatusType.STATUS_DELETED.equals(ns) ) {
+          status.setKind(true, SVNNodeKind.DIR);
+          status.setFile(myBase);
+          status.setPath("");
+          return;
+        }
         status.setKind(exists, SVNNodeKind.UNKNOWN);
       }
       status.setPath(path);
