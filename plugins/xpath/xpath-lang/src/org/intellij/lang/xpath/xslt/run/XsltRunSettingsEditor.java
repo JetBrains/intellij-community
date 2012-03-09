@@ -29,6 +29,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -36,6 +37,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -44,13 +46,14 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
@@ -304,9 +307,14 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
         }
       });
 
-      final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
-      myJDK.setModel(new DefaultComboBoxModel(allJdks));
-      if (allJdks.length > 0) {
+      final List<Sdk> allJdks = ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), new Condition<Sdk>() {
+        @Override
+        public boolean value(Sdk sdk) {
+          return sdk.getSdkType() instanceof JavaSdkType;
+        }
+      });
+      myJDK.setModel(new DefaultComboBoxModel(allJdks.toArray()));
+      if (allJdks.size() > 0) {
         myJDK.setSelectedIndex(0);
       }
       else {

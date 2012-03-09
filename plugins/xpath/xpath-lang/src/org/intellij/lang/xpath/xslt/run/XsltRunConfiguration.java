@@ -473,6 +473,10 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (jdk == null) {
             jdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
         }
+        // EA-33419
+        if (jdk == null || !(jdk.getSdkType() instanceof JavaSdkType)) {
+          return getDefaultSdk();
+        }
         return jdk;
     }
 
