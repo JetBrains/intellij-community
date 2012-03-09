@@ -26,6 +26,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -147,8 +148,16 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     }
 
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
-    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
     assert place != null;
+    boolean hasParams = hasConstructorParameters(psiClass, place);
+
+    JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
+
+    return true;
+  }
+
+  static boolean hasConstructorParameters(PsiClass psiClass, @NotNull PsiElement place) {
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
     boolean hasParams = false;
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (!resolveHelper.isAccessible(constructor, place, null)) continue;
@@ -157,10 +166,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
         break;
       }
     }
-
-    JavaCompletionUtil.insertParentheses(context, delegate, false, hasParams, forAnonymous);
-
-    return true;
+    return hasParams;
   }
 
   private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {

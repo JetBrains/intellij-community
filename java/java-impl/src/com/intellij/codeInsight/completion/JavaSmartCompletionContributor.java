@@ -353,6 +353,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
   @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
+    return getExpectedTypes(parameters, parameters.getCompletionType() == CompletionType.SMART);
+  }
+
+  @NotNull
+  public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters, boolean voidable) {
     final PsiElement position = parameters.getPosition();
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
@@ -372,7 +377,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     PsiExpression expression = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
     if (expression == null) return ExpectedTypeInfo.EMPTY_ARRAY;
 
-    return ExpectedTypesProvider.getExpectedTypes(expression, true, parameters.getCompletionType() == CompletionType.SMART, false);
+    return ExpectedTypesProvider.getExpectedTypes(expression, true, voidable, false);
   }
 
   static Set<LookupElement> completeReference(final PsiElement element,

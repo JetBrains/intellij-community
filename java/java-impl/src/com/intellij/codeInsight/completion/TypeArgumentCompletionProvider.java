@@ -16,12 +16,16 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CharTailType;
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -36,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
 /**
 * @author peter
 */
@@ -47,11 +53,12 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     final Pair<PsiClass, Integer> pair = getTypeParameterInfo(context);
     if (pair == null) return;
 
-    final PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(context, false);
-    if (psiTypes.length > 0) {
-      for (PsiType type : psiTypes) {
+    ExpectedTypeInfo[] types = JavaSmartCompletionContributor.getExpectedTypes(parameters, false);
+    if (types.length > 0) {
+      for (ExpectedTypeInfo info : types) {
+        PsiType type = info.getType();
         if (type instanceof PsiClassType) {
-          fillExpectedTypeArgs(resultSet, context, pair.first, pair.second, ((PsiClassType)type).resolveGenerics());
+          fillExpectedTypeArgs(resultSet, context, pair.first, pair.second, ((PsiClassType)type).resolveGenerics(), info.getTailType());
         }
       }
     } else {
@@ -63,7 +70,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
                                            PsiElement context,
                                            final PsiClass actualClass,
                                            final int index,
-                                           PsiClassType.ClassResolveResult expectedType) {
+                                           PsiClassType.ClassResolveResult expectedType, TailType globalTail) {
     final PsiClass expectedClass = expectedType.getElement();
 
     if (!InheritanceUtil.isInheritorOrSelf(actualClass, expectedClass, true)) return;
@@ -86,30 +93,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       typeItems.add(PsiTypeLookupItem.createLookupItem(arg, context));
     }
 
-    resultSet.addElement(LookupElementBuilder.create(typeItems.get(0).getObject(), typeItems.get(0).getLookupString()).setRenderer(new LookupElementRenderer<LookupElement>() {
-      @Override
-      public void renderElement(LookupElement element, LookupElementPresentation presentation) {
-        typeItems.get(0).renderElement(presentation);
-        presentation.setItemText(StringUtil.join(typeItems, new Function<PsiTypeLookupItem, String>() {
-          @Override
-          public String fun(PsiTypeLookupItem item) {
-            return item.getLookupString();
-          }
-        }, ", "));
-        presentation.setTailText(null);
-        presentation.setTypeText(null);
-      }
-    }).setInsertHandler(new InsertHandler<LookupElement>() {
-      @Override
-      public void handleInsert(InsertionContext context, LookupElement item) {
-        context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-        for (int i = 0; i < typeItems.size(); i++) {
-          CompletionUtil.emulateInsertion(context, context.getTailOffset(), typeItems.get(i));
-          getTail(i == typeItems.size() - 1).processTail(context.getEditor(), context.getTailOffset());
-        }
-        context.setAddCompletionChar(false);
-      }
-    }));
+    resultSet.addElement(new TypeArgsLookupElement(typeItems, globalTail, ConstructorInsertHandler.hasConstructorParameters(actualClass, context)));
   }
 
   @Nullable
@@ -183,5 +167,80 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     if(typeParameters.length <= parameterIndex) return null;
 
     return Pair.create(referencedClass, parameterIndex);
+  }
+
+  private static class TypeArgsLookupElement extends LookupElement {
+    private String myLookupString;
+    private final List<PsiTypeLookupItem> myTypeItems;
+    private final TailType myGlobalTail;
+    private final boolean myHasParameters;
+
+    public TypeArgsLookupElement(List<PsiTypeLookupItem> typeItems, TailType globalTail, boolean hasParameters) {
+      myTypeItems = typeItems;
+      myGlobalTail = globalTail;
+      myHasParameters = hasParameters;
+      myLookupString = StringUtil.join(myTypeItems, new Function<PsiTypeLookupItem, String>() {
+        @Override
+        public String fun(PsiTypeLookupItem item) {
+          return item.getLookupString();
+        }
+      }, ", ");
+    }
+
+    @NotNull
+    @Override
+    public Object getObject() {
+      return myTypeItems.get(0).getObject();
+    }
+
+    @NotNull
+    @Override
+    public String getLookupString() {
+      return myLookupString;
+    }
+
+    @Override
+    public void renderElement(LookupElementPresentation presentation) {
+      myTypeItems.get(0).renderElement(presentation);
+      presentation.setItemText(getLookupString());
+      presentation.setTailText(null);
+      presentation.setTypeText(null);
+    }
+
+    @Override
+    public void handleInsert(InsertionContext context) {
+      context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
+      for (int i = 0; i < myTypeItems.size(); i++) {
+        CompletionUtil.emulateInsertion(context, context.getTailOffset(), myTypeItems.get(i));
+        context.setTailOffset(getTail(i == myTypeItems.size() - 1).processTail(context.getEditor(), context.getTailOffset()));
+      }
+      context.setAddCompletionChar(false);
+
+      context.commitDocument();
+
+      PsiElement leaf = context.getFile().findElementAt(context.getTailOffset() - 1);
+      if (psiElement().withParents(PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class, PsiNewExpression.class)
+        .accepts(leaf)) {
+        ParenthesesInsertHandler.getInstance(myHasParameters).handleInsert(context, this);
+        myGlobalTail.processTail(context.getEditor(), context.getTailOffset());
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TypeArgsLookupElement element = (TypeArgsLookupElement)o;
+
+      if (!myTypeItems.equals(element.myTypeItems)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myTypeItems.hashCode();
+    }
   }
 }
