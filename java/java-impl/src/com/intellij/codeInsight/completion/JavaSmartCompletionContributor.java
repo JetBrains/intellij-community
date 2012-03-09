@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
@@ -34,10 +33,8 @@ import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionCache;
@@ -286,63 +283,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, psiElement().inside(psiElement(PsiReferenceParameterList.class)),
-           new CompletionProvider<CompletionParameters>() {
-
-             protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
-               final PsiElement context = parameters.getPosition();
-
-               final Pair<PsiClass, Integer> pair = getTypeParameterInfo(context);
-               if (pair == null) return;
-
-               final PsiClass referencedClass = pair.first;
-               final int parameterIndex = pair.second.intValue();
-               final PsiTypeParameter[] typeParameters = referencedClass.getTypeParameters();
-               final PsiTypeParameter targetParameter = typeParameters[parameterIndex];
-
-               boolean isLast = parameterIndex == typeParameters.length - 1;
-               final TailType tail = isLast ? new CharTailType('>') : TailType.COMMA;
-
-               PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
-               final PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(context, false);
-               if (psiTypes.length > 0) {
-                 for (PsiType type : psiTypes) {
-                   if (!(type instanceof PsiClassType)) continue;
-                   final PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
-                   final PsiClass typeClass = result.getElement();
-                   final PsiSubstitutor substitutor = result.getSubstitutor();
-
-                   if (!InheritanceUtil.isInheritorOrSelf(referencedClass, typeClass, true)) continue;
-
-                   final PsiSubstitutor currentSubstitutor =
-                     TypeConversionUtil.getClassSubstitutor(typeClass, referencedClass, PsiSubstitutor.EMPTY);
-                   for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(typeClass)) {
-                     final PsiType argSubstitution = substitutor.substitute(parameter);
-                     final PsiType paramSubstitution = currentSubstitutor.substitute(parameter);
-                     final PsiType substitution = resolveHelper
-                       .getSubstitutionForTypeParameter(targetParameter, paramSubstitution, argSubstitution, false,
-                                                        PsiUtil.getLanguageLevel(context));
-                     if (substitution != null && substitution != PsiType.NULL) {
-                       final LookupItem item = PsiTypeLookupItem.createLookupItem(substitution, context);
-                       resultSet.addElement(TailTypeDecorator.withTail(item.setInsertHandler(new DefaultInsertHandler()), tail));
-                     }
-                   }
-                 }
-               } else {
-                 final List<PsiClassType> typeList = Collections.singletonList((PsiClassType)TypeConversionUtil.typeParameterErasure(targetParameter));
-                 JavaInheritorsGetter
-                   .processInheritors(parameters, typeList, resultSet.getPrefixMatcher(), new Consumer<PsiType>() {
-                     public void consume(final PsiType type) {
-                       final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-                       if (psiClass == null) return;
-
-                       resultSet.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(psiClass), tail));
-                     }
-                   });
-
-               }
-             }
-           });
+    extend(CompletionType.SMART, psiElement().inside(psiElement(PsiReferenceParameterList.class)), new TypeArgumentCompletionProvider());
 
 
     extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter(ConstructorInsertHandler.SMART_INSTANCE));
@@ -407,39 +348,6 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
 
     return new JavaPsiClassReferenceElement(psiClass);
-  }
-
-  @Nullable
-  public static Pair<PsiClass, Integer> getTypeParameterInfo(PsiElement context) {
-    final PsiReferenceParameterList parameterList = PsiTreeUtil.getContextOfType(context, PsiReferenceParameterList.class, true);
-    if (parameterList == null) return null;
-
-    PsiElement parent = parameterList.getParent();
-    if (!(parent instanceof PsiJavaCodeReferenceElement)) return null;
-    
-    final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
-    final int parameterIndex;
-
-    int index = 0;
-    final PsiTypeElement typeElement = PsiTreeUtil.getContextOfType(context, PsiTypeElement.class, true);
-    if(typeElement != null){
-      final PsiTypeElement[] elements = referenceElement.getParameterList().getTypeParameterElements();
-      while (index < elements.length) {
-        final PsiTypeElement element = elements[index++];
-        if(element == typeElement) break;
-      }
-    }
-    parameterIndex = index - 1;
-
-    if(parameterIndex < 0) return null;
-    final PsiElement target = referenceElement.resolve();
-    if(!(target instanceof PsiClass)) return null;
-
-    final PsiClass referencedClass = (PsiClass)target;
-    final PsiTypeParameter[] typeParameters = referencedClass.getTypeParameters();
-    if(typeParameters.length <= parameterIndex) return null;
-
-    return Pair.create(referencedClass, parameterIndex);
   }
 
 
