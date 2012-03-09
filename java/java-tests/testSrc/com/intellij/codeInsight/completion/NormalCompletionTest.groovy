@@ -1315,4 +1315,13 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testSuggestAllTypeArguments() {
+    configure()
+    assert 'String, String' == lookup.items[1].lookupString
+    lookup.currentItem = lookup.items[1]
+    type '\n'
+    checkResult()
+
+  }
+
 }

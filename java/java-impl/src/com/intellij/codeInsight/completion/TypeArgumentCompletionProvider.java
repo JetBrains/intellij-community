@@ -46,6 +46,11 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 * @author peter
 */
 class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private final boolean mySmart;
+
+  TypeArgumentCompletionProvider(boolean smart) {
+    mySmart = smart;
+  }
 
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext processingContext, @NotNull final CompletionResultSet resultSet) {
     final PsiElement context = parameters.getPosition();
@@ -58,10 +63,10 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
       for (ExpectedTypeInfo info : types) {
         PsiType type = info.getType();
         if (type instanceof PsiClassType) {
-          fillExpectedTypeArgs(resultSet, context, pair.first, pair.second, ((PsiClassType)type).resolveGenerics(), info.getTailType());
+          fillExpectedTypeArgs(resultSet, context, pair.first, pair.second, ((PsiClassType)type).resolveGenerics(), mySmart ? info.getTailType() : TailType.NONE);
         }
       }
-    } else {
+    } else if (mySmart) {
       addInheritors(parameters, resultSet, pair.first, pair.second);
     }
   }

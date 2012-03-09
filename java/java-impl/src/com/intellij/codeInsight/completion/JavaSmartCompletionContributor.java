@@ -19,6 +19,7 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementExtractorFilter;
@@ -86,6 +87,8 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   static final ElementPattern<PsiElement> INSIDE_TYPECAST_EXPRESSION = psiElement().withParent(
     psiElement(PsiReferenceExpression.class).afterLeaf(
       psiElement().withText(")").withParent(PsiTypeCastExpression.class)));
+  static final PsiElementPattern.Capture<PsiElement> IN_TYPE_ARGS =
+    psiElement().inside(psiElement(PsiReferenceParameterList.class));
 
   @Nullable
   private static ElementFilter getReferenceFilter(PsiElement element) {
@@ -283,7 +286,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, psiElement().inside(psiElement(PsiReferenceParameterList.class)), new TypeArgumentCompletionProvider());
+    extend(CompletionType.SMART, IN_TYPE_ARGS, new TypeArgumentCompletionProvider(true));
 
 
     extend(CompletionType.SMART, AFTER_NEW, new JavaInheritorsGetter(ConstructorInsertHandler.SMART_INSTANCE));
