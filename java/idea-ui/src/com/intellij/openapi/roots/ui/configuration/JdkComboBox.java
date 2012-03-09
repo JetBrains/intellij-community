@@ -17,10 +17,11 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
@@ -48,15 +49,20 @@ import java.util.List;
 public class JdkComboBox extends ComboBoxWithWidePopup {
 
   @Nullable
-  private Condition<Sdk> myFilter;
-  
+  private final Condition<Sdk> myFilter;
+  @Nullable
+  private final Condition<SdkType> myCreationFilter;
+
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
-    this(jdkModel, null);
+    this(jdkModel, null, null);
   }
 
-  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel, @Nullable Condition<Sdk> filter) {
+  public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
+                     @Nullable Condition<Sdk> filter,
+                     @Nullable Condition<SdkType> creationFilter) {
     super(new JdkComboBoxModel(jdkModel, filter));
     myFilter = filter;
+    myCreationFilter = creationFilter;
     setRenderer(new ProjectJdkListRenderer(getRenderer()) {
       @Override
       public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -137,12 +143,18 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
               }
             }
           }
-        });
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(actionGroupTitle, group,
-                                  DataManager.getInstance().getDataContext(JdkComboBox.this), JBPopupFactory.ActionSelectionAid.MNEMONICS,
-                                  false)
-          .showUnderneathOf(setUpButton);
+        }, myCreationFilter);
+        final DataContext dataContext = DataManager.getInstance().getDataContext(JdkComboBox.this);
+        if (group.getChildrenCount() > 1) {
+          JBPopupFactory.getInstance()
+            .createActionGroupPopup(actionGroupTitle, group, dataContext, JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+            .showUnderneathOf(setUpButton);
+        }
+        else {
+          final AnActionEvent event =
+            new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0);
+          group.getChildren(event)[0].actionPerformed(event);
+        }
       }
     });
   }
