@@ -24,9 +24,10 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.MergeChangeCollector;
@@ -132,7 +133,7 @@ public abstract class GitUpdater {
     GitBranch dest = gitBranchPair.getDest();
     assert dest != null;
     String remoteBranch = dest.getName();
-    if (! hasRemotelyChangedPaths(currentBranch, remoteBranch)) {
+    if (! hasRemoteChanges(currentBranch, remoteBranch)) {
       LOG.info("isSaveNeeded No remote changes, save is not needed");
       return false;
     }
@@ -159,7 +160,11 @@ public abstract class GitUpdater {
     }
   }
 
-  protected boolean hasRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
-    return !GitUtil.getPathsDiffBetweenRefs(currentBranch, remoteBranch, myProject, myRoot).isEmpty();
+  protected boolean hasRemoteChanges(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
+    handler.setNoSSH(true);
+    handler.addParameters(currentBranch + ".." + remoteBranch);
+    String output = handler.run();
+    return output != null && !output.isEmpty();
   }
 }
