@@ -18,8 +18,10 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -333,6 +335,7 @@ public class PropertiesComponent extends JPanel {
           wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive ? SVNDepth.INFINITY : SVNDepth.EMPTY, null, null);
         }
         catch (SVNException err) {
+          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
           // show error message
         }
       }
