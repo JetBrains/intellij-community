@@ -557,15 +557,16 @@ public class JavaCompletionUtil {
 
   public static boolean containsMember(PsiType qualifierType, Object object) {
     if (qualifierType instanceof PsiArrayType && object instanceof PsiMember) { //length and clone()
-      if (((PsiMember)object).getContainingFile().getVirtualFile() == null) { //yes, they're a bit dummy
+      PsiFile file = ((PsiMember)object).getContainingFile();
+      if (file == null || file.getVirtualFile() == null) { //yes, they're a bit dummy
         return true;
       }
     }
     else if (qualifierType instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
       if (qualifierClass == null) return false;
-      if (object instanceof PsiMethod) {
-        return qualifierClass.findMethodBySignature((PsiMethod)object, false) != null;
+      if (object instanceof PsiMethod && qualifierClass.findMethodBySignature((PsiMethod)object, false) != null) {
+        return true;
       }
       if (object instanceof PsiMember) {
         return qualifierClass.equals(((PsiMember)object).getContainingClass());
