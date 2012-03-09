@@ -475,6 +475,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       if (namedArguments.length == 0) return;
 
       Map<String, NamedArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, false);
+      if (map == null) return;
 
       for (GrNamedArgument namedArgument : namedArguments) {
         String labelName = namedArgument.getLabelName();
