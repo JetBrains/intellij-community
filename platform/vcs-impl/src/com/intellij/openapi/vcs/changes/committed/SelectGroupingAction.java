@@ -26,6 +26,7 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
   public SelectGroupingAction(final CommittedChangesTreeBrowser browser) {
     super("Group by");
     myBrowser = browser;
+    getComboBox().setPrototypeDisplayValue("Date+");
   }
 
   protected void selectionChanged(Object selection) {
