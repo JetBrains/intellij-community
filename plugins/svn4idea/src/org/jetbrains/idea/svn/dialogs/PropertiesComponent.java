@@ -279,6 +279,7 @@ public class PropertiesComponent extends JPanel {
         }
         catch (SVNException err) {
           // show error message
+          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
         }
       }
       setFile(myVcs, myFile);
@@ -300,6 +301,7 @@ public class PropertiesComponent extends JPanel {
       try {
         myVcs.createWCClient().doSetProperty(myFile, getSelectedPropertyName(), null, true, false, null);
       } catch (SVNException error) {
+        VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + error.getMessage(), MessageType.ERROR);
         // show error message.
       }
       setFile(myVcs, myFile);
@@ -365,6 +367,7 @@ public class PropertiesComponent extends JPanel {
           wcClient.doSetProperty(myFile, name, SVNPropertyValue.create(value), false, recursive, null);
         }
         catch (SVNException err) {
+          VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not set property: " + err.getMessage(), MessageType.ERROR);
           // show error message
         }
       }
