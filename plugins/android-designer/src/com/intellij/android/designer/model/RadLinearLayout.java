@@ -15,20 +15,8 @@
  */
 package com.intellij.android.designer.model;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadLayout;
-
-import java.awt.*;
-import java.util.List;
-
 /**
  * @author Alexander Lobas
  */
-public class RadViewLayout extends RadLayout {
- @Override
-  public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    return new NonResizeSelectionDecorator(Color.RED, 1);
-  }
+public class RadLinearLayout extends RadViewLayout {
 }

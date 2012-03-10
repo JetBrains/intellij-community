@@ -17,12 +17,13 @@ package com.intellij.android.designer.designSurface;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
-import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.*;
+import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
+import com.intellij.android.designer.model.ModelParser;
+import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.android.designer.model.ViewsMetaManager;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -30,14 +31,10 @@ import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.selection.DirectionResizePoint;
-import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
+import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
-import com.intellij.designer.model.MetaManager;
-import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
-import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
@@ -45,16 +42,13 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.uipreview.LayoutDeviceConfiguration;
-import org.jetbrains.android.uipreview.LocaleData;
-import org.jetbrains.android.uipreview.RenderUtil;
-import org.jetbrains.android.uipreview.RenderingException;
+import org.jetbrains.android.sdk.AndroidTargetData;
+import org.jetbrains.android.uipreview.*;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -132,52 +125,24 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     }
   }
 
-  private void parseFile(final Runnable runnable) {
-    final RadViewComponent[] rootComponents = new RadViewComponent[1];
-    final MetaManager metaManager = ViewsMetaManager.getInstance(getProject());
-    final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      RadViewComponent myComponent;
-
-      @Override
-      public String compute() {
-        XmlTag root = myXmlFile.getRootTag();
-        if (root != null) {
-          root.accept(new XmlRecursiveElementVisitor() {
-            @Override
-            public void visitXmlTag(XmlTag tag) {
-              myComponent = new RadViewComponent(myComponent);
-              myComponent.setTag(tag);
-              myComponent.setMetaModel(metaManager.getModelByTag(tag.getName()));
-
-              if (rootComponents[0] == null) {
-                rootComponents[0] = myComponent;
-              }
-
-              super.visitXmlTag(tag);
-
-              myComponent = (RadViewComponent)myComponent.getParent();
-            }
-          });
-        }
-
-        return myXmlFile.getText();
-      }
-    });
-
-    createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
+  private void parseFile(final Runnable runnable) throws Exception {
+    final ModelParser parser = new ModelParser(getProject(), myXmlFile);
+    createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
         checkRenderer();
 
         RootView rootView = new RootView(mySession.getImage(), 30, 20);
-        updateRootComponent(rootComponents, mySession.getRootViews(), rootView);
+        parser.updateRootComponent(mySession.getRootViews(), rootView);
+
+        new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget()).loadRecursive(parser.getRootComponent());
 
         JPanel rootPanel = new JPanel(null);
         rootPanel.setBackground(Color.WHITE);
         rootPanel.add(rootView);
 
         removeNativeRoot();
-        myRootComponent = rootComponents[0];
+        myRootComponent = parser.getRootComponent();
         myLayeredPane.add(rootPanel, LAYER_COMPONENT);
 
         runnable.run();
@@ -200,7 +165,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
         RootView rootView = (RootView)rootComponent.getNativeComponent();
         rootView.setImage(mySession.getImage());
-        updateRootComponent(rootComponent, mySession.getRootViews(), rootView);
+        ModelParser.updateRootComponent(rootComponent, mySession.getRootViews(), rootView);
 
         myLayeredPane.repaint();
       }
@@ -210,6 +175,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private void checkRenderer() throws Throwable {
     Result result = mySession.getResult();
     if (!result.isSuccess()) {
+      System.out.println(
+        "No session: " + result.getErrorMessage() + " : " + result.getStatus() + " : " + result.getData() + " : " + result.getException());
       Throwable exception = result.getException();
       if (exception != null) {
         throw exception;
@@ -225,55 +192,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
     }
   }
-
-  private void updateRootComponent(RadViewComponent[] rootComponents, List<ViewInfo> views, JComponent nativeComponent) {
-    RadViewComponent rootComponent = rootComponents[0];
-
-    if (views.size() == 1) {
-      RadViewComponent newRootComponent = new RadViewComponent(null);
-      newRootComponent.setMetaModel(ViewsMetaManager.getInstance(getProject()).getModelByTag("<root>"));
-      newRootComponent.getChildren().add(rootComponent);
-      rootComponent.setParent(newRootComponent);
-
-      updateComponent(rootComponent, views.get(0), nativeComponent, 0, 0);
-
-      rootComponents[0] = newRootComponent;
-
-      newRootComponent.setNativeComponent(nativeComponent);
-      newRootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
-    }
-    else {
-      updateRootComponent(rootComponent, views, nativeComponent);
-    }
-  }
-
-  private static void updateRootComponent(RadViewComponent rootComponent, List<ViewInfo> views, JComponent nativeComponent) {
-    int size = views.size();
-    List<RadComponent> children = rootComponent.getChildren();
-    for (int i = 0; i < size; i++) {
-      updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, 0, 0);
-    }
-
-    rootComponent.setNativeComponent(nativeComponent);
-    rootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
-  }
-
-  private static void updateComponent(RadViewComponent component, ViewInfo view, JComponent nativeComponent, int parentX, int parentY) {
-    component.setNativeComponent(nativeComponent);
-
-    int left = parentX + view.getLeft();
-    int top = parentY + view.getTop();
-    component.setBounds(left, top, view.getRight() - view.getLeft(), view.getBottom() - view.getTop());
-
-    List<ViewInfo> views = view.getChildren();
-    List<RadComponent> children = component.getChildren();
-    int size = views.size();
-
-    for (int i = 0; i < size; i++) {
-      updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, left, top);
-    }
-  }
-
 
   private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
     if (mySession == null) {
@@ -407,9 +325,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected ComponentDecorator getRootSelectionDecorator() {
-    return new ResizeSelectionDecorator(Color.RED, 1, new DirectionResizePoint(Position.EAST, "top_resize_"),
-                                        new DirectionResizePoint(Position.SOUTH_EAST, "top_resize"),
-                                        new DirectionResizePoint(Position.SOUTH, "top_resize"));
+    return new NonResizeSelectionDecorator(Color.RED, 1);
   }
 
   @Override
@@ -420,26 +336,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   @NotNull
   protected ComponentCreationFactory createCreationFactory(Item paletteItem) {
-    return new ComponentCreationFactory() {
-      @Override
-      @NotNull
-      public RadComponent create() throws Exception {
-        return new RadViewComponent(null);
-      }
-    };
-    //return null;  // TODO: Auto-generated method stub
+    return null;  // TODO: Auto-generated method stub
   }
 
   @Override
   public ComponentPasteFactory createPasteFactory(String xmlComponents) {
-    return new ComponentPasteFactory() {
-      @NotNull
-      @Override
-      public List<RadComponent> create() throws Exception {
-        return Collections.<RadComponent>singletonList(new RadViewComponent(null));
-      }
-    };
-    //return null; // TODO: Auto-generated method stub
+    return null; // TODO: Auto-generated method stub
   }
 
   @Override
