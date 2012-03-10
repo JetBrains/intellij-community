@@ -5,9 +5,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NullableComputable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -69,6 +72,14 @@ public abstract class ModuleStructureExtension {
 
   @Nullable
   public Comparator<MasterDetailsComponent.MyNode> getNodeComparator() {
+    return null;
+  }
+
+  /**
+   * @return callback or <code>null</code> if not handled
+   */
+  @Nullable
+  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry entry) {
     return null;
   }
 }
