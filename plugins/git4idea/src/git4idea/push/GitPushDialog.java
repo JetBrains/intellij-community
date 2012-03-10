@@ -178,14 +178,13 @@ public class GitPushDialog extends DialogWrapper {
     try {
       LOG.info("collectInfoToPush...");
       myPushSpecs = pushSpecsForCurrentOrEnteredBranches();
-      LOG.info("PushSpecsForCurrentOrEnteredBranches: " + myPushSpecs);
       myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
-      LOG.info("Collected commits to push: " + logMessageForCommits(myGitCommitsToPush));
+      LOG.info("collectInfoToPush | Collected commits to push: " + logMessageForCommits(myGitCommitsToPush));
       return null;
     }
     catch (VcsException e) {
       myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
-      LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
+      LOG.error("collectInfoToPush | Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
       return e.getMessage();
     }
   }
@@ -272,7 +271,7 @@ public class GitPushDialog extends DialogWrapper {
     // waiting for commit list loading, because this information is needed to correctly handle rejected push situation and correctly
     // notify about pushed commits
     // TODO optimize: don't refresh: information about pushed commits can be achieved from the successful push output
-    LOG.info("getPushInfo");
+    LOG.info("getPushInfo start");
     synchronized (COMMITS_LOADING_LOCK) {
       GitCommitsByRepoAndBranch selectedCommits;
       if (myGitCommitsToPush == null) {

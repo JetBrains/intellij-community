@@ -61,6 +61,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
   private final DefaultTreeModel myTreeModel;
   private final CheckedTreeNode myRootNode;
   private final ReentrantReadWriteLock TREE_CONSTRUCTION_LOCK = new ReentrantReadWriteLock();
+  private boolean myTreeWasConstructed;
   private final MyTreeCellRenderer myTreeCellRenderer;
 
   GitPushLog(@NotNull Project project, @NotNull Collection<GitRepository> repositories, @NotNull final Consumer<Boolean> checkboxListener) {
@@ -166,6 +167,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
       myTree.setModel(myTreeModel);  // TODO: why doesn't it repaint otherwise?
       TreeUtil.expandAll(myTree);
       selectFirstCommit();
+      myTreeWasConstructed = true;
     }
     finally {
       TREE_CONSTRUCTION_LOCK.writeLock().unlock();
@@ -259,23 +261,28 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
 
     try {
       TREE_CONSTRUCTION_LOCK.readLock().lock();  // wait for tree to be constructed
-      Collection<GitRepository> selectedRepositories = new ArrayList<GitRepository>(myAllRepositories.size());
-      if (myRootNode.getChildCount() == 0) {  // the method is requested before tree construction began => returning all repos.
+      if (!myTreeWasConstructed) {
         return myAllRepositories;
       }
+      else {
+        Collection<GitRepository> selectedRepositories = new ArrayList<GitRepository>(myAllRepositories.size());
+        if (myRootNode.getChildCount() == 0) {  // the method is requested before tree construction began => returning all repos.
+          return myAllRepositories;
+        }
 
-      for (int i = 0; i < myRootNode.getChildCount(); i++) {
-        TreeNode child = myRootNode.getChildAt(i);
-        if (child instanceof CheckedTreeNode) {
-          CheckedTreeNode node = (CheckedTreeNode)child;
-          if (node.isChecked()) {
-            if (node.getUserObject() instanceof GitRepository) {
-              selectedRepositories.add((GitRepository)node.getUserObject());
+        for (int i = 0; i < myRootNode.getChildCount(); i++) {
+          TreeNode child = myRootNode.getChildAt(i);
+          if (child instanceof CheckedTreeNode) {
+            CheckedTreeNode node = (CheckedTreeNode)child;
+            if (node.isChecked()) {
+              if (node.getUserObject() instanceof GitRepository) {
+                selectedRepositories.add((GitRepository)node.getUserObject());
+              }
             }
           }
         }
+        return selectedRepositories;
       }
-      return selectedRepositories;
     }
     finally {
       TREE_CONSTRUCTION_LOCK.readLock().unlock();
