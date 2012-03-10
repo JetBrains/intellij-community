@@ -184,6 +184,7 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup
     type 'c'
     assert !lookup.focused
+    assert 'char' in myFixture.lookupElementStrings
     assert myFixture.editor.document.text.contains('for(final c)')
     type ' in c'
     assert lookup.focused
