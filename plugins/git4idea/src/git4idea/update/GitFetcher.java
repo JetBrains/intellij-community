@@ -46,6 +46,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static git4idea.GitBranch.REFS_HEADS_PREFIX;
+import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
+
 /**
  * @author Kirill Likhodedov
  */
@@ -158,10 +161,14 @@ public class GitFetcher {
     if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
       h.addParameters("--prune");
     }
-    h.addParameters(remote.getName());
+
+    String remoteName = remote.getName();
+    h.addParameters(remoteName);
     if (branch != null) {
-      h.addParameters(branch);
+      branch = getRidOfPrefixIfExists(branch);
+      h.addParameters(REFS_HEADS_PREFIX + branch + ":" + REFS_REMOTES_PREFIX + remoteName + "/" + branch);
     }
+
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching...");
     fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
@@ -196,6 +203,13 @@ public class GitFetcher {
 
     result.get().addPruneInfo(pruneDetector.getPrunedRefs());
     return result.get();
+  }
+
+  private static String getRidOfPrefixIfExists(String branch) {
+    if (branch.startsWith(REFS_HEADS_PREFIX)) {
+      return branch.substring(REFS_HEADS_PREFIX.length());
+    }
+    return branch;
   }
 
   @NotNull
