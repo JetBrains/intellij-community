@@ -80,6 +80,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     }
 
     Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
+    if (map == null) {
+      return;
+    }
+
     if (map.isEmpty()) {
       map = findOtherNamedArgumentsInFile(mapOrArgumentList);
     }
@@ -155,6 +159,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
+  @Nullable
   private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
     if (argumentList instanceof GrArgumentList) {

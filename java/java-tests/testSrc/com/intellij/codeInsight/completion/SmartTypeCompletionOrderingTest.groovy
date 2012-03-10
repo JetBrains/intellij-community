@@ -291,9 +291,9 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.addClass("package foo; public class FList<T> implements java.util.List<T> { public static <T> FList<T> emptyList() {} }");
     configureNoCompletion(getTestName(false) + ".java");
     myFixture.complete(CompletionType.SMART, 2);
-    assertPreferredItems(0, "local", "local.subList", "emptyList", "singletonList", "unmodifiableList");
-    assert 'Collections.emptyList' in lookup.items[2].allLookupStrings
-    assert 'FList.emptyList' in lookup.items[5].allLookupStrings
+    assertPreferredItems(0, "local", "local.subList", "locMethod", "locMethod().subList", "emptyList", "singletonList", "unmodifiableList", "emptyList");
+    assert 'Collections.emptyList' in lookup.items[4].allLookupStrings
+    assert 'FList.emptyList' in lookup.items[7].allLookupStrings
   }
 
   public void testDispreferGetterInSetterCall() {

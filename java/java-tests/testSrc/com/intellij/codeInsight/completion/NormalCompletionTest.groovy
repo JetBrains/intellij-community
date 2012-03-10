@@ -1308,4 +1308,20 @@ public class ListUtils {
     assert p.typeText == 'Foo'
   }
 
+  public void testSuggestEmptySet() {
+    configure()
+    assert 'emptySet' == myFixture.lookupElementStrings[0]
+    type '\n'
+    checkResult()
+  }
+
+  public void testSuggestAllTypeArguments() {
+    configure()
+    assert 'String, String' == lookup.items[1].lookupString
+    lookup.currentItem = lookup.items[1]
+    type '\n'
+    checkResult()
+
+  }
+
 }

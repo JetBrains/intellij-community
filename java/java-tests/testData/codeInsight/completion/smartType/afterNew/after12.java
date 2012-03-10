@@ -1,4 +1,4 @@
 
 class Test<T> {
-  Test<String> test = new Test<String><caret>
+  Test<String> test = new Test<String>();<caret>
 }

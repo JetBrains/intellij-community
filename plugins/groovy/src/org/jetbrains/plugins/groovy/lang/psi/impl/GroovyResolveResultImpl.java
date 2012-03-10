@@ -115,4 +115,12 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
   public boolean isInvokedOnProperty() {
     return myIsInvokedOnProperty;
   }
+
+  @Override
+  public String toString() {
+    return "GroovyResolveResultImpl{" +
+           "myElement=" + myElement +
+           ", mySubstitutor=" + mySubstitutor +
+           '}';
+  }
 }
