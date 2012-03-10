@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -53,7 +54,6 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   private final @NotNull AbstractVcs myVcs;
   private final @NotNull ProjectLevelVcsManager myVcsManager;
-  private final @NotNull PlatformFacade myPlatformFacade;
 
   private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
   private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
@@ -67,15 +67,14 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   public GitRepositoryManager(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     super(project);
-    myPlatformFacade = platformFacade;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    myVcs = myPlatformFacade.getVcs(myProject);
+    myVcs = platformFacade.getVcs(myProject);
   }
 
   @Override
   public void initComponent() {
     Disposer.register(myProject, this);
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
       @Override
       public void run() {
         final MessageBus messageBus = myProject.getMessageBus();
