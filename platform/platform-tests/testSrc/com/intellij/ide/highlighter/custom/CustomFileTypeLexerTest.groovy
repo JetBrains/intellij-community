@@ -300,5 +300,22 @@ CHARACTER (')')
 '''
   }
 
+  public void testSpecialCharactersInKeywords() {
+    SyntaxTable table = new SyntaxTable()
+    table.addKeyword1("a*")
+    table.addKeyword1("b-c")
+    table.addKeyword2("d#")
+    table.addKeyword2("e")
+    doTest table, 'a* b-c d# e-', '''\
+KEYWORD_1 ('a*')
+WHITESPACE (' ')
+KEYWORD_1 ('b-c')
+WHITESPACE (' ')
+KEYWORD_2 ('d#')
+WHITESPACE (' ')
+IDENTIFIER ('e-')
+'''
+  }
+
 
 }

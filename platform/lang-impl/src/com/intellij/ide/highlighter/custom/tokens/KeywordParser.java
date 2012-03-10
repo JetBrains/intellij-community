@@ -47,17 +47,30 @@ public class KeywordParser extends TokenParser {
         if (regex.length() > 0) {
           regex.append("|");
         }
-        regex.append(word);
+        regex.append(escapeSpecialCharacters(word));
       }
     }
     Pattern pattern = null;
     try {
-      pattern = Pattern.compile("(" + regex + ")($|[\\W])", (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.DOTALL);
+      String pat = "(" + regex + ")($|[^\\w-])";
+      pattern = Pattern.compile(pat, (ignoreCase ? Pattern.CASE_INSENSITIVE : 0) | Pattern.DOTALL);
     }
     catch (PatternSyntaxException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
     myPattern = pattern;
+  }
+
+  private static String escapeSpecialCharacters(String word) {
+    StringBuilder esc = new StringBuilder();
+    word = word.replace("\\", "\\\\");
+    for (int i = 0; i < word.length(); i++) {
+      char ch = word.charAt(i);
+      if ("-*+?$%^.()".indexOf(ch) >= 0) esc.append('\\');
+      esc.append(ch);
+    }
+    word = esc.toString();
+    return word;
   }
 
   private Set<String> getKeywordSet(Set<String> keywordSet) {
