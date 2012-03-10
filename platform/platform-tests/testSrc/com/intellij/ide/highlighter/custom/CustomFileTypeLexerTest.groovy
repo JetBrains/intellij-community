@@ -15,15 +15,21 @@
  */
 package com.intellij.ide.highlighter.custom
 
-import com.intellij.psi.tree.IElementType
-import static com.intellij.psi.CustomHighlighterTokenType.*
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.Nullable
+import com.intellij.testFramework.LexerTestCase
+import junit.framework.TestCase
 
 /**
  * @author peter
  */
-class CustomFileTypeLexerTest extends CustomFileTypeLexerTestBase {
-  @Override
-  protected SyntaxTable createSyntaxTable() {
+class CustomFileTypeLexerTest extends TestCase {
+
+  protected void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
+    assertEquals(expected, LexerTestCase.printTokens(text, 0, new CustomFileTypeLexer(table)));
+  }
+
+  private SyntaxTable createGenericTable() {
     SyntaxTable table = new SyntaxTable();
 
     table.lineComment = ';'
@@ -40,20 +46,259 @@ class CustomFileTypeLexerTest extends CustomFileTypeLexerTestBase {
   }
 
   public void testSpacesInsideKeywords() {
-    checkTypesAndTokens('if length(variable)then return 1',
-                        [KEYWORD_1, WHITESPACE, KEYWORD_1, CHARACTER, IDENTIFIER, CHARACTER, KEYWORD_1, WHITESPACE, KEYWORD_2, WHITESPACE, NUMBER] as IElementType[],
-                        ['if', ' ', 'length', '(', 'variable', ')', 'then', ' ', 'return', ' ', '1'] as String[])
-
+    doTest createGenericTable(), 'if length(variable)then return 1', '''\
+KEYWORD_1 ('if')
+WHITESPACE (' ')
+KEYWORD_1 ('length')
+CHARACTER ('(')
+IDENTIFIER ('variable')
+CHARACTER (')')
+KEYWORD_1 ('then')
+WHITESPACE (' ')
+KEYWORD_2 ('return')
+WHITESPACE (' ')
+NUMBER ('1')
+'''
   }
 
   public void testFortranComments() {
-    checkTypesAndTokens('''
+    doTest createGenericTable(), '''
 foo;noncomment
 ;comment
   ;noncomment
-''',
-                        [WHITESPACE, IDENTIFIER, PUNCTUATION, IDENTIFIER, WHITESPACE, LINE_COMMENT, WHITESPACE, PUNCTUATION, IDENTIFIER, WHITESPACE] as IElementType[],
-                        ['\n', 'foo', ';', 'noncomment', '\n', ';comment', '\n  ', ';', 'noncomment', '\n'] as String[])
-
+''', '''\
+WHITESPACE ('\\n')
+IDENTIFIER ('foo')
+PUNCTUATION (';')
+IDENTIFIER ('noncomment')
+WHITESPACE ('\\n')
+LINE_COMMENT (';comment')
+WHITESPACE ('\\n  ')
+PUNCTUATION (';')
+IDENTIFIER ('noncomment')
+WHITESPACE ('\\n')
+'''
   }
+
+  private SyntaxTable createJavaSyntaxTable() {
+    SyntaxTable table = new SyntaxTable();
+
+    table.setLineComment("//");
+    table.setStartComment("/*");
+    table.setEndComment("*/");
+
+    table.setHexPrefix("0x");
+    table.setNumPostfixChars("cfdle");
+
+    table.addKeyword1("package");
+    table.addKeyword1("import");
+    table.addKeyword1("this");
+    table.addKeyword1("super");
+    table.addKeyword1("public");
+    table.addKeyword1("private");
+    table.addKeyword1("protected");
+    table.addKeyword1("null");
+    table.addKeyword1("if");
+    table.addKeyword1("else");
+    table.addKeyword1("throws");
+    table.addKeyword1("switch");
+    table.addKeyword1("case");
+    table.addKeyword1("break");
+    table.addKeyword1("default");
+    table.addKeyword1("continue");
+    table.addKeyword1("goto");
+    table.addKeyword1("boolean");
+    table.addKeyword1("true");
+    table.addKeyword1("false");
+    table.addKeyword1("final");
+    table.addKeyword1("class");
+    table.addKeyword1("static");
+    table.addKeyword1("final");
+    table.addKeyword1("void");
+    table.addKeyword1("int");
+    table.addKeyword1("while");
+    table.addKeyword1("new");
+    table.addKeyword1("for");
+    table.addKeyword1("byte");
+    table.addKeyword1("float");
+    table.addKeyword1("double");
+    table.addKeyword1("short");
+    table.addKeyword1("extends");
+    table.addKeyword1("implements");
+    table.addKeyword1("interface");
+    table.addKeyword1("abstract");
+    table.addKeyword1("char");
+    table.addKeyword1("try");
+    table.addKeyword1("catch");
+    table.addKeyword1("finally");
+    table.addKeyword1("synchronized");
+
+    return table;
+  }
+
+  public void testParseSampleCode() {
+    doTest createJavaSyntaxTable(), "private some text f b g\n\n\n//   1\n  public static void main(String[] args) {\n}\n-10 - 10\n\"dsfdfdf\"\n/* a\n *bc */", '''\
+KEYWORD_1 ('private')
+WHITESPACE (' ')
+IDENTIFIER ('some')
+WHITESPACE (' ')
+IDENTIFIER ('text')
+WHITESPACE (' ')
+IDENTIFIER ('f')
+WHITESPACE (' ')
+IDENTIFIER ('b')
+WHITESPACE (' ')
+IDENTIFIER ('g')
+WHITESPACE ('\\n\\n\\n')
+LINE_COMMENT ('//   1')
+WHITESPACE ('\\n  ')
+KEYWORD_1 ('public')
+WHITESPACE (' ')
+KEYWORD_1 ('static')
+WHITESPACE (' ')
+KEYWORD_1 ('void')
+WHITESPACE (' ')
+IDENTIFIER ('main')
+CHARACTER ('(')
+IDENTIFIER ('String')
+CHARACTER ('[')
+CHARACTER (']')
+WHITESPACE (' ')
+IDENTIFIER ('args')
+CHARACTER (')')
+WHITESPACE (' ')
+CHARACTER ('{')
+WHITESPACE ('\\n')
+CHARACTER ('}')
+WHITESPACE ('\\n')
+CHARACTER ('-')
+NUMBER ('10')
+WHITESPACE (' ')
+CHARACTER ('-')
+WHITESPACE (' ')
+NUMBER ('10')
+WHITESPACE ('\\n')
+STRING ('"dsfdfdf"')
+WHITESPACE ('\\n')
+MULTI_LINE_COMMENT ('/* a\\n *bc */')
+'''
+  }
+
+  public void testBlockCommentStart() {
+    doTest createJavaSyntaxTable(), "/*", 'MULTI_LINE_COMMENT (\'/*\')\n'
+  }
+
+  public void testLineCommentStart() {
+    doTest createJavaSyntaxTable(), "//", 'LINE_COMMENT (\'//\')\n'
+  }
+
+  public void testEmpty() {
+    doTest createJavaSyntaxTable(), "", ''
+  }
+
+  public void testSpace() {
+    doTest createJavaSyntaxTable(), " ", 'WHITESPACE (\' \')\n'
+  }
+
+  public void testParseSampleCodeFromTo() {
+    String sampleCode = "  int n=123;\n  float z=1;";
+    def lexer = new CustomFileTypeLexer(createJavaSyntaxTable())
+    lexer.start(sampleCode, 5, 5);
+    assertEquals(lexer.getTokenType(), null);
+    lexer.start(sampleCode, 5, 6);
+    lexer.getTokenType();
+    assertEquals(5, lexer.getTokenStart());
+    assertEquals(6, lexer.getTokenEnd());
+    assertEquals(6, lexer.getBufferEnd());
+  }
+
+  private SyntaxTable createPropTable() {
+    SyntaxTable table = new SyntaxTable();
+
+    table.setLineComment("#");
+    table.setIgnoreCase(true);
+
+    table.addKeyword1("value");
+    table.addKeyword2("Value");
+    table.setNumPostfixChars("LGH");
+    return table;
+  }
+
+  public void testSimple() {
+    doTest createPropTable(), "# Comment\n" +
+                              "x.1.a=12.2L\n" +
+                              "   y.2.b=13.4 # comment\n" +
+                              "VALUE value VaLuE Value1 17.00h 11.0k", '''\
+LINE_COMMENT ('# Comment')
+WHITESPACE ('\\n')
+IDENTIFIER ('x')
+PUNCTUATION ('.')
+NUMBER ('1')
+PUNCTUATION ('.')
+IDENTIFIER ('a')
+CHARACTER ('=')
+NUMBER ('12.2L')
+WHITESPACE ('\\n   ')
+IDENTIFIER ('y')
+PUNCTUATION ('.')
+NUMBER ('2')
+PUNCTUATION ('.')
+IDENTIFIER ('b')
+CHARACTER ('=')
+NUMBER ('13.4')
+WHITESPACE (' ')
+LINE_COMMENT ('# comment')
+WHITESPACE ('\\n')
+KEYWORD_1 ('VALUE')
+WHITESPACE (' ')
+KEYWORD_1 ('value')
+WHITESPACE (' ')
+KEYWORD_1 ('VaLuE')
+WHITESPACE (' ')
+IDENTIFIER ('Value1')
+WHITESPACE (' ')
+NUMBER ('17.00h')
+WHITESPACE (' ')
+NUMBER ('11')
+PUNCTUATION ('.')
+NUMBER ('0')
+IDENTIFIER ('k')
+'''
+  }
+
+  public void testNumber() {
+    doTest createPropTable(), "1.23=1.24", '''\
+NUMBER ('1.23')
+CHARACTER ('=')
+NUMBER ('1.24')
+'''
+  }
+
+  public void testPostfix() {
+    doTest createPropTable(), "abc 1.2ltext", '''\
+IDENTIFIER ('abc')
+WHITESPACE (' ')
+NUMBER ('1.2l')
+IDENTIFIER ('text')
+'''
+  }
+
+  public void testWeird() {
+    doTest createPropTable(), "test.1.", '''\
+IDENTIFIER ('test')
+PUNCTUATION ('.')
+NUMBER ('1.')
+'''
+  }
+
+  public void testParenths() throws Exception {
+    doTest createPropTable(),"value(255)", '''\
+KEYWORD_1 ('value')
+CHARACTER ('(')
+NUMBER ('255')
+CHARACTER (')')
+'''
+  }
+
+
 }
