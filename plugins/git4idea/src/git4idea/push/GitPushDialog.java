@@ -99,6 +99,10 @@ public class GitPushDialog extends DialogWrapper {
     return rootPanel;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.VersionControl.Git.PushDialog";
+  }
 
   private JComponent createCommitListPanel() {
     myLoadingPanel.add(myListPanel, BorderLayout.CENTER);
