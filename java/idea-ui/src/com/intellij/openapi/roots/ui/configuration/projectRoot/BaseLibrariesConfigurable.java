@@ -27,11 +27,16 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.artifacts.UsageInArtifact;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.CreateNewLibraryAction;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
@@ -250,7 +255,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   protected boolean removeLibrary(final Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
-      final Collection<ProjectStructureElementUsage> usages = myContext.getDaemonAnalyzer().getUsages(getSelectedElement());
+      final Collection<ProjectStructureElementUsage> usages = myContext.getDaemonAnalyzer().getUsages(new LibraryProjectStructureElement(myContext, library));
       if (usages.size() > 0) {
         final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<String, ProjectStructureElementUsage>();
         for (final ProjectStructureElementUsage usage : usages) {
