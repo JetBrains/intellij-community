@@ -1931,7 +1931,9 @@ public class FileBasedIndex implements ApplicationComponent {
         };
 
         for (IndexableFileSet set : myIndexableSets) {
-          set.iterateIndexableFilesIn(file, iterator);
+          if (set.isInSet(file)) {
+            set.iterateIndexableFilesIn(file, iterator);
+          }
         }
       }
       else {
