@@ -44,12 +44,14 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
       myLifecycleStrategy = new DefaultLifecycleStrategy(new DefaultComponentMonitor());
     }
 
+    @Override
     public ComponentAdapter createComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters)
       throws PicoIntrospectionException, AssignabilityRegistrationException, NotConcreteRegistrationException {
       return new CachingComponentAdapter(
         new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true, currentMonitor(), myLifecycleStrategy));
     }
 
+    @Override
     public void changeMonitor(ComponentMonitor monitor) {
       super.changeMonitor(monitor);
       if (myLifecycleStrategy instanceof ComponentMonitorStrategy) {
@@ -60,10 +62,12 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
 
 
 
+  @Override
   public ComponentAdapter getComponentAdapterOfType(final Class componentType) {
     return super.getComponentAdapterOfType(componentType);
   }
 
+  @Override
   public List getComponentAdaptersOfType(final Class componentType) {
     if (componentType == null) return Collections.emptyList();
     if (componentType == String.class) return Collections.emptyList();
