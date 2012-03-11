@@ -33,6 +33,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
 import git4idea.PlatformFacade;
 import git4idea.roots.GitRootProblemNotifier;
@@ -55,10 +57,18 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   private final @NotNull AbstractVcs myVcs;
   private final @NotNull ProjectLevelVcsManager myVcsManager;
 
-  private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
-  private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
+  private final @NotNull Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
+  private final @NotNull Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
-  private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
+  private final @NotNull ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
+
+  private final @NotNull Object ROOT_SCAN_STUB_OBJECT = new Object();
+  private final @NotNull QueueProcessor<Object> myRootScanQueue = new QueueProcessor<Object>(new Consumer<Object>() {
+    @Override
+    public void consume(Object o) {
+      GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
+    }
+  });
 
   @Nullable
   public static GitRepositoryManager getInstance(@NotNull Project project) {
@@ -201,7 +211,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
         REPO_LOCK.writeLock().unlock();
     }
 
-    GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
+    myRootScanQueue.add(ROOT_SCAN_STUB_OBJECT);
   }
 
   private static boolean gitRootOK(@NotNull VirtualFile root) {
