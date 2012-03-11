@@ -40,7 +40,7 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {
       }
     }
     final PsiElement parent = conditionalExpression.getParent();
-    if (parent instanceof PsiExpressionStatement) {
+    if (parent instanceof PsiExpressionStatement || parent instanceof PsiExpressionList) {
       return false;
     }
     final PsiMember member = PsiTreeUtil.getParentOfType(element,
