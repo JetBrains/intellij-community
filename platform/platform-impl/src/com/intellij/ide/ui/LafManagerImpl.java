@@ -428,6 +428,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     initInputMapDefaults(uiDefaults);
 
     UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
+    UIManager.put("MenuItem.background", UIManager.getColor("Menu.background"));
 
     patchFileChooserStrings(uiDefaults);
     if (shouldPatchLAFFonts()) {
