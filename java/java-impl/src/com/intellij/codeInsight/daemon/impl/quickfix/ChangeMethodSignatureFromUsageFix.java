@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -293,7 +294,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
         PsiType paramType = substitutor.substitute(parameter.getType());
         if (buf.length() > 0) buf.append(", ");
         final PsiType parameterType = PsiUtil.convertAnonymousToBaseType(paramType);
-        final String presentableText = parameterType.getPresentableText();
+        final String presentableText = escapePresentableType(parameterType);
         final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(pi, parameter.getName(), parameterType);
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           buf.append(presentableText);
@@ -310,7 +311,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
       if (result.size() != expressions.length) return null;
       for(int i = pi; i < parameters.length; i++) {
         if (buf.length() > 0) buf.append(", ");
-        buf.append("<s>").append(parameters[i].getType().getPresentableText()).append("</s>");
+        buf.append("<s>").append(escapePresentableType(parameters[i].getType())).append("</s>");
         final ParameterInfoImpl parameterInfo = new ParameterInfoImpl(pi, parameters[i].getName(), parameters[i].getType());
         removedParams.add(parameterInfo);
       }
@@ -325,7 +326,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
         PsiParameter parameter = parameters[i];
         PsiExpression expression = expressions[i];
         PsiType paramType = substitutor.substitute(parameter.getType());
-        final String presentableText = paramType.getPresentableText();
+        final String presentableText = escapePresentableType(paramType);
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           result.add(new ParameterInfoImpl(i, parameter.getName(), paramType));
           buf.append(presentableText);
@@ -336,7 +337,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
           final ParameterInfoImpl changedParameterInfo = new ParameterInfoImpl(i, parameter.getName(), exprType);
           result.add(changedParameterInfo);
           changedParams.add(changedParameterInfo);
-          buf.append("<s>").append(presentableText).append("</s> <b>").append(exprType.getPresentableText()).append("</b>");
+          buf.append("<s>").append(presentableText).append("</s> <b>").append(escapePresentableType(exprType)).append("</b>");
         }
       }
       // do not perform silly refactorings
@@ -354,6 +355,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
       if (isSilly) return null;
     }
     return result.toArray(new ParameterInfoImpl[result.size()]);
+  }
+
+  protected static String escapePresentableType(PsiType exprType) {
+    return StringUtil.escapeXml(exprType.getPresentableText());
   }
 
   protected boolean findNewParamsPlace(PsiExpression[] expressions,
@@ -381,7 +386,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
       if (parameterAssignable) {
         final PsiType type = parameter.getType();
         result.add(new ParameterInfoImpl(pi, parameter.getName(), type));
-        buf.append(type.getPresentableText());
+        buf.append(escapePresentableType(type));
         pi++;
         ei++;
       }
@@ -390,7 +395,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
           assert varargParam != null;
           final PsiType type = varargParam.getType();
           result.add(new ParameterInfoImpl(pi, varargParam.getName(), type));
-          buf.append(type.getPresentableText());
+          buf.append(escapePresentableType(type));
         }
         pi++;
         ei++;
@@ -404,7 +409,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction, HighP
         final ParameterInfoImpl newParameterInfo = new ParameterInfoImpl(-1, name, exprType, expression.getText().replace('\n', ' '));
         result.add(newParameterInfo);
         newParams.add(newParameterInfo);
-        buf.append("<b>").append(exprType.getPresentableText()).append("</b>");
+        buf.append("<b>").append(escapePresentableType(exprType)).append("</b>");
         ei++;
       }
     }
