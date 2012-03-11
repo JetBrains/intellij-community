@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -138,7 +139,8 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
 
     for (ProblemData problemData : problems) {
-      final String message = problemData.getMessage().replace('<', '{').replace('>', '}');
+      final String s = problemData.getMessage();
+      final String message = XmlUtil.escape(s.indexOf('>') >= 0 && s.indexOf('<') >= 0 ? s.replace('<', '{').replace('>', '}') : s);
       final TextRange range = problemData.getTextRange();
 
       if (range.getStartOffset() == range.getEndOffset()) {
@@ -273,6 +275,8 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     switch (severity) {
       case ERROR:
         return HighlightDisplayLevel.ERROR;
+      case FATAL:
+        return HighlightDisplayLevel.ERROR;
       case WARNING:
         return HighlightDisplayLevel.WARNING;
       case INFORMATIONAL:
@@ -294,7 +298,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
     return scope != Scope.JAVA_FILE &&
            scope != Scope.MANIFEST &&
            scope != Scope.RESOURCE_FILE &&
-           scope != Scope.PROGUARD;
+           scope != Scope.PROGUARD_FILE;
   }
 
   static class MyLocalQuickFix implements LocalQuickFix {

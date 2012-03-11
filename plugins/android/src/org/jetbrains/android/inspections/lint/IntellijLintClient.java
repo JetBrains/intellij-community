@@ -1,13 +1,12 @@
 package org.jetbrains.android.inspections.lint;
 
-import com.android.tools.lint.PositionXmlParser;
+import com.android.tools.lint.LintCliXmlParser;
+import com.android.tools.lint.LombokParser;
 import com.android.tools.lint.client.api.Configuration;
 import com.android.tools.lint.client.api.IDomParser;
+import com.android.tools.lint.client.api.IJavaParser;
 import com.android.tools.lint.client.api.LintClient;
-import com.android.tools.lint.detector.api.Context;
-import com.android.tools.lint.detector.api.Issue;
-import com.android.tools.lint.detector.api.Location;
-import com.android.tools.lint.detector.api.Position;
+import com.android.tools.lint.detector.api.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +49,7 @@ class IntellijLintClient extends LintClient implements Disposable {
   }
 
   @Override
-  public void report(Context context, Issue issue, Location location, String message, Object data) {
+  public void report(Context context, Issue issue, Severity severity, Location location, String message, Object data) {
     if (location != null) {
       final File file = location.getFile();
 
@@ -72,18 +71,29 @@ class IntellijLintClient extends LintClient implements Disposable {
   }
 
   @Override
-  public void log(Throwable exception, String format, Object... args) {
+  public void log(Severity severity, Throwable exception, String format, Object... args) {
     // todo: log
   }
 
   @Override
-  public IDomParser getParser() {
-    return new PositionXmlParser();
+  public IDomParser getDomParser() {
+    return new LintCliXmlParser();
+  }
+
+  @Override
+  public IJavaParser getJavaParser() {
+    return new LombokParser();
   }
 
   @Override
   public List<File> getJavaClassFolders(com.android.tools.lint.detector.api.Project project) {
     // todo: implement when class files checking detectors will be available
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<File> getJavaLibraries(com.android.tools.lint.detector.api.Project project) {
+    // todo: implement
     return Collections.emptyList();
   }
 
