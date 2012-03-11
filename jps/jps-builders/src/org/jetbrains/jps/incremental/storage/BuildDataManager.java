@@ -34,10 +34,10 @@ public class BuildDataManager {
   private final File myDataStorageRoot;
 
   public BuildDataManager(final File dataStorageRoot, final boolean useMemoryTempCaches) throws IOException {
+    myDataStorageRoot = dataStorageRoot;
     mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
-    myDataStorageRoot = dataStorageRoot;
-    myArtifactsBuildData = new ArtifactsBuildData(new File(myDataStorageRoot, "artifacts"));
+    myArtifactsBuildData = new ArtifactsBuildData(new File(dataStorageRoot, "artifacts"));
   }
 
   public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws IOException {
@@ -137,17 +137,15 @@ public class BuildDataManager {
         finally {
           final Mappings mappings = myMappings;
           if (mappings != null) {
-            synchronized (mappings) {
-              try {
-                mappings.close();
+            try {
+              mappings.close();
+            }
+            catch (RuntimeException e) {
+              final Throwable cause = e.getCause();
+              if (cause instanceof IOException) {
+                throw ((IOException)cause);
               }
-              catch (RuntimeException e) {
-                final Throwable cause = e.getCause();
-                if (cause instanceof IOException) {
-                  throw ((IOException)cause);
-                }
-                throw e;
-              }
+              throw e;
             }
           }
         }

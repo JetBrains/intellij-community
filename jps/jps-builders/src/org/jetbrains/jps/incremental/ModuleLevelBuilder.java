@@ -64,65 +64,62 @@ public abstract class ModuleLevelBuilder extends Builder {
 
       final Mappings globalMappings = context.getDataManager().getMappings();
 
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (globalMappings) {
-        if (!context.isProjectRebuild() && context.shouldDifferentiate(chunk, context.isCompilingTests())) {
-          context.processMessage(new ProgressMessage("Checking dependencies"));
-          final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
-          final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
+      if (!context.isProjectRebuild() && context.shouldDifferentiate(chunk, context.isCompilingTests())) {
+        context.processMessage(new ProgressMessage("Checking dependencies"));
+        final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
+        final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
 
-          // mark as affected all files that were dirty before compilation
-          allAffectedFiles.addAll(filesToCompile);
-          // accumulate all successfully compiled in this round
-          allCompiledFiles.addAll(successfullyCompiled);
-          // unmark as affected all successfully compiled
-          allAffectedFiles.removeAll(successfullyCompiled);
+        // mark as affected all files that were dirty before compilation
+        allAffectedFiles.addAll(filesToCompile);
+        // accumulate all successfully compiled in this round
+        allCompiledFiles.addAll(successfullyCompiled);
+        // unmark as affected all successfully compiled
+        allAffectedFiles.removeAll(successfullyCompiled);
 
-          final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
+        final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
 
-          final boolean incremental = globalMappings.differentiate(
-            delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles
-          );
+        final boolean incremental = globalMappings.differentiate(
+          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles
+        );
 
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Differentiate Results:");
-            LOG.debug("   Compiled Files:");
-            for (final File c : allCompiledFiles) {
-              LOG.debug("      " + c.getAbsolutePath());
-            }
-            LOG.debug("   Affected Files:");
-            for (final File c : allAffectedFiles) {
-              LOG.debug("      " + c.getAbsolutePath());
-            }
-            LOG.debug("End Of Differentiate Results.");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Differentiate Results:");
+          LOG.debug("   Compiled Files:");
+          for (final File c : allCompiledFiles) {
+            LOG.debug("      " + c.getAbsolutePath());
           }
-
-          if (incremental) {
-            final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
-            newlyAffectedFiles.removeAll(affectedBeforeDif);
-            newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
-
-            context.processMessage(new ProgressMessage("Found " + newlyAffectedFiles.size() + " affected files"));
-
-            if (!newlyAffectedFiles.isEmpty()) {
-              for (File file : newlyAffectedFiles) {
-                context.markDirtyIfNotDeleted(file);
-              }
-              additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
-            }
+          LOG.debug("   Affected Files:");
+          for (final File c : allAffectedFiles) {
+            LOG.debug("      " + c.getAbsolutePath());
           }
-          else {
-            context.processMessage(new ProgressMessage("Marking " + chunk.getName() + " and dependants for recompilation"));
-
-            additionalPassRequired = context.isMake();
-            context.markDirtyRecursively(chunk);
-          }
+          LOG.debug("End Of Differentiate Results.");
         }
 
-        context.processMessage(new ProgressMessage("Updating dependency information"));
+        if (incremental) {
+          final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
+          newlyAffectedFiles.removeAll(affectedBeforeDif);
+          newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
-        globalMappings.integrate(delta, successfullyCompiled, removedPaths);
+          context.processMessage(new ProgressMessage("Found " + newlyAffectedFiles.size() + " affected files"));
+
+          if (!newlyAffectedFiles.isEmpty()) {
+            for (File file : newlyAffectedFiles) {
+              context.markDirtyIfNotDeleted(file);
+            }
+            additionalPassRequired = context.isMake() && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+          }
+        }
+        else {
+          context.processMessage(new ProgressMessage("Marking " + chunk.getName() + " and dependants for recompilation"));
+
+          additionalPassRequired = context.isMake();
+          context.markDirtyRecursively(chunk);
+        }
       }
+
+      context.processMessage(new ProgressMessage("Updating dependency information"));
+
+      globalMappings.integrate(delta, successfullyCompiled, removedPaths);
 
       return additionalPassRequired;
     }
