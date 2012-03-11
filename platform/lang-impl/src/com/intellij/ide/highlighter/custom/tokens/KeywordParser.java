@@ -66,7 +66,7 @@ public class KeywordParser extends TokenParser {
     word = word.replace("\\", "\\\\");
     for (int i = 0; i < word.length(); i++) {
       char ch = word.charAt(i);
-      if ("-*+?$%^.()".indexOf(ch) >= 0) esc.append('\\');
+      if ("-*+?$%^.(){}[]|".indexOf(ch) >= 0) esc.append('\\');
       esc.append(ch);
     }
     word = esc.toString();

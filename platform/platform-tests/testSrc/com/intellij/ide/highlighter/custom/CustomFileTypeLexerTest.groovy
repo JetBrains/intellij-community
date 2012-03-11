@@ -306,7 +306,8 @@ CHARACTER (')')
     table.addKeyword1("b-c")
     table.addKeyword2("d#")
     table.addKeyword2("e")
-    doTest table, 'a* b-c d# e-', '''\
+    table.addKeyword2("foo{}")
+    doTest table, 'a* b-c d# e- e foo{}', '''\
 KEYWORD_1 ('a*')
 WHITESPACE (' ')
 KEYWORD_1 ('b-c')
@@ -314,6 +315,10 @@ WHITESPACE (' ')
 KEYWORD_2 ('d#')
 WHITESPACE (' ')
 IDENTIFIER ('e-')
+WHITESPACE (' ')
+KEYWORD_2 ('e')
+WHITESPACE (' ')
+KEYWORD_2 ('foo{}')
 '''
   }
 
