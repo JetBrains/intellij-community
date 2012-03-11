@@ -27,6 +27,9 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibrary
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorListener;
 import com.intellij.openapi.util.Disposer;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +41,9 @@ import java.util.*;
  */
 
 public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModelEx {
-  private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap = new HashMap<Library, ExistingLibraryEditor>();
-  private final Set<Library> myRemovedLibraries = new HashSet<Library>();
+  //todo[nik] remove LibraryImpl#equals method instead of using identity maps
+  private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap = new THashMap<Library, ExistingLibraryEditor>(TObjectHashingStrategy.IDENTITY);
+  private final Set<Library> myRemovedLibraries = new THashSet<Library>(TObjectHashingStrategy.IDENTITY);
 
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
   private final Project myProject;
