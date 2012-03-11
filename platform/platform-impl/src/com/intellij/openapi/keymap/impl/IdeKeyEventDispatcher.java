@@ -35,7 +35,6 @@ import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -166,8 +165,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if (focusOwner instanceof ShortcutTextField) {
       return false;
     }
-    if ((focusOwner instanceof TypingTarget ||
-        (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()))) {
+    if (focusOwner instanceof JTextComponent && ((JTextComponent)focusOwner).isEditable()) {
       if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED && e.getKeyChar() != KeyEvent.VK_ESCAPE) {
         MacUIUtil.hideCursor();
       }

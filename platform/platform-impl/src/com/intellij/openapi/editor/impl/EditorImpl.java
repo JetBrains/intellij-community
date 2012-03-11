@@ -81,6 +81,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
@@ -877,6 +878,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     DataContext dataContext = getDataContext();
     actionManager.fireBeforeEditorTyping(c, dataContext);
+    MacUIUtil.hideCursor();
     EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
 
     return true;
