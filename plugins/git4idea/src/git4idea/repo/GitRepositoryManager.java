@@ -60,7 +60,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
-  @NotNull
+  @Nullable
   public static GitRepositoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, GitRepositoryManager.class);
   }
