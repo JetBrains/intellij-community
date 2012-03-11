@@ -26,10 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
@@ -71,7 +68,15 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     if (element == null) {
       if (LookupManager.getActiveLookup(editor) != null) {
-        element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiNamedElement.class);
+        final PsiElement elementUnderCaret = file.findElementAt(editor.getCaretModel().getOffset());
+        if (elementUnderCaret != null) {
+          final PsiElement parent = elementUnderCaret.getParent();
+          if (parent instanceof PsiReference) {
+            element = ((PsiReference)parent).resolve();
+          } else {
+            element = PsiTreeUtil.getParentOfType(elementUnderCaret, PsiNamedElement.class);
+          }
+        }
         if (element == null) return;
       } else {
         return;
