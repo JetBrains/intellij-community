@@ -387,12 +387,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public VirtualFile getModuleOutputDirectory(Module module) {
-    // todo: caching?
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 
   public VirtualFile getModuleOutputDirectoryForTests(Module module) {
-    // todo: caching?
     return CompilerPaths.getModuleOutputDirectory(module, true);
   }
 
