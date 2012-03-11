@@ -16,18 +16,19 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mike
@@ -44,6 +45,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   public static final String NONQUALIFIED_ATTR_VALUE = "unqualified";
   @NonNls
   private static final String ELEMENT_FORM_DEFAULT = "elementFormDefault";
+  private static final Key<ParameterizedCachedValue<XmlAttributeDescriptor[], XmlTag>> ATTRS_KEY = Key.create("attributes");
+  private ParameterizedCachedValueProvider<XmlAttributeDescriptor[],XmlTag> myCachedValueProvider;
 
   public XmlElementDescriptorImpl(@Nullable XmlTag descriptorTag) {
     myDescriptorTag = descriptorTag;
@@ -242,6 +245,20 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
+    if (myDescriptorTag == null) // TODO make it NotNull
+      return computeAttributeDescriptors(context);
+
+    CachedValuesManager manager = CachedValuesManager.getManager(myDescriptorTag.getProject());
+    myCachedValueProvider = new ParameterizedCachedValueProvider<XmlAttributeDescriptor[], XmlTag>() {
+      @Override
+      public CachedValueProvider.Result<XmlAttributeDescriptor[]> compute(XmlTag param) {
+        return CachedValueProvider.Result.createSingleDependency(computeAttributeDescriptors(param), myDescriptorTag.getContainingFile());
+      }
+    };
+    return manager.getParameterizedCachedValue(myDescriptorTag, ATTRS_KEY, myCachedValueProvider, false, context);
+  }
+
+  private XmlAttributeDescriptor[] computeAttributeDescriptors(XmlTag context) {
     TypeDescriptor type = getType(context);
 
     if (type instanceof ComplexTypeDescriptor) {
