@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -186,6 +187,11 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
         service.queueCacheUpdate(updatersToRun);
       }
     }
+  }
+
+  @Override
+  protected Project guessProjectFile(VirtualFile file) {
+    return ProjectUtil.guessProjectForFile(file);
   }
 
   @Override

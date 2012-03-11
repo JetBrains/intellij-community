@@ -1170,7 +1170,7 @@ public abstract class FileBasedIndex {
             fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
           }
           if (project == null) {
-            project = ProjectUtil.guessProjectForFile(file);
+            project = guessProjectFile(file);
           }
           fc.putUserData(IndexingDataKeys.PROJECT, project);
         }
@@ -1194,6 +1194,8 @@ public abstract class FileBasedIndex {
       psiFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
     }
   }
+
+  protected abstract Project guessProjectFile(VirtualFile file);
 
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC)
     throws StorageException {
