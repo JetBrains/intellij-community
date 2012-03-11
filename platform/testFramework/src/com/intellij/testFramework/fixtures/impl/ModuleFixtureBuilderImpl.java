@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -83,7 +84,8 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected Module createModule() {
     final Project project = myFixtureBuilder.getFixture().getProject();
     assert project != null;
-    final String moduleFilePath = new File(project.getProjectFilePath()).getParent() + File.separator + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    final String projectFilePath = ProjectUtil.getProjectFilePath(project);
+    final String moduleFilePath = new File(projectFilePath).getParent() + File.separator + getNextIndex() + ModuleFileType.DOT_DEFAULT_EXTENSION;
     return ModuleManager.getInstance(project).newModule(moduleFilePath, myModuleType);
   }
 
