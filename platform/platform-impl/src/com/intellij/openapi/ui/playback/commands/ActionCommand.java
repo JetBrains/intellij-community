@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TimedOutCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -64,7 +65,7 @@ public class ActionCommand extends TypeCommand {
       }
 
       if (stroke != null) {
-        final ActionCallback result = new ActionCallback.TimedOut(Registry.intValue("actionSystem.commandProcessingTimeout"), "Timed out calling action id=" + actionName, new Throwable(), true) {
+        final ActionCallback result = new TimedOutCallback(Registry.intValue("actionSystem.commandProcessingTimeout"), "Timed out calling action id=" + actionName, new Throwable(), true) {
           @Override
           protected void dumpError() {
             context.error(getMessage(), getLine());

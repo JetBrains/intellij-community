@@ -147,10 +147,12 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
         }
       }
     };
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      getUi().cancelUpdate().doWhenProcessed(afterCancelUpdate);
-    } else {
-      afterCancelUpdate.run();
+    if (!isDisposed()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        getUi().cancelUpdate().doWhenProcessed(afterCancelUpdate);
+      } else {
+        afterCancelUpdate.run();
+      }
     }
 
     return callback;

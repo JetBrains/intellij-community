@@ -17,7 +17,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -45,7 +44,7 @@ public class SimpleTimer {
     final Thread thread = Thread.currentThread();
     final int currentPrio = thread.getPriority();
     try {
-      // need this becase the timer's thread will inherit the priority on creation
+      // need this because the timer's thread will inherit the priority on creation
       thread.setPriority(Thread.MIN_PRIORITY + 1);
       ourTimer = new Timer(threadName, true);
     }
@@ -62,7 +61,7 @@ public class SimpleTimer {
     return new SimpleTimer(name);
   }
 
-  public SimpleTimerTask setUp(final Runnable runnable, long delay) {
+  public SimpleTimerTask setUp(final Runnable runnable, final long delay) {
     synchronized (myTime2Task) {
       final long current = System.currentTimeMillis();
       final long targetTime = current + delay;
@@ -87,7 +86,7 @@ public class SimpleTimer {
     }
   }
 
-  private void scheduleNext(long delay, long targetTime) {
+  private void scheduleNext(final long delay, final long targetTime) {
     myNextScheduledTime = targetTime;
     myNextProcessingTask = new TimerTask() {
       @Override

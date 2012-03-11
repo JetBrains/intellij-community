@@ -25,7 +25,7 @@ public class SimpleTimerTask {
   private final Object LOCK = new Object();
   private final SimpleTimer myTimer;
 
-  public SimpleTimerTask(long targetTime, Runnable runnable, SimpleTimer timer) {
+  public SimpleTimerTask(final long targetTime, Runnable runnable, SimpleTimer timer) {
     myTargetTime = targetTime;
     myRunnable = runnable;
     myTimer = timer;
