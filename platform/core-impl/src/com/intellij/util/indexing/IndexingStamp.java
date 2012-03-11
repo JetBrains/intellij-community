@@ -18,7 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
@@ -158,7 +158,7 @@ public class IndexingStamp {
   }
 
   public long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
-    if (file instanceof NewVirtualFile && file.isValid()) {
+    if (file instanceof VirtualFileWithId && file.isValid()) {
       synchronized (myTimestampsCache) {
         return myTimestampsCache.get(file).get(indexName);
       }
@@ -168,7 +168,7 @@ public class IndexingStamp {
 
   public void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {
     try {
-      if (file instanceof NewVirtualFile && file.isValid()) {
+      if (file instanceof VirtualFileWithId && file.isValid()) {
         synchronized (myTimestampsCache) {
           myTimestampsCache.get(file).set(indexName, indexCreationStamp);
         }
