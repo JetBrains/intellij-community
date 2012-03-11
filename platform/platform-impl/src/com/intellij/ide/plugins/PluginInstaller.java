@@ -93,13 +93,13 @@ public class PluginInstaller {
         depPlugin.setSize("-1");
         depPlugin.setName(depPluginId.getIdString()); //prevent from exceptions
 
-        if (optionalDependentPluginIds != null && ArrayUtil.indexOf(optionalDependentPluginIds, depPluginId) != -1) {
-          if (isPluginInRepo(depPluginId, allPlugins)) {
+        if (isPluginInRepo(depPluginId, allPlugins)) {
+          if (ArrayUtil.indexOf(optionalDependentPluginIds, depPluginId) != -1) {
             optionalDeps.add(depPlugin);
           }
-        }
-        else {
-          depends.add(depPlugin);
+          else {
+            depends.add(depPlugin);
+          }
         }
       }
 

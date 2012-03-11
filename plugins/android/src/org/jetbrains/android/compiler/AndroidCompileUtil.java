@@ -56,6 +56,7 @@ import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
@@ -82,7 +83,7 @@ public class AndroidCompileUtil {
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
 
-  @NonNls private static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
+  @NonNls public static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
 
   @NonNls
   private static final String[] SCALA_TEST_CONFIGURATIONS =
@@ -115,7 +116,7 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  public static VirtualFile getProguardConfigFile(@NotNull AndroidFacet facet) {
+  public static VirtualFile getDefaultProguardConfigFile(@NotNull AndroidFacet facet) {
     final VirtualFile root = AndroidRootUtil.getMainContentRoot(facet);
     return root != null ? root.findChild(PROGUARD_CFG_FILE_NAME) : null;
   }
@@ -817,5 +818,23 @@ public class AndroidCompileUtil {
 
     // we exclude sources of library modules automatically for tools r7 or previous
     return platform.getSdkData().getPlatformToolsRevision() > 7;
+  }
+
+  @Nullable
+  public static String getProguardConfigFilePathIfShouldRun(@NotNull AndroidFacet facet, CompileContext context) {
+    final String path = context.getCompileScope().
+      getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY);
+    if (path != null) {
+      return path;
+    }
+
+    final AndroidFacetConfiguration configuration = facet.getConfiguration();
+    if (configuration.RUN_PROGUARD) {
+      final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
+      if (proguardCfgFile != null) {
+        return FileUtil.toSystemDependentName(proguardCfgFile.getPath());
+      }
+    }
+    return null;
   }
 }

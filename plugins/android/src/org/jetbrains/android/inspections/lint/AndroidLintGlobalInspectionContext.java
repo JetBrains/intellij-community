@@ -1,11 +1,9 @@
 package org.jetbrains.android.inspections.lint;
 
-import com.android.tools.lint.PositionXmlParser;
+import com.android.tools.lint.LintCliXmlParser;
+import com.android.tools.lint.LombokParser;
 import com.android.tools.lint.client.api.*;
-import com.android.tools.lint.detector.api.Context;
-import com.android.tools.lint.detector.api.Issue;
-import com.android.tools.lint.detector.api.Location;
-import com.android.tools.lint.detector.api.Position;
+import com.android.tools.lint.detector.api.*;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -81,7 +79,7 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     final AnalysisScope scope = context.getRefManager().getScope();
 
     final LintClient client = new MyLintClient(project, problemMap, scope, issues);
-    final Lint lint = new Lint(new IssueRegistry() {
+    final LintDriver lint = new LintDriver(new IssueRegistry() {
       @Override
       public List<Issue> getIssues() {
         return issues;
@@ -93,7 +91,8 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
       ProgressWrapper.unwrap(indicator).setText("Running Android Lint");
     }
 
-    lint.analyze(Arrays.asList(ioContentRoots), null);
+    lint.analyze(Arrays.asList(ioContentRoots), EnumSet
+      .of(Scope.JAVA_FILE, Scope.MANIFEST, Scope.PROGUARD_FILE, Scope.ALL_JAVA_FILES, Scope.ALL_RESOURCE_FILES, Scope.RESOURCE_FILE));
 
     myResults = problemMap;
   }
@@ -143,7 +142,7 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     }
 
     @Override
-    public void report(Context context, Issue issue, Location location, String message, Object data) {
+    public void report(Context context, Issue issue, Severity severity, Location location, String message, Object data) {
       VirtualFile vFile = null;
       File file = null;
 
@@ -154,8 +153,8 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
           vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
         }
       }
-      else if (context.project != null) {
-        final Module module = findModuleForLintProject(myProject, context.project);
+      else if (context.getProject() != null) {
+        final Module module = findModuleForLintProject(myProject, context.getProject());
 
         if (module != null) {
           final AndroidFacet facet = AndroidFacet.getInstance(module);
@@ -203,13 +202,18 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     }
 
     @Override
-    public void log(Throwable exception, String format, Object... args) {
+    public void log(Severity severity, Throwable exception, String format, Object... args) {
       // todo: implement
     }
 
     @Override
-    public IDomParser getParser() {
-      return new PositionXmlParser();
+    public IDomParser getDomParser() {
+      return new LintCliXmlParser();
+    }
+
+    @Override
+    public IJavaParser getJavaParser() {
+      return new LombokParser();
     }
 
     @Override
@@ -240,6 +244,12 @@ class AndroidLintGlobalInspectionContext implements GlobalInspectionContextExten
     @Override
     public List<File> getJavaClassFolders(com.android.tools.lint.detector.api.Project project) {
       // todo: implement when class files checking detectors will be available
+      return Collections.emptyList();
+    }
+
+    @Override
+    public List<File> getJavaLibraries(com.android.tools.lint.detector.api.Project project) {
+      // todo: implement
       return Collections.emptyList();
     }
 

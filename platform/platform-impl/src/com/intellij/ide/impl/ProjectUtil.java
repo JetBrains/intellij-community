@@ -228,8 +228,11 @@ public class ProjectUtil {
   private static boolean isSameProject(String path, Project p) {
     final IProjectStore projectStore = ((ProjectEx)p).getStateStore();
 
-    String toOpen = FileUtil.toSystemIndependentName(path);
-    String existing = FileUtil.toSystemIndependentName(projectStore.getProjectFilePath());
+    final String toOpen = FileUtil.toSystemIndependentName(path);
+
+    final VirtualFile projectFile = projectStore.getProjectFile();
+    if (projectFile == null) return false;
+    final String existing = projectFile.getPath();
 
     final VirtualFile existingBaseDir = projectStore.getProjectBaseDir();
     if (existingBaseDir == null) return false; // could be null if not yet initialized
@@ -273,5 +276,17 @@ public class ProjectUtil {
   @SuppressWarnings("UnusedDeclaration")
   public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
     return com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile(file);
+  }
+
+  @Nullable
+  public static String getBasePath(@NotNull final Project project) {
+    final VirtualFile baseDir = project.getBaseDir();
+    return baseDir != null ? FileUtil.toSystemDependentName(baseDir.getPath()) : null;
+  }
+
+  @Nullable
+  public static String getProjectFilePath(@NotNull final Project project) {
+    final VirtualFile projectFile = project.getProjectFile();
+    return projectFile != null ? FileUtil.toSystemDependentName(projectFile.getPath()) : null;
   }
 }

@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,26 +30,26 @@ public final class GotoProjectDirectory extends FileChooserAction {
   private static final Icon ourIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
 
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
-    final String projectPath = getProjectPath(e);
+    final VirtualFile projectPath = getProjectPath(e);
     if (projectPath != null) {
-      fileSystemTree.select(new Runnable() {
+      fileSystemTree.select(projectPath, new Runnable() {
         public void run() {
           fileSystemTree.expand(projectPath, null);
         }
-      }, projectPath);
+      });
     }
   }
 
   protected void update(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setIcon(ourIcon);
-    final String projectPath = getProjectPath(e);
+    final VirtualFile projectPath = getProjectPath(e);
     presentation.setEnabled(projectPath != null && fileSystemTree.isUnderRoots(projectPath));
   }
 
   @Nullable
-  private static String getProjectPath(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    return project != null ? project.getBasePath() : null;
+  private static VirtualFile getProjectPath(final AnActionEvent e) {
+    final VirtualFile projectFileDir = e.getData(PlatformDataKeys.PROJECT_FILE_DIRECTORY);
+    return projectFileDir != null && projectFileDir.isValid() ? projectFileDir : null;
   }
 }

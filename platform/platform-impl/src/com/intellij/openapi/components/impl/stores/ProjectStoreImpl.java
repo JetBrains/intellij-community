@@ -44,6 +44,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
@@ -248,11 +249,11 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
-  @Override
-  public String getProjectBasePath() {
+  @Nullable
+  private String getProjectBasePath() {
     if (myProject.isDefault()) return null;
 
-    final String path = getProjectFilePath();
+    final String path = getProjectFilePathInternal();
     if (!StringUtil.isEmptyOrSpaces(path)) {
       return myScheme == StorageScheme.DEFAULT ? new File(path).getParent() : new File(path).getParentFile().getParent();
     }
@@ -272,7 +273,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public String getLocation() {
     if (myCachedLocation == null) {
       if (myScheme == StorageScheme.DEFAULT) {
-        myCachedLocation = getProjectFilePath();
+        myCachedLocation = getProjectFilePathInternal();
       }
       else {
         final VirtualFile baseDir = getProjectBaseDir();
@@ -313,7 +314,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return baseDir.getName().replace(":", "");
     }
     else {
-      String temp = getProjectFileName();
+      String temp = getProjectFileNameInternal();
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp);
       if (fileType instanceof ProjectFileType) {
         temp = temp.substring(0, temp.length() - fileType.getDefaultExtension().length() - 1);
@@ -336,7 +337,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   public String getPresentableUrl() {
     if (myProject.isDefault()) return null;
     if (myPresentableUrl == null) {
-      final String url = myScheme == StorageScheme.DIRECTORY_BASED ? getProjectBasePath() : getProjectFilePath();
+      final String url = myScheme == StorageScheme.DIRECTORY_BASED ? getProjectBasePath() : getProjectFilePathInternal();
       myPresentableUrl = url != null ? FileUtil.toSystemDependentName(url) : url;
     }
     return myPresentableUrl;
@@ -380,17 +381,28 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     }
   }
 
+  /** @deprecated internal method (to remove in IDEA 12) */
   @NotNull
   @Override
   public String getProjectFileName() {
+    return getProjectFileNameInternal();
+  }
+
+  @NotNull
+  private String getProjectFileNameInternal() {
     final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
     assert storage != null;
     return storage.getFileName();
   }
 
+  /** @deprecated internal method (to remove in IDEA 12) */
   @NotNull
   @Override
   public String getProjectFilePath() {
+    return getProjectFilePathInternal();
+  }
+
+  private String getProjectFilePathInternal() {
     if (myProject.isDefault()) return "";
     final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
     assert storage != null;

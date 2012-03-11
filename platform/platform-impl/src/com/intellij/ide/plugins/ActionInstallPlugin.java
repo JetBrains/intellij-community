@@ -158,11 +158,11 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
                                                       final Set<IdeaPluginDescriptor> disabledDependants, 
                                                       final ArrayList<PluginNode> list) {
     if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
-      String message = "";
+      String message = "<html><body>";
       if (disabled.size() == 1) {
-        message = "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled";
+        message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
       } else if (!disabled.isEmpty()) {
-        message = "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
+        message += "Updated plugins " + StringUtil.join(disabled, new Function<IdeaPluginDescriptor, String>() {
           @Override
           public String fun(IdeaPluginDescriptor pluginDescriptor) {
             return pluginDescriptor.getName();
@@ -171,9 +171,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       }
 
       if (!disabledDependants.isEmpty()) {
-        if (!message.isEmpty()) {
-          message += "\n";
-        }
+        message += "<br>";
         message += "Updated plugin" + (list.size() > 1 ? "s depend " : " depends ") + "on disabled";
         if (disabledDependants.size() == 1) {
           message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
@@ -186,16 +184,24 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           }, ", ") + ".";
         }
       }
-      message += "\nWould you like to enable plugins with dependencies?";
+      message += " Disabled plugins and plugins which depends on disabled plugins won't be activated after restart.";
 
       int result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
         result =
-          Messages.showYesNoCancelDialog(message, CommonBundle.getWarningTitle(), "Enable all",
+          Messages.showYesNoCancelDialog(message + "</body></html>", CommonBundle.getWarningTitle(), "Enable all",
                                          "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
                                          Messages.getQuestionIcon());
       } else {
-        result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), "Enable", CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+        message += "<br>Would you like to enable ";
+        if (!disabled.isEmpty()) {
+          message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
+        }
+        else {
+          message += "plugin dependenc" + (disabledDependants.size() > 1 ? "ies" : "y");
+        }
+        message += "?</body></html>";
+        result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
       }
 
       if (result == DialogWrapper.OK_EXIT_CODE) {

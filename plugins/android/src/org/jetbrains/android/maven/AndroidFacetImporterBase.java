@@ -679,7 +679,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     AndroidFacetConfiguration configuration = facet.getConfiguration();
 
     String resFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", true, true);
-    if (resFolderRelPath != null) {
+    if (resFolderRelPath != null && isFullyResolved(resFolderRelPath)) {
       configuration.RES_FOLDER_RELATIVE_PATH = '/' + resFolderRelPath;
     }
 
@@ -701,13 +701,14 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
     else {
       String resOverlayFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceOverlayDirectory", true, true);
-      if (resOverlayFolderRelPath != null) {
+      if (resOverlayFolderRelPath != null && isFullyResolved(resOverlayFolderRelPath)) {
         configuration.RES_OVERLAY_FOLDERS = Arrays.asList('/' + resOverlayFolderRelPath);
       }
     }
 
     String resFolderForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "resourceDirectory", false, true);
-    if (resFolderForCompilerRelPath != null && !resFolderForCompilerRelPath.equals(resFolderRelPath)) {
+    if (resFolderForCompilerRelPath != null &&
+        !resFolderForCompilerRelPath.equals(resFolderRelPath)) {
       if (!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER) {
         // it may be already configured in setupFacet()
         configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = true;
@@ -717,26 +718,32 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     String assetsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "assetsDirectory", false, true);
-    if (assetsFolderRelPath != null) {
+    if (assetsFolderRelPath != null && isFullyResolved(assetsFolderRelPath)) {
       configuration.ASSETS_FOLDER_RELATIVE_PATH = '/' + assetsFolderRelPath;
     }
 
     String manifestFileRelPath =  getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", true, false);
-    if (manifestFileRelPath != null) {
+    if (manifestFileRelPath != null && isFullyResolved(manifestFileRelPath)) {
       configuration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestFileRelPath;
     }
 
     String manifestFileForCompilerRelPath = getPathFromConfig(module, project, moduleDirPath, "androidManifestFile", false, false);
-    if (manifestFileForCompilerRelPath != null && !manifestFileForCompilerRelPath.equals(manifestFileRelPath)) {
+    if (manifestFileForCompilerRelPath != null &&
+        !manifestFileForCompilerRelPath.equals(manifestFileRelPath) &&
+        isFullyResolved(manifestFileForCompilerRelPath)) {
       configuration.USE_CUSTOM_COMPILER_MANIFEST = true;
       configuration.CUSTOM_COMPILER_MANIFEST = '/' + manifestFileForCompilerRelPath;
       configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK = true;
     }
 
     String nativeLibsFolderRelPath = getPathFromConfig(module, project, moduleDirPath, "nativeLibrariesDirectory", false, true);
-    if (nativeLibsFolderRelPath != null) {
+    if (nativeLibsFolderRelPath != null && isFullyResolved(nativeLibsFolderRelPath)) {
       configuration.LIBS_FOLDER_RELATIVE_PATH = '/' + nativeLibsFolderRelPath;
     }
+  }
+
+  private static boolean isFullyResolved(@NotNull String s) {
+    return !s.contains("${");
   }
 
   @Nullable
