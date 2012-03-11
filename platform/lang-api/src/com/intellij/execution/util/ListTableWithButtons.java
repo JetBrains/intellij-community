@@ -16,10 +16,11 @@
 package com.intellij.execution.util;
 
 import com.google.common.collect.Lists;
-import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.AnActionButtonUpdater;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -28,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
@@ -38,17 +37,65 @@ import java.util.Observable;
  */
 public abstract class ListTableWithButtons<T> extends Observable {
   private final List<T> myElements = Lists.newArrayList();
-  private final JPanel myPanel = new JPanel(new BorderLayout());
-  private final TableView myTableVeiw;
+  private final JPanel myPanel;
+  private final TableView myTableView;
   private boolean myIsEnabled = true;
 
   protected ListTableWithButtons() {
-    myTableVeiw = new TableView(createListModel());
-    myTableVeiw.getTableViewModel().setSortable(false);
-    myPanel.add(ScrollPaneFactory.createScrollPane(myTableVeiw.getComponent()), BorderLayout.CENTER);
-    JComponent toolbarComponent = createToolbar();
-    myPanel.add(toolbarComponent, BorderLayout.NORTH);
-    myTableVeiw.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myTableView = new TableView(createListModel());
+    myTableView.getTableViewModel().setSortable(false);
+    myPanel = ToolbarDecorator.createDecorator(myTableView)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          myTableView.stopEditing();
+          setModified();
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              myElements.add(createElement());
+              myTableView.getTableViewModel().setItems(myElements);
+              myTableView.getComponent().editCellAt(myElements.size() - 1, 0);
+            }
+          });
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          myTableView.stopEditing();
+          setModified();
+          Object selected = getSelection();
+          if (selected != null) {
+            int selectedIndex = myElements.indexOf(selected);
+            myElements.remove(selected);
+            myTableView.getTableViewModel().setItems(myElements);
+
+            int prev = selectedIndex - 1;
+            if (prev >= 0) {
+              myTableView.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
+            }
+            else if (selectedIndex < myElements.size()) {
+              myTableView.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+            }
+          }
+        }
+      }).disableUpDownActions().createPanel();
+
+    ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        T selection = getSelection();
+        return selection != null && myIsEnabled && canDeleteElement(selection);
+      }
+    });
+    ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
+      @Override
+      public boolean isEnabled(AnActionEvent e) {
+        return myIsEnabled;
+      }
+    });
+
+
+    myTableView.getComponent().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
   }
 
   protected abstract ListTableModel createListModel();
@@ -56,13 +103,6 @@ public abstract class ListTableWithButtons<T> extends Observable {
   protected void setModified() {
     setChanged();
     notifyObservers();
-  }
-
-  protected JComponent createToolbar() {
-    DefaultActionGroup actions = new DefaultActionGroup();
-    actions.add(new AddAction());
-    actions.add(new DeleteAction());
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true).getComponent();
   }
 
   protected List<T> getElements() {
@@ -74,28 +114,28 @@ public abstract class ListTableWithButtons<T> extends Observable {
   }
 
   public void setEnabled() {
-    myTableVeiw.getComponent().setEnabled(true);
+    myTableView.getComponent().setEnabled(true);
     myIsEnabled = true;
   }
 
   public void setDisabled() {
-    myTableVeiw.getComponent().setEnabled(false);
+    myTableView.getComponent().setEnabled(false);
     myIsEnabled = false;
   }
 
   public void stopEditing() {
-    myTableVeiw.stopEditing();
+    myTableView.stopEditing();
   }
 
   public void refreshValues() {
-    myTableVeiw.getComponent().repaint();
+    myTableView.getComponent().repaint();
   }
 
   protected abstract T createElement();
 
 
   protected T getSelection() {
-    int selIndex = myTableVeiw.getComponent().getSelectionModel().getMinSelectionIndex();
+    int selIndex = myTableView.getComponent().getSelectionModel().getMinSelectionIndex();
     if (selIndex < 0) {
       return null;
     }
@@ -109,66 +149,12 @@ public abstract class ListTableWithButtons<T> extends Observable {
     for (T envVariable : envVariables) {
       myElements.add(cloneElement(envVariable));
     }
-    myTableVeiw.getTableViewModel().setItems(myElements);
+    myTableView.getTableViewModel().setItems(myElements);
   }
 
   protected abstract T cloneElement(T variable);
 
-  private final class DeleteAction extends AnAction {
-    public DeleteAction() {
-      super(CommonBundle.message("button.delete"), null, IconLoader.getIcon("/general/remove.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      T selection = getSelection();
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(selection != null && myIsEnabled && canDeleteElement(selection));
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      myTableVeiw.stopEditing();
-      setModified();
-      Object selected = getSelection();
-      if (selected != null) {
-        int selectedIndex = myElements.indexOf(selected);
-        myElements.remove(selected);
-        myTableVeiw.getTableViewModel().setItems(myElements);
-
-        int prev = selectedIndex - 1;
-        if (prev >= 0) {
-          myTableVeiw.getComponent().getSelectionModel().setSelectionInterval(prev, prev);
-        }
-        else if (selectedIndex < myElements.size()) {
-          myTableVeiw.getComponent().getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
-        }
-      }
-    }
-  }
-
   protected abstract boolean canDeleteElement(T selection);
-
-  private final class AddAction extends AnAction {
-    public AddAction() {
-      super(CommonBundle.message("button.add"), null, IconLoader.getIcon("/general/add.png"));
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIsEnabled);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      myTableVeiw.stopEditing();
-      setModified();
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          myElements.add(createElement());
-          myTableVeiw.getTableViewModel().setItems(myElements);
-          myTableVeiw.getComponent().editCellAt(myElements.size() - 1, 0);
-        }
-      });
-    }
-  }
 
   protected static abstract class ElementsColumnInfoBase<T> extends ColumnInfo<T, String> {
     private DefaultTableCellRenderer myRenderer;
