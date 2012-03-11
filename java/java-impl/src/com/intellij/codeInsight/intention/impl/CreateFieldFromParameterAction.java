@@ -60,6 +60,8 @@ import java.util.*;
 public class CreateFieldFromParameterAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.CreateFieldFromParameterAction");
   private static final Key<Map<SmartPsiElementPointer<PsiParameter>, Boolean>> PARAMS = Key.create("FIELDS_FROM_PARAMS");
+  
+  private static final Object LOCK = new Object();
 
   private String myName = "";
 
@@ -118,18 +120,20 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       }
     }
     if (method == null) return false;
-    final Collection<SmartPsiElementPointer<PsiParameter>> params = getUnboundedParams(method);
-    params.clear();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (PsiParameter parameter : parameters) {
-      params.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter));
+    synchronized (LOCK) {
+      final Collection<SmartPsiElementPointer<PsiParameter>> params = getUnboundedParams(method);
+      params.clear();
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      for (PsiParameter parameter : parameters) {
+        params.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter));
+      }
+      if (params.isEmpty()) return false;
+      if (psiParameter == null) {
+        psiParameter = params.iterator().next().getElement();
+        LOG.assertTrue(psiParameter != null);
+      }
+      myName = params.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode() ? null : psiParameter.getName();
     }
-    if (params.isEmpty()) return false;
-    if (psiParameter == null) {
-      psiParameter = params.iterator().next().getElement();
-      LOG.assertTrue(psiParameter != null);
-    }
-    myName = params.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode() ? null : psiParameter.getName();
     return isAvailable(psiParameter);
   }
 
@@ -222,9 +226,13 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     final PsiMethod method = myParameter != null ? (PsiMethod)myParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
     LOG.assertTrue(method != null);
-    final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams = getUnboundedParams(method);
-    if (myParameter == null) {
-      myParameter = unboundedParams.iterator().next().getElement();
+    final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams;
+    synchronized (LOCK) {
+      unboundedParams = getUnboundedParams(method);
+      if (unboundedParams.isEmpty()) return;
+      if (myParameter == null) {
+        myParameter = unboundedParams.iterator().next().getElement();
+      }
     }
     if (unboundedParams.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       ClassMember[] members = new ClassMember[unboundedParams.size()];
@@ -269,7 +277,9 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     else {
       processParameter(project, myParameter, isInteractive);
     }
-    unboundedParams.clear();
+    synchronized (LOCK) {
+      unboundedParams.clear();
+    }
   }
 
   private static void processParameter(final Project project,
