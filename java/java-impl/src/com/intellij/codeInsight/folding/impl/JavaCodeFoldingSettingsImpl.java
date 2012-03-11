@@ -151,7 +151,7 @@ public class JavaCodeFoldingSettingsImpl extends JavaCodeFoldingSettings impleme
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_INNER_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANONYMOUS_CLASSES = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_ANNOTATIONS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CLOSURES = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CLOSURES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_I18N_MESSAGES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_SUPPRESS_WARNINGS = true;
