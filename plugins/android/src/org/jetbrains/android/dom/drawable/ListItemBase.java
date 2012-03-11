@@ -13,12 +13,18 @@ import java.util.List;
  */
 public interface ListItemBase extends DrawableDomElement {
   @Convert(ResourceReferenceConverter.class)
-    @AndroidResourceType("drawable")
-    AndroidAttributeValue<ResourceValue> getDrawable();
+  @AndroidResourceType("drawable")
+  AndroidAttributeValue<ResourceValue> getDrawable();
 
-    List<BitmapOrNinePatchElement> getBitmaps();
+  List<BitmapOrNinePatchElement> getBitmaps();
 
-    List<Shape> getShapes();
+  List<BitmapOrNinePatchElement> getNinePatches();
 
-    List<InsetOrClipOrScale> getClips();
+  List<Shape> getShapes();
+
+  List<InsetOrClipOrScale> getClips();
+
+  List<InsetOrClipOrScale> getScales();
+
+  List<InsetOrClipOrScale> getInsets();
 }

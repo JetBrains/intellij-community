@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:id="@android:id/background">
+    <shape>
+      <corners android:radius="5dip"/>
+      <gradient
+          android:startColor="#ff9d9e9d"
+          android:centerColor="#ff5a5d5a"
+          android:centerY="0.75"
+          android:endColor="#ff747674"
+          android:angle="270"
+          />
+    </shape>
+  </item>
+
+  <item android:id="@android:id/secondaryProgress">
+    <scale android:drawable="@drawable/myDrawable"/>
+  </item>
+
+  <item android:id="@android:id/secondaryProgress">
+    <inset android:drawable="@drawable/myDrawable"/>
+  </item>
+
+  <item android:id="@android:id/secondaryProgress">
+    <nine-patch android:src="@drawable/myDrawable"/>
+  </item>
+
+  <item android:id="@android:id/secondaryProgress">
+    <bitmap android:src="@drawable/myDrawable"/>
+  </item>
+
+  <item android:id="@android:id/secondaryProgress">
+    <<error>bitmap</error>/>
+  </item>
+
+  <item android:id="@android:id/secondaryProgress">
+    <<warning>aba</warning> android:drawable="@drawable/myDrawable"/>
+  </item>
+
+  <item android:id="@android:id/progress">
+    <clip>
+      <shape>
+        <corners android:radius="5dip"/>
+        <gradient
+            android:startColor="#ff747674"
+            android:endColor="#ff747674"
+            android:angle="270"/>
+      </shape>
+    </clip>
+  </item>
+</layer-list>
