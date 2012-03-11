@@ -70,6 +70,8 @@
     <orderEntry type="module" module-name="junit" />
     <orderEntry type="module" module-name="maven" />
     <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="svn4idea" />
+    <orderEntry type="module" module-name="svn4idea-tests" />
     <orderEntry type="module" module-name="testng" />
     <orderEntry type="module" module-name="IntelliLang-java" />
     <orderEntry type="module" module-name="IntelliLang-javaee" />
