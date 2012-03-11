@@ -79,7 +79,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     ensureTempDirCreated();
 
-    myDir = FileUtil.createTempFile(ourTempDir, "test", "", false);
+    myDir = new File(ourTempDir, getTestName(false));
     myDir.mkdirs();
 
     setUpFixtures();
