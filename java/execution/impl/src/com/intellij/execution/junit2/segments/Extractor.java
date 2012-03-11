@@ -38,6 +38,7 @@ public class Extractor implements Disposable {
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT, this);
+  private int myOrder = -1;
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
@@ -56,12 +57,7 @@ public class Extractor implements Disposable {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
       @Override
       public void addLast(final Runnable runnable) {
-        myQueue.queue(new Update(runnable) {
-          @Override
-          public void run() {
-            queue.addLast(runnable);
-          }
-        });
+        myQueue.queue(new MyUpdate(runnable, queue, myOrder++));
       }
 
       @Override
@@ -102,4 +98,26 @@ public class Extractor implements Disposable {
     return new SegmentedInputStreamReader(myStream);
   }
 
+  private static class MyUpdate extends Update {
+    private final Runnable myRunnable;
+    private final DeferredActionsQueue myQueue;
+    private final int myOrder;
+
+    public MyUpdate(Runnable runnable, DeferredActionsQueue queue, int order) {
+      super(runnable);
+      myRunnable = runnable;
+      myQueue = queue;
+      myOrder = order;
+    }
+
+    @Override
+    public void run() {
+      myQueue.addLast(myRunnable);
+    }
+
+    @Override
+    public int compareTo(Object o) {
+      return myOrder - ((MyUpdate)o).myOrder;
+    }
+  }
 }
