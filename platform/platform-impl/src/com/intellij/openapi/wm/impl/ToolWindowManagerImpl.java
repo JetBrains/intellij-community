@@ -1326,11 +1326,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       position.set(Balloon.Position.atLeft);
     }
 
-    Icon actualIcon = icon != null ? icon : type.getDefaultIcon();
-
     final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), actualIcon, type.getPopupBackground(), listenerWrapper)
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getPopupBackground(), listenerWrapper)
         .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
     FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
       @Override
