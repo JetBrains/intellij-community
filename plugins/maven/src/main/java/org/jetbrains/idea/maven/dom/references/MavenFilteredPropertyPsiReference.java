@@ -29,8 +29,8 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import java.util.List;
 
 public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference {
-  public MavenFilteredPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range, boolean isSoft) {
-    super(mavenProject, element, text, range, isSoft);
+  public MavenFilteredPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range) {
+    super(mavenProject, element, text, range, true);
   }
 
   @Override

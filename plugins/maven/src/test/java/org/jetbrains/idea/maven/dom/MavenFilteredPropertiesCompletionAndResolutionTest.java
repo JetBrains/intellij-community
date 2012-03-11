@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
@@ -493,7 +494,9 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
 
     assertNotNull(resolveReference(f, "basedir"));
     assertNotNull(resolveReference(f, "pom.baseUri"));
-    assertNotNull(getReference(f, "ve|rsion"));
+    PsiReference ref = getReference(f, "ve|rsion");
+    assertNotNull(ref);
+    assertTrue(ref.isSoft());
   }
 
   public void testDontUseDefaultDelimiter1() throws Exception {

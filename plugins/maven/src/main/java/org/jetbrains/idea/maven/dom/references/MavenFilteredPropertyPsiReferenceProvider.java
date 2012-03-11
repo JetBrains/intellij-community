@@ -138,8 +138,7 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
 
       TextRange range = TextRange.from(from, propertyName.length());
 
-      res.add(
-        new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range, MavenPropertyPsiReferenceProvider.SOFT_DEFAULT));
+      res.add(new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range));
     }
 
     return res == null ? PsiReference.EMPTY_ARRAY : res.toArray(new PsiReference[res.size()]);
