@@ -24,11 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
@@ -64,12 +63,15 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   @NotNull
   protected FutureTask<Boolean> preprocessFile(@NotNull final PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException {
     final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
-    final List<Runnable> runnables = ContainerUtil.map(optimizers, new Function<ImportOptimizer, Runnable>() {
-      @Override
-      public Runnable fun(ImportOptimizer optimizer) {
-        return optimizer.processFile(file);
+    final List<Runnable> runnables = new ArrayList<Runnable>();
+    List<PsiFile> files = file.getViewProvider().getAllFiles();
+    for (ImportOptimizer optimizer : optimizers) {
+      for (PsiFile psiFile : files) {
+        if (optimizer.supports(psiFile)) {
+          runnables.add(optimizer.processFile(psiFile));
+        }
       }
-    });
+    }
     Runnable runnable = runnables.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
       @Override
       public void run() {
