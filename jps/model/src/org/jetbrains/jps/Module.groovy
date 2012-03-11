@@ -11,7 +11,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   String name;
   Sdk sdk;
 
-  private List<ModuleDependency> dependencies = []
+  List<ModuleDependency> dependencies = []
   List<String> contentRoots = []
   List<String> sourceRoots = []
   List<String> testRoots = []
@@ -115,7 +115,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
     return dependencies.findAll({it.scope.isIncludedIn(kind) && (!exportedOnly || it.exported)})*.item;
   }
 
-  private static class ModuleDependency {
+  public static class ModuleDependency {
     ClasspathItem item
     DependencyScope scope
     boolean exported

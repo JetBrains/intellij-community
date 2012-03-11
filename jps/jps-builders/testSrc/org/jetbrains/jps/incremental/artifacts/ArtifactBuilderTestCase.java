@@ -22,9 +22,7 @@ import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
 import groovy.lang.Closure;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.Library;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.Project;
+import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.incremental.*;
@@ -32,6 +30,7 @@ import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
@@ -48,6 +47,7 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
   private Project myProject;
   private File myProjectDir;
   private TestArtifactBuilderLogger myArtifactBuilderLogger;
+  private Sdk myJdk;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -112,8 +112,21 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
   }
 
   protected Module addModule(String moduleName, @Nullable String srcPath) {
+    if (myJdk == null) {
+      try {
+        myJdk = myProject.createSdk("JavaSDK", "jdk", System.getProperty("java.home"), null);
+        final List<String> paths = new LinkedList<String>();
+        paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
+        myJdk.setClasspath(paths);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
     final Module module = myProject.createModule(moduleName, Closure.IDENTITY);
     module.forceInit();
+    module.setSdk(myJdk);
+    module.getDependencies().add(new Module.ModuleDependency(myJdk, PredefinedDependencyScopes.getCOMPILE(), false));
     if (srcPath != null) {
       module.getContentRoots().add(srcPath);
       module.getSourceRoots().add(srcPath);
@@ -163,11 +176,15 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     myArtifactBuilderLogger.clear();
     IncProjectBuilder builder = new IncProjectBuilder(myDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL);
     final List<BuildMessage> errorMessages = new ArrayList<BuildMessage>();
+    final List<BuildMessage> infoMessages = new ArrayList<BuildMessage>();
     builder.addMessageHandler(new MessageHandler() {
       @Override
       public void processMessage(BuildMessage msg) {
         if (msg.getKind() == BuildMessage.Kind.ERROR) {
           errorMessages.add(msg);
+        }
+        else {
+          infoMessages.add(msg);
         }
       }
     });
@@ -176,7 +193,7 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
       assertFalse("Build not failed as expected", errorMessages.isEmpty());
     }
     else {
-      assertTrue("Build failed: " + errorMessages, errorMessages.isEmpty());
+      assertTrue("Build failed. \nErrors:\n" + errorMessages + "\nInfo messages:\n" + infoMessages, errorMessages.isEmpty());
     }
   }
 
