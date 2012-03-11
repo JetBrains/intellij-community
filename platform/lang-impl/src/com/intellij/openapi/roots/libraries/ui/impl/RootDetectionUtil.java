@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -53,19 +54,23 @@ public class RootDetectionUtil {
     new Task.Modal(project, "Scanning for Roots", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (RootDetector detector : detectors) {
-          for (VirtualFile rootCandidate : rootCandidates) {
-            final Collection<VirtualFile> roots = detector.detectRoots(rootCandidate, indicator);
-            final VirtualFile first = ContainerUtil.getFirstItem(roots);
-            if (first != null && roots.size() == 1 && first.equals(rootCandidate)) {
-              result.add(new OrderRoot(first, detector.getRootType(), detector.isJarDirectory()));
-            }
-            else {
-              for (VirtualFile root : roots) {
-                suggestedRoots.add(new SuggestedChildRootInfo(detector, rootCandidate, root));
+        try {
+          for (RootDetector detector : detectors) {
+            for (VirtualFile rootCandidate : rootCandidates) {
+              final Collection<VirtualFile> roots = detector.detectRoots(rootCandidate, indicator);
+              final VirtualFile first = ContainerUtil.getFirstItem(roots);
+              if (first != null && roots.size() == 1 && first.equals(rootCandidate)) {
+                result.add(new OrderRoot(first, detector.getRootType(), detector.isJarDirectory()));
+              }
+              else {
+                for (VirtualFile root : roots) {
+                  suggestedRoots.add(new SuggestedChildRootInfo(detector, rootCandidate, root));
+                }
               }
             }
           }
+        }
+        catch (ProcessCanceledException ignored) {
         }
       }
     }.queue();
