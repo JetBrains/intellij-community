@@ -158,6 +158,13 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
                   final ItemElement itemElement = (ItemElement)selectedElement;
                   getLibraryEditor().removeRoot(itemElement.getUrl(), itemElement.getRootType());
                 }
+                else if (selectedElement instanceof OrderRootTypeElement) {
+                  final OrderRootType rootType = ((OrderRootTypeElement)selectedElement).getOrderRootType();
+                  final String[] urls = getLibraryEditor().getUrls(rootType);
+                  for (String url : urls) {
+                    getLibraryEditor().removeRoot(url, rootType);
+                  }
+                }
               }
             }
           });
@@ -197,8 +204,15 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       @Override
       public boolean isEnabled(AnActionEvent e) {
         final Object[] selectedElements = getSelectedElements();
-        final Class<?> elementsClass = getElementsClass(selectedElements);
-        return elementsClass != null && !elementsClass.isAssignableFrom(OrderRootTypeElement.class);
+        for (Object element : selectedElements) {
+          if (element instanceof ItemElement) {
+            return true;
+          }
+          if (element instanceof OrderRootTypeElement && getLibraryEditor().getUrls(((OrderRootTypeElement)element).getOrderRootType()).length > 0) {
+            return true;
+          }
+        }
+        return false;
       }
     });
 
