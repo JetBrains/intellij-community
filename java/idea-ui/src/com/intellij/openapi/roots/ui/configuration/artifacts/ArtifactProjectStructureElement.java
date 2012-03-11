@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PackagingElementPath;
@@ -64,13 +65,14 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   public List<ProjectStructureElementUsage> getUsagesInElement() {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
     final List<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>();
-    ArtifactUtil.processPackagingElements(myArtifactsStructureContext.getRootElement(artifact), null, new PackagingElementProcessor<PackagingElement<?>>() {
+    final CompositePackagingElement<?> rootElement = myArtifactsStructureContext.getRootElement(artifact);
+    ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
         ProjectStructureElement element = getProjectStructureElementFor(packagingElement, ArtifactProjectStructureElement.this.myContext,
                                                                         ArtifactProjectStructureElement.this.myArtifactsStructureContext);
         if (element != null) {
-          usages.add(createUsage(packagingElement, path, element));
+          usages.add(createUsage(packagingElement, element, path.getPathStringFrom("/", rootElement)));
         }
         return true;
       }
@@ -109,9 +111,8 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     return null;
   }
 
-  private UsageInArtifact createUsage(PackagingElement<?> packagingElement, PackagingElementPath path,
-                                      final ProjectStructureElement element) {
-    return new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, element, this, path.getPathString(), packagingElement);
+  private UsageInArtifact createUsage(PackagingElement<?> packagingElement, final ProjectStructureElement element, final String parentPath) {
+    return new UsageInArtifact(myOriginalArtifact, myArtifactsStructureContext, element, this, parentPath, packagingElement);
   }
 
   @Override
