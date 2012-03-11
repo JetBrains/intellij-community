@@ -23,8 +23,8 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
+import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -80,22 +80,22 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
       final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context);
       if (modules != null) {
         for (Module module : modules) {
-          if (currentViewId.equals(ProjectViewPane.ID)) {
-            result.add(new ProjectViewModuleNode(project, module, viewSettings));
+          if (PackageViewPane.ID.equals(currentViewId)) {
+            result.add(new PackageViewModuleNode(project, module, viewSettings));
           }
           else {
-            result.add(new PackageViewModuleNode(project, module, viewSettings));
+            result.add(new ProjectViewModuleNode(project, module, viewSettings));
           }
         }
       } else {
         final ModuleGroup[] data = ModuleGroup.ARRAY_DATA_KEY.getData(context);
         if (data != null) {
           for (ModuleGroup moduleGroup : data) {
-            if (currentViewId.equals(ProjectViewPane.ID)) {
-              result.add(new ProjectViewModuleGroupNode(project, moduleGroup, viewSettings));
+            if (PackageViewPane.ID.equals(currentViewId)) {
+              result.add(new PackageViewModuleGroupNode(project, moduleGroup, viewSettings));
             }
             else {
-              result.add(new PackageViewModuleGroupNode(project, moduleGroup, viewSettings));
+              result.add(new ProjectViewModuleGroupNode(project, moduleGroup, viewSettings));
             }
           }
         }
