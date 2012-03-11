@@ -22,6 +22,7 @@ import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -31,13 +32,14 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.PathUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
-import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.EmptySdkLog;
 
@@ -45,8 +47,9 @@ import java.io.File;
 import java.io.IOException;
 
 @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
-  public static final String ANDROID_LIBRARY_NAME = "Android SDK";
+public abstract class AndroidTestCase extends UsefulTestCase {
+  protected JavaCodeInsightTestFixture myFixture;
+  protected Module myModule;
 
   private boolean myCreateManifest;
   protected AndroidFacet myFacet;
@@ -63,12 +66,11 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
     return PathUtil.getCanonicalPath(PluginPathManager.getPluginHomePath("android") + "/testData");
   }
 
-  @Override
-  protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("android") + "/testData";
+  protected static String getTestDataPath() {
+    return PluginPathManager.getPluginHomePath("android") + "/testData";
   }
 
-  private String getTestSdkPath() {
+  private static String getTestSdkPath() {
     return getTestDataPath() + "/sdk1.5";
   }
 
@@ -76,8 +78,18 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
+    final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    tuneModule(moduleFixtureBuilder, myFixture.getTempDirPath());
+
+    myFixture.setUp();
+    myFixture.setTestDataPath(getTestDataPath());
+    myModule = moduleFixtureBuilder.getFixture().getModule();
+
     myFacet = addAndroidFacet(myModule, getTestSdkPath());
     myFixture.copyDirectoryToProject(getResDir(), "res");
+
     if (myCreateManifest) {
       createManifest();
     }
@@ -85,12 +97,6 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
 
   protected String getResDir() {
     return "res";
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    tuneModule(moduleBuilder,
-               myFixture.getTempDirPath());
   }
 
   public static void tuneModule(JavaModuleFixtureBuilder moduleBuilder, String moduleDirPath) {
@@ -109,6 +115,9 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
 
   @Override
   public void tearDown() throws Exception {
+    myModule = null;
+    myFixture.tearDown();
+    myFixture = null;
     myFacet = null;
     super.tearDown();
   }
@@ -161,5 +170,9 @@ public abstract class AndroidTestCase extends JavaCodeInsightFixtureTestCase {
     sdkModificator.setSdkAdditionalData(data);
     sdkModificator.commitChanges();
     return sdk;
+  }
+
+  protected Project getProject() {
+    return myFixture.getProject();
   }
 }

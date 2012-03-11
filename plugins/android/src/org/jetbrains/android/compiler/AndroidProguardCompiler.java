@@ -57,12 +57,13 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
             continue;
           }
 
-          if (!AndroidCompileUtil.isReleaseBuild(context)) {
+          final String proguardCfgPath = AndroidCompileUtil.getProguardConfigFilePathIfShouldRun(facet, context);
+          if (proguardCfgPath == null) {
             continue;
           }
 
-          final String proguardCfgPath = context.getCompileScope().getUserData(PROGUARD_CFG_PATH_KEY);
-          if (proguardCfgPath == null) {
+          if (proguardCfgPath.length() == 0) {
+            context.addMessage(CompilerMessageCategory.ERROR, "Proguard config file path is not specified", null, -1, -1);
             continue;
           }
 

@@ -258,6 +258,10 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
                              "inset", "clip", "scale", "shape");
   }
 
+  public void testInlineClip() throws Throwable {
+    doTestHighlighting();
+  }
+
   private void doTestOnlyDrawableReferences() throws IOException {
     VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
     myFixture.configureFromExistingVirtualFile(file);

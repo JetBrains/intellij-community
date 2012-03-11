@@ -33,16 +33,16 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -55,7 +55,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  *         Date: Feb 24, 2005
  */
-public class CompoundRendererConfigurable implements UnnamedConfigurable{
+public class CompoundRendererConfigurable implements UnnamedConfigurable {
   private CompoundReferenceRenderer myRenderer;
   private CompoundReferenceRenderer myOriginalRenderer;
   private Project myProject;
@@ -72,13 +72,9 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
   private JComponent myChildrenListEditor;
   private JLabel myExpandedLabel;
   private JPanel myMainPanel;
-  private Table myTable;
+  private JBTable myTable;
   @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
   @NonNls private static final String DATA_PANEL_ID = "DATA";
-  private JButton myAddButton;
-  private JButton myRemoveButton;
-  private JButton myUpButton;
-  private JButton myDownButton;
   private static final int NAME_TABLE_COLUMN = 0;
   private static final int EXPRESSION_TABLE_COLUMN = 1;
 
@@ -108,8 +104,9 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     final JPanel panel = new JPanel(new GridBagLayout());
     myClassNameField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        PsiClass psiClass = DebuggerUtils.getInstance().chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
-        if(psiClass != null) {
+        PsiClass psiClass = DebuggerUtils.getInstance()
+          .chooseClassDialog(DebuggerBundle.message("title.compound.renderer.configurable.choose.renderer.reference.type"), myProject);
+        if (psiClass != null) {
           myClassNameField.setText(JVMNameUtil.getNonAnonymousClassName(psiClass));
         }
       }
@@ -149,23 +146,46 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     myRbListChildrenRenderer.addItemListener(updateListener);
     myRbExpressionChildrenRenderer.addItemListener(updateListener);
 
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                       GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
-    panel.add(myRbDefaultLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myRbExpressionLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myLabelEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(20, 0, 0, 0), 0, 0));
+    panel.add(myRbDefaultLabel,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(0, 10, 0, 0), 0, 0));
+    panel.add(myRbExpressionLabel,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(0, 10, 0, 0), 0, 0));
+    panel.add(myLabelEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                    GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
 
-    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(20, 0, 0, 0), 0, 0));
-    panel.add(myRbDefaultChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myRbExpressionChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myChildrenEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+    panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(20, 0, 0, 0), 0, 0));
+    panel.add(myRbDefaultChildrenRenderer,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(0, 10, 0, 0), 0, 0));
+    panel.add(myRbExpressionChildrenRenderer,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(0, 10, 0, 0), 0, 0));
+    panel.add(myChildrenEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                       GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
     myExpandedLabel = new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
-    panel.add(myExpandedLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(4, 30, 0, 0), 0, 0));
-    panel.add(myChildrenExpandedEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
-    panel.add(myRbListChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myChildrenListEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(4, 30, 0, 0), 0, 0));
+    panel.add(myExpandedLabel,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
+                                     new Insets(4, 30, 0, 0), 0, 0));
+    panel.add(myChildrenExpandedEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+    panel.add(myRbListChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
+    panel.add(myChildrenListEditor,
+              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                     new Insets(4, 30, 0, 0), 0, 0));
 
     myMainPanel = new JPanel(new CardLayout());
     myMainPanel.add(new JPanel(), EMPTY_PANEL_ID);
@@ -177,7 +197,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         final Project project = myProject;
-        final PsiClass psiClass = project != null? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
+        final PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
         myLabelEditor.setContext(psiClass);
         myChildrenEditor.setContext(psiClass);
         myChildrenExpandedEditor.setContext(psiClass);
@@ -193,12 +213,12 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     myChildrenExpandedEditor.setEnabled(isChildrenExpression);
     myExpandedLabel.setEnabled(isChildrenExpression);
     myChildrenEditor.setEnabled(isChildrenExpression);
-    myChildrenListEditor.setEnabled(myRbListChildrenRenderer.isSelected());
+    myTable.setEnabled(myRbListChildrenRenderer.isSelected());
   }
 
   private JComponent createChildrenListEditor() {
     final MyTableModel tableModel = new MyTableModel();
-    myTable = new Table(tableModel);
+    myTable = new JBTable(tableModel);
     myListChildrenEditor = new DebuggerExpressionTextField(myProject, null, "NamedChildrenConfigurable");
 
     final TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
@@ -213,72 +233,43 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
     });
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
-      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
         final TextWithImports textWithImports = (TextWithImports)value;
-        final String text = (textWithImports != null)? textWithImports.getText() : "";
+        final String text = (textWithImports != null) ? textWithImports.getText() : "";
         return super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
       }
     });
 
-    myAddButton = new JButton(DebuggerBundle.message("button.add"));
-    myRemoveButton = new JButton(DebuggerBundle.message("button.remove"));
-    myUpButton = new JButton(DebuggerBundle.message("button.move.up"));
-    myDownButton = new JButton(DebuggerBundle.message("button.move.down"));
-
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        tableModel.addRow("", DebuggerUtils.getInstance().createExpressionWithImports(""));
-      }
-    });
-
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        int selectedRow = myTable.getSelectedRow();
-        if(selectedRow >= 0 && selectedRow < myTable.getRowCount()) {
-          getTableModel().removeRow(selectedRow);
+    return ToolbarDecorator.createDecorator(myTable)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          tableModel.addRow("", DebuggerUtils.getInstance().createExpressionWithImports(""));
         }
-      }
-    });
-
-    myDownButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        TableUtil.moveSelectedItemsDown(myTable);
-      }
-    });
-
-    myUpButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        TableUtil.moveSelectedItemsUp(myTable);
-      }
-    });
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        int selectedRow = myTable.getSelectedRow();
-        myRemoveButton.setEnabled(selectedRow != -1);
-        myUpButton.setEnabled(selectedRow > 0);
-        myDownButton.setEnabled(selectedRow < myTable.getRowCount() - 1);
-      }
-    });
-
-    final JPanel panel = new JPanel(new GridBagLayout()) {
-      public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
-        myTable.setEnabled(enabled);
-        myAddButton.setEnabled(enabled);
-        myRemoveButton.setEnabled(enabled);
-        myUpButton.setEnabled(enabled);
-        myDownButton.setEnabled(enabled);
-      }
-    };
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    panel.add(scrollPane, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 4, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myAddButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
-    panel.add(myRemoveButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
-    panel.add(myUpButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
-    panel.add(myDownButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 4, 4, 0), 0, 0));
-
-    return panel;
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          int selectedRow = myTable.getSelectedRow();
+          if (selectedRow >= 0 && selectedRow < myTable.getRowCount()) {
+            getTableModel().removeRow(selectedRow);
+          }
+        }
+      }).setUpAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          TableUtil.moveSelectedItemsUp(myTable);
+        }
+      }).setDownAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          TableUtil.moveSelectedItemsDown(myTable);
+        }
+      }).createPanel();
   }
 
   public boolean isModified() {
@@ -323,7 +314,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
   public void reset() {
     final TextWithImports emptyExpressionFragment = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
-    ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, myRenderer == null? EMPTY_PANEL_ID : DATA_PANEL_ID);
+    ((CardLayout)myMainPanel.getLayout()).show(myMainPanel, myRenderer == null ? EMPTY_PANEL_ID : DATA_PANEL_ID);
     if (myRenderer == null) {
       return;
     }
@@ -416,9 +407,12 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
 
     public Class getColumnClass(int columnIndex) {
       switch (columnIndex) {
-          case NAME_TABLE_COLUMN: return String.class;
-          case EXPRESSION_TABLE_COLUMN: return TextWithImports.class;
-          default: return super.getColumnClass(columnIndex);
+        case NAME_TABLE_COLUMN:
+          return String.class;
+        case EXPRESSION_TABLE_COLUMN:
+          return TextWithImports.class;
+        default:
+          return super.getColumnClass(columnIndex);
       }
     }
 
@@ -428,9 +422,12 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
       final Row row = myData.get(rowIndex);
       switch (columnIndex) {
-          case NAME_TABLE_COLUMN: return row.name;
-          case EXPRESSION_TABLE_COLUMN: return row.value;
-          default: return null;
+        case NAME_TABLE_COLUMN:
+          return row.name;
+        case EXPRESSION_TABLE_COLUMN:
+          return row.value;
+        default:
+          return null;
       }
     }
 
@@ -440,20 +437,23 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
       }
       final Row row = myData.get(rowIndex);
       switch (columnIndex) {
-          case NAME_TABLE_COLUMN:
-            row.name = (String)aValue;
-            break;
-          case EXPRESSION_TABLE_COLUMN:
-            row.value = (TextWithImports)aValue;
-            break;
+        case NAME_TABLE_COLUMN:
+          row.name = (String)aValue;
+          break;
+        case EXPRESSION_TABLE_COLUMN:
+          row.value = (TextWithImports)aValue;
+          break;
       }
     }
 
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
-          case NAME_TABLE_COLUMN: return DebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
-          case EXPRESSION_TABLE_COLUMN: return DebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
-          default: return "";
+        case NAME_TABLE_COLUMN:
+          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.name");
+        case EXPRESSION_TABLE_COLUMN:
+          return DebuggerBundle.message("label.compound.renderer.configurable.table.header.expression");
+        default:
+          return "";
       }
     }
 

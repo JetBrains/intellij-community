@@ -92,10 +92,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
               }
             }
             final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized (dataManager.getMappings()) {
-              callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), reader);
-            }
+            callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), reader);
           }
         }
       }
@@ -817,10 +814,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         public void run() {
           final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(myContext);
           if (callback != null) {
-            final BuildDataManager dataManager = myContext.getDataManager();
-            synchronized (dataManager.getMappings()) {
-              callback.registerImports(className, imports, staticImports);
-            }
+            callback.registerImports(className, imports, staticImports);
           }
         }
       });

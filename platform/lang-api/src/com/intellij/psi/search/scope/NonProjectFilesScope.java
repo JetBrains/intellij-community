@@ -15,14 +15,13 @@
  */
 package com.intellij.psi.search.scope;
 
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.scope.packageSet.AbstractPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.Colored;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.RegExp;
 
 /**
@@ -41,5 +40,20 @@ public class NonProjectFilesScope extends NamedScope {
         return !ProjectScope.getProjectScope(holder.getProject()).contains(file);
       }
     });
+  }
+
+  public static NamedScope[] removeFromList(NamedScope[] scopes) {
+    int nonProjectIdx = -1;
+    for (int i = 0, length = scopes.length; i < length; i++) {
+      NamedScope scope = scopes[i];
+      if (scope instanceof NonProjectFilesScope) {
+        nonProjectIdx = i;
+        break;
+      }
+    }
+    if (nonProjectIdx > -1) {
+      scopes = ArrayUtil.remove(scopes, nonProjectIdx);
+    }
+    return scopes;
   }
 }

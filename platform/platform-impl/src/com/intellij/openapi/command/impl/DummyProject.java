@@ -86,11 +86,6 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return null;
   }
 
-  @Override
-  public String getBasePath() {
-    return null;
-  }
-
   public void save() {
   }
 

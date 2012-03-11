@@ -3,7 +3,7 @@ package org.jetbrains.android.inspections.lint;
 import com.android.sdklib.SdkConstants;
 import com.android.tools.lint.checks.BuiltinIssueRegistry;
 import com.android.tools.lint.client.api.IssueRegistry;
-import com.android.tools.lint.client.api.Lint;
+import com.android.tools.lint.client.api.LintDriver;
 import com.android.tools.lint.detector.api.Issue;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -90,7 +90,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
   public State doAnnotate(final State state) {
     final IntellijLintClient client = new IntellijLintClient(state);
     try {
-      final Lint lint = new Lint(new IssueRegistry() {
+      final LintDriver lint = new LintDriver(new IssueRegistry() {
         @Override
         public List<Issue> getIssues() {
           return state.getIssues();

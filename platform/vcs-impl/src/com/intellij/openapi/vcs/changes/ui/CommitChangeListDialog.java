@@ -321,20 +321,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myCommitMessageArea = new CommitMessage(project);
 
-    if (comment != null) {
-      setCommitMessage(comment);
-      myLastKnownComment = comment;
-      myLastSelectedListName = initialSelection == null ? myBrowser.getSelectedChangeList().getName() : initialSelection.getName();
-    } else {
-      updateComment();
-
-      if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
-        setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
-        final String messageFromVcs = getInitialMessageFromVcs();
-        if (messageFromVcs != null) {
-          myCommitMessageArea.setText(messageFromVcs);
-        }
-      }
+    if (!VcsConfiguration.getInstance(project).CLEAR_INITIAL_COMMIT_MESSAGE) {
+      setComment(project, initialSelection, comment);
     }
 
     myActionName = VcsBundle.message("commit.dialog.title");
@@ -469,6 +457,24 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     showDetailsIfSaved();
+  }
+
+  private void setComment(Project project, LocalChangeList initialSelection, String comment) {
+    if (comment != null) {
+      setCommitMessage(comment);
+      myLastKnownComment = comment;
+      myLastSelectedListName = initialSelection == null ? myBrowser.getSelectedChangeList().getName() : initialSelection.getName();
+    } else {
+      updateComment();
+
+      if (StringUtil.isEmptyOrSpaces(myCommitMessageArea.getComment())) {
+        setCommitMessage(VcsConfiguration.getInstance(project).LAST_COMMIT_MESSAGE);
+        final String messageFromVcs = getInitialMessageFromVcs();
+        if (messageFromVcs != null) {
+          myCommitMessageArea.setText(messageFromVcs);
+        }
+      }
+    }
   }
 
   private void showDetailsIfSaved() {
@@ -710,6 +716,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateComment() {
+    if (VcsConfiguration.getInstance(getProject()).CLEAR_INITIAL_COMMIT_MESSAGE) return;
     final LocalChangeList list = (LocalChangeList) myBrowser.getSelectedChangeList();
     if (list == null || (list.getName().equals(myLastSelectedListName))) {
       return;

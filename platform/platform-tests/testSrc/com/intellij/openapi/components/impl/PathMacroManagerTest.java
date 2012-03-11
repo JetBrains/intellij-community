@@ -142,17 +142,10 @@ public class PathMacroManagerTest {
       allowing(moduleFile).getParent(); will(returnValue(moduleParentFile));
       allowing(projectParentFile).getPath(); will(returnValue(StringUtil.getPackageName(moduleFilePath, '/')));
 
-      allowing(myApplication).getComponent(with(equal(PathMacros.class)));
-      will(returnValue(myPathMacros));
+      allowing(myApplication).getComponent(with(equal(PathMacros.class))); will(returnValue(myPathMacros));
       allowing(myPathMacros).addMacroReplacements(with(any(ReplacePathToMacroMap.class)));
 
-      allowing(myProject).getProjectFilePath();
-      will(returnValue(projectPath));
-      allowing(myProject).getBaseDir();
-      will(returnValue(projectFile));
-      allowing(myProject).getBasePath(); will(returnValue(projectPath));
-
-      allowing(myModule).getModuleFile(); will(returnValue(moduleFile));
+      allowing(myProject).getBaseDir(); will(returnValue(projectFile));
       allowing(myModule).getModuleFilePath(); will(returnValue(moduleFilePath));
       allowing(myModule).getProject(); will(returnValue(myProject));
     }});

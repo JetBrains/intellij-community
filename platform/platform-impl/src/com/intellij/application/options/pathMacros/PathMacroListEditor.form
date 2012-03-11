@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.application.options.pathMacros.PathMacroListEditor">
-  <grid id="f12c5" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="f12c5" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="33" y="34" width="588" height="355"/>
@@ -8,59 +8,18 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="10b63" class="com.intellij.ui.components.JBScrollPane" binding="myScrollPane">
+      <grid id="6e973" binding="myPathVariablesPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <minimum-size width="-1" height="200"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
-      <grid id="6e973" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
-        <constraints>
-          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
-        <children>
-          <component id="cce25" class="javax.swing.JButton" binding="myAddButton">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <actionCommand resource-bundle="messages/ApplicationBundle" key="button.add"/>
-              <autoscrolls value="true"/>
-              <text resource-bundle="messages/ApplicationBundle" key="button.add"/>
-            </properties>
-          </component>
-          <component id="fddf" class="javax.swing.JButton" binding="myEditButton">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="button.edit.dialog"/>
-            </properties>
-          </component>
-          <component id="b8f8f" class="javax.swing.JButton" binding="myRemoveButton">
-            <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="button.remove.r"/>
-            </properties>
-          </component>
-          <vspacer id="cca3a">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
-        </children>
+        <children/>
       </grid>
       <grid id="972af" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>

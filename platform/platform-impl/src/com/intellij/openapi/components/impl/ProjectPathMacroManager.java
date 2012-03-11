@@ -34,25 +34,14 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
   @Override
   public ExpandMacroToPathMap getExpandMacroMap() {
     final ExpandMacroToPathMap result = super.getExpandMacroMap();
-    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, myProject.getBasePath());
+    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject));
     return result;
   }
 
   @Override
   public ReplacePathToMacroMap getReplacePathMap() {
     final ReplacePathToMacroMap result = super.getReplacePathMap();
-
-    final String projectDir = getProjectDir(myProject);
-    if (projectDir != null) {
-      addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, projectDir, null);
-    }
-
-    // add non-canonical path if differs
-    final String projectPath = myProject.getBasePath();
-    if (!pathsEqual(projectPath, projectDir)) {
-      addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, projectPath, null);
-    }
-
+    addFileHierarchyReplacements(result, PathMacrosImpl.PROJECT_DIR_MACRO_NAME, getProjectDir(myProject), null);
     return result;
   }
 

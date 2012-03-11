@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,8 @@ public class ProjectFileVersionImpl extends ProjectFileVersion implements Projec
     final IProjectStore stateStore = ((ProjectEx)myProject).getStateStore();
     final String filePath;
     if (stateStore.getStorageScheme() == StorageScheme.DEFAULT) {
-      filePath = stateStore.getProjectFilePath();
+      final VirtualFile projectFile = stateStore.getProjectFile();
+      filePath = projectFile != null ? projectFile.getPath() : null;
     }
     else {
       final VirtualFile baseDir = stateStore.getProjectBaseDir();

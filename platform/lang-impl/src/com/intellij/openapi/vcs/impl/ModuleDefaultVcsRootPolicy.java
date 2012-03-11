@@ -86,7 +86,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         // explicitly (we know it anyway)
         VcsDirectoryMapping mapping = mappingList.getMappingFor(file, module);
         final String mappingVcs = mapping != null ? mapping.getVcs() : null;
-        if (vcsName.equals(mappingVcs)) {
+        if (vcsName.equals(mappingVcs) && !result.contains(file)) {
           result.add(file);
         }
       }

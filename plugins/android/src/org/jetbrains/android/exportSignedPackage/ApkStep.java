@@ -49,6 +49,7 @@ import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidPackagingCompiler;
 import org.jetbrains.android.compiler.AndroidProguardCompiler;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -170,7 +171,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
       selected = Boolean.parseBoolean(runProguardPropValue);
     }
     else {
-      selected = false;
+      selected = myWizard.getFacet().getConfiguration().RUN_PROGUARD;
     }
     myProguardCheckBox.setSelected(selected);
     myProguardConfigFilePathLabel.setEnabled(selected);
@@ -182,9 +183,18 @@ class ApkStep extends ExportSignedPackageWizardStep {
       myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardCfgPath));
     }
     else {
-      final VirtualFile proguardConfigFile = AndroidCompileUtil.getProguardConfigFile(myWizard.getFacet());
-      if (proguardConfigFile != null) {
-        myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardConfigFile.getPath()));
+      final AndroidFacetConfiguration configuration = myWizard.getFacet().getConfiguration();
+      if (configuration.RUN_PROGUARD) {
+        final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(myWizard.getFacet());
+        if (proguardCfgFile != null) {
+          myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardCfgFile.getPath()));
+        }
+      }
+      else {
+        final VirtualFile proguardConfigFile = AndroidCompileUtil.getDefaultProguardConfigFile(myWizard.getFacet());
+        if (proguardConfigFile != null) {
+          myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardConfigFile.getPath()));
+        }
       }
     }
 

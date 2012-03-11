@@ -31,16 +31,15 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ListUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -52,12 +51,10 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private JComboBox mySmartPasteCombo;
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
-  private JBList myExcludePackagesList;
-  private JButton myAddPackageButton;
-  private JButton myRemoveButton;
   private JCheckBox myCbAddUnambiguousImports;
   private JCheckBox myCbOptimizeImports;
-
+  private JPanel myExcludeFromImportAndCompletionPanel;
+  private JBList myExcludePackagesList;
   private DefaultListModel myExcludePackagesModel;
   @NonNls private static final Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
 
@@ -66,34 +63,28 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
 
-    myAddPackageButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        InputValidator validator = new InputValidator() {
+    myExcludePackagesList = new JBList();
+    myExcludeFromImportAndCompletionPanel.add(
+      ToolbarDecorator.createDecorator(myExcludePackagesList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            InputValidator validator = new InputValidator() {
 
-          public boolean checkInput(String inputString) {
-            return ourPackagePattern.matcher(inputString).matches();
-          }
+              public boolean checkInput(String inputString) {
+                return ourPackagePattern.matcher(inputString).matches();
+              }
 
-          public boolean canClose(String inputString) {
-            return checkInput(inputString);
+              public boolean canClose(String inputString) {
+                return checkInput(inputString);
+              }
+            };
+            String packageName = Messages.showInputDialog(myWholePanel, ApplicationBundle.message("exclude.from.completion.prompt"),
+                                                          ApplicationBundle.message("exclude.from.completion.title"),
+                                                          Messages.getWarningIcon(), "", validator);
+            addExcludePackage(packageName);
           }
-        };
-        String packageName = Messages.showInputDialog(myWholePanel, ApplicationBundle.message("exclude.from.completion.prompt"),
-                                                      ApplicationBundle.message("exclude.from.completion.title"),
-                                                      Messages.getWarningIcon(), "", validator);
-        addExcludePackage(packageName);
-      }
-    });
-    myExcludePackagesList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        myRemoveButton.setEnabled(myExcludePackagesList.getSelectedValue() != null);
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ListUtil.removeSelectedItems(myExcludePackagesList);
-      }
-    });
+        }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myExcludePackagesList.getEmptyText().setText(ApplicationBundle.message("exclude.from.imports.no.exclusions"));
   }
@@ -104,7 +95,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     }
     int index = -Arrays.binarySearch(myExcludePackagesModel.toArray(), packageName) - 1;
     if (index < 0) return;
-    
+
     myExcludePackagesModel.add(index, packageName);
     myExcludePackagesList.setSelectedValue(packageName, true);
     ListScrollingUtil.ensureIndexIsVisible(myExcludePackagesList, index, 0);
@@ -135,7 +126,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myCbAddUnambiguousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
 
     myExcludePackagesModel = new DefaultListModel();
-    for(String aPackage: codeInsightSettings.EXCLUDED_PACKAGES) {
+    for (String aPackage : codeInsightSettings.EXCLUDED_PACKAGES) {
       myExcludePackagesModel.add(myExcludePackagesModel.size(), aPackage);
     }
     myExcludePackagesList.setModel(myExcludePackagesModel);
@@ -167,7 +158,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private String[] getExcludedPackages() {
     String[] excludedPackages = new String[myExcludePackagesModel.size()];
     for (int i = 0; i < myExcludePackagesModel.size(); i++) {
-      excludedPackages [i] = (String)myExcludePackagesModel.elementAt(i);
+      excludedPackages[i] = (String)myExcludePackagesModel.elementAt(i);
     }
     Arrays.sort(excludedPackages);
     return excludedPackages;

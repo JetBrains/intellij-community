@@ -173,6 +173,20 @@ public class AndroidLintTest extends AndroidTestCase {
     doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintManifestOrderInspection());
   }
 
+  public void testButtonsOrder() throws Exception {
+    myFixture.copyFileToProject(getGlobalTestDir() + "/AndroidManifest.xml", "AndroidManifest.xml");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/strings.xml", "res/values/strings.xml");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/layout.xml", "res/layout/layout.xml");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintButtonOrderInspection());
+  }
+
+  public void testViewType() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/MyActivity.java", "src/p1/p2/MyActivity.java");
+    myFixture.copyFileToProject(getGlobalTestDir() + "/layout.xml", "res/layout/layout.xml");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintWrongViewCastInspection());
+  }
+
   public void testDuplicateIcons() throws Exception {
     createManifest();
     myFixture.copyFileToProject(getGlobalTestDir() + "/dup1.png", "res/drawable/dup1.png");

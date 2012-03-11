@@ -78,8 +78,9 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     myThrowsList = new LightReferenceListBuilder(manager, GroovyFileType.GROOVY_LANGUAGE, PsiReferenceList.Role.THROWS_LIST);
   }
 
-  public void setNamedParameters(@NotNull Map<String, NamedArgumentDescriptor> namedParameters) {
+  public GrLightMethodBuilder setNamedParameters(@NotNull Map<String, NamedArgumentDescriptor> namedParameters) {
     this.myNamedParameters = namedParameters;
+    return this;
   }
 
   @Override

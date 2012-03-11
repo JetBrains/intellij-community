@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -47,7 +46,6 @@ import com.intellij.util.SequentialTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -389,15 +387,12 @@ public abstract class AbstractLayoutCodeProcessor {
   private static Set<VirtualFile> getIgnoreRoots(@NotNull Project project) {
     Set<VirtualFile> result = new HashSet<VirtualFile>();
 
-    String location = project.getBasePath();
-    if (location != null) {
-      File projectDir = new File(location, Project.DIRECTORY_STORE_FOLDER);
-      if (projectDir.isDirectory()) {
-        VirtualFile projectVirtualDirectory = LocalFileSystem.getInstance().findFileByIoFile(projectDir);
-        if (projectVirtualDirectory != null) {
-          result.add(projectVirtualDirectory);
-        } 
-      } 
+    VirtualFile baseDir = project.getBaseDir();
+    if (baseDir != null) {
+      VirtualFile projectVirtualDirectory = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+      if (projectVirtualDirectory != null) {
+        result.add(projectVirtualDirectory);
+      }
     }
 
     VirtualFile projectFile = project.getProjectFile();

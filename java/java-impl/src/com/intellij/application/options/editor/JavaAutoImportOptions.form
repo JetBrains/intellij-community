@@ -59,50 +59,15 @@
           </hspacer>
         </children>
       </grid>
-      <grid id="e67c2" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-        <margin top="0" left="0" bottom="0" right="0"/>
+      <grid id="e67c2" binding="myExcludeFromImportAndCompletionPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="400" height="150"/>
+          </grid>
         </constraints>
         <properties/>
         <border type="none"/>
-        <children>
-          <scrollpane id="9c6c" class="com.intellij.ui.components.JBScrollPane">
-            <constraints>
-              <grid row="0" column="0" row-span="3" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="75463" class="com.intellij.ui.components.JBList" binding="myExcludePackagesList">
-                <constraints/>
-                <properties/>
-              </component>
-            </children>
-          </scrollpane>
-          <component id="82013" class="javax.swing.JButton" binding="myAddPackageButton">
-            <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="exclude.from.imports.add"/>
-            </properties>
-          </component>
-          <component id="9c559" class="javax.swing.JButton" binding="myRemoveButton">
-            <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <enabled value="false"/>
-              <text resource-bundle="messages/ApplicationBundle" key="action.remove"/>
-            </properties>
-          </component>
-          <vspacer id="c69dd">
-            <constraints>
-              <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
-        </children>
+        <children/>
       </grid>
       <component id="64f08" class="com.intellij.ui.TitledSeparator">
         <constraints>
