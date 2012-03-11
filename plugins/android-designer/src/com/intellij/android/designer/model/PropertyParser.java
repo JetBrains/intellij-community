@@ -38,14 +38,13 @@ import java.util.*;
 public class PropertyParser {
   private AttributeDefinitions myDefinitions;
   private ProjectClassLoader myClassLoader;
-  private Map<String, List<AttributeDefinition>> myCachedAttributes;
+  private Map<String, List<Property>> myCachedProperties;
 
   public PropertyParser(Module module, IAndroidTarget target) throws Exception {
     MetaManager metaManager = ViewsMetaManager.getInstance(module.getProject());
-    myCachedAttributes = (Map<String, List<AttributeDefinition>>)metaManager.getCache().get(target.hashString());
-    if (myCachedAttributes == null) {
-      myCachedAttributes = new HashMap<String, List<AttributeDefinition>>();
-      metaManager.getCache().put(target.hashString(), myCachedAttributes);
+    myCachedProperties = metaManager.getCache(target.hashString());
+    if (myCachedProperties == null) {
+      metaManager.setCache(target.hashString(), myCachedProperties = new HashMap<String, List<Property>>());
     }
 
     AndroidPlatform androidPlatform = AndroidPlatform.getInstance(module);
@@ -65,49 +64,47 @@ public class PropertyParser {
   }
 
   public void load(RadViewComponent component) throws Exception {
-    List<Property> properties = new ArrayList<Property>();
-    component.setProperties(properties);
-
     ViewInfo info = component.getViewInfo();
     if (info == null) {
-      return;
+      component.setProperties(Collections.<Property>emptyList());
     }
-
-    List<AttributeDefinition> attributes = loadAttributes(myClassLoader.loadClass(info.getClassName()));
-    for (AttributeDefinition attribute : attributes) {
-      // TODO
+    else {
+      component.setProperties(load(myClassLoader.loadClass(info.getClassName())));
     }
   }
 
-  private List<AttributeDefinition> loadAttributes(Class<?> componentClass) {
+  private List<Property> load(Class<?> componentClass) {
     String component = componentClass.getSimpleName();
-    List<AttributeDefinition> attributes = myCachedAttributes.get(component);
+    List<Property> properties = myCachedProperties.get(component);
 
-    if (attributes == null) {
-      attributes = new ArrayList<AttributeDefinition>();
+    if (properties == null) {
+      properties = new ArrayList<Property>();
 
-      StyleableDefinition attributeDefs = myDefinitions.getStyleableByName(component);
-      if (attributeDefs != null) {
-        attributes.addAll(attributeDefs.getAttributes());
+      StyleableDefinition definitions = myDefinitions.getStyleableByName(component);
+      if (definitions != null) {
+        for (AttributeDefinition definition : definitions.getAttributes()) {
+          properties.add(new AttributeProperty(null, definition));
+          // TODO
+        }
       }
 
       Class<?> superComponentClass = componentClass.getSuperclass();
       if (superComponentClass != null) {
-        attributes.addAll(loadAttributes(superComponentClass));
+        properties.addAll(load(superComponentClass));
       }
 
-      if (!attributes.isEmpty()) {
-        Collections.sort(attributes, new Comparator<AttributeDefinition>() {
+      if (!properties.isEmpty()) {
+        Collections.sort(properties, new Comparator<Property>() {
           @Override
-          public int compare(AttributeDefinition a1, AttributeDefinition a2) {
-            return a1.getName().compareTo(a2.getName());
+          public int compare(Property p1, Property p2) {
+            return p1.getName().compareTo(p2.getName());
           }
         });
       }
 
-      myCachedAttributes.put(component, attributes);
+      myCachedProperties.put(component, properties);
     }
 
-    return attributes;
+    return properties;
   }
 }

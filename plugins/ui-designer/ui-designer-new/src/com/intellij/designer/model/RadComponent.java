@@ -134,11 +134,12 @@ public abstract class RadComponent {
     return Collections.emptyList();
   }
 
-  public final Object getClientProperty(@NotNull Object key) {
-    return myClientProperties.get(key);
+  @SuppressWarnings("unchecked")
+  public final <T> T getClientProperty(@NotNull String key) {
+    return (T)myClientProperties.get(key);
   }
 
-  public final void putClientProperty(@NotNull Object key, Object value) {
+  public final void setClientProperty(@NotNull Object key, Object value) {
     myClientProperties.put(key, value);
   }
 

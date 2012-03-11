@@ -18,7 +18,6 @@ package com.intellij.android.designer.designSurface;
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
 import com.android.ide.common.resources.configuration.*;
-import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.ModelParser;
@@ -44,10 +43,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidTargetData;
 import org.jetbrains.android.uipreview.*;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
@@ -130,10 +127,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        checkRenderer();
+        checkRenderer(false);
 
         RootView rootView = new RootView(mySession.getImage(), 30, 20);
-        parser.updateRootComponent(mySession.getRootViews(), rootView);
+        parser.updateRootComponent(mySession, rootView);
 
         new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget()).loadRecursive(parser.getRootComponent());
 
@@ -160,20 +157,24 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        checkRenderer();
-
-        RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
-        RootView rootView = (RootView)rootComponent.getNativeComponent();
-        rootView.setImage(mySession.getImage());
-        ModelParser.updateRootComponent(rootComponent, mySession.getRootViews(), rootView);
-
-        myLayeredPane.repaint();
+        updateRenderer(false);
       }
     });
   }
 
-  private void checkRenderer() throws Throwable {
-    Result result = mySession.getResult();
+  private void updateRenderer(boolean render) throws Throwable {
+    checkRenderer(render);
+
+    RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+    RootView rootView = (RootView)rootComponent.getNativeComponent();
+    rootView.setImage(mySession.getImage());
+    ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+
+    myLayeredPane.repaint();
+  }
+
+  private void checkRenderer(boolean render) throws Throwable {
+    Result result = render ? mySession.render() : mySession.getResult();
     if (!result.isSuccess()) {
       System.out.println(
         "No session: " + result.getErrorMessage() + " : " + result.getStatus() + " : " + result.getData() + " : " + result.getException());
@@ -250,6 +251,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           mySession = RenderUtil
             .createRenderSession(getProject(), layoutXmlText, myFile, manager.getSelectedTarget(), facet, config, xdpi, ydpi,
                                  manager.getSelectedTheme());
+          System.out.println(mySession + " | " + mySession.getClass());
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
@@ -347,24 +349,34 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   protected boolean execute(ThrowableRunnable<Exception> operation) {
     try {
+      myPSIChangeListener.stop();
       operation.run();
+      updateRenderer(true);
       return true;
     }
     catch (Throwable e) {
       showError("Execute command", e);
       return false;
     }
+    finally {
+      myPSIChangeListener.start();
+    }
   }
 
   @Override
   protected void execute(List<EditOperation> operations) {
     try {
+      myPSIChangeListener.stop();
       for (EditOperation operation : operations) {
         operation.execute();
       }
+      updateRenderer(true);
     }
     catch (Throwable e) {
       showError("Execute command", e);
+    }
+    finally {
+      myPSIChangeListener.start();
     }
   }
 

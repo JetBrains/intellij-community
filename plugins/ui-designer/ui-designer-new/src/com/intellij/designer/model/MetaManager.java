@@ -121,8 +121,13 @@ public abstract class MetaManager {
     myPaletteGroups.add(group);
   }
 
-  public Map<Object, Object> getCache() {
-    return myCache;
+  @SuppressWarnings("unchecked")
+  public <K, V> Map<K, V> getCache(Object key) {
+    return (Map<K, V>)myCache.get(key);
+  }
+
+  public void setCache(Object key, Object value) {
+    myCache.put(key, value);
   }
 
   @Nullable

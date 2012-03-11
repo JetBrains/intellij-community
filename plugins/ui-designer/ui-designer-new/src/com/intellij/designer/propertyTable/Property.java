@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class Property {
+public abstract class Property<T extends RadComponent> {
   private final Property myParent;
   @NotNull private final String myName;
   private boolean myImportant;
@@ -48,7 +48,7 @@ public abstract class Property {
     return myParent;
   }
 
-  public List<Property> getChildren(@Nullable RadComponent component) {
+  public List<Property> getChildren(@Nullable T component) {
     return Collections.emptyList();
   }
 
@@ -69,18 +69,18 @@ public abstract class Property {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  public Object getValue(RadComponent component) throws Exception {
+  public Object getValue(T component) throws Exception {
     return null;
   }
 
-  public void setValue(RadComponent component, Object value) throws Exception {
+  public void setValue(T component, Object value) throws Exception {
   }
 
-  public boolean isDefaultValue(RadComponent component) throws Exception {
+  public boolean isDefaultValue(T component) throws Exception {
     return false;
   }
 
-  public void setDefaultValue(RadComponent component) throws Exception {
+  public void setDefaultValue(T component) throws Exception {
   }
 
   public boolean availableFor(List<RadComponent> components) {

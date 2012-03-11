@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model;
 
+import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
@@ -34,6 +35,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ModelParser extends XmlRecursiveElementVisitor {
+  public static final String SESSION = "RENDER_LIB_SESSION";
+
   private final MetaManager myMetaManager;
   private final XmlFile myXmlFile;
   private RadViewComponent myRootComponent;
@@ -121,29 +124,25 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     return myLayoutXmlText;
   }
 
-  public void updateRootComponent(List<ViewInfo> views, JComponent nativeComponent) throws Exception {
+  public void updateRootComponent(RenderSession session, JComponent nativeComponent) throws Exception {
     RadViewComponent rootComponent = myRootComponent;
 
-    if (views.size() == 1) {
+    if (session.getRootViews().size() == 1) {
       RadViewComponent newRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
+
       rootComponent.setParent(newRootComponent);
       newRootComponent.getChildren().add(rootComponent);
 
-      updateComponent(rootComponent, views.get(0), nativeComponent, 0, 0);
-
-      newRootComponent.setNativeComponent(nativeComponent);
-      newRootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
-
-      myRootComponent = newRootComponent;
+      myRootComponent = rootComponent = newRootComponent;
     }
-    else {
-      updateRootComponent(rootComponent, views, nativeComponent);
-    }
+
+    updateRootComponent(rootComponent, session, nativeComponent);
   }
 
   public static void updateRootComponent(RadViewComponent rootComponent,
-                                         List<ViewInfo> views,
+                                         RenderSession session,
                                          JComponent nativeComponent) {
+    List<ViewInfo> views = session.getRootViews();
     int size = views.size();
     List<RadComponent> children = rootComponent.getChildren();
     for (int i = 0; i < size; i++) {
@@ -152,6 +151,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
     rootComponent.setNativeComponent(nativeComponent);
     rootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
+    rootComponent.setClientProperty(SESSION, session);
   }
 
   private static void updateComponent(RadViewComponent component,
