@@ -310,10 +310,12 @@ public class MavenDomUtil {
     if (file == null) return false;
 
     for (MavenResource each : project.getResources()) {
+      if (!each.isFiltered()) continue;
+
       VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(each.getDirectory());
       if (resourceDir == null) continue;
       if (!VfsUtil.isAncestor(resourceDir, file, true)) continue;
-      return each.isFiltered();
+      return true;
     }
     return false;
   }
