@@ -65,7 +65,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleProjectState"/>
 
-    <toolWindow id="Gradle" anchor="right" icon="/icons/gradle.png"
+    <toolWindow id="JetGradle" anchor="right" icon="/icons/gradle.png"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
   </extensions>
 
