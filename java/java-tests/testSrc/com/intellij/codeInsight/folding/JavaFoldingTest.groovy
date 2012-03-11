@@ -17,13 +17,12 @@ package com.intellij.codeInsight.folding;
 
 
 import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
-import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
-import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.find.FindManager
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Denis Zhdanov
@@ -135,6 +134,37 @@ class Test {
     changeFoldRegions { closureStartFold.expanded = false }
     assertTrue closureStartFold.expanded
     assertTrue closureEndFold.expanded
+  }
+
+  public void "test closure folding when an abstract method is not in the direct superclass"() {
+    myFoldingSettings.COLLAPSE_CLOSURES = true
+    def text = """\
+public abstract class AroundTemplateMethod<T> {
+  public abstract T execute();
+}
+private static abstract class SetupTimer<T> extends AroundTemplateMethod<T> {
+}
+class Test {
+    void test() {
+     new SetupTimer<Integer>() {
+      public Integer execute() {
+        return 0;
+      }
+    };
+  }
+}
+"""
+
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    def closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("<Integer>"))
+    assertNotNull closureStartFold
+    assertFalse closureStartFold.expanded
+
+    assertNotNull closureStartFold.group
+    def closureFolds = foldingModel.getGroupedRegions(closureStartFold.group)
+    assertNotNull closureFolds
+    assertEquals(2, closureFolds.size())
   }
 
   public void testFindInFolding() {

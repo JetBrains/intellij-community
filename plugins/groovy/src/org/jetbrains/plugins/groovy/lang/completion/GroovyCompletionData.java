@@ -25,6 +25,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -96,7 +98,10 @@ public class GroovyCompletionData {
         result.addElement(keyword("as", TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
-      if (isInfixOperatorPosition(position)) {
+      if (isAfterForParameter(position)) {
+        addKeywords(result, true, "in");
+      }
+      else if (isInfixOperatorPosition(position)) {
         addKeywords(result, true, "in", PsiKeyword.INSTANCEOF);
       } else if (suggestThrows(position)) {
         result.addElement(keyword(PsiKeyword.THROWS, TailType.INSERT_SPACE));
@@ -133,6 +138,13 @@ public class GroovyCompletionData {
         }
       }
     }
+  }
+
+  private static boolean isAfterForParameter(PsiElement position) {
+    ElementPattern<PsiElement> forParameter =
+      psiElement().withParents(GrParameter.class, GrTraditionalForClause.class, GrForStatement.class);
+    return psiElement().withParent(GrReferenceExpression.class).afterLeaf(forParameter).accepts(position) ||
+           forParameter.accepts(position) && psiElement().afterLeaf(psiElement(GroovyTokenTypes.mIDENT)).accepts(position);
   }
 
   public static void addModifiers(PsiElement position, CompletionResultSet result) {

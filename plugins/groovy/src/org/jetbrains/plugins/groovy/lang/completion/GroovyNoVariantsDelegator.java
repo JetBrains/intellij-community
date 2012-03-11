@@ -125,7 +125,7 @@ public class GroovyNoVariantsDelegator extends CompletionContributor {
     }
 
     return factory.createReferenceExpressionFromText("xxx.xxx",
-                                                     ReferenceExpressionCompletionContributor
+                                                     JavaCompletionUtil
                                                        .createContextWithXxxVariable(place, qualifierType));
   }
 

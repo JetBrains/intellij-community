@@ -1188,4 +1188,9 @@ new Base().fie<caret>x''')
     assert myFixture.lookupElementStrings == ['field1']
   }
 
+  public void testForIn() {
+    assert doContainsTest('in', 'for (int i i<caret>')
+    assert doContainsTest('in', 'for (i i<caret>')
+  }
+
 }

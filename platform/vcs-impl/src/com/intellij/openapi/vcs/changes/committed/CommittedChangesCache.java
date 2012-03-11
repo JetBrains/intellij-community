@@ -599,7 +599,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
     myCachedIncomingChangeLists = result;
     debug("Incoming changes loaded");
-    notifyIncomingChangesUpdated(null);
+    notifyIncomingChangesUpdated(result);
     return result;
   }
 
@@ -741,7 +741,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   }
 
   private void notifyIncomingChangesUpdated(@Nullable final Collection<CommittedChangeList> receivedChanges) {
-    final ArrayList<CommittedChangeList> listCopy = receivedChanges == null ? null : new ArrayList<CommittedChangeList>(receivedChanges);
+    final Collection<CommittedChangeList> changes = receivedChanges == null ? myCachedIncomingChangeLists : receivedChanges;
+    if (changes == null) {
+      final List<CommittedChangeList> lists = loadIncomingChanges(false);
+      myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(new ArrayList<CommittedChangeList>(lists));
+      return;
+    }
+    final ArrayList<CommittedChangeList> listCopy = new ArrayList<CommittedChangeList>(changes);
     myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(listCopy);
   }
 

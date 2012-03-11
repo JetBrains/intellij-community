@@ -15,9 +15,11 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -55,9 +57,11 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     return true;
   }
 
-  private static void delegate(CompletionParameters parameters, CompletionResultSet result) {
+  private static void delegate(CompletionParameters parameters, final CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       PsiElement position = parameters.getPosition();
+      suggestCollectionUtilities(parameters, result, position);
+
       if (parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result, false) &&
           JavaCompletionContributor.isClassNamePossible(position)) {
@@ -70,6 +74,19 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
 
     if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
       result.runRemainingContributors(parameters.withInvocationCount(3), true);
+    }
+  }
+
+  private static void suggestCollectionUtilities(CompletionParameters parameters, final CompletionResultSet result, PsiElement position) {
+    if (StringUtil.isNotEmpty(result.getPrefixMatcher().getPrefix())) {
+      for (ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+        new CollectionsUtilityMethodsProvider(position, info.getType(), info.getDefaultType(), new Consumer<LookupElement>() {
+          @Override
+          public void consume(LookupElement element) {
+            result.addElement(element);
+          }
+        }).addCompletions(true);
+      }
     }
   }
 

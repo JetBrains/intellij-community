@@ -27,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
+import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -58,7 +59,7 @@ public class GitPushDialog extends DialogWrapper {
   private final Object COMMITS_LOADING_LOCK = new Object();
   private final GitManualPushToBranch myRefspecPanel;
   private final AtomicReference<String> myDestBranchInfoOnRefresh = new AtomicReference<String>();
-  
+
   private final boolean myPushPossible;
 
   public GitPushDialog(@NotNull Project project) {
@@ -115,14 +116,14 @@ public class GitPushDialog extends DialogWrapper {
 
   private void loadCommitsInBackground() {
     myLoadingPanel.startLoading();
-    
+
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         final AtomicReference<String> error = new AtomicReference<String>();
         synchronized (COMMITS_LOADING_LOCK) {
           error.set(collectInfoToPush());
         }
-        
+
         final Pair<String, String> remoteAndBranch = getRemoteAndTrackedBranchForCurrentBranch();
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
@@ -175,17 +176,27 @@ public class GitPushDialog extends DialogWrapper {
   @Nullable
   private String collectInfoToPush() {
     try {
+      LOG.info("collectInfoToPush...");
       myPushSpecs = pushSpecsForCurrentOrEnteredBranches();
       myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
+      LOG.info("collectInfoToPush | Collected commits to push: " + logMessageForCommits(myGitCommitsToPush));
       return null;
     }
     catch (VcsException e) {
       myGitCommitsToPush = GitCommitsByRepoAndBranch.empty();
-      LOG.error("Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
+      LOG.error("collectInfoToPush | Couldn't collect commits to push. Push spec: " + myPushSpecs, e);
       return e.getMessage();
     }
   }
-  
+
+  private static String logMessageForCommits(GitCommitsByRepoAndBranch commitsToPush) {
+    StringBuilder logMessage = new StringBuilder();
+    for (GitCommit commit : commitsToPush.getAllCommits()) {
+      logMessage.append(commit.getShortHash());
+    }
+    return logMessage.toString();
+  }
+
   private Map<GitRepository, GitPushSpec> pushSpecsForCurrentOrEnteredBranches() throws VcsException {
     Map<GitRepository, GitPushSpec> defaultSpecs = new HashMap<GitRepository, GitPushSpec>();
     for (GitRepository repository : myRepositories) {
@@ -220,7 +231,7 @@ public class GitPushDialog extends DialogWrapper {
         }
         tracked = manualBranch;
       }
-      
+
       GitPushSpec pushSpec = new GitPushSpec(remote, currentBranch, tracked);
       defaultSpecs.put(repository, pushSpec);
     }
@@ -260,19 +271,23 @@ public class GitPushDialog extends DialogWrapper {
     // waiting for commit list loading, because this information is needed to correctly handle rejected push situation and correctly
     // notify about pushed commits
     // TODO optimize: don't refresh: information about pushed commits can be achieved from the successful push output
+    LOG.info("getPushInfo start");
     synchronized (COMMITS_LOADING_LOCK) {
       GitCommitsByRepoAndBranch selectedCommits;
       if (myGitCommitsToPush == null) {
+        LOG.info("getPushInfo | myGitCommitsToPush == null. collecting...");
         collectInfoToPush();
         selectedCommits = myGitCommitsToPush;
       }
       else {
         if (refreshNeeded()) {
+          LOG.info("getPushInfo | refresh is needed, collecting...");
           collectInfoToPush();
         }
         Collection<GitRepository> selectedRepositories = myListPanel.getSelectedRepositories();
         selectedCommits = myGitCommitsToPush.retainAll(selectedRepositories);
       }
+      LOG.info("getPushInfo | selectedCommits: " + logMessageForCommits(selectedCommits));
       return new GitPushInfo(selectedCommits, myPushSpecs);
     }
   }

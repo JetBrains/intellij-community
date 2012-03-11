@@ -20,7 +20,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
@@ -453,22 +452,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
-    return select(module.getName(), null, true).doWhenDone(new Runnable() {
-      public void run() {
-        final MasterDetailsComponent.MyNode node = ModuleStructureConfigurable.getInstance(myProject).findModuleNode(module);
-        if (node != null) {
-          ModuleConfigurable moduleConfigurable = (ModuleConfigurable)node.getConfigurable();
-          ModuleEditor moduleEditor = moduleConfigurable.getModuleEditor();
-          moduleEditor.selectEditor(ClasspathEditor.NAME);
-          if (orderEntry != null) {
-            ModuleConfigurationEditor editor = moduleEditor.getEditor(ClasspathEditor.NAME);
-            if (editor instanceof ClasspathEditor) {
-              ((ClasspathEditor)editor).selectOrderEntry(orderEntry);
-            }
-          }
-        }
-      }
-    });
+    return ModuleStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry);
   }
 
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {

@@ -64,6 +64,7 @@ public class GitBranchTrackInfo {
     return String.format("%s %s %s %b", myBranch, myRemote, myRemoteBranch, myMerge);
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Override
   public boolean equals(Object o) {
 
@@ -80,6 +81,7 @@ public class GitBranchTrackInfo {
     return true;
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Override
   public int hashCode() {
     int result = myBranch != null ? myBranch.hashCode() : 0;

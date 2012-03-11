@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -698,7 +699,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       }
     }
 
-    return false;
+    return !OverrideImplementUtil.getMethodSignaturesToImplement(baseClass).isEmpty();
   }
 
   private static boolean addToFold(List<FoldingDescriptor> list, PsiElement elementToFold, Document document, boolean allowOneLiners) {

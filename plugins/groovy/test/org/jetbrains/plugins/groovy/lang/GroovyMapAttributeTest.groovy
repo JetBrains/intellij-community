@@ -15,16 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.lang
 
-import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.plugins.groovy.completion.GrCompletionWithLibraryTest
 
 /**
  * @author Sergey Evdokimov
  */
 class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return GrCompletionWithLibraryTest.GROOVY_17_PROJECT_DESCRIPTOR
+  }
 
   private void doTestCompletion(String fileText, boolean exists) {
     myFixture.configureByText("a.groovy", fileText)

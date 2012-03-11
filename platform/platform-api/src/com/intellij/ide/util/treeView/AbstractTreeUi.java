@@ -4067,7 +4067,7 @@ public class AbstractTreeUi {
     return preselectedRow;
   }
 
-  private void expandAllWithoutRecursion(@Nullable final Runnable onDone) {
+  public void expandAllWithoutRecursion(@Nullable final Runnable onDone) {
     final JTree tree = getTree();
     int myCurrentRow = 0;
     if (tree.getRowCount() > 0) {
@@ -4083,8 +4083,6 @@ public class AbstractTreeUi {
   }
 
   public void expandAll(@Nullable final Runnable onDone) {
-    if (isPassthroughMode()) expandAllWithoutRecursion(onDone);
-
     final JTree tree = getTree();
     if (tree.getRowCount() > 0) {
       final int expandRecursionDepth = Math.max(2, Registry.intValue("ide.tree.expandRecursionDepth"));

@@ -30,7 +30,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
@@ -46,9 +45,10 @@ import java.util.List;
 public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private static final int TOOLTIP_DELAY_MILLIS = 500;
-  
-  private final Alarm myToolbarAppearanceAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Alarm myToolbarTrackingAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+
+  private final Alarm            myToolbarAppearanceAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm            myToolbarTrackingAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final List<JComponent> myToolbarControls        = new ArrayList<JComponent>();
   
   private Tree                            myTree;
   private GradleProjectStructureTreeModel myTreeModel;
@@ -75,6 +75,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         });
       }
     });
+    myToolbarControls.add(new GradleProjectStructureFiltersPanel());
     initContent();
   }
 
@@ -93,6 +94,8 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     applyInitialAppearance(myTree, (DefaultMutableTreeNode)myTreeModel.getRoot());
 
     GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridwidth = GridBagConstraints.REMAINDER;
+    constraints.anchor = GridBagConstraints.WEST;
     constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = constraints.weighty = 1;
     result.add(myTree, constraints);
@@ -103,10 +106,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     return result;
   }
 
+  @NotNull
+  @Override
+  protected List<JComponent> getToolbarControls() {
+    return myToolbarControls;
+  }
+
   @Override
   protected void updateContent() {
-    // TODO den implement
-    int i = 1;
   }
 
   private void setupToolbar() {

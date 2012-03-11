@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -122,5 +123,18 @@ public class XmlTagValueImpl implements XmlTagValue{
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  public boolean hasCDATA() {
+    for (XmlText xmlText : myTextElements) {
+      PsiElement[] children = xmlText.getChildren();
+      for (PsiElement child : children) {
+        if (child.getNode().getElementType() == XmlElementType.XML_CDATA) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

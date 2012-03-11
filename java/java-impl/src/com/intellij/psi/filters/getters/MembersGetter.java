@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.StaticMemberProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -43,6 +44,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class MembersGetter {
+  public static final Key<Boolean> EXPECTED_TYPE_INHERITOR_MEMBER = Key.create("EXPECTED_TYPE_INHERITOR_MEMBER");
 
   public void processMembers(@NotNull final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where,
                              final boolean acceptMethods, boolean searchInheritors,
@@ -85,7 +87,7 @@ public abstract class MembersGetter {
     
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
 
-    PsiClassType baseType = JavaPsiFacade.getElementFactory(where.getProject()).createType(where);
+    final PsiClassType baseType = JavaPsiFacade.getElementFactory(where.getProject()).createType(where);
     Consumer<PsiType> consumer = new Consumer<PsiType>() {
       @Override
       public void consume(PsiType psiType) {
@@ -97,7 +99,7 @@ public abstract class MembersGetter {
               return;
             }
           }
-          processClassDeclaredMembers(psiClass, context, acceptMethods, results, resolveHelper, importedStatically);
+          processClassDeclaredMembers(psiClass, context, acceptMethods, results, resolveHelper, importedStatically, psiType != baseType);
         }
       }
     };
@@ -110,7 +112,7 @@ public abstract class MembersGetter {
   private void processClassDeclaredMembers(PsiClass where,
                                            PsiElement context,
                                            boolean acceptMethods,
-                                           Consumer<LookupElement> results, final PsiResolveHelper resolveHelper, final Set<PsiMember> importedStatically) {
+                                           Consumer<LookupElement> results, final PsiResolveHelper resolveHelper, final Set<PsiMember> importedStatically, boolean isInheritor) {
     final FilterScopeProcessor<PsiElement> processor = new FilterScopeProcessor<PsiElement>(TrueFilter.INSTANCE);
     where.processDeclarations(processor, ResolveState.initial(), null, context);
 
@@ -123,6 +125,7 @@ public abstract class MembersGetter {
           if (result instanceof PsiMethod && acceptMethods) continue;
           final LookupElement item = result instanceof PsiMethod ? createMethodElement((PsiMethod)result) : createFieldElement((PsiField)result);
           if (item != null) {
+            item.putUserData(EXPECTED_TYPE_INHERITOR_MEMBER, isInheritor);
             results.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(item));
           }
         }

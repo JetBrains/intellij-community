@@ -1300,4 +1300,28 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testCastVisually() {
+    configure()
+    def p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    assert p.itemText == 'getValue'
+    assert p.itemTextBold
+    assert p.typeText == 'Foo'
+  }
+
+  public void testSuggestEmptySet() {
+    configure()
+    assert 'emptySet' == myFixture.lookupElementStrings[0]
+    type '\n'
+    checkResult()
+  }
+
+  public void testSuggestAllTypeArguments() {
+    configure()
+    assert 'String, String' == lookup.items[1].lookupString
+    lookup.currentItem = lookup.items[1]
+    type '\n'
+    checkResult()
+
+  }
+
 }

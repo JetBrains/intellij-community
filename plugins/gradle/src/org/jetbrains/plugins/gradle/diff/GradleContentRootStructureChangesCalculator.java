@@ -17,7 +17,6 @@ public class GradleContentRootStructureChangesCalculator
                         @NotNull ModuleAwareContentRoot intellijEntity,
                         @NotNull GradleChangesCalculationContext context)
   {
-    // TODO den implement content root conflict changes here.
   }
 
   @NotNull

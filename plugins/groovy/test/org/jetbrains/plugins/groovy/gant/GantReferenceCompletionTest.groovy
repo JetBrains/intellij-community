@@ -83,16 +83,11 @@ target(aaa: "") {
   }
 
   public void testMutual() throws Throwable {
-    complete """
+    checkVariants """
 target(genga: "") { }
 target(aaa: "") {
-    depends(geng<caret>)
-}"""
-    myFixture.checkResult """
-target(genga: "") { }
-target(aaa: "") {
-    depends(genga<caret>)
-}"""
+    depends(geng<caret>x)
+}""", 'genga'
   }
 
   public void testUnknownQualifier() throws Throwable {

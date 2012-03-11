@@ -16,17 +16,17 @@
 package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,6 +56,7 @@ public abstract class GroovyNamedArgumentProvider {
     getNamedArguments(call, resolve, argumentName, forCompletion, result);
   }
 
+  @Nullable
   public static Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
                                                                                   @Nullable String argumentName,
                                                                                   boolean forCompletion) {
@@ -80,6 +81,7 @@ public abstract class GroovyNamedArgumentProvider {
       }
     }
     else {
+      boolean mapExpected = false;
       for (GroovyResolveResult result : callVariants) {
         PsiElement element = result.getElement();
         if (element instanceof GrAccessorMethod) continue;
@@ -89,6 +91,8 @@ public abstract class GroovyNamedArgumentProvider {
           PsiParameter[] parameters = method.getParameterList().getParameters();
 
           if (!method.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;
+
+          mapExpected = true;
 
           for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
             if (methodInfo.getNamedArguments() != null) {
@@ -107,16 +111,27 @@ public abstract class GroovyNamedArgumentProvider {
         for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
           namedArgumentProvider.getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
         }
+
+        if (element instanceof GrVariable &&
+            InheritanceUtil.isInheritor(((GrVariable)element).getTypeGroovy(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+          mapExpected = true;
+        }
+      }
+      if (!mapExpected && namedArguments.isEmpty()) {
+        return null;
       }
     }
 
     return namedArguments;
   }
 
-  public static boolean canBeMap(PsiParameter parameter) {
-    if (parameter instanceof GrParameter) {
-      if (((GrParameter)parameter).getTypeElementGroovy() == null) return true;
+  private static boolean canBeMap(PsiParameter parameter) {
+    PsiType type = parameter.getType();
+    if (parameter instanceof GrParameter &&
+        type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+        ((GrParameter)parameter).getTypeElementGroovy() == null) {
+      return true;
     }
-    return GroovyPsiManager.isInheritorCached(parameter.getType(), CommonClassNames.JAVA_UTIL_MAP);
+    return GroovyPsiManager.isInheritorCached(type, CommonClassNames.JAVA_UTIL_MAP);
   }
 }

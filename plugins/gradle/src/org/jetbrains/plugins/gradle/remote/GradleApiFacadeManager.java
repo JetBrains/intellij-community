@@ -171,7 +171,7 @@ public class GradleApiFacadeManager {
         final GeneralCommandLine commandLine = JdkUtil.setupJVMCommandLine(
           ((JavaSdkType)sdk.getSdkType()).getVMExecutablePath(sdk),
           params,
-          false // TODO den check
+          false
         );
         final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString()) {
           @Override

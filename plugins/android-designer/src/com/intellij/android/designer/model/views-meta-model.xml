@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <meta-model>
   <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadViewLayout"
         tag="&lt;root&gt;">
 
     <palette title="Device Screen" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadViewLayout"
         tag="merge">
 
     <palette title="Device Screen (#merge)" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        layout="com.intellij.android.designer.model.RadViewLayout"
+        tag="&lt;unknown&gt;">
+
+    <palette title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
@@ -51,7 +60,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
+        layout="com.intellij.android.designer.model.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
 
@@ -70,14 +79,6 @@
   </meta>
 
   <palette>
-    <group name="Layouts">
-      <item tag="LinearLayout"/>
-    </group>
-
-    <group name="Widgets">
-      <item tag="Button"/>
-      <item tag="TextView"/>
-    </group>
   </palette>
 
 </meta-model>

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
@@ -159,7 +160,9 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new StringBufferInputStream(result), svnHandl[0]);
       if (! svnHandl[0].isAnythingReported()) {
-        throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
+        if (! SvnUtil.isSvnVersioned(myProject, path)) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY));
+        }
       }
     }
     catch (SvnExceptionWrapper e) {

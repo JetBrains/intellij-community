@@ -33,11 +33,8 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
-import com.intellij.psi.impl.FakePsiElement;
-import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -445,24 +442,8 @@ public class ReferenceExpressionCompletionContributor {
         .createExpressionFromText(((PsiClass)qualifierItem.getObject()).getQualifiedName() + ".xxx", place);
     }
 
-    return (PsiReferenceExpression) factory.createExpressionFromText("xxx.xxx", createContextWithXxxVariable(place, qualifierType));
-  }
-
-  public static FakePsiElement createContextWithXxxVariable(final PsiElement place, final PsiType varType) {
-    return new FakePsiElement() {
-      @Override
-      public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         PsiElement lastParent,
-                                         @NotNull PsiElement place) {
-        return processor.execute(new LightVariableBuilder("xxx", varType, place), ResolveState.initial());
-      }
-
-      @Override
-      public PsiElement getParent() {
-        return place;
-      }
-    };
+    return (PsiReferenceExpression) factory.createExpressionFromText("xxx.xxx", JavaCompletionUtil
+      .createContextWithXxxVariable(place, qualifierType));
   }
 
   private static boolean shoudChain(PsiElement element, PsiType qualifierType, PsiType expectedType, LookupElement item) {

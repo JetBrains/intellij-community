@@ -21,7 +21,6 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -30,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeSupport;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,6 +51,8 @@ public abstract class MetaManager {
   private final List<Group> myPaletteGroups = new ArrayList<Group>();
 
   private PropertyChangeSupport myPaletteChangeSupport;
+
+  private Map<Object, Object> myCache = new HashMap<Object, Object>();
 
   protected MetaManager(Project project, String name) {
     try {
@@ -117,6 +119,10 @@ public abstract class MetaManager {
     }
 
     myPaletteGroups.add(group);
+  }
+
+  public Map<Object, Object> getCache() {
+    return myCache;
   }
 
   @Nullable

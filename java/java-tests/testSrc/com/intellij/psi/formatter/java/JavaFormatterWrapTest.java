@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,6 +152,18 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doClassTest(text, text);
   }
 
+  public void testWrapCompoundStringLiteralThatEndsAtRightMargin() {
+    // Inspired by IDEA-82398
+    getSettings().getRootSettings().RIGHT_MARGIN = 30;
+    getSettings().getRootSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
+
+    final String text = "class Test {\n" +
+                        "    String s = \"first line \" +\n" +
+                        "            +\"second line\";\n" +
+                        "}";
+    doTextTest(text, text);
+  }
+  
   public void testWrapLongLine() {
     // Inspired by IDEA-55782
     getSettings().getRootSettings().RIGHT_MARGIN = 50;

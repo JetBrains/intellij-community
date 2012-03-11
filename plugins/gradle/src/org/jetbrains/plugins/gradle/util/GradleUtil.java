@@ -256,8 +256,14 @@ public class GradleUtil {
     }
     return file.getPath();
   }
-  
-  // TODO den add doc about relative coordinates
+
+  /**
+   * Allows to calculate the position to use for showing hint for the given node of the given tree.
+   * 
+   * @param node  target node for which a hint should be shown
+   * @param tree  target tree that contains given node
+   * @return      preferred hint position (in coordinates relative to the given tree)
+   */
   @NotNull
   public static Point getHintPosition(@NotNull GradleProjectStructureNode<?> node, @NotNull Tree tree) {
     final Rectangle bounds = tree.getPathBounds(new TreePath(node.getPath()));

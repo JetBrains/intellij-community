@@ -29,14 +29,11 @@ public final class AndroidTreeDecorator extends TreeComponentDecorator {
   public void decorate(RadComponent component, ColoredTreeCellRenderer renderer) {
     MetaModel metaModel = component.getMetaModel();
 
-    // TODO
-    if (metaModel == null) {
-      RadViewComponent viewComponent = (RadViewComponent)component;
-      renderer.append(viewComponent.getTag().getName());
-    }
-    else {
-      renderer.append(metaModel.getPaletteItem().getTitle());
-      renderer.setIcon(metaModel.getIcon());
-    }
+    StringBuffer fullTitle = new StringBuffer();
+    String title1 = new String(metaModel.getPaletteItem().getTitle());
+    fullTitle.append(title1.replaceAll("%tag%", ((RadViewComponent)component).getTag().getName()));
+    renderer.append(fullTitle.toString());
+
+    renderer.setIcon(metaModel.getIcon());
   }
 }
