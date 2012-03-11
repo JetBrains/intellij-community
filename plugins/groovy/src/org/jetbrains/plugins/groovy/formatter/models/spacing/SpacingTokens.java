@@ -22,23 +22,18 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 /**
  * @author ilyas
  */
-public abstract class SpacingTokens implements GroovyElementTypes {
+public interface SpacingTokens extends GroovyElementTypes {
 
-  protected final static TokenSet LEFT_BRACES = TokenSet.create(mLPAREN, mLBRACK, mLCURLY);
-  protected final static TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
+  TokenSet LEFT_BRACES = TokenSet.create(mLPAREN, mLBRACK, mLCURLY);
+  TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
 
-  protected final static TokenSet PUNCTUATION_SIGNS = TokenSet.create(mDOT,
-      mMEMBER_POINTER,
-      mSPREAD_DOT,
-      mOPTIONAL_DOT,
-      mCOMMA,
-      mSEMI);
+  TokenSet PUNCTUATION_SIGNS = TokenSet.create(mDOT, mMEMBER_POINTER, mSPREAD_DOT, mOPTIONAL_DOT, mCOMMA, mSEMI);
 
-  protected final static TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
+  TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
 
-  protected final static TokenSet PREFIXES = TokenSet.create(mDEC, mINC, mAT, mBNOT, mLNOT);
-  protected final static TokenSet POSTFIXES = TokenSet.create(mDEC, mINC);
-  protected final static TokenSet PREFIXES_OPTIONAL = TokenSet.create(mPLUS, mMINUS);
+  TokenSet PREFIXES = TokenSet.create(mDEC, mINC, mAT, mBNOT, mLNOT);
+  TokenSet POSTFIXES = TokenSet.create(mDEC, mINC);
+  TokenSet PREFIXES_OPTIONAL = TokenSet.create(mPLUS, mMINUS);
 
-  protected final static TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
+  TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
 }

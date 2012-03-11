@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.litera
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
@@ -30,10 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 public class GrStringInjectionImpl extends GroovyPsiElementImpl implements GrStringInjection {
   public GrStringInjectionImpl(@NotNull ASTNode node) {
     super(node);
-  }
-
-  public boolean hasClosableBlock() {
-    return findChildByClass(GrClosableBlock.class) != null;
   }
 
   @Nullable
@@ -50,5 +47,10 @@ public class GrStringInjectionImpl extends GroovyPsiElementImpl implements GrStr
   @Override
   public String toString() {
     return "GString injection";
+  }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitGStringInjection(this);
   }
 }

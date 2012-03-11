@@ -20,7 +20,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -34,7 +37,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmet
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -162,7 +169,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitRegexExpression(GrRegex expression) {
-    visitLiteralExpression(expression);
+    visitGStringExpression(expression);
   }
 
   public void visitLiteralExpression(GrLiteral literal) {
@@ -170,7 +177,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitGStringExpression(GrString gstring) {
-    visitExpression(gstring);
+    visitLiteralExpression(gstring);
   }
 
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
@@ -273,7 +280,7 @@ public abstract class GroovyElementVisitor {
     visitElement(wildcardTypeArgument);
   }
 
-  public void visitDefaultAnnotationMember(GrAnnotationMethod annotationMethod) {
+  public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
     visitElement(annotationMethod);
   }
 
@@ -423,5 +430,9 @@ public abstract class GroovyElementVisitor {
 
   public void visitRangeExpression(GrRangeExpression range) {
     visitBinaryExpression(range);
+  }
+
+  public void visitGStringInjection(GrStringInjection injection) {
+    visitElement(injection);
   }
 }

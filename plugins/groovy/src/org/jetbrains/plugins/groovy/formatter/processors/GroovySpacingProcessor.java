@@ -40,36 +40,46 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 
 import static org.jetbrains.plugins.groovy.GroovyFileType.GROOVY_LANGUAGE;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.LEFT_BRACES;
+import static org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens.RIGHT_BRACES;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_ASTERISKS;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_INLINE_TAG_END;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_INLINE_TAG_START;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_COMMA;
 import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes.mGDOC_TAG_VALUE_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.GDOC_TAG;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kELSE;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kNEW;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSWITCH;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSYNCHRONIZED;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCLOSABLE_BLOCK_OP;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOLON;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLBRACK;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLCURLY;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLPAREN;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mLT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRBRACK;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRCURLY;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mRPAREN;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSL_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.GDOC_TAG;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mCLOSABLE_BLOCK_OP;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mCOLON;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_ASTERISKS;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_END;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_START;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_TAG_VALUE_RPAREN;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mNLS;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURLY;
 
 /**
  * @author ilyas
@@ -104,7 +114,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (prev != null && prev.getElementType() == mNLS) {
       prev = getPrevElementType(prev);
     }
-    if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && COMMENT_SET.contains(myChild2.getElementType())) {
+    if (mySettings.KEEP_FIRST_COLUMN_COMMENT && COMMENT_SET.contains(myChild2.getElementType())) {
       if (myChild1.getElementType() != IMPORT_STATEMENT) {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
       }
@@ -119,6 +129,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myParent instanceof GroovyPsiElement) {
       ((GroovyPsiElement) myParent).accept(this);
     }
+  }
+
+  @Override
+  public void visitLiteralExpression(GrLiteral literal) {
+    createSpaceInCode(false);
+  }
+
+  @Override
+  public void visitGStringInjection(GrStringInjection injection) {
+    createSpaceInCode(false);
   }
 
   private void _init(final ASTNode child) {
@@ -208,9 +228,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
     if (myChild2.getElementType() == CLASS_BODY) {
       PsiIdentifier nameIdentifier = typeDefinition.getNameIdentifier();
-      int dependanceStart = nameIdentifier == null ? myParent.getTextRange().getStartOffset() : nameIdentifier.getTextRange().getStartOffset();
+      int dependenceStart = nameIdentifier == null ? myParent.getTextRange().getStartOffset() : nameIdentifier.getTextRange().getStartOffset();
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_CLASS_LBRACE, mySettings.CLASS_BRACE_STYLE,
-                                      new TextRange(dependanceStart, myChild1.getTextRange().getEndOffset()), false);
+                                      new TextRange(dependenceStart, myChild1.getTextRange().getEndOffset()), false);
     }
   }
 
@@ -225,23 +245,59 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
+  @Override
+  public void visitTypeArgumentList(GrTypeArgumentList typeArgumentList) {
+    if (mLT.equals(myChild1.getElementType()) || mGT.equals(myChild2.getElementType())) {
+      createSpaceProperty(false, true, 1);
+    }
+  }
+
+  @Override
+  public void visitForInClause(GrForInClause forInClause) {
+    if (myChild1.getElementType() == PARAMETER && myChild2.getElementType() == mCOLON) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
+  public void visitCastExpression(GrTypeCastExpression typeCastExpression) {
+    if (LEFT_BRACES.contains(myChild1.getElementType()) || RIGHT_BRACES.contains(myChild2.getElementType())) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_CAST_PARENTHESES);
+    }
+    else if (myChild1.getElementType() == mRPAREN) {
+      createSpaceInCode(mySettings.SPACE_AFTER_TYPE_CAST);
+    }
+  }
+
+  @Override
   public void visitMethod(GrMethod method) {
     if (myChild2.getElementType() == mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
-    } else if (myChild2.getElementType() == mRPAREN && myChild2.getElementType() == THROW_CLAUSE) {
+    }
+    else if (myChild2.getElementType() == mRPAREN && myChild2.getElementType() == THROW_CLAUSE) {
       createSpaceInCode(true);
-    } else if (isOpenBlock(myChild2)) {
+    }
+    else if (isOpenBlock(myChild2)) {
       PsiElement methodName = method.getNameIdentifier();
-      int dependancyStart = methodName == null ? myParent.getTextRange().getStartOffset() : methodName.getTextRange().getStartOffset();
+      int dependencyStart = methodName == null ? myParent.getTextRange().getStartOffset() : methodName.getTextRange().getStartOffset();
       myResult = getSpaceBeforeLBrace(mySettings.SPACE_BEFORE_METHOD_LBRACE, mySettings.METHOD_BRACE_STYLE,
-                                      new TextRange(dependancyStart, myChild1.getTextRange().getEndOffset()), mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
-    } else if (myChild1.getElementType() == MODIFIERS) {
+                                      new TextRange(dependencyStart, myChild1.getTextRange().getEndOffset()),
+                                      mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
+    }
+    else if (myChild1.getElementType() == MODIFIERS) {
       processModifierList(myChild1);
-    } else if (COMMENT_SET.contains(myChild1.getElementType())
-               && (myChild2.getElementType() == MODIFIERS || myChild2.getElementType() == REFERENCE_ELEMENT)) {
+    }
+    else if (COMMENT_SET.contains(myChild1.getElementType()) &&
+             (myChild2.getElementType() == MODIFIERS || myChild2.getElementType() == REFERENCE_ELEMENT)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
+  }
 
+  @Override
+  public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
+    if (myChild2.getElementType() == mLPAREN) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
+    }
   }
 
   private static boolean isOpenBlock(final ASTNode node) {
@@ -420,16 +476,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       if (rparenth == null) {
         createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
       } else {
-        createParenSpace(mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
-                         new TextRange(myChild1.getTextRange().getStartOffset(), rparenth.getTextRange().getEndOffset()));
+        createParenthSpace(mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+                           new TextRange(myChild1.getTextRange().getStartOffset(), rparenth.getTextRange().getEndOffset()));
       }
     } else if (myChild2.getElementType() == mRPAREN) {
       ASTNode lparenth = findFrom(myChild2, mLPAREN, false);
       if (lparenth == null) {
         createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
       } else {
-        createParenSpace(mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
-                         new TextRange(lparenth.getTextRange().getStartOffset(), myChild2.getTextRange().getEndOffset()));
+        createParenthSpace(mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+                           new TextRange(lparenth.getTextRange().getStartOffset(), myChild2.getTextRange().getEndOffset()));
       }
 
     } else if (myChild2.getElementType() == BLOCK_STATEMENT || isOpenBlock(myChild2)) {
@@ -444,11 +500,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-  private void createParenSpace(final boolean onNewLine, final boolean space, final TextRange dependance) {
+  private void createParenthSpace(final boolean onNewLine, final boolean space, final TextRange dependence) {
     if (onNewLine) {
       final int spaces = space ? 1 : 0;
       myResult = Spacing
-        .createDependentLFSpacing(spaces, spaces, dependance, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        .createDependentLFSpacing(spaces, spaces, dependence, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else {
       createSpaceInCode(space);
     }
