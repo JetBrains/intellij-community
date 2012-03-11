@@ -16,14 +16,14 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -86,18 +86,28 @@ public class GitRootDetector {
   }
 
   @NotNull
-  private static Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile projectDir) {
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    VfsUtil.processFilesRecursively(projectDir, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile virtualFile) {
-        if (virtualFile.isDirectory() && hasGitDir(virtualFile)) {
-          roots.add(virtualFile);
-        }
-        return true;
-      }
-    });
+  private static Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile dir, int depth) {
+    Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    if (depth > 2) {
+      // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
+      return roots;
+    }
+    if (!dir.isDirectory()) {
+      return roots;
+    }
+
+    if (hasGitDir(dir)) {
+      roots.add(dir);
+    }
+    for (VirtualFile child: dir.getChildren()) {
+      roots.addAll(scanForRootsInsideDir(child, depth + 1));
+    }
     return roots;
+  }
+
+  @NotNull
+  private static Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile projectDir) {
+    return scanForRootsInsideDir(projectDir, 0);
   }
 
   @Nullable

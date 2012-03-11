@@ -145,6 +145,16 @@ class GitRootDetectorTest extends AbstractGitRootTest {
            below:        false
   }
 
+  @Test
+  // This is a test of performance optimization via limitation: don't scan deep though the whole VFS
+  void "don't scan deeper than 2 levels below a content root"() {
+    doTest linked_roots:  ["content_root"],
+           gits:          ["community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3"],
+           expected:      ["community", "content_root/lev1/lev2"],
+           full:          false,
+           below:         false
+  }
+
   /**
    * Perform test. Map contains actual Git repositories to be created on disk,
    * and Git repositories expected to be detected by the GitRootDetector.
