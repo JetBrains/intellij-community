@@ -2173,8 +2173,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int drawSoftWrapAwareBackground(Graphics g, Color backColor, CharSequence text, int start, int end, Point position,
                                           @JdkConstants.FontStyle int fontType, Color defaultBackground, Rectangle clip, TIntHashSet softWrapsToSkip,
-                                          boolean[] caretRowPainted)
-  {
+                                          boolean[] caretRowPainted) {
     int startToUse = start;
     // Given 'end' offset is exclusive though SoftWrapModel.getSoftWrapsForRange() uses inclusive end offset.
     // Hence, we decrement it if necessary. Please note that we don't do that if start is equal to end. That is the case,
@@ -4506,7 +4505,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   @NotNull
   public EditorColorsScheme getColorsScheme() {
-    assertReadAccess();
     return myScheme;
   }
 
