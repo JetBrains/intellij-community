@@ -4,17 +4,22 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.diff.*;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.id.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeComparator;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeComparator;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
@@ -49,24 +54,57 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private final Map<String, GradleProjectStructureNode<GradleModuleId>> myModules
     = new HashMap<String, GradleProjectStructureNode<GradleModuleId>>();
 
-  private final TreeNode[]                myNodeHolder                = new TreeNode[1];
-  private final int[]                     myIndexHolder               = new int[1];
-  private final NodeListener              myNodeListener              = new NodeListener();
-  private final ObsoleteChangesDispatcher myObsoleteChangesDispatcher = new ObsoleteChangesDispatcher();
-  private final NewChangesDispatcher      myNewChangesDispatcher      = new NewChangesDispatcher();
+  private final Set<GradleProjectStructureNodeFilter> myFilters                   = new HashSet<GradleProjectStructureNodeFilter>();
+  private final TreeNode[]                            myNodeHolder                = new TreeNode[1];
+  private final int[]                                 myIndexHolder               = new int[1];
+  private final NodeListener                          myNodeListener              = new NodeListener();
+  private final ObsoleteChangesDispatcher             myObsoleteChangesDispatcher = new ObsoleteChangesDispatcher();
+  private final NewChangesDispatcher                  myNewChangesDispatcher      = new NewChangesDispatcher();
 
   @NotNull private final Project                                   myProject;
   @NotNull private final PlatformFacade                            myPlatformFacade;
   @NotNull private final GradleProjectStructureHelper              myProjectStructureHelper;
   @NotNull private final Comparator<GradleProjectStructureNode<?>> myNodeComparator;
+  @NotNull private final GradleProjectStructureChangesModel        myChangesModel;
+  
+  private Comparator<GradleProjectStructureChange> myChangesComparator;
+  private boolean myProcessChangesAtTheSameThread;
 
   public GradleProjectStructureTreeModel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     super(null);
     myProject = project;
     myPlatformFacade = context.getPlatformFacade();
     myProjectStructureHelper = context.getProjectStructureHelper();
+    myChangesModel = context.getChangesModel();
     myNodeComparator = new GradleProjectStructureNodeComparator(context);
     rebuild();
+
+    context.getChangesModel().addListener(new GradleProjectStructureChangeListener() {
+      @Override
+      public void onChanges(@NotNull final Collection<GradleProjectStructureChange> oldChanges,
+                            @NotNull final Collection<GradleProjectStructureChange> currentChanges)
+      {
+        final Runnable task = new Runnable() {
+          @Override
+          public void run() {
+            Collection<GradleProjectStructureChange> c = ContainerUtil.subtract(oldChanges, currentChanges);
+            if (myChangesComparator != null) {
+              List<GradleProjectStructureChange> toSort = new ArrayList<GradleProjectStructureChange>(c);
+              Collections.sort(toSort, myChangesComparator);
+              c = toSort;
+            }
+            processObsoleteChanges(c);
+            processCurrentChanges(currentChanges);
+          }
+        };
+        if (myProcessChangesAtTheSameThread) {
+          task.run();
+        }
+        else {
+          UIUtil.invokeLaterIfNeeded(task);
+        }
+      }
+    });
   }
 
   public void rebuild() {
@@ -121,10 +159,70 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         dependenciesNode.add(dependency);
       }
     }
+    processCurrentChanges(myChangesModel.getChanges());
+    filterNodes(root);
 
     setRoot(root);
   }
 
+  @TestOnly
+  public void setProcessChangesAtTheSameThread(boolean processChangesAtTheSameThread) {
+    myProcessChangesAtTheSameThread = processChangesAtTheSameThread;
+  }
+
+  @TestOnly
+  public void setChangesComparator(@Nullable Comparator<GradleProjectStructureChange> changesComparator) {
+    myChangesComparator = changesComparator;
+  }
+
+  private void filterNodes(@NotNull GradleProjectStructureNode<?> root) {
+    if (myFilters.isEmpty()) {
+      return;
+    }
+    Deque<GradleProjectStructureNode<?>> toRemove = new ArrayDeque<GradleProjectStructureNode<?>>();
+    Stack<GradleProjectStructureNode<?>> toProcess = new Stack<GradleProjectStructureNode<?>>();
+    toProcess.push(root);
+    while (!toProcess.isEmpty()) {
+      final GradleProjectStructureNode<?> current = toProcess.pop();
+      toRemove.add(current);
+      for (GradleProjectStructureNodeFilter filter : myFilters) {
+        if (filter.isVisible(current)) {
+          toRemove.remove(current);
+          // Keep all nodes up to the hierarchy.
+          for (GradleProjectStructureNode<?> parent = current.getParent(); parent != null; parent = parent.getParent()) {
+            if (!toRemove.remove(parent)) {
+              break;
+            }
+          }
+          break;
+        }
+      }
+      for (GradleProjectStructureNode<?> child : current) {
+        toProcess.push(child);
+      }
+    }
+    for (GradleProjectStructureNode<?> node = toRemove.pollLast(); node != null; node = toRemove.pollLast()) {
+      final GradleProjectStructureNode<?> parent = node.getParent();
+      if (parent != null) {
+        parent.remove(node);
+      }
+    }
+  }
+
+  public void addFilter(@NotNull GradleProjectStructureNodeFilter filter) {
+    myFilters.add(filter);
+    rebuild();
+  }
+
+  public boolean hasFilter(@NotNull GradleProjectStructureNodeFilter filter) {
+    return myFilters.contains(filter);
+  }
+  
+  public void removeFilter(@NotNull GradleProjectStructureNodeFilter filter) {
+    myFilters.remove(filter);
+    rebuild();
+  }
+  
   @NotNull
   private static String getContentRootNodeName(@NotNull GradleContentRootId id, boolean singleRoot) {
     final String name = GradleBundle.message("gradle.import.structure.tree.node.content.root");

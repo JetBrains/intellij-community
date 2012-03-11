@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
 
 import java.util.Collection;
 
@@ -13,6 +14,9 @@ public class GradleDataKeys {
 
   /** Key for obtaining 'sync project structure' tree. */
   public static final DataKey<Tree> SYNC_TREE = DataKey.create("gradle.sync.tree");
+
+  /** Key for obtaining 'sync project structure' tree model. */
+  public static final DataKey<GradleProjectStructureTreeModel> SYNC_TREE_MODEL = DataKey.create("gradle.sync.tree.model");
   
   /** Key for obtaining currently selected nodes at the gradle 'sync project structure' tree. */
   public static final DataKey<Collection<GradleProjectStructureNode<?>>> SYNC_TREE_SELECTED_NODE

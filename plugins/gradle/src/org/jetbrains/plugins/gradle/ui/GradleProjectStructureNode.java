@@ -100,8 +100,15 @@ public class GradleProjectStructureNode<T extends GradleEntityId> extends Defaul
 
   @Override
   public void remove(MutableTreeNode aChild) {
+    boolean b = mySkipNotification;
+    mySkipNotification = true;
     final int index = getIndex(aChild);
-    super.remove(aChild);
+    try {
+      super.remove(aChild);
+    }
+    finally {
+      mySkipNotification = b;
+    }
     onNodeRemoved((GradleProjectStructureNode<?>)aChild, index);
   }
 

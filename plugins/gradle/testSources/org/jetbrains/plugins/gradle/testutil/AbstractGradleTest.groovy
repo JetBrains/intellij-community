@@ -1,19 +1,17 @@
 package org.jetbrains.plugins.gradle.testutil
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangeListener
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel
+import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext
 import org.junit.Before
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.defaults.DefaultPicoContainer
 import org.jetbrains.plugins.gradle.diff.*
 
 import static org.junit.Assert.fail
-import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext
 
 /**
  * @author Denis Zhdanov
@@ -28,7 +26,6 @@ public abstract class AbstractGradleTest {
   def changesBuilder
   def treeChecker
   def container
-  private Closure changesComparator
 
   @Before
   public void setUp() {
@@ -61,28 +58,18 @@ public abstract class AbstractGradleTest {
   @SuppressWarnings("GroovyAssignabilityCheck")
   protected def init(map = [:]) {
     treeModel = container.getComponentInstance(GradleProjectStructureTreeModel) as GradleProjectStructureTreeModel
-    changesModel.addListener({ old, current ->
-                               treeModel.processObsoleteChanges(sortChanges(ContainerUtil.subtract(old, current)));
-                               treeModel.processCurrentChanges(sortChanges(current))
-    } as GradleProjectStructureChangeListener)
+    treeModel.processChangesAtTheSameThread = true;
     setState(map, false)
     treeModel.rebuild()
     changesModel.update(gradle.project)
   }
 
-  def sortChanges(changes) {
-    if (changesComparator) {
-      return changes.toList().sort(changesComparator)
-    }
-    return changes
-  }
-  
   protected def setState(map, update = true) {
     map.intellij?.delegate = intellij
     map.intellij?.call()
     map.gradle?.delegate = gradle
     map.gradle?.call()
-    changesComparator = map.changesSorter
+    treeModel.changesComparator = map.changesSorter as Comparator
     if (update) {
       changesModel.update(gradle.project)
     }
