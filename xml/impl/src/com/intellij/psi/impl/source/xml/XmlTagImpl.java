@@ -92,6 +92,22 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private final int myHC = ourHC++;
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
 
+  private static final Key<ParameterizedCachedValue<XmlTag[], XmlTagImpl>> SUBTAGS_KEY = Key.create("subtags");
+  private static final ParameterizedCachedValueProvider<XmlTag[],XmlTagImpl> CACHED_VALUE_PROVIDER =
+    new ParameterizedCachedValueProvider<XmlTag[], XmlTagImpl>() {
+      @Override
+      public CachedValueProvider.Result<XmlTag[]> compute(XmlTagImpl tag) {
+        final List<XmlTag> result = new ArrayList<XmlTag>();
+
+        tag.fillSubTags(result);
+
+        final int s = result.size();
+        XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
+        return CachedValueProvider.Result
+          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag.getContainingFile());
+      }
+    };
+
   @Override
   public final int hashCode() {
     return myHC;
@@ -606,19 +622,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
   @NotNull
   public XmlTag[] getSubTags() {
-    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<XmlTag[]>() {
-      @Override
-      public Result<XmlTag[]> compute() {
-        final List<XmlTag> result = new ArrayList<XmlTag>();
-
-        fillSubTags(result);
-
-        final int s = result.size();
-        XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
-        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, getContainingFile());
-
-      }
-    });
+    return CachedValuesManager.getManager(getProject()).getParameterizedCachedValue(this, SUBTAGS_KEY, CACHED_VALUE_PROVIDER, false, this);
   }
 
   protected void fillSubTags(final List<XmlTag> result) {
