@@ -126,7 +126,7 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     final Module module = myProject.createModule(moduleName, Closure.IDENTITY);
     module.forceInit();
     module.setSdk(myJdk);
-    module.getDependencies().add(new Module.ModuleDependency(myJdk, PredefinedDependencyScopes.getCOMPILE(), false));
+    module.addDependency(myJdk, PredefinedDependencyScopes.getCOMPILE(), false);
     if (srcPath != null) {
       module.getContentRoots().add(srcPath);
       module.getSourceRoots().add(srcPath);

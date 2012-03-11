@@ -2,6 +2,7 @@ package org.jetbrains.jps
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.idea.Facet
+import org.jetbrains.annotations.TestOnly
 
 /**
  * @author max
@@ -11,7 +12,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   String name;
   Sdk sdk;
 
-  List<ModuleDependency> dependencies = []
+  private List<ModuleDependency> dependencies = []
   List<String> contentRoots = []
   List<String> sourceRoots = []
   List<String> testRoots = []
@@ -115,7 +116,12 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
     return dependencies.findAll({it.scope.isIncludedIn(kind) && (!exportedOnly || it.exported)})*.item;
   }
 
-  public static class ModuleDependency {
+  @TestOnly
+  public void addDependency(ClasspathItem dependency, DependencyScope scope, boolean exported) {
+    dependencies << new ModuleDependency(dependency, scope, exported)
+  }
+
+  private static class ModuleDependency {
     ClasspathItem item
     DependencyScope scope
     boolean exported
