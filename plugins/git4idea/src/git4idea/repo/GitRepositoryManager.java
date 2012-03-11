@@ -36,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.messages.MessageBus;
+import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import git4idea.roots.GitRootProblemNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static git4idea.GitUtil.sortRepositories;
 
 /**
  * GitRepositoryManager initializes and stores {@link GitRepository GitRepositories} for Git roots defined in the project.
@@ -54,19 +53,21 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
-  private final @NotNull AbstractVcs myVcs;
-  private final @NotNull ProjectLevelVcsManager myVcsManager;
+  @NotNull private final AbstractVcs myVcs;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
 
-  private final @NotNull Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
-  private final @NotNull Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
+  @NotNull private final Map<VirtualFile, GitRepository> myRepositories = new HashMap<VirtualFile, GitRepository>();
+  @NotNull private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
-  private final @NotNull ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
+  @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
-  private final @NotNull Object ROOT_SCAN_STUB_OBJECT = new Object();
-  private final @NotNull QueueProcessor<Object> myRootScanQueue = new QueueProcessor<Object>(new Consumer<Object>() {
+  @NotNull private final Object ROOT_SCAN_STUB_OBJECT = new Object();
+  @NotNull private final QueueProcessor<Object> myRootScanQueue = new QueueProcessor<Object>(new Consumer<Object>() {
     @Override
     public void consume(Object o) {
-      GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
+      if (!myProject.isDisposed()) {
+        GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
+      }
     }
   });
 
@@ -143,7 +144,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   public List<GitRepository> getRepositories() {
     try {
       REPO_LOCK.readLock().lock();
-      return sortRepositories(myRepositories.values());
+      return GitUtil.sortRepositories(myRepositories.values());
     }
     finally {
       REPO_LOCK.readLock().unlock();
