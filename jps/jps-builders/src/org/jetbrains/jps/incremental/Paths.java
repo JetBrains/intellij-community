@@ -35,7 +35,8 @@ public class Paths {
   }
 
   public static File getDataStorageRoot(Project project) {
-    return new File(getInstance().mySystemRoot, project.getProjectName().toLowerCase(Locale.US) + Integer.toHexString(project.getLocationHash()));
+    final String name = project.getProjectName().toLowerCase(Locale.US);
+    return new File(getInstance().mySystemRoot, name + "_" + Integer.toHexString(project.getLocationHash()));
   }
 
   public static URI toURI(String localPath) {
