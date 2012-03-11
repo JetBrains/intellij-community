@@ -87,7 +87,7 @@ public class BreakpointManager implements JDOMExternalizable {
   private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
   private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
   private final List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
-  private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
+  @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
   private final Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
   private final Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
   private final Map<Key<? extends Breakpoint>, String> myDefaultSuspendPolicies = new HashMap<Key<? extends Breakpoint>, String>();
@@ -102,7 +102,7 @@ public class BreakpointManager implements JDOMExternalizable {
   @NonNls private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
   @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
 
-  private void update(List<BreakpointWithHighlighter> breakpoints) {
+  private void update(@NotNull List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
 
     for (BreakpointWithHighlighter breakpoint : breakpoints) {
@@ -148,19 +148,21 @@ public class BreakpointManager implements JDOMExternalizable {
 
   private void remove(final BreakpointWithHighlighter breakpoint) {
     DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+      @Override
       public void run() {
         removeBreakpoint(breakpoint);
       }
     });
   }
 
-  public BreakpointManager(Project project, StartupManager startupManager, DebuggerManagerImpl debuggerManager) {
+  public BreakpointManager(@NotNull Project project, @NotNull StartupManager startupManager, @NotNull DebuggerManagerImpl debuggerManager) {
     myProject = project;
     myStartupManager = startupManager;
     debuggerManager.getContextManager().addListener(new DebuggerContextListener() {
       private DebuggerSession myPreviousSession;
 
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
+      @Override
+      public void changeEvent(@NotNull DebuggerContextImpl newContext, int event) {
         if (newContext.getDebuggerSession() != myPreviousSession || event == DebuggerSession.EVENT_DETACHED) {
           updateBreakpointsUI();
           myPreviousSession = newContext.getDebuggerSession();
@@ -172,7 +174,7 @@ public class BreakpointManager implements JDOMExternalizable {
   public void init() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     EditorMouseAdapter myEditorMouseListener = new EditorMouseAdapter() {
-      private EditorMouseEvent myMousePressedEvent;
+      @Nullable private EditorMouseEvent myMousePressedEvent;
 
       @Nullable
       private Breakpoint toggleBreakpoint(final boolean mostSuitingBreakpoint, final int line) {
@@ -247,7 +249,8 @@ public class BreakpointManager implements JDOMExternalizable {
       }
 
       //mousePressed + mouseReleased is a hack to keep selection in editor when shift is pressed
-      public void mousePressed(EditorMouseEvent e) {
+      @Override
+      public void mousePressed(@NotNull EditorMouseEvent e) {
         if (MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(e.getEditor())) return;
 
         if (e.isConsumed()) return;
@@ -258,20 +261,23 @@ public class BreakpointManager implements JDOMExternalizable {
         }
       }
 
-      public void mouseReleased(EditorMouseEvent e) {
+      @Override
+      public void mouseReleased(@NotNull EditorMouseEvent e) {
         if (myMousePressedEvent != null) {
           mouseClicked(e);
         }
         myMousePressedEvent = null;
       }
 
-      public void mouseClicked(final EditorMouseEvent e) {
+      @Override
+      public void mouseClicked(@NotNull final EditorMouseEvent e) {
         if (MarkupEditorFilterFactory.createIsDiffFilter().avaliableIn(e.getEditor())) return;
 
         if (e.isConsumed()) return;
 
         if (e.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
           PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(new Runnable() {
+            @Override
             public void run() {
               final Editor editor = e.getEditor();
               if (!isFromMyProject(editor)) {
@@ -299,6 +305,7 @@ public class BreakpointManager implements JDOMExternalizable {
               e.consume();
 
               DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+                @Override
                 public void run() {
                   Breakpoint breakpoint = toggleBreakpoint(e.getMouseEvent().isAltDown(), line);
 
@@ -333,7 +340,8 @@ public class BreakpointManager implements JDOMExternalizable {
     final DocumentListener myDocumentListener = new DocumentAdapter() {
       private final Alarm myUpdateAlarm = new Alarm();
 
-      public void documentChanged(final DocumentEvent e) {
+      @Override
+      public void documentChanged(@NotNull final DocumentEvent e) {
         final Document document = e.getDocument();
         synchronized (BreakpointManager.this) {
           List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
@@ -343,6 +351,7 @@ public class BreakpointManager implements JDOMExternalizable {
             // must create new array in order to avoid "concurrent modification" errors
             final List<BreakpointWithHighlighter> breakpointsToUpdate = new ArrayList<BreakpointWithHighlighter>(breakpoints);
             myUpdateAlarm.addRequest(new Runnable() {
+              @Override
               public void run() {
                 if (!myProject.isDisposed()) {
                   PsiDocumentManager.getInstance(myProject).commitDocument(document);
@@ -366,6 +375,7 @@ public class BreakpointManager implements JDOMExternalizable {
     if (initialBreakpoint != null && selectComponent != null) {
       final JComponent component = ((BreakpointPanel)dialog.getSelectedPanel()).getControl(selectComponent);
       dialog.setPreferredFocusedComponent(component, new Runnable() {
+        @Override
         public void run() {
           if (component instanceof DebuggerExpressionComboBox) {
             ((DebuggerExpressionComboBox)component).selectAll();
@@ -425,7 +435,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   @Nullable
-  public FieldBreakpoint addFieldBreakpoint(Document document, int offset) {
+  public FieldBreakpoint addFieldBreakpoint(@NotNull Document document, int offset) {
     PsiField field = FieldBreakpoint.findField(myProject, document, offset);
     if (field == null) {
       return null;
@@ -450,6 +460,7 @@ public class BreakpointManager implements JDOMExternalizable {
     return fieldBreakpoint;
   }
 
+  @NotNull
   public ExceptionBreakpoint addExceptionBreakpoint(@NotNull String exceptionClassName, String packageName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ExceptionBreakpoint breakpoint = new ExceptionBreakpoint(myProject, exceptionClassName, packageName);
@@ -489,6 +500,7 @@ public class BreakpointManager implements JDOMExternalizable {
   /**
    * @return null if not found or a breakpoint object
    */
+  @NotNull
   public List<BreakpointWithHighlighter> findBreakpoints(final Document document, final int offset) {
     LinkedList<BreakpointWithHighlighter> result = new LinkedList<BreakpointWithHighlighter>();
 
@@ -502,7 +514,8 @@ public class BreakpointManager implements JDOMExternalizable {
     return result;
   }
 
-  public List<BreakpointWithHighlighter> findBreakpoints(Document document, TextRange textRange) {
+  @NotNull
+  public List<BreakpointWithHighlighter> findBreakpoints(@NotNull Document document, @NotNull TextRange textRange) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<BreakpointWithHighlighter> result = new ArrayList<BreakpointWithHighlighter>();
     int startLine = document.getLineNumber(textRange.getStartOffset());
@@ -538,11 +551,13 @@ public class BreakpointManager implements JDOMExternalizable {
     return null;
   }
 
-  public void readExternal(final Element parentNode) throws InvalidDataException {
+  @Override
+  public void readExternal(@NotNull final Element parentNode) throws InvalidDataException {
     if (myProject.isOpen()) {
       doRead(parentNode);
     } else {
       myStartupManager.registerPostStartupActivity(new Runnable() {
+        @Override
         public void run() {
           doRead(parentNode);
         }
@@ -550,8 +565,9 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  private void doRead(final Element parentNode) {
+  private void doRead(@NotNull final Element parentNode) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
         final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
@@ -619,6 +635,7 @@ public class BreakpointManager implements JDOMExternalizable {
         }
 
         DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
+          @Override
           public void run() {
             updateBreakpointsUI();
           }
@@ -661,7 +678,7 @@ public class BreakpointManager implements JDOMExternalizable {
     myDispatcher.getMulticaster().breakpointsChanged();
   }
 
-  public synchronized void removeBreakpoint(final Breakpoint breakpoint) {
+  public synchronized void removeBreakpoint(@Nullable final Breakpoint breakpoint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (breakpoint == null) {
       return;
@@ -691,9 +708,12 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) 
-  public void writeExternal(final Element parentNode) throws WriteExternalException {
+  @Override
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void writeExternal(@NotNull final Element parentNode) throws WriteExternalException {
     WriteExternalException ex = ApplicationManager.getApplication().runReadAction(new Computable<WriteExternalException>() {
+      @Override
+      @Nullable
       public WriteExternalException compute() {
         try {
           removeInvalidBreakpoints();
@@ -741,7 +761,7 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRule(final EnableBreakpointRule enableBreakpointRule, Element element) {
+  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRule(@NotNull final EnableBreakpointRule enableBreakpointRule, @NotNull Element element) {
     Element rule = new Element("rule");
     if (enableBreakpointRule.isLeaveEnabled()) {
       rule.setAttribute("leaveEnabled", Boolean.toString(true));
@@ -751,20 +771,20 @@ public class BreakpointManager implements JDOMExternalizable {
     writeRuleBreakpoint(rule, SLAVE_BREAKPOINT_TAGNAME, enableBreakpointRule.getSlaveBreakpoint());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRuleBreakpoint(final Element element, final String tagName, final Breakpoint breakpoint) {
+  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRuleBreakpoint(@NotNull final Element element, final String tagName, @NotNull final Breakpoint breakpoint) {
     Element master = new Element(tagName);
     element.addContent(master);
     master.setAttribute("name", breakpoint.getDisplayName());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void writeBreakpoint(final Element group, final Breakpoint breakpoint) throws WriteExternalException {
+  private static void writeBreakpoint(@NotNull final Element group, @NotNull final Breakpoint breakpoint) throws WriteExternalException {
     Element breakpointNode = new Element("breakpoint");
     group.addContent(breakpointNode);
     breakpoint.writeExternal(breakpointNode);
   }
 
-  private static <T extends Breakpoint> Element getCategoryGroupElement(final Map<Key<? extends Breakpoint>, Element> categoryToElementMap, final Key<T> category, final Element parentNode) {
+  private static <T extends Breakpoint> Element getCategoryGroupElement(@NotNull final Map<Key<? extends Breakpoint>, Element> categoryToElementMap, @NotNull final Key<T> category, @NotNull final Element parentNode) {
     Element group = categoryToElementMap.get(category);
     if (group == null) {
       group = new Element(category.toString());
@@ -794,7 +814,7 @@ public class BreakpointManager implements JDOMExternalizable {
    * @return breakpoints of one of the category:
    *         LINE_BREAKPOINTS, EXCEPTION_BREKPOINTS, FIELD_BREAKPOINTS, METHOD_BREAKPOINTS
    */
-  public <T extends Breakpoint> Breakpoint[] getBreakpoints(final Key<T> category) {
+  public <T extends Breakpoint> Breakpoint[] getBreakpoints(@NotNull final Key<T> category) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     removeInvalidBreakpoints();
 
@@ -809,6 +829,7 @@ public class BreakpointManager implements JDOMExternalizable {
     return breakpoints.toArray(new Breakpoint[breakpoints.size()]);
   }
 
+  @NotNull
   public synchronized List<Breakpoint> getBreakpoints() {
     if (myBreakpointsListForIteration == null) {
       myBreakpointsListForIteration = new ArrayList<Breakpoint>(myBreakpoints.size() + 1);
@@ -826,7 +847,7 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   //interaction with RequestManagerImpl
-  public void disableBreakpoints(final DebugProcessImpl debugProcess) {
+  public void disableBreakpoints(@NotNull final DebugProcessImpl debugProcess) {
     final List<Breakpoint> breakpoints = getBreakpoints();
     if (!breakpoints.isEmpty()) {
       final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
@@ -835,6 +856,7 @@ public class BreakpointManager implements JDOMExternalizable {
         requestManager.deleteRequest(breakpoint);
       }
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           updateBreakpointsUI();
         }
@@ -850,6 +872,7 @@ public class BreakpointManager implements JDOMExternalizable {
         breakpoint.createRequest(debugProcess);
       }
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           updateBreakpointsUI();
         }
@@ -857,7 +880,7 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  public void applyThreadFilter(final DebugProcessImpl debugProcess, ThreadReference newFilterThread) {
+  public void applyThreadFilter(@NotNull final DebugProcessImpl debugProcess, @Nullable ThreadReference newFilterThread) {
     final RequestManagerImpl requestManager = debugProcess.getRequestsManager();
     final ThreadReference oldFilterThread = requestManager.getFilterThread();
     if (Comparing.equal(newFilterThread, oldFilterThread)) {
@@ -878,7 +901,7 @@ public class BreakpointManager implements JDOMExternalizable {
       // important! need to add filter to _existing_ requests, otherwise Requestor->Request mapping will be lost
       // and debugger trees will not be restored to original state
       abstract class FilterSetter <T extends EventRequest> {
-         void applyFilter(final List<T> requests, final ThreadReference thread) {
+         void applyFilter(@NotNull final List<T> requests, final ThreadReference thread) {
           for (T request : requests) {
             try {
               final boolean wasEnabled = request.isEnabled();
@@ -901,19 +924,22 @@ public class BreakpointManager implements JDOMExternalizable {
       final EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
 
       new FilterSetter<BreakpointRequest>() {
-        protected void addFilter(final BreakpointRequest request, final ThreadReference thread) {
+        @Override
+        protected void addFilter(@NotNull final BreakpointRequest request, final ThreadReference thread) {
           request.addThreadFilter(thread);
         }
       }.applyFilter(eventRequestManager.breakpointRequests(), newFilterThread);
 
       new FilterSetter<MethodEntryRequest>() {
-        protected void addFilter(final MethodEntryRequest request, final ThreadReference thread) {
+        @Override
+        protected void addFilter(@NotNull final MethodEntryRequest request, final ThreadReference thread) {
           request.addThreadFilter(thread);
         }
       }.applyFilter(eventRequestManager.methodEntryRequests(), newFilterThread);
 
       new FilterSetter<MethodExitRequest>() {
-        protected void addFilter(final MethodExitRequest request, final ThreadReference thread) {
+        @Override
+        protected void addFilter(@NotNull final MethodExitRequest request, final ThreadReference thread) {
           request.addThreadFilter(thread);
         }
       }.applyFilter(eventRequestManager.methodExitRequests(), newFilterThread);
@@ -951,11 +977,11 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  public void addBreakpointManagerListener(BreakpointManagerListener listener) {
+  public void addBreakpointManagerListener(@NotNull BreakpointManagerListener listener) {
     myDispatcher.addListener(listener);
   }
 
-  public void removeBreakpointManagerListener(BreakpointManagerListener listener) {
+  public void removeBreakpointManagerListener(@NotNull BreakpointManagerListener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -968,8 +994,10 @@ public class BreakpointManager implements JDOMExternalizable {
       // can be invoked from non-AWT thread
       myAlarm.cancelAllRequests();
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           myAlarm.addRequest(new Runnable() {
+            @Override
             public void run() {
               myDispatcher.getMulticaster().breakpointsChanged();
             }
@@ -985,7 +1013,7 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  public void setBreakpointEnabled(final Breakpoint breakpoint, final boolean enabled) {
+  public void setBreakpointEnabled(@NotNull final Breakpoint breakpoint, final boolean enabled) {
     if (breakpoint.ENABLED != enabled) {
       breakpoint.ENABLED = enabled;
       fireBreakpointChanged(breakpoint);
@@ -993,12 +1021,12 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
   
-  public void addBreakpointRule(EnableBreakpointRule rule) {
+  public void addBreakpointRule(@NotNull EnableBreakpointRule rule) {
     rule.init();
     myBreakpointRules.add(rule);
   }
   
-  public boolean removeBreakpointRule(EnableBreakpointRule rule) {
+  public boolean removeBreakpointRule(@NotNull EnableBreakpointRule rule) {
     final boolean removed = myBreakpointRules.remove(rule);
     if (removed) {
       rule.dispose();
@@ -1039,6 +1067,7 @@ public class BreakpointManager implements JDOMExternalizable {
     myAllowMulticasting = true;
     if (!myBreakpointRules.isEmpty()) {
       IJSwingUtilities.invoke(new Runnable() {
+        @Override
         public void run() {
           myDispatcher.getMulticaster().breakpointsChanged();
         }

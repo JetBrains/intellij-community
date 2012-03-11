@@ -80,7 +80,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   @Override
-  public boolean isInSet(final VirtualFile file) {
+  public boolean isInSet(@NotNull final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
     if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
       if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
@@ -90,7 +90,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   @Override
-  public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
+  public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

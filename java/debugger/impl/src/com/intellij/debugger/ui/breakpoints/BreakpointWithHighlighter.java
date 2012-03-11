@@ -66,9 +66,9 @@ import java.awt.dnd.DragSource;
  * Time: 3:22:55 PM
  */
 public abstract class BreakpointWithHighlighter extends Breakpoint {
-  private RangeHighlighter myHighlighter;
+  @Nullable private RangeHighlighter myHighlighter;
 
-  private SourcePosition mySourcePosition;
+  @Nullable private SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
   private volatile Icon myIcon = getSetIcon(false);
@@ -76,8 +76,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   @Nullable private String myPackageName;
   @Nullable private String myInvalidMessage;
 
-  protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess,
-                                                        final ReferenceType classType);
+  protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType);
 
   protected abstract Icon getDisabledIcon(boolean isMuted);
 
@@ -89,14 +88,17 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   
   protected abstract Icon getVerifiedWarningsIcon(boolean isMuted);
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }
 
+  @Override
   public String getClassName() {
     return myClassName;
   }
 
+  @Override
   @Nullable
   public String getShortClassName() {
     final SourcePosition pos = getSourcePosition();
@@ -108,10 +110,12 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return super.getShortClassName();
   }
 
+  @Override
   public String getPackageName() {
     return myPackageName;
   }
 
+  @Nullable
   protected Breakpoint init() {
     if (!isValid()) {
       myHighlighter.dispose();
@@ -132,7 +136,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
   }
 
-  private Icon calcIcon(DebugProcessImpl debugProcess) {
+  private Icon calcIcon(@Nullable DebugProcessImpl debugProcess) {
     final boolean muted = debugProcess != null && isMuted(debugProcess);
     if (!ENABLED) {
       return getDisabledIcon(muted);
@@ -168,53 +172,55 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return getSetIcon(muted);
   }
 
-  protected BreakpointWithHighlighter(Project project) {
+  protected BreakpointWithHighlighter(@NotNull Project project) {
     //for persistency
     super(project);
   }
 
-  public BreakpointWithHighlighter(final Project project, final RangeHighlighter highlighter) {
+  public BreakpointWithHighlighter(@NotNull final Project project, @NotNull final RangeHighlighter highlighter) {
     super(project);
     myHighlighter = highlighter;
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
     reload();
   }
 
+  @Nullable
   public RangeHighlighter getHighlighter() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myHighlighter;
   }
 
+  @Override
   public boolean isValid() {
     return isPositionValid(getSourcePosition());
   }
 
-  private static boolean isPositionValid(final SourcePosition sourcePosition) {
+  private static boolean isPositionValid(@Nullable final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
+      @Override
       public Boolean compute() {
         return sourcePosition != null && sourcePosition.getFile().isValid()? Boolean.TRUE : Boolean.FALSE;
       }
     }).booleanValue();
   }
 
+  @Nullable
   public SourcePosition getSourcePosition() {
     return mySourcePosition;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
+  @NotNull
   public String getDescription() {
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
-      //noinspection HardCodedStringLiteral
       buf.append("<html><body>");
       buf.append(getDisplayName());
-      if(myInvalidMessage != null && !"".equals(myInvalidMessage)) {
-        //noinspection HardCodedStringLiteral
+      if(myInvalidMessage != null && !myInvalidMessage.isEmpty()) {
         buf.append("<br><font color='red'>");
         buf.append(DebuggerBundle.message("breakpoint.warning", myInvalidMessage));
-        //noinspection HardCodedStringLiteral
         buf.append("</font>");
       }
-      //noinspection HardCodedStringLiteral
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.suspend.policy")).append(" : ");
       if(DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
@@ -226,30 +232,25 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       else if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) {
         buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
       }
-      //noinspection HardCodedStringLiteral
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.log.message")).append(": ");
       buf.append(LOG_ENABLED ? CommonBundle.getYesButtonText() : CommonBundle.getNoButtonText());
       if (LOG_EXPRESSION_ENABLED) {
-        //noinspection HardCodedStringLiteral
         buf.append("&nbsp;<br>&nbsp;");
         buf.append(DebuggerBundle.message("breakpoint.property.name.log.expression")).append(": ");
         buf.append(XmlStringUtil.escapeString(getLogMessage().getText()));
       }
-      if (CONDITION_ENABLED && getCondition() != null && !"".equals(getCondition().getText())) {
-        //noinspection HardCodedStringLiteral
+      if (CONDITION_ENABLED && getCondition() != null && getCondition().getText() != null && !getCondition().getText().isEmpty()) {
         buf.append("&nbsp;<br>&nbsp;");
         buf.append(DebuggerBundle.message("breakpoint.property.name.condition")).append(": ");
         buf.append(XmlStringUtil.escapeString(getCondition().getText()));
       }
       if (COUNT_FILTER_ENABLED) {
-        //noinspection HardCodedStringLiteral
         buf.append("&nbsp;<br>&nbsp;");
         buf.append(DebuggerBundle.message("breakpoint.property.name.pass.count")).append(": ");
         buf.append(COUNT_FILTER);
       }
       if (CLASS_FILTERS_ENABLED) {
-        //noinspection HardCodedStringLiteral
         buf.append("&nbsp;<br>&nbsp;");
         buf.append(DebuggerBundle.message("breakpoint.property.name.class.filters")).append(": ");
         ClassFilter[] classFilters = getClassFilters();
@@ -258,7 +259,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         }
       }
       if (INSTANCE_FILTERS_ENABLED) {
-        //noinspection HardCodedStringLiteral
         buf.append("&nbsp;<br>&nbsp;");
         buf.append(DebuggerBundle.message("breakpoint.property.name.instance.filters"));
         InstanceFilter[] instanceFilters = getInstanceFilters();
@@ -266,7 +266,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
           buf.append(Long.toString(instanceFilter.getId())).append(" ");
         }
       }
-      //noinspection HardCodedStringLiteral
       buf.append("</body></html>");
       return buf.toString();
     }
@@ -275,6 +274,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     }
   }
 
+  @Override
   public final void reload() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (getHighlighter().isValid()) {
@@ -288,7 +288,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     mySourcePosition = null;
   }
 
-  public void createRequest(DebugProcessImpl debugProcess) {
+  @Override
+  public void createRequest(@NotNull DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     // check is this breakpoint is enabled, vm reference is valid and there're no requests created yet
     if (!ENABLED || !debugProcess.isAttached() || isMuted(debugProcess) || !debugProcess.getRequestsManager().findRequests(this).isEmpty()) {
@@ -303,10 +304,11 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     updateUI();
   }
 
-  protected boolean isMuted(final DebugProcessImpl debugProcess) {
+  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
     return debugProcess.areBreakpointsMuted();
   }
 
+  @Override
   public void processClassPrepare(final DebugProcess debugProcess, final ReferenceType classType) {
     if (!ENABLED || !isValid()) {
       return;
@@ -319,12 +321,14 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   /**
    * updates the state of breakpoint and all the related UI widgets etc
    */
+  @Override
   public final void updateUI(@NotNull final Runnable afterUpdate) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
     final Project project = getProject();
     DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+      @Override
       public void run() {
         if (!isValid()) {
           return;
@@ -340,13 +344,16 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         }
         else {
           debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
+            @Override
             protected void action() throws Exception {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   updateCaches(debugProcess);
                 }
               });
               DebuggerInvocationUtil.swingInvokeLater(project, new Runnable() {
+                @Override
                 public void run() {
                   updateGutter();
                   afterUpdate.run();
@@ -374,11 +381,13 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   /**
    * called by BreakpointManager when destroying the breakpoint
    */
+  @Override
   public void delete() {
     if (isVisible()) {
       final RangeHighlighter highlighter = getHighlighter();
       if (highlighter != null) {
         DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
+          @Override
           public void run() {
             highlighter.dispose();
             //we should delete it here, so gutter will not fire events to deleted breakpoint
@@ -390,7 +399,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   }
 
-  public boolean isAt(Document document, int offset) {
+  public boolean isAt(@NotNull Document document, int offset) {
     RangeHighlighter highlighter = getHighlighter();
     return highlighter != null
            && highlighter.isValid()
@@ -401,6 +410,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   protected void reload(PsiFile psiFile) {
   }
 
+  @Override
   public PsiClass getPsiClass() {
     final SourcePosition sourcePosition = getSourcePosition();
     return getPsiClassAt(sourcePosition);
@@ -408,6 +418,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   protected static PsiClass getPsiClassAt(final SourcePosition sourcePosition) {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+      @Nullable
+      @Override
       public PsiClass compute() {
         return JVMNameUtil.getClassAt(sourcePosition);
       }
@@ -419,9 +431,10 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     highlighter.setGutterIconRenderer(renderer);
   }
 
+  @Override
   public abstract Key<? extends BreakpointWithHighlighter> getCategory();
 
-  public boolean canMoveTo(final SourcePosition position) {
+  public boolean canMoveTo(@Nullable final SourcePosition position) {
     if (position == null || !position.getFile().isValid()) {
       return false;
     }
@@ -438,7 +451,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return breakpointManager.findBreakpoint(document, spOffset, getCategory()) == null;
   }
 
-  public boolean moveTo(SourcePosition position) {
+  public boolean moveTo(@NotNull SourcePosition position) {
     if (!canMoveTo(position)) {
       return false;
     }
@@ -481,6 +494,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     myVisible = visible;
   }
 
+  @NotNull
   public Document getDocument() {
     return getHighlighter().getDocument();
   }
@@ -490,9 +504,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return sourcePosition != null ? sourcePosition.getLine() : -1;
   }
 
-  protected static RangeHighlighter createHighlighter(Project project,
-                                                   Document document,
-                                                   int lineIndex) {
+  @Nullable
+  protected static RangeHighlighter createHighlighter(@NotNull Project project, @NotNull Document document, int lineIndex) {
     if (lineIndex < 0 || lineIndex >= document.getLineCount()) {
       return null;
     }
@@ -509,7 +522,8 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return highlighter;
   }
 
-  public void readExternal(Element breakpointNode) throws InvalidDataException {
+  @Override
+  public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
     //noinspection HardCodedStringLiteral
     final String url = breakpointNode.getAttributeValue("url");
@@ -558,8 +572,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     reload();
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public void writeExternal(@NotNull Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
     PsiFile psiFile = getSourcePosition().getFile();
     final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -574,19 +589,21 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     }
   }
 
+  @NotNull
   private ActionGroup createMenuActions() {
     final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
     /**
      * Used from Popup Menu
      */
     class RemoveAction extends AnAction {
-      private Breakpoint myBreakpoint;
+      @Nullable private Breakpoint myBreakpoint;
 
       public RemoveAction(Breakpoint breakpoint) {
         super(DebuggerBundle.message("action.remove.text"));
         myBreakpoint = breakpoint;
       }
 
+      @Override
       public void actionPerformed(AnActionEvent e) {
         if (myBreakpoint != null) {
           breakpointManager.removeBreakpoint(myBreakpoint);
@@ -608,6 +625,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         myNewValue = newValue;
       }
 
+      @Override
       public void actionPerformed(AnActionEvent e) {
         myBreakpoint.ENABLED = myNewValue;
         breakpointManager.fireBreakpointChanged(myBreakpoint);
@@ -629,30 +647,36 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     private final Icon myIcon;
     private final String myDescription;
 
-    public MyGutterIconRenderer(Icon icon, String description) {
+    public MyGutterIconRenderer(@NotNull Icon icon, @NotNull String description) {
       myIcon = icon;
       myDescription = description;
     }
 
+    @Override
     @NotNull
     public Icon getIcon() {
       return myIcon;
     }
 
+    @Override
     public String getTooltipText() {
       return myDescription;
     }
 
+    @Override
     public AnAction getClickAction() {
       return new AnAction() {
+        @Override
         public void actionPerformed(AnActionEvent e) {
           DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(BreakpointWithHighlighter.this);
         }
       };
     }
 
+    @Override
     public AnAction getMiddleButtonClickAction() {
       return new AnAction() {
+        @Override
         public void actionPerformed(AnActionEvent e) {
           ENABLED = !ENABLED;
           DebuggerManagerEx.getInstanceEx(BreakpointWithHighlighter.this.getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
@@ -661,17 +685,21 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       };
     }
 
+    @Override
     public ActionGroup getPopupMenuActions() {
       return createMenuActions();
     }
 
+    @Override
     public GutterDraggableObject getDraggableObject() {
       return new GutterDraggableObject() {
-        public boolean copy(int line, VirtualFile file) {
+        @Override
+        public boolean copy(int line, @NotNull VirtualFile file) {
           final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
           return psiFile == null ? false : moveTo(SourcePosition.createFromLine(psiFile, line));
         }
 
+        @Override
         public Cursor getCursor(int line) {
           final SourcePosition newPosition = SourcePosition.createFromLine(getSourcePosition().getFile(), line);
           return canMoveTo(newPosition)? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
@@ -680,7 +708,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@NotNull Object obj) {
       return obj instanceof MyGutterIconRenderer &&
              Comparing.equal(getTooltipText(), ((MyGutterIconRenderer)obj).getTooltipText()) &&
              Comparing.equal(getIcon(), ((MyGutterIconRenderer)obj).getIcon());

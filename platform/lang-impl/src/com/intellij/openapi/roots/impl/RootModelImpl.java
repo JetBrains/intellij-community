@@ -54,15 +54,15 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
-  private OrderEntry[] myCachedOrderEntries;
+  @Nullable private OrderEntry[] myCachedOrderEntries;
 
-  private final ModuleLibraryTable myModuleLibraryTable;
+  @NotNull private final ModuleLibraryTable myModuleLibraryTable;
   final ModuleRootManagerImpl myModuleRootManager;
   private boolean myWritable;
   private final VirtualFilePointerManager myFilePointerManager;
 
-  VirtualFilePointer myExplodedDirectoryPointer;
-  private String myExplodedDirectory;
+  @Nullable VirtualFilePointer myExplodedDirectoryPointer;
+  @Nullable private String myExplodedDirectory;
   private boolean myExcludeExploded;
 
   @NonNls private static final String EXPLODED_TAG = "exploded";
@@ -84,7 +84,7 @@ public class RootModelImpl implements ModifiableRootModel {
   // have to register all child disposables using this fake object since all clients call just ModifiableModel.dispose()
   private final Disposable myDisposable = Disposer.newDisposable();
 
-  RootModelImpl(ModuleRootManagerImpl moduleRootManager, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
+  RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
     myModuleRootManager = moduleRootManager;
     myProjectRootManager = projectRootManager;
     myFilePointerManager = filePointerManager;
@@ -106,8 +106,8 @@ public class RootModelImpl implements ModifiableRootModel {
     myOrderEntries.add(new ModuleSourceOrderEntryImpl(this));
   }
 
-  RootModelImpl(Element element,
-                ModuleRootManagerImpl moduleRootManager,
+  RootModelImpl(@NotNull Element element,
+                @NotNull ModuleRootManagerImpl moduleRootManager,
                 ProjectRootManagerImpl projectRootManager,
                 VirtualFilePointerManager filePointerManager) throws InvalidDataException {
     myProjectRootManager = projectRootManager;
@@ -168,6 +168,7 @@ public class RootModelImpl implements ModifiableRootModel {
     myConfigurationAccessor = new RootConfigurationAccessor();
   }
 
+  @Override
   public boolean isWritable() {
     return myWritable;
   }
@@ -177,11 +178,11 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   //creates modifiable model
-  RootModelImpl(RootModelImpl rootModel,
+  RootModelImpl(@NotNull RootModelImpl rootModel,
                 ModuleRootManagerImpl moduleRootManager,
                 final boolean writable,
                 final RootConfigurationAccessor rootConfigurationAccessor,
-                VirtualFilePointerManager filePointerManager,
+                @NotNull VirtualFilePointerManager filePointerManager,
                 ProjectRootManagerImpl projectRootManager) {
     myFilePointerManager = filePointerManager;
     myModuleRootManager = moduleRootManager;
@@ -211,7 +212,7 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  private void setExplodedFrom(RootModelImpl rootModel, VirtualFilePointerManager filePointerManager) {
+  private void setExplodedFrom(@NotNull RootModelImpl rootModel, @NotNull VirtualFilePointerManager filePointerManager) {
     if (rootModel.myExplodedDirectoryPointer != null) {
       myExplodedDirectoryPointer = filePointerManager.duplicate(rootModel.myExplodedDirectoryPointer, getModule(), null);
     }
@@ -220,7 +221,7 @@ public class RootModelImpl implements ModifiableRootModel {
     myExcludeExploded = rootModel.myExcludeExploded;
   }
 
-  private void copyContainersFrom(RootModelImpl rootModel) {
+  private void copyContainersFrom(@NotNull RootModelImpl rootModel) {
     myOrderRootPointerContainers.clear();
     for(PersistentOrderRootType orderRootType: OrderRootType.getAllPersistentTypes()) {
       final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
@@ -230,7 +231,7 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  private void setOrderEntriesFrom(RootModelImpl rootModel) {
+  private void setOrderEntriesFrom(@NotNull RootModelImpl rootModel) {
     myOrderEntries.clear();
     for (OrderEntry orderEntry : rootModel.myOrderEntries) {
       if (orderEntry instanceof ClonableOrderEntry) {
@@ -244,6 +245,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return myOrderRootPointerContainers.get(orderRootType);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getOrderedRoots(OrderRootType type) {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -254,6 +256,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
+  @Override
   @NotNull
   public String[] getOrderedRootUrls(OrderRootType type) {
     final ArrayList<String> result = new ArrayList<String>();
@@ -264,6 +267,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getContentRoots() {
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -277,6 +281,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
+  @Override
   @NotNull
   public String[] getContentRootUrls() {
     if (myContent.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -289,6 +294,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @Override
   @NotNull
   public String[] getExcludeRootUrls() {
     final List<String> result = new SmartList<String>();
@@ -301,6 +307,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getExcludeRoots() {
     final List<VirtualFile> result = new SmartList<VirtualFile>();
@@ -316,11 +323,13 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
+  @Override
   @NotNull
   public String[] getSourceRootUrls() {
     return getSourceRootUrls(true);
   }
 
+  @Override
   @NotNull
   public String[] getSourceRootUrls(boolean includingTests) {
     List<String> result = new SmartList<String>();
@@ -335,11 +344,13 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSourceRoots() {
     return getSourceRoots(true);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getSourceRoots(final boolean includingTests) {
     List<VirtualFile> result = new SmartList<VirtualFile>();
@@ -355,10 +366,12 @@ public class RootModelImpl implements ModifiableRootModel {
     return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
   }
 
+  @Override
   public ContentEntry[] getContentEntries() {
     return myContent.toArray(new ContentEntry[myContent.size()]);
   }
 
+  @Override
   @NotNull
   public OrderEntry[] getOrderEntries() {
     OrderEntry[] cachedOrderEntries = myCachedOrderEntries;
@@ -372,18 +385,22 @@ public class RootModelImpl implements ModifiableRootModel {
     return Collections.unmodifiableList(myOrderEntries).iterator();
   }
 
+  @Override
   public void removeContentEntry(ContentEntry entry) {
     assertWritable();
     LOG.assertTrue(myContent.contains(entry));
     myContent.remove(entry);
   }
 
+  @Override
   public void addOrderEntry(OrderEntry entry) {
     assertWritable();
     LOG.assertTrue(!myOrderEntries.contains(entry));
     myOrderEntries.add(entry);
   }
 
+  @NotNull
+  @Override
   public LibraryOrderEntry addLibraryEntry(Library library) {
     assertWritable();
     final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(library, this, myProjectRootManager);
@@ -392,14 +409,18 @@ public class RootModelImpl implements ModifiableRootModel {
     return libraryOrderEntry;
   }
 
-  public LibraryOrderEntry addInvalidLibrary(String name, String level) {
+  @NotNull
+  @Override
+  public LibraryOrderEntry addInvalidLibrary(@NotNull String name, @NotNull String level) {
     assertWritable();
     final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(name, level, this, myProjectRootManager);
     myOrderEntries.add(libraryOrderEntry);
     return libraryOrderEntry;
   }
 
-  public ModuleOrderEntry addModuleOrderEntry(Module module) {
+  @NotNull
+  @Override
+  public ModuleOrderEntry addModuleOrderEntry(@NotNull Module module) {
     assertWritable();
     LOG.assertTrue(!module.equals(getModule()));
     LOG.assertTrue(Comparing.equal(myModuleRootManager.getModule().getProject(), module.getProject()));
@@ -408,7 +429,9 @@ public class RootModelImpl implements ModifiableRootModel {
     return moduleOrderEntry;
   }
 
-  public ModuleOrderEntry addInvalidModuleEntry(String name) {
+  @NotNull
+  @Override
+  public ModuleOrderEntry addInvalidModuleEntry(@NotNull String name) {
     assertWritable();
     LOG.assertTrue(!name.equals(getModule().getName()));
     final ModuleOrderEntryImpl moduleOrderEntry = new ModuleOrderEntryImpl(name, this);
@@ -416,7 +439,9 @@ public class RootModelImpl implements ModifiableRootModel {
     return moduleOrderEntry;
   }
 
-  public LibraryOrderEntry findLibraryOrderEntry(Library library) {
+  @Nullable
+  @Override
+  public LibraryOrderEntry findLibraryOrderEntry(@NotNull Library library) {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)orderEntry).getLibrary())) {
         return (LibraryOrderEntry)orderEntry;
@@ -425,6 +450,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return null;
   }
 
+  @Override
   public void removeOrderEntry(OrderEntry entry) {
     assertWritable();
     removeOrderEntryInternal(entry);
@@ -435,18 +461,20 @@ public class RootModelImpl implements ModifiableRootModel {
     myOrderEntries.remove(entry);
   }
 
-  public void rearrangeOrderEntries(OrderEntry[] newEntries) {
+  @Override
+  public void rearrangeOrderEntries(@NotNull OrderEntry[] newEntries) {
     assertWritable();
     assertValidRearrangement(newEntries);
     myOrderEntries.clear();
     ContainerUtil.addAll(myOrderEntries, newEntries);
   }
 
-  private void assertValidRearrangement(OrderEntry[] newEntries) {
+  private void assertValidRearrangement(@NotNull OrderEntry[] newEntries) {
     String error = checkValidRearrangement(newEntries);
     LOG.assertTrue(error == null, error);
   }
-  private String checkValidRearrangement(OrderEntry[] newEntries) {
+  @Nullable
+  private String checkValidRearrangement(@NotNull OrderEntry[] newEntries) {
     if (newEntries.length != myOrderEntries.size()) {
       return "Size mismatch: old size=" + myOrderEntries.size() + "; new size=" + newEntries.length;
     }
@@ -464,6 +492,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return null;
   }
 
+  @Override
   public void clear() {
     final Sdk jdk = getSdk();
     myContent.clear();
@@ -472,6 +501,7 @@ public class RootModelImpl implements ModifiableRootModel {
     addSourceOrderEntries();
   }
 
+  @Override
   public void commit() {
     myModuleRootManager.commitModel(this);
     myWritable = false;
@@ -510,11 +540,13 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
+  @Override
   @NotNull
   public LibraryTable getModuleLibraryTable() {
     return myModuleLibraryTable;
   }
 
+  @Override
   public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
     R result = initialValue;
     for (OrderEntry orderEntry : getOrderEntries()) {
@@ -529,25 +561,30 @@ public class RootModelImpl implements ModifiableRootModel {
     return new ModuleOrderEnumerator(this, null);
   }
 
+  @Override
   public Project getProject() {
     return myProjectRootManager.getProject();
   }
 
+  @Override
   @NotNull
   public ContentEntry addContentEntry(@NotNull VirtualFile file) {
     return addContentEntry(new ContentEntryImpl(file, this));
   }
 
+  @Override
   @NotNull
-  public ContentEntry addContentEntry(String url) {
+  public ContentEntry addContentEntry(@NotNull String url) {
     return addContentEntry(new ContentEntryImpl(url, this));
   }
 
+  @Override
   public boolean isDisposed() {
     return myDisposed;
   }
 
-  private ContentEntry addContentEntry(ContentEntry e) {
+  @NotNull
+  private ContentEntry addContentEntry(@NotNull ContentEntry e) {
     if (myContent.contains(e)) {
       for (ContentEntry contentEntry : getContentEntries()) {
         if (ContentComparator.INSTANCE.compare(contentEntry, e) == 0) return contentEntry;
@@ -557,7 +594,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return e;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     for (ModuleExtension extension : myExtensions) {
       extension.writeExternal(element);
     }
@@ -596,7 +633,8 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public void setSdk(Sdk jdk) {
+  @Override
+  public void setSdk(@Nullable Sdk jdk) {
     assertWritable();
     final JdkOrderEntry jdkLibraryEntry;
     if (jdk != null) {
@@ -609,18 +647,21 @@ public class RootModelImpl implements ModifiableRootModel {
 
   }
 
+  @Override
   public void setInvalidSdk(String jdkName, String jdkType) {
     assertWritable();
     replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager));
   }
 
+  @Override
   public void inheritSdk() {
     assertWritable();
     replaceEntryOfType(JdkOrderEntry.class, new InheritedJdkOrderEntryImpl(this, myProjectRootManager));
   }
 
 
-  public <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, final T entry) {
+  @Override
+  public <T extends OrderEntry> void replaceEntryOfType(@NotNull Class<T> entryClass, @Nullable final T entry) {
     assertWritable();
     for (int i = 0; i < myOrderEntries.size(); i++) {
       OrderEntry orderEntry = myOrderEntries.get(i);
@@ -638,6 +679,7 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
+  @Override
   public Sdk getSdk() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof JdkOrderEntry) {
@@ -647,6 +689,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return null;
   }
 
+  @Override
   public boolean isSdkInherited() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof InheritedJdkOrderEntry) {
@@ -656,6 +699,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return false;
   }
 
+  @Override
   public String getSdkName() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof JdkOrderEntry) {
@@ -709,40 +753,47 @@ public class RootModelImpl implements ModifiableRootModel {
   private static class ContentComparator implements Comparator<ContentEntry> {
     public static final ContentComparator INSTANCE = new ContentComparator();
 
-    public int compare(final ContentEntry o1, final ContentEntry o2) {
+    @Override
+    public int compare(@NotNull final ContentEntry o1, @NotNull final ContentEntry o2) {
       return o1.getUrl().compareTo(o2.getUrl());
     }
   }
 
+  @Override
   public VirtualFile getExplodedDirectory() {
     return myExplodedDirectoryPointer == null ? null : myExplodedDirectoryPointer.getFile();
   }
 
-  public void setExplodedDirectory(VirtualFile file) {
+  @Override
+  public void setExplodedDirectory(@Nullable VirtualFile file) {
     setExplodedDirectory(file == null ? null : file.getUrl());
   }
 
-  public void setExplodedDirectory(String url) {
+  @Override
+  public void setExplodedDirectory(@Nullable String url) {
     myExplodedDirectory = url;
     myExplodedDirectoryPointer = url == null ? null : myFilePointerManager.create(url, myDisposable, null);
   }
 
+  @Override
   @NotNull
   public Module getModule() {
     return myModuleRootManager.getModule();
   }
 
+  @Override
   public String getExplodedDirectoryUrl() {
     return myExplodedDirectoryPointer == null ? null : myExplodedDirectoryPointer.getUrl();
   }
 
-  private static boolean vptrEqual(VirtualFilePointer p1, VirtualFilePointer p2) {
+  private static boolean vptrEqual(@Nullable VirtualFilePointer p1, @Nullable VirtualFilePointer p2) {
     if (p1 == null && p2 == null) return true;
     if (p1 == null || p2 == null) return false;
     return Comparing.equal(p1.getUrl(), p2.getUrl());
   }
 
 
+  @Override
   public boolean isChanged() {
     if (!myWritable) return false;
 
@@ -796,7 +847,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return false;
   }
 
-  private static boolean orderEntriesEquals(OrderEntry orderEntry1, OrderEntry orderEntry2) {
+  private static boolean orderEntriesEquals(@NotNull OrderEntry orderEntry1, @NotNull OrderEntry orderEntry2) {
     if (!((OrderEntryBaseImpl)orderEntry1).sameType(orderEntry2)) return false;
     if (orderEntry1 instanceof JdkOrderEntry) {
       if (!(orderEntry2 instanceof JdkOrderEntry)) return false;
@@ -849,11 +900,12 @@ public class RootModelImpl implements ModifiableRootModel {
     return true;
   }
 
-  void makeExternalChange(Runnable runnable) {
+  void makeExternalChange(@NotNull Runnable runnable) {
     if (myWritable || myDisposed) return;
     myModuleRootManager.makeRootsChange(runnable);
   }
 
+  @Override
   public void dispose() {
     assert !myDisposed;
     Disposer.dispose(myDisposable);
@@ -862,40 +914,48 @@ public class RootModelImpl implements ModifiableRootModel {
     myDisposed = true;
   }
 
+  @Override
   public boolean isExcludeExplodedDirectory() {
     return myExcludeExploded;
   }
 
+  @Override
   public void setExcludeExplodedDirectory(boolean excludeExplodedDir) {
     myExcludeExploded = excludeExplodedDir;
   }
 
   private class Order extends ArrayList<OrderEntry> {
+    @Override
     public void clear() {
       super.clear();
       clearCachedEntries();
     }
 
-    public OrderEntry set(int i, OrderEntry orderEntry) {
+    @NotNull
+    @Override
+    public OrderEntry set(int i, @NotNull OrderEntry orderEntry) {
       super.set(i, orderEntry);
       ((OrderEntryBaseImpl)orderEntry).setIndex(i);
       clearCachedEntries();
       return orderEntry;
     }
 
-    public boolean add(OrderEntry orderEntry) {
+    @Override
+    public boolean add(@NotNull OrderEntry orderEntry) {
       super.add(orderEntry);
       ((OrderEntryBaseImpl)orderEntry).setIndex(size() - 1);
       clearCachedEntries();
       return true;
     }
 
+    @Override
     public void add(int i, OrderEntry orderEntry) {
       super.add(i, orderEntry);
       clearCachedEntries();
       setIndicies(i);
     }
 
+    @Override
     public OrderEntry remove(int i) {
       OrderEntry entry = super.remove(i);
       setIndicies(i);
@@ -903,6 +963,7 @@ public class RootModelImpl implements ModifiableRootModel {
       return entry;
     }
 
+    @Override
     public boolean remove(Object o) {
       int index = indexOf(o);
       if (index < 0) return false;
@@ -911,6 +972,7 @@ public class RootModelImpl implements ModifiableRootModel {
       return true;
     }
 
+    @Override
     public boolean addAll(Collection<? extends OrderEntry> collection) {
       int startSize = size();
       boolean result = super.addAll(collection);
@@ -919,6 +981,7 @@ public class RootModelImpl implements ModifiableRootModel {
       return result;
     }
 
+    @Override
     public boolean addAll(int i, Collection<? extends OrderEntry> collection) {
       boolean result = super.addAll(i, collection);
       setIndicies(i);
@@ -926,12 +989,14 @@ public class RootModelImpl implements ModifiableRootModel {
       return result;
     }
 
+    @Override
     public void removeRange(int i, int i1) {
       super.removeRange(i, i1);
       clearCachedEntries();
       setIndicies(i);
     }
 
+    @Override
     public boolean removeAll(Collection<?> collection) {
       boolean result = super.removeAll(collection);
       setIndicies(0);
@@ -939,6 +1004,7 @@ public class RootModelImpl implements ModifiableRootModel {
       return result;
     }
 
+    @Override
     public boolean retainAll(Collection<?> collection) {
       boolean result = super.retainAll(collection);
       setIndicies(0);
@@ -956,12 +1022,14 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
+  @Override
   @NotNull
   public String[] getDependencyModuleNames() {
     List<String> result = orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries().process(new CollectDependentModules(), new ArrayList<String>());
     return ContainerUtil.toArray(result, new String[result.size()]);
   }
 
+  @Override
   @NotNull
   public VirtualFile[] getRootPaths(final OrderRootType rootType) {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
@@ -973,6 +1041,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  @Override
   @NotNull
   public String[] getRootUrls(final OrderRootType rootType) {
     final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
@@ -984,11 +1053,13 @@ public class RootModelImpl implements ModifiableRootModel {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   @NotNull
   public Module[] getModuleDependencies() {
     return getModuleDependencies(true);
   }
 
+  @Override
   @NotNull
   public Module[] getModuleDependencies(boolean includeTests) {
     final List<Module> result = new ArrayList<Module>();
@@ -1016,13 +1087,16 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   private static class CollectDependentModules extends RootPolicy<List<String>> {
-    public List<String> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, List<String> arrayList) {
+    @NotNull
+    @Override
+    public List<String> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, @NotNull List<String> arrayList) {
       arrayList.add(moduleOrderEntry.getModuleName());
       return arrayList;
     }
   }
 
-  public void setRootUrls(final OrderRootType orderRootType, final String[] urls) {
+  @Override
+  public void setRootUrls(final OrderRootType orderRootType, @NotNull final String[] urls) {
     assertWritable();
     VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
     if (container == null) {
@@ -1036,7 +1110,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Nullable
-  private VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
+  private VirtualFilePointer getOutputPathValue(@NotNull Element element, String tag, final boolean createPointer) {
     final Element outputPathChild = element.getChild(tag);
     VirtualFilePointer vptr = null;
     if (outputPathChild != null && createPointer) {
@@ -1047,7 +1121,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @Nullable
-  private static String getOutputPathValue(Element element, String tag) {
+  private static String getOutputPathValue(@NotNull Element element, String tag) {
     final Element outputPathChild = element.getChild(tag);
     if (outputPathChild != null) {
       return outputPathChild.getAttributeValue(ATTRIBUTE_URL);
@@ -1055,14 +1129,16 @@ public class RootModelImpl implements ModifiableRootModel {
     return null;
   }
 
-  public <T> T getModuleExtension(final Class<T> klass) {
+  @Nullable
+  @Override
+  public <T> T getModuleExtension(@NotNull final Class<T> klass) {
     for (ModuleExtension extension : myExtensions) {
       if (klass.isAssignableFrom(extension.getClass())) return (T)extension;
     }
     return null;
   }
 
-  void registerOnDispose(Disposable disposable) {
+  void registerOnDispose(@NotNull Disposable disposable) {
     Disposer.register(myDisposable, disposable);
   }
 }

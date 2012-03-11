@@ -40,6 +40,7 @@ import com.sun.jdi.Value;
 import com.sun.jdi.event.LocatableEvent;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
   @NonNls private static final String CONDITION_OPTION_NAME = "CONDITION";
   protected final Project myProject;
 
-  public FilteredRequestor(Project project) {
+  public FilteredRequestor(@NotNull Project project) {
     myProject = project;
     myCondition = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
   }

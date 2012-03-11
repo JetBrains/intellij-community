@@ -94,6 +94,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   }
 
 
+  @Override
   protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     if (isMuted) {
@@ -104,22 +105,27 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
+  @Override
   protected Icon getSetIcon(boolean isMuted) {
     return isMuted? MUTED_ICON : ICON;
   }
 
+  @Override
   protected Icon getInvalidIcon(boolean isMuted) {
     return isMuted? ourMutedInvalidIcon : ourInvalidIcon;
   }
 
+  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
     return isMuted? ourMutedVerifiedIcon : ourVerifiedIcon;
   }
 
+  @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
     return isMuted? ourMutedVerifiedWarningIcon : ourVerifiedWarningIcon;
   }
 
+  @Override
   public Key<FieldBreakpoint> getCategory() {
     return CATEGORY;
   }
@@ -127,6 +133,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   public PsiField getPsiField() {
     final SourcePosition sourcePosition = getSourcePosition();
     final PsiField field = ApplicationManager.getApplication().runReadAction(new Computable<PsiField>() {
+      @Override
       public PsiField compute() {
         final PsiClass psiClass = getPsiClassAt(sourcePosition);
         return psiClass != null ? psiClass.findFieldByName(myFieldName, true) : null;
@@ -138,6 +145,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return PositionUtil.getPsiElementAt(getProject(), PsiField.class, sourcePosition);
   }
 
+  @Override
   protected void reload(PsiFile psiFile) {
     super.reload(psiFile);
     PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, getSourcePosition());
@@ -150,11 +158,13 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
-  public boolean moveTo(SourcePosition position) {
+  @Override
+  public boolean moveTo(@NotNull SourcePosition position) {
     final PsiField field = PositionUtil.getPsiElementAt(getProject(), PsiField.class, position);
     return field != null && super.moveTo(SourcePosition.createFromElement(field));
   }
 
+  @Override
   protected ObjectReference getThisObject(SuspendContextImpl context, LocatableEvent event) throws EvaluateException {
     if (event instanceof ModificationWatchpointEvent) {
       ModificationWatchpointEvent modificationEvent = (ModificationWatchpointEvent)event;
@@ -174,6 +184,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return super.getThisObject(context, event);
   }
 
+  @Override
   public void createRequestForPreparedClass(DebugProcessImpl debugProcess,
                                             ReferenceType refType) {
     VirtualMachineProxy vm = debugProcess.getVirtualMachineProxy();
@@ -207,10 +218,11 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
+  @Override
   public String getEventMessage(final LocatableEvent event) {
     final Location location = event.location();
     final String locationQName = location.declaringType().name() + "." + location.method().name();
-    String locationFileName = "";
+    String locationFileName;
     try {
       locationFileName = location.sourceName();
     }
@@ -247,7 +259,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
         locationLine
       );
     }
-    else if (event instanceof AccessWatchpointEvent) {
+    if (event instanceof AccessWatchpointEvent) {
       AccessWatchpointEvent accessEvent = (AccessWatchpointEvent)event;
       final ObjectReference object = accessEvent.object();
       final Field field = accessEvent.field();
@@ -274,33 +286,37 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return null;
   }
 
+  @Override
   public String getDisplayName() {
     if(!isValid()) {
       return DebuggerBundle.message("status.breakpoint.invalid");
     }
     final String className = getClassName();
-    return className != null && className.length() > 0 ? className + "." + myFieldName : myFieldName;
+    return className != null && !className.isEmpty() ? className + "." + myFieldName : myFieldName;
   }
 
-  public static FieldBreakpoint create(Project project, Document document, int lineIndex, String fieldName) {
+  public static FieldBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex, String fieldName) {
     FieldBreakpoint breakpoint = new FieldBreakpoint(project, createHighlighter(project, document, lineIndex), fieldName);
     return (FieldBreakpoint)breakpoint.init();
   }
 
+  @Override
   public boolean canMoveTo(final SourcePosition position) {
     return super.canMoveTo(position) && PositionUtil.getPsiElementAt(getProject(), PsiField.class, position) != null;
   }
 
+  @Override
   public boolean isValid() {
     return super.isValid() && getPsiField() != null;
   }
 
-  public boolean isAt(Document document, int offset) {
+  @Override
+  public boolean isAt(@NotNull Document document, int offset) {
     PsiField field = findField(myProject, document, offset);
     return field == getPsiField();
   }
 
-  protected static FieldBreakpoint create(Project project, Field field, ObjectReference object) {
+  protected static FieldBreakpoint create(@NotNull Project project, @NotNull Field field, ObjectReference object) {
     String fieldName = field.name();
     int line = 0;
     Document document = null;
@@ -343,8 +359,9 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     int line = document.getLineNumber(offset);
     if(field == null) {
-      final PsiField[] fld = new PsiField[] {null};
+      final PsiField[] fld = {null};
       XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
+        @Override
         public boolean process(PsiElement element) {
           PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
           if(field != null) {
@@ -360,7 +377,8 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     return field;
   }
 
-  public void readExternal(Element breakpointNode) throws InvalidDataException {
+  @Override
+  public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
     //noinspection HardCodedStringLiteral
     myFieldName = breakpointNode.getAttributeValue("field_name");
@@ -369,12 +387,14 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  public void writeExternal(@NotNull Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
     parentNode.setAttribute("field_name", getFieldName());
   }
 
+  @Override
   public PsiElement getEvaluationElement() {
     return getPsiClass();
   }

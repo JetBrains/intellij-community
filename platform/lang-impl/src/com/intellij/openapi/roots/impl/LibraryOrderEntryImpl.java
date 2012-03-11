@@ -39,8 +39,8 @@ import org.jetbrains.annotations.Nullable;
 class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements LibraryOrderEntry, ClonableOrderEntry, WritableOrderEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryImpl");
   private Library myLibrary;
-  private String myLibraryName; // is non-null if myLibrary == null
-  private String myLibraryLevel; // is non-null if myLibraryLevel == null
+  @Nullable private String myLibraryName; // is non-null if myLibrary == null
+  @Nullable private String myLibraryLevel; // is non-null if myLibraryLevel == null
   private boolean myExported;
   @NonNls static final String ENTRY_TYPE = "library";
   @NonNls private static final String NAME_ATTR = "name";
@@ -49,7 +49,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   @NonNls private static final String EXPORTED_ATTR = "exported";
   private LibraryType myLibraryType;
 
-  LibraryOrderEntryImpl(Library library, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  LibraryOrderEntryImpl(@NotNull Library library, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     LOG.assertTrue(library.getTable() != null);
     myLibrary = library;
@@ -60,7 +60,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     init();
   }
 
-  LibraryOrderEntryImpl(Element element, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
+  LibraryOrderEntryImpl(@NotNull Element element, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) throws InvalidDataException {
     super(rootModel, projectRootManager);
     LOG.assertTrue(ENTRY_TYPE.equals(element.getAttributeValue(OrderEntryFactory.ORDER_ENTRY_TYPE_ATTR)));
     myExported = element.getAttributeValue(EXPORTED_ATTR) != null;
@@ -74,7 +74,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     init();
   }
 
-  private LibraryOrderEntryImpl(LibraryOrderEntryImpl that, RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  private LibraryOrderEntryImpl(@NotNull LibraryOrderEntryImpl that, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super (rootModel, projectRootManager);
     if (that.myLibrary == null) {
       myLibraryName = that.myLibraryName;
@@ -92,8 +92,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
 
   public LibraryOrderEntryImpl(@NotNull String name,
                                @NotNull String level,
-                               RootModelImpl rootModel,
-                               ProjectRootManagerImpl projectRootManager) {
+                               @NotNull RootModelImpl rootModel,
+                               @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     searchForLibrary(name, level);
     addListeners();
@@ -118,23 +118,28 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
   }
 
+  @Override
   public boolean isExported() {
     return myExported;
   }
 
+  @Override
   public void setExported(boolean exported) {
     myExported = exported;
   }
 
+  @Override
   @NotNull
   public DependencyScope getScope() {
     return myScope;
   }
 
+  @Override
   public void setScope(@NotNull DependencyScope scope) {
     myScope = scope;
   }
 
+  @Override
   @Nullable
   public Library getLibrary() {
     Library library = getRootModel().getConfigurationAccessor().getLibrary(myLibrary, myLibraryName, myLibraryLevel);
@@ -149,19 +154,24 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     return null;
   }
 
+  @Override
   public boolean isModuleLevel() {
     return false;
   }
 
+  @Override
+  @Nullable
   public String getPresentableName() {
     return getLibraryName();
   }
 
+  @Override
   @Nullable
   protected RootProvider getRootProvider() {
     return myLibrary == null ? null : myLibrary.getRootProvider();
   }
 
+  @Override
   public boolean isValid() {
     if (isDisposed()) {
       return false;
@@ -170,18 +180,22 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     return library != null && !((LibraryEx)library).isDisposed();
   }
 
-  public <R> R accept(RootPolicy<R> policy, R initialValue) {
+  @Override
+  public <R> R accept(@NotNull RootPolicy<R> policy, R initialValue) {
     return policy.visitLibraryOrderEntry(this, initialValue);
   }
 
-  public OrderEntry cloneEntry(RootModelImpl rootModel,
+  @Override
+  @NotNull
+  public OrderEntry cloneEntry(@NotNull RootModelImpl rootModel,
                                ProjectRootManagerImpl projectRootManager,
                                VirtualFilePointerManager filePointerManager) {
     ProjectRootManagerImpl rootManager = ProjectRootManagerImpl.getInstanceImpl(getRootModel().getModule().getProject());
     return new LibraryOrderEntryImpl(this, rootModel, rootManager);
   }
 
-  public void writeExternal(Element rootElement) throws WriteExternalException {
+  @Override
+  public void writeExternal(@NotNull Element rootElement) throws WriteExternalException {
     final Element element = OrderEntryFactory.createOrderEntryElement(ENTRY_TYPE);
     final String libraryLevel = getLibraryLevel();
     if (myExported) {
@@ -193,6 +207,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     rootElement.addContent(element);
   }
 
+  @Override
+  @Nullable
   public String getLibraryLevel() {
     if (myLibrary != null) {
       final LibraryTable table = myLibrary.getTable();
@@ -202,6 +218,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
   }
 
+  @Override
   public String getLibraryName() {
     return myLibrary == null ? myLibraryName : myLibrary.getName();
   }
@@ -215,10 +232,12 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
 
+  @Override
   public boolean isSynthetic() {
     return false;
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     final LibraryTable libraryTable =
@@ -229,7 +248,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
 
-  private void afterLibraryAdded(Library newLibrary) {
+  private void afterLibraryAdded(@NotNull Library newLibrary) {
     if (myLibrary == null) {
       if (Comparing.equal(myLibraryName, newLibrary.getName())) {
         myLibrary = newLibrary;
@@ -256,24 +275,28 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     public MyOrderEntryLibraryTableListener() {
     }
 
-    public void afterLibraryAdded(Library newLibrary) {
+    @Override
+    public void afterLibraryAdded(@NotNull Library newLibrary) {
       LibraryOrderEntryImpl.this.afterLibraryAdded(newLibrary);
     }
 
-    public void afterLibraryRenamed(Library library) {
+    @Override
+    public void afterLibraryRenamed(@NotNull Library library) {
       afterLibraryAdded(library);
     }
 
+    @Override
     public void beforeLibraryRemoved(Library library) {
       LibraryOrderEntryImpl.this.beforeLibraryRemoved(library);
     }
 
+    @Override
     public void afterLibraryRemoved(Library library) {
     }
   }
 
   @Override
-  protected VirtualFile[] filterDirectories(VirtualFile[] files) {
+  protected VirtualFile[] filterDirectories(@NotNull VirtualFile[] files) {
     if (myLibraryType != null && myLibraryType.isFileBased()) {
       return files;
     }

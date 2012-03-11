@@ -42,7 +42,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @return new content entry
    */
   @NotNull
-  ContentEntry addContentEntry(VirtualFile root);
+  ContentEntry addContentEntry(@NotNull VirtualFile root);
 
   /**
    * Adds the specified directory as a content root.
@@ -51,21 +51,21 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @return new content entry
    */
   @NotNull
-  ContentEntry addContentEntry(String url);
+  ContentEntry addContentEntry(@NotNull String url);
 
   /**
    * Remove the specified content root.
    *
    * @param entry the content root to remove.
    */
-  void removeContentEntry(ContentEntry entry);
+  void removeContentEntry(@NotNull ContentEntry entry);
 
   /**
    * Appends an order entry to the classpath.
    *
    * @param orderEntry the order entry to add.
    */
-  void addOrderEntry(OrderEntry orderEntry);
+  void addOrderEntry(@NotNull OrderEntry orderEntry);
 
   /**
    * Creates an entry for a given library and adds it to order
@@ -73,7 +73,8 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @param library the library for which the entry is created.
    * @return newly created order entry for the library
    */
-  LibraryOrderEntry addLibraryEntry(Library library);
+  @NotNull
+  LibraryOrderEntry addLibraryEntry(@NotNull Library library);
 
   /**
    * Adds an entry for invalid library.
@@ -82,25 +83,29 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @param level
    * @return
    */
-  LibraryOrderEntry addInvalidLibrary(@NonNls String name, String level);
+  @NotNull
+  LibraryOrderEntry addInvalidLibrary(@NotNull @NonNls String name, @NotNull String level);
 
-  ModuleOrderEntry addModuleOrderEntry(Module module);
+  @NotNull
+  ModuleOrderEntry addModuleOrderEntry(@NotNull Module module);
 
-  ModuleOrderEntry addInvalidModuleEntry(String name);
+  @NotNull
+  ModuleOrderEntry addInvalidModuleEntry(@NotNull String name);
 
-  LibraryOrderEntry findLibraryOrderEntry(Library library);
+  @Nullable
+  LibraryOrderEntry findLibraryOrderEntry(@NotNull Library library);
 
   /**
    * Removes order entry from an order.
    *
    * @param orderEntry
    */
-  void removeOrderEntry(OrderEntry orderEntry);
+  void removeOrderEntry(@NotNull OrderEntry orderEntry);
 
   /**
    * @param newOrder
    */
-  void rearrangeOrderEntries(OrderEntry[] newOrder);
+  void rearrangeOrderEntries(@NotNull OrderEntry[] newOrder);
 
   void clear();
 
@@ -139,7 +144,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
    * @param sdkName JDK name
    * @param sdkType JDK type
    */
-  void setInvalidSdk(String sdkName, String sdkType);
+  void setInvalidSdk(@NotNull String sdkName, String sdkType);
 
   /**
    * Makes this module inheriting JDK from its project
