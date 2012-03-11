@@ -34,11 +34,12 @@ public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
   private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static ExtensionsAreaImpl ourRootArea = createRootArea();
+  @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
   private static final MultiMap<String, AreaInstance> ourAreaClass2instances = new MultiMap<String, AreaInstance>();
   private static final Map<AreaInstance,String> ourAreaInstance2class = new THashMap<AreaInstance, String>();
   private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
 
+  @NotNull
   private static ExtensionsAreaImpl createRootArea() {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
     rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
@@ -48,6 +49,7 @@ public class Extensions {
   private Extensions() {
   }
 
+  @NotNull
   public static ExtensionsArea getRootArea() {
     return ourRootArea;
   }
@@ -79,18 +81,20 @@ public class Extensions {
     });
   }
 
+  @NotNull
   public static Object[] getExtensions(@NonNls String extensionPointName) {
     return getExtensions(extensionPointName, null);
   }
 
   @NotNull
   @SuppressWarnings({"unchecked"})
-  public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName) {
+  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return (T[])getExtensions(extensionPointName.getName(), null);
   }
 
+  @NotNull
   @SuppressWarnings({"unchecked"})
-  public static <T> T[] getExtensions(ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
+  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
     return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
   }
 
@@ -101,7 +105,8 @@ public class Extensions {
     return extensionPoint.getExtensions();
   }
 
-  public static <T, U extends T> U findExtension(ExtensionPointName<T> extensionPointName, Class<U> extClass) {
+  @NotNull
+  public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
     for (T t : getExtensions(extensionPointName)) {
       if (extClass.isInstance(t)) {
         //noinspection unchecked
@@ -111,7 +116,8 @@ public class Extensions {
     throw new IllegalArgumentException("could not find extension implementation " + extClass);
   }
 
-  public static <T, U extends T> U findExtension(ExtensionPointName<T> extensionPointName, AreaInstance areaInstance, Class<U> extClass) {
+  @NotNull
+  public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance, @NotNull Class<U> extClass) {
     for (T t : getExtensions(extensionPointName, areaInstance)) {
       if (extClass.isInstance(t)) {
         //noinspection unchecked
@@ -121,11 +127,11 @@ public class Extensions {
     throw new IllegalArgumentException("could not find extension implementation " + extClass);
   }
 
-  public static void instantiateArea(@NonNls @NotNull String areaClass, AreaInstance areaInstance, @Nullable AreaInstance parentAreaInstance) {
+  public static void instantiateArea(@NonNls @NotNull String areaClass, @Nullable AreaInstance areaInstance, @Nullable AreaInstance parentAreaInstance) {
     if (!ourAreaClass2Configuration.containsKey(areaClass)) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
     }
-    if ((areaInstance == null && ourRootArea != null) || ourAreaInstance2area.containsKey(areaInstance)) {
+    if (areaInstance == null || ourAreaInstance2area.containsKey(areaInstance)) {
       throw new IllegalArgumentException("Area already instantiated for: " + areaInstance);
     }
     ExtensionsArea parentArea = getArea(parentAreaInstance);
@@ -143,16 +149,17 @@ public class Extensions {
     }
   }
 
+  @NotNull
   private static AreaListener[] getAreaListeners() {
     return getRootArea().getExtensionPoint(AREA_LISTENER_EXTENSION_POINT).getExtensions();
   }
 
-  public static void registerAreaClass(@NonNls String areaClass, @Nullable @NonNls String parentAreaClass) {
+  public static void registerAreaClass(@NonNls @NotNull String areaClass, @Nullable @NonNls String parentAreaClass) {
     if (ourAreaClass2Configuration.containsKey(areaClass)) {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
       AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
       if (!equals(configuration.getParentClassName(), parentAreaClass)) {
-        throw new RuntimeException("Area class already registered: " + areaClass, ourAreaClass2Configuration.get(areaClass).getCreationPoint());
+        throw new RuntimeException("Area class already registered: " + areaClass + ", "+ ourAreaClass2Configuration.get(areaClass));
       }
       else {
         return;
@@ -181,32 +188,27 @@ public class Extensions {
     }
   }
 
+  @NotNull
   public static AreaInstance[] getAllAreas(String areaClass) {
     Collection<AreaInstance> instances = ourAreaClass2instances.get(areaClass);
     return instances.toArray(new AreaInstance[instances.size()]);
   }
 
-  private static boolean equals(Object object1, Object object2) {
+  private static boolean equals(@Nullable Object object1, @Nullable Object object2) {
     return object1 == object2 || object1 != null && object2 != null && object1.equals(object2);
   }
 
-  public static void setLogProvider(LogProvider logProvider) {
+  public static void setLogProvider(@NotNull LogProvider logProvider) {
     ourLogger = logProvider;
   }
 
   private static class AreaClassConfiguration {
     private final String myClassName;
     private final String myParentClassName;
-    private final Throwable myCreationPoint;
 
     AreaClassConfiguration(String className, String parentClassName) {
-      myCreationPoint = new Throwable();
       myClassName = className;
       myParentClassName = parentClassName;
-    }
-
-    public Throwable getCreationPoint() {
-      return myCreationPoint;
     }
 
     public String getClassName() {
@@ -218,6 +220,7 @@ public class Extensions {
     }
   }
 
+  @SuppressWarnings("CallToPrintStackTrace")
   public static class SimpleLogProvider implements LogProvider {
     @Override
     public void error(String message) {
@@ -225,13 +228,13 @@ public class Extensions {
     }
 
     @Override
-    public void error(String message, Throwable t) {
+    public void error(String message, @NotNull Throwable t) {
       System.err.println(message);
       t.printStackTrace();
     }
 
     @Override
-    public void error(Throwable t) {
+    public void error(@NotNull Throwable t) {
       t.printStackTrace();
     }
 
@@ -241,13 +244,13 @@ public class Extensions {
     }
 
     @Override
-    public void warn(String message, Throwable t) {
+    public void warn(String message, @NotNull Throwable t) {
       System.err.println(message);
       t.printStackTrace();
     }
 
     @Override
-    public void warn(Throwable t) {
+    public void warn(@NotNull Throwable t) {
       t.printStackTrace();
     }
   }

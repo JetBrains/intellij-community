@@ -48,8 +48,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private static final boolean DEBUG_REGISTRATION = false;
 
-  private AreaPicoContainerImpl myPicoContainer;
-  private Throwable myCreationTrace = null;
+  private final AreaPicoContainerImpl myPicoContainer;
+  private final Throwable myCreationTrace;
   private final Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
   private final Map<String,Throwable> myEPTraces = new HashMap<String, Throwable>();
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
@@ -61,16 +61,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final Map<Element,ExtensionComponentAdapter> myExtensionElement2extension = new HashMap<Element, ExtensionComponentAdapter>();
   private final Map<String,DefaultPicoContainer> myPluginName2picoContainer = new HashMap<String, DefaultPicoContainer>();
 
-  public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer, LogProvider logger) {
-    if (DEBUG_REGISTRATION) {
-      myCreationTrace = new Throwable("Area creation trace");
-    }
+  public ExtensionsAreaImpl(String areaClass, AreaInstance areaInstance, PicoContainer parentPicoContainer, @NotNull LogProvider logger) {
+    myCreationTrace = DEBUG_REGISTRATION ? new Throwable("Area creation trace") : null;
     myAreaClass = areaClass;
     myAreaInstance = areaInstance;
     myPicoContainer = new AreaPicoContainerImpl(parentPicoContainer, areaInstance);
-    //if (areaInstance != null) {
-    //  myPicoContainer.registerComponentInstance(areaInstance);
-    //}
     myLogger = logger;
     initialize();
   }
@@ -356,6 +351,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
                                               final List<Element> extensions) {
     final String areaClass = getAreaClass();
     if (extensionsPoints != null) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = extensionsPoints.size(); i < size; ++i) {
         Element element = extensionsPoints.get(i);
         if (equal(areaClass, element.getAttributeValue(ATTRIBUTE_AREA))) {
@@ -365,6 +361,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
 
     if (extensions != null) {
+      //noinspection ForLoopReplaceableByForEach
       for (int i = 0, size = extensions.size(); i < size; ++i) {
         Element element = extensions.get(i);
         if (hasExtensionPoint(extractEPName(element))) {
