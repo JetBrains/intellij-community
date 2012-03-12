@@ -111,6 +111,10 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testMethodFromInterfaceToAbstractClass() throws Exception {
+    doTest();
+  }
+
   public void testSameClassInterface() throws Exception {
     final String filePath = "/refactoring/pushDown/" + getTestName(false) + ".java";
     configureByFile(filePath);

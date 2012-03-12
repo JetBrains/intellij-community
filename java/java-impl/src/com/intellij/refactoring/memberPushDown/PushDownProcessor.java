@@ -356,11 +356,14 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       }
       else if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
-
         final PsiMethod methodBySignature = targetClass.findMethodBySignature(method, false);
         if (methodBySignature == null) {
+          final boolean wasInterface = myClass.isInterface();
           newMember = (PsiMethod)targetClass.add(method);
-          if (memberInfo.isToAbstract()) {
+          if (wasInterface) {
+            PsiUtil.setModifierProperty(newMember, PsiModifier.ABSTRACT, true);
+            PsiUtil.setModifierProperty(newMember, PsiModifier.PUBLIC, true);
+          } else if (memberInfo.isToAbstract()) {
             if (newMember.hasModifierProperty(PsiModifier.PRIVATE)) {
               PsiUtil.setModifierProperty(newMember, PsiModifier.PROTECTED, true);
             }
