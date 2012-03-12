@@ -34,9 +34,9 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +173,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     if (libsDir != null) {
       result.add(libsDir);
     }
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAndroidDependencies(facet.getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), true)) {
       VirtualFile depLibsDir = AndroidRootUtil.getLibsDir(depFacet);
       if (depLibsDir != null) {
         result.add(depLibsDir);

@@ -34,7 +34,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +102,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     if (assetsDir != null) {
       result.add(FileUtil.toSystemDependentName(assetsDir.getPath()));
     }
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
       final VirtualFile depAssetsDir = AndroidRootUtil.getAssetsDir(depFacet);
 
       if (depAssetsDir != null) {

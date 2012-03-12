@@ -62,7 +62,6 @@ import org.jetbrains.android.fileTypes.AndroidIdlFileType;
 import org.jetbrains.android.fileTypes.AndroidRenderscriptFileType;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -524,7 +523,7 @@ public class AndroidCompileUtil {
 
     doCollectResourceDirs(facet, collectResCacheDirs, result, context);
 
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
       doCollectResourceDirs(depFacet, collectResCacheDirs, result, context);
     }
     return ArrayUtil.toStringArray(result);

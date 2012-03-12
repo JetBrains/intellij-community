@@ -42,8 +42,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -633,6 +632,83 @@ public class AndroidUtils {
     for (AndroidFacet facet : ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID)) {
       if (!facet.getConfiguration().LIBRARY_PROJECT) {
         result.add(facet);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  public static List<AndroidFacet> getAndroidDependencies(@NotNull Module module, boolean androidLibrariesOnly) {
+    final List<AndroidFacet> depFacets = new ArrayList<AndroidFacet>();
+
+    for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (orderEntry instanceof ModuleOrderEntry) {
+        final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+
+        if (moduleOrderEntry.getScope() == DependencyScope.COMPILE) {
+          final Module depModule = moduleOrderEntry.getModule();
+
+          if (depModule != null) {
+            final AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
+
+            if (depFacet != null && (!androidLibrariesOnly || depFacet.getConfiguration().LIBRARY_PROJECT)) {
+              depFacets.add(depFacet);
+            }
+          }
+        }
+      }
+    }
+    return depFacets;
+  }
+
+  @NotNull
+  public static List<AndroidFacet> getAllAndroidDependencies(@NotNull Module module, boolean androidLibrariesOnly) {
+    final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
+    collectAllAndroidDependencies(module, androidLibrariesOnly, result, new HashSet<AndroidFacet>());
+    return result;
+  }
+
+  private static void collectAllAndroidDependencies(Module module,
+                                                    boolean androidLibrariesOnly,
+                                                    List<AndroidFacet> result,
+                                                    Set<AndroidFacet> visited) {
+    for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (orderEntry instanceof ModuleOrderEntry) {
+        final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+
+        if (moduleOrderEntry.getScope() == DependencyScope.COMPILE) {
+          final Module depModule = moduleOrderEntry.getModule();
+
+          if (depModule != null) {
+            final AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
+
+            if (depFacet != null &&
+                (!androidLibrariesOnly || depFacet.getConfiguration().LIBRARY_PROJECT) &&
+                visited.add(depFacet)) {
+              collectAllAndroidDependencies(depModule, androidLibrariesOnly, result, visited);
+              result.add(0, depFacet);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @NotNull
+  public static Set<String> getDepLibsPackages(Module module) {
+    final Set<String> result = new HashSet<String>();
+    final HashSet<Module> visited = new HashSet<Module>();
+
+    if (visited.add(module)) {
+      for (AndroidFacet depFacet : getAllAndroidDependencies(module, true)) {
+        final Manifest manifest = depFacet.getManifest();
+
+        if (manifest != null) {
+          String aPackage = manifest.getPackage().getValue();
+          if (aPackage != null) {
+            result.add(aPackage);
+          }
+        }
       }
     }
     return result;

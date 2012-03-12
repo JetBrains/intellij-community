@@ -32,8 +32,8 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +58,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
       return null;
     }
 
-    for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
       String genSrcRootPath = AndroidRootUtil.getAptGenSourceRootPath(depFacet);
       VirtualFile genSrcRoot = genSrcRootPath != null ? LocalFileSystem.getInstance().findFileByPath(genSrcRootPath) : null;
       VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
@@ -90,7 +90,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
           }
 
           Map<String, MyItem> qName2Item = new HashMap<String, MyItem>();
-          for (AndroidFacet depFacet : AndroidSdkUtils.getAllAndroidDependencies(module, true)) {
+          for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
             final AndroidPlatform platform = depFacet.getConfiguration().getAndroidPlatform();
 
             final int platformToolsRevision = platform != null ? platform.getSdkData().getPlatformToolsRevision() : -1;

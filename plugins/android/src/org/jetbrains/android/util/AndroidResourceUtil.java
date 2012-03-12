@@ -40,7 +40,6 @@ import org.jetbrains.android.dom.resources.Item;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -535,7 +534,7 @@ public class AndroidResourceUtil {
         return true;
       }
 
-      for (String aPackage : AndroidSdkUtils.getDepLibsPackages(facet.getModule())) {
+      for (String aPackage : AndroidUtils.getDepLibsPackages(facet.getModule())) {
         if (javaFile.getPackageName().equals(aPackage)) {
           return true;
         }

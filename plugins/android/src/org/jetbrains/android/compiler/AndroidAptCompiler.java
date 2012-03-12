@@ -35,7 +35,6 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
@@ -265,7 +264,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     // todo: support this in android-jps
     // see IDEA-79737 for details
     private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet) {
-      final List<AndroidFacet> dependencies = AndroidSdkUtils.getAllAndroidDependencies(facet.getModule(), true);
+      final List<AndroidFacet> dependencies = AndroidUtils.getAllAndroidDependencies(facet.getModule(), true);
 
       final Manifest manifest = facet.getManifest();
       if (manifest == null) {
@@ -285,7 +284,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             continue;
           }
         }
-        final List<AndroidFacet> depDependencies = AndroidSdkUtils.getAllAndroidDependencies(depFacet.getModule(), true);
+        final List<AndroidFacet> depDependencies = AndroidUtils.getAllAndroidDependencies(depFacet.getModule(), true);
 
         if (depDependencies.contains(facet) &&
             dependencies.contains(depFacet) &&
@@ -303,7 +302,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
       final List<String> result = new ArrayList<String>();
 
-      for (String libPackage : AndroidSdkUtils.getDepLibsPackages(module)) {
+      for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
         if (packageSet.add(libPackage)) {
           result.add(libPackage);
         }
