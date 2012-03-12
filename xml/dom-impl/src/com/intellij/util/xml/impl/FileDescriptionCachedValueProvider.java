@@ -17,11 +17,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataCache;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.semantic.SemElement;
 import com.intellij.util.SmartList;
@@ -29,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -41,16 +37,6 @@ import java.util.Set;
  */
 @SuppressWarnings({"HardCodedStringLiteral", "StringConcatenationInsideStringBufferAppend"})
 class FileDescriptionCachedValueProvider<T extends DomElement> implements SemElement{
-  private static final Key<CachedValue<XmlFileHeader>> ROOT_TAG_NS_KEY = Key.create("rootTag&ns");
-  private static final UserDataCache<CachedValue<XmlFileHeader>,XmlFile,Object> ourRootTagCache = new UserDataCache<CachedValue<XmlFileHeader>, XmlFile, Object>() {
-    protected CachedValue<XmlFileHeader> compute(final XmlFile file, final Object o) {
-      return CachedValuesManager.getManager(file.getProject()).createCachedValue(new CachedValueProvider<XmlFileHeader>() {
-        public Result<XmlFileHeader> compute() {
-          return new Result<XmlFileHeader>(DomImplUtil.getXmlFileHeader(file), file);
-        }
-      }, false);
-    }
-  };
 
   private final XmlFile myXmlFile;
   private volatile boolean myComputed;
@@ -68,7 +54,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   public final DomFileElementImpl<T> getFileElement() {
     if (myComputed) return myLastResult;
 
-    DomFileElementImpl<T> result = _computeFileElement(false, getRootTag(), null);
+    DomFileElementImpl<T> result = _computeFileElement(false, DomService.getInstance().getXmlFileHeader(myXmlFile), null);
 
     synchronized (myCondition) {
       if (myComputed) return myLastResult;
@@ -82,7 +68,8 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   }
 
   @Nullable
-  private DomFileElementImpl<T> _computeFileElement(final boolean fireEvents, final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
+  private DomFileElementImpl<T> _computeFileElement(final boolean fireEvents,
+                                                    @NotNull final XmlFileHeader rootTagName, @Nullable StringBuilder sb) {
     if (sb != null) {
       sb.append(rootTagName).append("\n");
     }
@@ -165,17 +152,12 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   }
 
   @Nullable
-  XmlFileHeader getRootTag() {
-    return myXmlFile.isValid() ? ourRootTagCache.get(ROOT_TAG_NS_KEY, myXmlFile, null).getValue() : XmlFileHeader.EMPTY;
-  }
-
-  @Nullable
   final DomFileElementImpl<T> getLastValue() {
     return myLastResult;
   }
 
   public String getFileElementWithLogging() {
-    final XmlFileHeader rootTagName = getRootTag();
+    final XmlFileHeader rootTagName = DomService.getInstance().getXmlFileHeader(myXmlFile);
     final StringBuilder log = new StringBuilder();
     myLastResult = _computeFileElement(false, rootTagName, log);
     return log.toString();

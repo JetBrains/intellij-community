@@ -36,7 +36,7 @@ import java.util.List;
  */
 public abstract class DomService {
   private static DomService ourCachedInstance = null;
-  
+
   public static DomService getInstance() {
     if (ourCachedInstance == null) {
       ourCachedInstance = ServiceManager.getService(DomService.class);
@@ -81,6 +81,9 @@ public abstract class DomService {
 
   @NotNull
   public abstract EvaluatedXmlName getEvaluatedXmlName(@NotNull DomElement element);
+
+  @NotNull
+  public abstract XmlFileHeader getXmlFileHeader(XmlFile file);
 
   public enum StructureViewMode {
     SHOW, SHOW_CHILDREN, SKIP

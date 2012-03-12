@@ -18,7 +18,10 @@ package com.intellij.util.xml;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentInstanceMap;
@@ -78,6 +81,7 @@ public class DomFileDescription<T> {
    * @see com.intellij.util.xml.Namespace
    * @param policy function that takes XML file root tag and returns (maybe empty) list of possible namespace URLs or DTD public ids. This
    * function shouldn't use DOM since it may be not initialized for the file at the moment
+   * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, com.intellij.psi.xml.XmlFile)} instead
    */
   protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
     myNamespacePolicies.put(namespaceKey, policy);
@@ -97,10 +101,17 @@ public class DomFileDescription<T> {
     });
   }
 
+  /**
+   * Consider using {@link DomService#getXmlFileHeader(com.intellij.psi.xml.XmlFile)} when implementing this.
+   */
   @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
     final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(namespaceKey);
+    if (function instanceof ConstantFunction) {
+      return function.fun(null);
+    }
+
     if (function != null) {
       final XmlDocument document = file.getDocument();
       if (document != null) {
@@ -151,7 +162,7 @@ public class DomFileDescription<T> {
 
   /**
    * The right place to call
-   * {@link #registerNamespacePolicy(String, com.intellij.util.NotNullFunction)},
+   * {@link #registerNamespacePolicy(String, String...)}
    * and {@link #registerTypeChooser(java.lang.reflect.Type, TypeChooser)}.
    */
   protected void initializeFileDescription() {}
@@ -188,26 +199,13 @@ public class DomFileDescription<T> {
     final Namespace namespace = DomReflectionUtil.findAnnotationDFS(myRootElementClass, Namespace.class);
     if (namespace != null) {
       final String key = namespace.value();
-      final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(key);
-      LOG.assertTrue(function != null, "No namespace policy for namespace " + key + " in " + this);
-      final XmlDocument document = file.getDocument();
-      if (document != null) {
-        final XmlTag tag = document.getRootTag();
-        if (tag != null) {
-          final List<String> list = function.fun(tag);
-          if (list.contains(tag.getNamespace())) return true;
-
-          final XmlProlog prolog = document.getProlog();
-          if (prolog != null) {
-            final XmlDoctype doctype = prolog.getDoctype();
-            if (doctype != null) {
-              final String publicId = doctype.getPublicId();
-              if (publicId != null && list.contains(publicId)) return true;
-            }
-          }
-        }
+      Set<String> allNs = new HashSet<String>(getAllowedNamespaces(key, file));
+      if (allNs.isEmpty()) {
+        return false;
       }
-      return false;
+
+      XmlFileHeader header = DomService.getInstance().getXmlFileHeader(file);
+      return allNs.contains(header.getPublicId()) || allNs.contains(header.getSystemId()) || allNs.contains(header.getRootTagNamespace());
     }
 
     return true;
