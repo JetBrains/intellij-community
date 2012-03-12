@@ -157,7 +157,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     // frames
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesPanel, XDebuggerBundle.message("debugger.session.tab.frames.title"),
-                                               XDebuggerUIConstants.FRAMES_TAB_ICON, null);
+                                               XDebuggerUIConstants.FRAMES_TAB_ICON, myFramesPanel.getFramesList());
     framesContent.setCloseable(false);
     framesContent.setAlertIcon(breakpointAlert);
 
