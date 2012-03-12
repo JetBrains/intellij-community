@@ -125,4 +125,8 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
       myListModel.addElement(createCheckBox(pair.first, pair.second));
     }
   }
+
+  public CheckBoxList getList() {
+    return myList;
+  }
 }

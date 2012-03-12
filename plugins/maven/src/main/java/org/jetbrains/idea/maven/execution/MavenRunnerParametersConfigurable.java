@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.TextFieldCompletionProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +49,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   protected LabeledComponent<TextFieldWithBrowseButton> workingDirComponent;
   protected LabeledComponent<EditorTextField> goalsComponent;
   private LabeledComponent<EditorTextField> profilesComponent;
+  private JBLabel myFakeLabel;
   private JComponent anchor;
 
   public MavenRunnerParametersConfigurable(@NotNull Project project) {
@@ -211,6 +213,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
     workingDirComponent.setAnchor(anchor);
     goalsComponent.setAnchor(anchor);
     profilesComponent.setAnchor(anchor);
+    myFakeLabel.setAnchor(anchor);
   }
   
   private abstract class MyCompletionProvider extends TextFieldCompletionProvider {

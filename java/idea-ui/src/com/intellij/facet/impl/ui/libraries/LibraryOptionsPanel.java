@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HtmlListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.download.DownloadableFileSetVersions;
@@ -70,7 +71,7 @@ import java.util.List;
 public class LibraryOptionsPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel");
 
-  private JLabel myMessageLabel;
+  private JBLabel myMessageLabel;
   private JPanel myPanel;
   private JButton myConfigureButton;
   private JComboBox myExistingLibraryComboBox;
@@ -218,7 +219,6 @@ public class LibraryOptionsPanel implements Disposable {
     }
 
     final Dimension minimumSize = new Dimension(-1, myMessageLabel.getFontMetrics(myMessageLabel.getFont()).getHeight() * 2);
-    myMessageLabel.setMinimumSize(minimumSize);
     myHiddenLabel.setMinimumSize(minimumSize);
 
     myCreateButton.addActionListener(new ActionListener() {
