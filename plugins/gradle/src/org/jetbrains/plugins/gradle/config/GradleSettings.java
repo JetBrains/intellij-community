@@ -23,7 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Holds project-level gradle-related settings.
@@ -40,11 +44,15 @@ import java.util.Set;
 public class GradleSettings implements PersistentStateComponent<GradleSettings>, Cloneable {
 
   /** Holds changes confirmed by the end-user. */
-  public final Set<GradleProjectStructureChange> CHANGES = new HashSet<GradleProjectStructureChange>();
-
+  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myExpandStates
+    = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
+  /** Holds information about 'expand/collapse' status of the 'sync project structure tree' nodes. */
+  //private final AtomicReference<Set<GradleProjectStructureChange>>             myAcceptedChanges
+  //  = new AtomicReference<Set<GradleProjectStructureChange>>();
+  
   public String LINKED_PROJECT_FILE_PATH;
   public String GRADLE_HOME;
-  
+
   @Override
   public GradleSettings getState() {
     return this;
@@ -67,6 +75,17 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
     project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onLinkedProjectPathChange(oldPath, path);
   }
 
+  @NotNull
+  public Map<String, Boolean> getExpandStates() {
+    return myExpandStates.get();
+  }
+  
+  public void setExpandStates(@Nullable Map<String, Boolean> state) {
+    if (state != null) {
+      myExpandStates.set(state);
+    }
+  }
+  
   @Override
   public String toString() {
     return "home: " + GRADLE_HOME + ", path: " + LINKED_PROJECT_FILE_PATH;

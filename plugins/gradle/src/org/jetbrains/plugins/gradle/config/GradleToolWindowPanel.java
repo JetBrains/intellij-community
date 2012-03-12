@@ -45,8 +45,8 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
   /** Top-level container, managed by the card layout. */
   private final JPanel     myContent = new JPanel(myLayout);
 
-  private final Project                      myProject;
-  private final String                       myPlace;
+  private final Project myProject;
+  private final String  myPlace;
 
   protected GradleToolWindowPanel(@NotNull Project project, @NotNull String place) {
     super(true);

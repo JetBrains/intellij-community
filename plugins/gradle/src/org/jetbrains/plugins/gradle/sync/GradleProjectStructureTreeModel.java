@@ -72,13 +72,16 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private boolean myProcessChangesAtTheSameThread;
 
   public GradleProjectStructureTreeModel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
+    this(project, context, true);
+  }
+  
+  GradleProjectStructureTreeModel(@NotNull Project project, @NotNull GradleProjectStructureContext context, boolean rebuild) {
     super(null);
     myProject = project;
     myPlatformFacade = context.getPlatformFacade();
     myProjectStructureHelper = context.getProjectStructureHelper();
     myChangesModel = context.getChangesModel();
     myNodeComparator = new GradleProjectStructureNodeComparator(context);
-    rebuild();
 
     context.getChangesModel().addListener(new GradleProjectStructureChangeListener() {
       @Override
@@ -106,6 +109,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         }
       }
     });
+
+    if (rebuild) {
+      rebuild();
+    }
   }
 
   public void rebuild() {
