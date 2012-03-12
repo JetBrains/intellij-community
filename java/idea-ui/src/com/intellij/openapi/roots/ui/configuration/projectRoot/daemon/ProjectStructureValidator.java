@@ -55,9 +55,9 @@ public abstract class ProjectStructureValidator {
     element.check(problemsHolder);
   }
 
-  public static void showDialogAndAddLibraryToDependencies(final Library library, final Project project) {
+  public static void showDialogAndAddLibraryToDependencies(final Library library, final Project project, boolean allowEmptySelection) {
     for (ProjectStructureValidator validator : EP_NAME.getExtensions()) {
-      if (validator.addLibraryToDependencies(library, project)) {
+      if (validator.addLibraryToDependencies(library, project, allowEmptySelection)) {
         return;
       }
     }
@@ -81,7 +81,7 @@ public abstract class ProjectStructureValidator {
   /**
    * @return <code>true</code> if handled
    */
-  protected boolean addLibraryToDependencies(final Library library, final Project project) {
+  protected boolean addLibraryToDependencies(final Library library, final Project project, final boolean allowEmptySelection) {
     return false;
   }
 

@@ -197,7 +197,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
     @Override
     public void performFix() {
-      LibraryEditingUtil.showDialogAndAddLibraryToDependencies(myLibrary, myContext.getProject());
+      LibraryEditingUtil.showDialogAndAddLibraryToDependencies(myLibrary, myContext.getProject(), false);
     }
   }
 

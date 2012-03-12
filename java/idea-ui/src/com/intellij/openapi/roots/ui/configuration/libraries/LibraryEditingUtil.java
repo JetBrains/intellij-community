@@ -209,7 +209,9 @@ public class LibraryEditingUtil {
     return modules;
   }
 
-  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library, @NotNull Project project) {
-    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, project);
+  public static void showDialogAndAddLibraryToDependencies(@NotNull Library library,
+                                                           @NotNull Project project,
+                                                           boolean allowEmptySelection) {
+    ProjectStructureValidator.showDialogAndAddLibraryToDependencies(library, project, allowEmptySelection);
   }
 }

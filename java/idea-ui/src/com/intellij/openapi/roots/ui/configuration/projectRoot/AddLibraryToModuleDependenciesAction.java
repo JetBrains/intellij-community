@@ -54,6 +54,6 @@ public class AddLibraryToModuleDependenciesAction extends DumbAwareAction {
     final LibraryProjectStructureElement element = (LibraryProjectStructureElement)myConfigurable.getSelectedElement();
     if (element == null) return;
     final Library library = element.getLibrary();
-    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject);
+    LibraryEditingUtil.showDialogAndAddLibraryToDependencies(library, myProject, false);
   }
 }
