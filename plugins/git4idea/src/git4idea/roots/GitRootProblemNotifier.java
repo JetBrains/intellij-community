@@ -18,6 +18,7 @@ package git4idea.roots;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -87,7 +88,14 @@ public class GitRootProblemNotifier {
 
   private void expireNotification() {
     if (myNotification != null) {
-      myNotification.expire();
+      final Notification notification = myNotification;
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          notification.expire();
+        }
+      });
+
       myNotification = null;
     }
   }
