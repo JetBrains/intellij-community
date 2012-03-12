@@ -61,7 +61,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
-  private final FileBasedIndexIndicesManager.InputFilter INPUT_FILTER = new FileBasedIndexIndicesManager.InputFilter() {
+  private final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       return canHaveStub(file);
@@ -142,7 +142,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   }
 
   @Override
-  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 

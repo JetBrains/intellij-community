@@ -23,8 +23,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.FileBasedIndexIndicesManager;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +39,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
   protected static final EnumeratorStringDescriptor KEY_DESCRIPTOR = new EnumeratorStringDescriptor();
 
-  private static final FileBasedIndexIndicesManager.InputFilter INPUT_FILTER = new FileBasedIndexIndicesManager.InputFilter() {
+  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       @NonNls final String extension = file.getExtension();
       return extension != null && extension.equals("xsd");
@@ -105,7 +105,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
     return KEY_DESCRIPTOR;
   }
 
-  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 

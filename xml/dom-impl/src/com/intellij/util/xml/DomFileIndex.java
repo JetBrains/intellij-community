@@ -38,7 +38,7 @@ import java.util.Set;
  */
 public class DomFileIndex extends ScalarIndexExtension<String>{
   public static final ID<String,Void> NAME = ID.create("DomFileIndex");
-  private static final FileBasedIndexIndicesManager.InputFilter INPUT_FILTER = new FileBasedIndexIndicesManager.InputFilter() {
+  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     public boolean acceptInput(final VirtualFile file) {
       return file.getFileType() == StdFileTypes.XML;
     }
@@ -89,7 +89,7 @@ public class DomFileIndex extends ScalarIndexExtension<String>{
     return new EnumeratorStringDescriptor();
   }
 
-  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return INPUT_FILTER;
   }
 

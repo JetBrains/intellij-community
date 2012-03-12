@@ -42,7 +42,7 @@ import java.util.Map;
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
-  private final FileBasedIndexIndicesManager.InputFilter myInputFilter = new FileBasedIndexIndicesManager.InputFilter() {
+  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
       final FileType fileType = file.getFileType();
@@ -118,7 +118,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
 
   @Override
-  public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
+  public FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
   

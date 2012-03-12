@@ -310,12 +310,12 @@ public abstract class FileBasedIndex {
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getCacheSize());
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
-        final FileBasedIndexIndicesManager.InputFilter inputFilter = extension.getInputFilter();
+        final InputFilter inputFilter = extension.getInputFilter();
         
         assert inputFilter != null : "Index extension " + name + " must provide non-null input filter";
 
         myIndexIndicesManager.addNewIndex(name,
-                                    new Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndexIndicesManager.InputFilter>(index, new IndexableFilesFilter(inputFilter)));
+                                    new Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>(index, new IndexableFilesFilter(inputFilter)));
         myIndexIdToVersionMap.put(name, version);
         if (!extension.dependsOnFileContent()) {
           myNotRequiringContentIndices.add(name);
@@ -1691,10 +1691,10 @@ public abstract class FileBasedIndex {
     myIndexableSetToProjectMap.remove(set);
   }
 
-  private static class IndexableFilesFilter implements FileBasedIndexIndicesManager.InputFilter {
-    private final FileBasedIndexIndicesManager.InputFilter myDelegate;
+  private static class IndexableFilesFilter implements InputFilter {
+    private final InputFilter myDelegate;
 
-    private IndexableFilesFilter(FileBasedIndexIndicesManager.InputFilter delegate) {
+    private IndexableFilesFilter(InputFilter delegate) {
       myDelegate = delegate;
     }
 
@@ -1718,5 +1718,9 @@ public abstract class FileBasedIndex {
 
   public IndexingStamp getIndexingStamp() {
     return myIndexingStamp;
+  }
+
+  public interface InputFilter {
+    boolean acceptInput(VirtualFile file);
   }
 }

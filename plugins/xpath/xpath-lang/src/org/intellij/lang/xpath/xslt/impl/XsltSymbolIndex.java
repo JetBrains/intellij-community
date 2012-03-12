@@ -135,8 +135,8 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         return new EnumeratorStringDescriptor();
     }
 
-    public FileBasedIndexIndicesManager.InputFilter getInputFilter() {
-        return new FileBasedIndexIndicesManager.InputFilter() {
+    public FileBasedIndex.InputFilter getInputFilter() {
+        return new FileBasedIndex.InputFilter() {
             public boolean acceptInput(VirtualFile file) {
                 if (file.getFileSystem() instanceof JarFileSystem) {
                   return false; // there is lots and lots of custom XML inside zip files
