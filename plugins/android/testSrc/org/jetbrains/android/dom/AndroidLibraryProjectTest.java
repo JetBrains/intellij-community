@@ -80,6 +80,7 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
 
     myAppFacet = AndroidTestCase.addAndroidFacet(myAppModule, getTestSdkPath());
     myLibFacet = AndroidTestCase.addAndroidFacet(myLibModule, getTestSdkPath());
+    myLibFacet.getConfiguration().LIBRARY_PROJECT = true;
 
     final ModifiableRootModel model1 = ModuleRootManager.getInstance(myAppModule).getModifiableModel();
     model1.addModuleOrderEntry(myLibModule);
