@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -286,7 +287,10 @@ public class LocalResourceManager extends ResourceManager {
       throw new IllegalArgumentException("Incorrect resource type");
     }
     VirtualFile resFile = findOrCreateResourceFile(resourceFileName);
-    if (resFile == null) return null;
+    if (resFile == null ||
+        !ReadonlyStatusHandler.ensureFilesWritable(myModule.getProject(), resFile)) {
+      return null;
+    }
     final Resources resources = loadDomElement(myModule, resFile, Resources.class);
     if (resources == null) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -393,7 +394,8 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
                                                  @NotNull String dirName,
                                                  @NotNull String value) throws Exception {
     final VirtualFile resFile = findOrCreateResourceFile(facet, fileName, dirName);
-    if (resFile == null) {
+    if (resFile == null ||
+        !ReadonlyStatusHandler.ensureFilesWritable(facet.getModule().getProject(), resFile)) {
       return null;
     }
 
