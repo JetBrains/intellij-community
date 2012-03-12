@@ -265,9 +265,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final String chunkName = getChunkPresentableName(chunk);
         context.processMessage(new ProgressMessage("Compiling java [" + chunkName + "]"));
 
-        final boolean compiledOk = compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
-
-        final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
+        final boolean compiledOk =
+          files.isEmpty() || compileJava(chunk, files, classpath, platformCp, sourcePath, outs, context, diagnosticSink, outputSink);
 
         context.checkCanceled();
 
@@ -278,6 +277,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (!forms.isEmpty()) {
           try {
             context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
+            final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
             final ClassLoader loader = createInstrumentationClassLoader(platformCp, classpath, chunkSourcePath, outputSink);
             instrumentForms(context, chunk, chunkSourcePath, loader, finder, forms, outputSink);
           }
