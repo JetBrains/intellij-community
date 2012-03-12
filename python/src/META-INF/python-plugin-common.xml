@@ -706,7 +706,7 @@
     <lang.formatter language="Mako"
                     implementationClass="com.jetbrains.mako.formatter.MakoFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Mako"
-                                       implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
+                                       implementationClass="com.jetbrains.mako.formatter.MakoWhiteSpaceFormattingStrategy"/>
     <lang.psiStructureViewFactory language="Mako" implementationClass="com.jetbrains.mako.structureView.MakoStructureViewFactory"/>
 
     <lang.elementManipulator forClass="com.jetbrains.mako.psi.impl.MakoTagAttribute"
