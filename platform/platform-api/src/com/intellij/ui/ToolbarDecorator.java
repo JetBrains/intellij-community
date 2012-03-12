@@ -71,6 +71,11 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   private String myRemoveName;
   private String myMoveUpName;
   private String myMoveDownName;
+  private AnActionButtonUpdater myAddActionUpdater = null;
+  private AnActionButtonUpdater myRemoveActionUpdater = null;
+  private AnActionButtonUpdater myEditActionUpdater = null;
+  private AnActionButtonUpdater myMoveUpActionUpdater = null;
+  private AnActionButtonUpdater myMoveDownActionUpdater = null;
   private Dimension myPreferredSize;
   private CommonActionsPanel myPanel;
   private Comparator<AnActionButton> myButtonComparator;
@@ -233,6 +238,31 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return this;
   }
 
+  public ToolbarDecorator setAddActionUpdater(AnActionButtonUpdater updater) {
+    myAddActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setRemoveActionUpdater(AnActionButtonUpdater updater) {
+    myRemoveActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setEditActionUpdater(AnActionButtonUpdater updater) {
+    myEditActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveUpActionUpdater(AnActionButtonUpdater updater) {
+    myMoveUpActionUpdater = updater;
+    return this;
+  }
+
+  public ToolbarDecorator setMoveDownActionUpdater(AnActionButtonUpdater updater) {
+    myMoveDownActionUpdater = updater;
+    return this;
+  }
+
   public ToolbarDecorator setPreferredSize(Dimension size) {
     myPreferredSize = size;
     return this;
@@ -262,12 +292,31 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     };
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.add(myPanel, getPlacement());
+    installUpdaters();
     updateButtons();
     installDnD();
     panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myPanel.getComponent(0));
     DataManager.registerDataProvider(panel, this);
     return panel;
+  }
+
+  private void installUpdaters() {
+    if (myAddActionEnabled && myAddAction != null && myAddActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.ADD).addCustomUpdater(myAddActionUpdater);
+    }
+    if (myEditActionEnabled && myEditAction != null && myEditActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.EDIT).addCustomUpdater(myEditActionUpdater);
+    }
+    if (myRemoveActionEnabled && myRemoveAction != null && myRemoveActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.REMOVE).addCustomUpdater(myRemoveActionUpdater);
+    }
+    if (myUpActionEnabled && myUpAction != null && myMoveUpActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.UP).addCustomUpdater(myMoveUpActionUpdater);
+    }
+    if (myDownActionEnabled && myDownAction != null && myMoveDownActionUpdater != null) {
+      myPanel.getAnActionButton(CommonActionsPanel.Buttons.DOWN).addCustomUpdater(myMoveDownActionUpdater);
+    }
   }
 
   protected void installDnD() {
