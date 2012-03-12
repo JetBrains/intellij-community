@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.IOException;
 
 /**
+ * Stores timestamps for files included in artifacts. If an included file is located in a jar file timestamp of the jar file is stored.
+ *
  * @author nik
  */
 public class ArtifactSourceTimestampStorage extends AbstractStateStorage<String, ArtifactSourceTimestampStorage.PerArtifactTimestamp[]> {

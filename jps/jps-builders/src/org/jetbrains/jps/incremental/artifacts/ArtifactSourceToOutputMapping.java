@@ -12,6 +12,9 @@ import java.io.File;
 import java.io.IOException;
 
 /**
+ * Stores output paths for each source file path. If a source file is located inside a jar the path to the jar file is stored.
+ * If an output file is located in a jar file the path to the jar file with '!/' suffix is stored.
+ *
  * @author nik
  */
 public class ArtifactSourceToOutputMapping extends AbstractStateStorage<String, String[]> {
