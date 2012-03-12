@@ -399,7 +399,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       if (templatesGroup == null) {
         continue;
       }
-      final List children = element.getChildren(ELEMENT_TEMPLATE);
+      final List children = templatesGroup.getChildren(ELEMENT_TEMPLATE);
       
       for (final Object elem : children) {
         final Element child = (Element)elem;
