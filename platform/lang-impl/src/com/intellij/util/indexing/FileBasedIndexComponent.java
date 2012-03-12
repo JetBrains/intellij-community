@@ -34,10 +34,8 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbServiceImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -160,6 +158,25 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
     if(!ApplicationManager.getApplication().isHeadlessEnvironment())
       new NotificationGroup("Indexing", NotificationDisplayType.BALLOON, false)
         .createNotification("Index Rebuild", rebuildNotification, NotificationType.INFORMATION, null).notify(null);
+  }
+
+  @Override
+  protected void handleDumbMode(@Nullable Project project) {
+      checkCanceled(); // DumbModeAction.CANCEL
+
+      if (project != null) {
+        final ProgressIndicator progressIndicator = getProgressIndicator();
+        if (progressIndicator instanceof BackgroundableProcessIndicator) {
+          final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
+          if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
+            assert !ApplicationManager.getApplication().isDispatchThread();
+            DumbService.getInstance(project).waitForSmartMode();
+            return;
+          }
+        }
+      }
+
+      throw new IndexNotReadyException();
   }
 
   @Override

@@ -45,12 +45,20 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   private final ProjectRootManagerEx myRootManager;
   private final FileTypeManager myFileTypeManager;
   private final ProjectFileExclusionManagerImpl myExclusionManager;
+  private IndexingStamp myIndexingStamp;
 
-  public FileBasedIndexProjectHandler(final FileBasedIndex index, final Project project, final ProjectRootManagerEx rootManager, FileTypeManager ftManager, final ProjectManager projectManager) {
+  public FileBasedIndexProjectHandler(final FileBasedIndex index,
+                                      final Project project,
+                                      final ProjectRootManagerEx rootManager,
+                                      FileTypeManager ftManager,
+                                      final ProjectManager projectManager,
+                                      IndexingStamp indexingStamp) {
     super(project);
     myIndex = index;
     myRootManager = rootManager;
     myFileTypeManager = ftManager;
+    myIndexingStamp = indexingStamp;
+    myIndexingStamp = indexingStamp;
     myExclusionManager = ProjectFileExclusionManagerImpl.getInstance(project);
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
@@ -59,7 +67,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
         @Override
         public void run() {
           final RefreshCacheUpdater changedFilesUpdater = new RefreshCacheUpdater();
-          final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index);
+          final UnindexedFilesUpdater unindexedFilesUpdater = new UnindexedFilesUpdater(project, index, myIndexingStamp);
 
           startupManager.registerCacheUpdater(unindexedFilesUpdater);
           rootManager.registerRootsChangeUpdater(unindexedFilesUpdater);

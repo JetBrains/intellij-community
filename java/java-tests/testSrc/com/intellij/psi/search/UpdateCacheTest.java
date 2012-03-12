@@ -40,8 +40,8 @@ public class UpdateCacheTest extends PsiTestCase{
   protected void setUp() throws Exception {
     super.setUp();
 
-    FileBasedIndex.requestRebuild(IdIndex.NAME);
-    FileBasedIndex.requestRebuild(TodoIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(IdIndex.NAME);
+    FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
   }
 
   @Override

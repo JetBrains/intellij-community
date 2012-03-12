@@ -21,7 +21,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -158,7 +158,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   private static int getCumulativeVersion() {
     int version = VERSION;
-    for (final FileType fileType : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+    for (final FileType fileType : FileTypeRegistry.getInstance().getRegisteredFileTypes()) {
       if (fileType instanceof LanguageFileType) {
         Language l = ((LanguageFileType)fileType).getLanguage();
         ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);

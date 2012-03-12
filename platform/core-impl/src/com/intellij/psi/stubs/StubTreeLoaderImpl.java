@@ -36,9 +36,11 @@ import java.util.List;
 public class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubTreeLoaderImpl");
   private IndexingStamp myIndexingStamp;
+  private StubUpdatingIndex myUpdatingIndex;
 
-  public StubTreeLoaderImpl(IndexingStamp indexingStamp) {
+  public StubTreeLoaderImpl(IndexingStamp indexingStamp, StubUpdatingIndex updatingIndex) {
     myIndexingStamp = indexingStamp;
+    myUpdatingIndex = updatingIndex;
   }
 
   @Override
@@ -117,6 +119,6 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   public boolean canHaveStub(VirtualFile file) {
-    return StubUpdatingIndex.canHaveStub(file);
+    return myUpdatingIndex.canHaveStub(file);
   }
 }

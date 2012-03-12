@@ -44,15 +44,13 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.indexing.AbstractVfsAdapter;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.messages.MessageBusConnection;
@@ -133,9 +131,14 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private final ProjectManager myProjectManager;
   private final TIntIntHashMap myInitInProgress = new TIntIntHashMap(); // projectId for successfully initialized projects
   private final Object myAsyncScanLock = new Object();
+  private AbstractVfsAdapter myVfsAdapter;
 
-  public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, ProjectManager projectManager, Application application) {
+  public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager,
+                                         ProjectManager projectManager,
+                                         Application application,
+                                         AbstractVfsAdapter vfsAdapter) {
     myProjectManager = projectManager;
+    myVfsAdapter = vfsAdapter;
 
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
     vfsManager.addVirtualFileListener(new MyVfsListener(), application);
@@ -346,8 +349,8 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return FileBasedIndex.getFileId(file);
   }
 
-  private static VirtualFile findFileById(int id) {
-    return IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), id);
+  private VirtualFile findFileById(int id) {
+    return myVfsAdapter.findFileById(id);
   }
 
   public void update(final CompileContext context, @Nullable final String outputRoot, final Collection<TranslatingCompiler.OutputItem> successfullyCompiled, final VirtualFile[] filesToRecompile)

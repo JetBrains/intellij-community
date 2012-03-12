@@ -22,7 +22,6 @@ package com.intellij.psi.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
@@ -58,15 +57,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 
-@State(
-  name = "FileBasedIndex",
-  roamingType = RoamingType.DISABLED,
-  storages = {
-  @Storage(
-    file = "$APP_CONFIG$/stubIndex.xml")
-    }
-)
-public class StubIndexImpl extends StubIndex implements ApplicationComponent, PersistentStateComponent<StubIndexState> {
+public class StubIndexImpl extends StubIndex {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<Boolean>(null);
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubIndexImpl");
   private final Map<StubIndexKey<?,?>, MyIndex<?>> myIndices = new THashMap<StubIndexKey<?,?>, MyIndex<?>>();
@@ -337,23 +328,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return Collections.emptyList();
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "Stub.IndexManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-    // This index must be disposed only after StubUpdatingIndex is disposed
-    // To ensure this, disposing is done explicitly from StubUpdatingIndex by calling dispose() method
-    // do not call this method here to avoid double-disposal
-  }
-
   public void dispose() {
     for (UpdatableIndex index : myIndices.values()) {
       index.dispose();
@@ -404,12 +378,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  @Override
   public StubIndexState getState() {
     return new StubIndexState(myIndices.keySet());
   }
 
-  @Override
   public void loadState(final StubIndexState state) {
     myPreviouslyRegistered = state;
   }

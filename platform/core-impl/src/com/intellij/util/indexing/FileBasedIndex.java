@@ -26,12 +26,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.project.DumbModeAction;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
@@ -235,6 +230,10 @@ public abstract class FileBasedIndex {
       IndexableFileSet additionalIndexableFileSet = myVfsAdapter.getAdditionalIndexableFileSet();
       if(additionalIndexableFileSet != null)
         registerIndexableSet(additionalIndexableFileSet, null);
+    }
+    catch (Exception t)
+    {
+      LOG.error(t);
     }
     finally {
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
@@ -701,23 +700,7 @@ public abstract class FileBasedIndex {
     }
   }
 
-  private void handleDumbMode(@Nullable Project project) {
-    checkCanceled(); // DumbModeAction.CANCEL
-
-    if (project != null) {
-      final ProgressIndicator progressIndicator = getProgressIndicator();
-      if (progressIndicator instanceof BackgroundableProcessIndicator) {
-        final BackgroundableProcessIndicator indicator = (BackgroundableProcessIndicator)progressIndicator;
-        if (indicator.getDumbModeAction() == DumbModeAction.WAIT) {
-          assert !ApplicationManager.getApplication().isDispatchThread();
-          DumbService.getInstance(project).waitForSmartMode();
-          return;
-        }
-      }
-    }
-
-    throw new IndexNotReadyException();
-  }
+  protected abstract void handleDumbMode(@Nullable Project project);
 
   protected abstract boolean isDumb(@Nullable Project project);
 
@@ -923,7 +906,7 @@ public abstract class FileBasedIndex {
     });
   }
 
-  private void checkCanceled() {
+  protected void checkCanceled() {
     ProgressManager.checkCanceled();
   }
 
@@ -1668,7 +1651,7 @@ public abstract class FileBasedIndex {
     }
   }
 
-  private ProgressIndicator getProgressIndicator() {
+  protected ProgressIndicator getProgressIndicator() {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     return indicator != null ? indicator : new EmptyProgressIndicator();
   }

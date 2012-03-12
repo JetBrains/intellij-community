@@ -51,11 +51,11 @@ import java.util.Map;
 public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
 
-  public TodoIndex(MessageBus messageBus) {
+  public TodoIndex(MessageBus messageBus, final FileBasedIndex fileBasedIndex) {
     messageBus.connect().subscribe(IndexPatternProvider.INDEX_PATTERNS_CHANGED, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
-        FileBasedIndex.requestRebuild(NAME);
+        fileBasedIndex.requestRebuild(NAME);
       }
     });
   }

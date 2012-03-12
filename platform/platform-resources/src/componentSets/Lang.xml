@@ -39,7 +39,7 @@
     </component>
     <component>
       <interface-class>com.intellij.psi.stubs.StubIndex</interface-class>
-      <implementation-class>com.intellij.psi.stubs.StubIndexImpl</implementation-class>
+      <implementation-class>com.intellij.psi.stubs.StubIndexComponent</implementation-class>
     </component>
 
     <component>
