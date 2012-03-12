@@ -303,11 +303,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     });
 
     c.addMouseListener(new MouseAdapter() {
-      public void mousePressed(final MouseEvent e) {
+      public void mouseReleased(final MouseEvent e) {
         myLastPoint[0] = e.getPoint();
         SwingUtilities.convertPointToScreen(myLastPoint[0], c);
         if (!e.isPopupTrigger()) {
-          if (UIUtil.isCloseClick(e)) {
+          if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             ui.processHide(e);
           }
           else {
