@@ -96,9 +96,9 @@ public class FindUsagesTest extends LightGroovyTestCase {
     assertTrue(((PsiMethod)target).getParameterList().getParametersCount() == 0);
   }
 
-  //public void testSetter1() throws Throwable {
-  //  doTestImpl("A.groovy", 2);
-  //}
+  public void testSetter1() throws Throwable {
+    doTestImpl("A.groovy", 2);
+  }
 
   public void testGetter1() throws Throwable {
     doTestImpl("A.groovy", 1);

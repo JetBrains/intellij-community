@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
+import com.intellij.psi.util.PropertyUtil
 
 /**
  * @author ven
@@ -190,13 +191,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertFalse(resolved.isPhysical());
   }
 
-  //public void testSwingProperty() throws Exception {
-  //  PsiReference ref = configureByFile("swingProperty/A.groovy");
-  //  PsiElement resolved = ref.resolve();
-  //  assertTrue(resolved instanceof PsiMethod);
-  //  assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
-  //  assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
-  //}
+  public void testSwingProperty() throws Exception {
+    PsiReference ref = configureByFile("swingProperty/A.groovy");
+    PsiElement resolved = ref.resolve();
+    assertTrue(resolved instanceof PsiMethod);
+    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
+    assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
+  }
 
   public void testLangClass() throws Exception {
     PsiReference ref = configureByFile("langClass/A.groovy");
