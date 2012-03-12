@@ -217,6 +217,10 @@ public class NamedArgumentDescriptor {
   public static class TypeCondition extends NamedArgumentDescriptor {
     private final PsiType myType;
 
+    public TypeCondition(@NotNull PsiType type) {
+      this(type, null);
+    }
+
     public TypeCondition(@NotNull PsiType type, @Nullable PsiElement navigationElement) {
       super(navigationElement);
       myType = type;
