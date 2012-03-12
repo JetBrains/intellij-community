@@ -985,6 +985,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       final int parentId = getFileId(parent);
       int childId = createAndCopyRecord(delegate, fake, parentId, attributes);
       appendIdToParentList(parentId, childId);
+      assert parent instanceof VirtualDirectoryImpl : parent;
       final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
       dir.addChild(dir.createChild(name, childId));
     }
