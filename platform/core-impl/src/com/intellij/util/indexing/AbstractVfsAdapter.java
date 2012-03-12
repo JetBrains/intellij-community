@@ -27,6 +27,14 @@ import java.io.DataOutputStream;
 public abstract class AbstractVfsAdapter {
   protected static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
+  private static class AbstractVfsAdapterHolder {
+    private static final AbstractVfsAdapter ourInstance = ApplicationManager.getApplication().getComponent(AbstractVfsAdapter.class);
+  }
+
+  public static AbstractVfsAdapter getInstance() {
+    return AbstractVfsAdapterHolder.ourInstance;
+  }
+
   @Nullable
   public abstract VirtualFile findFileById(final int id);
 
