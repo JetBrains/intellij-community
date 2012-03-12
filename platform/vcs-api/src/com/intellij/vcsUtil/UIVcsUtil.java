@@ -15,6 +15,7 @@
  */
 package com.intellij.vcsUtil;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
 
@@ -31,7 +32,7 @@ public class UIVcsUtil {
   }
 
   public static JPanel errorPanel(final String text, boolean isError) {
-    final JLabel label = new JLabel(text);
+    final JLabel label = new JLabel("<html><body>" + StringUtil.escapeXml(text) + "</body></html>");
     label.setForeground(isError ? SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor() : UIUtil.getInactiveTextColor());
     final JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(label, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.CENTER, GridBagConstraints.NONE,

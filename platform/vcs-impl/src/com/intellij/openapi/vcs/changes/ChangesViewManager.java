@@ -280,6 +280,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     final JPanel content = new JPanel(new BorderLayout());
     mySplitter = new Splitter(false, 0.5f);
+    mySplitter.setHonorComponentsMinimumSize(false);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(scrollPane, BorderLayout.CENTER);
