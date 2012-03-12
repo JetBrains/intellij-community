@@ -110,6 +110,10 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testClassBaseList() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("inspections/PyCompatibilityInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyCompatibilityInspection.class);

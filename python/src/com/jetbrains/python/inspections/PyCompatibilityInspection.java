@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -115,9 +116,10 @@ public class PyCompatibilityInspection extends PyInspection {
       myHolder = holder;
     }
 
+    @Override
     protected final void registerProblem(@Nullable final PsiElement element,
                                        @NotNull final String message,
-                                       final LocalQuickFix quickFix, boolean asError){
+                                       @Nullable final LocalQuickFix quickFix, final boolean asError){
       if (element == null || element.getTextLength() == 0){
           return;
       }
@@ -213,6 +215,24 @@ public class PyCompatibilityInspection extends PyInspection {
         }
         commonRegisterProblem(message, " not have module " + name,
                               len, source, null, false);
+      }
+    }
+
+    @Override
+    public void visitPyArgumentList(final PyArgumentList node) { //PY-5588
+      final List<PyElement> problemElements = new ArrayList<PyElement>();
+      if (node.getParent() instanceof PyClass) {
+        for (final PyExpression expression : node.getArguments()) {
+          if (expression instanceof PyKeywordArgument)
+            problemElements.add(expression);
+        }
+      }
+      final String errorMessage = "This syntax available only since py3";
+      final boolean isPy3 = LanguageLevel.forElement(node).isPy3K();
+      if (compatibleWithPy2() || !isPy3) {
+        for (final PyElement problemElement : problemElements)
+          myHolder.registerProblem(problemElement, errorMessage, isPy3? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
+                                                          ProblemHighlightType.GENERIC_ERROR);
       }
     }
   }

@@ -12,6 +12,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -455,13 +456,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     return false;
   }
 
-  protected abstract void registerProblem(PsiElement node, String s, LocalQuickFix localQuickFix, boolean asError);
+  protected abstract void registerProblem(PsiElement node, String s, @Nullable LocalQuickFix localQuickFix, boolean asError);
 
-  protected void registerProblem(PsiElement node, String s, LocalQuickFix localQuickFix) {
+  protected void registerProblem(final PsiElement node, final String s, @Nullable final LocalQuickFix localQuickFix) {
     registerProblem(node, s, localQuickFix, true);
   }
 
-  protected void registerProblem(PsiElement node, String s) {
+  protected void registerProblem(final PsiElement node, final String s) {
     registerProblem(node, s, null);
   }
 
@@ -492,10 +493,14 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyNonlocalStatement(PyNonlocalStatement node) {
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25) ||
-        myVersionsToProcess.contains(LanguageLevel.PYTHON26) || myVersionsToProcess.contains(LanguageLevel.PYTHON27)) {
+  public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
+    if (compatibleWithPy2()) {
       registerProblem(node, "nonlocal keyword available only since py3", null, false);
     }
+  }
+
+  protected boolean compatibleWithPy2() {
+    return myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25) ||
+           myVersionsToProcess.contains(LanguageLevel.PYTHON26) || myVersionsToProcess.contains(LanguageLevel.PYTHON27);
   }
 }
