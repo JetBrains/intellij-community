@@ -331,7 +331,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void scrollTo(final int offset) {
     if (myEditor == null) return;
-    final MyFlushRunnable scrollRunnable = new MyFlushRunnable() {
+    class ScrollRunnable extends MyFlushRunnable {
+      private int myOffset = offset;
       public void doRun() {
         flushDeferredText();
         if (myEditor == null) return;
@@ -342,8 +343,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myEditor.getCaretModel().moveToOffset(moveOffset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
-    };
-    addFlushRequest(scrollRunnable);
+
+      @Override
+      public boolean equals(Object o) {
+        return super.equals(o) && myOffset == ((ScrollRunnable)o).myOffset;
+      }
+    }
+    addFlushRequest(new ScrollRunnable());
   }
 
   public void requestScrollingToEnd() {
@@ -896,6 +902,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                 public void doRun() {
                   if (myHeavyUpdateTicket != currentValue) return;
                   myHyperlinks.adjustHighlighters(Collections.singletonList(additionalHighlight));
+                }
+
+                @Override
+                public boolean equals(Object o) {
+                  return this == o && super.equals(o);
                 }
               });
             }
