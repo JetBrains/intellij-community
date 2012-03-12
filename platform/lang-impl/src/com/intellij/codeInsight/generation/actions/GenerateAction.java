@@ -20,11 +20,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 
-public class GenerateAction extends AnAction implements PreloadableAction {
+public class GenerateAction extends DumbAwareAction implements PreloadableAction {
   public void actionPerformed(final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
