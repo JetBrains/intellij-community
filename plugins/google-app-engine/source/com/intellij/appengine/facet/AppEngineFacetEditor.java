@@ -11,16 +11,13 @@ import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.ListUtil;
-import com.intellij.ui.RightAlignedLabelUI;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,12 +35,11 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JPanel mySdkEditorPanel;
   private JCheckBox myRunEnhancerOnMakeCheckBox;
   private JPanel myFilesToEnhancePanel;
-  private JButton myAddButton;
   private JList myFilesList;
-  private JButton myRemoveButton;
   private JComboBox myPersistenceApiComboBox;
   private JTextField myUserEmailField;
   private JPasswordField myPasswordField;
+  private JPanel myFilesPanel;
   private AppEngineSdkEditor mySdkEditor;
   private DefaultListModel myFilesListModel;
 
@@ -66,27 +62,19 @@ public class AppEngineFacetEditor extends FacetEditorTab {
         }
       }
     });
+
     myFilesListModel = new DefaultListModel();
+    myFilesList = new JBList(myFilesListModel);
     myFilesList.setCellRenderer(new FilesListCellRenderer());
-    myFilesList.setModel(myFilesListModel);
-    myFilesList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        updateButtons();
-      }
-    });
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doAdd();
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        ListUtil.removeSelectedItems(myFilesList);
-        updateButtons();
-      }
-    });
+    myFilesPanel.add(ToolbarDecorator.createDecorator(myFilesList)
+                       .setAddAction(new AnActionButtonRunnable() {
+                         @Override
+                         public void run(AnActionButton button) {
+                           doAdd();
+                         }
+                       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
+
     PersistenceApiComboboxUtil.setComboboxModel(myPersistenceApiComboBox, false);
-    updateButtons();
   }
 
   private void doAdd() {
@@ -97,11 +85,6 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     for (VirtualFile file : files) {
       myFilesListModel.addElement(file.getPath());
     }
-    updateButtons();
-  }
-
-  private void updateButtons() {
-    myRemoveButton.setEnabled(myFilesList.getSelectedIndices().length > 0);
   }
 
   @Nls
