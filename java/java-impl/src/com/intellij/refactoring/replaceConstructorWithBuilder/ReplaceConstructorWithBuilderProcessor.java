@@ -222,7 +222,12 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     final StringBuffer buf = new StringBuffer();
     PsiMethod constructor = getMostCommonConstructor();
-    if (constructor == null) constructor = myConstructors[0];
+    if (constructor == null){
+      constructor = myConstructors[0];
+      if (constructor.getParameterList().getParametersCount() == 0) {
+        constructor = myConstructors[1];
+      }
+    }
     for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
       final String pureParamName = styleManager.variableNameToPropertyName(parameter.getName(), VariableKind.PARAMETER);
       if (buf.length() > 0) buf.append(", ");
