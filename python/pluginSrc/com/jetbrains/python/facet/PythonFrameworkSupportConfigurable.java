@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author yole
@@ -24,6 +25,7 @@ public class PythonFrameworkSupportConfigurable extends FrameworkSupportConfigur
     mySdkComboBox = new PythonSdkComboBox();
     mySdkComboBox.setProject(model.getProject());
     myMainPanel = LabeledComponent.create(mySdkComboBox, "Python SDK:");
+    ((LabeledComponent)myMainPanel).setLabelLocation(BorderLayout.WEST);
   }
 
   public JComponent getComponent() {
