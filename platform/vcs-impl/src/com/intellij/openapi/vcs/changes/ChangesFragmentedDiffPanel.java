@@ -588,7 +588,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     private PopupAction() {
       super("Settings", "Settings", IconLoader.getIcon("/general/secondaryGroup.png"));
-      myUsual = new AnAction("Top | Bottom") {
+      myUsual = new AnAction("Top | Bottom", "", VcsUtil.ourNotDot) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -602,7 +602,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? VcsUtil.ourNotDot : VcsUtil.ourDot);
         }
       };
-      myNumbered = new AnAction("Left | Right") {
+      myNumbered = new AnAction("Left | Right", "", VcsUtil.ourNotDot) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -755,7 +755,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     private final Icon myIcon;
 
     private MyUseSoftWrapsAction(boolean turned) {
-      super("Use soft wraps");
+      super("Use soft wraps", "", ourIcon);
       myIcon = ourIcon;
     }
 
