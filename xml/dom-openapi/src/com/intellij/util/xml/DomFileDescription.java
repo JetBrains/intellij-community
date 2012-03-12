@@ -93,12 +93,7 @@ public class DomFileDescription<T> {
    * @param namespaces XML namespace or DTD public or system id value for the given namespaceKey
    */
   public final void registerNamespacePolicy(String namespaceKey, final String... namespaces) {
-    registerNamespacePolicy(namespaceKey, new NotNullFunction<XmlTag, List<String>>() {
-      @NotNull
-      public List<String> fun(final XmlTag tag) {
-        return Arrays.asList(namespaces);
-      }
-    });
+    registerNamespacePolicy(namespaceKey, new ConstantFunction<XmlTag, List<String>>(Arrays.asList(namespaces)));
   }
 
   /**

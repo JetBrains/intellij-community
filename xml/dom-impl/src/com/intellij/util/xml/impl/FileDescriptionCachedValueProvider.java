@@ -44,17 +44,19 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   private final MyCondition myCondition = new MyCondition();
 
   private final DomManagerImpl myDomManager;
+  private final DomService myDomService;
 
   public FileDescriptionCachedValueProvider(final DomManagerImpl domManager, final XmlFile xmlFile) {
     myDomManager = domManager;
     myXmlFile = xmlFile;
+    myDomService = DomService.getInstance();
   }
 
   @Nullable
   public final DomFileElementImpl<T> getFileElement() {
     if (myComputed) return myLastResult;
 
-    DomFileElementImpl<T> result = _computeFileElement(false, DomService.getInstance().getXmlFileHeader(myXmlFile), null);
+    DomFileElementImpl<T> result = _computeFileElement(false, myDomService.getXmlFileHeader(myXmlFile), null);
 
     synchronized (myCondition) {
       if (myComputed) return myLastResult;
@@ -157,7 +159,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   }
 
   public String getFileElementWithLogging() {
-    final XmlFileHeader rootTagName = DomService.getInstance().getXmlFileHeader(myXmlFile);
+    final XmlFileHeader rootTagName = myDomService.getXmlFileHeader(myXmlFile);
     final StringBuilder log = new StringBuilder();
     myLastResult = _computeFileElement(false, rootTagName, log);
     return log.toString();
