@@ -180,18 +180,15 @@ public class PyCompatibilityInspection extends PyInspection {
         }
       }
 
-      PyQualifiedName sourceName = null;
       PyFromImportStatement fromImportStatement = PsiTreeUtil.getParentOfType(importElement, PyFromImportStatement.class);
-      if (fromImportStatement != null) {
-        sourceName = fromImportStatement.getImportSourceQName();
-      }
-      
+      if (fromImportStatement != null)
+        return;
+
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
         final PyQualifiedName qName = importElement.getImportedQName();
         if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
-          if (sourceName != null) moduleName = sourceName.append(qName.toString()).toString();
-          else moduleName = qName.toString();
+          moduleName = qName.toString();
           if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName)) {
             len = appendLanguageLevel(message, len, languageLevel);
           }
