@@ -261,7 +261,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   @Override
   public boolean isFullScreen(@NotNull Frame frame) {
-    return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).getFrameDecorator().isInFullScreen();
+    return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen();
   }
 
   @Override

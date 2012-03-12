@@ -455,6 +455,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     return myBalloonLayout;
   }
 
+  public boolean isInFullScreen() {
+    return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
+  }
+
   public void showWelcomeScreen() {
     myRootPane.showWelcomeScreen();
   }
