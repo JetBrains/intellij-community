@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
@@ -16,10 +15,19 @@ public class ModuleAwareContentRoot implements ContentEntry {
 
   @NotNull private final Module       myModule;
   @NotNull private final ContentEntry myDelegate;
+  @NotNull private final VirtualFile  myFile;
 
-  public ModuleAwareContentRoot(@NotNull Module module, @NotNull ContentEntry delegate) {
+  public ModuleAwareContentRoot(@NotNull Module module, @NotNull ContentEntry delegate) throws IllegalArgumentException {
     myDelegate = delegate;
     myModule = module;
+    final VirtualFile file = delegate.getFile();
+    if (file == null) {
+      throw new IllegalArgumentException(String.format(
+        "Detected attempt to create ModuleAwareContentRoot object for content root that points to the un-existing file - %s, module: %s",
+        delegate, module
+      ));
+    }
+    myFile = file;
   }
 
   @NotNull
@@ -27,10 +35,10 @@ public class ModuleAwareContentRoot implements ContentEntry {
     return myModule;
   }
 
+  @NotNull
   @Override
-  @Nullable
   public VirtualFile getFile() {
-    return myDelegate.getFile();
+    return myFile;
   }
 
   @Override

@@ -11,15 +11,11 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -52,12 +48,14 @@ public class PlatformFacadeImpl implements PlatformFacade {
     if (entries == null) {
       return Collections.emptyList();
     }
-    return ContainerUtil.map(entries, new Function<ContentEntry, ModuleAwareContentRoot>() {
-      @Override
-      public ModuleAwareContentRoot fun(ContentEntry entry) {
-        return new ModuleAwareContentRoot(module, entry);
+    List<ModuleAwareContentRoot> result = new ArrayList<ModuleAwareContentRoot>();
+    for (ContentEntry entry : entries) {
+      final VirtualFile file = entry.getFile();
+      if (file != null) {
+        result.add(new ModuleAwareContentRoot(module, entry));
       }
-    });
+    }
+    return result;
   }
 
   @NotNull
