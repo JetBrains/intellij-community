@@ -173,7 +173,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     if (libsDir != null) {
       result.add(libsDir);
     }
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(facet.getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAndroidLibraryDependencies(facet.getModule())) {
       VirtualFile depLibsDir = AndroidRootUtil.getLibsDir(depFacet);
       if (depLibsDir != null) {
         result.add(depLibsDir);

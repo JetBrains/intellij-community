@@ -576,7 +576,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private VirtualFile[] collectDependencies() {
     final List<VirtualFile> dependenciesList = new ArrayList<VirtualFile>();
 
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidDependencies(getModule(), true)) {
+    for (AndroidFacet depFacet : AndroidUtils.getAndroidLibraryDependencies(getModule())) {
       final Module depModule = depFacet.getModule();
       final VirtualFile libDir = getBaseAndroidContentRoot(depModule);
       if (libDir != null) {

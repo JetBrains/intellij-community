@@ -638,7 +638,7 @@ public class AndroidUtils {
   }
 
   @NotNull
-  public static List<AndroidFacet> getAndroidDependencies(@NotNull Module module, boolean androidLibrariesOnly) {
+  public static List<AndroidFacet> getAndroidLibraryDependencies(@NotNull Module module) {
     final List<AndroidFacet> depFacets = new ArrayList<AndroidFacet>();
 
     for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
@@ -651,7 +651,7 @@ public class AndroidUtils {
           if (depModule != null) {
             final AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
 
-            if (depFacet != null && (!androidLibrariesOnly || depFacet.getConfiguration().LIBRARY_PROJECT)) {
+            if (depFacet != null && depFacet.getConfiguration().LIBRARY_PROJECT) {
               depFacets.add(depFacet);
             }
           }
