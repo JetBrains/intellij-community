@@ -394,4 +394,24 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult 'O var = <selection>239</selection>;'
   }
 
+  public void testTemplateExpandingWithSelection() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("tpl", "user", 'expanded');
+    final JavaStringContextType contextType =
+      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaStringContextType.class);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
+
+    myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }")
+
+    def settings = TemplateSettings.getInstance()
+    settings.addTemplate(template);
+    try {
+      myFixture.type '\t'
+      myFixture.checkResult 'class A { void f() { Stri    "; } }'
+    }
+    finally {
+      settings.removeTemplate(template);
+    }
+  }
+
 }

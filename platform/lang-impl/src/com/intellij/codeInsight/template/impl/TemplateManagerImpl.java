@@ -239,6 +239,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   @Nullable
   public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<String, String> processor) {
+    if (editor.getSelectionModel().hasSelection()) {
+      return null;
+    }
+
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
     if (file == null) return null;
     TemplateSettings templateSettings = TemplateSettings.getInstance();
