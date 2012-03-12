@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.util;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.diff.PlatformFacade;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 

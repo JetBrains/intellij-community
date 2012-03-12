@@ -7,12 +7,19 @@ import com.intellij.openapi.roots.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.diff.*;
+import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
+import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
+import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
+import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.id.*;
@@ -63,7 +70,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private final NewChangesDispatcher                  myNewChangesDispatcher      = new NewChangesDispatcher();
 
   @NotNull private final Project                                   myProject;
-  @NotNull private final PlatformFacade                            myPlatformFacade;
+  @NotNull private final PlatformFacade myPlatformFacade;
   @NotNull private final GradleProjectStructureHelper              myProjectStructureHelper;
   @NotNull private final Comparator<GradleProjectStructureNode<?>> myNodeComparator;
   @NotNull private final GradleProjectStructureChangesModel        myChangesModel;
@@ -371,7 +378,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     processNewDependencyPresenceChange(change);
   }
   
-  private <I extends GradleAbstractDependencyId> void processNewDependencyPresenceChange(@NotNull GradleEntityPresenceChange<I> change) {
+  private <I extends GradleAbstractDependencyId> void processNewDependencyPresenceChange(@NotNull GradleAbstractEntityPresenceChange<I> change) {
     I id = change.getGradleEntity();
     TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
     if (id == null) {

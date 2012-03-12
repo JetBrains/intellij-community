@@ -36,12 +36,12 @@
 
     <!--Structure diff calculators-->
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
-                        serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleModuleStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleContentRootStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleModuleDependencyStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryStructureChangesCalculator"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyStructureChangesCalculator"/>
+                        serviceImplementation="org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>
     
     <!--Import services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleModuleImporter"/>
@@ -55,8 +55,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
                         serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.PlatformFacade"
-                        serviceImplementation="org.jetbrains.plugins.gradle.diff.PlatformFacadeImpl"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.config.PlatformFacade"
+                        serviceImplementation="org.jetbrains.plugins.gradle.config.PlatformFacadeImpl"/>
     
     <!--Conflict UI components-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>

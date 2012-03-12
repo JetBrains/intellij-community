@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.module;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -21,6 +21,12 @@ import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
+import org.jetbrains.plugins.gradle.diff.GradleDiffUtil;
+import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 
@@ -39,8 +45,8 @@ import java.util.List;
 public class GradleModuleStructureChangesCalculator implements GradleStructureChangesCalculator<GradleModule, Module> {
   
   @NotNull private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator;
-  @NotNull private final GradleModuleDependencyStructureChangesCalculator  myModuleDependencyCalculator;
-  @NotNull private final GradleContentRootStructureChangesCalculator       myContentRootCalculator;
+  @NotNull private final GradleModuleDependencyStructureChangesCalculator myModuleDependencyCalculator;
+  @NotNull private final GradleContentRootStructureChangesCalculator myContentRootCalculator;
 
   public GradleModuleStructureChangesCalculator(@NotNull GradleLibraryDependencyStructureChangesCalculator libraryDependencyCalculator,
                                                 @NotNull GradleModuleDependencyStructureChangesCalculator moduleDependencyCalculator,

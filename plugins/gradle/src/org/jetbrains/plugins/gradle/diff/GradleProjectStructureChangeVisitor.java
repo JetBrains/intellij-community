@@ -16,6 +16,13 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
+import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange;
+import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
+import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
 
 /**
  * Defines common interface for dispatching gradle project structure change objects.

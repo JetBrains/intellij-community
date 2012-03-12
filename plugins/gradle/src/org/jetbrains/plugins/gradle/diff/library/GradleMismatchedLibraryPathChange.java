@@ -1,8 +1,10 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.library;
 
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.util.Set;

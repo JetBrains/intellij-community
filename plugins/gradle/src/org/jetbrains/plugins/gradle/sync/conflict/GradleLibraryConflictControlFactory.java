@@ -6,7 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
-import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
