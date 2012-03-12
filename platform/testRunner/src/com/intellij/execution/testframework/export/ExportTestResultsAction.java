@@ -21,7 +21,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -135,20 +134,18 @@ public class ExportTestResultsAction extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
 
-          final File outputFolder;
-          final String outputFolderPath = config.getOutputFolder();
-          if (!StringUtil.isEmptyOrSpaces(outputFolderPath)) {
-            if (FileUtil.isAbsolute(outputFolderPath)) {
-              outputFolder = new File(outputFolderPath);
+          File outputFolder;
+          if (StringUtil.isNotEmpty(config.getOutputFolder())) {
+            if (FileUtil.isAbsolute(config.getOutputFolder())) {
+              outputFolder = new File(config.getOutputFolder());
             }
             else {
-              outputFolder = new File(ProjectUtil.getBasePath(project), outputFolderPath);
+              outputFolder = new File(new File(project.getBasePath()), config.getOutputFolder());
             }
           }
           else {
-            outputFolder = new File(ProjectUtil.getBasePath(project));
+            outputFolder = new File(project.getBasePath());
           }
-
           final File outputFile = new File(outputFolder, filename_);
           final String outputText;
           try {

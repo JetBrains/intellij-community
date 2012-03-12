@@ -636,10 +636,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       rootPaths.addAll(extension.getRootsToWatch());
     }
 
-    final VirtualFile projectFile = myProject.getStateStore().getProjectFile();
-    if (projectFile != null) {
-      rootPaths.add(projectFile.getPath());
-    }
+    final String projectFile = myProject.getStateStore().getProjectFilePath();
+    rootPaths.add(projectFile);
     final VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir != null) {
       rootPaths.add(baseDir.getPath());

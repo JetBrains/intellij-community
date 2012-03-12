@@ -46,8 +46,7 @@ public class ProjectUtil {
 
   @Nullable
   public static String getProjectLocationString(@NotNull final Project project) {
-    final VirtualFile baseDir = project.getBaseDir();
-    return baseDir != null ? FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(baseDir.getPath())) : null;
+    return FileUtil.getLocationRelativeToUserHome(project.getBasePath());
   }
 
   @NotNull

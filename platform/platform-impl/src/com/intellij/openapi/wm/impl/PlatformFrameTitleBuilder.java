@@ -29,10 +29,9 @@ import org.jetbrains.annotations.NotNull;
 public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   @Override
   public String getProjectTitle(@NotNull final Project project) {
-    final VirtualFile baseDir = project.getBaseDir();
-    if (baseDir == null) return project.getName();
+    final String basePath = project.getBasePath();
+    if (basePath == null) return project.getName();
 
-    final String basePath = FileUtil.toSystemDependentName(baseDir.getPath());
     if (basePath.equals(project.getName())) {
       return "[" + FileUtil.getLocationRelativeToUserHome(basePath) + "]";
     }

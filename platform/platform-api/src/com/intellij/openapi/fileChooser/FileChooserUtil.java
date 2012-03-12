@@ -90,9 +90,9 @@ public final class FileChooserUtil {
                                        @Nullable String lastPath) {
     if (toSelect == null && lastPath == null) {
       if (project != null) {
-        final VirtualFile baseDir = project.getBaseDir();
-        if (baseDir != null) {
-          return baseDir.getPath();
+        final String basePath = project.getBasePath();
+        if (basePath != null) {
+          return basePath;
         }
       }
     }

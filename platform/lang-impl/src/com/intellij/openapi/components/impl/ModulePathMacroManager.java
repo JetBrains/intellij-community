@@ -21,6 +21,7 @@ import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -53,6 +54,15 @@ public class ModulePathMacroManager extends BasePathMacroManager {
     if (!myModule.isDisposed()) {
       final String modulePath = getModuleDir(myModule.getModuleFilePath());
       addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath, PathMacrosImpl.getUserHome());
+
+      // add canonical path if differs
+      final VirtualFile moduleFile = myModule.getModuleFile();
+      if (moduleFile != null) {
+        final String moduleDir = getModuleDir(moduleFile.getPath());
+        if (!pathsEqual(moduleDir, modulePath)) {
+          addFileHierarchyReplacements(result, PathMacrosImpl.MODULE_DIR_MACRO_NAME, moduleDir, PathMacrosImpl.getUserHome());
+        }
+      }
     }
 
     return result;

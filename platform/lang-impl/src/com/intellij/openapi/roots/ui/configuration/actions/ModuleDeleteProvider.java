@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.TitledHandler;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,7 +56,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }
     for (Module module : modules) {
       final File moduleFile = new File(module.getModuleFilePath());
-      final File projectFile = new File(ProjectUtil.getProjectFilePath(module.getProject()));
+      final File projectFile = new File(module.getProject().getProjectFilePath());
       if (moduleFile.getParent().equals(projectFile.getParent()) && moduleFile.getParentFile().getName().equals(".idea")) {
         return true;
       }

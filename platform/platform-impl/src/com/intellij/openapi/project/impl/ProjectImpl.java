@@ -16,7 +16,6 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -221,8 +220,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   public String getProjectFilePath() {
-    final String projectFilePath = ProjectUtil.getProjectFilePath(this);
-    return projectFilePath != null ? projectFilePath : "";
+    return getStateStore().getProjectFilePath();
   }
 
   @Override
@@ -233,6 +231,11 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @Override
   public VirtualFile getBaseDir() {
     return getStateStore().getProjectBaseDir();
+  }
+
+  @Override
+  public String getBasePath() {
+    return getStateStore().getProjectBasePath();
   }
 
   @NotNull

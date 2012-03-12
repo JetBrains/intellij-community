@@ -118,6 +118,11 @@ public class MockProject extends MockComponentManager implements Project {
   }
 
   @Override
+  public String getBasePath() {
+    return null;
+  }
+
+  @Override
   public void save() {
   }
 

@@ -38,7 +38,12 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   VirtualFile getProjectBaseDir();
 
-  /** @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getProjectBaseDir()} (to remove in IDEA 13) */
+  @Nullable
+  String getProjectBasePath();
+
+  /**
+   * @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getProjectBasePath()} (to remove in IDEA 13).
+   */
   @Nullable
   String getLocation();
 
@@ -66,11 +71,9 @@ public interface IProjectStore extends IComponentStore {
 
   void loadProjectFromTemplate(ProjectImpl project);
 
-  /** @deprecated use {@linkplain #getProjectFile()} (to remove in IDEA 12) */
   @NotNull
   String getProjectFileName();
 
-  /** @deprecated use {@linkplain #getProjectFile()} (to remove in IDEA 12) */
   @NotNull
   String getProjectFilePath();
 }

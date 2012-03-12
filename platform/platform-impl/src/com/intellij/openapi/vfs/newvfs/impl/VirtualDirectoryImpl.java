@@ -276,9 +276,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (VirtualFile root : getAllRoots(project)) {
         allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
       }
-      VirtualFile baseDir = project.getBaseDir();
-      assert baseDir != null : project;
-      allowed.add(baseDir.getPath());
+      String location = project.getBasePath();
+      assert location != null : project;
+      allowed.add(FileUtil.toSystemIndependentName(location));
     }
 
     //for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {

@@ -66,6 +66,11 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
+  public String getProjectBasePath() {
+    throw new UnsupportedOperationException("Method getProjectBasePath is not yet implemented in " + getClass().getName());
+  }
+
+  @Override
   public String getLocation() {
     throw new UnsupportedOperationException("Method getLocation not implemented in " + getClass());
   }
