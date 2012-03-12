@@ -366,6 +366,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (myContext.myModulesConfigurator.isModified()) {
       myContext.myModulesConfigurator.apply();
     }
+
+    for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
+      extension.afterModelCommit();
+    }
   }
 
   public boolean isModified() {

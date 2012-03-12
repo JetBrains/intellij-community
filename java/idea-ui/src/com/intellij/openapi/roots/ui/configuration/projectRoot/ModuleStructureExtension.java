@@ -82,4 +82,7 @@ public abstract class ModuleStructureExtension {
   public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry entry) {
     return null;
   }
+
+  public void afterModelCommit() {
+  }
 }
