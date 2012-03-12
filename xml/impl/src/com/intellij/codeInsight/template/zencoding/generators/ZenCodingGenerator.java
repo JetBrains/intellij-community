@@ -22,6 +22,10 @@ import com.intellij.codeInsight.template.zencoding.tokens.TemplateToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,17 +70,24 @@ public abstract class ZenCodingGenerator {
     PsiElement element = callback.getContext();
     int line = editor.getCaretModel().getLogicalPosition().line;
     int lineStart = editor.getDocument().getLineStartOffset(line);
-    int elementStart;
+    int elementStart = -1;
     do {
-      elementStart = element.getTextRange().getStartOffset();
-      int startOffset = elementStart > lineStart ? elementStart : lineStart;
-      String key = computeKey(editor, startOffset);
-      if (key != null) {
-        while (key.length() > 0 && !ZenCodingTemplate.checkTemplateKey(key, callback, this)) {
-          key = key.substring(1);
-        }
-        if (key.length() > 0) {
-          return key;
+      PsiElement e = element;
+      while ((e instanceof LeafPsiElement && ((LeafPsiElement)e).getElementType() == XmlTokenType.XML_DATA_CHARACTERS) ||
+             e instanceof PsiWhiteSpace || e instanceof PsiErrorElement) {
+        elementStart = e.getTextRange().getStartOffset();
+        e = e.getPrevSibling();
+      }
+      if (elementStart >= 0) {
+        int startOffset = elementStart > lineStart ? elementStart : lineStart;
+        String key = computeKey(editor, startOffset);
+        if (key != null) {
+          while (key.length() > 0 && !ZenCodingTemplate.checkTemplateKey(key, callback, this)) {
+            key = key.substring(1);
+          }
+          if (key.length() > 0) {
+            return key;
+          }
         }
       }
       element = element.getParent();
