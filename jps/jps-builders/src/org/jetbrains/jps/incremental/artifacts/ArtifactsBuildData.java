@@ -38,14 +38,25 @@ public class ArtifactsBuildData {
     return state;
   }
 
-  public void clean() {
+  public void clean() throws IOException {
     myTimestampStorage.wipe();
     myPersistentData.clean();
+    IOException exc = null;
     for (ArtifactSourceFilesState state : myArtifactState.values()) {
-      state.clean();
+      try {
+        state.close();
+      }
+      catch (IOException e) {
+        if (exc == null) {
+          exc = e;
+        }
+      }
     }
     myArtifactState.clear();
     FileUtil.delete(myMappingsDir);
+    if (exc != null) {
+      throw exc;
+    }
   }
 
   public void close() throws IOException {
