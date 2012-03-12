@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EdtRunnable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ScrollPaneFactory;
@@ -288,7 +289,11 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public ActionCallback select(Configurable configurable) {
-    return select(configurable, "");
+    if (StringUtil.isEmpty(mySearch.getText())) {
+      return select(configurable, "");
+    } else {
+      return myFilter.refilterFor(mySearch.getText(), true, true);
+    }
   }
 
   public ActionCallback select(Configurable configurable, final String text) {
