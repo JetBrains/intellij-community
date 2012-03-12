@@ -36,4 +36,8 @@ public class UnnecessaryExplicitNumericCast {
 
     void c(int i) {}
     UnnecessaryExplicitNumericCast(long i) {}
+
+    void c(int cols, int no) {
+      int rows = (int) Math.ceil((double) no / cols);
+    }
 }
