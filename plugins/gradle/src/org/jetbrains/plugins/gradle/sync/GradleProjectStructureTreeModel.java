@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -113,6 +114,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
     GradleProjectId projectId = GradleEntityIdMapper.mapEntityToId(getProject());
     GradleProjectStructureNode<GradleProjectId> root = buildNode(projectId, getProject().getName());
+    setRoot(root);
     final Collection<Module> modules = myPlatformFacade.getModules(getProject());
     final List<GradleProjectStructureNode<?>> dependencies = new ArrayList<GradleProjectStructureNode<?>>();
     RootPolicy<Object> visitor = new RootPolicy<Object>() {
@@ -161,8 +163,6 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
     processCurrentChanges(myChangesModel.getChanges());
     filterNodes(root);
-
-    setRoot(root);
   }
 
   @TestOnly

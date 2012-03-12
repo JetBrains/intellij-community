@@ -12,6 +12,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.tree.TreeModelAdapter;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,12 +26,17 @@ import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeWillExpandListener;
+import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -40,11 +47,31 @@ import java.util.List;
  */
 public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
-  private static final int TOOLTIP_DELAY_MILLIS = 500;
+  private static final int TOOLTIP_DELAY_MILLIS                   = 500;
+  private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
+  
+  private static final Comparator<TreePath> PATH_COMPARATOR = new Comparator<TreePath>() {
+    @Override
+    public int compare(TreePath o1, TreePath o2) {
+      return o2.getPathCount() - o1.getPathCount();
+    }
+  };
 
   private final Alarm            myToolbarAppearanceAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm            myToolbarTrackingAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm            myCollapseStateAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<JComponent> myToolbarControls        = new ArrayList<JComponent>();
+  
+  /**
+   * Holds information about folding state (collapsed/expanded) for the project structure nodes.
+   * <p/>
+   * Key is a list that contains from the textual node path representation ending from the root. Value is an integer - positive
+   * for 'collapsed', negative for 'expanded'.
+   */
+  private final TObjectIntHashMap<List<String>> myExpandState = new TObjectIntHashMap<List<String>>();
+  
+  /** Holds list of paths which 'expand/collapse' state should be restored. */
+  private final List<TreePath> myPathsToProcessCollapseState = new ArrayList<TreePath>();
   
   private Tree                            myTree;
   private GradleProjectStructureTreeModel myTreeModel;
@@ -53,6 +80,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   private Object                          myNodeWithActiveToolbar;
   private Balloon                         myToolbar;
   private boolean                         mySuppressToolbar;
+  private boolean                         mySuppressCollapseTracking;
 
   public GradleProjectStructureChangesPanel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
@@ -72,7 +100,32 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     JPanel result = new JPanel(new GridBagLayout());
     myTreeModel = new GradleProjectStructureTreeModel(getProject(), myContext);
     myTree = new Tree(myTreeModel);
-    applyInitialAppearance(myTree, (DefaultMutableTreeNode)myTreeModel.getRoot());
+    myTree.addTreeWillExpandListener(new TreeWillExpandListener() {
+      @Override
+      public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+        if (!mySuppressCollapseTracking) {
+          myExpandState.put(getPath(event.getPath()), -1);
+        }
+      }
+
+      @Override
+      public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+        if (!mySuppressCollapseTracking) {
+          myExpandState.put(getPath(event.getPath()), 1);
+        }
+      }
+    });
+    myTreeModel.addTreeModelListener(new TreeModelAdapter() {
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) {
+        scheduleCollapseStateAppliance(e.getTreePath());
+      }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) {
+        scheduleCollapseStateAppliance(e.getTreePath());
+      }
+    });
 
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridwidth = GridBagConstraints.REMAINDER;
@@ -272,14 +325,68 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     }
   }
 
-  private static void applyInitialAppearance(@NotNull Tree tree, @NotNull DefaultMutableTreeNode node) {
-    if (node.getUserObject() == GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR) {
-      tree.expandPath(new TreePath(node.getPath()));
+  /**
+   * Schedules 'collapse/expand' state restoring for the given path. We can't do that immediately from the tree model listener
+   * as there is a possible case that other listeners have not been notified about the model state change, hence, attempt to define
+   * 'collapse/expand' state may bring us to the inconsistent state.
+   * 
+   * @param path  target path
+   */
+  private void scheduleCollapseStateAppliance(@NotNull TreePath path) {
+    myPathsToProcessCollapseState.add(path);
+    myCollapseStateAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        myCollapseStateAlarm.cancelAllRequests();
+        // We assume that the paths collection is modified only from the EDT, so, ConcurrentModificationException doesn't have
+        // a chance.
+        // Another thing is that we sort the paths in order to process the longest first. That is related to the JTree specifics
+        // that it automatically expands parent paths on child path expansion.
+        Collections.sort(myPathsToProcessCollapseState, PATH_COMPARATOR);
+        for (TreePath treePath : myPathsToProcessCollapseState) {
+          applyCollapseState(treePath);
+        }
+        myPathsToProcessCollapseState.clear();
+        final TreePath rootPath = new TreePath(myTreeModel.getRoot());
+        if (myTree.isCollapsed(rootPath)) {
+          myTree.expandPath(rootPath);
+        }
+      }
+    }, COLLAPSE_STATE_PROCESSING_DELAY_MILLIS);
+  }
+
+  /**
+   * Applies stored 'collapse/expand' state to the node located at the given path.
+   * 
+   * @param path  target path
+   */
+  private void applyCollapseState(@NotNull TreePath path) {
+    final List<String> key = getPath(path);
+    final int current = myExpandState.get(key);
+    if (current == 0) {
       return;
     }
-
-    for (int i = 0; i < node.getChildCount(); i++) {
-      applyInitialAppearance(tree, (DefaultMutableTreeNode)node.getChildAt(i));
+    boolean s = mySuppressCollapseTracking;
+    mySuppressCollapseTracking = true;
+    try {
+      if (current < 0) {
+        myTree.expandPath(path);
+      }
+      else {
+        myTree.collapsePath(path);
+      }
     }
+    finally {
+      mySuppressCollapseTracking = s;
+    }
+  }
+
+  @NotNull
+  private static List<String> getPath(@NotNull TreePath path) {
+    List<String> result = new ArrayList<String>();
+    for (TreePath current = path; current != null; current = current.getParentPath()) {
+      result.add(current.getLastPathComponent().toString());
+    }
+    return result;
   }
 }
