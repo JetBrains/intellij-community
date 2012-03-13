@@ -24,7 +24,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.EventListener;
 
 /**
@@ -111,14 +109,17 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   protected abstract ModifiableRootModel getModel();
 
   public void deleteContentEntry() {
-    final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt",
-                                                                      VirtualFileManager.extractPath(myContentEntryUrl).replace('/', File.separatorChar)),
+    final String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(myContentEntryUrl));
+    final int answer = Messages.showYesNoDialog(ProjectBundle.message("module.paths.remove.content.prompt", path),
                                                 ProjectBundle.message("module.paths.remove.content.title"), Messages.getQuestionIcon());
     if (answer != 0) { // no
       return;
     }
     myEventDispatcher.getMulticaster().beforeEntryDeleted(this);
-    getModel().removeContentEntry(getContentEntry());
+    final ContentEntry entry = getContentEntry();
+    if (entry != null) {
+      getModel().removeContentEntry(entry);
+    }
   }
 
   public void deleteContentFolder(ContentEntry contentEntry, ContentFolder folder) {
