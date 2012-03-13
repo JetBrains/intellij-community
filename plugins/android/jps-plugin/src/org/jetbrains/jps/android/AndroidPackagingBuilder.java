@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApkBuilder;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.util.AndroidCommonUtils;
@@ -197,6 +198,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final String assetsStorageName = releaseBuild ? "assets_packaging_release" : "assets_packaging_dev";
       assetsStorage = new AndroidFileSetStorage(dataStorageRoot, assetsStorageName);
 
+      final Set<Module> modulesToUpdateState = new HashSet<Module>();
+
       for (Module module : modules) {
         final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
         if (facet == null) {
@@ -216,6 +219,13 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
             success = false;
           }
         }
+        if (updateState) {
+          modulesToUpdateState.add(module);
+        }
+      }
+
+      for (Module module : modules) {
+        final boolean updateState = modulesToUpdateState.contains(module);
         resourcesStorage.update(module.getName(), updateState ? resourcesStates.get(module) : null);
         assetsStorage.update(module.getName(), updateState ? assetsStates.get(module) : null);
       }
@@ -426,7 +436,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                                    AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
         return false;
       }
-      final File assetsDir = facet.getAssetsDir();
+      final ArrayList<String> assetsDirPaths = new ArrayList<String>();
+      collectAssetDirs(facet, assetsDirPaths);
 
       final File outputDir = AndroidJpsUtil.getOutputDirectoryForPackagedFiles(context.getProjectPaths(), module);
       if (outputDir == null) {
@@ -442,11 +453,10 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final IAndroidTarget target = pair.getSecond();
 
       final String outputFilePath = getPackagedResourcesFile(module, outputDir).getPath();
-      final String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
       final String[] resourceDirPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, true, context);
 
-      return doPackageResources(context, manifestFile, target, resourceDirPaths, assetsDirPath, outputFilePath,
-                                           AndroidJpsUtil.isReleaseBuild(context));
+      return doPackageResources(context, manifestFile, target, resourceDirPaths, ArrayUtil.toStringArray(assetsDirPaths), outputFilePath,
+                                AndroidJpsUtil.isReleaseBuild(context));
     }
     catch (IOException e) {
       AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
@@ -458,7 +468,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                             @NotNull File manifestFile,
                                             @NotNull IAndroidTarget target,
                                             @NotNull String[] resourceDirPaths,
-                                            @Nullable String assetsDirPath,
+                                            @NotNull String[] assetsDirPaths,
                                             @NotNull String outputFilePath,
                                             boolean releasePackage) {
     try {
@@ -466,10 +476,9 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                 ? outputFilePath + RELEASE_SUFFIX
                                 : outputFilePath;
 
-      // todo: pass assets from apklib, filter ignored files
+      // todo: filter ignored files
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
-        .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths,
-                          assetsDirPath != null ? new String[]{assetsDirPath} : ArrayUtil.EMPTY_STRING_ARRAY, outputPath, null,
+        .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null,
                           !releasePackage, 0, new FileFilter() {
           @Override
           public boolean accept(File pathname) {
@@ -483,6 +492,22 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     catch (final IOException e) {
       AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
       return false;
+    }
+  }
+
+  private static void collectAssetDirs(@NotNull AndroidFacet facet, @NotNull List<String> result) throws IOException {
+    final File assetsDir = facet.getAssetsDir();
+    
+    if (assetsDir != null) {
+      result.add(assetsDir.getPath());
+    }
+
+    for (AndroidFacet depFacet : AndroidJpsUtil.getAllDependentAndroidLibraries(facet.getModule())) {
+      final File depAssetsDir = depFacet.getAssetsDir();
+
+      if (depAssetsDir != null) {
+        result.add(depAssetsDir.getPath());
+      }
     }
   }
 
