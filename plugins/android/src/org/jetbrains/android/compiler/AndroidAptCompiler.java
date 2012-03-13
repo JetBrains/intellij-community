@@ -260,8 +260,6 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       return items.toArray(new GenerationItem[items.size()]);
     }
 
-
-    // todo: support this in android-jps
     // see IDEA-79737 for details
     private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet) {
       final List<AndroidFacet> dependencies = AndroidUtils.getAllAndroidDependencies(facet.getModule(), true);
