@@ -237,7 +237,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (!isUnder) {
         if (!allowed.isEmpty()) {
-          assert false : "File accessed outside allowed roots: " + child + ";\n Allowed roots: " + allowed;
+          assert false : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<String>(allowed);
         }
       }
     }
@@ -478,8 +478,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Nullable
   private Map<String, VirtualFileSystemEntry> asMap() {
     if (myChildren instanceof Map) {
-      //noinspection unchecked
-      return (Map<String, VirtualFileSystemEntry>)myChildren;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      return map;
     }
     return null;
   }
@@ -492,8 +493,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myChildren = map;
     }
     else {
-      //noinspection unchecked
-      map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> _map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      map = _map;
     }
 
     return map;
