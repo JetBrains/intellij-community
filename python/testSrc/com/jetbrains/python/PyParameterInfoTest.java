@@ -81,7 +81,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testKwdFunction() {
-    Map<String, PsiElement> marks = loadTest(4);
+    Map<String, PsiElement> marks = loadTest(5);
 
     PsiElement arg1 = marks.get("<arg1>");
     feignCtrlP(arg1.getTextOffset()).check("a, b, **c", new String[]{"a, "});
@@ -99,6 +99,9 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     PsiElement arg4 = marks.get("<arg4>");
     feignCtrlP(arg4.getTextOffset()).check("a, b, **c", new String[]{"**c"});
     feignCtrlP(arg4.getTextOffset()+1).check("a, b, **c", new String[]{"**c"});
+
+    PsiElement arg5 = marks.get("<arg5>");
+    feignCtrlP(arg5.getTextOffset()).check("a, b, **c", new String[]{"**c"});
   }
 
   public void testKwdOutOfOrder() {
@@ -361,7 +364,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c=1, d=2, e=3", new String[]{"d=2, "});
-    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c=1, d=2, e=3", new String[]{}); // no logical next
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c=1, d=2, e=3", new String[]{"e=3"}); // no logical next
   }
 
   public void testPy3kPastTupleArg() {
