@@ -39,11 +39,8 @@ public interface Project extends ComponentManager, AreaInstance {
   String getName();
 
   /**
-   * <p>Returns a project base directory - a parent directory of a <code>.ipr</code> file or <code>.idea</code> directory.<br/>
-   * Returns <code>null</code> for default project.</p>
-   *
-   * <p>Please note that returned file is always de-referenced, so you have to use use {@linkplain #getBasePath()}
-   * if it's desired to keep symlinks in original path.</p>
+   * Returns a project base directory - a parent directory of a <code>.ipr</code> file or <code>.idea</code> directory.<br/>
+   * Returns <code>null</code> for default project.
    *
    * @return project base directory, or null for default project
    */
@@ -61,15 +58,12 @@ public interface Project extends ComponentManager, AreaInstance {
   String getBasePath();
 
   /**
-   * <p>Returns project descriptor file:
+   * Returns project descriptor file:
    * <ul>
    *   <li><code>path/to/project/project.ipr</code> - for file-based projects</li>
    *   <li><code>path/to/project/.idea/misc.xml</code> - for directory-based projects</li>
    * </ul>
-   * Returns <code>null</code> for default project.</p>
-   *
-   * <p>Please note that returned file is always de-referenced, so you have to use use {@linkplain #getProjectFilePath()}
-   * if it's desired to keep symlinks in original path.</p>
+   * Returns <code>null</code> for default project.
    *
    * @return project descriptor file, or null for default project
    */
@@ -89,6 +83,7 @@ public interface Project extends ComponentManager, AreaInstance {
   /**
    * Returns presentable project path:
    * {@linkplain #getProjectFilePath()} for file-based projects, {@linkplain #getBasePath()} for directory-based ones.<br/>
+   * * Returns <code>null</code> for default project.
    * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
    *
    * @return presentable project path
@@ -114,9 +109,7 @@ public interface Project extends ComponentManager, AreaInstance {
   @NonNls
   String getLocationHash();
 
-  /**
-   * @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getBasePath()} (to remove in IDEA 13).
-   */
+  /** @deprecated please use {@linkplain #getPresentableUrl()} or {@linkplain #getBasePath()} (to remove in IDEA 13) */
   @Nullable
   @NonNls
   String getLocation();

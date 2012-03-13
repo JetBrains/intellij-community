@@ -134,10 +134,11 @@ public class ExportTestResultsAction extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
 
-          File outputFolder;
-          if (StringUtil.isNotEmpty(config.getOutputFolder())) {
-            if (FileUtil.isAbsolute(config.getOutputFolder())) {
-              outputFolder = new File(config.getOutputFolder());
+          final File outputFolder;
+          final String outputFolderPath = config.getOutputFolder();
+          if (!StringUtil.isEmptyOrSpaces(outputFolderPath)) {
+            if (FileUtil.isAbsolute(outputFolderPath)) {
+              outputFolder = new File(outputFolderPath);
             }
             else {
               outputFolder = new File(new File(project.getBasePath()), config.getOutputFolder());
@@ -146,6 +147,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
           else {
             outputFolder = new File(project.getBasePath());
           }
+
           final File outputFile = new File(outputFolder, filename_);
           final String outputText;
           try {
