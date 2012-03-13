@@ -143,6 +143,7 @@ public abstract class DialogWrapper {
   private List<JBOptionButton> myOptionsButtons = new ArrayList<JBOptionButton>();
   private int myCurrentOptionsButtonIndex = -1;
   private boolean myResizeInProgress = false;
+  private ComponentAdapter myResizeListener;
 
   protected String getDoNotShowMessage() {
     return CommonBundle.message("dialog.options.do.not.show");
@@ -170,7 +171,7 @@ public abstract class DialogWrapper {
     myPeer = createPeer(project, canBeParent);
     final Window window = myPeer.getWindow();
     if (window != null) {
-      window.addComponentListener(new ComponentAdapter() {
+      myResizeListener = new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
           if (!myResizeInProgress) {
@@ -180,7 +181,8 @@ public abstract class DialogWrapper {
             }
           }
         }
-      });
+      };
+      window.addComponentListener(myResizeListener);
     }
     createDefaultActions();
   }
@@ -333,6 +335,11 @@ public abstract class DialogWrapper {
     if (myClosed) return;
     myClosed = true;
     myExitCode = exitCode;
+    Window window = getWindow();
+    if (window != null && myResizeListener != null) {
+      window.removeComponentListener(myResizeListener);
+      myResizeListener = null;
+    }
 
     if (isOk) {
       processDoNotAskOnOk(exitCode);
