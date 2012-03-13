@@ -15,30 +15,20 @@
  */
 package git4idea.repo;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.messages.MessageBus;
 import git4idea.GitUtil;
 import git4idea.PlatformFacade;
-import git4idea.roots.GitRootProblemNotifier;
+import git4idea.roots.GitRootScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,16 +50,7 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   @NotNull private final Set<GitRepositoryChangeListener> myListeners = new HashSet<GitRepositoryChangeListener>();
 
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
-
-  @NotNull private final Object ROOT_SCAN_STUB_OBJECT = new Object();
-  @NotNull private final QueueProcessor<Object> myRootScanQueue = new QueueProcessor<Object>(new Consumer<Object>() {
-    @Override
-    public void consume(Object o) {
-      if (!myProject.isDisposed()) {
-        GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
-      }
-    }
-  });
+  private GitRootScanner myRootScanner;
 
   @Nullable
   public static GitRepositoryManager getInstance(@NotNull Project project) {
@@ -85,16 +66,13 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   @Override
   public void initComponent() {
     Disposer.register(myProject, this);
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+    myRootScanner = new GitRootScanner(myProject, new DumbAwareRunnable() {
       @Override
       public void run() {
-        final MessageBus messageBus = myProject.getMessageBus();
-        final MyRepositoryCreationDeletionListener rootChangeListener = new MyRepositoryCreationDeletionListener();
-        messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, rootChangeListener);
-        messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, rootChangeListener);
         updateRepositoriesCollection();
       }
     });
+    Disposer.register(this, myRootScanner);
   }
 
   @Override
@@ -211,8 +189,6 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     finally {
         REPO_LOCK.writeLock().unlock();
     }
-
-    myRootScanQueue.add(ROOT_SCAN_STUB_OBJECT);
   }
 
   private static boolean gitRootOK(@NotNull VirtualFile root) {
@@ -233,28 +209,4 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
     return "GitRepositoryManager{myRepositories: " + myRepositories + '}';
   }
 
-  private class MyRepositoryCreationDeletionListener implements BulkFileListener, ModuleRootListener {
-    @Override
-    public void before(@NotNull List<? extends VFileEvent> events) {
-    }
-
-    @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
-      for (VFileEvent event : events) {
-        VirtualFile file = event.getFile();
-        if (file != null && file.getName().equalsIgnoreCase(".git") && file.isDirectory()) {
-          updateRepositoriesCollection();
-        }
-      }
-    }
-
-    @Override
-    public void beforeRootsChange(ModuleRootEvent event) {
-    }
-
-    @Override
-    public void rootsChanged(ModuleRootEvent event) {
-      updateRepositoriesCollection();
-    }
-  }
 }
