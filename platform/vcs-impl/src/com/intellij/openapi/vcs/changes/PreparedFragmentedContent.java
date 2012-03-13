@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
@@ -32,7 +33,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
@@ -108,55 +108,60 @@ public class PreparedFragmentedContent {
   }
 
   private void fromFragmentedContent(final FragmentedContent fragmentedContent) {
-    myOneSide = fragmentedContent.isOneSide();
-    myIsAddition = fragmentedContent.isAddition();
-    List<BeforeAfter<TextRange>> expandedRanges =
-      expand(fragmentedContent.getRanges(), VcsConfiguration.getInstance(myProject).SHORT_DIFF_EXTRA_LINES,
-             fragmentedContent.getBefore(), fragmentedContent.getAfter());
-    // add "artificial" empty lines
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        myOneSide = fragmentedContent.isOneSide();
+        myIsAddition = fragmentedContent.isAddition();
+        List<BeforeAfter<TextRange>> expandedRanges =
+          expand(fragmentedContent.getRanges(), VcsConfiguration.getInstance(myProject).SHORT_DIFF_EXTRA_LINES,
+                 fragmentedContent.getBefore(), fragmentedContent.getAfter());
+        // add "artificial" empty lines
 
-    // line starts
-    BeforeAfter<Integer> lines = new BeforeAfter<Integer>(0,0);
-    for (BeforeAfter<TextRange> lineNumbers : expandedRanges) {
-      if (lines.getBefore() > 0 || lines.getAfter() > 0) {
-        oldConvertor.emptyLine(lines.getBefore());
-        newConvertor.emptyLine(lines.getAfter());
-        lines = new BeforeAfter<Integer>(lines.getBefore() + 1, lines.getAfter() + 1);
-        sbOld.append('\n');
-        sbNew.append('\n');
+        // line starts
+        BeforeAfter<Integer> lines = new BeforeAfter<Integer>(0, 0);
+        for (BeforeAfter<TextRange> lineNumbers : expandedRanges) {
+          if (lines.getBefore() > 0 || lines.getAfter() > 0) {
+            oldConvertor.emptyLine(lines.getBefore());
+            newConvertor.emptyLine(lines.getAfter());
+            lines = new BeforeAfter<Integer>(lines.getBefore() + 1, lines.getAfter() + 1);
+            sbOld.append('\n');
+            sbNew.append('\n');
+          }
+
+          myLineRanges.add(lines);
+          oldConvertor.put(lines.getBefore(), lineNumbers.getBefore().getStartOffset());
+          newConvertor.put(lines.getAfter(), lineNumbers.getAfter().getStartOffset());
+
+          final Document document = fragmentedContent.getBefore();
+          if (sbOld.length() > 0) {
+            sbOld.append('\n');
+          }
+          final TextRange beforeRange = new TextRange(document.getLineStartOffset(lineNumbers.getBefore().getStartOffset()),
+                                                      document.getLineEndOffset(lineNumbers.getBefore().getEndOffset()));
+          myBeforeFragments.add(beforeRange);
+          sbOld.append(document.getText(beforeRange));
+
+          final Document document1 = fragmentedContent.getAfter();
+          if (sbNew.length() > 0) {
+            sbNew.append('\n');
+          }
+          final TextRange afterRange = new TextRange(document1.getLineStartOffset(lineNumbers.getAfter().getStartOffset()),
+                                                     document1.getLineEndOffset(lineNumbers.getAfter().getEndOffset()));
+          myAfterFragments.add(afterRange);
+          sbNew.append(document1.getText(afterRange));
+
+          int before = lines.getBefore() + lineNumbers.getBefore().getEndOffset() - lineNumbers.getBefore().getStartOffset() + 1;
+          int after = lines.getAfter() + lineNumbers.getAfter().getEndOffset() - lineNumbers.getAfter().getStartOffset() + 1;
+          lines = new BeforeAfter<Integer>(before, after);
+        }
+        myLineRanges.add(new BeforeAfter<Integer>(lines.getBefore() == 0 ? 0 : lines.getBefore() - 1,
+                                                  lines.getAfter() == 0 ? 0 : lines.getAfter() - 1));
+
+        setHighlighters(fragmentedContent.getBefore(), fragmentedContent.getAfter(), expandedRanges);
+        setTodoHighlighting(fragmentedContent.getBefore(), fragmentedContent.getAfter());
       }
-
-      myLineRanges.add(lines);
-      oldConvertor.put(lines.getBefore(), lineNumbers.getBefore().getStartOffset());
-      newConvertor.put(lines.getAfter(), lineNumbers.getAfter().getStartOffset());
-
-      final Document document = fragmentedContent.getBefore();
-      if (sbOld.length() > 0) {
-        sbOld.append('\n');
-      }
-      final TextRange beforeRange = new TextRange(document.getLineStartOffset(lineNumbers.getBefore().getStartOffset()),
-                                      document.getLineEndOffset(lineNumbers.getBefore().getEndOffset()));
-      myBeforeFragments.add(beforeRange);
-      sbOld.append(document.getText(beforeRange));
-
-      final Document document1 = fragmentedContent.getAfter();
-      if (sbNew.length() > 0) {
-        sbNew.append('\n');
-      }
-      final TextRange afterRange = new TextRange(document1.getLineStartOffset(lineNumbers.getAfter().getStartOffset()),
-                                      document1.getLineEndOffset(lineNumbers.getAfter().getEndOffset()));
-      myAfterFragments.add(afterRange);
-      sbNew.append(document1.getText(afterRange));
-
-      int before = lines.getBefore() + lineNumbers.getBefore().getEndOffset() - lineNumbers.getBefore().getStartOffset() + 1;
-      int after = lines.getAfter() + lineNumbers.getAfter().getEndOffset() - lineNumbers.getAfter().getStartOffset() + 1;
-      lines = new BeforeAfter<Integer>(before, after);
-    }
-    myLineRanges.add(new BeforeAfter<Integer>(lines.getBefore() == 0 ? 0 : lines.getBefore() - 1,
-                                              lines.getAfter() == 0 ? 0 : lines.getAfter() - 1));
-
-    setHighlighters(fragmentedContent.getBefore(), fragmentedContent.getAfter(), expandedRanges);
-    setTodoHighlighting(fragmentedContent.getBefore(), fragmentedContent.getAfter());
+    });
   }
 
   public LineNumberConvertor getOldConvertor() {
@@ -249,8 +254,8 @@ public class PreparedFragmentedContent {
     myBeforeTodoRanges = beforeTodoRanges;
   }
 
-  public List<BeforeAfter<TextRange>> expand(List<BeforeAfter<TextRange>> myRanges, final int lines, final Document oldDocument,
-                                             final Document document) {
+  public static List<BeforeAfter<TextRange>> expand(List<BeforeAfter<TextRange>> myRanges, final int lines, final Document oldDocument,
+                                                    final Document document) {
     if (myRanges == null || myRanges.isEmpty()) return Collections.emptyList();
     if (lines == -1) {
       final List<BeforeAfter<TextRange>> shiftedRanges = new ArrayList<BeforeAfter<TextRange>>(1);
@@ -286,12 +291,12 @@ public class PreparedFragmentedContent {
     return zippedRanges;
   }
 
-  private boolean neighbourOrIntersect(final TextRange a, final TextRange b) {
+  private static boolean neighbourOrIntersect(final TextRange a, final TextRange b) {
     return a.getEndOffset() + 1 == b.getStartOffset() || a.intersects(b);
   }
 
-  private TextRange expandRange(final TextRange range, final int shift, final int size) {
-    return new TextRange(Math.max(0, (range.getStartOffset() - shift)), Math.max(0, Math.min(size - 1, range.getEndOffset() + shift)));
+  private static TextRange expandRange(final TextRange range, final int shift, final int size) {
+    return new TextRange(Math.max(0, range.getStartOffset() - shift), Math.max(0, Math.min(size - 1, range.getEndOffset() + shift)));
   }
 
   private void setHighlighters(final Document oldDocument, final Document document,

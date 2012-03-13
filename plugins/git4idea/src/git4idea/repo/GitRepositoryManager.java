@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,14 +63,15 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
   @NotNull private final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
 
   @NotNull private final Object ROOT_SCAN_STUB_OBJECT = new Object();
-  @NotNull private final QueueProcessor<Object> myRootScanQueue = new QueueProcessor<Object>(new Consumer<Object>() {
+  private final Consumer<Object> myRootScanTask = new Consumer<Object>() {
     @Override
     public void consume(Object o) {
       if (!myProject.isDisposed()) {
         GitRootProblemNotifier.getInstance(myProject).rescanAndNotifyIfNeeded();
       }
     }
-  });
+  };
+  @NotNull private final QueueProcessor<Object> myRootScanQueue = new QueueProcessor<Object>(myRootScanTask);
 
   @Nullable
   public static GitRepositoryManager getInstance(@NotNull Project project) {
@@ -212,7 +214,12 @@ public final class GitRepositoryManager extends AbstractProjectComponent impleme
         REPO_LOCK.writeLock().unlock();
     }
 
-    myRootScanQueue.add(ROOT_SCAN_STUB_OBJECT);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myRootScanTask.consume(ROOT_SCAN_STUB_OBJECT);
+    }
+    else {
+      myRootScanQueue.add(ROOT_SCAN_STUB_OBJECT);
+    }
   }
 
   private static boolean gitRootOK(@NotNull VirtualFile root) {
