@@ -303,64 +303,7 @@ public class IncProjectBuilder {
     try {
       context.ensureFSStateInitialized(chunk);
       if (context.isMake()) {
-        // cleanup outputs
-        final Set<String> allChunkRemovedSources = new HashSet<String>();
-
-        for (Module module : chunk.getModules()) {
-          final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module, context.isCompilingTests());
-          if (deletedPaths.isEmpty()) {
-            continue;
-          }
-          allChunkRemovedSources.addAll(deletedPaths);
-
-          final String moduleName = module.getName().toLowerCase(Locale.US);
-          final SourceToOutputMapping sourceToOutputStorage =
-            context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
-          // actually delete outputs associated with removed paths
-          for (String deletedSource : deletedPaths) {
-            // deleting outputs corresponding to non-existing source
-            final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
-            
-            if (outputs != null) {
-              final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
-              if (logger.isEnabled()) {
-                if (outputs.size() > 0) {
-                  final String[] buffer = new String[outputs.size()];
-                  int i = 0;
-                  for (final String o : outputs) {
-                    buffer[i++] = o;
-                  }
-                  Arrays.sort(buffer);
-                  logger.log("Cleaning output files:");
-                  for(final String o : buffer) {
-                    logger.log(o);
-                  }
-                  logger.log("End of files");
-                }
-              }
-              
-              for (String output : outputs) {
-                FileUtil.delete(new File(output));
-              }
-              sourceToOutputStorage.remove(deletedSource);
-            }
-            
-            // check if deleted source was associated with a form
-            final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
-            final String formPath = sourceToFormMap.getState(deletedSource);
-            if (formPath != null) {
-              final File formFile = new File(formPath);
-              if (formFile.exists()) {
-                context.markDirty(formFile);
-              }
-              sourceToFormMap.remove(deletedSource);
-            }
-          }
-        }
-        Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
-        for (Module module : chunk.getModules()) {
-          myProjectDescriptor.fsState.clearDeletedPaths(module, context.isCompilingTests());
-        }
+        processDeletedPaths(context, chunk);
       }
 
       context.onChunkBuildStart(chunk);
@@ -395,6 +338,78 @@ public class IncProjectBuilder {
     }
   }
 
+  private void processDeletedPaths(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+    try {
+      // cleanup outputs
+      final Set<String> allChunkRemovedSources = new HashSet<String>();
+
+      for (Module module : chunk.getModules()) {
+        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getDeletedPaths(module, context.isCompilingTests());
+        if (deletedPaths.isEmpty()) {
+          continue;
+        }
+        allChunkRemovedSources.addAll(deletedPaths);
+
+        final String moduleName = module.getName().toLowerCase(Locale.US);
+        final SourceToOutputMapping sourceToOutputStorage =
+          context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+        // actually delete outputs associated with removed paths
+        for (String deletedSource : deletedPaths) {
+          // deleting outputs corresponding to non-existing source
+          final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
+
+          if (outputs != null) {
+            final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
+            if (logger.isEnabled()) {
+              if (outputs.size() > 0) {
+                final String[] buffer = new String[outputs.size()];
+                int i = 0;
+                for (final String o : outputs) {
+                  buffer[i++] = o;
+                }
+                Arrays.sort(buffer);
+                logger.log("Cleaning output files:");
+                for(final String o : buffer) {
+                  logger.log(o);
+                }
+                logger.log("End of files");
+              }
+            }
+
+            for (String output : outputs) {
+              FileUtil.delete(new File(output));
+            }
+            sourceToOutputStorage.remove(deletedSource);
+          }
+
+          // check if deleted source was associated with a form
+          final SourceToFormMapping sourceToFormMap = context.getDataManager().getSourceToFormMap();
+          final String formPath = sourceToFormMap.getState(deletedSource);
+          if (formPath != null) {
+            final File formFile = new File(formPath);
+            if (formFile.exists()) {
+              context.markDirty(formFile);
+            }
+            sourceToFormMap.remove(deletedSource);
+          }
+        }
+      }
+      if (!allChunkRemovedSources.isEmpty()) {
+        final Set<String> currentData = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
+        if (currentData != null) {
+          allChunkRemovedSources.addAll(currentData);
+        }
+        Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
+        for (Module module : chunk.getModules()) {
+          myProjectDescriptor.fsState.clearDeletedPaths(module, context.isCompilingTests());
+        }
+      }
+    }
+    catch (IOException e) {
+      throw new ProjectBuildException(e);
+    }
+  }
+
   private void runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalModuleLevelBuilderCount;
@@ -418,6 +433,9 @@ public class IncProjectBuilder {
         }
 
         for (ModuleLevelBuilder builder : builders) {
+          if (context.isMake()) {
+            processDeletedPaths(context, chunk);
+          }
           final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk);
 
           if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
