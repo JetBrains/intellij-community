@@ -24,6 +24,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.util.Function;
@@ -49,6 +50,7 @@ public class GitRootProblemNotifier {
 
   private final @NotNull Project myProject;
   private final @NotNull PlatformFacade myPlatformFacade;
+  private final @NotNull VcsConfiguration mySettings;
 
   private @Nullable Notification myNotification;
   private final @NotNull Object NOTIFICATION_LOCK = new Object();
@@ -62,9 +64,14 @@ public class GitRootProblemNotifier {
   private GitRootProblemNotifier(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     myProject = project;
     myPlatformFacade = platformFacade;
+    mySettings = VcsConfiguration.getInstance(myProject);
   }
 
   public void rescanAndNotifyIfNeeded() {
+    if (!mySettings.SHOW_VCS_ERROR_NOTIFICATIONS) {
+      return;
+    }
+
     Collection<VcsRootError> errors = scan();
     if (errors.isEmpty()) {
       synchronized (NOTIFICATION_LOCK) {
@@ -81,7 +88,8 @@ public class GitRootProblemNotifier {
 
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
-      myNotification = createNotification(IMPORTANT_ERROR_NOTIFICATION, title, description, ERROR, new MyNotificationListener(myProject));
+      myNotification = createNotification(IMPORTANT_ERROR_NOTIFICATION, title, description, ERROR,
+                                          new MyNotificationListener(myProject, mySettings));
       myPlatformFacade.getNotificator(myProject).notify(myNotification);
     }
   }
@@ -142,7 +150,7 @@ public class GitRootProblemNotifier {
       description.append("<br/>");
     }
 
-    description.append("<a href='configure'>Configure</a>");
+    description.append("<a href='configure'>Configure</a>&nbsp;&nbsp;<a href='ignore'>Ignore VCS root errors</a>");
 
     return description.toString();
   }
@@ -185,18 +193,26 @@ public class GitRootProblemNotifier {
 
   private static class MyNotificationListener implements NotificationListener {
 
-    private final @NotNull Project myProject;
+    @NotNull private final Project myProject;
+    @NotNull private final VcsConfiguration mySettings;
 
-    private MyNotificationListener(@NotNull Project project) {
+    private MyNotificationListener(@NotNull Project project, @NotNull VcsConfiguration settings) {
       myProject = project;
+      mySettings = settings;
     }
 
     @Override
     public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("configure")) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
-        Collection<VcsRootError> errorsAfterPossibleFix = GitRootProblemNotifier.getInstance(myProject).scan();
-        if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        if (event.getDescription().equals("configure")) {
+          ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
+          Collection<VcsRootError> errorsAfterPossibleFix = GitRootProblemNotifier.getInstance(myProject).scan();
+          if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
+            notification.expire();
+          }
+        }
+        else if (event.getDescription().equals("ignore")) {
+          mySettings.SHOW_VCS_ERROR_NOTIFICATIONS = false;
           notification.expire();
         }
       }

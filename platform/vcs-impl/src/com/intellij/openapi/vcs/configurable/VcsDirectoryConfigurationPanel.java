@@ -73,6 +73,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
   private final boolean myIsDisabled;
   private final VcsConfiguration myVcsConfiguration;
   private final @NotNull Map<String, VcsRootChecker> myCheckers;
+  private JCheckBox myShowVcsRootErrorNotification;
 
   private class MyDirectoryRenderer extends ColoredTableCellRenderer {
     private final Project myProject;
@@ -334,6 +335,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     panel.add(createErrorList(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createStoreBaseRevisionOption(), gb.nextLine().next().fillCellHorizontally());
     panel.add(createShowChangedOption(), gb.nextLine().next().fillCellHorizontally());
+    panel.add(createShowVcsRootErrorNotificationOption(), gb.nextLine().next().fillCellHorizontally());
 
     return panel;
   }
@@ -426,8 +428,6 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
     noteLabel.setBorder(BorderFactory.createEmptyBorder(2, 25, 5, 0));
 
-    myBaseRevisionTexts.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
-
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(myBaseRevisionTexts, BorderLayout.NORTH);
     panel.add(noteLabel, BorderLayout.SOUTH);
@@ -441,6 +441,13 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     return component;
   }
 
+  private JComponent createShowVcsRootErrorNotificationOption() {
+    myShowVcsRootErrorNotification = new JCheckBox("Notify about VCS root errors",
+                                                   myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS);
+    myShowVcsRootErrorNotification.setVisible(!myCheckers.isEmpty());
+    return myShowVcsRootErrorNotification;
+  }
+
   public void reset() {
     initializeModel();
   }
@@ -449,12 +456,16 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     myVcsManager.setDirectoryMappings(myModel.getItems());
     myRecentlyChangedConfigurable.apply();
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
+    myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS = myShowVcsRootErrorNotification.isSelected();
     initializeModel();
   }
 
   public boolean isModified() {
     if (myRecentlyChangedConfigurable.isModified()) return true;
     if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
+    if (myVcsConfiguration.SHOW_VCS_ERROR_NOTIFICATIONS != myShowVcsRootErrorNotification.isSelected()) {
+      return true;
+    }
     return !myModel.getItems().equals(myVcsManager.getDirectoryMappings());
   }
 

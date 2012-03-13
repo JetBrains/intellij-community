@@ -90,6 +90,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public boolean CREATE_PATCH_EXPAND_DETAILS_DEFAULT = true;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
+  public boolean SHOW_VCS_ERROR_NOTIFICATIONS = true;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
