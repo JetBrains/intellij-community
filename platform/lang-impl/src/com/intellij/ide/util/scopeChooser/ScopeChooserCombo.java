@@ -56,9 +56,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
   private Project myProject;
@@ -179,6 +181,14 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return model;
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    if (isPreferredSizeSet()) {
+      return super.getPreferredSize();
+    }
+    Dimension preferredSize = super.getPreferredSize();
+    return new Dimension(Math.min(400, preferredSize.width), preferredSize.height);
+  }
 
   private void createPredefinedScopeDescriptors(DefaultComboBoxModel model) {
     for (SearchScope scope : getPredefinedScopes(myProject, DataManager.getInstance().getDataContext(), mySuggestSearchInLibs, myPrevSearchFiles, true, true)) {

@@ -276,17 +276,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
     String scope = myFindUsagesOptions.searchScope.getDisplayName();
-    myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope) {
-      @Override
-      public Dimension getMinimumSize() {
-        return new Dimension(200, super.getMinimumSize().height);
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(400, super.getPreferredSize().height);
-      }
-    };
+    myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
     JComponent separator = SeparatorFactory.createSeparator(FindBundle.message("find.scope.label"), myScopeCombo.getComboBox());
