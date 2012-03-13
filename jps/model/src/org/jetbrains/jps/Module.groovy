@@ -18,7 +18,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   List<String> testRoots = []
   List<String> excludes = []
 
-  Set<String> generatedSourceRoots;
+  Set<String> generatedSourceRoots = [];
 
   String basePath
   String outputPath
