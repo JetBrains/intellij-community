@@ -23,13 +23,16 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor;
 import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -64,6 +67,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private static final MirrorLock MIRROR_LOCK = new MirrorLock();
   private static class MirrorLock {}
 
+  private static final Key<Document> DOCUMENT_IN_MIRROR_KEY = Key.create("DOCUMENT_IN_MIRROR_KEY");
   private final PsiManagerImpl myManager;
   private final boolean myIsForDecompiling;
   private final FileViewProvider myViewProvider;
@@ -306,6 +310,11 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
         final NonCancelableSection section = ProgressIndicatorProvider.getInstance().startNonCancelableSection();
         try {
           setMirror((TreeElement)mirrorTreeElement);
+
+          // TODO this code should be removed after 11.1 release. It is left just in case.
+          // Document is not actually used, maybe it is stored in mirror just to avoid garbage collecting
+          Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          myMirrorFileElement.putUserData(DOCUMENT_IN_MIRROR_KEY, document);
         }
         finally {
           section.done();
