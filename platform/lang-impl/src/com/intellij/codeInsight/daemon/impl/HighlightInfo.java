@@ -72,7 +72,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public TextAttributes getTextAttributes(final PsiElement element,
+  public TextAttributes getTextAttributes(@Nullable final PsiElement element,
                                           @Nullable  final EditorColorsScheme editorColorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes;
