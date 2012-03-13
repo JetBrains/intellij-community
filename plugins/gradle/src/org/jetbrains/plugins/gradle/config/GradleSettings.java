@@ -17,16 +17,12 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,6 +39,9 @@ import java.util.concurrent.atomic.AtomicReference;
 )
 public class GradleSettings implements PersistentStateComponent<GradleSettings>, Cloneable {
 
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  private static final boolean PRESERVE_EXPAND_STATE = !Boolean.getBoolean("gradle.forget.expand.nodes.state");
+  
   /** Holds changes confirmed by the end-user. */
   private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myExpandStates
     = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
@@ -55,6 +54,9 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
 
   @Override
   public GradleSettings getState() {
+    if (!PRESERVE_EXPAND_STATE) {
+      myExpandStates.get().clear();
+    }
     return this;
   }
 
@@ -80,7 +82,8 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
     return myExpandStates.get();
   }
   
-  public void setExpandStates(@Nullable Map<String, Boolean> state) {
+  @SuppressWarnings("UnusedDeclaration")
+  public void setExpandStates(@Nullable Map<String, Boolean> state) { // Necessary for the serialization.
     if (state != null) {
       myExpandStates.set(state);
     }
