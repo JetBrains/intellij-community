@@ -1092,7 +1092,7 @@ public class CompileDriver {
     if (scopeOutputs.size() > 0) {
       CompilerUtil.runInContext(context, CompilerBundle.message("progress.clearing.output"), new ThrowableRunnable<RuntimeException>() {
         public void run() {
-          clearOutputDirectories(scopeOutputs);
+          CompilerUtil.clearOutputDirectories(scopeOutputs);
         }
       });
     }
@@ -1515,7 +1515,7 @@ public class CompileDriver {
         final boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
         final VirtualFile[] allSources = context.getProjectCompileScope().getFiles(null, true);
         if (myShouldClearOutputDirectory) {
-          clearOutputDirectories(myAllOutputDirectories);
+          CompilerUtil.clearOutputDirectories(myAllOutputDirectories);
         }
         else { // refresh is still required
           try {
@@ -1639,34 +1639,6 @@ public class CompileDriver {
       }
     }
     return outputDirs;
-  }
-
-  private static void clearOutputDirectories(final Collection<File> outputDirectories) {
-    final long start = System.currentTimeMillis();
-    // do not delete directories themselves, or we'll get rootsChanged() otherwise
-    final Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
-    for (File outputDirectory : outputDirectories) {
-      File[] files = outputDirectory.listFiles();
-      if (files != null) {
-        ContainerUtil.addAll(filesToDelete, files);
-      }
-    }
-    if (filesToDelete.size() > 0) {
-      FileUtil.asyncDelete(filesToDelete);
-
-      // ensure output directories exist
-      for (final File file : outputDirectories) {
-        file.mkdirs();
-      }
-      final long clearStop = System.currentTimeMillis();
-
-      CompilerUtil.refreshIODirectories(outputDirectories);
-
-      final long refreshStop = System.currentTimeMillis();
-
-      CompilerUtil.logDuration("Clearing output dirs", clearStop - start);
-      CompilerUtil.logDuration("Refreshing output directories", refreshStop - clearStop);
-    }
   }
 
   private void clearCompilerSystemDirectory(final CompileContextEx context) {
@@ -2373,10 +2345,11 @@ public class CompileDriver {
       }
 
       if (checkOutputAndSourceIntersection && myShouldClearOutputDirectory) {
-        CompilerPathsEx.CLEAR_ALL_OUTPUTS_KEY.set(scope, true);
         if (!validateOutputAndSourcePathsIntersection()) {
           return false;
         }
+        // myShouldClearOutputDirectory may change in validateOutputAndSourcePathsIntersection()
+        CompilerPathsEx.CLEAR_ALL_OUTPUTS_KEY.set(scope, myShouldClearOutputDirectory);
       }
       else {
         CompilerPathsEx.CLEAR_ALL_OUTPUTS_KEY.set(scope, false);
@@ -2547,31 +2520,11 @@ public class CompileDriver {
       ContainerUtil.addIfNotNull(artifact.getOutputFile(), allOutputs);
     }
     final Set<VirtualFile> affectedOutputPaths = new HashSet<VirtualFile>();
-    for (Module module : allModules) {
-      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      final VirtualFile[] sourceRoots = rootManager.getSourceRoots();
-      for (final VirtualFile outputPath : allOutputs) {
-        for (VirtualFile sourceRoot : sourceRoots) {
-          if (VfsUtil.isAncestor(outputPath, sourceRoot, true) || VfsUtil.isAncestor(sourceRoot, outputPath, false)) {
-            affectedOutputPaths.add(outputPath);
-          }
-        }
-      }
-    }
+    CompilerUtil.computeIntersectingPaths(myProject, allOutputs, affectedOutputPaths);
     affectedOutputPaths.addAll(ArtifactCompilerUtil.getArtifactOutputsContainingSourceFiles(myProject));
 
     if (!affectedOutputPaths.isEmpty()) {
-      final StringBuilder paths = new StringBuilder();
-      for (final VirtualFile affectedOutputPath : affectedOutputPaths) {
-        if (paths.length() > 0) {
-          paths.append(",\n");
-        }
-        paths.append(affectedOutputPath.getPath().replace('/', File.separatorChar));
-      }
-      final int answer = Messages.showOkCancelDialog(myProject,
-                                                     CompilerBundle.message("warning.sources.under.output.paths", paths.toString()),
-                                                     CommonBundle.getErrorTitle(), Messages.getWarningIcon());
-      if (answer == 0) { // ok
+      if (CompilerUtil.askUserToContinueWithNoClearing(myProject, affectedOutputPaths)) {
         myShouldClearOutputDirectory = false;
         return true;
       }

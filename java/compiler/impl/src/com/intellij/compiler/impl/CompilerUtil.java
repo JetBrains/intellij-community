@@ -20,20 +20,24 @@
  */
 package com.intellij.compiler.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -246,5 +250,68 @@ public class CompilerUtil {
 
   public static void logDuration(final String activityName, long duration) {
     LOG.info(activityName + " took " + duration + " ms: " + duration /60000 + " min " +(duration %60000)/1000 + "sec");
+  }
+
+  public static void clearOutputDirectories(final Collection<File> outputDirectories) {
+    final long start = System.currentTimeMillis();
+    // do not delete directories themselves, or we'll get rootsChanged() otherwise
+    final Collection<File> filesToDelete = new ArrayList<File>(outputDirectories.size() * 2);
+    for (File outputDirectory : outputDirectories) {
+      File[] files = outputDirectory.listFiles();
+      if (files != null) {
+        ContainerUtil.addAll(filesToDelete, files);
+      }
+    }
+    if (filesToDelete.size() > 0) {
+      FileUtil.asyncDelete(filesToDelete);
+
+      // ensure output directories exist
+      for (final File file : outputDirectories) {
+        file.mkdirs();
+      }
+      final long clearStop = System.currentTimeMillis();
+
+      refreshIODirectories(outputDirectories);
+
+      final long refreshStop = System.currentTimeMillis();
+
+      logDuration("Clearing output dirs", clearStop - start);
+      logDuration("Refreshing output directories", refreshStop - clearStop);
+    }
+  }
+
+  public static void computeIntersectingPaths(final Project project,
+                                                          final Collection<VirtualFile> outputPaths,
+                                                          final Collection<VirtualFile> result) {
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      final VirtualFile[] sourceRoots = rootManager.getSourceRoots();
+      for (final VirtualFile outputPath : outputPaths) {
+        for (VirtualFile sourceRoot : sourceRoots) {
+          if (VfsUtilCore.isAncestor(outputPath, sourceRoot, true) || VfsUtilCore.isAncestor(sourceRoot, outputPath, false)) {
+            result.add(outputPath);
+          }
+        }
+      }
+    }
+  }
+
+  public static boolean askUserToContinueWithNoClearing(Project project, Collection<VirtualFile> affectedOutputPaths) {
+    final StringBuilder paths = new StringBuilder();
+    for (final VirtualFile affectedOutputPath : affectedOutputPaths) {
+      if (paths.length() > 0) {
+        paths.append(",\n");
+      }
+      paths.append(affectedOutputPath.getPath().replace('/', File.separatorChar));
+    }
+    final int answer = Messages.showOkCancelDialog(project,
+                                                   CompilerBundle.message("warning.sources.under.output.paths", paths.toString()),
+                                                   CommonBundle.getErrorTitle(), Messages.getWarningIcon());
+    if (answer == Messages.OK) { // ok
+      return true;
+    }
+    else {
+      return false;
+    }
   }
 }
