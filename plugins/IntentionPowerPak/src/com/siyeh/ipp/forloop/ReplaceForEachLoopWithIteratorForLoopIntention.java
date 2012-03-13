@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,32 +35,40 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiForeachStatement statement =
-      (PsiForeachStatement)element.getParent();
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
     if (statement == null) {
       return;
     }
     final Project project = statement.getProject();
-    final JavaCodeStyleManager codeStyleManager =
-      JavaCodeStyleManager.getInstance(project);
+    final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     final PsiExpression iteratedValue = statement.getIteratedValue();
     if (iteratedValue == null) {
       return;
     }
     @NonNls final StringBuilder newStatement = new StringBuilder();
-    final PsiParameter iterationParameter =
-      statement.getIterationParameter();
+    final PsiType iteratedValueType = iteratedValue.getType();
+    if (!(iteratedValueType instanceof PsiClassType)) {
+      return;
+    }
+    final PsiClassType classType = (PsiClassType)iteratedValueType;
+    final PsiParameter iterationParameter = statement.getIterationParameter();
     final PsiType parameterType = iterationParameter.getType();
-    final String iterator =
-      codeStyleManager.suggestUniqueVariableName("iterator",
-                                                 statement, true);
+    final String iterator = codeStyleManager.suggestUniqueVariableName("iterator", statement, true);
     final String typeText = parameterType.getCanonicalText();
     newStatement.append("for(java.util.Iterator");
-    newStatement.append('<');
-    newStatement.append(typeText);
-    newStatement.append("> ");
+    if (classType.hasParameters()) {
+      newStatement.append('<');
+      final PsiType[] parameters = classType.getParameters();
+      if (parameters.length == 1) {
+        newStatement.append(parameters[0].getCanonicalText());
+      } else {
+        newStatement.append(typeText);
+      }
+      newStatement.append("> ");
+    } else {
+      newStatement.append(' ');
+    }
     newStatement.append(iterator);
     newStatement.append(" = ");
     if (iteratedValue instanceof PsiTypeCastExpression) {
