@@ -519,110 +519,120 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     l.readLock().lock();
 
-    final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
-    if (firstOverlap == null) {
-      l.readLock().unlock();
-      return DisposableIterator.EMPTY;
-    }
-    final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
-    final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
-    final int modCountBefore = modCount;
-
-    return new DisposableIterator<T>() {
-      private IntervalNode<T> currentNode = firstOverlap;
-      private int deltaUpToRootExclusive = firstOverlapDelta-firstOverlap.delta;
-      private int indexInCurrentList = 0;
-      private T current;
-
-      @Override
-      public boolean hasNext() {
-        if (current != null) return true;
-        if (currentNode == null) return false;
-
-        if (modCount != modCountBefore) throw new ConcurrentModificationException();
-        while (indexInCurrentList != currentNode.intervals.size()) {
-          T t = currentNode.intervals.get(indexInCurrentList++).get();
-          if (t != null) {
-            current = t;
-            return true;
-          }
-        }
-        indexInCurrentList = 0;
-        while (true) {
-          currentNode = nextNode(currentNode);
-          if (currentNode == null) {
-            return false;
-          }
-          if (overlaps(currentNode, startOffset, endOffset, deltaUpToRootExclusive)) {
-            assert currentNode.intervalStart() + deltaUpToRootExclusive + currentNode.delta >= firstOverlapStart;
-            indexInCurrentList = 0;
-            while (indexInCurrentList != currentNode.intervals.size()) {
-              T t = currentNode.intervals.get(indexInCurrentList++).get();
-              if (t != null) {
-                current = t;
-                return true;
-              }
-            }
-            indexInCurrentList = 0;
-          }
-        }
-      }
-
-      @Override
-      public T next() {
-        if (!hasNext()) throw new NoSuchElementException();
-        T t = current;
-        current = null;
-        return t;
-      }
-
-      @Override
-      public void remove() {
-        throw new IncorrectOperationException();
-      }
-
-      @Override
-      public void dispose() {
+    try {
+      final IntervalNode<T> firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
+      if (firstOverlap == null) {
         l.readLock().unlock();
+        return DisposableIterator.EMPTY;
       }
+      final int firstOverlapDelta = firstOverlap.computeDeltaUpToRoot();
+      final int firstOverlapStart = firstOverlap.intervalStart() + firstOverlapDelta;
+      final int modCountBefore = modCount;
 
-      // next node in in-order traversal
-      private IntervalNode<T> nextNode(@NotNull IntervalNode<T> root) {
-        assert root.isValid() : root;
-        int delta = deltaUpToRootExclusive + root.delta;
-        int myMaxEnd = maxEndOf(root, deltaUpToRootExclusive);
-        if (startOffset > myMaxEnd) return null; // tree changed
+      return new DisposableIterator<T>() {
+        private IntervalNode<T> currentNode = firstOverlap;
+        private int deltaUpToRootExclusive = firstOverlapDelta-firstOverlap.delta;
+        private int indexInCurrentList = 0;
+        private T current;
 
-        // try to go right down
-        IntervalNode<T> right = root.getRight();
-        if (right != null) {
-          int rightMaxEnd = maxEndOf(right, delta);
-          if (startOffset <= rightMaxEnd) {
-            int rightDelta = delta + right.delta;
-            while (right.getLeft() != null && startOffset <= maxEndOf(right.getLeft(), rightDelta)) {
-              right = right.getLeft();
-              rightDelta += right.delta;
+        @Override
+        public boolean hasNext() {
+          if (current != null) return true;
+          if (currentNode == null) return false;
+
+          if (modCount != modCountBefore) throw new ConcurrentModificationException();
+          while (indexInCurrentList != currentNode.intervals.size()) {
+            T t = currentNode.intervals.get(indexInCurrentList++).get();
+            if (t != null) {
+              current = t;
+              return true;
             }
-            deltaUpToRootExclusive = rightDelta - right.delta;
-            return right;
+          }
+          indexInCurrentList = 0;
+          while (true) {
+            currentNode = nextNode(currentNode);
+            if (currentNode == null) {
+              return false;
+            }
+            if (overlaps(currentNode, startOffset, endOffset, deltaUpToRootExclusive)) {
+              assert currentNode.intervalStart() + deltaUpToRootExclusive + currentNode.delta >= firstOverlapStart;
+              indexInCurrentList = 0;
+              while (indexInCurrentList != currentNode.intervals.size()) {
+                T t = currentNode.intervals.get(indexInCurrentList++).get();
+                if (t != null) {
+                  current = t;
+                  return true;
+                }
+              }
+              indexInCurrentList = 0;
+            }
           }
         }
 
-        // go up
-        while (true) {
-          IntervalNode<T> parent = root.getParent();
-          if (parent == null) return null;
-          if (parent.intervalStart() + deltaUpToRootExclusive > endOffset) return null; // can't move right
-          deltaUpToRootExclusive -= parent.delta;
+        @Override
+        public T next() {
+          if (!hasNext()) throw new NoSuchElementException();
+          T t = current;
+          current = null;
+          return t;
+        }
 
-          if (parent.getLeft() == root) {
-            return parent;
+        @Override
+        public void remove() {
+          throw new IncorrectOperationException();
+        }
+
+        @Override
+        public void dispose() {
+          l.readLock().unlock();
+        }
+
+        // next node in in-order traversal
+        private IntervalNode<T> nextNode(@NotNull IntervalNode<T> root) {
+          assert root.isValid() : root;
+          int delta = deltaUpToRootExclusive + root.delta;
+          int myMaxEnd = maxEndOf(root, deltaUpToRootExclusive);
+          if (startOffset > myMaxEnd) return null; // tree changed
+
+          // try to go right down
+          IntervalNode<T> right = root.getRight();
+          if (right != null) {
+            int rightMaxEnd = maxEndOf(right, delta);
+            if (startOffset <= rightMaxEnd) {
+              int rightDelta = delta + right.delta;
+              while (right.getLeft() != null && startOffset <= maxEndOf(right.getLeft(), rightDelta)) {
+                right = right.getLeft();
+                rightDelta += right.delta;
+              }
+              deltaUpToRootExclusive = rightDelta - right.delta;
+              return right;
+            }
           }
 
-          root = parent;
+          // go up
+          while (true) {
+            IntervalNode<T> parent = root.getParent();
+            if (parent == null) return null;
+            if (parent.intervalStart() + deltaUpToRootExclusive > endOffset) return null; // can't move right
+            deltaUpToRootExclusive -= parent.delta;
+
+            if (parent.getLeft() == root) {
+              return parent;
+            }
+
+            root = parent;
+          }
         }
-      }
-    };
+      };
+    }
+    catch (RuntimeException e) {
+      l.readLock().unlock();
+      throw e;
+    }
+    catch (Error e) {
+      l.readLock().unlock();
+      throw e;
+    }
   }
 
   private boolean overlaps(IntervalNode<T> root, int startOffset, int endOffset, int deltaUpToRootExclusive) {
