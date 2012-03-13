@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

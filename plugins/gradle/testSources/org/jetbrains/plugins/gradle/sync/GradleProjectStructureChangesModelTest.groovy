@@ -6,8 +6,8 @@ import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.junit.Test
 
 import static org.junit.Assert.assertEquals
-import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange
-import org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
 
 /**
  * @author Denis Zhdanov

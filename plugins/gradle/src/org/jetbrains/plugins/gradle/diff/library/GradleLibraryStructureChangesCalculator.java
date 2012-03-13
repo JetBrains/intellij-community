@@ -1,9 +1,12 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.library;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
+import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
+import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 

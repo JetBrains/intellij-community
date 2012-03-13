@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.diff.PlatformFacade;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
 import org.jetbrains.plugins.gradle.util.GradleLog;

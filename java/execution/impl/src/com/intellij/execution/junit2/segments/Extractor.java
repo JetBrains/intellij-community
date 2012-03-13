@@ -20,7 +20,9 @@ import com.intellij.execution.junit2.SegmentedInputStream;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.rt.execution.junit.segments.PacketProcessor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +39,7 @@ public class Extractor implements Disposable {
   private final SegmentedInputStream myStream;
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT, this);
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT);
   private int myOrder = -1;
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
@@ -47,6 +49,13 @@ public class Extractor implements Disposable {
 
   @Override
   public void dispose() {
+    myQueue.flush();
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        Disposer.dispose(myQueue);
+      }
+    });
   }
 
   public void setDispatchListener(final DispatchListener listener) {

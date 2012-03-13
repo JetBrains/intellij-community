@@ -1,8 +1,10 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.dependency;
 
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
+import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency;
 
 /**

@@ -234,6 +234,17 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
+  protected void updateInitializerSelection() {
+    if (myAllowInitInMethodIfAll || !isReplaceAllOccurrences()) {
+      if (myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD) == -1) {
+        myInitialisersPlaceModel.insertElementAt(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, 0);
+      }
+    } else {
+      myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
+    }
+  }
+
+  @Override
   protected boolean shouldUpdateTypeSelector() {
     return false;
   }

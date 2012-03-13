@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -63,6 +64,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     }
     PsiField field = findFieldToAssign(myParameter);
     if (field == null) return false;
+    if (!field.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
     setText(CodeInsightBundle.message("intention.assign.field.from.parameter.text", field.getName()));
 
     return true;
