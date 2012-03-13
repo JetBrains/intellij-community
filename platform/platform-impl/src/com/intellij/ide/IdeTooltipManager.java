@@ -130,9 +130,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         hideCurrent(me, null, null);
       }
     } else if (me.getID() == MouseEvent.MOUSE_MOVED) {
-      if (c instanceof JComponent && ((JComponent)c).getToolTipText(me) == null) {
-        hideCurrent(me, null, null);//There is no tooltip here, let's proceed it as MOUSE_EXITED
-      } else if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
+      if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
           if (hideCurrent(me, null, null)) {
             maybeShowFor(c, me);
