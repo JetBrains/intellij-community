@@ -148,6 +148,10 @@ public abstract class GroovyElementVisitor {
     visitArgumentList(argumentList);
   }
 
+  public void visitElvisExpression(GrElvisExpression expression) {
+    visitConditionalExpression(expression);
+  }
+
   public void visitConditionalExpression(GrConditionalExpression expression) {
     visitExpression(expression);
   }
