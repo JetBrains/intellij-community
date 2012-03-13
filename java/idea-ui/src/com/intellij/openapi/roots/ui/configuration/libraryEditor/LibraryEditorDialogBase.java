@@ -98,16 +98,13 @@ public abstract class LibraryEditorDialogBase extends DialogWrapper {
   }
 
   protected JComponent createNorthPanel() {
-    FormBuilder formBuilder = new FormBuilder();
     String currentName = myLibraryRootsComponent.getLibraryEditor().getName();
     myNameField = new JTextField(currentName);
-    formBuilder.addLabeledComponent("&Name:", myNameField);
-    addNorthComponents(formBuilder);
     myNameField.selectAll();
 
-    final JPanel panel = formBuilder.getPanel();
-    panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-    return panel;
+    FormBuilder formBuilder = FormBuilder.createFormBuilder().addLabeledComponent("&Name:", myNameField);
+    addNorthComponents(formBuilder);
+    return formBuilder.addVerticalGap(10).getPanel();
   }
 
   protected void addNorthComponents(FormBuilder formBuilder) {

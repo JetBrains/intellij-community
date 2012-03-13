@@ -519,7 +519,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     @Nullable
     protected JComponent createCenterPanel() {
-      FormBuilder builder = new FormBuilder(true);
+      FormBuilder builder = FormBuilder.createFormBuilder().setVertical(true);
       builder.addLabeledComponent("&Name:", myNameField);
       builder.addLabeledComponent(getSplitDialogChooseFilesPrompt(), myChooser);
       myChooser.setPreferredSize(new Dimension(450, 300));

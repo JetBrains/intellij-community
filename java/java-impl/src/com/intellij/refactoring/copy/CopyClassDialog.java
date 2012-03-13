@@ -32,9 +32,10 @@ import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RecentsManager;
 import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -71,6 +72,7 @@ class CopyClassDialog extends DialogWrapper{
     String text = myDoClone ? RefactoringBundle.message("copy.class.clone.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass)) :
                   RefactoringBundle.message("copy.class.copy.0.1", UsageViewUtil.getType(aClass), UsageViewUtil.getLongName(aClass));
     myInformationLabel.setText(text);
+    myInformationLabel.setFont(myInformationLabel.getFont().deriveFont(Font.BOLD));
     init();
     myDestinationCB.setData(myProject, defaultTargetDirectory,
                             new Pass<String>() {
@@ -95,70 +97,32 @@ class CopyClassDialog extends DialogWrapper{
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-
-    gbConstraints.insets = new Insets(4,8,4,8);
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = 2;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-    panel.add(myInformationLabel, gbConstraints);
-
-    gbConstraints.gridwidth = 1;
-    gbConstraints.gridy = 1;
-    gbConstraints.weighty = 1;
-    gbConstraints.weightx = 0;
     myNameLabel.setText(RefactoringBundle.message("copy.files.new.name.label"));
-    panel.add(myNameLabel, gbConstraints);
-
-    gbConstraints.gridx = 1;
-    gbConstraints.weightx = 1;
     myNameField = new EditorTextField("");
     myNameLabel.setLabelFor(myNameField);
-    panel.add(myNameField, gbConstraints);
 
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 2;
-    gbConstraints.weightx = 0;
-    panel.add(myPackageLabel, gbConstraints);
-
-    gbConstraints.gridx = 1;
-    gbConstraints.weightx = 1;
     String qualifiedName = getQualifiedName();
-
     myTfPackage = new PackageNameReferenceEditorCombo(qualifiedName, myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
     myTfPackage.setTextFieldPreferredWidth(Math.max(qualifiedName.length() + 5, 40));
-
     myPackageLabel.setText(RefactoringBundle.message("destination.package"));
     myPackageLabel.setLabelFor(myTfPackage);
-
-    panel.add(myTfPackage, gbConstraints);
-
-    final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
     if (myDoClone) {
       myTfPackage.setVisible(false);
       myPackageLabel.setVisible(false);
     }
+
+    final JLabel label = new JLabel(RefactoringBundle.message("target.destination.folder"));
     final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getContentSourceRoots().length > 1;
     myDestinationCB.setVisible(!myDoClone && isMultipleSourceRoots);
     label.setVisible(!myDoClone && isMultipleSourceRoots);
 
-    gbConstraints.gridy = 3;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridwidth = 2;
-    gbConstraints.insets.top = 12;
-    gbConstraints.anchor = GridBagConstraints.WEST;
-    gbConstraints.fill = GridBagConstraints.NONE;
-    panel.add(label, gbConstraints);
 
-    gbConstraints.gridy = 4;
-    gbConstraints.gridx = 0;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.insets.top = 4;
-    panel.add(myDestinationCB, gbConstraints);
-
-    return panel;
+    return FormBuilder.createFormBuilder()
+      .addComponent(myInformationLabel)
+      .addLabeledComponent(myNameLabel, myNameField, UIUtil.LARGE_VGAP)
+      .addLabeledComponent(myPackageLabel, myTfPackage)
+      .addLabeledComponent(label, myDestinationCB)
+      .getPanel();
   }
 
   protected String getQualifiedName() {
