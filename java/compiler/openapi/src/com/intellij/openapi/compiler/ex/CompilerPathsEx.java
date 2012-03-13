@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -34,6 +35,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public class CompilerPathsEx extends CompilerPaths {
+  public static final Key<Boolean> CLEAR_ALL_OUTPUTS_KEY = Key.create("_should_clear_all_outputs_");
 
   public static File getZippedOutputPath(Project project, String outputDirectoryPath) {
     final File outputDir = new File(outputDirectoryPath);

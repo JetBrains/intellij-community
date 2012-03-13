@@ -2373,9 +2373,13 @@ public class CompileDriver {
       }
 
       if (checkOutputAndSourceIntersection && myShouldClearOutputDirectory) {
+        CompilerPathsEx.CLEAR_ALL_OUTPUTS_KEY.set(scope, true);
         if (!validateOutputAndSourcePathsIntersection()) {
           return false;
         }
+      }
+      else {
+        CompilerPathsEx.CLEAR_ALL_OUTPUTS_KEY.set(scope, false);
       }
       final List<Chunk<Module>> chunks = ModuleCompilerUtil.getSortedModuleChunks(myProject, Arrays.asList(scopeModules));
       for (final Chunk<Module> chunk : chunks) {
