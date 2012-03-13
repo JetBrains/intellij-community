@@ -18,6 +18,7 @@ package git4idea.update;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.util.continuation.*;
+import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFreezingProcess;
@@ -91,7 +92,7 @@ public class GitComplexProcess {
     myOperation = operation;
     myFreezeReason = "Local changes are not available until Git " + myTitle + " is finished.";
 
-    myRepositoryManager = GitRepositoryManager.getInstance(project);
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
 
     // define tasks that need information from constructor

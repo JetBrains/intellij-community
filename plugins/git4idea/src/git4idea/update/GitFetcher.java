@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.Notificator;
 import git4idea.branch.GitBranchUtil;
@@ -72,7 +73,7 @@ public class GitFetcher {
     myProject = project;
     myProgressIndicator = progressIndicator;
     myFetchAll = fetchAll;
-    myRepositoryManager = GitRepositoryManager.getInstance(project);
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myVcs = GitVcs.getInstance(project);
   }
 

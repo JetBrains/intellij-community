@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.GitUtil;
 import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
@@ -116,7 +117,11 @@ public class GitFileUtils {
       handler.setNoSSH(true);
       handler.run();
     }
-    final GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return;
+    }
+    final GitRepository repository = manager.getRepositoryForRoot(root);
     if (repository != null) {
       repository.getUntrackedFilesHolder().remove(files);
     }
@@ -145,7 +150,12 @@ public class GitFileUtils {
    * @throws VcsException in case of git problem
    */
   public static void addPaths(Project project, VirtualFile root, Collection<FilePath> files) throws VcsException {
-    final GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return;
+    }
+
+    final GitRepository repository = manager.getRepositoryForRoot(root);
     final GitUntrackedFilesHolder untrackedFilesHolder = (repository == null ? null : repository.getUntrackedFilesHolder());
 
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {

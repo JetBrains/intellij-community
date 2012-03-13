@@ -37,6 +37,7 @@ import com.intellij.ui.components.JBList;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -64,7 +65,11 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
 
     final VirtualFile file = getAffectedFile(event);
 
-    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return;
+    }
+    GitRepository repository = manager.getRepositoryForFile(file);
     assert repository != null;
 
     final String head = repository.getCurrentRevision();
@@ -126,7 +131,14 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       return;
     }
 
-    GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(vFiles[0]);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      presentation.setEnabled(false);
+      presentation.setVisible(true);
+      return;
+    }
+
+    GitRepository repository = manager.getRepositoryForFile(vFiles[0]);
     if (repository == null || repository.isFresh() || noBranchesToCompare(repository)) {
       presentation.setEnabled(false);
       presentation.setVisible(true);

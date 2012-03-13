@@ -18,6 +18,7 @@ package git4idea.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -57,6 +58,9 @@ public class GitResetHead extends GitRepositoryAction {
     GitLineHandler h = d.handler();
     affectedRoots.add(d.getGitRoot());
     GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
-    GitRepositoryManager.getInstance(project).updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL_CURRENT);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager != null) {
+      manager.updateRepository(d.getGitRoot(), GitRepository.TrackedTopic.ALL_CURRENT);
+    }
   }
 }

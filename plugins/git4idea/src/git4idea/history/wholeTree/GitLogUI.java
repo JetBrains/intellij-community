@@ -57,6 +57,7 @@ import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
@@ -2326,7 +2327,7 @@ public class GitLogUI implements Disposable {
       if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
 
       final GitRepository repository =
-        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+        GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
       new GitBranchOperationsProcessor(repository, myRefresh).checkout(commitAt.getHash().getString());
     }
@@ -2350,7 +2351,7 @@ public class GitLogUI implements Disposable {
       if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
 
       final GitRepository repository =
-        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+        GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
 
       String reference = commitAt.getHash().getString();
@@ -2390,7 +2391,7 @@ public class GitLogUI implements Disposable {
       if (commitAt.holdsDecoration() || myTableModel.isStashed(commitAt)) return;
 
       final GitRepository repository =
-        GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
+        GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(commitAt.selectRepository(myRootsUnderVcs));
       if (repository == null) return;
       new GitCreateNewTag(myProject, repository, commitAt.getHash().getString(), myRefresh).execute();
     }

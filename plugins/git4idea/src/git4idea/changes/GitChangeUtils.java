@@ -404,7 +404,7 @@ public class GitChangeUtils {
       fullComment = commentSubject;
     }
     else {
-      fullComment = commentBody + "\n\n" + commentSubject;
+      fullComment = commentSubject + "\n" + commentBody;
     }
     GitRevisionNumber thisRevision = new GitRevisionNumber(revisionNumber, commitDate);
 

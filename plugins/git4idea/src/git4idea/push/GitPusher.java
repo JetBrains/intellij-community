@@ -122,7 +122,7 @@ public final class GitPusher {
   public GitPusher(@NotNull Project project, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myProgressIndicator = indicator;
-    myRepositoryManager = GitRepositoryManager.getInstance(myProject);
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myRepositories = myRepositoryManager.getRepositories();
     mySettings = GitVcsSettings.getInstance(myProject);
     myPushSettings = GitPushSettings.getInstance(myProject);

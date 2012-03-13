@@ -71,7 +71,12 @@ public class GitPull extends GitRepositoryAction {
     new Task.Modal(project, GitBundle.message("pulling.title", dialog.getRemote()), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot());
+        final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
+        if (repositoryManager == null) {
+          return;
+        }
+
+        GitRepository repository = repositoryManager.getRepositoryForRoot(dialog.gitRoot());
         assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
         String remoteOrUrl = dialog.getRemote();
         
@@ -108,13 +113,13 @@ public class GitPull extends GitRepositoryAction {
           @Override
           protected void onSuccess() {
             GitMergeUtil.showUpdates(GitPull.this, project, exceptions, root, currentRev, beforeLabel, getActionName(), ActionInfo.UPDATE);
-            GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
+            repositoryManager.updateRepository(root, GitRepository.TrackedTopic.ALL);
           }
     
           @Override
           protected void onFailure() {
             GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", handlerReference.get().errors());
-            GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL);
+            repositoryManager.updateRepository(root, GitRepository.TrackedTopic.ALL);
           }
         });
       }

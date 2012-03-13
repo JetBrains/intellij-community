@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -561,7 +562,11 @@ public class GitUtil {
   }
   
   public static boolean justOneGitRepository(Project project) {
-    return !GitRepositoryManager.getInstance(project).moreThanOneRoot();
+    GitRepositoryManager manager = getRepositoryManager(project);
+    if (manager == null) {
+      return true;
+    }
+    return !manager.moreThanOneRoot();
   }
 
   public static List<GitRepository> sortRepositories(@NotNull Collection<GitRepository> repositories) {
@@ -707,5 +712,10 @@ public class GitUtil {
       }
     }
     return affectedChanges;
+  }
+
+  @Nullable
+  public static GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+    return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 }
