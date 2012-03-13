@@ -245,20 +245,7 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final XmlTag context) {
-    if (myDescriptorTag == null) // TODO make it NotNull
-      return computeAttributeDescriptors(context);
 
-    CachedValuesManager manager = CachedValuesManager.getManager(myDescriptorTag.getProject());
-    myCachedValueProvider = new ParameterizedCachedValueProvider<XmlAttributeDescriptor[], XmlTag>() {
-      @Override
-      public CachedValueProvider.Result<XmlAttributeDescriptor[]> compute(XmlTag param) {
-        return CachedValueProvider.Result.createSingleDependency(computeAttributeDescriptors(param), myDescriptorTag.getContainingFile());
-      }
-    };
-    return manager.getParameterizedCachedValue(myDescriptorTag, ATTRS_KEY, myCachedValueProvider, false, context);
-  }
-
-  private XmlAttributeDescriptor[] computeAttributeDescriptors(XmlTag context) {
     TypeDescriptor type = getType(context);
 
     if (type instanceof ComplexTypeDescriptor) {
@@ -286,11 +273,13 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     return XmlAttributeDescriptor.EMPTY;
   }
 
+  /** <xsd:anyAttribute> directive processed here */
   private static XmlAttributeDescriptor[] updateAttributeDescriptorsFromAny(final XmlTag context,
                                                                             final ComplexTypeDescriptor typeDescriptor,
                                                                             XmlAttributeDescriptor[] attributeDescriptors,
                                                                             final String ns) {
     if (typeDescriptor.canContainAttribute(ns, null) != ComplexTypeDescriptor.CanContainAttributeType.CanNotContain) {
+      // anyAttribute found
       final XmlNSDescriptor descriptor = context.getNSDescriptor(ns, true);
 
       if (descriptor instanceof XmlNSDescriptorImpl) {

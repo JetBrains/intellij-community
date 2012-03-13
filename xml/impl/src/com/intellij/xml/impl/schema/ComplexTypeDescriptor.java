@@ -18,9 +18,15 @@ package com.intellij.xml.impl.schema;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -69,6 +75,23 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
                             final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
       complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
+    }
+  };
+
+  private final FactoryMap<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache = new FactoryMap<String, CachedValue<CanContainAttributeType>>() {
+    @Override
+    protected CachedValue<CanContainAttributeType> create(final String key) {
+      return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(new CachedValueProvider<CanContainAttributeType>() {
+        @Override
+        public Result<CanContainAttributeType> compute() {
+          THashSet<PsiFile> dependencies = new THashSet<PsiFile>();
+          CanContainAttributeType type = _canContainAttribute(key, myTag, null, new THashSet<String>(), dependencies);
+          if (dependencies.isEmpty()) {
+            dependencies.add(myTag.getContainingFile());
+          }
+          return Result.create(type, ArrayUtil.toObjectArray(dependencies));
+        }
+      }, false);
     }
   };
 
@@ -348,15 +371,25 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   }
 
   public CanContainAttributeType canContainAttribute(String namespace, @Nullable String qName) {
-    return _canContainAttribute(namespace, myTag, qName, new THashSet<String>());
+    if (qName == null) {
+      return myAnyAttributeCache.get(namespace).getValue();
+    }
+    return _canContainAttribute(namespace, myTag, qName, new THashSet<String>(), null);
   }
   
   enum CanContainAttributeType {
     CanContainButSkip, CanContainButDoNotSkip, CanNotContain
   }
 
-  private CanContainAttributeType _canContainAttribute(String namespace, XmlTag tag, @Nullable String qName, Set<String> visited) {
+  private CanContainAttributeType _canContainAttribute(String namespace,
+                                                       XmlTag tag,
+                                                       @Nullable String qName,
+                                                       Set<String> visited,
+                                                       @Nullable Set<PsiFile> dependencies) {
     if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "anyAttribute")) {
+      if (dependencies != null) {
+        dependencies.add(tag.getContainingFile());
+      }
       String ns = tag.getAttributeValue("namespace");
       CanContainAttributeType canContainAttributeType = CanContainAttributeType.CanContainButDoNotSkip;
       if ("skip".equals(tag.getAttributeValue("processContents"))) canContainAttributeType= CanContainAttributeType.CanContainButSkip;
@@ -374,7 +407,10 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         XmlTag groupTag = myDocumentDescriptor.findAttributeGroup(ref);
 
         if (groupTag != null) {
-          final CanContainAttributeType containAttributeType = _canContainAttribute(namespace, groupTag, qName, visited);
+          if (dependencies != null) {
+            dependencies.add(groupTag.getContainingFile());
+          }
+          final CanContainAttributeType containAttributeType = _canContainAttribute(namespace, groupTag, qName, visited, dependencies);
           if (containAttributeType != CanContainAttributeType.CanNotContain) return containAttributeType;
         }
       }
@@ -394,8 +430,12 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
         if (descriptor instanceof ComplexTypeDescriptor) {
           ComplexTypeDescriptor complexTypeDescriptor = (ComplexTypeDescriptor)descriptor;
+          if (dependencies != null) {
+            dependencies.add(((ComplexTypeDescriptor)descriptor).getDeclaration().getContainingFile());
+          }
+
           final CanContainAttributeType containAttributeType =
-            complexTypeDescriptor._canContainAttribute(namespace, complexTypeDescriptor.getDeclaration(), qName, visited);
+            complexTypeDescriptor._canContainAttribute(namespace, complexTypeDescriptor.getDeclaration(), qName, visited, dependencies);
           if (containAttributeType != CanContainAttributeType.CanNotContain) return containAttributeType;
         }
       }
@@ -403,7 +443,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
     final XmlTag[] subTags = tag.getSubTags();
     for (XmlTag subTag : subTags) {
-      final CanContainAttributeType containAttributeType = _canContainAttribute(namespace, subTag, qName, visited);
+      final CanContainAttributeType containAttributeType = _canContainAttribute(namespace, subTag, qName, visited, dependencies);
       if (containAttributeType != CanContainAttributeType.CanNotContain) return containAttributeType;
     }
 
