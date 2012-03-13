@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -31,6 +32,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
       CompletionType.BASIC,
       psiElement().inside(PySubscriptionExpression.class),
       new CompletionProvider<CompletionParameters>() {
+        @Override
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
           PsiElement original = parameters.getOriginalPosition();
@@ -82,12 +84,12 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
           return result.withPrefixMatcher(findPrefix(prevElement, offset));
       }
     }
-    PsiElement parentElement = original.getParent();
+    final PsiElement parentElement = original.getParent();
     if (parentElement != null) {
       if (parentElement instanceof PyStringLiteralExpression)
-        return result.withPrefixMatcher(findPrefix((PyStringLiteralExpression)parentElement, offset));
+        return result.withPrefixMatcher(findPrefix((PyElement)parentElement, offset));
     }
-    PyNumericLiteralExpression number = PsiTreeUtil.findElementOfClassAtOffset(original.getContainingFile(),
+    final PyNumericLiteralExpression number = PsiTreeUtil.findElementOfClassAtOffset(original.getContainingFile(),
                                                                                offset - 1, PyNumericLiteralExpression.class, false);
     if (number != null)
       return result.withPrefixMatcher(findPrefix(number, offset));
@@ -99,21 +101,25 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
    * @param element to find prefix of
    * @return prefix
    */
-  private static String findPrefix(final PyElement element, int offset) {
+  private static String findPrefix(final PyElement element, final int offset) {
     return TextRange.create(element.getTextRange().getStartOffset(), offset).substring(element.getContainingFile().getText());
   }
 
   /**
    * add keys to completion result from dict constructor
    */
-  private static void addDictConstructorKeys(PyCallExpression dictConstructor, CompletionResultSet result) {
-    String name = dictConstructor.getCallee().getText();
+  private static void addDictConstructorKeys(final PyCallExpression dictConstructor, final CompletionResultSet result) {
+    final PyExpression callee = dictConstructor.getCallee();
+    if (callee == null) return;
+    final String name = callee.getText();
     if ("dict".equals(name)) {
       final TypeEvalContext context = TypeEvalContext.fast();
-      PyType type = dictConstructor.getType(context);
+      final PyType type = dictConstructor.getType(context);
       if (type != null && type.isBuiltin(context)) {
-        PyExpression[] argumentList = dictConstructor.getArgumentList().getArguments();
-        for (PyExpression argument : argumentList) {
+        final PyArgumentList list = dictConstructor.getArgumentList();
+        if (list == null) return;
+        final PyExpression[] argumentList = list.getArguments();
+        for (final PyExpression argument : argumentList) {
           if (argument instanceof PyKeywordArgument) {
             result.addElement(createElement("'" + ((PyKeywordArgument)argument).getKeyword() + "'"));
           }
@@ -129,11 +135,11 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
    * @param operand is operand of origin element
    * @param result is completion result set
    */
-  private static void addAdditionalKeys(PsiFile file, PsiElement operand, CompletionResultSet result) {
+  private static void addAdditionalKeys(final PsiFile file, final PsiElement operand, final CompletionResultSet result) {
     PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
     for (PySubscriptionExpression expr : subscriptionExpressions) {
       if (expr.getOperand().getText().equals(operand.getText())) {
-        PsiElement parent = expr.getParent();
+        final PsiElement parent = expr.getParent();
         if (parent instanceof PyAssignmentStatement) {
           if (expr.equals(((PyAssignmentStatement)parent).getLeftHandSideExpression())) {
             PyExpression key = expr.getIndexExpression();
@@ -151,7 +157,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
   /**
    * add keys from dict literal expression
    */
-  private static void addDictLiteralKeys(PyDictLiteralExpression dict, CompletionResultSet result) {
+  private static void addDictLiteralKeys(final PyDictLiteralExpression dict, final CompletionResultSet result) {
     PyKeyValueExpression[] keyValues = dict.getElements();
     for (PyKeyValueExpression expression : keyValues) {
       boolean addHandler = PsiTreeUtil.findElementOfClassAtRange(dict.getContainingFile(), expression.getTextRange().getStartOffset(),
@@ -160,11 +166,11 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static LookupElementBuilder createElement(String key) {
+  private static LookupElementBuilder createElement(final String key) {
     return createElement(key, true);
   }
 
-  private static LookupElementBuilder createElement(String key, boolean addHandler) {
+  private static LookupElementBuilder createElement(final String key, final boolean addHandler) {
     LookupElementBuilder item;
     item = LookupElementBuilder
       .create(key)
@@ -174,14 +180,18 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
     if (addHandler)
       item = item.setInsertHandler(new InsertHandler<LookupElement>() {
       @Override
-      public void handleInsert(InsertionContext context, LookupElement item) {
-        PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
+      public void handleInsert(final InsertionContext context, final LookupElement item) {
+        final PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
                                                                            PyStringLiteralExpression.class, false);
         if (str != null) {
-          boolean isDictKeys = PsiTreeUtil.getParentOfType(str, PySubscriptionExpression.class) != null;
+          final boolean isDictKeys = PsiTreeUtil.getParentOfType(str, PySubscriptionExpression.class) != null;
           if (isDictKeys) {
-            if ((!str.getText().startsWith("'") || !str.getText().endsWith("'")) &&
-                                      (!str.getText().startsWith("\"") || !str.getText().endsWith("\""))) {
+            final int off = context.getStartOffset()+str.getTextLength();
+            final PsiElement element = context.getFile().findElementAt(off);
+            final boolean atRBrace = element == null || element.getNode().getElementType() == PyTokenTypes.RBRACKET;
+            final boolean badQuoting = (!StringUtil.startsWithChar(str.getText(), '\'') || !StringUtil.endsWithChar(str.getText(), '\'')) &&
+                                       (!StringUtil.startsWithChar(str.getText(), '"') || !StringUtil.endsWithChar(str.getText(), '"'));
+            if (badQuoting || !atRBrace ) {
               final Document document = context.getEditor().getDocument();
               final int offset = context.getTailOffset();
               document.deleteString(offset-1, offset);
