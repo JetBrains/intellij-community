@@ -55,6 +55,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
       @Override
       public void run() {
         myProjectIsInitialized = true;
+        scanIfReady();
       }
     });
 
@@ -96,6 +97,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
   @Override
   public void directoryMappingChanged() {
     myMappingsAreReady = true;
+    scanIfReady();
   }
 
   private void scanIfReady() {
