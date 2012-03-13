@@ -691,4 +691,8 @@ public class CorrectImplementor implements ActionListener {
 ''')
     myFixture.testHighlighting(true, false, false)
   }
+
+  public void testReassignedHighlighting() {
+    myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy");
+  }
 }
