@@ -65,9 +65,15 @@ public class GitTestPlatformFacade implements PlatformFacade {
     myTestDialogManager.show(dialog)
   }
 
+  @NotNull
   @Override
-  ProjectRootManager getProjectRootManager(Project project) {
+  ProjectRootManager getProjectRootManager(@NotNull Project project) {
     myProjectRootManager
+  }
+
+  @Override
+  void runReadActionAndWaitIfNeeded(Runnable runnable) {
+    runnable.run()
   }
 
   @NotNull

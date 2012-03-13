@@ -15,11 +15,13 @@
  */
 package git4idea;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -50,10 +52,18 @@ public class PlatformFacadeImpl implements PlatformFacade {
     return ProjectRootManager.getInstance(project);
   }
 
+  @Override
+  public void runReadActionAndWaitIfNeeded(@NotNull final Runnable runnable) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        ApplicationManager.getApplication().runReadAction(runnable);
+      }
+    });
+  }
+
   @NotNull
   @Override
   public AbstractVcs getVcs(@NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
   }
-
 }

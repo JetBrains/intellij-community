@@ -54,4 +54,8 @@ public interface PlatformFacade {
   @NotNull
   ProjectRootManager getProjectRootManager(@NotNull Project project);
 
+  /**
+   * Invokes {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} in AWT and waits if needed.
+   */
+  void runReadActionAndWaitIfNeeded(@NotNull Runnable runnable);
 }

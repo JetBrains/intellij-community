@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * <p>
@@ -86,40 +87,55 @@ public class GitRootDetector {
   }
 
   @NotNull
-  private static Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile dir, int depth) {
-    Set<VirtualFile> roots = new HashSet<VirtualFile>();
+  private Set<VirtualFile> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
+    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
     if (depth > 2) {
       // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
       return roots;
     }
-    if (!dir.isDirectory()) {
-      return roots;
-    }
 
-    if (hasGitDir(dir)) {
-      roots.add(dir);
-    }
-    for (VirtualFile child: dir.getChildren()) {
-      roots.addAll(scanForRootsInsideDir(child, depth + 1));
-    }
+    myPlatformFacade.runReadActionAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        if (myProject.isDisposed() || !dir.isDirectory()) {
+          return;
+        }
+        if (hasGitDir(dir)) {
+          roots.add(dir);
+        }
+        for (VirtualFile child : dir.getChildren()) {
+          roots.addAll(scanForRootsInsideDir(child, depth + 1));
+        }
+      }
+    });
+
     return roots;
   }
 
   @NotNull
-  private static Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile projectDir) {
+  private Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile projectDir) {
     return scanForRootsInsideDir(projectDir, 0);
   }
 
   @Nullable
-  private static VirtualFile scanForSingleRootAboveDir(@NotNull VirtualFile projectDir) {
-    VirtualFile parent = projectDir.getParent();
-    while (parent != null) {
-      if (hasGitDir(parent)) {
-        return parent;
+  private VirtualFile scanForSingleRootAboveDir(@NotNull final VirtualFile projectDir) {
+    final AtomicReference<VirtualFile> parent = new AtomicReference<VirtualFile>();
+    myPlatformFacade.runReadActionAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        if (myProject.isDisposed()) {
+          return;
+        }
+
+        VirtualFile par = projectDir.getParent();
+        while (par != null) {
+          if (hasGitDir(par)) {
+            parent.set(par);
+            return;
+          }
+          par = par.getParent();
+        }
       }
-      parent = parent.getParent();
-    }
-    return null;
+    });
+    return parent.get();
   }
 
   private static boolean hasGitDir(@NotNull VirtualFile dir) {

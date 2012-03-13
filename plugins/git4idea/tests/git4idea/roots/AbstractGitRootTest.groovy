@@ -40,7 +40,8 @@ class AbstractGitRootTest {
   Project initProject(Collection<String> gitRoots, Collection<String> projectStructure, Collection<String> contentRoots = []) {
     String projectDir = createDirs(gitRoots)
     Project project = [
-      getBaseDir: { new GitMockVirtualFile(projectDir) }
+      getBaseDir: { new GitMockVirtualFile(projectDir) },
+      isDisposed: { false }
     ] as Project
     createProjectStructure(project, projectStructure);
     createProjectStructure(project, contentRoots);
