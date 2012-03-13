@@ -29,10 +29,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.ToolWindow;
@@ -41,6 +38,7 @@ import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +53,11 @@ import java.util.*;
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   private final Set<Pair<Object, SyncAction>> myActions = new LinkedHashSet<Pair<Object, SyncAction>>();
 
+  private Set<VirtualFile> myPluginRoots = Collections.emptySet();
+
   private long myModificationCount = 0;
+
+  private boolean myOutOfModuleDirectoryCreatedActionAdded;
 
   private final ModificationTracker myModificationTracker = new ModificationTracker() {
     @Override
@@ -126,8 +128,14 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
           if (module == null) { // Maybe it is creation of a plugin in plugin directory.
             if (file.isDirectory()) {
-              if (file.findChild(MvcModuleStructureUtil.APPLICATION_PROPERTIES) != null) {
+              if (myPluginRoots.contains(file.getParent())) {
                 queue(SyncAction.UpdateProjectStructure, myProject);
+                return;
+              }
+
+              if (!myOutOfModuleDirectoryCreatedActionAdded) {
+                queue(SyncAction.OutOfModuleDirectoryCreated, myProject);
+                myOutOfModuleDirectoryCreatedActionAdded = true;
               }
             }
             return;
@@ -367,6 +375,34 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       void doAction(Module module, MvcFramework framework) {
         framework.ensureRunConfigurationExists(module);
+      }
+    },
+
+    OutOfModuleDirectoryCreated {
+      @Override
+      void doAction(Module module, MvcFramework framework) {
+        final Project project = module.getProject();
+        final MvcModuleStructureSynchronizer mvcModuleStructureSynchronizer = MvcModuleStructureSynchronizer.getInstance(project);
+
+        if (mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded) {
+          mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded = false;
+
+          Set<VirtualFile> roots = new HashSet<VirtualFile>();
+
+          for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(project)) {
+            ContainerUtil.addIfNotNull(roots, LocalFileSystem.getInstance().findFileByPath(rootPath));
+          }
+
+          if (!roots.equals(mvcModuleStructureSynchronizer.myPluginRoots)) {
+            mvcModuleStructureSynchronizer.myPluginRoots = roots;
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                mvcModuleStructureSynchronizer.queue(UpdateProjectStructure, project);
+              }
+            });
+          }
+        }
       }
     };
 

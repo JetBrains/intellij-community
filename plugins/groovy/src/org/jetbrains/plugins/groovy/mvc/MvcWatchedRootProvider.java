@@ -27,17 +27,22 @@ public class MvcWatchedRootProvider implements WatchedRootsProvider {
 
   @NotNull
   public Set<String> getRootsToWatch() {
-    if (!myProject.isInitialized()) return Collections.emptySet();
+    return getRootsToWatch(myProject);
+  }
+
+  @NotNull
+  public static Set<String> getRootsToWatch(Project project) {
+    if (!project.isInitialized()) return Collections.emptySet();
 
     Set<String> result = null;
 
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
       final MvcFramework framework = MvcFramework.getInstance(module);
       if (framework == null) continue;
 
       if (result == null) result = new HashSet<String>();
 
-      final File sdkWorkDir = framework.getCommonPluginsDir(module);
+      File sdkWorkDir = framework.getCommonPluginsDir(module);
       if (sdkWorkDir != null) {
         result.add(sdkWorkDir.getAbsolutePath());
       }
