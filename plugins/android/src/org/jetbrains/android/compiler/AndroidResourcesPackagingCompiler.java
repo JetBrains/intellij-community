@@ -88,7 +88,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             }
 
             items.add(new MyItem(module, target, platformToolsRevision, manifestFile, resourcesDirPaths, assetDirPaths, outputPath,
-                                 false, AndroidCompileUtil.isReleaseBuild(context)));
+                                 configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context)));
             //items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
         }
