@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Set;
 
@@ -22,12 +23,8 @@ public class GradleMismatchedLibraryPathChange extends GradleAbstractConflicting
                                            @Nullable Set<String> intellijValue)
     throws IllegalArgumentException
   {
-    super(GradleBundle.message("gradle.sync.change.library.path", entity.getName()), gradleValue, intellijValue);
-    myLibraryName = entity.getName();
-    if (myLibraryName == null) {
-      throw new IllegalArgumentException(String.format("Can't create %s instance. Reason: given library has no name (%s)",
-                                                       getClass().getName(), entity));
-    }
+    super(GradleBundle.message("gradle.sync.change.library.path", GradleUtil.getLibraryName(entity)), gradleValue, intellijValue);
+    myLibraryName = GradleUtil.getLibraryName(entity);
   }
 
   @NotNull

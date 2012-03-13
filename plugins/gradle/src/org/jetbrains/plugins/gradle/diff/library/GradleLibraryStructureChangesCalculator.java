@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
 import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -47,7 +48,7 @@ public class GradleLibraryStructureChangesCalculator implements GradleStructureC
   @NotNull
   @Override
   public Object getIntellijKey(@NotNull Library entity) {
-    return entity.getName();
+    return GradleUtil.getLibraryName(entity);
   }
 
   @NotNull

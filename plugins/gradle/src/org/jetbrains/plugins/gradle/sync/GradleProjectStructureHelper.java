@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gradle.model.id.GradleContentRootId;
 import org.jetbrains.plugins.gradle.model.id.GradleLibraryDependencyId;
 import org.jetbrains.plugins.gradle.model.id.GradleModuleDependencyId;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
  * Thread-safe.
@@ -127,7 +128,7 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
     }
     for (ModuleAwareContentRoot contentRoot : myFacade.getContentRoots(module)) {
       final VirtualFile file = contentRoot.getFile();
-      if (file != null && id.getRootPath().equals(file.getPath())) {
+      if (id.getRootPath().equals(file.getPath())) {
         return contentRoot;
       }
     }
@@ -144,7 +145,7 @@ public class GradleProjectStructureHelper extends AbstractProjectComponent {
     final LibraryTable libraryTable = myFacade.getProjectLibraryTable(myProject);
     for (Library intellijLibrary : libraryTable.getLibraries()) {
       // TODO den consider 'merged libraries' at the registered project structure changes here.
-      if (libraryName.equals(intellijLibrary.getName())) {
+      if (libraryName.equals(GradleUtil.getLibraryName(intellijLibrary))) {
         return intellijLibrary;
       }
     }

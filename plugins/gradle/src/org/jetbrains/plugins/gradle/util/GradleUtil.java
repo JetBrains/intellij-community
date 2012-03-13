@@ -12,6 +12,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -53,6 +55,8 @@ import java.util.concurrent.TimeUnit;
  * @since 8/25/11 1:19 PM
  */
 public class GradleUtil {
+
+  public static final String PATH_SEPARATOR                         = "/";
 
   private GradleUtil() {
   }
@@ -274,6 +278,37 @@ public class GradleUtil {
       xAdjustment = icon.getIconWidth();
     }
     return new Point(bounds.x + xAdjustment, bounds.y + bounds.height);
+  }
+
+  @NotNull
+  public static String getLibraryName(@NotNull Library library) {
+    final String result = library.getName();
+    if (result != null) {
+      return result;
+    }
+    String[] endingsToStrip = { "/", "!", ".jar" };
+    StringBuilder buffer = new StringBuilder();
+    for (OrderRootType type : OrderRootType.getAllTypes()) {
+      for (String url : library.getUrls(type)) {
+        buffer.setLength(0);
+        buffer.append(url);
+        for (String ending : endingsToStrip) {
+          if (buffer.lastIndexOf(ending) == buffer.length() - ending.length()) {
+            buffer.setLength(buffer.length() - ending.length());
+          }
+        }
+        final int i = buffer.lastIndexOf(PATH_SEPARATOR);
+        if (i < 0 || i >= buffer.length() - 1) {
+          continue;
+        }
+        String candidate = buffer.substring(i + 1);
+        if (!StringUtil.isEmpty(candidate)) {
+          return candidate;
+        }
+      }
+    }
+    assert false;
+    return "unknown-lib";
   }
   
   private interface TaskUnderProgress {

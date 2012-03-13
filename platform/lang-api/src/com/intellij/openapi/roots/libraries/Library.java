@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public interface Library extends JDOMExternalizable, Disposable {
   Library[] EMPTY_ARRAY = new Library[0];
 
-  String getName();
+  @Nullable String getName();
 
   @NotNull String[] getUrls(@NotNull OrderRootType rootType);
 

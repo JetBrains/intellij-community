@@ -30,7 +30,7 @@ public class GradleLibraryConflictControlFactory {
   @NotNull
   public JComponent getControl(@NotNull Library library, @NotNull GradleMismatchedLibraryPathChange change) {
     GradleProjectStructureNode<GradleSyntheticId> root = new GradleProjectStructureNode<GradleSyntheticId>(
-      GradleUtil.buildSyntheticDescriptor(library.getName(), GradleIcons.LIB_ICON)
+      GradleUtil.buildSyntheticDescriptor(GradleUtil.getLibraryName(library), GradleIcons.LIB_ICON)
     );
     final Set<String> gradleLocalBinaryPaths = change.getGradleValue();
     if (gradleLocalBinaryPaths != null) {

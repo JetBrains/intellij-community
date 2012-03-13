@@ -113,10 +113,7 @@ public class GradleDiffUtil {
 
         @Override
         public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-          final String libraryName = libraryDependency.getLibraryName();
-          if (libraryName != null) {
-            context.register(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
-          }
+          context.register(new GradleLibraryDependencyPresenceChange(null, libraryDependency));
         }
 
         @Override

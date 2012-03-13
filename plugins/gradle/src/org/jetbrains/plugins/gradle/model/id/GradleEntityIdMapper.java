@@ -4,8 +4,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
@@ -92,20 +92,23 @@ public class GradleEntityIdMapper {
 
         @Override
         public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
-          final VirtualFile file = contentRoot.getFile();
-          if (file == null) {
-            return;
-          }
-          result.set(new GradleContentRootId(GradleEntityOwner.INTELLIJ, contentRoot.getModule().getName(), file.getPath()));
+          final String path = contentRoot.getFile().getPath();
+          result.set(new GradleContentRootId(GradleEntityOwner.INTELLIJ, contentRoot.getModule().getName(), path));
         }
 
         @Override
         public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-          final String libraryName = libraryDependency.getLibraryName();
-          if (libraryName != null) {
-            result
-              .set(new GradleLibraryDependencyId(GradleEntityOwner.INTELLIJ, libraryDependency.getOwnerModule().getName(), libraryName));
+          String libraryName = libraryDependency.getLibraryName();
+          if (libraryName == null) {
+            final Library library = libraryDependency.getLibrary();
+            if (library != null) {
+              libraryName = GradleUtil.getLibraryName(library);
+            }
           }
+          if (libraryName == null) {
+            return;
+          }
+          result.set(new GradleLibraryDependencyId(GradleEntityOwner.INTELLIJ, libraryDependency.getOwnerModule().getName(), libraryName));
         }
 
         @Override

@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -50,8 +49,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private static final int    TOOLTIP_DELAY_MILLIS                   = 500;
   private static final int    COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
-  private static final String PATH_SEPARATOR                         = "/";
-  
+
   private static final Comparator<TreePath> PATH_COMPARATOR = new Comparator<TreePath>() {
     @Override
     public int compare(TreePath o1, TreePath o2) {
@@ -385,7 +383,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   private static String getPath(@NotNull TreePath path) {
     StringBuilder buffer = new StringBuilder();
     for (TreePath current = path; current != null; current = current.getParentPath()) {
-      buffer.append(current.getLastPathComponent().toString()).append(PATH_SEPARATOR);
+      buffer.append(current.getLastPathComponent().toString()).append(GradleUtil.PATH_SEPARATOR);
     }
     buffer.setLength(buffer.length() - 1);
     return buffer.toString();
