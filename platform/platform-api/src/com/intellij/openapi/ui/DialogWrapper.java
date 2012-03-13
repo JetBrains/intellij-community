@@ -491,6 +491,10 @@ public abstract class DialogWrapper {
     return !myCheckBoxDoNotShowDialog.isSelected();
   }
 
+  public boolean isTypeAheadEnabled() {
+    return false;
+  }
+
   public static JPanel addDoNotShowCheckBox(JComponent southPanel, JCheckBox checkBox) {
     final JPanel panel = new JPanel(new BorderLayout());
 

@@ -79,6 +79,11 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     return result == null ? findLastSavedConfigurable(groups, project) : result;
   }
 
+  @Override
+  public boolean isTypeAheadEnabled() {
+    return true;
+  }
+
   protected JComponent createCenterPanel() {
     myEditor = new OptionsEditor(myProject, myGroups, myPreselected);
     myEditor.getContext().addColleague(new OptionsEditorColleague.Adapter() {
