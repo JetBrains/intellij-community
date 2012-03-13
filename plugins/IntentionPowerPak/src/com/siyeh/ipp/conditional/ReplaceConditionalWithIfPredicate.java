@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,39 +25,32 @@ class ReplaceConditionalWithIfPredicate implements PsiElementPredicate {
     if (!(element instanceof PsiConditionalExpression)) {
       return false;
     }
-    final PsiConditionalExpression conditionalExpression =
-      (PsiConditionalExpression)element;
+    final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
     if (JspPsiUtil.isInJspFile(element)) {
-      final PsiExpression thenExpression =
-        conditionalExpression.getThenExpression();
+      final PsiExpression thenExpression = conditionalExpression.getThenExpression();
       if (thenExpression == null) {
         return false;
       }
-      final PsiExpression elseExpression =
-        conditionalExpression.getElseExpression();
+      final PsiExpression elseExpression = conditionalExpression.getElseExpression();
       if (elseExpression == null) {
         return false;
       }
     }
     final PsiElement parent = conditionalExpression.getParent();
-    if (parent instanceof PsiExpressionStatement || parent instanceof PsiExpressionList) {
+    if (parent instanceof PsiExpressionStatement) {
       return false;
     }
-    final PsiMember member = PsiTreeUtil.getParentOfType(element,
-                                                         PsiMember.class);
+    final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
     if (member instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)member;
       if (!method.isConstructor()) {
         return true;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        PsiTreeUtil.getParentOfType(element,
-                                    PsiMethodCallExpression.class);
+      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (methodCallExpression == null) {
         return true;
       }
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       return !"super".equals(methodName);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 public class ReplaceConditionalWithIfTest extends IPPTestCase {
-    public void testConditionalAsArgument() { assertIntentionNotAvailable(); }
+    public void testConditionalAsArgument() { doTest(); }
     @Override
     protected String getIntentionName() {
         return IntentionPowerPackBundle.message(
