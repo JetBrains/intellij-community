@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -381,22 +381,25 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
 
   public void testFilePointerUpdate() throws Exception {
     final File tempDir = createTempDirectory();
-    final File file_f1 = new File(tempDir, "f1");
+    final File file = new File(tempDir, "f1");
 
-    final VirtualFilePointer pointer_f1 = createPointerByFile(file_f1, null);
+    final VirtualFilePointer pointer = createPointerByFile(file, null);
 
-    assertFalse(pointer_f1.isValid());
+    assertFalse(pointer.isValid());
 
-    file_f1.createNewFile();
+    boolean created = file.createNewFile();
+    assertTrue(created);
 
-    doVfsRefresh();
-
-    assertTrue(pointer_f1.isValid());
-
-    file_f1.delete();
 
     doVfsRefresh();
-    assertFalse(pointer_f1.isValid());
+
+    assertTrue(pointer.isValid());
+
+    boolean deleted = file.delete();
+    assertTrue(deleted);
+
+    doVfsRefresh();
+    assertFalse(pointer.isValid());
   }
 
   public void testContainerDeletePerformance() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -224,12 +223,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
     }
     while (true) {
       latch.await(100, TimeUnit.MILLISECONDS);
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-      else {
-        UIUtil.pump();
-      }
+      UIUtil.pump();
       if (latch.getCount() == 0) break;
     }
 
@@ -256,5 +250,34 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertNull(child);
 
     UsefulTestCase.assertEmpty(vDir.getChildren());
+  }
+
+  public void testDirAttributeRefreshes() throws IOException {
+    File tempDir = new WriteAction<File>() {
+      @Override
+      protected void run(Result<File> result) throws Throwable {
+        File res = createTempDirectory();
+        result.setResult(res);
+      }
+    }.execute().getResultObject();
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    assertNotNull(vDir);
+    assertTrue(vDir.isDirectory());
+
+    File file = FileUtil.createTempFile(tempDir, "xxx", "yyy", true);
+    assertNotNull(file);
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertFalse(vFile.isDirectory());
+
+    boolean deleted = file.delete();
+    assertTrue(deleted);
+    boolean created = file.mkdir();
+    assertTrue(created);
+    assertTrue(file.exists());
+
+    VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile2);
+    assertTrue(vFile2.isDirectory());
   }
 }

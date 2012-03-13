@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
@@ -87,12 +88,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private VirtualFileSystemEntry findChild(@NotNull String name,
-                                           final boolean createIfNotFound,
+                                           final boolean doRefresh,
                                            boolean ensureCanonicalName,
-                                           NewVirtualFileSystem delegate) {
-    final VirtualFileSystemEntry result = doFindChild(name, createIfNotFound, ensureCanonicalName, delegate);
+                                           @NotNull NewVirtualFileSystem delegate) {
+    VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate);
     if (result == NULL_VIRTUAL_FILE) {
-      return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
+      return doRefresh ? createAndFindChildWithEventFire(name) : null;
     }
 
     if (result == null) {
@@ -103,16 +104,24 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
     }
+    else if (doRefresh && delegate.isDirectory(result) != result.isDirectory()) {
+      final RefreshSession session = RefreshQueue.getInstance().createSession(false, false, null);
+      session.addFile(result);
+      session.launch();
+      result = doFindChild(name, ensureCanonicalName, delegate);
+      if (result == NULL_VIRTUAL_FILE) {
+        result = createAndFindChildWithEventFire(name);
+      }
+    }
 
     return result;
   }
 
   @Nullable
   private VirtualFileSystemEntry doFindChild(@NotNull String name,
-                                             final boolean createIfNotFound,
                                              boolean ensureCanonicalName,
-                                             NewVirtualFileSystem delegate) {
-    if (name.length() == 0) {
+                                             @NotNull NewVirtualFileSystem delegate) {
+    if (name.isEmpty()) {
       return null;
     }
 
@@ -135,7 +144,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (VirtualFileSystemEntry vf : array) {
         if (vf.nameMatches(name, ignoreCase)) return vf;
       }
-      return createIfNotFound ? createAndFindChildWithEventFire(name) : null;
+      return NULL_VIRTUAL_FILE;
     }
 
     if (file != null) return file;
@@ -143,7 +152,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (ensureCanonicalName) {
       VirtualFile fake = new FakeVirtualFile(this, name);
       name = delegate.getCanonicallyCasedName(fake);
-      if (name.length() == 0) return null;
+      if (name.isEmpty()) return null;
     }
 
     synchronized (this) {
@@ -165,7 +174,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
-  public VirtualFileSystemEntry createChild(String name, int id) {
+  public VirtualFileSystemEntry createChild(@NotNull String name, int id) {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
     if (PersistentFS.isDirectory(id)) {
@@ -300,8 +309,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : orderEntries) {
-        VirtualFile[] files;
-        files = entry.getFiles(OrderRootType.CLASSES);
+        VirtualFile[] files = entry.getFiles(OrderRootType.CLASSES);
         ContainerUtil.addAll(roots, files);
         files = entry.getFiles(OrderRootType.SOURCES);
         ContainerUtil.addAll(roots, files);

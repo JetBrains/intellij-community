@@ -249,7 +249,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
           else {
             editorInfos = new LinkedHashMap<VirtualFile, EditorInfo>();
             for (final VirtualFile vFile : reversed) {
-              editorInfos.putAll(copyFilesFillingEditorInfos(vFile.getParent(), toDir, vFile.getName()));
+              VirtualFile parent = vFile.getParent();
+              assert parent.isDirectory() : parent;
+              editorInfos.putAll(copyFilesFillingEditorInfos(parent, toDir, vFile.getName()));
             }
           }
 

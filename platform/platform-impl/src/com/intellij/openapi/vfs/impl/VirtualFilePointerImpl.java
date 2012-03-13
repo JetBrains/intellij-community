@@ -35,12 +35,12 @@ import java.io.PrintWriter;
 public class VirtualFilePointerImpl extends UserDataHolderBase implements VirtualFilePointer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerImpl");
 
-  private Pair<VirtualFile, String> myFileAndUrl; // must not be both null
+  private volatile Pair<VirtualFile, String> myFileAndUrl; // must not be both null
   private final VirtualFileManager myVirtualFileManager;
   private final VirtualFilePointerListener myListener;
-  private boolean disposed = false;
-  int useCount;
-  private long myLastUpdated = -1;
+  private volatile boolean disposed = false;
+  volatile int useCount;
+  private volatile long myLastUpdated = -1;
 
   private static final Key<Throwable> CREATE_TRACE = Key.create("CREATION_TRACE");
   private static final Key<Throwable> KILL_TRACE = Key.create("KILL_TRACE");
@@ -188,7 +188,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       }
     }
 
-    // 3. reset invalid file, restore URL id needed
+    // 3. reset invalid file, restore URL if needed
     if (file != null && !file.exists()) {
       if (url == null) {
         url = file.getUrl();

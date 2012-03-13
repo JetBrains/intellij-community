@@ -89,6 +89,7 @@ import java.util.Collection;
     filesToDelete.add(dir);
 
     final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    assert vDir.isDirectory(): vDir;
 
     final Exception[] exception = {null};
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
