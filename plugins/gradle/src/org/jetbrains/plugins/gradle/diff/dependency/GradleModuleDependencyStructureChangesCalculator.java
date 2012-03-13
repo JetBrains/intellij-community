@@ -1,7 +1,9 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.dependency;
 
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleAbstractDependencyStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency;
 
 /**

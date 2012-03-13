@@ -1,6 +1,8 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.dependency;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
+import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
 
 /**
@@ -16,6 +18,7 @@ public abstract class GradleAbstractDependencyStructureChangesCalculator<G exten
 {
   @Override
   public void calculate(@NotNull G gradleEntity, @NotNull I intellijEntity, @NotNull GradleChangesCalculationContext context) {
+    
     doCalculate(gradleEntity, intellijEntity, context);
   }
   

@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange;
+import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitorAdapter;

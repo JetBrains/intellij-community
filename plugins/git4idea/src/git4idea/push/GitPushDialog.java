@@ -30,7 +30,6 @@ import git4idea.GitUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +66,7 @@ public class GitPushDialog extends DialogWrapper {
     myProject = project;
     myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
 
-    myRepositories = GitRepositoryManager.getInstance(myProject).getRepositories();
+    myRepositories = GitUtil.getRepositoryManager(myProject).getRepositories();
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
 

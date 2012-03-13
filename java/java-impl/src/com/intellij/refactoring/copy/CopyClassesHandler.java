@@ -138,7 +138,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     final Map<PsiFile, PsiClass[]> classes = convertToTopLevelClasses(elements, false, "", relativePathsMap);
     assert classes != null;
     if (defaultTargetDirectory == null) {
-      defaultTargetDirectory = classes.keySet().iterator().next().getContainingDirectory();
+      final PsiFile psiFile = classes.keySet().iterator().next();
+      defaultTargetDirectory = psiFile.getContainingDirectory();
+      LOG.assertTrue(defaultTargetDirectory != null, psiFile);
     } else {
       Project project = defaultTargetDirectory.getProject();
       VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex()

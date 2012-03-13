@@ -39,7 +39,7 @@ public class GitExec {
   public static GitRepository init(@NotNull Project project, @NotNull VirtualFile root) throws IOException {
     new GitTestRunEnv(new File(root.getPath())).run("init");
     root.refresh(false, true);
-    return GitRepository.getFullInstance(root, project, project);
+    return GitRepository.getLightInstance(root, project, project);
   }
 
   public static void create(@NotNull GitRepository repository, @NotNull String filePath) {

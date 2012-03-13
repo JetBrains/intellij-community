@@ -29,6 +29,7 @@ public class TimedOutCallback extends ActionCallback implements Runnable {
   private Throwable myAllocation;
   private String myMessage;
   private SimpleTimerTask myTask;
+  private boolean myShouldDumpError;
 
   public TimedOutCallback(final long timeOut, String message, Throwable allocation, boolean isEdt) {
     scheduleCheck(timeOut, message, allocation, isEdt);
@@ -46,12 +47,11 @@ public class TimedOutCallback extends ActionCallback implements Runnable {
     myTask = SimpleTimer.getInstance().setUp(new Runnable() {
       @Override
       public void run() {
-        if (System.currentTimeMillis() - current > timeOut) { //double check is necessary :-(
-          if (isEdt) {
-            SwingUtilities.invokeLater(TimedOutCallback.this);
-          } else {
-            TimedOutCallback.this.run();
-          }
+        myShouldDumpError = System.currentTimeMillis() - current > timeOut; //double check is necessary :-(
+        if (isEdt) {
+          SwingUtilities.invokeLater(TimedOutCallback.this);
+        } else {
+          TimedOutCallback.this.run();
         }
       }
     }, timeOut);
@@ -61,7 +61,11 @@ public class TimedOutCallback extends ActionCallback implements Runnable {
   public final void run() {
     if (!isProcessed()) {
       setRejected();
-      dumpError();
+
+      if (myShouldDumpError) {
+        dumpError();
+      }
+
       onTimeout();
     }
   }

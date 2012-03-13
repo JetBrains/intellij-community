@@ -1,9 +1,17 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
+import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
+import org.jetbrains.plugins.gradle.diff.GradleDiffUtil;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
+import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator;
+import org.jetbrains.plugins.gradle.diff.project.GradleLanguageLevelChange;
+import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 
@@ -36,8 +37,10 @@ public class GitBranchesAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
-    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
-
+    GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
+    if (repositoryManager == null) {
+      return;
+    }
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     GitRepository repository = (file == null ?
                                 GitBranchUiUtil.getCurrentRepository(project):

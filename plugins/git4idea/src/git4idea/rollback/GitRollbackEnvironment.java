@@ -29,13 +29,12 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
-import git4idea.util.GitFileUtils;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.repo.GitUntrackedFilesHolder;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -165,7 +164,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     }
     lfs.refreshIoFiles(filesToRefresh);
 
-    for (GitRepository repo : GitRepositoryManager.getInstance(myProject).getRepositories()) {
+    for (GitRepository repo : GitUtil.getRepositoryManager(myProject).getRepositories()) {
       repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
     }
   }
@@ -200,7 +199,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     GitFileUtils.delete(myProject, root, files, "--cached", "-f");
 
     if (toUnversioned) {
-      final GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+      final GitRepository repo = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       final GitUntrackedFilesHolder untrackedFilesHolder = (repo == null ? null : repo.getUntrackedFilesHolder());
       for (FilePath path : files) {
         final VirtualFile vf = VcsUtil.getVirtualFile(path.getIOFile());

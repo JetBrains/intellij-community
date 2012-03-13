@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.diff;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.config.PlatformFacade;
 
 import java.util.HashSet;
 import java.util.Set;

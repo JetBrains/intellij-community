@@ -141,6 +141,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    */
   protected static void configureFromFileText(@NonNls final String fileName, @NonNls final String fileText) throws IOException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final Document fakeDocument = new DocumentImpl(fileText);
 
@@ -332,6 +333,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final Document document = EditorFactory.getInstance().createDocument(fileText);
 
@@ -574,10 +576,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }
   
-  private static void doAction(@NotNull String actionId) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
-    actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+  private static void doAction(@NotNull final String actionId) {
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        EditorActionManager actionManager = EditorActionManager.getInstance();
+        EditorActionHandler actionHandler = actionManager.getActionHandler(actionId);
+        actionHandler.execute(getEditor(), DataManager.getInstance().getDataContext());
+      }
+    }, "", null);
   }
 
   protected static DataContext getCurrentEditorDataContext() {

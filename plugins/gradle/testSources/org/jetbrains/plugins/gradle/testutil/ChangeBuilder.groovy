@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.gradle.testutil;
 
 
-import org.jetbrains.plugins.gradle.diff.GradleLibraryDependencyPresenceChange
-import org.jetbrains.plugins.gradle.diff.GradleMismatchedLibraryPathChange
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.plugins.gradle.util.GradleUtil
-import org.jetbrains.plugins.gradle.diff.GradleModulePresenceChange
-import org.jetbrains.plugins.gradle.diff.GradleModuleDependencyPresenceChange
-import org.jetbrains.plugins.gradle.diff.GradleContentRootPresenceChange
+import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange
+import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange
 
 /**
  * @author Denis Zhdanov

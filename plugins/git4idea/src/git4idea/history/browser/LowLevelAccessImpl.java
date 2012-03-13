@@ -26,12 +26,12 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.commands.GitCommand;
@@ -43,7 +43,6 @@ import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,7 +115,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
   // uses cached version
   public CachedRefs getRefs() throws VcsException {
     final CachedRefs refs = new CachedRefs();
-    final GitRepository repositoryForRoot = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myRoot);
+    final GitRepository repositoryForRoot = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
     final GitBranchesCollection branches;
     if (repositoryForRoot != null) {
       branches = repositoryForRoot.getBranches();

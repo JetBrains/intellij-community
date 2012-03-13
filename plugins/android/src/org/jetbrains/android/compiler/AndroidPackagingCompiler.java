@@ -137,7 +137,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
             final String keystorePath = FileUtil.toSystemDependentName(VfsUtil.urlToPath(configuration.CUSTOM_DEBUG_KEYSTORE_PATH));
             items.add(
               createItem(module, facet, manifestFile, sourceRoots, externalJars, resPackagePath, classesDexPath, sdkPath, outputPath,
-                         false, AndroidCompileUtil.isReleaseBuild(context), keystorePath));
+                         configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context), keystorePath));
           }
         }
       }
@@ -268,6 +268,10 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     }
 
     if (releaseBuild) {
+      return true;
+    }
+
+    if (facet.getConfiguration().GENERATE_UNSIGNED_APK) {
       return true;
     }
 
