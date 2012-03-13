@@ -213,7 +213,8 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
     return "com.intellij.util.indexing.FileBasedIndexComponent";
   }
 
-  public static void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator) {
+  @Override
+  public void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator) {
     if (project.isDisposed()) {
       return;
     }

@@ -22,7 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
@@ -53,12 +53,12 @@ public class UnindexedFilesUpdater implements CacheUpdater {
   public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
     CollectingContentIterator finder = myIndex.createContentIterator();
     long l = System.currentTimeMillis();
-    FileBasedIndexComponent.iterateIndexableFiles(finder, myProject, indicator);
+    myIndex.iterateIndexableFiles(finder, myProject, indicator);
     LOG.info("Indexable files iterated in " + (System.currentTimeMillis() - l) + " ms");
     List<VirtualFile> files = finder.getFiles();
     LOG.info("Unindexed files update started: " + files.size() + " files to update");
     myStarted = System.currentTimeMillis();
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   @Override

@@ -169,6 +169,8 @@ public abstract class FileBasedIndex {
   protected void notifyIndexRebuild(String rebuildNotification) {
   }
 
+  public abstract void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator);
+
   private static String calcConfigPath(final String path) {
     try {
       final String _path = FileUtil.toSystemIndependentName(new File(path).getCanonicalPath());
