@@ -439,4 +439,8 @@ public abstract class GroovyElementVisitor {
   public void visitGStringInjection(GrStringInjection injection) {
     visitElement(injection);
   }
+
+  public void visitTypeParameterList(GrTypeParameterList list) {
+    visitElement(list);
+  }
 }
