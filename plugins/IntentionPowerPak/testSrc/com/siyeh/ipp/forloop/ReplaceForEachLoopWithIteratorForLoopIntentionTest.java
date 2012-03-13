@@ -24,6 +24,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntentionTest extends IPPTestC
   public void testBareCollectionLoop() { doTest(); }
   public void testGenericTypes() { doTest(); }
   public void testBoundedTypes() { doTest(); }
+  public void testPrecedence() { doTest(); }
 
   @Override
   protected String getIntentionName() {

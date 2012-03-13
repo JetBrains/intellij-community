@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +72,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     }
     newStatement.append(iterator);
     newStatement.append(" = ");
-    if (iteratedValue instanceof PsiTypeCastExpression) {
+    if (ParenthesesUtils.getPrecedence(iteratedValue) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
       newStatement.append('(');
       newStatement.append(iteratedValue.getText());
       newStatement.append(')');
