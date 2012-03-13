@@ -25,6 +25,10 @@
       <implementation-class>com.intellij.util.indexing.FileBasedIndexComponent</implementation-class>
     </component>
     <component>
+      <interface-class>com.intellij.util.indexing.FileBasedIndexInitializer</interface-class>
+      <implementation-class>com.intellij.util.indexing.FileBasedIndexInitializerComponent</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexIndicesManager</implementation-class>
     </component>
     <component>

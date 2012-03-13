@@ -39,7 +39,6 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
@@ -59,19 +58,16 @@ import java.util.Set;
 
 public class FileBasedIndexComponent extends FileBasedIndex implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexComponent");
-  
-  public FileBasedIndexComponent(final VirtualFileManagerEx vfManager,
-                                 FileDocumentManager fdm,
-                                 FileTypeManager fileTypeManager,
-                                 MessageBus bus,
+
+  public FileBasedIndexComponent(MessageBus bus,
                                  FileBasedIndexUnsavedDocumentsManager unsavedDocumentsManager,
                                  FileBasedIndexIndicesManager indexIndicesManager,
                                  FileBasedIndexTransactionMap transactionMap,
                                  FileBasedIndexLimitsChecker limitsChecker,
                                  AbstractVfsAdapter vfsAdapter,
                                  IndexingStamp indexingStamp,
-                                 SerializationManager sm) throws IOException {
-    super(vfManager, fdm, bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker, vfsAdapter, indexingStamp, sm);
+                                 SerializationManager sm, FileTypeManager fileTypeManager) throws IOException {
+    super(bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker, vfsAdapter, indexingStamp, sm);
 
     final MessageBusConnection connection = bus.connect();
     final FileTypeManager fileTypeManager_ = fileTypeManager;
@@ -296,5 +292,13 @@ public class FileBasedIndexComponent extends FileBasedIndex implements Applicati
         processor.processFile(root);
       }
     }
+  }
+
+  @Override
+  public void initComponent() {
+  }
+
+  @Override
+  public void disposeComponent() {
   }
 }

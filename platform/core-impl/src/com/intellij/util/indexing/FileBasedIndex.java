@@ -22,20 +22,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
@@ -47,11 +43,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.*;
@@ -60,22 +52,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-/**
- * @author Eugene Zhuravlev
- *         Date: Dec 20, 2007
- */
 
 public abstract class FileBasedIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
   @NonNls
-  private static final String CORRUPTION_MARKER_NAME = "corruption.marker";
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNotRequiringContentIndices = new THashSet<ID<?, ?>>();
   private final Set<ID<?, ?>> myRequiringContentIndices = new THashSet<ID<?, ?>>();
@@ -85,13 +70,12 @@ public abstract class FileBasedIndex {
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createEmptyCOWList();
   private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new THashMap<IndexableFileSet, Project>();
 
-  private static final int OK = 1;
-  private static final int REQUIRES_REBUILD = 2;
-  private static final int REBUILD_IN_PROGRESS = 3;
-  private static final Map<ID<?, ?>, AtomicInteger> ourRebuildStatus = new THashMap<ID<?,?>, AtomicInteger>();
+  public  static final int REBUILD_OK = 1;
+  public static final int REQUIRES_REBUILD = 2;
+  public static final int REBUILD_IN_PROGRESS = 3;
 
-  private final VirtualFileManagerEx myVfManager;
-  private final FileDocumentManager myFileDocumentManager;
+  private final Map<ID<?, ?>, AtomicInteger> myRebuildStatus = new THashMap<ID<?,?>, AtomicInteger>();
+
   private FileBasedIndexUnsavedDocumentsManager myUnsavedDocumentsManager;
   private FileBasedIndexIndicesManager myIndexIndicesManager;
   private FileBasedIndexTransactionMap myTransactionMap;
@@ -102,9 +86,9 @@ public abstract class FileBasedIndex {
   @Nullable private final String myConfigPath;
   @Nullable private final String mySystemPath;
   private final boolean myIsUnitTestMode;
-  private ScheduledFuture<?> myFlushingFuture;
-  private volatile int myLocalModCount;
   private IndexingStamp myIndexingStamp;
+
+  private volatile int myLocalModCount;
 
   public void requestReindex(final VirtualFile file) {
     myChangedFilesCollector.invalidateIndices(file, true);
@@ -114,8 +98,11 @@ public abstract class FileBasedIndex {
     myChangedFilesCollector.invalidateIndices(file, false);
   }
 
-  public FileBasedIndex(final VirtualFileManagerEx vfManager, FileDocumentManager fdm,
-                        MessageBus bus,
+  public Map<ID<?, ?>, AtomicInteger> getRebuildStatus() {
+    return myRebuildStatus;
+  }
+
+  public FileBasedIndex(MessageBus bus,
                         FileBasedIndexUnsavedDocumentsManager unsavedDocumentsManager,
                         FileBasedIndexIndicesManager indexIndicesManager,
                         FileBasedIndexTransactionMap transactionMap,
@@ -123,8 +110,6 @@ public abstract class FileBasedIndex {
                         AbstractVfsAdapter vfsAdapter,
                         IndexingStamp indexingStamp,
                         SerializationManager sm /*need this parameter to ensure component dependency*/) throws IOException {
-    myVfManager = vfManager;
-    myFileDocumentManager = fdm;
     myUnsavedDocumentsManager = unsavedDocumentsManager;
     myIndexIndicesManager = indexIndicesManager;
     myTransactionMap = transactionMap;
@@ -175,87 +160,10 @@ public abstract class FileBasedIndex {
     });
 
     myChangedFilesCollector = new ChangedFilesCollector();
+  }
 
-    /*
-    final File workInProgressFile = getMarkerFile();
-    if (workInProgressFile.exists()) {
-      // previous IDEA session was closed incorrectly, so drop all indices
-      FileUtil.delete(PathManager.getIndexRoot());
-    }
-    */
-
-    try {
-      final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
-      for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        ourRebuildStatus.put(extension.getName(), new AtomicInteger(OK));
-      }
-
-      final File corruptionMarker = new File(PathManager.getIndexRoot(), CORRUPTION_MARKER_NAME);
-      final boolean currentVersionCorrupted = corruptionMarker.exists();
-      boolean versionChanged = false;
-      for (FileBasedIndexExtension<?, ?> extension : extensions) {
-        versionChanged |= registerIndexer(extension, currentVersionCorrupted);
-      }
-      FileUtil.delete(corruptionMarker);
-
-      String rebuildNotification = null;
-      if (currentVersionCorrupted) {
-        rebuildNotification = "Index files on disk are corrupted. Indices will be rebuilt.";
-      }
-      else if (versionChanged) {
-        rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";
-      }
-      if (rebuildNotification != null
-          && Registry.is("ide.showIndexRebuildMessage")) {
-        notifyIndexRebuild(rebuildNotification);
-      }
-
-      dropUnregisteredIndices();
-
-      // check if rebuild was requested for any index during registration
-      for (ID<?, ?> indexId : myIndexIndicesManager.keySet()) {
-        if (ourRebuildStatus.get(indexId).compareAndSet(REQUIRES_REBUILD, OK)) {
-          try {
-            clearIndex(indexId);
-          }
-          catch (StorageException e) {
-            requestRebuild(indexId);
-            LOG.error(e);
-          }
-        }
-      }
-
-      myVfManager.addVirtualFileListener(myChangedFilesCollector);
-
-      IndexableFileSet additionalIndexableFileSet = myVfsAdapter.getAdditionalIndexableFileSet();
-      if(additionalIndexableFileSet != null)
-        registerIndexableSet(additionalIndexableFileSet, null);
-    }
-    catch (Exception t)
-    {
-      LOG.error(t);
-    }
-    finally {
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @Override
-        public void run() {
-          performShutdown();
-        }
-      });
-      //FileUtil.createIfDoesntExist(workInProgressFile);
-      saveRegisteredIndices(myIndexIndicesManager.keySet());
-      myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
-        int lastModCount = 0;
-        @Override
-        public void run() {
-          if (lastModCount == myLocalModCount) {
-            flushAllIndices(lastModCount);
-          }
-          lastModCount = myLocalModCount;
-        }
-      });
-
-    }
+  public int getLocalModCount() {
+    return myLocalModCount;
   }
 
   protected void notifyIndexRebuild(String rebuildNotification) {
@@ -276,6 +184,14 @@ public abstract class FileBasedIndex {
     return myVfsAdapter;
   }
 
+  public <K, V> void addNotRequiringContentIndex(ID<K, V> name) {
+    myNotRequiringContentIndices.add(name);
+  }
+
+  public <K, V> void addRequiringContentIndices(ID<K, V> name) {
+    myRequiringContentIndices.add(name);
+  }
+
   private static class FileBasedIndexHolder {
     private static final FileBasedIndex ourInstance = ApplicationManager.getApplication().getComponent(FileBasedIndex.class);
   }
@@ -283,300 +199,6 @@ public abstract class FileBasedIndex {
   public static FileBasedIndex getInstance() {
     return FileBasedIndexHolder.ourInstance;
   }
-
-  /**
-   * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
-   *
-   * @param extension
-   * @param isCurrentVersionCorrupted
-   */
-  private <K, V> boolean registerIndexer(final FileBasedIndexExtension<K, V> extension, final boolean isCurrentVersionCorrupted) throws IOException {
-    final ID<K, V> name = extension.getName();
-    final int version = extension.getVersion();
-    final File versionFile = IndexInfrastructure.getVersionFile(name);
-    final boolean versionFileExisted = versionFile.exists();
-    boolean versionChanged = false;
-    if (isCurrentVersionCorrupted || IndexInfrastructure.versionDiffers(versionFile, version)) {
-      if (!isCurrentVersionCorrupted && versionFileExisted) {
-        versionChanged = true;
-        LOG.info("Version has changed for index " + extension.getName() + ". The index will be rebuilt.");
-      }
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
-      IndexInfrastructure.rewriteVersion(versionFile, version);
-    }
-
-    for (int attempt = 0; attempt < 2; attempt++) {
-      try {
-        final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getCacheSize());
-        final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
-        final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
-        final InputFilter inputFilter = extension.getInputFilter();
-        
-        assert inputFilter != null : "Index extension " + name + " must provide non-null input filter";
-
-        myIndexIndicesManager.addNewIndex(name,
-                                    new Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>(index, new IndexableFilesFilter(inputFilter)));
-        myIndexIdToVersionMap.put(name, version);
-        if (!extension.dependsOnFileContent()) {
-          myNotRequiringContentIndices.add(name);
-        }
-        else {
-          myRequiringContentIndices.add(name);
-        }
-        myLimitsChecker.addNoLimitsFileTypes(extension.getFileTypesWithSizeLimitNotApplicable());
-        break;
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(name));
-        IndexInfrastructure.rewriteVersion(versionFile, version);
-      }
-    }
-    return versionChanged;
-  }
-
-  private static void saveRegisteredIndices(Collection<ID<?, ?>> ids) {
-    final File file = getRegisteredIndicesFile();
-    try {
-      FileUtil.createIfDoesntExist(file);
-      final DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-      try {
-        os.writeInt(ids.size());
-        for (ID<?, ?> id : ids) {
-          IOUtil.writeString(id.toString(), os);
-        }
-      }
-      finally {
-        os.close();
-      }
-    }
-    catch (IOException ignored) {
-    }
-  }
-
-  private static Set<String> readRegisteredIndexNames() {
-    final Set<String> result = new HashSet<String>();
-    try {
-      final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(getRegisteredIndicesFile())));
-      try {
-        final int size = in.readInt();
-        for (int idx = 0; idx < size; idx++) {
-          result.add(IOUtil.readString(in));
-        }
-      }
-      finally {
-        in.close();
-      }
-    }
-    catch (IOException ignored) {
-    }
-    return result;
-  }
-
-  private static File getRegisteredIndicesFile() {
-    return new File(PathManager.getIndexRoot(), "registered");
-  }
-
-  private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final ID<K, V> indexId, final FileBasedIndexExtension<K, V> extension, final MemoryIndexStorage<K, V> storage) throws IOException {
-    final MapReduceIndex<K, V, FileContent> index;
-    if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      final UpdatableIndex<K, V, FileContent> custom = ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(indexId, this, storage);
-      
-      assert custom != null : "Custom index implementation must not be null; index: " + indexId;
-      
-      if (!(custom instanceof MapReduceIndex)) {
-        return custom;
-      }
-      index = (MapReduceIndex<K,V, FileContent>)custom;
-    }
-    else {
-      index = new MapReduceIndex<K, V, FileContent>(indexId, extension.getIndexer(), storage);
-    }
-
-    final KeyDescriptor<K> keyDescriptor = extension.getKeyDescriptor();
-    index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
-      @Override
-      public PersistentHashMap<Integer, Collection<K>> create() {
-        try {
-          return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
-
-    return index;
-  }
-
-  private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(final ID<K, ?> indexId,
-                                                                                       final KeyDescriptor<K> keyDescriptor,
-                                                                                       MemoryIndexStorage<K, ?> storage) throws IOException {
-    final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(indexId);
-    final Ref<Boolean> isBufferingMode = new Ref<Boolean>(false);
-    final Map<Integer, Collection<K>> tempMap = new HashMap<Integer, Collection<K>>();
-
-    final DataExternalizer<Collection<K>> dataExternalizer = new DataExternalizer<Collection<K>>() {
-      @Override
-      public void save(DataOutput out, Collection<K> value) throws IOException {
-        try {
-          DataInputOutputUtil.writeINT(out, value.size());
-          for (K key : value) {
-            keyDescriptor.save(out, key);
-          }
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("Error saving data for index " + indexId, e);
-        }
-      }
-
-      @Override
-      public Collection<K> read(DataInput in) throws IOException {
-        try {
-          final int size = DataInputOutputUtil.readINT(in);
-          final List<K> list = new ArrayList<K>(size);
-          for (int idx = 0; idx < size; idx++) {
-            list.add(keyDescriptor.read(in));
-          }
-          return list;
-        }
-        catch (IllegalArgumentException e) {
-          throw new IOException("Error reading data for index " + indexId, e);
-        }
-      }
-    };
-    
-    // Important! Update IdToDataKeysIndex depending on the sate of "buffering" flag from the MemoryStorage.
-    // If buffering is on, all changes should be done in memory (similar to the way it is done in memory storage).
-    // Otherwise data in IdToDataKeysIndex will not be in sync with the 'main' data in the index on disk and index updates will be based on the
-    // wrong sets of keys for the given file. This will lead to unpredictable results in main index because it will not be
-    // cleared properly before updating (removed data will still be present on disk). See IDEA-52223 for illustration of possible effects.
-
-    final PersistentHashMap<Integer, Collection<K>> map = new PersistentHashMap<Integer, Collection<K>>(
-      indexStorageFile, new EnumeratorIntegerDescriptor(), dataExternalizer
-    ) {
-
-      @Override
-      protected Collection<K> doGet(Integer integer) throws IOException {
-        if (isBufferingMode.get()) {
-          final Collection<K> collection = tempMap.get(integer);
-          if (collection != null) {
-            return collection;
-          }
-        }
-        return super.doGet(integer);
-      }
-
-      @Override
-      protected void doPut(Integer integer, Collection<K> ks) throws IOException {
-        if (isBufferingMode.get()) {
-          tempMap.put(integer, ks == null? Collections.<K>emptySet() : ks);
-        }
-        else {
-          super.doPut(integer, ks);
-        }
-      }
-
-      @Override
-      protected void doRemove(Integer integer) throws IOException {
-        if (isBufferingMode.get()) {
-          tempMap.put(integer, Collections.<K>emptySet());
-        }
-        else {
-          super.doRemove(integer);
-        }
-      }
-    };
-
-    storage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
-      @Override
-      public void bufferingStateChanged(boolean newState) {
-        synchronized (map) {
-          isBufferingMode.set(newState);
-        }
-      }
-      @Override
-      public void memoryStorageCleared() {
-        synchronized (map) {
-          tempMap.clear();
-        }
-      }
-    });
-    return map;
-  }
-
-  public void disposeComponent() {
-    performShutdown();
-  }
-
-  public void initComponent() {
-  }
-
-  private final AtomicBoolean myShutdownPerformed = new AtomicBoolean(false);
-
-  private void performShutdown() {
-    if (!myShutdownPerformed.compareAndSet(false, true)) {
-      return; // already shut down
-    }
-    try {
-      if (myFlushingFuture != null) {
-        myFlushingFuture.cancel(false);
-        myFlushingFuture = null;
-      }
-
-      myFileDocumentManager.saveAllDocuments();
-    }
-    finally {
-      LOG.info("START INDEX SHUTDOWN");
-      try {
-        myChangedFilesCollector.forceUpdate(null, null, null, true);
-
-        for (ID<?, ?> indexId : myIndexIndicesManager.keySet()) {
-          final UpdatableIndex<?, ?, FileContent> index = myIndexIndicesManager.getIndex(indexId);
-          assert index != null;
-          checkRebuild(indexId, true); // if the index was scheduled for rebuild, only clean it
-          //LOG.info("DISPOSING " + indexId);
-          index.dispose();
-        }
-
-        myVfManager.removeVirtualFileListener(myChangedFilesCollector);
-
-        //FileUtil.delete(getMarkerFile());
-      }
-      catch (Throwable e) {
-        LOG.info("Problems during index shutdown", e);
-        throw new RuntimeException(e);
-      }
-      LOG.info("END INDEX SHUTDOWN");
-    }
-  }
-
-  private void flushAllIndices(final long modCount) {
-    if (HeavyProcessLatch.INSTANCE.isRunning()) {
-      return;
-    }
-    myIndexingStamp.flushCache();
-    for (ID<?, ?> indexId : new ArrayList<ID<?, ?>>(myIndexIndicesManager.keySet())) {
-      if (HeavyProcessLatch.INSTANCE.isRunning() || modCount != myLocalModCount) {
-        return; // do not interfere with 'main' jobs
-      }
-      try {
-        final UpdatableIndex<?, ?, FileContent> index = myIndexIndicesManager.getIndex(indexId);
-        if (index != null) {
-          index.flush();
-        }
-      }
-      catch (StorageException e) {
-        LOG.info(e);
-        requestRebuild(indexId);
-      }
-    }
-
-    if (!HeavyProcessLatch.INSTANCE.isRunning() && modCount == myLocalModCount) { // do not interfere with 'main' jobs
-      SerializationManager.getInstance().flushNameStorage();
-    }
-  }
-
   /**
    * @param project it is guaranteed to return data which is up-to-date withing the project
    * Keys obtained from the files which do not belong to the project specified may not be up-to-date or even exist
@@ -1014,9 +636,9 @@ public abstract class FileBasedIndex {
     }
   }
 
-  private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
-    final AtomicInteger status = ourRebuildStatus.get(indexId);
-    if (status.get() == OK) return;
+  public void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {
+    final AtomicInteger status = myRebuildStatus.get(indexId);
+    if (status.get() == REBUILD_OK) return;
     if (status.compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag(null);
 
@@ -1034,7 +656,7 @@ public abstract class FileBasedIndex {
             LOG.info(e);
           }
           finally {
-            status.compareAndSet(REBUILD_IN_PROGRESS, OK);
+            status.compareAndSet(REBUILD_IN_PROGRESS, REBUILD_OK);
           }
         }
       };
@@ -1077,18 +699,16 @@ public abstract class FileBasedIndex {
     }
   }
 
+  public void putIndex(ID<?, ?> name, int version) {
+    myIndexIdToVersionMap.put(name, version);
+  }
+
   protected void cleanupMemoryStorage() {
     myIndexIndicesManager.cleanupMemoryStorage();
   }
 
-  private void dropUnregisteredIndices() {
-    final Set<String> indicesToDrop = readRegisteredIndexNames();
-    for (ID<?, ?> key : myIndexIndicesManager.keySet()) {
-      indicesToDrop.remove(key.toString());
-    }
-    for (String s : indicesToDrop) {
-      FileUtil.delete(IndexInfrastructure.getIndexRootDir(ID.create(s)));
-    }
+  public ChangedFilesCollector getChangedFilesCollector() {
+    return myChangedFilesCollector;
   }
 
   public void requestRebuild(ID<?, ?> indexId) {
@@ -1098,7 +718,7 @@ public abstract class FileBasedIndex {
   public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag(null);
     LOG.info("Rebuild requested for index " + indexId, throwable);
-    ourRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
+    myRebuildStatus.get(indexId).set(REQUIRES_REBUILD);
   }
 
   public int getNumberOfPendingInvalidations() {
@@ -1182,7 +802,7 @@ public abstract class FileBasedIndex {
 
   private void updateSingleIndex(final ID<?, ?> indexId, final VirtualFile file, final FileContent currentFC)
     throws StorageException {
-    if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
+    if (myRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
     }
     myLocalModCount++;
@@ -1255,7 +875,7 @@ public abstract class FileBasedIndex {
     }
   }
 
-  private final class ChangedFilesCollector extends VirtualFileAdapter {
+  public final class ChangedFilesCollector extends VirtualFileAdapter {
     private final Set<VirtualFile> myFilesToUpdate = new ConcurrentHashSet<VirtualFile>();
     private final Queue<InvalidationTask> myFutureInvalidations = new ConcurrentLinkedQueue<InvalidationTask>();
 
@@ -1518,7 +1138,7 @@ public abstract class FileBasedIndex {
 
     private final Semaphore myForceUpdateSemaphore = new Semaphore();
 
-    private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo, 
+    public void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo,
                              boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       for (VirtualFile file: getAllFilesToUpdate()) {
@@ -1689,19 +1309,6 @@ public abstract class FileBasedIndex {
     myChangedFilesCollector.forceUpdate(null, null, null, true);
     myIndexableSets.remove(set);
     myIndexableSetToProjectMap.remove(set);
-  }
-
-  private static class IndexableFilesFilter implements InputFilter {
-    private final InputFilter myDelegate;
-
-    private IndexableFilesFilter(InputFilter delegate) {
-      myDelegate = delegate;
-    }
-
-    @Override
-    public boolean acceptInput(final VirtualFile file) {
-      return file instanceof VirtualFileWithId && myDelegate.acceptInput(file);
-    }
   }
 
   protected void cleanupProcessedFlag(VirtualFile root) {
