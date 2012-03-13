@@ -287,7 +287,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     boolean hasAssignment = var.getInitializerGroovy() != null || var instanceof GrParameter;
     SearchScope scope = method == null ? GlobalSearchScope.projectScope(var.getProject()) : new LocalSearchScope(method);
     for (PsiReference reference : ReferencesSearch.search(var, scope).findAll()) {
-      if (reference instanceof GrReferenceExpression && PsiUtil.isLValue((GrReferenceExpression)reference)) {
+      if (reference instanceof GrReferenceExpression &&
+          (PsiUtil.isLValue((GrReferenceExpression)reference) ||
+           ((GrReferenceExpression)reference).getParent() instanceof GrPostfixExpression)) {
         if (hasAssignment) {
           return true;
         }
