@@ -14,10 +14,7 @@ import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.CompilerExcludes;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.*;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.ProjectLevelBuilder;
@@ -476,13 +473,14 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                                 ? outputFilePath + RELEASE_SUFFIX
                                 : outputFilePath;
 
-      // todo: filter ignored files
+      final IgnoredFilePatterns ignoredFilePatterns = context.getProject().getIgnoredFilePatterns();
+
       final Map<AndroidCompilerMessageKind, List<String>> messages = AndroidApt
         .packageResources(target, -1, manifestFile.getPath(), resourceDirPaths, assetsDirPaths, outputPath, null,
                           !releasePackage, 0, new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            return true;
+            return !ignoredFilePatterns.isIgnored(PathUtil.getFileName(pathname.getPath()));
           }
         });
 
