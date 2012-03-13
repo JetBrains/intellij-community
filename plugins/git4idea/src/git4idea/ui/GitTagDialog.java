@@ -22,14 +22,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
+import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.util.GitUIUtil;
-import git4idea.util.StringScanner;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitUIUtil;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -201,7 +202,10 @@ public class GitTagDialog extends DialogWrapper {
       }
       finally {
         exceptions.addAll(h.errors());
-        GitRepositoryManager.getInstance(myProject).updateRepository(getGitRoot(), GitRepository.TrackedTopic.ALL);
+        GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
+        if (manager != null) {
+          manager.updateRepository(getGitRoot(), GitRepository.TrackedTopic.ALL);
+        }
       }
     }
     finally {

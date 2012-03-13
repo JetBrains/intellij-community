@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -50,9 +51,12 @@ public class GitRevert extends BasicAction {
     }
     RollbackChangesDialog.rollbackChanges(project, changes);
     for (VirtualFile conflictedFile : affectedFiles) {
-      final GitRepository repo = GitRepositoryManager.getInstance(project).getRepositoryForFile(conflictedFile);
-      if (repo != null) {
-        repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
+      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+      if (manager != null) {
+        final GitRepository repo = manager.getRepositoryForFile(conflictedFile);
+        if (repo != null) {
+          repo.update(GitRepository.TrackedTopic.ALL_CURRENT);
+        }
       }
     }
     return false;

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitDeprecatedRemote;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandlerUtil;
@@ -31,7 +32,6 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.jgit.GitHttpAdapter;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +183,7 @@ public class GitPullDialog extends DialogWrapper {
   @NotNull
   private Collection<String> getRemoteBranches(@NotNull GitDeprecatedRemote remote) {
     if (GitHttpAdapter.shouldUseJGit(remote.fetchUrl())) {
-      GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(gitRoot());
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(gitRoot());
       if (repository == null) {
         return Collections.emptyList();
       }

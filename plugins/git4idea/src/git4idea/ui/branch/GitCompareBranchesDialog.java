@@ -19,8 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.TabbedPaneImpl;
+import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitCommitCompareInfo;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +50,7 @@ public class GitCompareBranchesDialog extends DialogWrapper {
     myInitialRepo = initialRepo;
 
     String rootString;
-    if (compareInfo.getRepositories().size() == 1 && GitRepositoryManager.getInstance(myProject).moreThanOneRoot()) {
+    if (compareInfo.getRepositories().size() == 1 && GitUtil.getRepositoryManager(myProject).moreThanOneRoot()) {
       rootString = " in root " + GitUIUtil.getShortRepositoryName(initialRepo);
     }
     else {

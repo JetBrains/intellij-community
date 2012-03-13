@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.messages.MessageBusConnection;
+import git4idea.GitUtil;
 import git4idea.commands.Git;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -295,7 +296,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
-    final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
+    final GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForFile(file);
     return repository != null && repository.getRoot().equals(myRoot);
   }
   

@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -71,7 +72,10 @@ public class GitMerge extends GitRepositoryAction {
     }
     finally {
       exceptions.addAll(h.errors());
-      GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
+      GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+      if (manager != null) {
+        manager.updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
+      }
     }
     if (exceptions.size() != 0) {
       return;

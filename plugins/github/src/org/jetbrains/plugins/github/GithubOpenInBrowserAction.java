@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -64,7 +65,11 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
       return false;
     }
 
-    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(dir);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return false;
+    }
+    final GitRepository gitRepository = manager.getRepositoryForFile(dir);
     if (gitRepository == null) {
       return false;
     }
@@ -90,7 +95,11 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     }
 
     final VirtualFile root = project.getBaseDir();
-    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(root);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return;
+    }
+    final GitRepository gitRepository = manager.getRepositoryForFile(root);
     // Check that given repository is properly configured git repository
     final GitRemote gitRemote = GithubUtil.findGitHubRemoteBranch(gitRepository);
     final String pushUrl = GithubUtil.getGithubUrl(gitRemote);

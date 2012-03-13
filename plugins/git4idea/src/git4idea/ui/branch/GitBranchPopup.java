@@ -32,6 +32,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -81,7 +82,7 @@ class GitBranchPopup  {
   private GitBranchPopup(@NotNull Project project, @NotNull GitRepository currentRepository) {
     myProject = project;
     myCurrentRepository = currentRepository;
-    myRepositoryManager = GitRepositoryManager.getInstance(project);
+    myRepositoryManager = GitUtil.getRepositoryManager(project);
     myVcs = GitVcs.getInstance(project);
     myVcsSettings = GitVcsSettings.getInstance(myProject);
 
@@ -193,7 +194,7 @@ class GitBranchPopup  {
   private ActionGroup createActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
 
-    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myProject);
+    GitRepositoryManager repositoryManager = myRepositoryManager;
     if (repositoryManager.moreThanOneRoot()) {
 
       if (!myMultiRootBranchConfig.diverged() && userWantsSyncControl()) {
@@ -245,7 +246,7 @@ class GitBranchPopup  {
   private DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    for (GitRepository repository : GitRepositoryManager.getInstance(myProject).getRepositories()) {
+    for (GitRepository repository : myRepositoryManager.getRepositories()) {
       popupGroup.add(new RootAction(repository, highlightCurrentRepo() ? myCurrentRepository : null));
     }
     return popupGroup;

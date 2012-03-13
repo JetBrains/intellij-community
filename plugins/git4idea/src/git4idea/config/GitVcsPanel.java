@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
@@ -74,7 +75,7 @@ public class GitVcsPanel {
     myConvertTextFilesComboBox.setSelectedItem(CRLF_ASK);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
+    final GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myProject);
     mySyncBranchControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
   }
 

@@ -19,7 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.commands.*;
+import git4idea.GitUtil;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitTask;
+import git4idea.commands.GitTaskResult;
+import git4idea.commands.GitTaskResultHandlerAdapter;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitInteractiveRebaseEditorHandler;
 import git4idea.rebase.GitRebaseEditorService;
@@ -62,7 +66,10 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
       @Override
       protected void run(GitTaskResult taskResult) {
         editor.close();
-        GitRepositoryManager.getInstance(project).updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
+        GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+        if (manager != null) {
+          manager.updateRepository(root, GitRepository.TrackedTopic.ALL_CURRENT);
+        }
         notifyAboutErrorResult(taskResult, resultListener, exceptions, project);
       }
     });

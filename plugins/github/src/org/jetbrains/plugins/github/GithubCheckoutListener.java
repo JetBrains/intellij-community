@@ -10,6 +10,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.github.GitHubRepository;
 import com.intellij.tasks.github.GitHubRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import git4idea.GitUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -45,7 +46,11 @@ public class GithubCheckoutListener implements CheckoutListener {
       return null;
     }
     // Check if git is already initialized and presence of remote branch
-    final GitRepository gitRepository = GitRepositoryManager.getInstance(project).getRepositoryForFile(root);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return null;
+    }
+    final GitRepository gitRepository = manager.getRepositoryForFile(root);
     if (gitRepository == null){
       return null;
     }

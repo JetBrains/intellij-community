@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -163,7 +164,10 @@ public class GitBranchUiUtil {
     if (project == null) {
       return null;
     }
-    GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
+    if (manager == null) {
+      return null;
+    }
     VirtualFile file = getSelectedFile(project);
     if (file != null) {
       return manager.getRepositoryForRoot(getVcsRootFor(project, file));

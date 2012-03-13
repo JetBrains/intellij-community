@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVersion;
@@ -241,7 +242,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
      */
     @Nullable
     private DetachedRoot getDetachedRoot() {
-      GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(myPanel.getProject());
+      GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myPanel.getProject());
+      if (repositoryManager == null) {
+        return null;
+      }
       for (VirtualFile root : myPanel.getRoots()) {
         GitRepository repository = repositoryManager.getRepositoryForRoot(root);
         if (repository == null) {

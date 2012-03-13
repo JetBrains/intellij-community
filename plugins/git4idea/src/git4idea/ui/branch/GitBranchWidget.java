@@ -25,10 +25,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
+import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseEvent;
@@ -47,7 +47,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
 
   public GitBranchWidget(Project project) {
     super(project);
-    GitRepositoryManager.getInstance(project).addListenerToAllRepositories(this);
+    GitUtil.getRepositoryManager(project).addListenerToAllRepositories(this);
     mySettings = GitVcsSettings.getInstance(project);
     myMaxString = "Git: Rebasing master";
   }
@@ -161,7 +161,7 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
   @NotNull
   private static String getDisplayableBranchTooltip(GitRepository repo) {
     String text = GitBranchUiUtil.getDisplayableBranchText(repo);
-    if (GitRepositoryManager.getInstance(repo.getProject()).getRepositories().size() > 1) {
+    if (!GitUtil.justOneGitRepository(repo.getProject())) {
       return text + "\n" + "Root: " + repo.getRoot().getName();
     }
     return text;

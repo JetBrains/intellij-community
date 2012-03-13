@@ -29,11 +29,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import git4idea.GitBranch;
 import git4idea.GitDeprecatedRemote;
+import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -236,7 +236,7 @@ public class GitUIUtil {
         public void actionPerformed(final ActionEvent e) {
           VirtualFile root = (VirtualFile)gitRootChooser.getSelectedItem();
           assert root != null : "The root must not be null";
-          GitRepository repo = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+          GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
           assert repo != null : "The repository must not be null";
           GitBranch current = repo.getCurrentBranch();
           if (current == null) {
@@ -329,7 +329,7 @@ public class GitUIUtil {
    * @param fetchUrl       if true, the fetch url is shown instead of push url
    */
   public static void setupRemotes(final Project project, final VirtualFile root, final JComboBox remoteCombobox, final boolean fetchUrl) {
-    final GitRepository repo = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
+    final GitRepository repo = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root);
     assert repo != null : "GitRepository can't be null for root " + root;
     GitBranch gitBranch = repo.getCurrentBranch();
 
