@@ -420,13 +420,16 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   @Override
   public long getLength(@NotNull final VirtualFile file) {
     final VirtualFile canonicalFile = file.getCanonicalFile();
-    if (canonicalFile == null) return 0;
+    return canonicalFile == null ? 0 : getLengthNoFollow(canonicalFile);
+  }
 
-    final int id = getFileId(canonicalFile);
+  @SuppressWarnings("MethodMayBeStatic")
+  public long getLengthNoFollow(@NotNull final VirtualFile file) {
+    final int id = getFileId(file);
 
     long len = FSRecords.getLength(id);
     if (len == -1) {
-      len = (int)getDelegate(canonicalFile).getLength(canonicalFile);
+      len = (int)getDelegate(file).getLength(file);
       FSRecords.setLength(id, len);
     }
 
