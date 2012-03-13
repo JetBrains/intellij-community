@@ -377,7 +377,7 @@ public class IncProjectBuilder {
             }
 
             for (String output : outputs) {
-              FileUtil.delete(new File(output));
+              new File(output).delete();
             }
             sourceToOutputStorage.remove(deletedSource);
           }
@@ -516,7 +516,7 @@ public class IncProjectBuilder {
               if (logger.isEnabled()) {
                 allOutputs.add(output);
               }
-              FileUtil.delete(new File(output));
+              new File(output).delete();
             }
             srcToOut.remove(srcPath);
           }
