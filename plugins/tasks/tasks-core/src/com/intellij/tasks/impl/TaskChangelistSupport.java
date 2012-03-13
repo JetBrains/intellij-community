@@ -45,7 +45,7 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     final ActivateTaskDialog.MyTextFieldWithAutoCompletionListProvider completionProvider =
       new ActivateTaskDialog.MyTextFieldWithAutoCompletionListProvider(myProject);
 
-    TextFieldWithAutoCompletionContributor.installCompletion(document, myProject, completionProvider, false);
+    TextFieldWithAutoCompletionContributor.installCompletion(document, myProject, completionProvider, true);
   }
 
   public Consumer<LocalChangeList> addControls(JPanel bottomPanel, LocalChangeList initial) {
