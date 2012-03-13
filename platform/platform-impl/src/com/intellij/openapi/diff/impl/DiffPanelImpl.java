@@ -345,6 +345,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       Disposer.dispose((Disposable)component);
     }
     myPanel.setBottomComponent(null);
+    myPanel.setDataProvider(null);
+    myPanel.setScrollingPanel(null);
   }
 
   public JComponent getComponent() {

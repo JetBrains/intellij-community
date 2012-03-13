@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.containers.hash.HashMap;
 
 import java.awt.*;
 import java.util.*;
@@ -92,7 +91,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
 
       new AnAction() {
         public void actionPerformed(final AnActionEvent e) {
-          frameWrapper.getFrame().dispose();
+          Disposer.dispose(frameWrapper);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("CloseContent")),
                                   diffPanel.getComponent());
@@ -101,7 +100,7 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
     }
   }
 
-  private CompositeDiffPanel createPanel(DiffRequest request, final Window window, final Disposable parentDisposable) {
+  private CompositeDiffPanel createPanel(final DiffRequest request, final Window window, final Disposable parentDisposable) {
     final CompositeDiffPanel panel = new CompositeDiffPanel(request.getProject(), this, window, parentDisposable);
     request.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
     final List<Pair<String, DiffRequest>> layers = request.getOtherLayers();
@@ -110,6 +109,18 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
         layer.getSecond().getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), panel);
       }
     }
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        final String name = PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName();
+        request.getGenericData().remove(name);
+        if (layers != null) {
+          for (Pair<String, DiffRequest> layer : layers) {
+            layer.getSecond().getGenericData().remove(name);
+          }
+        }
+      }
+    });
     return panel;
   }
 
