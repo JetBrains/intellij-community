@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.util;
 
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public interface CachedValueProvider<T> {
   @Nullable
@@ -44,6 +47,10 @@ public interface CachedValueProvider<T> {
 
     public static <T> Result<T> create(@Nullable T value, Object... dependencies) {
       return new Result<T>(value, dependencies);
+    }
+
+    public static <T> Result<T> create(@Nullable T value, Collection<?> dependencies) {
+      return new Result<T>(value, ArrayUtil.toObjectArray(dependencies));
     }
 
     @Deprecated
