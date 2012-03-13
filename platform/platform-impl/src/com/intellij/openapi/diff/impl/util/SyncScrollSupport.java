@@ -19,10 +19,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
@@ -35,7 +38,7 @@ public class SyncScrollSupport implements Disposable {
   private final ArrayList<ScrollListener> myScrollers = new ArrayList<ScrollListener>();
 
   public void install(EditingSides[] sideContainers) {
-    dispose();
+    Disposer.dispose(this);
     Editor[] editors = new Editor[sideContainers.length + 1];
     editors[0] = sideContainers[0].getEditor(FragmentSide.SIDE1);
     for (int i = 0; i < sideContainers.length; i++) {
@@ -50,7 +53,7 @@ public class SyncScrollSupport implements Disposable {
 
   public void dispose() {
     for (ScrollListener scrollListener : myScrollers) {
-      scrollListener.dispose();
+      Disposer.dispose(scrollListener);
     }
     myScrollers.clear();
   }
@@ -79,7 +82,7 @@ public class SyncScrollSupport implements Disposable {
   }
 
   private class ScrollListener implements VisibleAreaListener, Disposable {
-    private final Pair<FragmentSide, EditingSides>[] myScrollContexts;
+    private Pair<FragmentSide, EditingSides>[] myScrollContexts;
     private final Editor myEditor;
 
     public ScrollListener(Pair<FragmentSide, EditingSides>[] scrollContexts, Editor editor) {
@@ -94,6 +97,7 @@ public class SyncScrollSupport implements Disposable {
 
     public void dispose() {
       myEditor.getScrollingModel().removeVisibleAreaListener(this);
+      myScrollContexts = null;
     }
 
     public void visibleAreaChanged(VisibleAreaEvent e) {
