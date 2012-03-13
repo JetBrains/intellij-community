@@ -45,7 +45,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
-  public boolean canDeleteElement(DataContext dataContext) {
+  public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     return modules != null && !isPrimaryModule(modules);
   }
@@ -64,7 +64,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     return false;
   }
 
-  public void deleteElement(DataContext dataContext) {
+  public void deleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     assert modules != null;
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);

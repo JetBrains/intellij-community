@@ -59,7 +59,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   CodeFoldingManagerImpl(Project project) {
     myProject = project;
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
-      public void updateStarted(final Document doc) {
+      public void updateStarted(@NotNull final Document doc) {
         resetFoldingInfo(doc);
       }
     });

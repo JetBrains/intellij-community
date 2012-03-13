@@ -812,12 +812,12 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       final PsiElement[] elements = getSelectedPsiElements();
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getSelectedPsiElements());
       ArrayList<PsiElement> validElements = new ArrayList<PsiElement>();
       for (PsiElement psiElement : allElements) {

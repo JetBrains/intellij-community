@@ -165,7 +165,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     Disposer.dispose(myBuilder);
   }
 
-  public void performCopy(DataContext dataContext) {
+  public void performCopy(@NotNull DataContext dataContext) {
     final ErrorTreeNodeDescriptor descriptor = getSelectedNodeDescriptor();
     if (descriptor != null) {
       final String[] lines = descriptor.getElement().getText();
@@ -173,11 +173,11 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  public boolean isCopyEnabled(DataContext dataContext) {
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return getSelectedNodeDescriptor() != null;
   }
 
-  public boolean isCopyVisible(DataContext dataContext) {
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
 

@@ -34,6 +34,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.util.ThrowableRunnable;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -58,7 +59,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public boolean canDeleteElement(DataContext dataContext) {
+  public boolean canDeleteElement(@NotNull DataContext dataContext) {
     // TODO: InplaceEditing
     List<RadComponent> selection = myDesigner.getActionsArea().getSelection();
     if (selection.isEmpty()) {
@@ -73,7 +74,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   }
 
   @Override
-  public void deleteElement(DataContext dataContext) {
+  public void deleteElement(@NotNull DataContext dataContext) {
     CommandProcessor.getInstance().executeCommand(myDesigner.getProject(), new Runnable() {
       public void run() {
         myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
@@ -125,18 +126,18 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public boolean isCopyVisible(DataContext dataContext) {
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
 
   @Override
-  public boolean isCopyEnabled(DataContext dataContext) {
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     // TODO: InplaceEditing
     return !myDesigner.getActionsArea().getSelection().isEmpty();
   }
 
   @Override
-  public void performCopy(DataContext dataContext) {
+  public void performCopy(@NotNull DataContext dataContext) {
     doCopy();
   }
 
@@ -164,12 +165,12 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public boolean isPastePossible(DataContext dataContext) {
+  public boolean isPastePossible(@NotNull DataContext dataContext) {
     return isPasteEnabled(dataContext);
   }
 
   @Override
-  public boolean isPasteEnabled(DataContext dataContext) {
+  public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     // TODO: InplaceEditing
     return getSerializedComponentData() != null;
   }
@@ -203,7 +204,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   }
 
   @Override
-  public void performPaste(DataContext dataContext) {
+  public void performPaste(@NotNull DataContext dataContext) {
     ComponentPasteFactory factory = myDesigner.createPasteFactory(getSerializedComponentData());
     if (factory != null) {
       myDesigner.getToolProvider().setActiveTool(new PasteTool(true, factory));
@@ -217,17 +218,17 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public boolean isCutVisible(DataContext dataContext) {
+  public boolean isCutVisible(@NotNull DataContext dataContext) {
     return true;
   }
 
   @Override
-  public boolean isCutEnabled(DataContext dataContext) {
+  public boolean isCutEnabled(@NotNull DataContext dataContext) {
     return isCopyEnabled(dataContext) && canDeleteElement(dataContext);
   }
 
   @Override
-  public void performCut(DataContext dataContext) {
+  public void performCut(@NotNull DataContext dataContext) {
     if (doCopy()) {
       deleteElement(dataContext);
     }

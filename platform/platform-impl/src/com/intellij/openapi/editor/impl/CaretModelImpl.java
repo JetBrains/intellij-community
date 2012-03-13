@@ -109,12 +109,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myVisualLineEnd = doc.getLineCount() > 1 ? doc.getLineStartOffset(1) : doc.getLineCount() == 0 ? 0 : doc.getLineEndOffset(0);
     DocumentBulkUpdateListener bulkUpdateListener = new DocumentBulkUpdateListener() {
       @Override
-      public void updateStarted(Document doc) {
+      public void updateStarted(@NotNull Document doc) {
         if (doc != myEditor.getDocument() && myOffset >= doc.getTextLength()) return;
         savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
       }
       @Override
-      public void updateFinished(Document doc) {
+      public void updateFinished(@NotNull Document doc) {
         if (doc != myEditor.getDocument() || myIsInUpdate) return;
         if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()) {
           moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());

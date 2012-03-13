@@ -293,14 +293,14 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       for (PsiDirectory directory : getSelectedDirectories()) {
         if (!directory.getManager().isInProject(directory)) return false;
       }
       return true;
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiDirectory> allElements = Arrays.asList(getSelectedDirectories());
       List<PsiElement> validElements = new ArrayList<PsiElement>();
       for (PsiElement psiElement : allElements) {

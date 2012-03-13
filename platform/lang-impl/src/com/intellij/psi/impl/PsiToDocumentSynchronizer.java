@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -68,9 +67,9 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     void syncDocument(Document document, PsiTreeChangeEventImpl event);
   }
 
-  private void doSync(final PsiTreeChangeEvent event, boolean force, final DocSyncAction syncAction) {
+  private void doSync(@NotNull final PsiTreeChangeEvent event, boolean force, @NotNull final DocSyncAction syncAction) {
     if (!toProcessPsiEvent()) return;
-    PsiFile psiFile = event.getFile();
+    final PsiFile psiFile = event.getFile();
     if (psiFile == null || psiFile.getNode() == null) return;
 
     final DocumentEx document = (DocumentEx)myPsiDocumentManager.getCachedDocument(psiFile);
@@ -96,7 +95,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     myPsiDocumentManager.commitOtherFilesAssociatedWithDocument(document, psiFile);
 
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
-    if(!insideTransaction){
+    if (!insideTransaction) {
       document.setModificationStamp(psiFile.getModificationStamp());
       if (LOG.isDebugEnabled()) {
         PsiDocumentManagerImpl.checkConsistency(psiFile, document);

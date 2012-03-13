@@ -45,6 +45,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class DeleteHandler {
   }
 
   public static class DefaultDeleteProvider implements DeleteProvider {
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
         return false;
       }
@@ -82,7 +83,7 @@ public class DeleteHandler {
       return elements;
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return;
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);

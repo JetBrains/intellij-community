@@ -32,7 +32,9 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, Schem
   TextAttributes getAttributes(TextAttributesKey key);
   void setAttributes(TextAttributesKey key, TextAttributes attributes);
 
+  @NotNull
   Color getDefaultBackground();
+  @NotNull
   Color getDefaultForeground();
 
   Color getColor(ColorKey key);

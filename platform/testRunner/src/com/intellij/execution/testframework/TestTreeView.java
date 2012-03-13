@@ -106,18 +106,18 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   }
 
   @Override
-  public void performCopy(DataContext dataContext) {
+  public void performCopy(@NotNull DataContext dataContext) {
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     CopyPasteManager.getInstance().setContents(new StringSelection(CopyReferenceAction.elementToFqn(element)));
   }
 
   @Override
-  public boolean isCopyEnabled(DataContext dataContext) {
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     return LangDataKeys.PSI_ELEMENT.getData(dataContext) != null;
   }
 
   @Override
-  public boolean isCopyVisible(DataContext dataContext) {
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
     return true;
   }
 

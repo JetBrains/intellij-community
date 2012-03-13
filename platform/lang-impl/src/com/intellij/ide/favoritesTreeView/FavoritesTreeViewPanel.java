@@ -441,12 +441,12 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       final PsiElement[] elements = getElementsToDelete();
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
       List<PsiElement> validElements = new ArrayList<PsiElement>();
       for (PsiElement psiElement : allElements) {

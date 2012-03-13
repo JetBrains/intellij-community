@@ -666,12 +666,12 @@ public class DynamicToolWindowWrapper {
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
         return new DeleteProvider() {
           @Override
-          public void deleteElement(DataContext dataContext) {
+          public void deleteElement(@NotNull DataContext dataContext) {
             deleteRow();
           }
 
           @Override
-          public boolean canDeleteElement(DataContext dataContext) {
+          public boolean canDeleteElement(@NotNull DataContext dataContext) {
             return myTreeTable.getTree().getSelectionPaths() != null;
           }
         };

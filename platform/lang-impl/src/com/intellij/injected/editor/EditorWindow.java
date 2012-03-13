@@ -301,6 +301,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.getContentComponent();
   }
 
+  @NotNull
   @Override
   public EditorGutterComponentEx getGutterComponentEx() {
     return myDelegate.getGutterComponentEx();
@@ -364,6 +365,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return new LogicalPosition(lineNumber, column);
   }
 
+  @NotNull
   @Override
   public EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme) {
     return myDelegate.createBoundColorSchemeDelegate(customGlobalScheme);
@@ -598,6 +600,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return new LogicalPosition(pos.line, pos.column);
   }
 
+  @NotNull
   @Override
   public DataContext getDataContext() {
     return myDelegate.getDataContext();
@@ -745,6 +748,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     return myDelegate.calcColumnNumber(myDocumentWindow.injectedToHost(offset), myDocumentWindow.injectedToHostLine(lineIndex));
   }
 
+  @NotNull
   @Override
   public IndentsModel getIndentsModel() {
     return myDelegate.getIndentsModel();

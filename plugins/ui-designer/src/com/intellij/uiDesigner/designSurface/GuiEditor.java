@@ -1037,7 +1037,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
    * Allows "DEL" button to work through the standard mechanism
    */
   private final class MyDeleteProvider implements DeleteProvider {
-    public void deleteElement(final DataContext dataContext) {
+    public void deleteElement(@NotNull final DataContext dataContext) {
       if (!GuiEditor.this.ensureEditable()) {
         return;
       }
@@ -1048,7 +1048,7 @@ public final class GuiEditor extends JPanel implements DataProvider {
       }, UIDesignerBundle.message("command.delete.selection"), null);
     }
 
-    public boolean canDeleteElement(final DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull final DataContext dataContext) {
       final UIDesignerToolWindowManager manager = UIDesignerToolWindowManager.getInstance(getProject());
       return
         !manager.getPropertyInspector().isEditing() &&

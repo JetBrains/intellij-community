@@ -95,12 +95,14 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
     myDefaultColorSchemesManager = defaultColorSchemesManager;
   }
 
+  @NotNull
   @Override
   public Color getDefaultBackground() {
     final Color c = getAttributes(HighlighterColors.TEXT).getBackgroundColor();
     return c != null ? c : Color.white;
   }
 
+  @NotNull
   @Override
   public Color getDefaultForeground() {
     final Color c = getAttributes(HighlighterColors.TEXT).getForegroundColor();

@@ -45,7 +45,7 @@ public class VfsImplUtil {
       return null;
     }
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
-      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
+      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         file = file.getParent();
       }
@@ -68,7 +68,7 @@ public class VfsImplUtil {
     if (file == null || !file.exists()) return null;
 
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
-      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
+      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         file = file.getParent();
       }
@@ -92,7 +92,7 @@ public class VfsImplUtil {
 
     LOG.assertTrue(basePath.length() <= normalizedPath.length(), vfs + " failed to extract root path: " + basePath + " from " + normalizedPath);
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
-      if (pathElement.length() == 0 || ".".equals(pathElement)) continue;
+      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
         file = file.getParent();
       }

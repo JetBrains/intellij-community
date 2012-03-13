@@ -59,11 +59,13 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setAttributes(key, attributes);
   }
 
+  @NotNull
   @Override
   public Color getDefaultBackground() {
     return myDelegate.getDefaultBackground();
   }
 
+  @NotNull
   @Override
   public Color getDefaultForeground() {
     return myDelegate.getDefaultForeground();

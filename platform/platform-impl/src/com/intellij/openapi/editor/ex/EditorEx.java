@@ -47,6 +47,7 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_FONT_SIZE = "fontSize";
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
+  @NotNull
   EditorGutterComponentEx getGutterComponentEx();
 
   EditorHighlighter getHighlighter();
@@ -108,6 +109,7 @@ public interface EditorEx extends Editor {
 
   void setFile(VirtualFile vFile);
 
+  @NotNull
   DataContext getDataContext();
 
   boolean processKeyTyped(@NotNull KeyEvent e);
@@ -156,6 +158,7 @@ public interface EditorEx extends Editor {
    * @param customGlobalScheme
    * @return
    */
+  @NotNull
   EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme);
 
   /**

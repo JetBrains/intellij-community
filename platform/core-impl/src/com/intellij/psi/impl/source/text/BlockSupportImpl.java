@@ -55,7 +55,7 @@ public class BlockSupportImpl extends BlockSupport {
   public BlockSupportImpl(Project project) {
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
-      public void updateStarted(final Document doc) {
+      public void updateStarted(@NotNull final Document doc) {
         doc.putUserData(DO_NOT_REPARSE_INCREMENTALLY,  Boolean.TRUE);
       }
     });

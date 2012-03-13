@@ -34,6 +34,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -265,6 +266,7 @@ class UndoableGroup {
     }
   }
 
+  @NotNull
   public Collection<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new THashSet<DocumentReference>();
     for (UndoableAction action : myActions) {

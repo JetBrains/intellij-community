@@ -64,6 +64,7 @@ public class CommandLineApplication {
 
   public static class MyDataManagerImpl extends DataManagerImpl {
     
+    @NotNull
     public DataContext getDataContext() {
       return new CommandLineDataContext();
     }

@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -33,12 +34,12 @@ import java.util.Arrays;
 public final class VirtualFileDeleteProvider implements DeleteProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider");
 
-  public boolean canDeleteElement(DataContext dataContext) {
+  public boolean canDeleteElement(@NotNull DataContext dataContext) {
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     return files != null && files.length > 0;
   }
 
-  public void deleteElement(DataContext dataContext) {
+  public void deleteElement(@NotNull DataContext dataContext) {
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files == null || files.length == 0) return;
 

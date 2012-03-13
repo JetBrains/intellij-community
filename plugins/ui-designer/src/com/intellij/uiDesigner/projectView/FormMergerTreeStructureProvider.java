@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -150,12 +151,12 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       myElements = collectFormPsiElements(selected);
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       DeleteHandler.deletePsiElement(myElements, project);
     }
 
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       return DeleteHandler.shouldEnableDeleteAction(myElements);
     }
 

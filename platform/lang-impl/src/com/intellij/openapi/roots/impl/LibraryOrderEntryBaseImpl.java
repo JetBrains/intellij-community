@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -37,9 +38,9 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LibraryOrderEntryBaseImpl");
   protected final ProjectRootManagerImpl myProjectRootManagerImpl;
   @NotNull protected DependencyScope myScope = DependencyScope.COMPILE;
-  private RootProvider myCurrentlySubscribedRootProvider = null;
+  @Nullable private RootProvider myCurrentlySubscribedRootProvider = null;
 
-  LibraryOrderEntryBaseImpl(RootModelImpl rootModel, ProjectRootManagerImpl instanceImpl) {
+  LibraryOrderEntryBaseImpl(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl instanceImpl) {
     super(rootModel);
     myProjectRootManagerImpl = instanceImpl;
   }
@@ -48,12 +49,13 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     updateFromRootProviderAndSubscribe();
   }
 
+  @Override
   @NotNull
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     if (type == OrderRootType.COMPILATION_CLASSES) {
       return getRootFiles(OrderRootType.CLASSES);
     }
-    else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
       if (!myScope.isForProductionCompile()) {
         return VirtualFile.EMPTY_ARRAY;
       }
@@ -65,15 +67,16 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return getRootFiles(type);
   }
 
+  @Override
   @NotNull
-  public String[] getUrls(OrderRootType type) {
+  public String[] getUrls(@NotNull OrderRootType type) {
     LOG.assertTrue(!getRootModel().getModule().isDisposed());
     RootProvider rootProvider = getRootProvider();
     if (rootProvider == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     if (type == OrderRootType.COMPILATION_CLASSES) {
       return rootProvider.getUrls(OrderRootType.CLASSES);
     }
-    else if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
+    if (type == OrderRootType.PRODUCTION_COMPILATION_CLASSES) {
       if (!myScope.isForProductionCompile()) {
         return ArrayUtil.EMPTY_STRING_ARRAY;
       }
@@ -85,28 +88,32 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return rootProvider.getUrls(type);
   }
 
-  public VirtualFile[] getRootFiles(OrderRootType type) {
+  public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
     return rootProvider == null ? VirtualFile.EMPTY_ARRAY : filterDirectories(rootProvider.getFiles(type));
   }
 
-  protected VirtualFile[] filterDirectories(VirtualFile[] files) {
+  protected VirtualFile[] filterDirectories(@NotNull VirtualFile[] files) {
     List<VirtualFile> filtered = ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, VirtualFile>() {
-      public VirtualFile fun(VirtualFile file) {
+      @Override
+      public VirtualFile fun(@NotNull VirtualFile file) {
         return file.isDirectory() ? file : null;
       }
     });
     return VfsUtil.toVirtualFileArray(filtered);
   }
 
+  @Nullable
   protected abstract RootProvider getRootProvider();
 
+  @NotNull
   @SuppressWarnings({"UnusedDeclaration"})
-  public String[] getRootUrls(OrderRootType type) {
+  public String[] getRootUrls(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
     return rootProvider == null ? ArrayUtil.EMPTY_STRING_ARRAY : rootProvider.getUrls(type);
   }
 
+  @Override
   @NotNull
   public final Module getOwnerModule() {
     return getRootModel().getModule();
@@ -114,6 +121,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   protected void updateFromRootProviderAndSubscribe() {
     getRootModel().makeExternalChange(new Runnable() {
+      @Override
       public void run() {
         resubscribe(getRootProvider());
       }
@@ -125,7 +133,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     subscribe(wrapper);
   }
 
-  private void subscribe(RootProvider wrapper) {
+  private void subscribe(@Nullable RootProvider wrapper) {
     if (wrapper != null) {
       myProjectRootManagerImpl.subscribeToRootProvider(this, wrapper);
     }

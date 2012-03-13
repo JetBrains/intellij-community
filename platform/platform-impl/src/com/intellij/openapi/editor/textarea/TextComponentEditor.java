@@ -286,6 +286,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
     return null;
   }
 
+  @NotNull
   @Override
   public IndentsModel getIndentsModel() {
     return new EmptyIndentsModel();

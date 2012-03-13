@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -60,6 +61,7 @@ public class ConsoleViewUtil {
 
   public static DelegateColorScheme updateConsoleColorScheme(EditorColorsScheme scheme) {
     return new DelegateColorScheme(scheme) {
+      @NotNull
       @Override
       public Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);

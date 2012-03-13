@@ -1176,7 +1176,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     @Override
-    public void performCopy(DataContext dataContext) {
+    public void performCopy(@NotNull DataContext dataContext) {
       final Node selectedNode = getSelectedNode();
       assert selectedNode != null;
       final String plainText = selectedNode.getText(UsageViewImpl.this);
@@ -1184,12 +1184,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
 
     @Override
-    public boolean isCopyEnabled(DataContext dataContext) {
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
       return getSelectedNode() != null;
     }
 
     @Override
-    public boolean isCopyVisible(DataContext dataContext) {
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
       return true;
     }
 

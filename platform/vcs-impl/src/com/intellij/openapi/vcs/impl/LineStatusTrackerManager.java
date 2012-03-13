@@ -106,12 +106,12 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     });
 
     project.getMessageBus().connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
-      public void updateStarted(final Document doc) {
+      public void updateStarted(@NotNull final Document doc) {
         final LineStatusTracker tracker = getLineStatusTracker(doc);
         if (tracker != null) tracker.startBulkUpdate();
       }
 
-      public void updateFinished(final Document doc) {
+      public void updateFinished(@NotNull final Document doc) {
         final LineStatusTracker tracker = getLineStatusTracker(doc);
         if (tracker != null) tracker.finishBulkUpdate();
       }

@@ -142,6 +142,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public void initComponents() {
     final EditorColorsScheme colorsScheme = myConsoleEditor.getColorsScheme();
     final DelegateColorScheme scheme = new DelegateColorScheme(colorsScheme) {
+      @NotNull
       @Override
       public Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);

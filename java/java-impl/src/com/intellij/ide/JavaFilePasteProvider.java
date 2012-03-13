@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -38,7 +39,7 @@ import java.awt.datatransfer.Transferable;
  * @author yole
  */
 public class JavaFilePasteProvider implements PasteProvider {
-  public void performPaste(final DataContext dataContext) {
+  public void performPaste(@NotNull final DataContext dataContext) {
     final Project project = DataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = DataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
@@ -107,11 +108,11 @@ public class JavaFilePasteProvider implements PasteProvider {
     }
   }
 
-  public boolean isPastePossible(final DataContext dataContext) {
+  public boolean isPastePossible(@NotNull final DataContext dataContext) {
     return true;
   }
 
-  public boolean isPasteEnabled(final DataContext dataContext) {
+  public boolean isPasteEnabled(@NotNull final DataContext dataContext) {
     final Project project = DataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = DataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {

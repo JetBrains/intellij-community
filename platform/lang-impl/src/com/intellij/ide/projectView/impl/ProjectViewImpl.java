@@ -851,12 +851,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
-    public boolean canDeleteElement(DataContext dataContext) {
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
       final PsiElement[] elements = getElementsToDelete();
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
-    public void deleteElement(DataContext dataContext) {
+    public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
       List<PsiElement> validElements = new ArrayList<PsiElement>();
       for (PsiElement psiElement : allElements) {
@@ -1002,11 +1002,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         final LibraryOrderEntry orderEntry = getSelectedLibrary();
         if (orderEntry != null) {
           return new DeleteProvider() {
-            public void deleteElement(DataContext dataContext) {
+            public void deleteElement(@NotNull DataContext dataContext) {
               detachLibrary(orderEntry, myProject);
             }
 
-            public boolean canDeleteElement(DataContext dataContext) {
+            public boolean canDeleteElement(@NotNull DataContext dataContext) {
               return true;
             }
           };
