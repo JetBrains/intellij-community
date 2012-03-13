@@ -16,6 +16,8 @@
 package git4idea.roots
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.VcsRootError
 import git4idea.test.GitMockVcsManager
 import git4idea.test.GitTestPlatformFacade
 import org.junit.Before
@@ -23,14 +25,14 @@ import org.junit.Test
 
 import static git4idea.test.GitGTestUtil.toAbsolute
 import static junit.framework.Assert.assertEquals
-import git4idea.test.GitMockVirtualFile
-import com.intellij.openapi.vcs.VcsRootError
 
 /**
  * 
  * @author Kirill Likhodedov
  */
 class GitRootErrorsFinderTest extends AbstractGitRootTest {
+
+  static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT
 
   Project myProject
   GitTestPlatformFacade myPlatformFacade
@@ -103,9 +105,66 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
            roots:  [".", "contrib"],
            errors: [unreg: ["..", "community"], extra: [".", "contrib"]]
   }
+  
+  @Test
+  void "Project root, no gits, then error about extra root"() {
+    doTest content_roots: ["."],
+           git:    [],
+           roots:  [PROJECT],
+           errors: [extra: [PROJECT]]
+  }
+  
+  @Test
+  void "Project root, full under git, then correct"() {
+    doTest content_roots: ["."],
+           git:    ["."],
+           roots:  [PROJECT],
+           errors: []
+  }
+  
+  @Test
+  void "Project root, git for a content root below project, then correct"() {
+    doTest content_roots: [".", "content_root"],
+           git:           [""],
+           roots:         [PROJECT],
+           errors:        []
+  }
+  
+  @Test
+  void "Project root, git below project folder not in a content root, then unregistered root error"() {
+  // this is to be fixed: auto-detection of Git repositories in subfolders for the <Project> mapping
+    doTest content_roots: ["."],
+           git:    ["community"],
+           roots:  [PROJECT],
+           errors: [unreg: ["community"]]
+  }
+
+  @Test
+  void "Project root, git for full project, content root, linked source, folder below project, then error in folder below"() {
+    doTest content_roots: [".", "content_root", "../linked_source_root"],
+           git:           [".", "content_root", "../linked_source_root", "folder"],
+           roots:         [PROJECT],
+           errors:        [unreg: ["folder"]]
+  }
+
+  @Test
+  void "Project root, root for folder, git for full project, content root, linked source, folder below project, then correct"() {
+    doTest content_roots: [".", "content_root", "../linked_source_root"],
+           git:           [".", "content_root", "../linked_source_root", "folder"],
+           roots:         [PROJECT, "folder"],
+           errors:        []
+  }
+
+  @Test
+  void "Project root, git like in IDEA project, then correct"() {
+    doTest content_roots: [".", "community", "contrib"],
+           git:           [".", "community", "contrib"],
+           roots:         [PROJECT],
+           errors:        []
+  }
 
   private void doTest(Map map) {
-    myProject = initProject(map.git, [], [])
+    myProject = initProject(map.git, [], map.content_roots)
     myVcsManager = (GitMockVcsManager) myPlatformFacade.getVcsManager(myProject)
 
     addVcsRoots(map.roots)
@@ -120,17 +179,22 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
 
   void addVcsRoots(Collection<String> relativeRoots) {
     relativeRoots.each {
-      String root = toAbsolute(it, myProject)
-      myVcsManager.addRoots(root)
+      if (it.equals(PROJECT)) {
+        myVcsManager.setProjectRootMapping()
+      }
+      else {
+        String root = toAbsolute(it, myProject)
+        myVcsManager.addRoots(root)
+      }
     }
   }
 
   VcsRootError unreg(String path) {
-    return new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, new GitMockVirtualFile(toAbsolute(path, myProject)))
+    return new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, toAbsolute(path, myProject))
   }
 
   VcsRootError extra(String path) {
-    return new VcsRootError(VcsRootError.Type.EXTRA_ROOT, new GitMockVirtualFile(toAbsolute(path, myProject)))
+    return new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, path.equals(PROJECT) ? PROJECT : toAbsolute(path, myProject))
   }
 
   

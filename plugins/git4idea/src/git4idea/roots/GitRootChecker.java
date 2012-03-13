@@ -16,10 +16,9 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.VcsRootError;
-import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,30 +31,44 @@ import java.util.Collection;
  */
 public class GitRootChecker implements VcsRootChecker {
 
-  private final Collection<VcsRootError> myErrors;
+  @NotNull private final Collection<VcsRootError> myErrors;
+  private final boolean myProjectMappingIsInvalid;
 
-  public GitRootChecker(Project project, PlatformFacade platformFacade) {
+  public GitRootChecker(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     myErrors = new GitRootErrorsFinder(project, platformFacade).find();
+    myProjectMappingIsInvalid = isProjectMappingInvalid();
+  }
+
+  private boolean isProjectMappingInvalid() {
+    for (VcsRootError error : myErrors) {
+      if (error.getType() == VcsRootError.Type.EXTRA_MAPPING && error.getMapping().equals(VcsDirectoryMapping.PROJECT_CONSTANT)) {
+        return  true;
+      }
+    }
+    return false;
   }
 
   @NotNull
   @Override
-  public Collection<VirtualFile> getUnregisteredRoots() {
-    Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
+  public Collection<String> getUnregisteredRoots() {
+    Collection<String> roots = new ArrayList<String>();
     for (VcsRootError error : myErrors) {
       if (error.getType() == VcsRootError.Type.UNREGISTERED_ROOT) {
-        roots.add(error.getRoot());
+        roots.add(error.getMapping());
       }
     }
     return roots;
   }
 
   @Override
-  public boolean isInvalidRoot(@NotNull String directory) {
+  public boolean isInvalidMapping(@NotNull VcsDirectoryMapping mapping) {
     // this information is available in myErrors,
     // but the method may be called in VcsDirectoryConfigurationPanel after adding a mapping (to highlight errors right away)
     // in which case ProjectLevelVcsManager#getAllVcsRoots() is not aware of new roots yet,
     // while GitRootErrorsFinder relies on the set of roots returned from ProjectLevelVcsManager.
-    return !new File(FileUtil.toSystemDependentName(directory), ".git").exists();
+    if (mapping.isDefaultMapping()) {
+      return myProjectMappingIsInvalid;
+    }
+    return !new File(mapping.getDirectory(), ".git").exists();
   }
 }

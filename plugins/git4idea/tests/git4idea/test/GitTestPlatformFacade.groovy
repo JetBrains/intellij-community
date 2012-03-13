@@ -38,7 +38,6 @@ public class GitTestPlatformFacade implements PlatformFacade {
   GitMockProjectRootManager myProjectRootManager
 
   public GitTestPlatformFacade() {
-    myVcsManager = new GitMockVcsManager()
     myTestDialogManager = new TestDialogManager()
     myProjectRootManager = new GitMockProjectRootManager()
   }
@@ -46,6 +45,9 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @NotNull
   @Override
   ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
+    if (!myVcsManager) {
+      myVcsManager = new GitMockVcsManager(project, this)
+    }
     return myVcsManager
   }
 

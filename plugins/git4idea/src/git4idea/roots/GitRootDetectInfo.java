@@ -57,7 +57,7 @@ public class GitRootDetectInfo {
   }
 
   @NotNull
-  Collection<VirtualFile> getRoots() {
+  public Collection<VirtualFile> getRoots() {
     return new ArrayList<VirtualFile>(myRoots);
   }
 

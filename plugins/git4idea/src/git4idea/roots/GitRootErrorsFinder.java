@@ -16,7 +16,9 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.PlatformFacade;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Detects actual Git roots and compares them to the ones registered in Settings | Version Control.
@@ -35,29 +38,63 @@ public class GitRootErrorsFinder {
 
   private final @NotNull Project myProject;
   private final @NotNull PlatformFacade myPlatformFacade;
+  private final @NotNull ProjectLevelVcsManager myVcsManager;
+  private final AbstractVcs myVcs;
 
   public GitRootErrorsFinder(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
     myProject = project;
     myPlatformFacade = platformFacade;
+    myVcsManager = myPlatformFacade.getVcsManager(myProject);
+    myVcs = myPlatformFacade.getVcs(myProject);
   }
 
   @NotNull
   public Collection<VcsRootError> find() {
-    ProjectLevelVcsManager vcsManager = myPlatformFacade.getVcsManager(myProject);
-    Collection<VirtualFile> vcsRoots = Arrays.asList(vcsManager.getRootsUnderVcs(myPlatformFacade.getVcs(myProject)));
+    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings(myVcs);
     Collection<VirtualFile> gitRoots = new GitRootDetector(myProject, myPlatformFacade).detect().getRoots();
+
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
-    for (VirtualFile vcsRoot : vcsRoots) {
-      if (!gitRoots.contains(vcsRoot)) {
-        errors.add(new VcsRootError(VcsRootError.Type.EXTRA_ROOT, vcsRoot));
-      }
-    }
+    errors.addAll(findExtraMappings(mappings, rootsToPaths(gitRoots)));
+    errors.addAll(findUnregisteredRoots(gitRoots));
+    return errors;
+  }
+
+  private Collection<VcsRootError> findUnregisteredRoots(Collection<VirtualFile> gitRoots) {
+    Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
+    Collection<VirtualFile> vcsRoots = Arrays.asList(myVcsManager.getRootsUnderVcs(myVcs));
     for (VirtualFile gitRoot : gitRoots) {
       if (!vcsRoots.contains(gitRoot)) {
-        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, gitRoot));
+        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, gitRoot.getPath()));
       }
     }
     return errors;
+  }
+
+  private static Collection<VcsRootError> findExtraMappings(List<VcsDirectoryMapping> mappings, Collection<String> gitPaths) {
+    Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
+    for (VcsDirectoryMapping mapping : mappings) {
+      if (mapping.isDefaultMapping()) {
+        if (gitPaths.isEmpty()) {
+          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT));
+        }
+      }
+      else {
+        String mappedPath = mapping.systemIndependentPath();
+        if (!gitPaths.contains(mappedPath)) {
+          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, mappedPath));
+        }
+      }
+    }
+    return errors;
+  }
+
+  @NotNull
+  private static Collection<String> rootsToPaths(@NotNull Collection<VirtualFile> gitRoots) {
+    Collection<String> gitPaths = new ArrayList<String>(gitRoots.size());
+    for (VirtualFile root : gitRoots) {
+      gitPaths.add(root.getPath());
+    }
+    return gitPaths;
   }
 
 }

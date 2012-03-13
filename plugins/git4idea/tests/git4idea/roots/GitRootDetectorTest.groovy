@@ -120,39 +120,39 @@ class GitRootDetectorTest extends AbstractGitRootTest {
 
   @Test
   void "linked source root alone should be detected"() {
-    doTest linked_roots: ["../linked_root"],
-           gits:         ["../linked_root"],
-           expected:     ["../linked_root"],
-           full:         false,
-           below:        false
+    doTest content_roots: ["../linked_root"],
+           gits:          ["../linked_root"],
+           expected:      ["../linked_root"],
+           full:          false,
+           below:         false
   }
 
   @Test
   void "linked source root and project root should be detected"() {
-    doTest linked_roots: ["../linked_root"],
-           gits:         [".", "../linked_root"],
-           expected:     [".", "../linked_root"],
-           full:         true,
-           below:        false
+    doTest content_roots: ["../linked_root"],
+           gits:          [".", "../linked_root"],
+           expected:      [".", "../linked_root"],
+           full:          true,
+           below:         false
   }
 
   @Test
   void "linked source below Git"() {
-    doTest linked_roots: ["../linked_root/src"],
-           gits:         [".", "../linked_root"],
-           expected:     [".", "../linked_root"],
-           full:         true,
-           below:        false
+    doTest content_roots: ["../linked_root/src"],
+           gits:          [".", "../linked_root"],
+           expected:      [".", "../linked_root"],
+           full:          true,
+           below:         false
   }
 
   @Test
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS
   void "don't scan deeper than 2 levels below a content root"() {
-    doTest linked_roots:  ["content_root"],
-           gits:          ["community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3"],
-           expected:      ["community", "content_root/lev1/lev2"],
-           full:          false,
-           below:         false
+    doTest content_roots:  ["content_root"],
+           gits:           ["community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3"],
+           expected:       ["community", "content_root/lev1/lev2"],
+           full:           false,
+           below:          false
   }
 
   /**
@@ -161,7 +161,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
    * @param map
    */
   private void doTest(Map map) {
-    myProject = initProject(map.gits, map.project, map.linked_roots)
+    myProject = initProject(map.gits, map.project, map.content_roots)
     testInfo empty: map.expected.empty,
              full : map.full,
              roots: map.expected,

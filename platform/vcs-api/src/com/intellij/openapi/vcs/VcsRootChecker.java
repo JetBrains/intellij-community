@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,14 +28,15 @@ import java.util.Collection;
 public interface VcsRootChecker {
 
   /**
-   * @return VCS roots which are not registered in the Settings | Version Control.
+   * @return Paths to VCS roots which are not registered in the Settings | Version Control.
    */
   @NotNull
-  Collection<VirtualFile> getUnregisteredRoots();
+  Collection<String> getUnregisteredRoots();
 
   /**
+   *
    * @param directory root to be checked.
    * @return true if the given directory is not a VCS root.
    */
-  boolean isInvalidRoot(@NotNull String directory);
+  boolean isInvalidMapping(@NotNull VcsDirectoryMapping mapping);
 }

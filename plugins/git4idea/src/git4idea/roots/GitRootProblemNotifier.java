@@ -24,8 +24,8 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
@@ -73,8 +73,8 @@ public class GitRootProblemNotifier {
       return;
     }
 
-    Collection<VirtualFile> unregisteredRoots = getUnregisteredRoots(errors);
-    Collection<VirtualFile> invalidRoots = getInvalidRoots(errors);
+    Collection<String> unregisteredRoots = getUnregisteredRoots(errors);
+    Collection<String> invalidRoots = getInvalidRoots(errors);
 
     String title = makeTitle(unregisteredRoots, invalidRoots);
     String description = makeDescription(unregisteredRoots, invalidRoots);
@@ -106,35 +106,38 @@ public class GitRootProblemNotifier {
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  private static String makeDescription(@NotNull Collection<VirtualFile> unregisteredRoots, @NotNull Collection<VirtualFile> invalidRoots) {
-    Function<VirtualFile, String> rootToString = new Function<VirtualFile, String>() {
+  private static String makeDescription(@NotNull Collection<String> unregisteredRoots, @NotNull Collection<String> invalidRoots) {
+    Function<String, String> rootToDisplayableString = new Function<String, String>() {
       @Override
-      public String fun(VirtualFile virtualFile) {
-        return FileUtil.toSystemDependentName(virtualFile.getPath());
+      public String fun(String path) {
+        if (path.equals(VcsDirectoryMapping.PROJECT_CONSTANT)) {
+          return StringUtil.escapeXml(path);
+        }
+        return FileUtil.toSystemDependentName(path);
       }
     };
 
     StringBuilder description = new StringBuilder();
     if (!invalidRoots.isEmpty()) {
       if (invalidRoots.size() == 1) {
-        description.append("The directory " + rootToString.fun(invalidRoots.iterator().next()) + " is registered as a Git root, " +
-                           "but it is not.");
+        description.append("The directory " + rootToDisplayableString.fun(invalidRoots.iterator().next()) + " is registered as a Git root, " +
+                           "but no Git repositories were found there.");
       }
       else {
         description.append("The following directories are registered as Git roots, but they are not: <br/>" +
-                           StringUtil.join(invalidRoots, rootToString, ", "));
+                           StringUtil.join(invalidRoots, rootToDisplayableString, ", "));
       }
       description.append("<br/>");
     }
 
     if (!unregisteredRoots.isEmpty()) {
       if (unregisteredRoots.size() == 1) {
-        description.append("The directory " + rootToString.fun(unregisteredRoots.iterator().next()) + " is under Git, " +
+        description.append("The directory " + rootToDisplayableString.fun(unregisteredRoots.iterator().next()) + " is under Git, " +
                            "but is not registered in the Settings.");
       }
       else {
         description.append("The following directories are roots of Git repositories, but they are not registered in the Settings: <br/>" +
-                           StringUtil.join(unregisteredRoots, rootToString, ", "));
+                           StringUtil.join(unregisteredRoots, rootToDisplayableString, ", "));
       }
       description.append("<br/>");
     }
@@ -145,10 +148,10 @@ public class GitRootProblemNotifier {
   }
 
   @NotNull
-  private static String makeTitle(@NotNull Collection<VirtualFile> unregisteredRoots, @NotNull Collection<VirtualFile> invalidRoots) {
+  private static String makeTitle(@NotNull Collection<String> unregisteredRoots, @NotNull Collection<String> invalidRoots) {
     String title;
     if (unregisteredRoots.isEmpty()) {
-      title = "Invalid Git " + pluralize("root", invalidRoots.size());
+      title = "Invalid Git root " + pluralize("mapping", invalidRoots.size());
     }
     else if (invalidRoots.isEmpty()) {
       title = "Unregistered Git " + pluralize("root", unregisteredRoots.size()) + " detected";
@@ -160,21 +163,21 @@ public class GitRootProblemNotifier {
   }
 
   @NotNull
-  private static Collection<VirtualFile> getUnregisteredRoots(@NotNull Collection<VcsRootError> errors) {
+  private static Collection<String> getUnregisteredRoots(@NotNull Collection<VcsRootError> errors) {
     return filterErrorsByType(errors, VcsRootError.Type.UNREGISTERED_ROOT);
   }
 
   @NotNull
-  private static Collection<VirtualFile> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
-    return filterErrorsByType(errors, VcsRootError.Type.EXTRA_ROOT);
+  private static Collection<String> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
+    return filterErrorsByType(errors, VcsRootError.Type.EXTRA_MAPPING);
   }
 
   @NotNull
-  private static Collection<VirtualFile> filterErrorsByType(@NotNull Collection<VcsRootError> errors, @NotNull VcsRootError.Type type) {
-    Collection<VirtualFile> roots = new ArrayList<VirtualFile>();
+  private static Collection<String> filterErrorsByType(@NotNull Collection<VcsRootError> errors, @NotNull VcsRootError.Type type) {
+    Collection<String> roots = new ArrayList<String>();
     for (VcsRootError error : errors) {
       if (error.getType() == type) {
-        roots.add(error.getRoot());
+        roots.add(error.getMapping());
       }
     }
     return roots;

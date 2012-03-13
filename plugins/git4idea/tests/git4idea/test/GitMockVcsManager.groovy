@@ -16,6 +16,7 @@
 package git4idea.test
 
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.history.VcsHistoryCache
 import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.openapi.vcs.impl.VcsDescriptor
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PairProcessor
 import com.intellij.util.Processor
+import git4idea.PlatformFacade
 import com.intellij.openapi.vcs.*
 
 /**
@@ -32,20 +34,38 @@ import com.intellij.openapi.vcs.*
  */
 public class GitMockVcsManager extends ProjectLevelVcsManager {
 
+  Project myProject
+  PlatformFacade myPlatformFacade
   Collection<String> myRoots = []
+  boolean myProjectRootMapping = false
+
+  GitMockVcsManager(Project project, PlatformFacade facade) {
+    myProject = project
+    myPlatformFacade = facade
+  }
 
   void addRoots(String... roots) {
     roots.each { myRoots << it }
   }
 
+  void setProjectRootMapping() {
+    myProjectRootMapping = true
+  }
+
   @Override
   VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
-    myRoots.collect { new GitMockVirtualFile(it) }
+    List<VirtualFile> roots = myRoots.collect { new GitMockVirtualFile(it) }
+    roots.addAll(myPlatformFacade.getProjectRootManager(myProject).getContentRoots())
+    roots
   }
 
   @Override
   List<VcsDirectoryMapping> getDirectoryMappings() {
-    myRoots.collect { new VcsDirectoryMapping(it, "Git") }
+    List<VcsDirectoryMapping> roots = myRoots.collect { new VcsDirectoryMapping(it, "Git") }
+    if (myProjectRootMapping) {
+      roots << new VcsDirectoryMapping("", "Git")
+    }
+    roots
   }
 
   @Override

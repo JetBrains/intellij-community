@@ -37,15 +37,15 @@ class AbstractGitRootTest {
    * And creates an instance of the project.
    * @param gitRoots path to actual .git roots, relative to the project dir.
    */
-  Project initProject(Collection<String> gitRoots, Collection<String> projectStructure, Collection<String> linkedRoots) {
+  Project initProject(Collection<String> gitRoots, Collection<String> projectStructure, Collection<String> contentRoots = []) {
     String projectDir = createDirs(gitRoots)
     Project project = [
       getBaseDir: { new GitMockVirtualFile(projectDir) }
     ] as Project
     createProjectStructure(project, projectStructure);
-    createProjectStructure(project, linkedRoots);
+    createProjectStructure(project, contentRoots);
 
-    linkedRoots.each { myPlatformFacade.myProjectRootManager.myContentRoots << GitMockVirtualFile.fromPath(it, project)}
+    contentRoots.each { myPlatformFacade.myProjectRootManager.myContentRoots << GitMockVirtualFile.fromPath(it, project)}
 
     project
   }

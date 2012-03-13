@@ -116,7 +116,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     private boolean mappingIsError(VcsDirectoryMapping mapping) {
       String vcs = mapping.getVcs();
       VcsRootChecker checker = myCheckers.get(vcs);
-      return checker != null && checker.isInvalidRoot(mapping.getDirectory());
+      return checker != null && checker.isInvalidMapping(mapping);
     }
   }
 
@@ -395,14 +395,14 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     Box box = Box.createVerticalBox();
     for (Map.Entry<String, VcsRootChecker> entry : myCheckers.entrySet()) {
       VcsRootChecker checker = entry.getValue();
-      for (final VirtualFile root : checker.getUnregisteredRoots()) {
+      for (final String root : checker.getUnregisteredRoots()) {
         final String vcs = entry.getKey();
-        String title = "Unregistered " + vcs + " root: " + FileUtil.toSystemDependentName(root.getPresentableUrl());
+        String title = "Unregistered " + vcs + " root: " + FileUtil.toSystemDependentName(root);
         final VcsRootErrorLabel vcsRootErrorLabel = new VcsRootErrorLabel(title);
         vcsRootErrorLabel.setAddRootLinkHandler(new Runnable() {
           @Override
           public void run() {
-            addMapping(new VcsDirectoryMapping(root.getPath(), vcs));
+            addMapping(new VcsDirectoryMapping(root, vcs));
             vcsRootErrorLabel.setVisible(false);
           }
         });

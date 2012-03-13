@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,16 +28,16 @@ import org.jetbrains.annotations.NotNull;
 public class VcsRootError {
 
   private final @NotNull Type myType;
-  private final @NotNull VirtualFile myRoot;
+  private final @NotNull String myMapping;
 
   public enum Type {
-    EXTRA_ROOT,
+    EXTRA_MAPPING,
     UNREGISTERED_ROOT
   }
 
-  public VcsRootError(@NotNull Type type, @NotNull VirtualFile root) {
+  public VcsRootError(@NotNull Type type, @NotNull String mapping) {
     myType = type;
-    myRoot = root;
+    myMapping = mapping;
   }
 
   @NotNull
@@ -47,13 +46,13 @@ public class VcsRootError {
   }
 
   @NotNull
-  public VirtualFile getRoot() {
-    return myRoot;
+  public String getMapping() {
+    return myMapping;
   }
 
   @Override
   public String toString() {
-    return String.format("GitRootError{myType=%s, myRoot=%s}", myType, myRoot);
+    return String.format("VcsRootError{%s - %s}", myType, myMapping);
   }
 
   @Override
@@ -63,7 +62,7 @@ public class VcsRootError {
 
     VcsRootError error = (VcsRootError)o;
 
-    if (!myRoot.equals(error.myRoot)) return false;
+    if (!myMapping.equals(error.myMapping)) return false;
     if (myType != error.myType) return false;
 
     return true;
@@ -73,7 +72,7 @@ public class VcsRootError {
   @Override
   public int hashCode() {
     int result = myType != null ? myType.hashCode() : 0;
-    result = 31 * result + myRoot.hashCode();
+    result = 31 * result + myMapping.hashCode();
     return result;
   }
 }
