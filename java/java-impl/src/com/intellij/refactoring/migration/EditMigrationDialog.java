@@ -19,28 +19,19 @@ package com.intellij.refactoring.migration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class EditMigrationDialog extends DialogWrapper{
-  private JTable myTable;
-  private JButton myEditButton;
-  private JButton myAddButton;
-  private JButton myRemoveButton;
-  private JButton myMoveUpButton;
-  private JButton myMoveDownButton;
+  private JBTable myTable;
   private JTextField myNameField;
   private JTextArea myDescriptionTextArea;
   private final Project myProject;
@@ -79,146 +70,62 @@ public class EditMigrationDialog extends DialogWrapper{
   }
 
   protected JComponent createNorthPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 1;
-    gbConstraints.anchor = GridBagConstraints.EAST;
-    JLabel promptLabel = new JLabel(RefactoringBundle.message("migration.map.name.prompt"));
-    panel.add(promptLabel, gbConstraints);
-
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     myNameField = new JTextField(myMigrationMap.getName());
     myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         validateOKButton();
       }
     });
-    panel.add(myNameField, gbConstraints);
 
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 1;
-    gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-    gbConstraints.anchor = GridBagConstraints.NORTHEAST;
-    JLabel descriptionPromptLabel = new JLabel(RefactoringBundle.message("migration.map.description.label"));
-    panel.add(descriptionPromptLabel, gbConstraints);
-
-    gbConstraints.fill = GridBagConstraints.BOTH;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-
-    myDescriptionTextArea = new JTextArea(myMigrationMap.getDescription(), 3, 40);
+    myDescriptionTextArea = new JTextArea(myMigrationMap.getDescription(), 3, 40) {
+      @Override
+      public Dimension getMinimumSize() {
+        return super.getPreferredSize();
+      }
+    };
     myDescriptionTextArea.setLineWrap(true);
     myDescriptionTextArea.setWrapStyleWord(true);
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionTextArea);
-    scrollPane.setBorder(null);
-    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
     myDescriptionTextArea.setFont(myNameField.getFont());
     myDescriptionTextArea.setBackground(myNameField.getBackground());
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myDescriptionTextArea);
     scrollPane.setBorder(myNameField.getBorder());
-    panel.add(scrollPane, gbConstraints);
 
-    return panel;
+    return FormBuilder.createFormBuilder()
+      .addLabeledComponent(new JLabel(RefactoringBundle.message("migration.map.name.prompt")), myNameField)
+      .addLabeledComponent(new JLabel(RefactoringBundle.message("migration.map.description.label")), scrollPane)
+      .addVerticalGap(UIUtil.LARGE_VGAP).getPanel();
   }
 
   protected JComponent createCenterPanel() {
-    JPanel tablePanel = new JPanel(new BorderLayout());
-    tablePanel.add(createTable(), BorderLayout.CENTER);
-
-    JPanel tableButtonsPanel = new JPanel();
-    tableButtonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-    tableButtonsPanel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.insets = new Insets(5,0,5,0);
-
-    myAddButton = new JButton(RefactoringBundle.message("migration.add.button"));
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        validateOKButton();
-      }
-    });
-    tableButtonsPanel.add(myAddButton, gbConstraints);
-
-    myEditButton = new JButton(RefactoringBundle.message("migration.edit.button"));
-    tableButtonsPanel.add(myEditButton, gbConstraints);
-    myRemoveButton = new JButton(RefactoringBundle.message("migration.remove.button"));
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        validateOKButton();
-      }
-    });
-    tableButtonsPanel.add(myRemoveButton, gbConstraints);
-
-    myMoveUpButton = new JButton(RefactoringBundle.message("migration.move.up.button"));
-    tableButtonsPanel.add(myMoveUpButton, gbConstraints);
-    myMoveDownButton = new JButton(RefactoringBundle.message("migration.move.down.button"));
-    tableButtonsPanel.add(myMoveDownButton, gbConstraints);
-
-    gbConstraints.weighty = 1;
-    tableButtonsPanel.add(new JPanel(), gbConstraints);
-
-    tablePanel.add(tableButtonsPanel, BorderLayout.EAST);
-
-    myEditButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
+    return ToolbarDecorator.createDecorator(createTable())
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          addRow();
+          validateOKButton();
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          removeRow();
+          validateOKButton();
+        }
+      }).setEditAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
           edit();
         }
-      }
-    );
-
-    myAddButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          addRow();
-        }
-      }
-    );
-
-    myRemoveButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
-          removeRow();
-        }
-      }
-    );
-
-    myMoveUpButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
+      }).setUpAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
           moveUp();
         }
-      }
-    );
-
-    myMoveDownButton.addActionListener(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent event) {
+      }).setDownAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
           moveDown();
         }
-      }
-    );
-
-    myTable.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener(){
-        public void valueChanged(ListSelectionEvent e){
-          enableButtons();
-        }
-      }
-    );
-
-    enableButtons();
-    return tablePanel;
+      }).createPanel();
   }
 
   private void edit() {
@@ -293,7 +200,7 @@ public class EditMigrationDialog extends DialogWrapper{
     myTable.setRowSelectionInterval(selected + 1, selected + 1);
   }
 
-  private JScrollPane createTable() {
+  private JBTable createTable() {
     final String[] names = {
       RefactoringBundle.message("migration.type.column.header"),
       RefactoringBundle.message("migration.old.name.column.header"),
@@ -349,21 +256,11 @@ public class EditMigrationDialog extends DialogWrapper{
     };
 
     // Create the table
-    myTable = new Table(dataModel);
+    myTable = new JBTable(dataModel);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myTable.setPreferredScrollableViewportSize(new Dimension(300, myTable.getRowHeight() * 10));
 
-    return ScrollPaneFactory.createScrollPane(myTable);
+    return myTable;
   }
-
-  private void enableButtons() {
-    int selectedIndex = myTable.getSelectedRow();
-    myEditButton.setEnabled(selectedIndex != -1);
-    myRemoveButton.setEnabled(selectedIndex != -1);
-    myMoveDownButton.setEnabled(selectedIndex != -1 && selectedIndex < myTable.getRowCount() - 1);
-    myMoveUpButton.setEnabled(selectedIndex > 0);
-  }
-
 }
-
