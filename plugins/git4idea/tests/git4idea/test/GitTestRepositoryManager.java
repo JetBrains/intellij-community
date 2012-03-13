@@ -22,6 +22,7 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,39 +30,38 @@ import java.util.List;
  */
 public class GitTestRepositoryManager implements GitRepositoryManager {
 
+  @Nullable
   @Override
   public GitRepository getRepositoryForRoot(@Nullable VirtualFile root) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
+  @Nullable
   @Override
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @NotNull
   @Override
   public List<GitRepository> getRepositories() {
-    throw new UnsupportedOperationException();
+    return Collections.emptyList();
   }
 
   @Override
   public boolean moreThanOneRoot() {
-    throw new UnsupportedOperationException();
+    return false;
   }
 
   @Override
   public void addListenerToAllRepositories(@NotNull GitRepositoryChangeListener listener) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
   public void updateRepository(VirtualFile root, GitRepository.TrackedTopic... topics) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
   public void updateAllRepositories(GitRepository.TrackedTopic... topics) {
-    throw new UnsupportedOperationException();
   }
 }
