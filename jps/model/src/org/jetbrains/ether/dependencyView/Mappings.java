@@ -1140,13 +1140,13 @@ public class Mappings {
               }
             }
 
-            if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
-              final Collection<Pair<MethodRepr, ClassRepr>> overriding = u.findOverridingMethods(m, it, false);
+            final Collection<Pair<MethodRepr, ClassRepr>> overriding = u.findOverridingMethods(m, it, false);
+            for (final Pair<MethodRepr, ClassRepr> p : overriding) {
+              final DependencyContext.S fName = myClassToSourceFile.get(p.second.name);
+              affectedFiles.add(new File(myContext.getValue(fName)));
+            }
 
-              for (final Pair<MethodRepr, ClassRepr> p : overriding) {
-                final DependencyContext.S fName = myClassToSourceFile.get(p.second.name);
-                affectedFiles.add(new File(myContext.getValue(fName)));
-              }
+            if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
 
               for (DependencyContext.S p : propagated) {
                 if (!p.equals(it.name)) {
