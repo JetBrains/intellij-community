@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
@@ -22,7 +23,6 @@ import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.java.FormsParsing;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -146,8 +146,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         success = false;
         continue;
       }
-      final File outputDirectory = moduleData.getOutputDirectory();
-      final File aidlOutputDirectory = new File(outputDirectory, AndroidJpsUtil.GENERATED_AIDL_DIR_NAME);
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File aidlOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AIDL_GENERATED_SOURCE_ROOT_NAME);
       final IAndroidTarget target = moduleData.getAndroidTarget();
 
       try {
@@ -177,8 +177,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           final String moduleName = getCannonicalModuleName(module);
           final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(moduleName, false);
           sourceToOutputMap.update(filePath, outputFilePath);
-
-          JavaBuilder.addTempSourcePathRoot(context, aidlOutputDirectory);
+          context.markDirty(outputFile);
         }
       }
       catch (final IOException e) {
@@ -209,9 +208,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final File outputDirectory = moduleData.getOutputDirectory();
-      final File rsOutputDirectory = new File(outputDirectory, AndroidJpsUtil.GENERATED_RENDER_SCRIPT_DIR_NAME);
-      final File generatedResourcesDir = new File(outputDirectory, AndroidJpsUtil.GENERATED_RESOURCES_DIR_NAME);
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File rsOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME);
+      final File generatedResourcesDir = AndroidJpsUtil.getGeneratedResourcesStorage(module);
 
       final IAndroidTarget target = moduleData.getAndroidTarget();
       final String sdkLocation = moduleData.getSdkLocation();
@@ -246,7 +245,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(moduleName, false);
           sourceToOutputMap.update(filePath, newFilePaths);
 
-          JavaBuilder.addTempSourcePathRoot(context, rsOutputDirectory);
+          for (File newFile : newFiles) {
+            context.markDirty(newFile);
+          }
         }
       }
       catch (IOException e) {
@@ -311,12 +312,17 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
             continue;
           }
         }
-        final File outputDirectory = moduleData.getOutputDirectory();
-        final File aptOutputDirectory = new File(outputDirectory, AndroidJpsUtil.GENERATED_AAPT_DIR_NAME);
+        final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+        final File aptOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME);
 
         if (aptOutputDirectory.exists()) {
           // clear directory, because it may contain obsolete files (ex. if package name was changed)
+          final List<File> filesToDelete = collectJavaFilesRecursively(aptOutputDirectory);
           FileUtil.delete(aptOutputDirectory);
+
+          for (File file : filesToDelete) {
+            context.markDeleted(file);
+          }
         }
 
         context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aapt", module.getName())));
@@ -333,7 +339,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         }
         else {
           storage.update(module.getName(), newState);
-          JavaBuilder.addTempSourcePathRoot(context, aptOutputDirectory);
+          markDirtyRecursively(aptOutputDirectory, context);
         }
       }
       catch (IOException e) {
@@ -342,6 +348,44 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
     return success;
+  }
+
+  private static boolean markDirtyRecursively(@NotNull File dir, @NotNull final CompileContext context) {
+    final Ref<Boolean> success = Ref.create(true);
+
+    FileUtil.processFilesRecursively(dir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (file.isFile() && "java".equals(FileUtil.getExtension(file.getName()))) {
+          try {
+            context.markDirty(file);
+          }
+          catch (IOException e) {
+            AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+            success.set(false);
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+    return success.get();
+  }
+
+  @NotNull
+  private static List<File> collectJavaFilesRecursively(@NotNull File dir) {
+    final List<File> result = new ArrayList<File>();
+
+    FileUtil.processFilesRecursively(dir, new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        if (file.isFile() && "java".equals(FileUtil.getExtension(file.getName()))) {
+          result.add(file);
+        }
+        return true;
+      }
+    });
+    return result;
   }
 
   @NotNull
@@ -480,6 +524,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         @Override
         public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
           if (myLastName != null && PERMISSION_TAG.equals(name) || PERMISSION_GROUP_TAG.equals(name)) {
+            assert myLastName != null;
             result.add(new ResourceEntry(name, myLastName));
           }
         }
@@ -538,15 +583,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       final AndroidSdk androidSdk = pair.getFirst();
       final IAndroidTarget target = pair.getSecond();
 
-      final File outputDir = context.getProjectPaths().getModuleOutputDir(module, false);
-      if (outputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
-          .message("android.jps.errors.output.dir.not.specified", module.getName())));
-        success = false;
-        continue;
-      }
-
-      moduleDataMap.put(module, new MyModuleData(outputDir, androidSdk.getSdkPath(), target, facet));
+      moduleDataMap.put(module, new MyModuleData(androidSdk.getSdkPath(), target, facet));
     }
 
     return success ? moduleDataMap : null;
@@ -591,24 +628,16 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static class MyModuleData {
-    private final File myOutputDirectory;
     private final String mySdkLocation;
     private final IAndroidTarget myAndroidTarget;
     private final AndroidFacet myFacet;
 
-    private MyModuleData(@NotNull File outputDirectory,
-                         @NotNull String sdkLocation,
+    private MyModuleData(@NotNull String sdkLocation,
                          @NotNull IAndroidTarget androidTarget,
                          @NotNull AndroidFacet facet) {
-      myOutputDirectory = outputDirectory;
       mySdkLocation = sdkLocation;
       myAndroidTarget = androidTarget;
       myFacet = facet;
-    }
-
-    @NotNull
-    public File getOutputDirectory() {
-      return myOutputDirectory;
     }
 
     @NotNull

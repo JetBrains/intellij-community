@@ -19,6 +19,7 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.Facet;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
+import org.jetbrains.jps.incremental.Paths;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -46,10 +47,11 @@ class AndroidJpsUtil {
       return "jar".equals(ext) || "class".equals(ext);
     }
   };
-  @NonNls public static final String GENERATED_AIDL_DIR_NAME = "generated-aidl";
-  @NonNls public static final String GENERATED_RENDER_SCRIPT_DIR_NAME = "generated-rs";
-  @NonNls public static final String GENERATED_RESOURCES_DIR_NAME = "generated-resources";
-  @NonNls public static final String GENERATED_AAPT_DIR_NAME = "generated-aapt";
+  @NonNls public static final String GENERATED_RESOURCES_DIR_NAME = "generated_resources";
+  @NonNls public static final String AAPT_GENERATED_SOURCE_ROOT_NAME = "aapt";
+  @NonNls public static final String AIDL_GENERATED_SOURCE_ROOT_NAME = "aidl";
+  @NonNls public static final String RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME = "rs";
+  @NonNls private static final String GENERATED_SOURCES_FOLDER_NAME = "generated_sources";
 
   private AndroidJpsUtil() {
   }
@@ -178,9 +180,10 @@ class AndroidJpsUtil {
 
     if (libraries != null) {
       // todo: do not include provided libs there
-      for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE, exportedLibrariesOnly)) {
+      for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, exportedLibrariesOnly)) {
         if (item instanceof Library && !(item instanceof Sdk)) {
-          for (String filePath : item.getClasspathRoots(ClasspathKind.PRODUCTION_COMPILE)) {
+          for (Object filePathObj : ((Library)item).getClasspath()) {
+            final String filePath = (String)filePathObj;
             final File file = new File(filePath);
 
             if (file.exists()) {
@@ -197,7 +200,7 @@ class AndroidJpsUtil {
       }
     }
 
-    for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE, false)) {
+    for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, false)) {
       if (item instanceof Module) {
         final Module depModule = (Module)item;
         final AndroidFacet depFacet = getFacet(depModule);
@@ -378,6 +381,11 @@ class AndroidJpsUtil {
       result.add(resDir.getPath());
     }
 
+    final File generatedResourcesStorage = getGeneratedResourcesStorage(facet.getModule());
+    if (generatedResourcesStorage.exists()) {
+      result.add(generatedResourcesStorage.getPath());
+    }
+
     for (AndroidFacet depFacet : getAllDependentAndroidLibraries(facet.getModule())) {
       final File depResDir = getResourceDirForCompilationPath(depFacet);
       if (depResDir != null) {
@@ -404,7 +412,7 @@ class AndroidJpsUtil {
   private static void collectDependentAndroidLibraries(@NotNull Module module,
                                                        @NotNull List<AndroidFacet> result,
                                                        @NotNull Set<String> visitedSet) {
-    for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE, false)) {
+    for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, false)) {
       if (item instanceof Module) {
         final Module depModule = (Module)item;
         final AndroidFacet depFacet = getFacet(depModule);
@@ -461,7 +469,7 @@ class AndroidJpsUtil {
       }
     }
 
-    for (ClasspathItem classpathItem : module.getClasspath(ClasspathKind.PRODUCTION_COMPILE)) {
+    for (ClasspathItem classpathItem : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME)) {
       if (classpathItem instanceof Module) {
         final Module depModule = (Module)classpathItem;
 
@@ -497,5 +505,21 @@ class AndroidJpsUtil {
   @NotNull
   public static String getApkName(@NotNull Module module) {
     return module.getName() + ".apk";
+  }
+
+  @NotNull
+  public static File getGeneratedSourcesStorage(@NotNull Module module) {
+    final File dataStorageRoot = Paths.getDataStorageRoot(module.getProject());
+    final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
+    final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_SOURCES_FOLDER_NAME);
+    return new File(generatedSourcesRoot, module.getName());
+  }
+
+  @NotNull
+  public static File getGeneratedResourcesStorage(@NotNull Module module) {
+    final File dataStorageRoot = Paths.getDataStorageRoot(module.getProject());
+    final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
+    final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_RESOURCES_DIR_NAME);
+    return new File(generatedSourcesRoot, module.getName());
   }
 }
