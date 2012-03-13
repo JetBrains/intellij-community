@@ -27,8 +27,6 @@ public interface SpacingTokens extends GroovyElementTypes {
   TokenSet LEFT_BRACES = TokenSet.create(mLPAREN, mLBRACK, mLCURLY);
   TokenSet RIGHT_BRACES = TokenSet.create(mRPAREN, mRBRACK, mRCURLY);
 
-  TokenSet PUNCTUATION_SIGNS = TokenSet.create(mDOT, mMEMBER_POINTER, mSPREAD_DOT, mOPTIONAL_DOT, mCOMMA, mSEMI);
-
   TokenSet INDEX_OR_ARRAY = TokenSet.create(PATH_INDEX_PROPERTY, ARRAY_TYPE, ARRAY_DECLARATOR);
 
   TokenSet PREFIXES = TokenSet.create(mDEC, mINC, mAT, mBNOT, mLNOT);
@@ -36,4 +34,12 @@ public interface SpacingTokens extends GroovyElementTypes {
   TokenSet PREFIXES_OPTIONAL = TokenSet.create(mPLUS, mMINUS);
 
   TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
+
+  TokenSet LOGICAL_OPERATORS = TokenSet.create(mLAND, mLOR);
+  TokenSet EQUALITY_OPERATORS = TokenSet.create(mEQUAL, mNOT_EQUAL);
+  TokenSet RELATIONAL_OPERATORS = TokenSet.create(mGT, mGE, mLT, mLE);
+  TokenSet BITWISE_OPERATORS = TokenSet.create(mBAND, mBOR, mBXOR);
+  TokenSet ADDITIVE_OPERATORS = TokenSet.create(mPLUS, mMINUS);
+  TokenSet MULTIPLICATIVE_OPERATORS = TokenSet.create(mSTAR, mDIV, mMOD);
+  TokenSet SHIFT_OPERATORS = TokenSet.create(COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
 }

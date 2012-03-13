@@ -124,8 +124,20 @@ public abstract class GroovySpacingProcessorBasic {
     }
 
 /********** punctuation marks ************/
+    if (mCOMMA == leftType) {
+      return settings.SPACE_AFTER_COMMA ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
+    }
+    if (mCOMMA == rightType) {
+      return settings.SPACE_BEFORE_COMMA ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
+    }
+    if (mSEMI == leftType) {
+      return settings.SPACE_AFTER_SEMICOLON ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
+    }
+    if (mSEMI == rightType) {
+      return settings.SPACE_BEFORE_SEMICOLON ? COMMON_SPACING : NO_SPACING_WITH_NEWLINE;
+    }
     // For dots, commas etc.
-    if ((PUNCTUATION_SIGNS.contains(rightType)) ||
+    if ((DOTS.contains(rightType)) ||
         (mCOLON.equals(rightType) && !(right.getParent() instanceof GrConditionalExpression))) {
       return NO_SPACING_WITH_NEWLINE;
     }

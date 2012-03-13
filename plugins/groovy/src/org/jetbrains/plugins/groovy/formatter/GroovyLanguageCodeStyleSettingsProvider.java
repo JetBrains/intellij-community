@@ -47,7 +47,72 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       return;
     }
     if (settingsType == SettingsType.SPACING_SETTINGS) {
-      consumer.showAllStandardOptions();
+      consumer.showStandardOptions("INSERT_FIRST_SPACE_IN_LINE",
+                                   "SPACE_AROUND_ASSIGNMENT_OPERATORS",
+                                   "SPACE_AROUND_LOGICAL_OPERATORS",
+                                   "SPACE_AROUND_EQUALITY_OPERATORS",
+                                   "SPACE_AROUND_RELATIONAL_OPERATORS",
+                                   "SPACE_AROUND_BITWISE_OPERATORS",
+                                   "SPACE_AROUND_ADDITIVE_OPERATORS",
+                                   "SPACE_AROUND_MULTIPLICATIVE_OPERATORS",
+                                   "SPACE_AROUND_SHIFT_OPERATORS",
+                                   "SPACE_AROUND_UNARY_OPERATOR",
+                                   "SPACE_AFTER_COMMA",
+                                   "SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS",
+                                   "SPACE_BEFORE_COMMA",
+                                   "SPACE_AFTER_SEMICOLON",
+                                   "SPACE_BEFORE_SEMICOLON",
+                                   "SPACE_WITHIN_PARENTHESES",
+                                   "SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES",
+                                   "SPACE_WITHIN_METHOD_CALL_PARENTHESES",
+                                   "SPACE_WITHIN_METHOD_PARENTHESES",
+                                   "SPACE_WITHIN_IF_PARENTHESES",
+                                   "SPACE_WITHIN_WHILE_PARENTHESES",
+                                   "SPACE_WITHIN_FOR_PARENTHESES",
+//                                   "SPACE_WITHIN_TRY_PARENTHESES",
+                                   "SPACE_WITHIN_CATCH_PARENTHESES",
+                                   "SPACE_WITHIN_SWITCH_PARENTHESES",
+                                   "SPACE_WITHIN_SYNCHRONIZED_PARENTHESES",
+                                   "SPACE_WITHIN_CAST_PARENTHESES",
+                                   "SPACE_WITHIN_BRACKETS",
+                                   "SPACE_WITHIN_BRACES",
+//                                   "SPACE_WITHIN_ARRAY_INITIALIZER_BRACES",
+                                   "SPACE_AFTER_TYPE_CAST",
+                                   "SPACE_BEFORE_METHOD_CALL_PARENTHESES",
+                                   "SPACE_BEFORE_METHOD_PARENTHESES",
+                                   "SPACE_BEFORE_IF_PARENTHESES",
+                                   "SPACE_BEFORE_WHILE_PARENTHESES",
+                                   "SPACE_BEFORE_FOR_PARENTHESES",
+//                                   "SPACE_BEFORE_TRY_PARENTHESES",
+                                   "SPACE_BEFORE_CATCH_PARENTHESES",
+                                   "SPACE_BEFORE_SWITCH_PARENTHESES",
+                                   "SPACE_BEFORE_SYNCHRONIZED_PARENTHESES",
+                                   "SPACE_BEFORE_CLASS_LBRACE",
+                                   "SPACE_BEFORE_METHOD_LBRACE",
+                                   "SPACE_BEFORE_IF_LBRACE",
+                                   "SPACE_BEFORE_ELSE_LBRACE",
+                                   "SPACE_BEFORE_WHILE_LBRACE",
+                                   "SPACE_BEFORE_FOR_LBRACE",
+//                                   "SPACE_BEFORE_DO_LBRACE",
+                                   "SPACE_BEFORE_SWITCH_LBRACE",
+                                   "SPACE_BEFORE_TRY_LBRACE",
+                                   "SPACE_BEFORE_CATCH_LBRACE",
+                                   "SPACE_BEFORE_FINALLY_LBRACE",
+                                   "SPACE_BEFORE_SYNCHRONIZED_LBRACE",
+//                                   "SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE",
+//                                   "SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE",
+                                   "SPACE_BEFORE_ELSE_KEYWORD",
+//                                   "SPACE_BEFORE_WHILE_KEYWORD",
+                                   "SPACE_BEFORE_CATCH_KEYWORD",
+                                   "SPACE_BEFORE_FINALLY_KEYWORD",
+                                   "SPACE_BEFORE_QUEST",
+                                   "SPACE_AFTER_QUEST",
+                                   "SPACE_BEFORE_COLON",
+                                   "SPACE_AFTER_COLON",
+                                   "SPACE_BEFORE_TYPE_PARAMETER_LIST",
+                                   "SPACE_BEFORE_ANOTATION_PARAMETER_LIST",
+                                   "SPACE_WITHIN_ANNOTATION_PARENTHESES"
+      );
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT", "In named argument after ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
       return;
     }
@@ -145,7 +210,9 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   
   private final static String SPACING_SAMPLE =
     "class Foo {\n" +
-    "  public static foo(int x, int y) {\n" +
+    "  @Annotation(param=\"foo\")\n"+
+    "  @Ann([1, 2])\n" +
+    "  public static <T1, T2> void foo(int x, int y) {\n" +
     "    for (int i = 0; i < x; i++) {\n" +
     "      y += (y ^ 0x123) << 2\n" +
     "    }\n" +
@@ -168,6 +235,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "      } finally {\n" +
     "        int[] arr = (int[]) g(y)\n" +
     "        x = y >= 0 ? arr[y] : -1\n" +
+    "        y = [1, 2, 3] ?: 4\n" +
     "      }\n" +
     "    }\n" +
     "  }\n" +
