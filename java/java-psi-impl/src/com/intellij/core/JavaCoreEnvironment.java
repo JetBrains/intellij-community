@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.util.indexing.FileBasedIndex;
 
 import java.io.File;
 
@@ -86,6 +87,9 @@ public class JavaCoreEnvironment extends CoreEnvironment {
 
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
     myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
+
+    //
+    myApplication.registerService(FileBasedIndex.class, FileBasedIndex.class);
   }
 
   public void addToClasspath(File path) {
