@@ -127,8 +127,7 @@ public class UIUtil {
 
   public static final int DEFAULT_HGAP = 10;
   public static final int DEFAULT_VGAP = 4;
-  public static final int LARGE_HGAP = 30;
-  public static final int LARGE_VGAP = 20;
+  public static final int LARGE_VGAP = 12;
 
   public static final Insets PANEL_REGULAR_INSETS = new Insets(8, 12, 8, 12);
   public static final Insets PANEL_SMALL_INSETS = new Insets(5, 8, 5, 8);

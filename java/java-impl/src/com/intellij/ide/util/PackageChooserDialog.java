@@ -124,7 +124,6 @@ public class PackageChooserDialog extends PackageChooser {
       }
     );
 
-    myTree.setBorder(BorderFactory.createEtchedBorder());
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(new Dimension(500, 300));
 

@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -37,6 +36,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -65,7 +65,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
   @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
 
-  private JLabel myInfoLabel;
+  private JBLabel myInfoLabel;
   private JCheckBox myJavaDocCheckBox;
   private JCheckBox mySourcesCheckBox;
   private final Project myProject;
@@ -73,7 +73,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private AsyncProcessIcon myProgressIcon;
   private ComboboxWithBrowseButton myComboComponent;
   private JPanel myPanel;
-  private JLabel myCaptionLabel;
+  private JBLabel myCaptionLabel;
   private final THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates
     = new THashMap<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
   private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
@@ -88,12 +88,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myProject = project;
     myManaged = managed;
     myProgressIcon.suspend();
-    myCaptionLabel.setText("Enter keyword, pattern or class name to search by or Maven coordinates,\n" +
-                           "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':");
-    myCaptionLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-    myCaptionLabel.setUI(new MultiLineLabelUI());
-    myInfoLabel.setUI(new MultiLineLabelUI());
-    myInfoLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+    myCaptionLabel.setText("<html>" + StringUtil.escapeXml("enter keyword, pattern or class name to search by or Maven coordinates," +
+                           "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':") + "</html>");
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
 
@@ -108,7 +104,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myCombobox.setModel(new CollectionComboBoxModel(myShownItems, null));
     myCombobox.setEditable(true);
     final JTextField textField = (JTextField)myCombobox.getEditor().getEditorComponent();
-    textField.setColumns(50);
+    textField.setColumns(20);
     if (initialFilter != null) {
       textField.setText(initialFilter);
     }
@@ -257,7 +253,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   private void updateInfoLabel() {
-    myInfoLabel.setText("Found: " + myCoordinates.size() + "\nShowing: " + myCombobox.getModel().getSize());
+    myInfoLabel.setText("<html>Found: " + myCoordinates.size() + "<br>Showing: " + myCombobox.getModel().getSize() + "</html>");
   }
 
   @Override

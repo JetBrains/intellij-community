@@ -51,9 +51,9 @@ public class FrameworkSupportOptionsComponent {
     layout.setVerticalFill(true);
     myMainPanel = new JPanel(layout);
 
-    if (title != null) {
-      myMainPanel.setBorder(IdeBorderFactory.createTitledBorder(title, true));
-    }
+    //if (title != null) {
+    //  myMainPanel.setBorder(IdeBorderFactory.createTitledBorder(title, true));
+    //}
 
     final JComponent component = myConfigurable.createComponent();
     if (component != null) {
