@@ -1,14 +1,10 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.ui.ListSpeedSearch;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
@@ -92,16 +88,15 @@ public class ExistingTemplatesComponent {
       );
     }
 
-    DefaultActionGroup group = new DefaultActionGroup();
-    AnAction addAction = new AnAction(SSRBundle.message("create.template.action.name"), null, IconLoader.getIcon("/general/add.png")) {
-      public void actionPerformed(AnActionEvent e) {
-        addSelectedTreeNodeAndClose();
-      }
-    };
-
-    AnAction removeAction =
-      new AnAction(SSRBundle.message("remove.template.action.name"), null, IconLoader.getIcon("/general/remove.png")) {
-        public void actionPerformed(AnActionEvent e) {
+    panel = ToolbarDecorator.createDecorator(patternTree)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          addSelectedTreeNodeAndClose();
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
           Object selection = patternTree.getLastSelectedPathComponent();
 
           if (selection instanceof DefaultMutableTreeNode) {
@@ -114,22 +109,10 @@ public class ExistingTemplatesComponent {
             }
           }
         }
-      };
+      }).createPanel();
 
-    group.add(addAction);
-    group.add(removeAction);
+      new JPanel(new BorderLayout());
 
-    JPanel templatesPanel = new JPanel(new BorderLayout());
-    addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, templatesPanel);
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, templatesPanel);
-
-    templatesPanel.add(
-      BorderLayout.NORTH,
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent()
-    );
-    templatesPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(patternTree));
-
-    panel = templatesPanel;
     configureSelectTemplateAction(patternTree);
 
     historyModel = new DefaultListModel();
