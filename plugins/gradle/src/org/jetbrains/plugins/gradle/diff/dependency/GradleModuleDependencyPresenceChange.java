@@ -1,8 +1,10 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.dependency;
 
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.diff.GradleAbstractEntityPresenceChange;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency;
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
 import org.jetbrains.plugins.gradle.model.id.GradleModuleDependencyId;
@@ -12,7 +14,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  * @author Denis Zhdanov
  * @since 2/17/12 3:14 PM
  */
-public class GradleModuleDependencyPresenceChange extends GradleEntityPresenceChange<GradleModuleDependencyId> {
+public class GradleModuleDependencyPresenceChange extends GradleAbstractEntityPresenceChange<GradleModuleDependencyId> {
 
   public GradleModuleDependencyPresenceChange(@Nullable GradleModuleDependency gradle,
                                               @Nullable ModuleOrderEntry intellij)

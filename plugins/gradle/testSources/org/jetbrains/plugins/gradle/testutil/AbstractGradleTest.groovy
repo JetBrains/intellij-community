@@ -12,6 +12,13 @@ import org.picocontainer.defaults.DefaultPicoContainer
 import org.jetbrains.plugins.gradle.diff.*
 
 import static org.junit.Assert.fail
+import org.jetbrains.plugins.gradle.config.PlatformFacade
+import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
 
 /**
  * @author Denis Zhdanov

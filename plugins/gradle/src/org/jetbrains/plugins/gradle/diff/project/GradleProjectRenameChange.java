@@ -1,6 +1,8 @@
-package org.jetbrains.plugins.gradle.diff;
+package org.jetbrains.plugins.gradle.diff.project;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**

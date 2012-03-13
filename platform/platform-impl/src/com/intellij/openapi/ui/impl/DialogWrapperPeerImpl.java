@@ -82,7 +82,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   private final ActionCallback myWindowFocusedCallback = new ActionCallback("DialogFocusedCallback");
   private final ActionCallback myTypeAheadDone = new ActionCallback("DialogTypeAheadDone");
-  private final ActionCallback myTypeAheadCallback = new ActionCallback();
+  private ActionCallback myTypeAheadCallback;
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -95,6 +95,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    */
   protected DialogWrapperPeerImpl(DialogWrapper wrapper, Project project, boolean canBeParent) {
     myWrapper = wrapper;
+    myTypeAheadCallback = myWrapper.isTypeAheadEnabled() ? new ActionCallback() : (ActionCallback)null;
     myWindowManager = null;
     Application application = ApplicationManager.getApplication();
     if (application != null && application.hasComponent(WindowManager.class)) {
@@ -378,7 +379,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
   }
 
   public ActionCallback show() {
-    IdeFocusManager.getInstance(myProject).typeAheadUntil(myTypeAheadCallback);
+    if (myTypeAheadCallback != null) {
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(myTypeAheadCallback);
+    }
     final ActionCallback result = new ActionCallback();
 
     LOG.assertTrue(EventQueue.isDispatchThread(), "Access is allowed from event dispatch thread only");
@@ -953,7 +956,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
                 notifyFocused(wrapper);
               }
             }
-            myTypeAheadCallback.setDone();
+            if (myTypeAheadCallback != null) {
+              myTypeAheadCallback.setDone();
+            }
           }
         });
       }
