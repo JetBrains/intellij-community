@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -100,8 +99,11 @@ public class UIUtil {
     JPanel tmp = new JPanel();
 
     tmp.setLayout(new BoxLayout(tmp, BoxLayout.X_AXIS));
-    for (JComponent option : options) {
-      tmp.add(option);
+    for (int i = 0; i < options.length; i++) {
+      if (i != 0) {
+        tmp.add(Box.createHorizontalStrut(com.intellij.util.ui.UIUtil.DEFAULT_HGAP));
+      }
+      tmp.add(options[i]);
     }
     tmp.add(Box.createHorizontalGlue());
 

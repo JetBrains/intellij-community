@@ -219,19 +219,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   protected void buildOptions(JPanel searchOptions) {
     searchIncrementally = new JCheckBox(SSRBundle.message("find.with.prompt.checkbox"), false);
-
     if (isSearchOnDemandEnabled()) {
-      searchOptions.add(
-        UIUtil.createOptionLine(searchIncrementally)
-      );
+      searchOptions.add(searchIncrementally);
     }
 
     recursiveMatching = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
-
     if (isRecursiveSearchEnabled()) {
-      searchOptions.add(
-        UIUtil.createOptionLine(recursiveMatching)
-      );
+      searchOptions.add(recursiveMatching);
     }
 
     //searchOptions.add(
@@ -243,20 +237,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     //distinctResults.setMnemonic('D');
 
     caseSensitiveMatch = new JCheckBox(SSRBundle.message("case.sensitive.checkbox"), true);
-
-    searchOptions.add(UIUtil.createOptionLine(caseSensitiveMatch));
+    searchOptions.add(caseSensitiveMatch);
 
     searchOptions.add(
       UIUtil.createOptionLine(
         new JComponent[]{
           maxMatchesSwitch = new JCheckBox(SSRBundle.message("maximum.matches.checkbox"), false),
-          maxMatches = new JTextField(
-            Integer.toString(
-              MatchOptions.DEFAULT_MAX_MATCHES_COUNT
-            ),
-            3
-          ),
-          (JComponent)Box.createHorizontalGlue()
+          maxMatches = new JTextField(Integer.toString(MatchOptions.DEFAULT_MAX_MATCHES_COUNT), 3),
+          new Box.Filler(new Dimension(0, 0), new Dimension(Short.MAX_VALUE, 0), new Dimension(Short.MAX_VALUE, 0))
         }
       )
     );
@@ -308,7 +296,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     searchOptions.add(
       UIUtil.createOptionLine(
         new JComponent[]{
-          (JComponent)Box.createHorizontalStrut(8),
           jLabel,
           fileTypes,
           (JComponent)Box.createHorizontalStrut(8),
