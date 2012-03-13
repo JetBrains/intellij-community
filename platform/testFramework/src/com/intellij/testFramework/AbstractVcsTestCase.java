@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -114,6 +111,12 @@ public abstract class AbstractVcsTestCase {
       throw new RuntimeException("Timeout waiting for VCS client to finish execution");
     }
     return result;
+  }
+
+  protected void setVcsMappings(VcsDirectoryMapping... mappings) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    vcsManager.setDirectoryMappings(Arrays.asList(mappings));
+    vcsManager.updateActiveVcss();
   }
 
   protected static ProcessOutput runArbitrary(final String command, final String[] args) throws IOException {
