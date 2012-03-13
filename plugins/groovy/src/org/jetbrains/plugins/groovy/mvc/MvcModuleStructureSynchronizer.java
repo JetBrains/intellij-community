@@ -242,22 +242,21 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private void queue(SyncAction action, Object on) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    synchronized (myActions) {
-      if (myActions.isEmpty()) {
-        if (myProject.isDisposed()) return;
-        StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-          public void run() {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                runActions();
-              }
-            }, ModalityState.NON_MODAL);
-          }
-        });
-      }
 
-      myActions.add(new Pair<Object, SyncAction>(on, action));
+    if (myActions.isEmpty()) {
+      if (myProject.isDisposed()) return;
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+        public void run() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              runActions();
+            }
+          }, ModalityState.NON_MODAL);
+        }
+      });
     }
+
+    myActions.add(new Pair<Object, SyncAction>(on, action));
   }
 
   @NotNull
@@ -289,16 +288,12 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private void runActions() {
     try {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       if (myProject.isDisposed()) {
         return;
       }
 
-      Pair<Object, SyncAction>[] actions;
+      Pair<Object, SyncAction>[] actions = myActions.toArray(new Pair[myActions.size()]);
       //get module by object and kill duplicates
-      synchronized (myActions) {
-        actions = myActions.toArray(new Pair[myActions.size()]);
-      }
 
       final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<Trinity<Module, SyncAction, MvcFramework>>();
 
@@ -336,9 +331,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       // if there were any actions added during performSyncAction, clear them too
       // all needed actions are already added to buffer and have thus been performed
       // otherwise you may get repetitive 'run create-app?' questions
-      synchronized (myActions) {
-        myActions.clear();
-      }
+      myActions.clear();
     }
   }
 
