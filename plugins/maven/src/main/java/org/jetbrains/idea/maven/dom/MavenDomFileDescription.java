@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileDescription;
@@ -28,7 +29,14 @@ public abstract class MavenDomFileDescription<T> extends DomFileDescription<T> {
   }
 
   public boolean isMyFile(@NotNull XmlFile file, final Module module) {
-    return MavenDomUtil.isMavenFile(file) && super.isMyFile(file, module);
+    boolean isMavenFile = MavenDomUtil.isMavenFile(file);
+    boolean superResult = super.isMyFile(file, module);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("MavenDomFileDescription.isMyFile");
+      System.out.println("superResult = " + superResult);
+      System.out.println("isMavenFile = " + isMavenFile);
+    }
+    return isMavenFile && superResult;
   }
 
   @Override
