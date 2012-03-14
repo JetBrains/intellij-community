@@ -176,6 +176,10 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         final PsiClass superClass = aClass.getSuperClass();
         if (hasDefaultDeprecatedConstructor(superClass)) {
           final boolean isAnonymous = aClass instanceof PsiAnonymousClass;
+          if (isAnonymous) {
+            final PsiExpressionList argumentList = ((PsiAnonymousClass)aClass).getArgumentList();
+            if (argumentList != null && argumentList.getExpressions().length > 0) return;
+          }
           registerDefaultConstructorProblem(superClass, isAnonymous ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier(), isAnonymous);
         }
       }
