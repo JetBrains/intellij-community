@@ -18,6 +18,7 @@ package com.intellij.psi.filters.position;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterPositionUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: spLeaner
@@ -30,7 +31,7 @@ public class AfterElement extends PositionElementFilter {
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
+  public boolean isAcceptable(Object element, @Nullable PsiElement context){
     if (!(element instanceof PsiElement)) return false;
     final PsiElement previous = FilterPositionUtil.searchNonSpaceNonCommentBack((PsiElement) element, true);
     if(previous != null){
