@@ -284,9 +284,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static boolean isReassigned(GrVariable var) {
     PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
+    PsiNamedElement scope = method == null ? var.getContainingFile() : method;
+    if (scope == null) {
+      return false;
+    }
     boolean hasAssignment = var.getInitializerGroovy() != null || var instanceof GrParameter;
-    SearchScope scope = method == null ? GlobalSearchScope.projectScope(var.getProject()) : new LocalSearchScope(method);
-    for (PsiReference reference : ReferencesSearch.search(var, scope).findAll()) {
+    for (PsiReference reference : ReferencesSearch.search(var, new LocalSearchScope(scope)).findAll()) {
       if (reference instanceof GrReferenceExpression &&
           (PsiUtil.isLValue((GrReferenceExpression)reference) ||
            ((GrReferenceExpression)reference).getParent() instanceof GrPostfixExpression)) {
