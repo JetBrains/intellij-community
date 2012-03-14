@@ -28,6 +28,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -312,7 +313,11 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
         }
       }
       else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        if (SystemInfo.isUnix) {
+          GraphicsUtil.installAntialiasing(g2d);
+        } else {
+          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        }
       }
     }
     else {

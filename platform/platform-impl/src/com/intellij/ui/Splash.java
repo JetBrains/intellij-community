@@ -19,6 +19,7 @@ import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -135,7 +136,11 @@ public class Splash extends JDialog implements StartupProgress {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         UIUtil.applyRenderingHints(g);
-        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
+        if (SystemInfo.isUnix) {
+          g.setFont(new Font("Arial", Font.BOLD, 10));
+        } else {
+          g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
+        }
         g.setColor(textColor);
         final String licensedToMessage = provider.getLicensedToMessage();
         final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();

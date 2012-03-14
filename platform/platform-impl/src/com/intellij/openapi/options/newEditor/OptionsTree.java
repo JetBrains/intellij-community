@@ -29,6 +29,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -738,6 +739,12 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
 
       @Override
       protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
+      }
+
+      @Override
+      public void paint(Graphics g, JComponent c) {
+        GraphicsUtil.installAntialiasing(g);
+        super.paint(g, c);
       }
     }
   }

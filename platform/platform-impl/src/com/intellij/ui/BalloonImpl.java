@@ -787,7 +787,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     void paintComponent(BalloonImpl balloon, final Rectangle bounds, final Graphics2D g, Point pointTarget, JComponent component) {
       final GraphicsConfig cfg = new GraphicsConfig(g);
-      cfg.setAntialiasing(true);
+      GraphicsUtil.installAntialiasing(g);
 
 
       Shape shape;
