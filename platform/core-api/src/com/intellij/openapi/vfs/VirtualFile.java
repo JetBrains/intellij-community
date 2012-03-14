@@ -245,7 +245,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   @Nullable
   public String getCanonicalPath() {
-    return null;
+    return getPath();
   }
 
   /**
