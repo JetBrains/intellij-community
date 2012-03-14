@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
@@ -56,20 +55,28 @@ public class RefCountHolder {
   }
 
   private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
-  public static RefCountHolder getInstance(PsiFile file) {
+  @NotNull
+  public static RefCountHolder getInstance(@NotNull PsiFile file) {
     Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     RefCountHolder holder = ref == null ? null : ref.get();
-    while (holder == null) {
+    if (holder == null) {
       holder = new RefCountHolder(file);
-      ref = ((UserDataHolderEx)file).putUserDataIfAbsent(REF_COUNT_HOLDER_IN_FILE_KEY, new SoftReference<RefCountHolder>(holder));
-      holder = ref.get();
+      while (true) {
+        boolean replaced = ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, new SoftReference<RefCountHolder>(holder));
+        if (replaced) break;
+        ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
+        RefCountHolder newHolder = ref == null ? null : ref.get();
+        if (newHolder != null) {
+          holder = newHolder;
+          break;
+        }
+      }
     }
     return holder;
   }
 
   private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
-    LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30, true));
   }
 
   private void clear() {
