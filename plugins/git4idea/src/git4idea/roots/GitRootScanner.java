@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.messages.MessageBus;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,6 +41,7 @@ import java.util.List;
  */
 public class GitRootScanner implements BulkFileListener, ModuleRootListener, Disposable, VcsListener {
 
+  @NotNull private final Project myProject;
   @NotNull private final Runnable myExecuteAfterScan;
   @NotNull private final GitRootProblemNotifier myRootProblemNotifier;
 
@@ -49,6 +51,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
   @NotNull private final Object SCAN_LOCK = new Object();
 
   public GitRootScanner(@NotNull Project project, @NotNull Runnable executeAfterScan) {
+    myProject = project;
     myExecuteAfterScan = executeAfterScan;
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -129,7 +132,8 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
         return;
       }
       myScanning = true;
-      myRootProblemNotifier.rescanAndNotifyIfNeeded();
+      GitRootDetectInfo detectInfo = myRootProblemNotifier.rescanAndNotifyIfNeeded();
+      myProject.getMessageBus().syncPublisher(GitRepositoryManager.GIT_ROOTS_CHANGE).gitRootsChanged(detectInfo.getRoots());
       myExecuteAfterScan.run();
       myScanning = false;
     }

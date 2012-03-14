@@ -67,17 +67,19 @@ public class GitRootProblemNotifier {
     mySettings = VcsConfiguration.getInstance(myProject);
   }
 
-  public void rescanAndNotifyIfNeeded() {
+  public GitRootDetectInfo rescanAndNotifyIfNeeded() {
+    GitRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
+
     if (!mySettings.SHOW_VCS_ERROR_NOTIFICATIONS) {
-      return;
+      return detectInfo;
     }
 
-    Collection<VcsRootError> errors = scan();
+    Collection<VcsRootError> errors = scan(detectInfo);
     if (errors.isEmpty()) {
       synchronized (NOTIFICATION_LOCK) {
         expireNotification();
       }
-      return;
+      return detectInfo;
     }
 
     Collection<String> unregisteredRoots = getUnregisteredRoots(errors);
@@ -89,9 +91,10 @@ public class GitRootProblemNotifier {
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
       myNotification = createNotification(IMPORTANT_ERROR_NOTIFICATION, title, description, ERROR,
-                                          new MyNotificationListener(myProject, mySettings));
+                                          new MyNotificationListener(myProject, mySettings, myPlatformFacade));
       myPlatformFacade.getNotificator(myProject).notify(myNotification);
     }
+    return detectInfo;
   }
 
   private void expireNotification() {
@@ -109,8 +112,8 @@ public class GitRootProblemNotifier {
   }
 
   @NotNull
-  private Collection<VcsRootError> scan() {
-    return new GitRootErrorsFinder(myProject, myPlatformFacade).find();
+  private Collection<VcsRootError> scan(GitRootDetectInfo detectInfo) {
+    return new GitRootErrorsFinder(myProject, myPlatformFacade).find(detectInfo);
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
@@ -195,10 +198,12 @@ public class GitRootProblemNotifier {
 
     @NotNull private final Project myProject;
     @NotNull private final VcsConfiguration mySettings;
+    @NotNull private final PlatformFacade myPlatformFacade;
 
-    private MyNotificationListener(@NotNull Project project, @NotNull VcsConfiguration settings) {
+    private MyNotificationListener(@NotNull Project project, @NotNull VcsConfiguration settings, @NotNull PlatformFacade facade) {
       myProject = project;
       mySettings = settings;
+      myPlatformFacade = facade;
     }
 
     @Override
@@ -206,7 +211,8 @@ public class GitRootProblemNotifier {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.getDescription().equals("configure")) {
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
-          Collection<VcsRootError> errorsAfterPossibleFix = GitRootProblemNotifier.getInstance(myProject).scan();
+          Collection<VcsRootError> errorsAfterPossibleFix = GitRootProblemNotifier.getInstance(myProject).scan(
+            new GitRootDetector(myProject, myPlatformFacade).detect());
           if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
             notification.expire();
           }

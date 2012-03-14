@@ -48,9 +48,9 @@ public class GitRootErrorsFinder {
   }
 
   @NotNull
-  public Collection<VcsRootError> find() {
+  public Collection<VcsRootError> find(@NotNull GitRootDetectInfo rootDetectInfo) {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings(myVcs);
-    Collection<VirtualFile> gitRoots = new GitRootDetector(myProject, myPlatformFacade).detect().getRoots();
+    Collection<VirtualFile> gitRoots = rootDetectInfo.getRoots();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     Collection<String> gitPaths = rootsToPaths(gitRoots);

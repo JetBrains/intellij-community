@@ -16,6 +16,8 @@
 package git4idea.repo;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.Topic;
+import git4idea.roots.GitRootsListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,8 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public interface GitRepositoryManager {
+
+  Topic<GitRootsListener> GIT_ROOTS_CHANGE = Topic.create("Git Roots change", GitRootsListener.class);
 
   /**
    * Returns the {@link GitRepository} which tracks the Git repository located in the given directory,
