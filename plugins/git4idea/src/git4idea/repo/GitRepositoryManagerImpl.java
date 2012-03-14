@@ -157,8 +157,13 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
       for (VirtualFile root : roots) {
         if (!myRepositories.containsKey(root)) {
           if (gitRootOK(root)) {
-            GitRepository repository = createGitRepository(root);
-            myRepositories.put(root, repository);
+            try {
+              GitRepository repository = createGitRepository(root);
+              myRepositories.put(root, repository);
+            }
+            catch (GitRepoStateException e) {
+              LOG.error("Couldn't initialize GitRepository in " + root.getPresentableUrl(), e);
+            }
           }
           else {
             LOG.info("Invalid Git root: " + root);
