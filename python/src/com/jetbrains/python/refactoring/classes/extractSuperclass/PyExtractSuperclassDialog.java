@@ -126,9 +126,7 @@ public class PyExtractSuperclassDialog  extends UpDirectedMembersMovingDialog {
     assert root != null;
 
     final Project project = myClass.getProject();
-    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
-      descriptor.addRoot(file);
-    }        
+    descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
     descriptor.setIsTreeRootVisible(true);
     myTargetDirField.setText(FileUtil.toSystemDependentName(root.getPath()));
     myTargetDirField.addBrowseFolderListener(FILE_BROWSER_TITLE,

@@ -43,9 +43,7 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
     setTitle(PyBundle.message("refactoring.move.class.or.function.dialog.title"));
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
-      descriptor.addRoot(file);
-    }
+    descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
     descriptor.setIsTreeRootVisible(true);
 
     myPanel.getBrowseTargetFileButton().addBrowseFolderListener(PyBundle.message("refactoring.move.class.or.function.choose.destination.file.title"),
