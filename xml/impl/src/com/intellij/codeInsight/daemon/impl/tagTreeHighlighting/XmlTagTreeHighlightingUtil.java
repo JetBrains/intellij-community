@@ -57,7 +57,7 @@ class XmlTagTreeHighlightingUtil {
       return false;
     }
 
-    if (!(file instanceof XmlFile)/* || !HtmlUtil.hasHtml(file)*/) {
+    if (!hasXmlViewProvider(file)) {
       return false;
     }
 
@@ -65,6 +65,15 @@ class XmlTagTreeHighlightingUtil {
       return false;
     }
     return true;
+  }
+
+  private static boolean hasXmlViewProvider(@NotNull PsiFile file) {
+    for (PsiFile f : file.getViewProvider().getAllFiles()) {
+      if (f instanceof XmlFile) {
+        return true;
+      }
+    }
+    return false;
   }
 
   static Color makeTransparent(@NotNull Color color, @NotNull Color backgroundColor, double transparency) {

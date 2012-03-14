@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,7 +42,7 @@ public class XmlTagTreeHighlightingPassFactory extends AbstractProjectComponent 
     if (!XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) return null;
     if (!(editor instanceof EditorEx)) return null;
 
-    return new XmlTagTreeHighlightingPass((XmlFile)file, (EditorEx)editor);
+    return new XmlTagTreeHighlightingPass(file, (EditorEx)editor);
   }
 }
 
