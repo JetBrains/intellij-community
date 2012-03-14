@@ -33,16 +33,14 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.roots.ToolbarPanel;
@@ -143,14 +141,17 @@ public class ContentEntryTreeEditor {
     myContentEntryEditor = contentEntryEditor;
     myContentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
 
-    final String path = FileUtil.toSystemDependentName(VfsUtil.urlToPath(contentEntryEditor.getContentEntryUrl()));
-    myDescriptor.setRoots(path);
+    final ContentEntry entry = contentEntryEditor.getContentEntry();
+    assert entry != null : contentEntryEditor;
+    final VirtualFile file = entry.getFile();
+    assert file != null : entry;
+    myDescriptor.setRoots(file);
 
     final Runnable init = new Runnable() {
       public void run() {
         //noinspection ConstantConditions
         myFileSystemTree.updateTree();
-        myFileSystemTree.select(null, path);
+        myFileSystemTree.select(file, null);
       }
     };
 

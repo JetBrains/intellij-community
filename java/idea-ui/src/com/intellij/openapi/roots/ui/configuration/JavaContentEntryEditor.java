@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +43,9 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
   }
 
   @Override
-  protected ExcludeFolder doAddExcludeFolder(@NotNull final String path) {
-    final boolean isCompilerOutput = isCompilerOutput(path);
-    final boolean isExplodedDirectory = isExplodedDirectory(path);
+  protected ExcludeFolder doAddExcludeFolder(@NotNull final VirtualFile file) {
+    final boolean isCompilerOutput = isCompilerOutput(file);
+    final boolean isExplodedDirectory = isExplodedDirectory(file);
     if (isCompilerOutput || isExplodedDirectory) {
       if (isCompilerOutput) {
         myCompilerExtension.setExcludeOutput(true);
@@ -54,32 +55,35 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
       }
       return null;
     }
-    return super.doAddExcludeFolder(path);
+    return super.doAddExcludeFolder(file);
   }
 
   @Override
   protected void doRemoveExcludeFolder(@NotNull final ExcludeFolder excludeFolder) {
-    final String path = VfsUtil.urlToPath(excludeFolder.getUrl());
-    if (isCompilerOutput(path)) {
-      myCompilerExtension.setExcludeOutput(false);
-    }
-    if (isExplodedDirectory(path)) {
-      getModel().setExcludeExplodedDirectory(false);
+    final VirtualFile file = excludeFolder.getFile();
+    if (file != null) {
+      if (isCompilerOutput(file)) {
+        myCompilerExtension.setExcludeOutput(false);
+      }
+      if (isExplodedDirectory(file)) {
+        getModel().setExcludeExplodedDirectory(false);
+      }
     }
     super.doRemoveExcludeFolder(excludeFolder);
   }
 
-  private boolean isCompilerOutput(final String path) {
-    final String compilerOutputPath = VfsUtil.urlToPath(myCompilerExtension.getCompilerOutputUrl());
-    if (FileUtil.pathsEqual(compilerOutputPath, path, true)) {
+  private boolean isCompilerOutput(@NotNull final VirtualFile file) {
+    final VirtualFile compilerOutputPath = myCompilerExtension.getCompilerOutputPath();
+    if (file.equals(compilerOutputPath)) {
       return true;
     }
 
-    final String compilerOutputPathForTests = VfsUtil.urlToPath(myCompilerExtension.getCompilerOutputUrlForTests());
-    if (FileUtil.pathsEqual(compilerOutputPathForTests, path, true)) {
+    final VirtualFile compilerOutputPathForTests = myCompilerExtension.getCompilerOutputPathForTests();
+    if (file.equals(compilerOutputPathForTests)) {
       return true;
     }
 
+    final String path = file.getPath();
     if (myCompilerExtension.isCompilerOutputPathInherited()) {
       final ProjectStructureConfigurable instance = ProjectStructureConfigurable.getInstance(getModel().getModule().getProject());
       final String compilerOutput = VfsUtil.urlToPath(instance.getProjectConfig().getCompilerOutputUrl());
@@ -91,8 +95,7 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
     return false;
   }
 
-  private boolean isExplodedDirectory(final String path) {
-    final String explodedUrl = getModel().getExplodedDirectoryUrl();
-    return explodedUrl != null && FileUtil.pathsEqual(VfsUtil.urlToPath(explodedUrl), path, true);
+  private boolean isExplodedDirectory(@NotNull final VirtualFile file) {
+    return file.equals(getModel().getExplodedDirectory());
   }
 }

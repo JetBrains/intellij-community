@@ -46,7 +46,7 @@ public class FileChooserDescriptor implements Cloneable {
   private String myDescription;
 
   private boolean myHideIgnored = true;
-  private final List<String> myRoots = new ArrayList<String>();
+  private final List<VirtualFile> myRoots = new ArrayList<VirtualFile>();
   private boolean myShowFileSystemRoots = true;
   private boolean myIsTreeRootVisible = false;
 
@@ -240,34 +240,30 @@ public class FileChooserDescriptor implements Cloneable {
     myHideIgnored = hideIgnored;
   }
 
-  @NotNull
-  public final List<String> getRootPaths() {
+  public final List<VirtualFile> getRoots() {
     return Collections.unmodifiableList(myRoots);
   }
 
-  public final void setRoots(final String... roots) {
+  public final void setRoots(final VirtualFile... roots) {
     setRoots(Arrays.asList(roots));
   }
 
-  public final void setRoots(@NotNull final Collection<String> roots) {
+  public final void setRoots(@NotNull final List<VirtualFile> roots) {
     myRoots.clear();
     myRoots.addAll(roots);
   }
 
-  /** @deprecated use {@linkplain #getRootPaths()} (to remove in IDEA 13) */
-  public final List<VirtualFile> getRoots() {
-    return FileChooserUtil.pathsToFiles(myRoots, false);
-  }
-
-  /** @deprecated use {@linkplain #setRoots(java.util.Collection)} (to remove in IDEA 13) */
+  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public final void setRoot(VirtualFile root) {
     myRoots.clear();
-    myRoots.add(root.getPresentableUrl());
+    myRoots.add(root);
   }
 
-  /** @deprecated use {@linkplain #setRoots(java.util.Collection)} (to remove in IDEA 13) */
+  /** @deprecated use {@linkplain #setRoots(com.intellij.openapi.vfs.VirtualFile...)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public final void addRoot(VirtualFile root) {
-    myRoots.add(root.getPresentableUrl());
+    myRoots.add(root);
   }
 
   public boolean isTreeRootVisible() {

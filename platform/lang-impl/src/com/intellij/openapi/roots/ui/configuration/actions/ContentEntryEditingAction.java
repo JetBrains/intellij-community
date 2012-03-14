@@ -25,14 +25,11 @@ import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -51,8 +48,8 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     super.update(e);
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(true);
-    final VirtualFile[] files = doGetSelectedFiles();
-    if (files == null || files.length == 0) {
+    final VirtualFile[] files = getSelectedFiles();
+    if (files.length == 0) {
       presentation.setEnabled(false);
       return;
     }
@@ -64,25 +61,18 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
     }
   }
 
-  /** @deprecated use {@linkplain #getSelectedPaths()} (to remove in IDEA 12) */
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
+  @NotNull
   protected final VirtualFile[] getSelectedFiles() {
-    return doGetSelectedFiles();
-  }
-
-  @Nullable
-  private VirtualFile[] doGetSelectedFiles() {
     final TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (selectionPaths == null) {
-      return null;
+      return VirtualFile.EMPTY_ARRAY;
     }
     final List<VirtualFile> selected = new ArrayList<VirtualFile>();
     for (TreePath treePath : selectionPaths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
       final Object nodeDescriptor = node.getUserObject();
       if (!(nodeDescriptor instanceof FileNodeDescriptor)) {
-        return null;
+        return VirtualFile.EMPTY_ARRAY;
       }
       final FileElement fileElement = ((FileNodeDescriptor)nodeDescriptor).getElement();
       final VirtualFile file = fileElement.getFile();
@@ -92,12 +82,6 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
       }
     }
     return selected.toArray(new VirtualFile[selected.size()]);
-  }
-
-  @NotNull
-  protected List<String> getSelectedPaths() {
-    final VirtualFile[] files = doGetSelectedFiles();
-    return files != null ? Arrays.asList(FileChooserUtil.filesToPaths(files)) : Collections.<String>emptyList();
   }
 
   public JComponent createCustomComponent(Presentation presentation) {

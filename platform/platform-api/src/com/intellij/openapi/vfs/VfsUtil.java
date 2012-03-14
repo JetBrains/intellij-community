@@ -680,4 +680,9 @@ public class VfsUtil extends VfsUtilCore {
     //noinspection SSBasedInspection
     return files.toArray(new VirtualFile[size]);
   }
+
+  @NotNull
+  public static String getReadableUrl(@NotNull final VirtualFile file) {
+    return file.isInLocalFileSystem() ? file.getPresentableUrl() : file.getUrl();
+  }
 }

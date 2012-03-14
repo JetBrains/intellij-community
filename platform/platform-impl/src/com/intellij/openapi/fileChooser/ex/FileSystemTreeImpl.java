@@ -36,10 +36,10 @@ import com.intellij.openapi.fileChooser.impl.FileTreeStructure;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -50,7 +50,6 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +62,6 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.event.*;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -245,20 +243,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
     select(new VirtualFile[]{file}, onDone);
   }
 
-  @Override
-  public void select(@Nullable final Runnable onDone, final String... paths) {
-    final List<Object> elements = ContainerUtil.mapNotNull(paths, new NullableFunction<String, Object>() {
-      @Override
-      public Object fun(final String path) {
-        final VirtualFile file = FileChooserUtil.pathToFile(path, false);
-        return file != null ? getFileElementFor(file) : null;
-      }
-    });
-    if (elements.size() > 0) {
-      myTreeBuilder.select(elements.toArray(), onDone);
-    }
-  }
-
   public void select(VirtualFile[] file, @Nullable final Runnable onDone) {
     Object[] elements = new Object[file.length];
     for (int i = 0; i < file.length; i++) {
@@ -267,14 +251,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
     }
 
     myTreeBuilder.select(elements, onDone);
-  }
-
-  @Override
-  public void expand(@NotNull final String path, @Nullable final Runnable onDone) {
-    final VirtualFile file = FileChooserUtil.pathToFile(path, false);
-    if (file != null) {
-      myTreeBuilder.expand(getFileElementFor(file), onDone);
-    }
   }
 
   public void expand(final VirtualFile file, @Nullable final Runnable onDone) {
@@ -373,8 +349,8 @@ public class FileSystemTreeImpl implements FileSystemTree {
     final VirtualFile selected = getSelectedFile();
     if (selected != null) return selected;
 
-    final List<String> rootPaths = myDescriptor.getRootPaths();
-    return rootPaths.size() == 1 ? FileChooserUtil.pathToFile(rootPaths.get(0), false) : null;
+    final List<VirtualFile> roots = myDescriptor.getRoots();
+    return roots.size() == 1 ? roots.get(0) : null;
   }
 
   @NotNull
@@ -432,23 +408,17 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   @Override
-  public boolean isUnderRoots(@NotNull final String path) {
-    final List<String> rootPaths = myDescriptor.getRootPaths();
-    if (rootPaths.size() == 0) return true;
+  public boolean isUnderRoots(@NotNull VirtualFile file) {
+    final List<VirtualFile> roots = myDescriptor.getRoots();
+    if (roots.size() == 0) return true;
 
-    final File candidate = new File(FileUtil.toSystemDependentName(path));
-    for (String rootPath : rootPaths) {
-      if (FileUtil.isAncestor(new File(FileUtil.toSystemDependentName(rootPath)), candidate, false)) {
+    for (VirtualFile root : roots) {
+      if (root != null && VfsUtilCore.isAncestor(root, file, false)) {
         return true;
       }
     }
 
     return false;
-  }
-
-  @Override
-  public boolean isUnderRoots(@NotNull VirtualFile file) {
-    return isUnderRoots(file.getPath());
   }
 
   public void addListener(final Listener listener, final Disposable parent) {

@@ -21,7 +21,6 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserUtil;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.fileChooser.ex.RootFileElement;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * @author Yura Cangea
@@ -51,9 +49,8 @@ public class FileTreeStructure extends AbstractTreeStructure {
 
   public FileTreeStructure(Project project, FileChooserDescriptor chooserDescriptor) {
     myProject = project;
-    final List<String> rootPaths = chooserDescriptor.getRootPaths();
-    final String name = rootPaths.size() == 1 ? rootPaths.get(0) : chooserDescriptor.getTitle();
-    final VirtualFile[] rootFiles = VfsUtil.toVirtualFileArray(FileChooserUtil.pathsToFiles(rootPaths, false));
+    final VirtualFile[] rootFiles = VfsUtil.toVirtualFileArray(chooserDescriptor.getRoots());
+    final String name = rootFiles.length == 1 && rootFiles[0] != null ? rootFiles[0].getPresentableUrl() : chooserDescriptor.getTitle();
     myRootElement = new RootFileElement(rootFiles, name, chooserDescriptor.isShowFileSystemRoots());
     myChooserDescriptor = chooserDescriptor;
     myShowHidden = PropertiesComponent.getInstance().getBoolean("FileChooser.showHiddens", false);

@@ -21,33 +21,44 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.module.Module;
-import com.intellij.util.PathUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public final class GotoModuleDirectory extends FileChooserAction {
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
-    final String path = getModulePath(e);
-    if (path != null) {
-      fileSystemTree.select(new Runnable() {
+    final VirtualFile moduleDir = getModuleDir(e);
+    if (moduleDir != null) {
+      fileSystemTree.select(moduleDir, new Runnable() {
         public void run() {
-          fileSystemTree.expand(path, null);
+          fileSystemTree.expand(moduleDir, null);
         }
-      }, path);
+      });
     }
   }
 
   protected void update(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final String path = getModulePath(e);
-    presentation.setEnabled(path != null && fileSystemTree.isUnderRoots(path));
+    final VirtualFile moduleDir = getModuleDir(e);
+    presentation.setEnabled(moduleDir != null && fileSystemTree.isUnderRoots(moduleDir));
   }
 
   @Nullable
-  private static String getModulePath(final AnActionEvent e) {
+  private static VirtualFile getModuleDir(final AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     if (module == null) {
       module = e.getData(LangDataKeys.MODULE);
     }
-    return module == null || module.isDisposed() ? null : PathUtil.getParentPath(module.getModuleFilePath());
+
+    if (module != null && !module.isDisposed()) {
+      final VirtualFile moduleFile = module.getModuleFile();
+      if (moduleFile != null && moduleFile.isValid()) {
+        final VirtualFile moduleDir = moduleFile.getParent();
+        if (moduleDir != null && moduleDir.isValid()) {
+          return moduleDir;
+        }
+      }
+    }
+
+    return null;
   }
 }

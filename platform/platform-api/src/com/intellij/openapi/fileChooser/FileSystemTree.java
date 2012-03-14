@@ -40,16 +40,13 @@ public interface FileSystemTree extends Disposable {
   @Nullable
   VirtualFile getNewFileParent();
 
-  void select(@Nullable Runnable onDone, String... paths);
   void select(VirtualFile file, @Nullable Runnable onDone);
   void select(VirtualFile[] files, @Nullable Runnable onDone);
 
-  void expand(@NotNull String path, @Nullable final Runnable onDone);
   void expand(VirtualFile file, @Nullable Runnable onDone);
 
   void addListener(Listener listener, Disposable parent);
 
-  boolean isUnderRoots(@NotNull String path);
   boolean isUnderRoots(@NotNull VirtualFile file);
 
   boolean selectionExists();

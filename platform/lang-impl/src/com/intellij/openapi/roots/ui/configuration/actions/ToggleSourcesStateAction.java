@@ -23,9 +23,9 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,29 +54,29 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
 
   @Override
   public boolean isSelected(final AnActionEvent e) {
-    final List<String> selectedPaths = getSelectedPaths();
-    if (selectedPaths.size() == 0) return false;
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    if (selectedFiles.length == 0) return false;
 
     final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
-    return myEditTestSources ? editor.isTestSource(selectedPaths.get(0)) : editor.isSource(selectedPaths.get(0));
+    return myEditTestSources ? editor.isTestSource(selectedFiles[0]) : editor.isSource(selectedFiles[0]);
   }
 
   @Override
   public void setSelected(final AnActionEvent e, final boolean isSelected) {
-    final List<String> selectedPaths = getSelectedPaths();
-    assert selectedPaths.size() != 0;
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    assert selectedFiles.length != 0;
 
     final ContentEntryEditor contentEntryEditor = myEntryTreeEditor.getContentEntryEditor();
-    for (String selectedPath : selectedPaths) {
-      final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedPath);
+    for (VirtualFile selectedFile : selectedFiles) {
+      final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
       if (isSelected) {
         if (sourceFolder == null) { // not marked yet
-          contentEntryEditor.addSourceFolder(selectedPath, myEditTestSources);
+          contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
         }
         else {
           if (myEditTestSources != sourceFolder.isTestSource()) {
             contentEntryEditor.removeSourceFolder(sourceFolder);
-            contentEntryEditor.addSourceFolder(selectedPath, myEditTestSources);
+            contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
           }
         }
       }

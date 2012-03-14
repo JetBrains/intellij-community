@@ -30,7 +30,7 @@ public final class GotoProjectDirectory extends FileChooserAction {
   private static final Icon ourIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
 
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
-    final VirtualFile projectPath = getProjectPath(e);
+    final VirtualFile projectPath = getProjectDir(e);
     if (projectPath != null) {
       fileSystemTree.select(projectPath, new Runnable() {
         public void run() {
@@ -43,12 +43,12 @@ public final class GotoProjectDirectory extends FileChooserAction {
   protected void update(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setIcon(ourIcon);
-    final VirtualFile projectPath = getProjectPath(e);
+    final VirtualFile projectPath = getProjectDir(e);
     presentation.setEnabled(projectPath != null && fileSystemTree.isUnderRoots(projectPath));
   }
 
   @Nullable
-  private static VirtualFile getProjectPath(final AnActionEvent e) {
+  private static VirtualFile getProjectDir(final AnActionEvent e) {
     final VirtualFile projectFileDir = e.getData(PlatformDataKeys.PROJECT_FILE_DIRECTORY);
     return projectFileDir != null && projectFileDir.isValid() ? projectFileDir : null;
   }

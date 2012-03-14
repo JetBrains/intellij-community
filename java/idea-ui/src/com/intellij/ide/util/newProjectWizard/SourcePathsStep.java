@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -380,7 +380,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     public void actionPerformed(ActionEvent e) {
       final VirtualFile contentEntryDir = getContentEntryDir();
       if (contentEntryDir != null) {
-        myChooserDescriptor.setRoot(contentEntryDir);
+        myChooserDescriptor.setRoots(contentEntryDir);
         final String textBefore = myField.getText().trim();
         super.actionPerformed(e);
         if (!textBefore.equals(myField.getText().trim())) {

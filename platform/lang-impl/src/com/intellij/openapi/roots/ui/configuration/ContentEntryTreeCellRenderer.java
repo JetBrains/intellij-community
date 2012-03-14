@@ -22,8 +22,7 @@ import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.io.File;
 
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
@@ -49,15 +47,15 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
       if (userObject instanceof NodeDescriptor) {
         final Object element = ((NodeDescriptor)userObject).getElement();
         if (element instanceof FileElement) {
-          final String path = ((FileElement)element).getPath();
-          if (new File(path).isDirectory()) {
+          final VirtualFile file = ((FileElement)element).getFile();
+          if (file != null && file.isDirectory()) {
             final ContentEntry contentEntry = editor.getContentEntry();
             if (contentEntry != null) {
-              final String prefix = getPrefix(contentEntry, path);
+              final String prefix = getPrefix(contentEntry, file);
               if (prefix.length() > 0) {
                 append(" (" + prefix + ")", new SimpleTextAttributes(Font.PLAIN, Color.GRAY));
               }
-              setIcon(updateIcon(contentEntry, path, getIcon(), expanded));
+              setIcon(updateIcon(contentEntry, file, getIcon(), expanded));
             }
           }
         }
@@ -65,38 +63,36 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     }
   }
 
-  private static String getPrefix(final ContentEntry entry, final String path) {
+  private static String getPrefix(final ContentEntry entry, final VirtualFile file) {
     for (final SourceFolder sourceFolder : entry.getSourceFolders()) {
-      final String sourcePath = VfsUtil.urlToPath(sourceFolder.getUrl());
-      if (FileUtil.pathsEqual(sourcePath, path, true)) {
+      if (file.equals(sourceFolder.getFile())) {
         return sourceFolder.getPackagePrefix();
       }
     }
     return "";
   }
 
-  protected Icon updateIcon(final ContentEntry entry, final String path, final Icon originalIcon, final boolean expanded) {
+  protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon, final boolean expanded) {
     for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-      final String excludePath = VfsUtil.urlToPath(excludeFolder.getUrl());
-      if (FileUtil.isAncestor(excludePath, path, false)) {
+      final VirtualFile excludePath = excludeFolder.getFile();
+      if (excludePath != null && VfsUtilCore.isAncestor(excludePath, file, false)) {
         return IconSet.getExcludeIcon(expanded);
       }
     }
 
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
-      final String sourcePath = VfsUtil.urlToPath(sourceFolder.getUrl());
-      if (FileUtil.pathsEqual(sourcePath, path, true)) {
+      if (file.equals(sourceFolder.getFile())) {
         return IconSet.getSourceRootIcon(sourceFolder.isTestSource(), expanded);
       }
     }
 
     Icon icon = originalIcon;
-    String currentRoot = null;
+    VirtualFile currentRoot = null;
     for (SourceFolder sourceFolder : sourceFolders) {
-      final String sourcePath = VfsUtil.urlToPath(sourceFolder.getUrl());
-      if (FileUtil.isAncestor(sourcePath, path, true)) {
-        if (currentRoot != null && FileUtil.isAncestor(sourcePath, currentRoot, false)) {
+      final VirtualFile sourcePath = sourceFolder.getFile();
+      if (sourcePath != null && VfsUtilCore.isAncestor(sourcePath, file, true)) {
+        if (currentRoot != null && VfsUtilCore.isAncestor(sourcePath, currentRoot, false)) {
           continue;
         }
         icon = IconSet.getSourceFolderIcon(sourceFolder.isTestSource(), expanded);
@@ -104,11 +100,5 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
       }
     }
     return icon;
-  }
-
-  /** @deprecated use {@linkplain #updateIcon(com.intellij.openapi.roots.ContentEntry, String, javax.swing.Icon, boolean)} (to remove in IDEA 12) */
-  @SuppressWarnings("UnusedDeclaration")
-  protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon, final boolean expanded) {
-    return updateIcon(entry, file.getPath(), originalIcon, expanded);
   }
 }

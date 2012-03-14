@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.fileChooser.FileChooserUtil;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
@@ -40,7 +39,6 @@ import java.util.EventListener;
  */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallback {
-
   private boolean myIsSelected;
   private ContentRootPanel myContentRootPanel;
   private JPanel myMainPanel;
@@ -193,24 +191,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public SourceFolder addSourceFolder(@NotNull final String path, final boolean isTestSource) {
-    final SourceFolder sourceFolder = doAddSourceFolder(path, isTestSource);
-    if (sourceFolder != null) {
-      myEventDispatcher.getMulticaster().sourceFolderAdded(this, sourceFolder);
-      update();
-    }
-    return sourceFolder;
-  }
-
-  @Nullable
-  protected SourceFolder doAddSourceFolder(@NotNull final String path, final boolean isTestSource) {
-    final ContentEntry contentEntry = getContentEntry();
-    return contentEntry != null ? contentEntry.addSourceFolder(VfsUtil.pathToUrl(path), isTestSource) : null;
-  }
-
-  /** @deprecated use {@linkplain #addSourceFolder(String, boolean)} (to remove in IDEA 12) */
-  @Nullable
-  public SourceFolder addSourceFolder(VirtualFile file, boolean isTestSource) {
+  public SourceFolder addSourceFolder(@NotNull final VirtualFile file, boolean isTestSource) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry != null) {
       final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, isTestSource);
@@ -224,6 +205,12 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
 
     return null;
+  }
+
+  @Nullable
+  protected SourceFolder doAddSourceFolder(@NotNull final VirtualFile file, final boolean isTestSource) {
+    final ContentEntry contentEntry = getContentEntry();
+    return contentEntry != null ? contentEntry.addSourceFolder(file, isTestSource) : null;
   }
 
   public void removeSourceFolder(@NotNull final SourceFolder sourceFolder) {
@@ -242,21 +229,9 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public ExcludeFolder addExcludeFolder(@NotNull final String path) {
+  public ExcludeFolder addExcludeFolder(@NotNull final VirtualFile file) {
     try {
-      return doAddExcludeFolder(path);
-    }
-    finally {
-      myEventDispatcher.getMulticaster().folderExcluded(this, FileChooserUtil.pathToFile(path, false));
-      update();
-    }
-  }
-
-  /** @deprecated use {@linkplain #addExcludeFolder(String)} (to remove in IDEA 12) */
-  @Nullable
-  public ExcludeFolder addExcludeFolder(VirtualFile file) {
-    try {
-      return doAddExcludeFolder(file.getPath());
+      return doAddExcludeFolder(file);
     }
     finally {
       myEventDispatcher.getMulticaster().folderExcluded(this, file);
@@ -265,14 +240,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  protected ExcludeFolder doAddExcludeFolder(@NotNull final String path) {
-    final ContentEntry contentEntry = getContentEntry();
-    return contentEntry != null ? contentEntry.addExcludeFolder(path) : null;
-  }
-
-  /** @deprecated use {@linkplain #doAddExcludeFolder(String)} (to remove in IDEA 12) */
-  @Nullable
-  protected ExcludeFolder doAddExcludeFolder(VirtualFile file) {
+  protected ExcludeFolder doAddExcludeFolder(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     return contentEntry != null ? contentEntry.addExcludeFolder(file) : null;
   }
@@ -302,51 +270,20 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
-  public boolean isSource(@NotNull final String path) {
-    final SourceFolder sourceFolder = getSourceFolder(path);
+  public boolean isSource(@NotNull final VirtualFile file) {
+    final SourceFolder sourceFolder = getSourceFolder(file);
     return sourceFolder != null && !sourceFolder.isTestSource();
   }
 
-  /** @deprecated use {@linkplain #isSource(String)} (to remove in IDEA 12) */
-  public boolean isSource(VirtualFile file) {
-    return file != null && !isTestSource(file.getPath());
-  }
-
-  public boolean isTestSource(@NotNull final String path) {
-    final SourceFolder sourceFolder = getSourceFolder(path);
+  public boolean isTestSource(@NotNull final VirtualFile file) {
+    final SourceFolder sourceFolder = getSourceFolder(file);
     return sourceFolder != null && sourceFolder.isTestSource();
   }
 
-  /** @deprecated use {@linkplain #isTestSource(String)} (to remove in IDEA 12) */
-  public boolean isTestSource(VirtualFile file) {
-    return file != null && isTestSource(file.getPath());
+  public boolean isExcluded(@NotNull final VirtualFile file) {
+    return getExcludeFolder(file) != null;
   }
 
-  public boolean isExcluded(@NotNull final String path) {
-    return getExcludeFolder(path) != null;
-  }
-
-  /** @deprecated use {@linkplain #isExcluded(String)} (to remove in IDEA 12) */
-  public boolean isExcluded(VirtualFile file) {
-    return file != null && getExcludeFolder(file.getPath()) != null;
-  }
-
-  public boolean isUnderExcludedDirectory(@NotNull final String path) {
-    final ContentEntry contentEntry = getContentEntry();
-    if (contentEntry == null) {
-      return false;
-    }
-    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-    for (ExcludeFolder excludeFolder : excludeFolders) {
-      final String excludedPath = VfsUtil.urlToPath(excludeFolder.getUrl());
-      if (FileUtil.isAncestor(excludedPath, path, true)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /** @deprecated use {@linkplain #isUnderExcludedDirectory(String)} (to remove in IDEA 12) */
   public boolean isUnderExcludedDirectory(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
@@ -366,23 +303,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public ExcludeFolder getExcludeFolder(@NotNull final String path) {
-    final ContentEntry contentEntry = getContentEntry();
-    if (contentEntry == null) {
-      return null;
-    }
-    for (final ExcludeFolder excludeFolder : contentEntry.getExcludeFolders()) {
-      final String excludedPath = VfsUtil.urlToPath(excludeFolder.getUrl());
-      if (FileUtil.pathsEqual(excludedPath, path, true)) {
-        return excludeFolder;
-      }
-    }
-    return null;
-  }
-
-  /** @deprecated use {@linkplain #getExcludeFolder(String)} (to remove in IDEA 12) */
-  @Nullable
-  public ExcludeFolder getExcludeFolder(VirtualFile file) {
+  public ExcludeFolder getExcludeFolder(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return null;
@@ -401,23 +322,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public SourceFolder getSourceFolder(@NotNull final String path) {
-    final ContentEntry contentEntry = getContentEntry();
-    if (contentEntry == null) {
-      return null;
-    }
-    for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-      final String sourcePath = VfsUtil.urlToPath(sourceFolder.getUrl());
-      if (FileUtil.pathsEqual(sourcePath, path, true)) {
-        return sourceFolder;
-      }
-    }
-    return null;
-  }
-
-  /** @deprecated use {@linkplain #getSourceFolder(String)} (to remove in IDEA 12) */
-  @Nullable
-  public SourceFolder getSourceFolder(VirtualFile file) {
+  public SourceFolder getSourceFolder(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return null;

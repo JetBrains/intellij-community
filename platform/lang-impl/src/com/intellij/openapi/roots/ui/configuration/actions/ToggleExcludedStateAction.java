@@ -23,9 +23,9 @@ import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryEditor;
 import com.intellij.openapi.roots.ui.configuration.ContentEntryTreeEditor;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -45,23 +45,23 @@ public class ToggleExcludedStateAction extends ContentEntryEditingAction {
 
   @Override
   public boolean isSelected(final AnActionEvent e) {
-    final List<String> selectedPaths = getSelectedPaths();
-    if (selectedPaths.size() == 0) return false;
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    if (selectedFiles.length == 0) return false;
 
     final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
-    return editor.isExcluded(selectedPaths.get(0)) || editor.isUnderExcludedDirectory(selectedPaths.get(0));
+    return editor.isExcluded(selectedFiles[0]) || editor.isUnderExcludedDirectory(selectedFiles[0]);
   }
 
   @Override
   public void setSelected(final AnActionEvent e, final boolean isSelected) {
-    final List<String> selectedPaths = getSelectedPaths();
-    assert selectedPaths.size() != 0;
+    final VirtualFile[] selectedFiles = getSelectedFiles();
+    assert selectedFiles.length != 0;
 
-    for (String selectedPath : selectedPaths) {
-      final ExcludeFolder excludeFolder = myEntryTreeEditor.getContentEntryEditor().getExcludeFolder(selectedPath);
+    for (VirtualFile selectedFile : selectedFiles) {
+      final ExcludeFolder excludeFolder = myEntryTreeEditor.getContentEntryEditor().getExcludeFolder(selectedFile);
       if (isSelected) {
         if (excludeFolder == null) { // not excluded yet
-          myEntryTreeEditor.getContentEntryEditor().addExcludeFolder(selectedPath);
+          myEntryTreeEditor.getContentEntryEditor().addExcludeFolder(selectedFile);
         }
       }
       else {
