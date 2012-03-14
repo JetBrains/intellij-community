@@ -184,7 +184,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     reload();
   }
 
-  @Nullable
   public RangeHighlighter getHighlighter() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myHighlighter;
@@ -204,7 +203,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     }).booleanValue();
   }
 
-  @Nullable
   public SourcePosition getSourcePosition() {
     return mySourcePosition;
   }
@@ -679,7 +677,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         @Override
         public void actionPerformed(AnActionEvent e) {
           ENABLED = !ENABLED;
-          DebuggerManagerEx.getInstanceEx(BreakpointWithHighlighter.this.getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
+          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
           updateUI();
         }
       };
@@ -696,7 +694,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         @Override
         public boolean copy(int line, @NotNull VirtualFile file) {
           final PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
-          return psiFile == null ? false : moveTo(SourcePosition.createFromLine(psiFile, line));
+          return psiFile != null && moveTo(SourcePosition.createFromLine(psiFile, line));
         }
 
         @Override
@@ -717,6 +715,11 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     @Override
     public int hashCode() {
       return getIcon().hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "LB " + getDisplayName();
     }
   }
 }

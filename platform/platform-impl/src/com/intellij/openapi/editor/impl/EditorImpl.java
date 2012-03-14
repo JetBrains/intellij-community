@@ -1520,7 +1520,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myDocument.getTextLength() > 0) {
       int startDocLine = myDocument.getLineNumber(e.getOffset());
       int endDocLine = myDocument.getLineNumber(e.getOffset() + e.getNewLength());
-      if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine) {
+      if (e.getOldLength() > e.getNewLength() || startDocLine != endDocLine || StringUtil.indexOf(e.getOldFragment(),'\n') != -1) {
         updateGutterSize();
       }
 
