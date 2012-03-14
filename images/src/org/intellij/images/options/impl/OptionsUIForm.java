@@ -20,8 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorPanel;
@@ -42,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
 /**
  * Options UI form bean.
@@ -237,22 +239,21 @@ final class OptionsUIForm {
   private final class ExternalEditorPathActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
       Application application = ApplicationManager.getApplication();
-      VirtualFile previous = application.runWriteAction(new Computable<VirtualFile>() {
+      VirtualFile previous = application.runWriteAction(new NullableComputable<VirtualFile>() {
         public VirtualFile compute() {
-          return LocalFileSystem.getInstance().refreshAndFindFileByPath(externalEditorPath.getText().replace('\\', '/'));
+          final String path = FileUtil.toSystemIndependentName(externalEditorPath.getText());
+          return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
         }
       });
       FileChooserDescriptor fileDescriptor = new FileChooserDescriptor(true, SystemInfo.isMac, false, false, false, false);
       fileDescriptor.setShowFileSystemRoots(true);
       fileDescriptor.setTitle(ImagesBundle.message("select.external.executable.title"));
       fileDescriptor.setDescription(ImagesBundle.message("select.external.executable.message"));
-      FileChooser.chooseFilesWithSlideEffect(fileDescriptor, null, previous, new Consumer<VirtualFile[]>() {
+      FileChooser.chooseFiles(fileDescriptor, null, previous, new Consumer<List<VirtualFile>>() {
         @Override
-        public void consume(VirtualFile[] virtualFiles) {
-          if (virtualFiles != null && virtualFiles.length > 0) {
-            String path = virtualFiles[0].getPath();
-            externalEditorPath.setText(path);
-          }
+        public void consume(final List<VirtualFile> files) {
+          String path = files.get(0).getPath();
+          externalEditorPath.setText(path);
         }
       });
     }

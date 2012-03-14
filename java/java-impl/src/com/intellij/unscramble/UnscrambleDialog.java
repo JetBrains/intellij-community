@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,12 +202,10 @@ public class UnscrambleDialog extends DialogWrapper {
     JPanel panel = GuiUtils.constructFieldWithBrowseButton(myLogFile, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-        FileChooser.chooseFilesWithSlideEffect(descriptor, myProject, null, new Consumer<VirtualFile[]>() {
+        FileChooser.chooseFiles(descriptor, myProject, null, new Consumer<List<VirtualFile>>() {
           @Override
-          public void consume(VirtualFile[] files) {
-            if (files.length != 0) {
-              myLogFile.setText(FileUtil.toSystemDependentName(files[files.length - 1].getPath()));
-            }
+          public void consume(List<VirtualFile> files) {
+            myLogFile.setText(FileUtil.toSystemDependentName(files.get(files.size() - 1).getPath()));
           }
         });
       }

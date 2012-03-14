@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -33,12 +35,10 @@ public class OpenDirectoryProjectAction extends AnAction implements DumbAware {
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(false);
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
-    FileChooser.chooseFilesWithSlideEffect(descriptor, project, null, new Consumer<VirtualFile[]>() {
+    FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
       @Override
-      public void consume(final VirtualFile[] files) {
-        if (files.length > 0) {
-          PlatformProjectOpenProcessor.getInstance().doOpenProject(files[0], project, false);
-        }
+      public void consume(final List<VirtualFile> files) {
+        PlatformProjectOpenProcessor.getInstance().doOpenProject(files.get(0), project, false);
       }
     });
   }

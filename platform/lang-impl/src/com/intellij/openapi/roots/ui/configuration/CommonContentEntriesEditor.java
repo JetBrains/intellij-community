@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -386,13 +386,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      FileChooser.chooseFilesWithSlideEffect(myDescriptor, myProject, myLastSelectedDir, new Consumer<VirtualFile[]>() {
+      FileChooser.chooseFiles(myDescriptor, myProject, myLastSelectedDir, new Consumer<List<VirtualFile>>() {
         @Override
-        public void consume(VirtualFile[] files) {
-          if (files.length > 0) {
-            myLastSelectedDir = files[0];
-            addContentEntries(files);
-          }
+        public void consume(List<VirtualFile> files) {
+          myLastSelectedDir = files.get(0);
+          addContentEntries(VfsUtil.toVirtualFileArray(files));
         }
       });
     }

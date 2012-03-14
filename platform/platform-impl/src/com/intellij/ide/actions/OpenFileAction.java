@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -41,9 +43,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
   private static String getLastFilePath(Project project) {
@@ -61,38 +61,22 @@ public class OpenFileAction extends AnAction implements DumbAware {
       return;
     }
 
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    ArrayList<FileType> list = new ArrayList<FileType>();
-    for(FileType ft: fileTypeManager.getRegisteredFileTypes()) {
-      if (fileTypeManager.getAssociatedExtensions(ft).length > 0 &&
-          (ft instanceof ProjectFileType || !ft.isReadOnly())) {
-        list.add(ft);
-      }
-    }
-    Collections.sort(list, new Comparator<FileType>() {
-      public int compare(final FileType o1, final FileType o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor();
     descriptor.setTitle(IdeBundle.message("title.open.file"));
 
     final String lastFilePath = project != null ? getLastFilePath(project) : null;
     final VirtualFile toSelect = lastFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(lastFilePath);
 
-    FileChooser.chooseFilesWithSlideEffect(descriptor, project, toSelect,new Consumer<VirtualFile[]>() {
+    FileChooser.chooseFiles(descriptor, project, toSelect, new Consumer<List<VirtualFile>>() {
       @Override
-      public void consume(final VirtualFile[] files) {
+      public void consume(final List<VirtualFile> files) {
         doOpenFile(project, files);
       }
     });
   }
 
-  private void doOpenFile(@Nullable final Project project,
-                          @NotNull final VirtualFile[] result) {
-    if (result.length == 0) return;
-
+  private static void doOpenFile(@Nullable final Project project,
+                                 @NotNull final List<VirtualFile> result) {
     for (final VirtualFile file : result) {
       if (project != null) setLastFilePath(project, file.getParent().getPath());
       if (isProjectFile(file.getName())) {

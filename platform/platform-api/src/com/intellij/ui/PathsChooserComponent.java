@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,13 +66,13 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
         dirChooser.setShowFileSystemRoots(true);
         dirChooser.setHideIgnored(true);
         dirChooser.setTitle(UIBundle.message("file.chooser.default.title"));
-        FileChooser.chooseFilesWithSlideEffect(dirChooser, myProject, null, new Consumer<VirtualFile[]>() {
+        FileChooser.chooseFiles(dirChooser, myProject, null, new Consumer<List<VirtualFile>>() {
           @Override
-          public void consume(VirtualFile[] files) {
+          public void consume(List<VirtualFile> files) {
             for (VirtualFile file : files) {
-            // adding to the end
+              // adding to the end
               final String path = file.getPath();
-              if (processor.addPath(myWorkingCollection, path)){
+              if (processor.addPath(myWorkingCollection, path)) {
                 myListModel.addElement(path);
               }
             }

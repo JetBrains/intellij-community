@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -44,6 +45,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author alex
@@ -410,12 +412,12 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
       final String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
       PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
 
-      FileChooser.chooseFilesWithSlideEffect(descriptor, myProject, file, new Consumer<VirtualFile[]>() {
+      FileChooser.chooseFiles(descriptor, myProject, file, new Consumer<List<VirtualFile>>() {
         @Override
-        public void consume(VirtualFile[] files) {
+        public void consume(List<VirtualFile> files) {
           PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
-          if (files != null && files.length == 1) {
-            path[0] = files[0].getPath().replace('/', File.separatorChar);
+          if (files.size() == 1) {
+            path[0] = FileUtil.toSystemDependentName(files.get(0).getPath());
             myKeyFileText.setText(path[0]);
           }
           checkKeyFile();

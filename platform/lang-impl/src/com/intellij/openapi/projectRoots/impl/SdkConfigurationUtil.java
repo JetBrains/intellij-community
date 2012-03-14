@@ -75,15 +75,13 @@ public class SdkConfigurationUtil {
     VirtualFile suggestedDir = suggestedPath == null
                                ? null
                                :  LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
-    FileChooser.chooseFilesWithSlideEffect(descriptor, project, suggestedDir, new Consumer<VirtualFile[]>() {
+    FileChooser.chooseFiles(descriptor, project, suggestedDir, new Consumer<List<VirtualFile>>() {
       @Override
-      public void consume(VirtualFile[] selectedFiles) {
-        if (selectedFiles.length > 0) {
-          for (SdkType sdkType : sdkTypes) {
-            if (sdkType.isValidSdkHome(selectedFiles[0].getPath())) {
-              onSdkCreatedCallBack.consume(setupSdk(existingSdks, selectedFiles[0], sdkType, false, null, null));
-              return;
-            }
+      public void consume(List<VirtualFile> selectedFiles) {
+        for (SdkType sdkType : sdkTypes) {
+          if (sdkType.isValidSdkHome(selectedFiles.get(0).getPath())) {
+            onSdkCreatedCallBack.consume(setupSdk(existingSdks, selectedFiles.get(0), sdkType, false, null, null));
+            return;
           }
         }
         onSdkCreatedCallBack.consume(null);
@@ -268,24 +266,21 @@ public class SdkConfigurationUtil {
 
   public static void selectSdkHome(final SdkType sdkType, @NotNull final Consumer<String> consumer){
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
-    FileChooser.chooseFilesWithSlideEffect(descriptor, null, getSuggestedSdkRoot(sdkType),
-                                           new Consumer<VirtualFile[]>() {
-                                             @Override
-                                             public void consume(final VirtualFile[] chosen) {
-                                               if (chosen != null && chosen.length != 0) {
-                                                 final String path = chosen[0].getPath();
-                                                 if (sdkType.isValidSdkHome(path)) {
-                                                   consumer.consume(path);
-                                                   return;
-                                                 }
+    FileChooser.chooseFiles(descriptor, null, getSuggestedSdkRoot(sdkType), new Consumer<List<VirtualFile>>() {
+      @Override
+      public void consume(final List<VirtualFile> chosen) {
+        final String path = chosen.get(0).getPath();
+        if (sdkType.isValidSdkHome(path)) {
+          consumer.consume(path);
+          return;
+        }
 
-                                                 String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-                                                 if (sdkType.isValidSdkHome(adjustedPath)) {
-                                                   consumer.consume(adjustedPath);
-                                                 }
-                                               }
-                                             }
-                                           });
+        final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
+        if (sdkType.isValidSdkHome(adjustedPath)) {
+          consumer.consume(adjustedPath);
+        }
+      }
+    });
   }
 
   @Nullable

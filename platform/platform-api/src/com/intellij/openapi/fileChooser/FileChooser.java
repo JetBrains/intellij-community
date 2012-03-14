@@ -83,6 +83,7 @@ public class FileChooser {
    *                                          com.intellij.openapi.vfs.VirtualFile,
    *                                          com.intellij.util.Consumer)} (to remove in IDEA 13)
    */
+  @SuppressWarnings("UnusedDeclaration")
   public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
                                                 @Nullable final Project project,
                                                 @Nullable final VirtualFile toSelect,
@@ -102,6 +103,7 @@ public class FileChooser {
    *                                          com.intellij.openapi.vfs.VirtualFile,
    *                                          com.intellij.util.Consumer)} (to remove in IDEA 13)
    */
+  @SuppressWarnings("UnusedDeclaration")
   public static void chooseFilesWithSlideEffect(@NotNull final FileChooserDescriptor descriptor,
                                                 @Nullable final Project project,
                                                 @Nullable final Component parent,

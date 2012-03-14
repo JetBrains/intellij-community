@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,10 +64,8 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -859,13 +857,11 @@ public class FindDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        FileChooser.chooseFilesWithSlideEffect(descriptor, myProject, null, new Consumer<VirtualFile[]>() {
+        FileChooser.chooseFiles(descriptor, myProject, null, new Consumer<List<VirtualFile>>() {
           @Override
-          public void consume(final VirtualFile[] files) {
-            if (files.length != 0) {
-              myDirectoryComboBox.setSelectedItem(files[0].getPresentableUrl());
-              //validateFindButton();
-            }
+          public void consume(final List<VirtualFile> files) {
+            myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl());
+            //validateFindButton();
           }
         });
       }

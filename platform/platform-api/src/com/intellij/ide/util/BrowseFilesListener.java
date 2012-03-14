@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,28 +18,31 @@ package com.intellij.ide.util;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Dec 28, 2003
  */
 public class BrowseFilesListener implements ActionListener {
+  public static final FileChooserDescriptor SINGLE_DIRECTORY_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+  public static final FileChooserDescriptor SINGLE_FILE_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+
   private final JTextField myTextField;
   private final String myTitle;
   private final String myDescription;
   private final FileChooserDescriptor myChooserDescriptor;
-  public static final FileChooserDescriptor SINGLE_DIRECTORY_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-  public static final FileChooserDescriptor SINGLE_FILE_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
 
   public BrowseFilesListener(JTextField textField, final String title, final String description, final FileChooserDescriptor chooserDescriptor) {
     myTextField = textField;
@@ -48,6 +51,7 @@ public class BrowseFilesListener implements ActionListener {
     myChooserDescriptor = chooserDescriptor;
   }
 
+  @Nullable
   protected VirtualFile getFileToSelect() {
     final String path = myTextField.getText().trim().replace(File.separatorChar, '/');
     if (path.length() > 0) {
@@ -70,22 +74,11 @@ public class BrowseFilesListener implements ActionListener {
     final VirtualFile fileToSelect = getFileToSelect();
     myChooserDescriptor.setTitle(myTitle); // important to set title and description here because a shared descriptor instance can be used
     myChooserDescriptor.setDescription(myDescription);
-    if (SystemInfo.isMac) {
-      FileChooser.chooseFilesWithSlideEffect(myChooserDescriptor, null, fileToSelect, new Consumer<VirtualFile[]>() {
-        @Override
-        public void consume(final VirtualFile[] files) {
-          if (files != null && files.length > 0) {
-            doSetText(files[0].getPath().replace('/', File.separatorChar));
-          }
-        }
-      });
-    } else {
-      VirtualFile[] files = (fileToSelect != null) ?
-                            FileChooser.chooseFiles(myTextField, myChooserDescriptor, fileToSelect) :
-                            FileChooser.chooseFiles(myTextField, myChooserDescriptor);
-      if (files.length > 0) {
-        myTextField.setText(files[0].getPath().replace('/', File.separatorChar));
+    FileChooser.chooseFiles(myChooserDescriptor, null, fileToSelect, new Consumer<List<VirtualFile>>() {
+      @Override
+      public void consume(final List<VirtualFile> files) {
+        doSetText(FileUtil.toSystemDependentName(files.get(0).getPath()));
       }
-    }
+    });
   }
 }
