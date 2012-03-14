@@ -286,7 +286,7 @@ public class CompileServerManager implements ApplicationComponent{
   }
 
   private void runAutoMake() {
-    final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    final Project[] openProjects = myProjectManager.getOpenProjects();
     if (openProjects.length > 0) {
       final List<RequestFuture> futures = new ArrayList<RequestFuture>();
       for (final Project project : openProjects) {
