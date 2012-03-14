@@ -291,7 +291,7 @@ public class IdeaProjectLoader {
     }
     def outputTag = componentTag?.output?.getAt(0)
     String outputPath = outputTag != null ? IdeaProjectLoadingUtil.pathFromUrl(outputTag.'@url') : null
-    projectOutputPath = outputPath != null && outputPath.length() > 0 ? projectMacroExpander.expandMacros(outputPath) : null
+    projectOutputPath = outputPath != null && outputPath.length() > 0 ? FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(outputPath)) : null
     project.projectSdk = sdk
     projectLanguageLevel = componentTag?."@languageLevel"
   }
@@ -540,8 +540,8 @@ public class IdeaProjectLoader {
             }
           }
           else {
-            currentModule.outputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url))
-            currentModule.testOutputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url'))
+            currentModule.outputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url)))
+            currentModule.testOutputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url')))
             if (currentModule.testOutputPath == null) {
               currentModule.testOutputPath = currentModule.outputPath
             }
