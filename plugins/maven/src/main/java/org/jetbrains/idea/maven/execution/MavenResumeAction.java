@@ -83,7 +83,7 @@ public class MavenResumeAction extends AnAction {
     myExecutor = executor;
     myEnvironment = environment;
 
-    assert environment.getRunProfile() instanceof MavenRunConfiguration;
+    final MavenRunConfiguration runConfiguration = (MavenRunConfiguration)environment.getRunProfile();
 
     getTemplatePresentation().setEnabled(false);
 
@@ -98,7 +98,11 @@ public class MavenResumeAction extends AnAction {
                             myBuildingProjectIndex ));
         }
 
-        if (event.getExitCode() == 1 && myBuildingProjectIndex > 1) {
+        if (event.getExitCode() == 1 && myBuildingProjectIndex > 0) {
+          if (myBuildingProjectIndex == 1 && !hasResumeFromParameter(runConfiguration)) {
+            return;
+          }
+
           myResumeFromModuleName = myMavenProjectNames.get(myBuildingProjectIndex - 1);
 
           MavenProject mavenProject = findProjectByName(myResumeFromModuleName);
@@ -174,6 +178,11 @@ public class MavenResumeAction extends AnAction {
     });
   }
 
+  private static boolean hasResumeFromParameter(MavenRunConfiguration runConfiguration) {
+    List<String> goals = runConfiguration.getRunnerParameters().getGoals();
+    return goals.size() > 2 && "-rf".equals(goals.get(goals.size() - 2));
+  }
+
   @Nullable
   private MavenProject findProjectByName(@NotNull String projectName) {
     List<MavenProject> projects = MavenProjectsManager.getInstance(myEnvironment.getProject()).getProjects();
@@ -211,8 +220,7 @@ public class MavenResumeAction extends AnAction {
   }
 
   public static boolean isApplicable(@Nullable Project project, JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
-    List<String> goals = runConfiguration.getRunnerParameters().getGoals();
-    if (goals.size() > 2 && "-rf".equals(goals.get(goals.size() - 2))) { // This runConfiguration was created by other MavenResumeAction.
+    if (hasResumeFromParameter(runConfiguration)) { // This runConfiguration was created by other MavenResumeAction.
       MavenRunConfiguration clonedRunConf = runConfiguration.clone();
       List<String> clonedGoals = clonedRunConf.getRunnerParameters().getGoals();
       clonedGoals.remove(clonedGoals.size() - 1);
