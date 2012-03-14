@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,11 +76,11 @@ public class RenderServiceFactory {
     return null;
   }
 
-  public RenderResources createResourceResolver(final AndroidFacet facet,
-                                                 FolderConfiguration config,
-                                                 ProjectResources projectResources,
-                                                 String themeName,
-                                                 boolean isProjectTheme) {
+  public Pair<RenderResources, RenderResources> createResourceResolver(final AndroidFacet facet,
+                                                                       FolderConfiguration config,
+                                                                       ProjectResources projectResources,
+                                                                       String themeName,
+                                                                       boolean isProjectTheme) {
     final Map<ResourceType, Map<String, ResourceValue>> configedProjectRes = projectResources.getConfiguredResources(config);
 
     DumbService.getInstance(facet.getModule().getProject()).waitForSmartMode();
@@ -99,16 +100,17 @@ public class RenderServiceFactory {
 
     final Map<ResourceType, Map<String, ResourceValue>> configedFrameworkRes = myResources.getConfiguredResources(config);
     final ResourceResolver resolver = ResourceResolver.create(configedProjectRes, configedFrameworkRes, themeName, isProjectTheme);
-    return new ResourceResolverDecorator(resolver);
+    return new Pair<RenderResources, RenderResources>(new ResourceResolverDecorator(resolver), resolver);
   }
 
   public RenderService createService(RenderResources resources,
+                                     RenderResources legacyResources,
                                      FolderConfiguration config,
                                      float xdpi,
                                      float ydpi,
                                      IProjectCallback projectCallback,
                                      int minSdkVersion) {
-    return new RenderService(myLibrary, resources, config, xdpi, ydpi, projectCallback, minSdkVersion);
+    return new RenderService(myLibrary, resources, legacyResources, config, xdpi, ydpi, projectCallback, minSdkVersion);
   }
 
   private RenderServiceFactory(@NotNull Map<String, Map<String, Integer>> enumMap) {
