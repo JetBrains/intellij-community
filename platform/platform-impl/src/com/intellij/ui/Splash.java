@@ -136,11 +136,8 @@ public class Splash extends JDialog implements StartupProgress {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         UIUtil.applyRenderingHints(g);
-        if (SystemInfo.isUnix) {
-          g.setFont(new Font("Arial", Font.BOLD, 10));
-        } else {
-          g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, 11));
-        }
+        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, SystemInfo.isUnix ? 10 : 11));
+
         g.setColor(textColor);
         final String licensedToMessage = provider.getLicensedToMessage();
         final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
