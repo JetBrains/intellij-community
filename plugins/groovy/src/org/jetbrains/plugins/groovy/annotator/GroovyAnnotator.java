@@ -40,6 +40,10 @@ import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignature;
@@ -189,6 +193,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       if (resolved instanceof PsiMember) {
         highlightMemberResolved(myHolder, referenceExpression, ((PsiMember)resolved));
       }
+      else if (resolved instanceof GrVariable) {
+        highlightVariable((GrVariable)resolved, getElementToHighlight(referenceExpression));
+      }
+
       /*if (!resolveResult.isAccessible()) {
         String message = GroovyBundle.message("cannot.access", referenceExpression.getReferenceName());
         final Annotation annotation = myHolder.createWarningAnnotation(getElementToHighlight(referenceExpression), message);
@@ -260,6 +268,35 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
+  }
+
+  private void highlightVariable(GrVariable variable, PsiElement toHighlight) {
+    Annotation annotation = myHolder.createInfoAnnotation(toHighlight, null);
+    boolean reassigned = isReassigned(variable);
+    if (variable instanceof GrParameter) {
+      annotation
+        .setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER);
+    } else {
+      annotation
+        .setTextAttributes(reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE);
+    }
+  }
+
+  private static boolean isReassigned(GrVariable var) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
+    boolean hasAssignment = var.getInitializerGroovy() != null || var instanceof GrParameter;
+    SearchScope scope = method == null ? GlobalSearchScope.projectScope(var.getProject()) : new LocalSearchScope(method);
+    for (PsiReference reference : ReferencesSearch.search(var, scope).findAll()) {
+      if (reference instanceof GrReferenceExpression &&
+          (PsiUtil.isLValue((GrReferenceExpression)reference) ||
+           ((GrReferenceExpression)reference).getParent() instanceof GrPostfixExpression)) {
+        if (hasAssignment) {
+          return true;
+        }
+        hasAssignment = true;
+      }
+    }
+    return false;
   }
 
   public static boolean shouldHighlightAsUnresolved(@NotNull GrReferenceExpression referenceExpression) {
@@ -485,6 +522,10 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitMethod(GrMethod method) {
+    if (!method.isConstructor()) {
+      myHolder.createInfoAnnotation(method.getNameIdentifierGroovy(), null).setTextAttributes(DefaultHighlighter.METHOD_DECLARATION);
+    }
+
     checkMethodDefinitionModifiers(myHolder, method);
     checkMethodWithTypeParamsShouldHaveReturnType(myHolder, method);
     checkInnerMethod(myHolder, method);
@@ -576,6 +617,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkName(variable);
     if (variable instanceof GrMember) {
       highlightMember(myHolder, ((GrMember)variable));
+    } else {
+      highlightVariable(variable, variable.getNameIdentifierGroovy());
     }
 
     PsiNamedElement duplicate = ResolveUtil

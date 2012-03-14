@@ -67,10 +67,15 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
       new AttributesDescriptor("Unresolved reference access", DefaultHighlighter.UNRESOLVED_ACCESS),
       new AttributesDescriptor("List/map to object conversion", DefaultHighlighter.LITERAL_CONVERSION),
       new AttributesDescriptor("Annotation", DefaultHighlighter.ANNOTATION),
+      new AttributesDescriptor("Local variable", DefaultHighlighter.LOCAL_VARIABLE),
+      new AttributesDescriptor("Reassigned local variable", DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE),
+      new AttributesDescriptor("Parameter", DefaultHighlighter.PARAMETER),
+      new AttributesDescriptor("Reassigned parameter", DefaultHighlighter.REASSIGNED_PARAMETER),
       new AttributesDescriptor("Static field", DefaultHighlighter.STATIC_FIELD),
       new AttributesDescriptor("Instance field", DefaultHighlighter.INSTANCE_FIELD),
       new AttributesDescriptor("Instance method call", DefaultHighlighter.METHOD_CALL),
       new AttributesDescriptor("Static method call", DefaultHighlighter.STATIC_METHOD_ACCESS),
+      new AttributesDescriptor("Method declaration", DefaultHighlighter.METHOD_DECLARATION),
       new AttributesDescriptor("Class reference", DefaultHighlighter.CLASS_REFERENCE),
       new AttributesDescriptor("Map key accessed as a property", DefaultHighlighter.MAP_KEY),
       new AttributesDescriptor("Instance property reference", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE),
@@ -103,10 +108,11 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "  def <instfield>property</instfield>\n" +
            "//This is a line comment\n" +
            "/* This is a block comment */\n" +
-           "  static def foo(int i) {\n" +
-           "    <classref>Map</classref> map = [key:1, b:2]\n" +
+           "  static def <method>foo</method>(int <param>i</param>, int <reParam>j</reParam>) {\n" +
+           "    <classref>Map</classref> map = [<mapkey>key</mapkey>:1, <mapkey>b</mapkey>:2]\n" +
+           "    <reParam>j</reParam>++\n" +
            "    print map.<mapkey>key</mapkey>\n" +
-           "    return [i, i, <instfield>property</instfield>]\n" +
+           "    return [<param>i</param>, <instfield>property</instfield>]\n" +
            "  }\n" +
            "  static def <statfield>panel</statfield> = new <classref>JPanel</classref>()\n" +
            "}\n" +
@@ -114,8 +120,9 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
            "<classref>Demo</classref>.<statfield>panel</statfield>.size = " +
            "<classref>Demo</classref>.<statmet>foo</statmet>(\"123${456}789\".toInteger()) \n" +
            "'JetBrains'.matches(/Jw+Bw+/) \n" +
-           "def x=1 + <unresolved>unresolved</unresolved>\n" +
-           "def f1 = []\n" +
+           "def <local>x</local>=1 + <unresolved>unresolved</unresolved>\n" +
+           "def <reLocal>f1</reLocal> = []\n" +
+           "<reLocal>f1</reLocal> = [2]\n" +
            "<classref>File</classref> f=<literal>[</literal>'path'<literal>]</literal>\n" +
            "print new <classref>Demo</classref>().<prop>property</prop>\n" +
            "print '<validescape>\\n</validescape> <invalidescape>\\x</invalidescape>'"
@@ -140,6 +147,11 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
     map.put("staticprop", DefaultHighlighter.STATIC_PROPERTY_REFERENCE);
     map.put("validescape", DefaultHighlighter.VALID_STRING_ESCAPE);
     map.put("invalidescape", DefaultHighlighter.INVALID_STRING_ESCAPE);
+    map.put("local", DefaultHighlighter.LOCAL_VARIABLE);
+    map.put("reLocal", DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE);
+    map.put("param", DefaultHighlighter.PARAMETER);
+    map.put("reParam", DefaultHighlighter.REASSIGNED_PARAMETER);
+    map.put("method", DefaultHighlighter.METHOD_DECLARATION);
     return map;
   }
 }

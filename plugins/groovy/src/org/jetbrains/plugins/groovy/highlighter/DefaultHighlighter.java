@@ -94,6 +94,18 @@ public class DefaultHighlighter {
   public static TextAttributesKey ANNOTATION = TextAttributesKey.createTextAttributesKey(ANNOTATION_ID,
       HighlightInfoType.ANNOTATION_NAME.getAttributesKey().getDefaultAttributes());
 
+  public static TextAttributesKey LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("Groovy var",
+      HighlightInfoType.LOCAL_VARIABLE.getAttributesKey().getDefaultAttributes());
+  public static TextAttributesKey REASSIGNED_LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("Groovy reassigned var",
+      HighlightInfoType.REASSIGNED_LOCAL_VARIABLE.getAttributesKey().getDefaultAttributes());
+  public static TextAttributesKey PARAMETER = TextAttributesKey.createTextAttributesKey("Groovy parameter",
+      HighlightInfoType.PARAMETER.getAttributesKey().getDefaultAttributes());
+  public static TextAttributesKey REASSIGNED_PARAMETER = TextAttributesKey.createTextAttributesKey("Groovy reassigned parameter",
+      HighlightInfoType.REASSIGNED_PARAMETER.getAttributesKey().getDefaultAttributes());
+
+  public static TextAttributesKey METHOD_DECLARATION = TextAttributesKey.createTextAttributesKey("Groovy method declaration",
+      HighlightInfoType.METHOD_DECLARATION.getAttributesKey().getDefaultAttributes());
+
   public static TextAttributesKey INSTANCE_FIELD = TextAttributesKey.createTextAttributesKey(INSTANCE_FIELD_ID,
       HighlightInfoType.INSTANCE_FIELD.getAttributesKey().getDefaultAttributes());
 
