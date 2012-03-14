@@ -30,7 +30,7 @@ import java.util.*;
 public class MavenRunnerParameters implements Cloneable {
   private boolean isPomExecution;
   private Path myWorkingDirPath;
-  private List<String> myGoals;
+  private final List<String> myGoals = new ArrayList<String>();
 
   private final Map<String, Boolean> myProfilesMap = new LinkedHashMap<String, Boolean>();
 
@@ -106,8 +106,9 @@ public class MavenRunnerParameters implements Cloneable {
     return myGoals;
   }
 
-  public void setGoals(List<String> goals) {
-    myGoals = new ArrayList<String>();
+  public void setGoals(@Nullable List<String> goals) {
+    myGoals.clear();
+
     if (goals != null) {
       myGoals.addAll(goals);
     }
@@ -189,7 +190,7 @@ public class MavenRunnerParameters implements Cloneable {
     final MavenRunnerParameters that = (MavenRunnerParameters)o;
 
     if (isPomExecution != that.isPomExecution) return false;
-    if (myGoals != null ? !myGoals.equals(that.myGoals) : that.myGoals != null) return false;
+    if (!myGoals.equals(that.myGoals)) return false;
     if (myWorkingDirPath != null ? !myWorkingDirPath.equals(that.myWorkingDirPath) : that.myWorkingDirPath != null) return false;
     if (!myProfilesMap.equals(that.myProfilesMap)) return false;
 
@@ -200,7 +201,7 @@ public class MavenRunnerParameters implements Cloneable {
     int result;
     result = isPomExecution ? 1 : 0;
     result = 31 * result + (myWorkingDirPath != null ? myWorkingDirPath.hashCode() : 0);
-    result = 31 * result + (myGoals != null ? myGoals.hashCode() : 0);
+    result = 31 * result + myGoals.hashCode();
     result = 31 * result + myProfilesMap.hashCode();
     return result;
   }

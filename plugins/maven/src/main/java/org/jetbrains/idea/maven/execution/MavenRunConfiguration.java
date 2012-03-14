@@ -15,8 +15,7 @@
  */
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -30,10 +29,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -48,7 +48,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     mySettings = new MavenSettings(project);
   }
 
-  public RunConfiguration clone() {
+  public MavenRunConfiguration clone() {
     MavenRunConfiguration clone = (MavenRunConfiguration)super.clone();
     clone.mySettings = mySettings.clone();
     return clone;
@@ -66,11 +66,28 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return null;
   }
 
+  public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
+    return MavenExternalParameters
+      .createJavaParameters(project, mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
+  }
+
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     JavaCommandLineState state = new JavaCommandLineState(env) {
       protected JavaParameters createJavaParameters() throws ExecutionException {
-        return MavenExternalParameters
-          .createJavaParameters(env.getProject(), mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
+        return MavenRunConfiguration.this.createJavaParameters(env.getProject());
+      }
+
+      @Override
+      public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+        DefaultExecutionResult res = (DefaultExecutionResult)super.execute(executor, runner);
+        if (res != null) {
+          if (executor.getId().equals(ToolWindowId.RUN)
+              && MavenResumeAction.isApplicable(env.getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
+            MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, executor, env);
+            res.setRestartActions(resumeAction);
+          }
+        }
+        return res;
       }
 
       @NotNull
