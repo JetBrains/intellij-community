@@ -509,7 +509,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         if (getCanonicalText().equals(dstItem.getName())) {
           return getElement();
         }
-        return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), file.getName());
+        return fixRefText(file.getName());
       }
       newName = PsiFileSystemItemUtil.getRelativePath(curItem, dstItem);
       if (newName == null) {
@@ -522,6 +522,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
 
     return rename(newName);
+  }
+
+  protected PsiElement fixRefText(String name) {
+    return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), name);
   }
 
   /* Happens when it's been moved to another folder */
