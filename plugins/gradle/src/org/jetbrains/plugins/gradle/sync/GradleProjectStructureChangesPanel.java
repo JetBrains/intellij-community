@@ -99,14 +99,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
         if (!mySuppressCollapseTracking) {
-          mySettings.getExpandStates().put(getPath(event.getPath()), true);
+          mySettings.getWorkingExpandStates().put(getPath(event.getPath()), true);
         }
       }
 
       @Override
       public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
         if (!mySuppressCollapseTracking) {
-          mySettings.getExpandStates().put(getPath(event.getPath()), false);
+          mySettings.getWorkingExpandStates().put(getPath(event.getPath()), false);
         }
       }
     });
@@ -361,7 +361,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
    */
   private void applyCollapseState(@NotNull TreePath path) {
     final String key = getPath(path);
-    final Boolean expanded = mySettings.getExpandStates().get(key);
+    final Boolean expanded = mySettings.getWorkingExpandStates().get(key);
     if (expanded == null) {
       return;
     }
