@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -59,13 +60,13 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
   }
 
   public ArtifactCompilerInstructionCreator archive(@NotNull String archiveFileName) {
-    final JarInfo jarInfo = new JarInfo();
+    final JarDestinationInfo destination = new JarDestinationInfo(childPathInJar(archiveFileName), myJarInfo, myJarDestination);
+    final JarInfo jarInfo = new JarInfo(destination);
     final String outputPath = myJarDestination.getOutputPath() + "/" + archiveFileName;
     if (!myInstructionsBuilder.registerJarFile(jarInfo, outputPath)) {
       return new SkipAllInstructionCreator(myInstructionsBuilder);
     }
-    final JarDestinationInfo destination = new JarDestinationInfo(childPathInJar(archiveFileName), myJarInfo, myJarDestination);
-    jarInfo.addDestination(destination);
+    myJarInfo.addJar(destination.getPathInJar(), jarInfo);
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
   }
 }

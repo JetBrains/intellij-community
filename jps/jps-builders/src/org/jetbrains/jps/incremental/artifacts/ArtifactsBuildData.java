@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.artifacts.Artifact;
@@ -14,6 +15,7 @@ import java.util.Map;
  * @author nik
  */
 public class ArtifactsBuildData {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData");
   private Map<Artifact, ArtifactSourceFilesState> myArtifactState;
   private final ArtifactSourceTimestampStorage myTimestampStorage;
   private ArtifactCompilerPersistentData myPersistentData;
@@ -26,6 +28,11 @@ public class ArtifactsBuildData {
     myArtifactState = new HashMap<Artifact, ArtifactSourceFilesState>();
     myPersistentData = new ArtifactCompilerPersistentData(artifactsDataDir);
     myMappingsDir = new File(myArtifactsDataDir, "mappings");
+    if (myPersistentData.isVersionChanged()) {
+      myTimestampStorage.wipe();
+      FileUtil.delete(myMappingsDir);
+      //todo[nik] clear artifacts outputs
+    }
   }
 
   public ArtifactSourceFilesState getOrCreateState(Artifact artifact, Project project, ModuleRootsIndex index) {
@@ -60,6 +67,7 @@ public class ArtifactsBuildData {
   }
 
   public void close() throws IOException {
+    myPersistentData.save();
     myTimestampStorage.close();
     for (ArtifactSourceFilesState state : myArtifactState.values()) {
       state.close();
@@ -67,6 +75,12 @@ public class ArtifactsBuildData {
   }
 
   public void flush(boolean memoryCachesOnly) {
+    try {
+      myPersistentData.save();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
     myTimestampStorage.flush(memoryCachesOnly);
     for (ArtifactSourceFilesState state : myArtifactState.values()) {
       state.flush(memoryCachesOnly);

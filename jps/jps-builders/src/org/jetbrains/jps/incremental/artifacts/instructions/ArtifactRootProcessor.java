@@ -7,5 +7,5 @@ import java.util.Collection;
  * @author nik
  */
 public interface ArtifactRootProcessor {
-  void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws IOException;
+  void process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException;
 }

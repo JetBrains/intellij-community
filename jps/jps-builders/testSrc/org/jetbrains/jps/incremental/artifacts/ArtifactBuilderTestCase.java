@@ -262,7 +262,8 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
   }
 
   protected void assertUpToDate() {
-    assertCopied();
+    assertEmpty(myArtifactBuilderLogger.myDeletedFilePaths);
+    assertEmpty(myArtifactBuilderLogger.myCopiedFilePaths);
   }
 
   private String getProjectRelativePath(String path) {

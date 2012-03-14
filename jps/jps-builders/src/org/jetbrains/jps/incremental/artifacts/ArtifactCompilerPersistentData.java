@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class ArtifactCompilerPersistentData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.ArtifactCompilerPersistentData");
-  private static final int VERSION = 0;
+  private static final int VERSION = 1;
   private File myFile;
   private Map<String, Integer> myArtifact2Id = new HashMap<String, Integer>();
   private TIntHashSet myUsedIds = new TIntHashSet();

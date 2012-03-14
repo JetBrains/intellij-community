@@ -1,10 +1,12 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
+import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author nik
@@ -21,7 +23,10 @@ public abstract class ArtifactSourceRoot {
 
   public abstract boolean containsFile(String filePath);
 
-  public abstract void copyFromRoot(String filePath, String outputPath, List<String> outputs) throws IOException;
+  public abstract void copyFromRoot(String filePath,
+                                    int rootIndex, String outputPath,
+                                    CompileContext context, ArtifactSourceToOutputMapping srcOutMapping,
+                                    ArtifactOutputToSourceMapping outSrcMapping) throws IOException;
 
   public SourceFileFilter getFilter() {
     return myFilter;

@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
@@ -13,11 +14,7 @@ import org.jetbrains.jps.incremental.artifacts.instructions.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 /**
  * @author nik
@@ -28,12 +25,13 @@ public class ArtifactSourceFilesState {
   private final int myArtifactId;
   private final ModuleRootsIndex myRootsIndex;
   private final ArtifactSourceTimestampStorage myTimestampStorage;
-  private Set<String> myChangedFiles = new HashSet<String>();
+  private Map<String, IntArrayList> myChangedFiles = new HashMap<String, IntArrayList>();
   private Set<String> myDeletedFiles = new HashSet<String>();
   private ArtifactInstructionsBuilder myInstructionsBuilder;
-  private ArtifactSourceToOutputMapping myMapping;
-  private final AtomicBoolean myInitialized = new AtomicBoolean();
-  private final File myMappingsFile;
+  private ArtifactSourceToOutputMapping mySrcOutMapping;
+  private ArtifactOutputToSourceMapping myOutSrcMapping;
+  private final File mySrcOutMappingsFile;
+  private File myOutSrcMappingsFile;
 
   public ArtifactSourceFilesState(Artifact artifact, int artifactId, Project project,
                                   ModuleRootsIndex rootsIndex,
@@ -44,23 +42,34 @@ public class ArtifactSourceFilesState {
     myRootsIndex = rootsIndex;
     myTimestampStorage = timestampStorage;
     myArtifactId = artifactId;
-    myMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "src-out");
+    mySrcOutMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "src-out");
+    myOutSrcMappingsFile = new File(new File(mappingsDir, String.valueOf(artifactId)), "out-src");
   }
 
-  public ArtifactSourceToOutputMapping getOrCreateMapping() throws IOException {
-    if (myMapping == null) {
-      myMapping = new ArtifactSourceToOutputMapping(myMappingsFile);
+  public ArtifactSourceToOutputMapping getOrCreateSrcOutMapping() throws IOException {
+    if (mySrcOutMapping == null) {
+      mySrcOutMapping = new ArtifactSourceToOutputMapping(mySrcOutMappingsFile);
     }
-    return myMapping;
+    return mySrcOutMapping;
+  }
+
+  public ArtifactOutputToSourceMapping getOrCreateOutSrcMapping() throws IOException {
+    if (myOutSrcMapping == null) {
+      myOutSrcMapping = new ArtifactOutputToSourceMapping(myOutSrcMappingsFile);
+    }
+    return myOutSrcMapping;
   }
 
   public void clean() {
-    if (myMapping != null) {
-      myMapping.wipe();
+    if (mySrcOutMapping != null) {
+      mySrcOutMapping.wipe();
+    }
+    if (myOutSrcMapping != null) {
+      myOutSrcMapping.wipe();
     }
   }
 
-  public Set<String> getChangedFiles() {
+  public Map<String, IntArrayList> getChangedFiles() {
     return myChangedFiles;
   }
 
@@ -69,25 +78,19 @@ public class ArtifactSourceFilesState {
   }
 
   public void initState() throws IOException {
-    /*
-    if (!myInitialized.compareAndSet(false, true)) {
-      return;
-    }
-    */
-
     final Set<String> currentPaths = new HashSet<String>();
     myChangedFiles.clear();
     myDeletedFiles.clear();
     getOrCreateInstructions().processRoots(new ArtifactRootProcessor() {
       @Override
-      public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws IOException {
+      public void process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
         final File rootFile = root.getRootFile();
         if (rootFile.exists()) {
-          processRecursively(rootFile, root.getFilter(), currentPaths);
+          processRecursively(rootFile, rootIndex, root.getFilter(), currentPaths);
         }
       }
     });
-    final ArtifactSourceToOutputMapping mapping = getOrCreateMapping();
+    final ArtifactSourceToOutputMapping mapping = getOrCreateSrcOutMapping();
     final Iterator<String> iterator = mapping.getKeysIterator();
     while (iterator.hasNext()) {
       String path = iterator.next();
@@ -97,7 +100,7 @@ public class ArtifactSourceFilesState {
     }
   }
 
-  private void processRecursively(File file, SourceFileFilter filter, Set<String> currentPaths) throws IOException {
+  private void processRecursively(File file, int rootIndex, SourceFileFilter filter, Set<String> currentPaths) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
     if (!filter.accept(filePath)) return;
 
@@ -105,7 +108,7 @@ public class ArtifactSourceFilesState {
       final File[] children = file.listFiles();
       if (children != null) {
         for (File child : children) {
-          processRecursively(child, filter, currentPaths);
+          processRecursively(child, rootIndex, filter, currentPaths);
         }
       }
     }
@@ -123,7 +126,12 @@ public class ArtifactSourceFilesState {
       }
       if (!upToDate) {
         myDeletedFiles.remove(filePath);
-        myChangedFiles.add(filePath);
+        IntArrayList list = myChangedFiles.get(filePath);
+        if (list == null) {
+          list = new IntArrayList(1);
+          myChangedFiles.put(filePath, list);
+        }
+        list.add(rootIndex);
       }
     }
   }
@@ -156,7 +164,7 @@ public class ArtifactSourceFilesState {
         }
       }
     }
-    for (String filePath : myChangedFiles) {
+    for (String filePath : myChangedFiles.keySet()) {
       final ArtifactSourceTimestampStorage.PerArtifactTimestamp[] state = myTimestampStorage.getState(filePath);
       File file = new File(FileUtil.toSystemDependentName(filePath));
       final long timestamp = file.lastModified();
@@ -185,14 +193,20 @@ public class ArtifactSourceFilesState {
   }
 
   public void close() throws IOException {
-    if (myMapping != null) {
-      myMapping.close();
+    if (mySrcOutMapping != null) {
+      mySrcOutMapping.close();
+    }
+    if (myOutSrcMapping != null) {
+      myOutSrcMapping.close();
     }
   }
 
   public void flush(boolean memoryCachesOnly) {
-    if (myMapping != null) {
-      myMapping.flush(memoryCachesOnly);
+    if (mySrcOutMapping != null) {
+      mySrcOutMapping.flush(memoryCachesOnly);
+    }
+    if (myOutSrcMapping != null) {
+      myOutSrcMapping.flush(memoryCachesOnly);
     }
   }
 }

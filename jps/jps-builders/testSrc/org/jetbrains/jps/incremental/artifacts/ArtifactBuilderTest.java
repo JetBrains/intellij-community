@@ -131,74 +131,11 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
       );
   }
 
-  public void testOverwriteArchives() {
-    final Artifact included = addArtifact("included",
-                                          root().archive("x.jar").fileCopy(createFile("aaa.class")));
-    final Artifact a = addArtifact(
-      root()
-        .artifact(included)
-        .archive("x.jar")
-          .fileCopy(createFile("bbb.class")));
-    buildAll();
-    assertOutput(a, fs()
-      .archive("x.jar")
-        .file("aaa.class")
-      );
-  }
-
-  public void testOverwriteNestedArchive() {
-    final Artifact included = addArtifact("included", root().archive("a.jar").archive("b.jar").fileCopy(createFile("c.class")));
-    final Artifact a = addArtifact(
-      root()
-        .artifact(included)
-        .archive("a.jar").archive("d.jar").fileCopy(createFile("e.class")));
-    buildAll();
-    assertOutput(a, fs().archive("a.jar").archive("b.jar").file("c.class"));
-  }
-
-  public void testOverwriteFileByArchive() {
-    final Library library = addProjectLibrary("lib", getJUnitJarPath());
-    Artifact included = addArtifact("included", root().archive("junit.jar").fileCopy(createFile("x.class")));
-    Artifact a = addArtifact(root()
-                               .artifact(included)
-                               .lib(library));
-    buildAll();
-    assertOutput(a, fs().archive("junit.jar").file("x.class"));
-  }
-
-  //todo[nik] fix ordering
-  public void _testOverwriteArchiveByFile() {
-    Artifact included = addArtifact("included", root().archive("jdom.jar").fileCopy(createFile("x.class")));
-    Artifact a = addArtifact(root()
-                               .fileCopy(createFile("jdom.jar", "123"))
-                               .artifact(included));
-    buildAll();
-    assertOutput(a, fs().file("jdom.jar", "123"));
-  }
-
   public void testCopyLibrary() {
     final Library library = addProjectLibrary("lib", getJUnitJarPath());
     final Artifact a = addArtifact(root().lib(library));
     buildAll();
     assertOutput(a, fs().file("junit.jar"));
-  }
-
-  //todo[nik] fix ordering
-  public void _testFileOrder() {
-    final Artifact a1 = addArtifact("included1",
-                                    root().dir("ddd").fileCopy(createFile("d1/xxx.txt", "first")));
-    final Artifact a2 = addArtifact("included2",
-                                    root().dir("ddd").fileCopy(createFile("d2/xxx.txt", "second")));
-    final Artifact a = addArtifact(
-      root()
-      .artifact(a1)
-      .dir("ddd")
-        .fileCopy(createFile("d3/xxx.txt", "foo"))
-        .end()
-      .artifact(a2)
-    );
-    buildAll();
-    assertOutput(a, fs().dir("ddd").file("xxx.txt", "first"));
   }
 
   public void testModuleOutput() {

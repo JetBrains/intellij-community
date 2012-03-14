@@ -25,8 +25,8 @@ public abstract class DestinationInfo {
   private final String myOutputFilePath;
 
   protected DestinationInfo(@NotNull final String outputPath, @NotNull String outputFilePath) {
-    myOutputFilePath = outputFilePath;
     myOutputPath = outputPath;
+    myOutputFilePath = outputFilePath;
   }
 
   @NotNull

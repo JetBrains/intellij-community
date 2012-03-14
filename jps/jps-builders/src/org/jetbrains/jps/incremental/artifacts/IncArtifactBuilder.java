@@ -2,10 +2,10 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
@@ -74,54 +74,92 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
                                                                                                   context.getProject(), context.getRootsIndex());
       state.initState();
       final Set<String> deletedFiles = state.getDeletedFiles();
-      final Set<String> changedFiles = state.getChangedFiles();
+      final Map<String,IntArrayList> changedFiles = state.getChangedFiles();
       if (deletedFiles.isEmpty() && changedFiles.isEmpty()) {
         return;
       }
 
       context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "'..."));
-      final ArtifactSourceToOutputMapping mapping = state.getOrCreateMapping();
-      final Set<String> deletedJars = deleteOutdatedFiles(deletedFiles, context, mapping);
-      final ArtifactInstructionsBuilder instructions = state.getOrCreateInstructions();
-      final Set<JarInfo> changedJars = new THashSet<JarInfo>();
-      for (String deletedJar : deletedJars) {
-        ContainerUtil.addIfNotNull(instructions.getJarInfo(deletedJar), changedJars);
+      final ArtifactSourceToOutputMapping srcOutMapping = state.getOrCreateSrcOutMapping();
+      final ArtifactOutputToSourceMapping outSrcMapping = state.getOrCreateOutSrcMapping();
+
+      final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
+      MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
+      for (String sourcePath : deletedFiles) {
+        final List<String> outputPaths = srcOutMapping.getState(sourcePath);
+        if (outputPaths != null) {
+          for (String outputPath : outputPaths) {
+            filesToDelete.putValue(outputPath, sourcePath);
+            final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+            if (sources != null) {
+              for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath());
+              }
+            }
+          }
+        }
       }
 
-      Map<String, String[]> updatedMappings = new HashMap<String, String[]>();
-      for (final String filePath : changedFiles) {
-        final List<String> outputs = new SmartList<String>();
-        instructions.processContainingRoots(filePath, new ArtifactRootProcessor() {
-          @Override
-          public void process(ArtifactSourceRoot root, Collection<DestinationInfo> destinations) throws IOException {
+      Set<String> changedOutputPaths = new THashSet<String>();
+      for (Map.Entry<String, IntArrayList> entry : changedFiles.entrySet()) {
+        final IntArrayList roots = entry.getValue();
+        final String sourcePath = entry.getKey();
+        for (int i = 0; i < roots.size(); i++) {
+          addFileToProcess(filesToProcess, roots.get(i), sourcePath);
+        }
+        final List<String> outputPaths = srcOutMapping.getState(sourcePath);
+        if (outputPaths != null) {
+          changedOutputPaths.addAll(outputPaths);
+          for (String outputPath : outputPaths) {
+            final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+            if (sources != null) {
+              for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath());
+              }
+            }
+          }
+        }
+      }
+      for (String sourcePath : changedFiles.keySet()) {
+        srcOutMapping.remove(sourcePath);
+      }
+      for (String outputPath : changedOutputPaths) {
+        outSrcMapping.remove(outputPath);
+      }
+
+      deleteOutdatedFiles(filesToDelete, context, srcOutMapping, outSrcMapping);
+
+      final ArtifactInstructionsBuilder instructions = state.getOrCreateInstructions();
+      final Set<JarInfo> changedJars = new THashSet<JarInfo>();
+      instructions.processRoots(new ArtifactRootProcessor() {
+        @Override
+        public void process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
+          final Set<String> sourcePaths = filesToProcess.get(rootIndex);
+          if (sourcePaths == null) return;
+
+          for (String sourcePath : sourcePaths) {
+            if (!root.containsFile(sourcePath)) continue;//todo[nik] this seems to be unnecessary
+
             for (DestinationInfo destination : destinations) {
               if (destination instanceof ExplodedDestinationInfo) {
-                context.getLoggingManager().getArtifactBuilderLogger().fileCopied(filePath);
-                root.copyFromRoot(filePath, destination.getOutputPath(), outputs);
+                root.copyFromRoot(sourcePath, rootIndex, destination.getOutputPath(), context, srcOutMapping, outSrcMapping);
               }
-              else {
-                outputs.add(destination.getOutputFilePath() + JarPathUtil.JAR_SEPARATOR);
+              else if (outSrcMapping.getState(destination.getOutputFilePath()) == null) {
+                outSrcMapping.update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
                 changedJars.add(((JarDestinationInfo)destination).getJarInfo());
               }
             }
           }
-        });
-        updatedMappings.put(filePath, ArrayUtil.toStringArray(outputs));
-      }
+        }
+      });
 
-      JarsBuilder builder = new JarsBuilder(changedJars, null, context);
-      final boolean processed = builder.buildJars(new THashSet<String>());
+      JarsBuilder builder = new JarsBuilder(changedJars, context, srcOutMapping, outSrcMapping, instructions);
+      final boolean processed = builder.buildJars();
       if (!processed) {
         return;
       }
 
       state.updateTimestamps();
-      for (String filePath : deletedFiles) {
-        mapping.remove(filePath);
-      }
-      for (Map.Entry<String, String[]> entry : updatedMappings.entrySet()) {
-        mapping.update(entry.getKey(), entry.getValue());
-      }
       state.markUpToDate();
       context.processMessage(UptoDateFilesSavedEvent.INSTANCE);
     }
@@ -130,48 +168,45 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     }
   }
 
-  private static Set<String> deleteOutdatedFiles(Set<String> deletedFiles, CompileContext context,
-                                                 ArtifactSourceToOutputMapping mapping) throws IOException {
-    if (deletedFiles.isEmpty()) return Collections.emptySet();
+  private static void addFileToProcess(TIntObjectHashMap<Set<String>> filesToProcess, final int rootIndex, final String path) {
+    Set<String> paths = filesToProcess.get(rootIndex);
+    if (paths == null) {
+      paths = new THashSet<String>();
+      filesToProcess.put(rootIndex, paths);
+    }
+    paths.add(path);
+  }
+
+  private static void deleteOutdatedFiles(MultiMap<String, String> filesToDelete, CompileContext context,
+                                          ArtifactSourceToOutputMapping srcOutMapping,
+                                          ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
+    if (filesToDelete.isEmpty()) return;
 
     context.processMessage(new ProgressMessage("Deleting outdated files..."));
-    Set<String> pathsToDelete = new THashSet<String>();
-    for (String path : deletedFiles) {
-      final String[] outputPaths = mapping.getState(path);
-      Collections.addAll(pathsToDelete, outputPaths);
-    }
-
     int notDeletedFilesCount = 0;
-    final THashSet<String> notDeletedJars = new THashSet<String>();
-    final THashSet<String> deletedJars = new THashSet<String>();
+    final THashSet<String> notDeletedPaths = new THashSet<String>();
+    final THashSet<String> deletedPaths = new THashSet<String>();
 
-    for (String fullPath : pathsToDelete) {
-      int end = fullPath.indexOf(JarPathUtil.JAR_SEPARATOR);
-      boolean isJar = end != -1;
-      String filePath = isJar ? fullPath.substring(0, end) : fullPath;
-      boolean deleted = false;
-      if (isJar) {
-        if (notDeletedJars.contains(filePath)) {
-          continue;
-        }
-        deleted = deletedJars.contains(filePath);
+    for (String filePath : filesToDelete.keySet()) {
+      if (notDeletedPaths.contains(filePath)) {
+        continue;
       }
 
-      File file = new File(FileUtil.toSystemDependentName(filePath));
+      boolean deleted = deletedPaths.contains(filePath);
       if (!deleted) {
-        deleted = FileUtil.delete(file);
+        deleted = FileUtil.delete(new File(FileUtil.toSystemDependentName(filePath)));
       }
 
       if (deleted) {
         context.getLoggingManager().getArtifactBuilderLogger().fileDeleted(filePath);
-        if (isJar) {
-          deletedJars.add(filePath);
+        outSrcMapping.remove(filePath);
+        deletedPaths.add(filePath);
+        for (String sourcePath : filesToDelete.get(filePath)) {
+          srcOutMapping.removeValue(sourcePath, filePath);
         }
       }
       else {
-        if (isJar) {
-          notDeletedJars.add(filePath);
-        }
+        notDeletedPaths.add(filePath);
         if (notDeletedFilesCount++ > 50) {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Deletion of outdated files stopped because too many files cannot be deleted"));
           break;
@@ -179,8 +214,6 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file '" + filePath + "'"));
       }
     }
-
-    return deletedJars;
   }
 
   @Override

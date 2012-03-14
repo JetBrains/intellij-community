@@ -45,12 +45,11 @@ public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructi
 
   public ArtifactCompilerInstructionCreator archive(@NotNull String archiveFileName) {
     String jarOutputPath = myOutputPath + "/" + archiveFileName;
-    final JarInfo jarInfo = new JarInfo();
+    final ExplodedDestinationInfo destination = new ExplodedDestinationInfo(jarOutputPath);
+    final JarInfo jarInfo = new JarInfo(destination);
     if (!myInstructionsBuilder.registerJarFile(jarInfo, jarOutputPath)) {
       return new SkipAllInstructionCreator(myInstructionsBuilder);
     }
-    final ExplodedDestinationInfo destination = new ExplodedDestinationInfo(jarOutputPath);
-    jarInfo.addDestination(destination);
     return new PackIntoArchiveInstructionCreator(myInstructionsBuilder, jarInfo, "", destination);
   }
 }

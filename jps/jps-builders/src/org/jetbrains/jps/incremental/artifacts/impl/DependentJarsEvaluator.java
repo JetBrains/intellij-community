@@ -17,6 +17,7 @@
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.jps.incremental.artifacts.instructions.DestinationInfo;
 import org.jetbrains.jps.incremental.artifacts.instructions.JarDestinationInfo;
 import org.jetbrains.jps.incremental.artifacts.instructions.JarInfo;
 
@@ -31,11 +32,14 @@ public class DependentJarsEvaluator {
 
   public void addJarWithDependencies(final JarInfo jarInfo) {
     if (myJars.add(jarInfo)) {
-      for (JarDestinationInfo destination : jarInfo.getJarDestinations()) {
-        addJarWithDependencies(destination.getJarInfo());
+      final DestinationInfo destination = jarInfo.getDestination();
+      if (destination instanceof JarDestinationInfo) {
+        addJarWithDependencies(((JarDestinationInfo)destination).getJarInfo());
       }
-      for (Pair<String, JarInfo> pair : jarInfo.getPackedJars()) {
-        addJarWithDependencies(pair.getSecond());
+      for (Pair<String, Object> pair : jarInfo.getContent()) {
+        if (pair.getSecond() instanceof JarInfo) {
+          addJarWithDependencies((JarInfo)pair.getSecond());
+        }
       }
     }
   }
