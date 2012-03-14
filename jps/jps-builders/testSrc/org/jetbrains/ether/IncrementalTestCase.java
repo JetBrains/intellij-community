@@ -192,7 +192,7 @@ public abstract class IncrementalTestCase extends TestCase {
     final String projectPath = getWorkDir() + File.separator + ".idea";
     final Project project = new Project();
 
-    final Sdk jdk = project.createSdk("JavaSDK", "IDEA jdk",  System.getProperty("java.home"), null);
+    final Sdk jdk = project.createSdk("JavaSDK", "IDEA jdk", "1.6", System.getProperty("java.home"), null);
     final List<String> paths = new LinkedList<String>();
 
     paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));

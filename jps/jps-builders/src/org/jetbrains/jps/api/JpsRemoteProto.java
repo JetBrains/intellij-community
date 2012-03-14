@@ -2789,6 +2789,10 @@ public final class JpsRemoteProto {
           java.util.List<String> getPathList();
           int getPathCount();
           String getPath(int index);
+          
+          // optional string version = 6;
+          boolean hasVersion();
+          String getVersion();
         }
         public static final class GlobalLibrary extends
             com.google.protobuf.GeneratedMessageLite
@@ -2951,12 +2955,45 @@ public final class JpsRemoteProto {
             return path_.get(index);
           }
           
+          // optional string version = 6;
+          public static final int VERSION_FIELD_NUMBER = 6;
+          private java.lang.Object version_;
+          public boolean hasVersion() {
+            return ((bitField0_ & 0x00000010) == 0x00000010);
+          }
+          public String getVersion() {
+            java.lang.Object ref = version_;
+            if (ref instanceof String) {
+              return (String) ref;
+            } else {
+              com.google.protobuf.ByteString bs = 
+                  (com.google.protobuf.ByteString) ref;
+              String s = bs.toStringUtf8();
+              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
+                version_ = s;
+              }
+              return s;
+            }
+          }
+          private com.google.protobuf.ByteString getVersionBytes() {
+            java.lang.Object ref = version_;
+            if (ref instanceof String) {
+              com.google.protobuf.ByteString b = 
+                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
+              version_ = b;
+              return b;
+            } else {
+              return (com.google.protobuf.ByteString) ref;
+            }
+          }
+          
           private void initFields() {
             name_ = "";
             homePath_ = "";
             typeName_ = "";
             additionalDataXml_ = "";
             path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            version_ = "";
           }
           private byte memoizedIsInitialized = -1;
           public final boolean isInitialized() {
@@ -2988,6 +3025,9 @@ public final class JpsRemoteProto {
             }
             for (int i = 0; i < path_.size(); i++) {
               output.writeBytes(5, path_.getByteString(i));
+            }
+            if (((bitField0_ & 0x00000010) == 0x00000010)) {
+              output.writeBytes(6, getVersionBytes());
             }
           }
           
@@ -3021,6 +3061,10 @@ public final class JpsRemoteProto {
               }
               size += dataSize;
               size += 1 * getPathList().size();
+            }
+            if (((bitField0_ & 0x00000010) == 0x00000010)) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeBytesSize(6, getVersionBytes());
             }
             memoizedSerializedSize = size;
             return size;
@@ -3134,6 +3178,8 @@ public final class JpsRemoteProto {
               bitField0_ = (bitField0_ & ~0x00000008);
               path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
               bitField0_ = (bitField0_ & ~0x00000010);
+              version_ = "";
+              bitField0_ = (bitField0_ & ~0x00000020);
               return this;
             }
             
@@ -3189,6 +3235,10 @@ public final class JpsRemoteProto {
                 bitField0_ = (bitField0_ & ~0x00000010);
               }
               result.path_ = path_;
+              if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+                to_bitField0_ |= 0x00000010;
+              }
+              result.version_ = version_;
               result.bitField0_ = to_bitField0_;
               return result;
             }
@@ -3216,6 +3266,9 @@ public final class JpsRemoteProto {
                   path_.addAll(other.path_);
                 }
                 
+              }
+              if (other.hasVersion()) {
+                setVersion(other.getVersion());
               }
               return this;
             }
@@ -3268,6 +3321,11 @@ public final class JpsRemoteProto {
                   case 42: {
                     ensurePathIsMutable();
                     path_.add(input.readBytes());
+                    break;
+                  }
+                  case 50: {
+                    bitField0_ |= 0x00000020;
+                    version_ = input.readBytes();
                     break;
                   }
                 }
@@ -3473,6 +3531,42 @@ public final class JpsRemoteProto {
             void addPath(com.google.protobuf.ByteString value) {
               ensurePathIsMutable();
               path_.add(value);
+              
+            }
+            
+            // optional string version = 6;
+            private java.lang.Object version_ = "";
+            public boolean hasVersion() {
+              return ((bitField0_ & 0x00000020) == 0x00000020);
+            }
+            public String getVersion() {
+              java.lang.Object ref = version_;
+              if (!(ref instanceof String)) {
+                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
+                version_ = s;
+                return s;
+              } else {
+                return (String) ref;
+              }
+            }
+            public Builder setVersion(String value) {
+              if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000020;
+              version_ = value;
+              
+              return this;
+            }
+            public Builder clearVersion() {
+              bitField0_ = (bitField0_ & ~0x00000020);
+              version_ = getDefaultInstance().getVersion();
+              
+              return this;
+            }
+            void setVersion(com.google.protobuf.ByteString value) {
+              bitField0_ |= 0x00000020;
+              version_ = value;
               
             }
             

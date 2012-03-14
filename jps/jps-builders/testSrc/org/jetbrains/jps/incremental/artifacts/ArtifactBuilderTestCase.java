@@ -114,7 +114,7 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
   protected Module addModule(String moduleName, @Nullable String srcPath) {
     if (myJdk == null) {
       try {
-        myJdk = myProject.createSdk("JavaSDK", "jdk", System.getProperty("java.home"), null);
+        myJdk = myProject.createSdk("JavaSDK", "jdk", "1.6", System.getProperty("java.home"), null);
         final List<String> paths = new LinkedList<String>();
         paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
         myJdk.setClasspath(paths);

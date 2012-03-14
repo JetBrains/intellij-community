@@ -10,12 +10,12 @@ public class SdkLoader {
   private static final OwnServiceLoader<SdkTypeService> sdkTypeLoader = OwnServiceLoader.load(SdkTypeService.class)
   private static Map<String, SdkTypeService> sdkTypes
 
-  public static Sdk createSdk(Project project, String typeName, String sdkName, String homePath, Node additionalData) {
+  public static Sdk createSdk(Project project, String typeName, String sdkName, String version, String homePath, Node additionalData) {
     def type = findSdkType(typeName)
     if (type == null) {
       return null
     }
-    return type.createSdk(project, sdkName, homePath, additionalData)
+    return type.createSdk(project, sdkName, version, homePath, additionalData)
   }
 
   private static SdkTypeService findSdkType(String typeName) {

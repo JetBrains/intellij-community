@@ -2,11 +2,14 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
@@ -22,12 +25,22 @@ import java.awt.*;
 public abstract class GradleAbstractSyncTreeFilterAction extends ToggleAction {
   
   @NotNull private final MyFilter myFilter;
+  @NotNull private final TextAttributesKey myAttributesKey;
+
+  private Color   myColor;
+  private boolean myIconChanged;
 
   protected GradleAbstractSyncTreeFilterAction(@NotNull AttributesDescriptor descriptor) {
     myFilter = new MyFilter(descriptor.getKey());
+    myAttributesKey = descriptor.getKey();
     getTemplatePresentation().setText(descriptor.getDisplayName());
-    final Color color = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(descriptor.getKey()).getForegroundColor();
-    getTemplatePresentation().setIcon(new ColorIcon(new JLabel("").getFont().getSize(), color));
+    updateIcon(EditorColorsManager.getInstance().getGlobalScheme());
+    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        updateIcon(scheme);
+      }
+    });
   }
 
   @Override
@@ -51,6 +64,27 @@ public abstract class GradleAbstractSyncTreeFilterAction extends ToggleAction {
     }
     else {
       treeModel.removeFilter(myFilter);
+    }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    if (myIconChanged) {
+      e.getPresentation().setIcon(getTemplatePresentation().getIcon());
+      myIconChanged = false;
+    }
+  }
+
+  private void updateIcon(@Nullable EditorColorsScheme scheme) {
+    if (scheme == null) {
+      return;
+    }
+    final Color color = scheme.getAttributes(myAttributesKey).getForegroundColor();
+    if (color != null && !color.equals(myColor)) {
+      getTemplatePresentation().setIcon(new ColorIcon(new JLabel("").getFont().getSize(), color));
+      myColor = color;
+      myIconChanged = true;
     }
   }
   

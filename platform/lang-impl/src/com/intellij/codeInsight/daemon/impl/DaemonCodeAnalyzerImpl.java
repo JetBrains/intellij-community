@@ -209,6 +209,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     TextEditorBackgroundHighlighter highlighter = (TextEditorBackgroundHighlighter)textEditor.getBackgroundHighlighter();
     final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
     HighlightingPass[] array = passes.toArray(new HighlightingPass[passes.size()]);
+    assert array.length != 0: "Highlighting is disabled for the file "+file;
 
     final DaemonProgressIndicator progress = createUpdateProgress();
     progress.setDebug(LOG.isDebugEnabled());

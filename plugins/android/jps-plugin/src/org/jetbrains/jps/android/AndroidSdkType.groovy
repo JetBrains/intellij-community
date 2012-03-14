@@ -13,7 +13,7 @@ class AndroidSdkType extends SdkTypeService {
   }
 
   @Override
-  Sdk createSdk(Project project, String name, String homePath, Node additionalData) {
+  Sdk createSdk(Project project, String name, String version, String homePath, Node additionalData) {
     def attributes = additionalData.attributes()
     if (attributes == null) {
       return null;
