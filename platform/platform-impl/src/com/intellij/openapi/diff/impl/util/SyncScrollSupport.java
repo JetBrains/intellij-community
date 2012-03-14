@@ -88,7 +88,6 @@ public class SyncScrollSupport implements Disposable {
     public ScrollListener(Pair<FragmentSide, EditingSides>[] scrollContexts, Editor editor) {
       myScrollContexts = scrollContexts;
       myEditor = editor;
-      install();
     }
 
     public void install() {
