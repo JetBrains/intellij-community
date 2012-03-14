@@ -162,6 +162,12 @@ public abstract class GroovySpacingProcessorBasic {
       return Spacing.createSpacing(0, 0, 1, false, 100);
     }
 
+    // For regexes
+    if (leftNode.getTreeParent().getElementType() == mREGEX_LITERAL ||
+        leftNode.getTreeParent().getElementType() == mDOLLAR_SLASH_REGEX_LITERAL) {
+      return NO_SPACING;
+    }
+
 /********** exclusions ************/
     // For << and >> ...
     if ((mLT.equals(leftType) && mLT.equals(rightType)) ||
