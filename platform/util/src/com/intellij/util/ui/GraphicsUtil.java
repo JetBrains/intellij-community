@@ -18,15 +18,29 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class GraphicsUtil {
-  public static void installAntialiasing(@NotNull Graphics g2) {
+  public static void setupAntialiasing(@NotNull Graphics g2) {
+    setupAntialiasing(g2, true);
+  }
+
+  public static void setupAntialiasing(Graphics g2, boolean enable) {
     if (g2 instanceof Graphics2D) {
       Graphics2D g = (Graphics2D)g2;
-      g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+      Toolkit tk = Toolkit.getDefaultToolkit();
+      //noinspection HardCodedStringLiteral
+      Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+
+      if (map != null) {
+        g.addRenderingHints(map);
+      } else {
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                           enable ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+      }
     }
   }
 }

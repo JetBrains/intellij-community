@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -295,7 +296,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
+    public void paint(Graphics g) {
+      GraphicsUtil.setupAntialiasing(g);
+
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       final Dimension size = getSize();
       if (isSmallVariant()) {
@@ -311,8 +314,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             new GradientPaint(0, 0, ColorUtil.shift(UIUtil.getControlColor(), 1.1), 0, h, ColorUtil.shift(UIUtil.getControlColor(), 0.9)));
         }
         g2.fillRect(2, 0, w - 2, h);
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        GraphicsUtil.setupAntialiasing(g2);
         if (!myMouseInside) {
           g2.setPaint(new GradientPaint(0, 0, UIUtil.getBorderColor(), 0, h, UIUtil.getBorderColor().darker()));
           //g2.setColor(UIUtil.getBorderColor());
