@@ -27,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
  * User : catherine
  */
 public class StatementMover extends LineMover {
-  private @Nullable PyStatementList myStatementListToAddPass;
-  private @Nullable PyStatementList myStatementListToAddPassAfter;  
-  private @Nullable PsiElement myStatementToIncreaseIndent;
-  private @Nullable PsiElement myStatementToDecreaseIndent;
-  private @Nullable PyStatement myStatementToAddLinebreak;
-  private @Nullable PsiElement myStatementToMove;
-  private @Nullable PyStatementPart myStatementPartToRemovePass;
+  @Nullable private PyStatementList myStatementListToAddPass;
+  @Nullable private PyStatementList myStatementListToAddPassAfter;
+  @Nullable private PsiElement myStatementToIncreaseIndent;
+  @Nullable private PsiElement myStatementToDecreaseIndent;
+  @Nullable private PyStatement myStatementToAddLinebreak;
+  @Nullable private PsiElement myStatementToMove;
+  @Nullable private PyStatementPart myStatementPartToRemovePass;
   private boolean moveToEmptyLine = false;
 
   private void init(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
@@ -215,8 +215,9 @@ public class StatementMover extends LineMover {
       PyElement parent1 = PsiTreeUtil.getParentOfType(myStatementToMove, PyFunction.class);
       if (parent2 != null && parent2 != parent1) {
         TextRange textRange2 = parent2.getTextRange();
-        info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()),
-                                              doc.getLineNumber(textRange2.getEndOffset())+1);
+        int endOffset = myStatementToMove instanceof PsiComment? doc.getLineNumber(textRange2.getEndOffset())
+                                                               : doc.getLineNumber(textRange2.getEndOffset())+1;
+        info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()), endOffset);
       }
       parent2 = PsiTreeUtil.getParentOfType(element2, PyClass.class);
       parent1 = PsiTreeUtil.getParentOfType(myStatementToMove, PyClass.class);
@@ -359,9 +360,11 @@ public class StatementMover extends LineMover {
         myStatementPartToRemovePass = (PyStatementPart)statementParts.second;
       }
     }
-    if (!(statementPart1 instanceof PyExceptPart) && statementPart2 != null && statementPart1 != null && statementPart1.getParent() == statementPart2.getParent() ||
-        statementPart2 == statementPart1) return true;
-    return false;
+    return !(statementPart1 instanceof PyExceptPart) &&
+           statementPart2 != null &&
+           statementPart1 != null &&
+           statementPart1.getParent() == statementPart2.getParent() ||
+           statementPart2 == statementPart1;
   }
 
   private void decreaseIndent(Editor editor) {
