@@ -35,8 +35,9 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
         @Override
         protected void addCompletions(
           @NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-          PsiElement original = parameters.getOriginalPosition();
-          int offset = parameters.getOffset();
+          final PsiElement original = parameters.getOriginalPosition();
+          final int offset = parameters.getOffset();
+          if (original == null) return;
           final CompletionResultSet dictCompletion = createResult(original, result, offset);
 
           PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(original, PySubscriptionExpression.class);
@@ -75,7 +76,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
    * @param offset
    * @return
    */
-  private static CompletionResultSet createResult(PsiElement original, CompletionResultSet result, int offset) {
+  private static CompletionResultSet createResult(@NotNull final PsiElement original, @NotNull final CompletionResultSet result, final int offset) {
     PyStringLiteralExpression prevElement = PsiTreeUtil.getPrevSiblingOfType(original, PyStringLiteralExpression.class);
     if (prevElement != null) {
       ASTNode prevNode = prevElement.getNode();
