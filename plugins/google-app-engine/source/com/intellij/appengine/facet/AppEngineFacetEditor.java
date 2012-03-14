@@ -80,7 +80,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private void doAdd() {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
     final ModuleRootModel rootModel = myContext.getRootModel();
-    descriptor.setRoots(Arrays.asList(rootModel.getSourceRootUrls()));
+    descriptor.setRoots(rootModel.getSourceRoots());
     final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor);
     for (VirtualFile file : files) {
       myFilesListModel.addElement(file.getPath());
