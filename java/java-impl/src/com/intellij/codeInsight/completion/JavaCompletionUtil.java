@@ -52,6 +52,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
@@ -510,8 +511,16 @@ public class JavaCompletionUtil {
         PsiType castType = castTypeItem.getPsiType();
         if (plainQualifier instanceof PsiClassType && castType instanceof PsiClassType) {
           PsiMethod method = (PsiMethod)o;
-          PsiSubstitutor plainSub = ((PsiClassType)plainQualifier).resolveGenerics().getSubstitutor();
-          PsiSubstitutor castSub = ((PsiClassType)castType).resolveGenerics().getSubstitutor();
+          PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
+          PsiClass plainClass = plainResult.getElement();
+          PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
+
+          if (castClass == null || plainClass == null || !castClass.isInheritor(plainClass, true)) {
+            return item;
+          }
+
+          PsiSubstitutor plainSub = plainResult.getSubstitutor();
+          PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
           if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
               plainSub.substitute(method.getReturnType()).equals(castSub.substitute(method.getReturnType()))) {
             return item;

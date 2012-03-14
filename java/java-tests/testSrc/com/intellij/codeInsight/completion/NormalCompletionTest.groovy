@@ -1324,4 +1324,6 @@ public class ListUtils {
 
   }
 
+  public void testListArrayListCast() { doTest('\n') }
+
 }
