@@ -53,4 +53,11 @@ public class GroupedLogMessage extends AbstractMessage {
     return myMessages.get(0).getMessage();
   }
 
+  @Override
+  public void setAssigneeId(Integer assigneeId) {
+    for (AbstractMessage message : myMessages) {
+      message.setAssigneeId(assigneeId);
+    }
+    super.setAssigneeId(assigneeId);
+  }
 }
