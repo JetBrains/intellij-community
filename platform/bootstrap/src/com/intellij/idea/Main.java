@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Restarter;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -66,7 +65,7 @@ public class Main {
       }
 
       if (!restarted && restartCode == 0) {
-        UIUtil.initDefaultLAF();
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignore) { }
         String msg = "The application cannot start right away since some critical files have been changed.\nPlease restart it manually.";
         JOptionPane.showMessageDialog(null, msg, "Update", JOptionPane.INFORMATION_MESSAGE);
       }
