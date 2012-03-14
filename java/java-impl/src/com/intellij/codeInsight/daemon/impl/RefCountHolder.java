@@ -30,6 +30,8 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -53,13 +55,16 @@ public class RefCountHolder {
     BEING_USED_BY_PHP,            // post highlighting pass is retrieving info
   }
 
-  private static final Key<RefCountHolder> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
+  private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
   public static RefCountHolder getInstance(PsiFile file) {
-    RefCountHolder refCountHolder = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
-    if (refCountHolder == null) {
-      refCountHolder = ((UserDataHolderEx)file).putUserDataIfAbsent(REF_COUNT_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
+    Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
+    RefCountHolder holder = ref == null ? null : ref.get();
+    while (holder == null) {
+      holder = new RefCountHolder(file);
+      ref = ((UserDataHolderEx)file).putUserDataIfAbsent(REF_COUNT_HOLDER_IN_FILE_KEY, new SoftReference<RefCountHolder>(holder));
+      holder = ref.get();
     }
-    return refCountHolder;
+    return holder;
   }
 
   private RefCountHolder(@NotNull PsiFile file) {
