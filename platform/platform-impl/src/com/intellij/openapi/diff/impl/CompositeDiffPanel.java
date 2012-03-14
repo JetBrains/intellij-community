@@ -50,7 +50,7 @@ public class CompositeDiffPanel implements DiffViewer {
     myRequest = request;
     myWindow = window;
     myParentDisposable = parentDisposable;
-    myUi = RunnerLayoutUi.Factory.getInstance(project).create("Diff", "Diff", "Diff", project);
+    myUi = RunnerLayoutUi.Factory.getInstance(project).create("Diff", "Diff", "Diff", parentDisposable);
     myUi.getComponent().setBorder(null);
     myUi.getOptions().setMinimizeActionEnabled(false);
     //myUi.getOptions().setTopToolbar()
