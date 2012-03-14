@@ -166,7 +166,7 @@ public class RollbackAction extends AnAction implements DumbAware {
   @Nullable
   private static List<Change> getChanges(final Project project, final AnActionEvent e) {
     final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
-    if (helper.isChangesSet()) return CollectionFactory.arrayList(helper.getChanges());
+    if (helper.isChangesSet() && helper.getChanges() != null) return CollectionFactory.arrayList(helper.getChanges());
 
     final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
