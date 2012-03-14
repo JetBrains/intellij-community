@@ -135,6 +135,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitBranchWidget myBranchWidget;
 
   private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
+  private final GitRootConverter myRootConverter;
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -174,6 +175,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myTaskQueue = new BackgroundTaskQueue(myProject, GitBundle.getString("task.queue.title"));
     myExecutableValidator = new GitExecutableValidator(myProject, this);
     myPlatformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
+    myRootConverter = new GitRootConverter(myProject, myPlatformFacade);
   }
 
 
@@ -495,7 +497,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public RootsConvertor getCustomConvertor() {
-    return GitRootConverter.INSTANCE;
+    return myRootConverter;
   }
 
   public static VcsKey getKey() {

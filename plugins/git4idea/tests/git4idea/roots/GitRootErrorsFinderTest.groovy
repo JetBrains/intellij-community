@@ -131,20 +131,19 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   }
   
   @Test
-  void "Project root, git below project folder not in a content root, then unregistered root error"() {
-  // this is to be fixed: auto-detection of Git repositories in subfolders for the <Project> mapping
+  void "Project root, git below project folder not in a content root, then correct since folders are auto-detected"() {
     doTest content_roots: ["."],
            git:    ["community"],
            roots:  [PROJECT],
-           errors: [unreg: ["community"]]
+           errors: []
   }
 
   @Test
-  void "Project root, git for full project, content root, linked source, folder below project, then error in folder below"() {
+  void "Project root, git for full project, content root, linked source, folder below project, then correct since folders are detected"() {
     doTest content_roots: [".", "content_root", "../linked_source_root"],
            git:           [".", "content_root", "../linked_source_root", "folder"],
            roots:         [PROJECT],
-           errors:        [unreg: ["folder"]]
+           errors:        []
   }
 
   @Test

@@ -16,9 +16,13 @@
 
 package git4idea;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
+import git4idea.roots.GitRootDetectInfo;
+import git4idea.roots.GitRootDetector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,12 +33,23 @@ import java.util.List;
  */
 public class GitRootConverter implements AbstractVcs.RootsConvertor {
 
-  public static final GitRootConverter INSTANCE = new GitRootConverter();
+  @NotNull private final Project myProject;
+  @NotNull private final PlatformFacade myPlatformFacade;
+
+  public GitRootConverter(@NotNull Project project, @NotNull PlatformFacade facade) {
+    myProject = project;
+    myPlatformFacade = facade;
+  }
 
   @NotNull
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
-    // TODO this should be faster, because it is called rather often. gitRootOrNull could be a bottle-neck.
+    GitRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
+
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
+    if (hasProjectMapping()) {
+      roots.addAll(detectInfo.getRoots());
+    }
+
     HashSet<VirtualFile> listed = new HashSet<VirtualFile>();
     for (VirtualFile f : result) {
       VirtualFile r = GitUtil.gitRootOrNull(f);
@@ -44,4 +59,14 @@ public class GitRootConverter implements AbstractVcs.RootsConvertor {
     }
     return roots;
   }
+
+  private boolean hasProjectMapping() {
+    for (VcsDirectoryMapping mapping : myPlatformFacade.getVcsManager(myProject).getDirectoryMappings()) {
+      if (mapping.isDefaultMapping()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
 }
