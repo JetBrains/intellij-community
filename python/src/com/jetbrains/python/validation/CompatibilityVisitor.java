@@ -476,7 +476,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
-                                       int len, PyElement node, LocalQuickFix localQuickFix, boolean asError) {
+                                       int len, PyElement node, @Nullable LocalQuickFix localQuickFix, boolean asError) {
     initMessage.append(" do");
     if (len == 1)
       initMessage.append("es");

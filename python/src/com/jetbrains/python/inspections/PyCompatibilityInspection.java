@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -135,10 +136,10 @@ public class PyCompatibilityInspection extends PyInspection {
 
       int len = 0;
       StringBuilder message = new StringBuilder("Python version ");
+      final PyExpression callee = node.getCallee();
+      assert callee != null;
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        PyExpression callee = node.getCallee();
-        assert callee != null;
         PsiReference reference = callee.getReference();
         if (reference != null) {
           PsiElement resolved = reference.resolve();
@@ -146,8 +147,9 @@ public class PyCompatibilityInspection extends PyInspection {
           final String name = callee.getText();
           if (resolved != null) {
             PsiFile file = resolved.getContainingFile();
-            if (file != null && ind.isInLibraryClasses(file.getVirtualFile())) {
-              if (!name.equals("print") && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
+            VirtualFile virtualFile = file.getVirtualFile();
+            if (virtualFile != null && ind.isInLibraryClasses(virtualFile)) {
+              if (!"print".equals(name) && UnsupportedFeaturesUtil.BUILTINS.get(languageLevel).contains(name)) {
                 len = appendLanguageLevel(message, len, languageLevel);
               }
             }
@@ -159,7 +161,7 @@ public class PyCompatibilityInspection extends PyInspection {
           //}
         }
       }
-      commonRegisterProblem(message, " not have method " + node.getCallee().getText(),
+      commonRegisterProblem(message, " not have method " + callee.getText(),
                             len, node, null, false);
     }
 
