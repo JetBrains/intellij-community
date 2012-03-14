@@ -63,6 +63,7 @@ public class ExpectedTypesProvider {
     return ServiceManager.getService(project, ExpectedTypesProvider.class);
   }
 
+  private static final int MAX_COUNT = 50;
   private static final ExpectedClassProvider ourGlobalScopeClassProvider = new ExpectedClassProvider() {
     public PsiField[] findDeclaredFields(final PsiManager manager, String name) {
       final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(manager.getProject());
@@ -73,7 +74,7 @@ public class ExpectedTypesProvider {
     public PsiMethod[] findDeclaredMethods(final PsiManager manager, String name) {
       final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(manager.getProject());
       GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
-      return cache.getMethodsByName(name, scope);
+      return cache.getMethodsByNameIfNotMoreThan(name, scope, MAX_COUNT);
     }
   };
   private static final PsiType[] PRIMITIVE_TYPES = {PsiType.BYTE, PsiType.CHAR, PsiType.SHORT, PsiType.INT, PsiType.LONG, PsiType.FLOAT, PsiType.DOUBLE};
