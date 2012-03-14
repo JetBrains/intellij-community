@@ -62,8 +62,7 @@ public class ProjectNameStep extends ModuleWizardStep {
     final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
     myNamePathComponent.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
     myNamePathComponent.setNameValue(initialProjectName);
-    myNamePathComponent.getNameComponent().setSelectionStart(0);
-    myNamePathComponent.getNameComponent().setSelectionEnd(initialProjectName.length());
+    myNamePathComponent.getNameComponent().select(0, initialProjectName.length());
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(10, 10, 10, 10)));
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(10, 0, 20, 0), 0, 0));
