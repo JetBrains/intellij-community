@@ -45,7 +45,7 @@ public class ModuleRootsIndex {
         myRootToModuleMap.put(root, descriptor);
         moduleRoots.add(descriptor);
       }
-      for (String r : module.getExcludes()) {
+      for (String r : module.getOwnExcludes()) {
         final File root = new File(FileUtil.toCanonicalPath(r));
         myExcludedRoots.add(root);
       }

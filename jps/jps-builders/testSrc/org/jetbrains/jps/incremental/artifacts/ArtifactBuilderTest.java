@@ -172,7 +172,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
 
     final Module module = addModule("myModule", null);
     module.getContentRoots().add(dir);
-    module.getExcludes().add(excluded);
+    module.addExcludedRoot(excluded);
 
     final Artifact a = addArtifact(root().dirCopy(excluded));
     buildAll();
@@ -188,7 +188,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
 
     Module module = addModule("myModule", null);
     module.getContentRoots().add(dir);
-    module.getExcludes().add(PathUtil.getParentPath(file));
+    module.addExcludedRoot(PathUtil.getParentPath(file));
 
     final Artifact a = addArtifact(root().dirCopy(dir));
     buildAll();

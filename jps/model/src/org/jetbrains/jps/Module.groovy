@@ -16,7 +16,8 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
   List<String> contentRoots = []
   List<String> sourceRoots = []
   List<String> testRoots = []
-  List<String> excludes = []
+  private List<String> excludes
+  private List<String> ownExcludes = []
 
   Set<String> generatedSourceRoots = [];
 
@@ -74,7 +75,7 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
       }
 
       meta.exclude = {Object[] arg ->
-        arg.each { excludes << FileUtil.toCanonicalPath(it) }
+        arg.each { addExcludedRoot(FileUtil.toCanonicalPath(it)) }
       }
 
       initializer.delegate = meta
@@ -88,6 +89,26 @@ class Module extends LazyInitializeableObject implements ClasspathItem {//}, Com
         }
       }
     })
+  }
+
+  List<String> getOwnExcludes() {
+    return ownExcludes
+  }
+
+  List<String> getExcludes() {
+    if (excludes == null) {
+      excludes = new ArrayList<String>(ownExcludes)
+      Set<String> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten() as Set
+      Set<File> myRoots = contentRoots.collect { new File(it) } as Set
+      Collection<String> newExcludes = (allContentRoots - contentRoots).findAll { PathUtil.isUnder(myRoots, new File(it)) }.collect { FileUtil.toCanonicalPath(it) }
+      excludes.addAll(newExcludes)
+    }
+    return excludes
+  }
+
+  void addExcludedRoot(String path) {
+    ownExcludes.add(path)
+    excludes = null
   }
 
   def String toString() {
