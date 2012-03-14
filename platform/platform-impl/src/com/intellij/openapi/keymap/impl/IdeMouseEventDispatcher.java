@@ -143,6 +143,10 @@ public final class IdeMouseEventDispatcher {
       ignore = true;
     }
 
+    if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getButton() > 3) {
+      return true;
+    }
+
     final JRootPane root = findRoot(e);
     if (root != null) {
       final Integer lastId = myRootPane2BlockedId.get(root);
@@ -206,6 +210,8 @@ public final class IdeMouseEventDispatcher {
           e.consume();
         }
       }
+      if (actions.length > 0 && e.isConsumed())
+        return true;
     }
     return false;
   }
