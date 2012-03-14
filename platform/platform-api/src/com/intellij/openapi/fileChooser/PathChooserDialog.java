@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,5 +31,5 @@ public interface PathChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_EXPLICIT = DataKey.create("prefer.last.over.explicit");
   DataKey<Boolean> NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES = DataKey.create("native.mac.chooser.show.hidden.files");
 
-  void choose(@Nullable String toSelect, @NotNull final Consumer<List<String>> callback);
+  void choose(@Nullable VirtualFile toSelect, @NotNull final Consumer<List<VirtualFile>> callback);
 }

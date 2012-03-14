@@ -19,7 +19,6 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
-import com.intellij.openapi.fileChooser.FileChooserUtil;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -78,7 +77,6 @@ public abstract class ContentEntryEditingAction extends ToggleAction implements 
       final VirtualFile file = fileElement.getFile();
       if (file != null) {
         selected.add(file);
-        FileChooserUtil.setSelectionPath(file, fileElement.getPath());
       }
     }
     return selected.toArray(new VirtualFile[selected.size()]);

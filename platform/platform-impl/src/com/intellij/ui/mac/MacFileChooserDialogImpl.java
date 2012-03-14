@@ -15,14 +15,15 @@
  */
 package com.intellij.ui.mac;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserUtil;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,10 +46,10 @@ import java.util.List;
 public class MacFileChooserDialogImpl implements PathChooserDialog {
   private static final int OK = 1;
 
-  private static String ourLastPath = null;
+  private static VirtualFile ourLastPath = null;
   private static FileChooserDescriptor myChooserDescriptor;
   private static List<String> myResultPaths = null;
-  private static Consumer<List<String>> myCallback = null;
+  private static Consumer<List<VirtualFile>> myCallback = null;
   private Project myProject;
 
   private static final Callback SHOULD_ENABLE_URL = new Callback() {
@@ -85,21 +87,26 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       processResult(returnCode, openPanelDidEnd);
 
       try {
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            IdeMenuBar bar = getMenuBar();
+            final IdeMenuBar bar = getMenuBar();
             if (bar != null) {
               bar.enableUpdates();
             }
           }
         });
-        if (myResultPaths != null) {
+        if (myResultPaths != null && myResultPaths.size() > 0) {
           final List<String> paths = myResultPaths;
-          final Consumer<List<String>> callback = myCallback;
+          final Consumer<List<VirtualFile>> callback = myCallback;
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              callback.consume(paths);
+              final List<VirtualFile> files = getChosenFiles(paths);
+              if (files.size() > 0) {
+                setLastSelectedPath(files.get(0));
+                callback.consume(files);
+              }
             }
           });
         }
@@ -112,6 +119,26 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       Foundation.cfRelease(self);
     }
   };
+
+  private static List<VirtualFile> getChosenFiles(final List<String> paths) {
+    if (paths == null || paths.size() == 0) return Collections.emptyList();
+
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    final List<VirtualFile> files = Lists.newArrayListWithExpectedSize(paths.size());
+    for (String path : paths) {
+      final String vfsPath = FileUtil.toSystemIndependentName(path);
+      final VirtualFile file = fs.refreshAndFindFileByPath(vfsPath);
+      if (file != null && file.isValid()) {
+        files.add(file);
+      }
+    }
+
+    return FileChooserUtil.getChosenFiles(myChooserDescriptor, files);
+  }
+
+  private static void setLastSelectedPath(final VirtualFile selectedPath) {
+    ourLastPath = selectedPath;
+  }
 
   private static final Callback MAIN_THREAD_RUNNABLE = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
@@ -227,11 +254,12 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   }
 
   @Override
-  public void choose(@Nullable final String toSelect, @NotNull final Consumer<List<String>> callback) {
+  public void choose(@Nullable final VirtualFile toSelect, @NotNull final Consumer<List<VirtualFile>> callback) {
     assert myCallback == null : "Current native file chooser should finish before next usage!";
     myCallback = callback;
 
-    final String selectPath = FileChooserUtil.getPathToSelect(myChooserDescriptor, myProject, toSelect, ourLastPath);
+    final VirtualFile selectFile = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, ourLastPath);
+    final String selectPath = selectFile != null ? FileUtil.toSystemDependentName(selectFile.getPath()) : null;
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
@@ -247,7 +275,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
     while (cur != null) {
       if (cur instanceof JFrame) {
-        JMenuBar menuBar = ((JFrame)cur).getJMenuBar();
+        final JMenuBar menuBar = ((JFrame)cur).getJMenuBar();
         if (menuBar instanceof IdeMenuBar) {
           return (IdeMenuBar)menuBar;
         }
@@ -258,7 +286,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   }
 
   private static void showNativeChooserAsSheet(@Nullable String toSelect) {
-    IdeMenuBar bar = getMenuBar();
+    final IdeMenuBar bar = getMenuBar();
     if (bar != null) {
       bar.disableUpdates();
     }
