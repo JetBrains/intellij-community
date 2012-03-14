@@ -167,7 +167,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
       return false;
     }
     String newPath = myGradleHomeComponent.getPath();
-    String oldPath = GradleSettings.getInstance(myProject).GRADLE_HOME;
+    String oldPath = GradleSettings.getInstance(myProject).getGradleHome();
     boolean modified = newPath == null ? oldPath == null : !newPath.equals(oldPath);
     if (modified) {
       useNormalColorForPath();
@@ -179,7 +179,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   public void apply() {
     useNormalColorForPath();
     String path = myGradleHomeComponent.getPath();
-    GradleSettings.getInstance(myProject).GRADLE_HOME = path;
+    GradleSettings.applyGradleHome(path, myProject);
     
     // There is a possible case that user defines gradle home for particular open project. We want to apply that value
     // to the default project as well if it's still non-defined.
@@ -193,7 +193,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     if (!StringUtil.isEmpty(path)
         && !Boolean.parseBoolean(PropertiesComponent.getInstance().getValue(NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT)))
     {
-      GradleSettings.getInstance(defaultProject).GRADLE_HOME = path;
+      GradleSettings.applyGradleHome(path, defaultProject);
     } 
   }
 
@@ -201,9 +201,9 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   public void reset() {
     useNormalColorForPath();
     myPathManuallyModified = false;
-    String valueToUse = GradleSettings.getInstance(myProject).GRADLE_HOME;
+    String valueToUse = GradleSettings.getInstance(myProject).getGradleHome();
     if (StringUtil.isEmpty(valueToUse)) {
-      valueToUse = GradleSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).GRADLE_HOME;
+      valueToUse = GradleSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).getGradleHome();
     } 
     if (!StringUtil.isEmpty(valueToUse)) {
       myGradleHomeSettingType = myLibraryManager.isGradleSdkHome(new File(valueToUse)) ?

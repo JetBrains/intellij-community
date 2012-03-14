@@ -23,6 +23,8 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.GradleGroovyEnabler;
+import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -298,6 +300,7 @@ public class GradleModulesImporter {
                                      @NotNull final String gradleProjectPath)
   {
     final Ref<GradleProject> gradleProjectRef = new Ref<GradleProject>();
+    final Ref<Library> libraryToPreserve = new Ref<Library>();
     
     final Runnable setupExternalDependenciesTask = new Runnable() {
       @Override
@@ -310,15 +313,15 @@ public class GradleModulesImporter {
         Application application = ApplicationManager.getApplication();
         AccessToken writeLock = application.acquireWriteActionLock(getClass());
         try {
-          doSetupLibraries(moduleMappings, gradleProject, intellijProject);
+          doSetupLibraries(moduleMappings, gradleProject, intellijProject, libraryToPreserve.get());
         }
         finally {
           writeLock.finish();
-        } 
+        }
       }
     };
     
-    Runnable resolveDependenciesTask = new Runnable() {
+    final Runnable resolveDependenciesTask = new Runnable() {
       @Override
       public void run() {
         ProgressManager.getInstance().run(
@@ -335,12 +338,26 @@ public class GradleModulesImporter {
       }
     };
     
-    UIUtil.invokeLaterIfNeeded(resolveDependenciesTask);
+    Runnable setupGroovyTask = new Runnable() {
+      @Override
+      public void run() {
+        final GradleSettings settings = GradleSettings.getInstance(intellijProject);
+        final String gradleHome = settings.getGradleHome();
+        if (gradleHome != null) {
+          final GradleGroovyEnabler groovyEnabler = intellijProject.getComponent(GradleGroovyEnabler.class);
+          libraryToPreserve.set(groovyEnabler.setupGroovySdkIfNecessary(gradleHome));
+        }
+        resolveDependenciesTask.run();
+      }
+    };
+    
+    UIUtil.invokeLaterIfNeeded(setupGroovyTask);
   }
 
   private static void doSetupLibraries(@NotNull Map<GradleModule, Module> moduleMappings,
                                        @NotNull GradleProject gradleProject,
-                                       @NotNull Project intellijProject)
+                                       @NotNull Project intellijProject,
+                                       @Nullable Library libraryToPreserve)
   {
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();
@@ -357,7 +374,9 @@ public class GradleModulesImporter {
     // Clean existing libraries (if any).
     try {
       for (Library library : model.getLibraries()) {
-        model.removeLibrary(library);
+        if (libraryToPreserve != library) {
+          model.removeLibrary(library);
+        }
       }
     }
     finally {

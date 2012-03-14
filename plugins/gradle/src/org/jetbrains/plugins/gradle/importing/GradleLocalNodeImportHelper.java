@@ -52,14 +52,14 @@ public class GradleLocalNodeImportHelper {
   @NotNull private final GradleEntityIdMapper           myIdMapper;
   @NotNull private final GradleModuleImporter           myModuleImporter;
   @NotNull private final GradleLibraryImporter          myLibraryImporter;
-  @NotNull private final GradleModuleDependencyImporter myModuleDependencyImporter;
+  @NotNull private final GradleDependencyImporter myModuleDependencyImporter;
   @NotNull private final GradleContentRootImporter      myContentRootImporter;
 
   public GradleLocalNodeImportHelper(@NotNull GradleProjectStructureHelper projectStructureHelper,
                                      @NotNull GradleEntityIdMapper idMapper,
                                      @NotNull GradleModuleImporter moduleImporter,
                                      @NotNull GradleLibraryImporter libraryImporter,
-                                     @NotNull GradleModuleDependencyImporter moduleDependencyImporter,
+                                     @NotNull GradleDependencyImporter moduleDependencyImporter,
                                      @NotNull GradleContentRootImporter contentRootImporter)
   {
     myProjectStructureHelper = projectStructureHelper;

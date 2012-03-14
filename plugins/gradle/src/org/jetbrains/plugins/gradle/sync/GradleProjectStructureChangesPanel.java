@@ -146,6 +146,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   @Override
   protected void updateContent() {
+    myTreeModel.rebuild();
   }
 
   private void setupToolbar() {

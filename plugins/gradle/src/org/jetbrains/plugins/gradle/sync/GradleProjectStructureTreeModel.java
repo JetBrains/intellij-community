@@ -78,6 +78,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private Comparator<GradleProjectStructureChange> myChangesComparator;
   private boolean myProcessChangesAtTheSameThread;
 
+  @SuppressWarnings("UnusedDeclaration") // Used implicitly by IoC
   public GradleProjectStructureTreeModel(@NotNull Project project, @NotNull GradleProjectStructureContext context) {
     this(project, context, true);
   }

@@ -48,7 +48,7 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleModuleImporter"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleLibraryImporter"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleContentRootImporter"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleModuleDependencyImporter"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.importing.GradleDependencyImporter"/>
 
     <!--Generic application services-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
@@ -94,6 +94,9 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.config.GradleGroovyEnabler</implementation-class>
     </component>
   </project-components>
   

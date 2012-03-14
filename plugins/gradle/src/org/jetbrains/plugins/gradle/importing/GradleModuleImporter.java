@@ -36,10 +36,10 @@ public class GradleModuleImporter {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   @NotNull private final GradleContentRootImporter      myContentRootImporter;
-  @NotNull private final GradleModuleDependencyImporter myDependencyImporter;
+  @NotNull private final GradleDependencyImporter myDependencyImporter;
 
   public GradleModuleImporter(@NotNull GradleContentRootImporter contentRootImporter,
-                              @NotNull GradleModuleDependencyImporter dependencyImporter)
+                              @NotNull GradleDependencyImporter dependencyImporter)
   {
     myContentRootImporter = contentRootImporter;
     myDependencyImporter = dependencyImporter;

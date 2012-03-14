@@ -16,6 +16,16 @@ public interface GradleConfigNotifier {
   Topic<GradleConfigNotifier> TOPIC = Topic.create("Gradle config", GradleConfigNotifier.class);
 
   /**
+   * Is expected to be invoked when gradle home path is changed.
+   * <p/>
+   * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
+   *
+   * @param oldPath  old path (if any)
+   * @param newPath  new path (if any)
+   */
+  void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath);
+  
+  /**
    * Is expected to be invoked when linked gradle project path (path of the 'build.gradle' file) is changed.
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.

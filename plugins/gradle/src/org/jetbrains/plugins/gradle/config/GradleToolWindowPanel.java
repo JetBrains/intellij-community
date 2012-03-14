@@ -55,7 +55,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     setContent(myContent);
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifier() {
+    connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifierAdapter() {
       @Override
       public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) {
         update();
@@ -105,7 +105,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
    */
   public void update() {
     final GradleSettings settings = GradleSettings.getInstance(myProject);
-    String cardToShow = settings.LINKED_PROJECT_FILE_PATH == null ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
+    String cardToShow = settings.getLinkedProjectPath() == null ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
     myLayout.show(myContent, cardToShow);
     
     updateContent();

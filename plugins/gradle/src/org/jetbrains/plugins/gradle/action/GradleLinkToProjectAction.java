@@ -36,6 +36,6 @@ public class GradleLinkToProjectAction extends AnAction implements DumbAware {
     if (file == null) {
       return;
     }
-    GradleSettings.setLinkedProjectPath(file.getPath(), project);
+    GradleSettings.applyLinkedProjectPath(file.getPath(), project);
   }
 }

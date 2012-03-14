@@ -157,7 +157,7 @@ public class GradleLibraryManager {
       project = ProjectManager.getInstance().getDefaultProject();
     }
     GradleSettings settings = GradleSettings.getInstance(project);
-    String path = settings.GRADLE_HOME;
+    String path = settings.getGradleHome();
     if (path == null) {
       return null;
     }

@@ -49,8 +49,8 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
   //private final AtomicReference<Set<GradleProjectStructureChange>>             myAcceptedChanges
   //  = new AtomicReference<Set<GradleProjectStructureChange>>();
   
-  public String LINKED_PROJECT_FILE_PATH;
-  public String GRADLE_HOME;
+  private String myLinkedProjectPath;
+  private String myGradleHome;
 
   @Override
   public GradleSettings getState() {
@@ -70,10 +70,37 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
     return ServiceManager.getService(project, GradleSettings.class);
   }
 
-  public static void setLinkedProjectPath(@Nullable String path, @NotNull Project project) {
+  @Nullable
+  public String getGradleHome() {
+    return myGradleHome;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setGradleHome(@Nullable String gradleHome) { // Necessary for the serialization.
+    myGradleHome = gradleHome;
+  }
+
+  public static void applyGradleHome(@Nullable String newPath, @NotNull Project project) {
     final GradleSettings settings = getInstance(project);
-    final String oldPath = settings.LINKED_PROJECT_FILE_PATH;
-    settings.LINKED_PROJECT_FILE_PATH = path;
+    final String oldPath = settings.myGradleHome;
+    settings.myGradleHome = newPath;
+    project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onGradleHomeChange(oldPath, newPath);
+  }
+
+  @Nullable
+  public String getLinkedProjectPath() {
+    return myLinkedProjectPath;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setLinkedProjectPath(@Nullable String linkedProjectPath) { // Necessary for the serialization.
+    myLinkedProjectPath = linkedProjectPath;
+  }
+
+  public static void applyLinkedProjectPath(@Nullable String path, @NotNull Project project) {
+    final GradleSettings settings = getInstance(project);
+    final String oldPath = settings.myLinkedProjectPath;
+    settings.myLinkedProjectPath = path;
     project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onLinkedProjectPathChange(oldPath, path);
   }
 
@@ -91,6 +118,6 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
   
   @Override
   public String toString() {
-    return "home: " + GRADLE_HOME + ", path: " + LINKED_PROJECT_FILE_PATH;
+    return "home: " + myGradleHome + ", path: " + myLinkedProjectPath;
   }
 }

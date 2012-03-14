@@ -122,10 +122,11 @@ public class GradleUtil {
    */
   public static void refreshProject(@NotNull Project project) {
     final GradleSettings settings = GradleSettings.getInstance(project);
-    final String linkedProjectPath = settings.LINKED_PROJECT_FILE_PATH;
+    final String linkedProjectPath = settings.getLinkedProjectPath();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       return;
     }
+    assert linkedProjectPath != null;
     Ref<String> errorHolder = new Ref<String>();
     refreshProject(project, linkedProjectPath, errorHolder, true, false);
     final String error = errorHolder.get();

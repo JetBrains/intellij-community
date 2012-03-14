@@ -2,7 +2,10 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.util.ui.UIUtil;
@@ -10,9 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
-import org.jetbrains.plugins.gradle.util.GradleLog;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Thread-safe.
@@ -20,11 +26,11 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 2/7/12 3:23 PM
  */
-public class GradleModuleDependencyImporter {
+public class GradleDependencyImporter {
   
   @NotNull private final PlatformFacade myPlatformFacade;
 
-  public GradleModuleDependencyImporter(@NotNull PlatformFacade platformFacade) {
+  public GradleDependencyImporter(@NotNull PlatformFacade platformFacade) {
     myPlatformFacade = platformFacade;
   }
 
@@ -91,61 +97,68 @@ public class GradleModuleDependencyImporter {
   }
 
   public void importLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
+    final List<LibraryDependencyInfo> infos = new ArrayList<LibraryDependencyInfo>();
+    final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
+    for (GradleLibraryDependency dependency : dependencies) {
+      final Library library = libraryTable.getLibraryByName(dependency.getName());
+      if (library != null) {
+        infos.add(new LibraryDependencyInfo(library, dependency.getScope(), dependency.isExported()));
+      }
+    }
+    doImportLibraryDependencies(infos, module);
+  }
+
+  @SuppressWarnings("MethodMayBeStatic")
+  public void importLibraryDependencies(@NotNull Module module, @NotNull Collection<Library> libraries) {
+    List<LibraryDependencyInfo> infos = new ArrayList<LibraryDependencyInfo>();
+    for (Library library : libraries) {
+      infos.add(new LibraryDependencyInfo(library, DependencyScope.PROVIDED, true));
+    }
+    doImportLibraryDependencies(infos, module);
+  }
+
+  private static void doImportLibraryDependencies(@NotNull final Iterable<LibraryDependencyInfo> infos, @NotNull final Module module) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        doImportLibraryDependencies(dependencies, module);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            // Register library dependencies.
+            ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+            final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+            final GradleProjectEntityImportListener publisher
+              = module.getProject().getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
+            try {
+              for (LibraryDependencyInfo info : infos) {
+                publisher.onImportStart(info.library);
+                LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(info.library);
+                orderEntry.setExported(info.exported);
+                orderEntry.setScope(info.scope);
+              }
+            }
+            finally {
+              moduleRootModel.commit();
+              for (LibraryDependencyInfo info : infos) {
+                publisher.onImportEnd(info.library);
+              }
+            }
+          }
+        }); 
       }
     });
   }
-  
-  public void doImportLibraryDependencies(@NotNull final Iterable<GradleLibraryDependency> dependencies, @NotNull final Module module) {
-    // Is assumed to be called from EDT
-    final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
-    final Map<GradleLibrary, Library> gradle2intellij = new HashMap<GradleLibrary, Library>(); 
-    for (final GradleLibraryDependency dependency : dependencies) {
-      // Try to find existing library in project libraries.
-      Library library = libraryTable.getLibraryByName(dependency.getName());
-      if (library != null) {
-        gradle2intellij.put(dependency.getTarget(), library);
-      }
-      else {
-        GradleLog.LOG.warn(String.format(
-          "Detected situation when target library for the gradle-local library dependency doesn't exist. Dependency: %s",
-          dependency
-        ));
-      }
-    }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        // Register library dependencies.
-        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
-        final GradleProjectEntityImportListener publisher
-          = module.getProject().getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
-        try {
-          for (GradleLibraryDependency dependency : dependencies) {
-            final Library library = gradle2intellij.get(dependency.getTarget());
-            if (library == null) {
-              continue;
-            }
-            publisher.onImportStart(library);
-            LibraryOrderEntry orderEntry = moduleRootModel.addLibraryEntry(library);
-            orderEntry.setExported(dependency.isExported());
-            orderEntry.setScope(dependency.getScope());
-          }
-        }
-        finally {
-          moduleRootModel.commit();
-          for (GradleLibraryDependency dependency : dependencies) {
-            if (dependency != null) {
-              publisher.onImportEnd(dependency);
-            }
-          }
-        }
-      }
-    });
+  private static class LibraryDependencyInfo {
+    
+    @NotNull public final Library         library;
+    @NotNull public final DependencyScope scope;
+    public final          boolean         exported;
+
+    LibraryDependencyInfo(@NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
+      this.library = library;
+      this.scope = scope;
+      this.exported = exported;
+    }
   }
 }

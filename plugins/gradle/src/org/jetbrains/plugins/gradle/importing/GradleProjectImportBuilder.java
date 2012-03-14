@@ -80,13 +80,17 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel)
   {
-    if (!project.isInitialized()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          GradleSettings.setLinkedProjectPath(myProjectFile.getAbsolutePath(), project);
-        }
-      });
+    final Runnable task = new Runnable() {
+      @Override
+      public void run() {
+        GradleSettings.applyLinkedProjectPath(myProjectFile.getAbsolutePath(), project);
+      }
+    };
+    if (project.isInitialized()) {
+      task.run();
+    }
+    else {
+      StartupManager.getInstance(project).registerPostStartupActivity(task);
     }
     GradleModulesImporter importer = new GradleModulesImporter();
     Map<GradleModule, Module> mappings =

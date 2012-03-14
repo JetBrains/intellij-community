@@ -6,9 +6,12 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
@@ -17,8 +20,7 @@ import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 
 import java.io.File;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -32,67 +34,104 @@ public class GradleLibraryImporter {
     myPlatformFacade = platformFacade;
   }
 
-  public void importLibrary(@NotNull final GradleLibrary library, @NotNull final Project project) {
+  @NotNull
+  public Library importLibrary(@NotNull final GradleLibrary library, @NotNull final Project project) {
+    Map<OrderRootType, Collection<File>> libraryFiles = new HashMap<OrderRootType, Collection<File>>();
+    for (LibraryPathType pathType : LibraryPathType.values()) {
+      final Set<String> paths = library.getPaths(pathType);
+      if (paths.isEmpty()) {
+        continue;
+      }
+      libraryFiles.put(Lazy.LIBRARY_ROOT_MAPPINGS.get(pathType), ContainerUtil.map(paths, new NotNullFunction<String, File>() {
+        @NotNull
+        @Override
+        public File fun(String path) {
+          return new File(path);
+        }
+      }));
+    }
+    return importLibrary(library.getName(), libraryFiles, project);
+  }
+  
+  @NotNull
+  public Library importLibrary(@NotNull final String libraryName,
+                               @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
+                               @NotNull final Project project)
+  {
+    final Ref<Library> result = new Ref<Library>();
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         final GradleProjectEntityImportListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityImportListener.TOPIC);
-        publisher.onImportStart(library);
+        publisher.onImportStart(libraryName);
         try {
-          doImportLibrary(library, project);
+          result.set(doImportLibrary(libraryName, libraryFiles, project));
         }
         finally {
-          publisher.onImportEnd(library);
+          publisher.onImportEnd(libraryName);
         }
       }
     });
+    return result.get();
   }
 
-  private void doImportLibrary(@NotNull final GradleLibrary gradleLibrary,@NotNull Project project) {
+  @NotNull
+  private Library doImportLibrary(@NotNull final String libraryName,
+                               @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
+                               @NotNull Project project)
+  {
     // Is assumed to be called from the EDT.
     final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
+    final Ref<Library> result = new Ref<Library>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
         final LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
         final Library intellijLibrary;
         try {
-          intellijLibrary = projectLibraryModel.createLibrary(gradleLibrary.getName());
+          intellijLibrary = projectLibraryModel.createLibrary(libraryName);
+          result.set(intellijLibrary);
         }
         finally {
           projectLibraryModel.commit();
         }
         final Library.ModifiableModel libraryModel = intellijLibrary.getModifiableModel();
         try {
-          registerPaths(gradleLibrary, libraryModel);
+          registerPaths(libraryFiles, libraryModel, libraryName);
         }
         finally {
           libraryModel.commit();
         }
       }
     });
+    return result.get();
   }
 
-  private static void registerPaths(@NotNull GradleLibrary gradleLibrary, @NotNull Library.ModifiableModel model) {
-    for (LibraryPathType pathType : LibraryPathType.values()) {
-      for (String path : gradleLibrary.getPaths(pathType)) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
+  private static void registerPaths(@NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
+                                    @NotNull Library.ModifiableModel model,
+                                    @NotNull String libraryName)
+  {
+    for (Map.Entry<OrderRootType, ? extends Collection<File>> entry : libraryFiles.entrySet()) {
+      for (File file : entry.getValue()) {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
         if (virtualFile == null) {
-          GradleLog.LOG.warn(String.format("Can't find %s of the library '%s' at path '%s'", pathType, gradleLibrary.getName(), path));
+          GradleLog.LOG.warn(
+            String.format("Can't find %s of the library '%s' at path '%s'", entry.getKey(), libraryName, file.getAbsolutePath())
+          );
           continue;
         }
         if (virtualFile.isDirectory()) {
-          model.addRoot(virtualFile, Lazy.LIBRARY_ROOT_MAPPINGS.get(pathType));
+          model.addRoot(virtualFile, entry.getKey());
         }
         else {
           VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
           if (jarRoot == null) {
             GradleLog.LOG.warn(String.format(
-              "Can't parse contents of the jar file at path '%s' for the library '%s''", path, gradleLibrary.getName()
+              "Can't parse contents of the jar file at path '%s' for the library '%s''", file.getAbsolutePath(), libraryName
             ));
             continue;
           }
-          model.addRoot(jarRoot, Lazy.LIBRARY_ROOT_MAPPINGS.get(pathType));
+          model.addRoot(jarRoot, entry.getKey());
         }
       }
     }

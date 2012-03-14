@@ -23,7 +23,7 @@ public class GradleLocalNodeImportHelperTest extends AbstractGradleTest {
     container.registerComponentImplementation(GradleLocalNodeImportHelper)
     container.registerComponentImplementation(GradleModuleImporter)
     container.registerComponentImplementation(GradleLibraryImporter)
-    container.registerComponentImplementation(GradleModuleDependencyImporter)
+    container.registerComponentImplementation(GradleDependencyImporter)
     container.registerComponentImplementation(GradleContentRootImporter)
   }
 

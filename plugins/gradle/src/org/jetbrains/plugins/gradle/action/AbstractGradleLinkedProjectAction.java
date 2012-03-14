@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import java.io.File;
 
 /**
- * Common super class for gradle actions that require {@link GradleSettings#LINKED_PROJECT_FILE_PATH linked project}.
+ * Common super class for gradle actions that require {@link GradleSettings#getLinkedProjectPath()}  linked project}.
  * <p/>
  * Not thread-safe.
  * 
@@ -56,7 +56,7 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
       return null;
     }
     
-    final String path = GradleSettings.getInstance(project).LINKED_PROJECT_FILE_PATH;
+    final String path = GradleSettings.getInstance(project).getLinkedProjectPath();
     if (StringUtil.isEmpty(path) || !new File(path).isFile()) {
       return null;
     }

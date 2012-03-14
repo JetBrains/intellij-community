@@ -39,6 +39,7 @@ import com.intellij.psi.search.NonClasspathDirectoryScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -95,7 +96,6 @@ public class GradleScriptType extends GroovyScriptType {
       configuration.setScriptParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
-
     
     final CompileStepBeforeRun.MakeBeforeRunTask runTask =
       RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
@@ -160,8 +160,8 @@ public class GradleScriptType extends GroovyScriptType {
         if (libraryManager.getGradleHome(module, project) == null) {
           // TODO den internationalise
           int result = Messages.showOkCancelDialog(
-            "Gradle is not configured. Do you want to configure it?",
-            "Configure Gradle SDK",
+            GradleBundle.message("gradle.run.no.sdk.text"),
+            GradleBundle.message("gradle.run.no.sdk.title"),
             GradleIcons.GRADLE_ICON
           );
           if (result == 0) {
