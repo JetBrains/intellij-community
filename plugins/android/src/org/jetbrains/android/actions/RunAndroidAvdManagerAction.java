@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
@@ -39,7 +40,7 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
   }
 
   @Override
-  protected void doRunTool(@NotNull String sdkPath) {
+  protected void doRunTool(@NotNull Project project, @NotNull String sdkPath) {
     runAvdManager(sdkPath);
   }
 
