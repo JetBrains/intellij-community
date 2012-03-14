@@ -35,6 +35,36 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
+  public static <K, V> Map<K, V> intersection(Map<K, V> map1, Map<K, V> map2) {
+    final Map<K, V> res = new HashMap<K, V>();
+    final HashSet<K> keys = new HashSet<K>();
+    keys.addAll(map1.keySet());
+    keys.addAll(map2.keySet());
+    for (K k : keys) {
+      V v1 = map1.get(k);
+      V v2 = map2.get(k);
+      if (v1 == v2 || (v1 != null && v1.equals(v2))) {
+        res.put(k, v1);
+      }
+    }
+    return res;
+  }
+
+  public static <K, V> Map<K,Pair<V,V>> diff(Map<K, V> map1, Map<K, V> map2) {
+    final Map<K, Pair<V,V>> res = new HashMap<K, Pair<V, V>>();
+    final HashSet<K> keys = new HashSet<K>();
+    keys.addAll(map1.keySet());
+    keys.addAll(map2.keySet());
+    for (K k : keys) {
+      V v1 = map1.get(k);
+      V v2 = map2.get(k);
+      if (!(v1 == v2 || (v1 != null && v1.equals(v2)))) {
+        res.put(k, Pair.create(v1, v2));
+      }
+    }
+    return res;
+  }
+
   @NotNull
   public static <T> List<T> mergeSortedLists(@NotNull List<T> list1, @NotNull List<T> list2, @NotNull Comparator<? super T> comparator, boolean mergeEqualItems){
     List<T> result = new ArrayList<T>(list1.size() + list2.size());
