@@ -21,9 +21,7 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.util.Consumer;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,18 +59,22 @@ public class JobImpl<T> implements Job<T> {
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
   }
 
+  @Override
   public String getTitle() {
     return null;
   }
 
+  @Override
   public void addTask(Callable<T> task) {
     addTask(task, null);
   }
 
+  @Override
   public void addTask(Runnable task, T result) {
     addTask(Executors.callable(task, result));
   }
 
+  @Override
   public void addTask(Runnable task) {
     addTask(Executors.callable(task, (T)null));
   }
@@ -98,6 +100,7 @@ public class JobImpl<T> implements Job<T> {
   }
 
 
+  @Override
   public List<T> scheduleAndWaitForResults() throws Throwable {
     checkCanSchedule();
     final Application application = ApplicationManager.getApplication();
@@ -130,13 +133,7 @@ public class JobImpl<T> implements Job<T> {
       Runnable task = JobSchedulerImpl.stealTask();
       if (task == null) break;
 
-      boolean wasMarked = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
-      try {
-        task.run();
-      }
-      finally {
-        if (wasMarked) ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
-      }
+      task.run();
     }
 
     waitForTermination();
@@ -181,6 +178,7 @@ public class JobImpl<T> implements Job<T> {
     }
   }
 
+  @Override
   public void cancel() {
     checkScheduled();
     if (canceled) return;
@@ -193,11 +191,13 @@ public class JobImpl<T> implements Job<T> {
     runningTasks.set(0);
   }
 
+  @Override
   public boolean isCanceled() {
     checkScheduled();
     return canceled;
   }
 
+  @Override
   public void schedule() {
     checkCanSchedule();
     scheduled = true;
@@ -215,6 +215,7 @@ public class JobImpl<T> implements Job<T> {
     return tasks;
   }
 
+  @Override
   public boolean isDone() {
     checkScheduled();
 
@@ -251,5 +252,4 @@ public class JobImpl<T> implements Job<T> {
   void taskDone() {
     runningTasks.decrementAndGet();
   }
-
 }
