@@ -5333,15 +5333,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   private boolean tweakSelectionEvent(@NotNull MouseEvent e) {
     return getSelectionModel().hasSelection() && e.getButton() == MouseEvent.BUTTON1 && e.isShiftDown()
-           && e.getComponent() == getGutterComponentEx();
+           && getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA;
   }
 
   /**
    * Checks if editor selection should be changed because of click at the given point at gutter and proceeds if necessary.
    * <p/>
-   * The main idea is that selection can be changed during left mouse clicks with hold <code>Shift</code> button and we want
-   * to distinguish that situation from <code>'close line numbers gutter'</code> action (activated by <code>'Shift+click'</code>
-   * on gutter area).
+   * The main idea is that selection can be changed during left mouse clicks on the gutter line numbers area with hold
+   * <code>Shift</code> button. The selection should be adjusted if necessary.
    *
    * @param e   event for mouse click on gutter area
    * @return    <code>true</code> if editor's selection is changed because of the click; <code>false</code> otherwise
