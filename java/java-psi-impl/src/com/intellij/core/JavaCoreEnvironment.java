@@ -18,6 +18,9 @@ package com.intellij.core;
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.indexing.AbstractVfsAdapterJavaComponent;
+import com.intellij.indexing.FileBasedIndexJavaComponent;
+import com.intellij.indexing.FileBasedIndexUnsavedDocumentsManagerJavaComponent;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.java.JavaLanguage;
@@ -27,6 +30,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystemWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
@@ -41,7 +45,9 @@ import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.psi.stubs.SerializationManager;
+import com.intellij.psi.stubs.SerializationManagerImpl;
+import com.intellij.util.indexing.*;
 
 import java.io.File;
 
@@ -89,7 +95,17 @@ public class JavaCoreEnvironment extends CoreEnvironment {
     myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
 
     //
-    myApplication.registerService(FileBasedIndex.class, FileBasedIndex.class);
+    myApplication.registerService(SerializationManager.class, SerializationManagerImpl.class);
+
+    myApplication.registerService(CoreLocalFileSystemWithId.class, new CoreLocalFileSystemWithId()); //TODO!!!!
+
+    myApplication.registerService(FileBasedIndex.class, FileBasedIndexJavaComponent.class);
+    myApplication.registerService(AbstractVfsAdapter.class, AbstractVfsAdapterJavaComponent.class);
+    myApplication.registerService(IndexingStamp.class, IndexingStamp.class);
+    myApplication.registerService(FileBasedIndexLimitsChecker.class, FileBasedIndexLimitsChecker.class);
+    myApplication.registerService(FileBasedIndexTransactionMap.class, FileBasedIndexTransactionMap.class);
+    myApplication.registerService(FileBasedIndexUnsavedDocumentsManager.class, FileBasedIndexUnsavedDocumentsManagerJavaComponent.class);
+    myApplication.registerService(FileBasedIndexIndicesManager.class, FileBasedIndexIndicesManager.class);
   }
 
   public void addToClasspath(File path) {

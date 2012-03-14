@@ -58,6 +58,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.Function;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
@@ -102,9 +103,10 @@ public class CoreEnvironment {
       }
     }, null));
 
+    MessageBusImpl messageBus = new MessageBusImpl(myApplication, null);
+    registerComponentInstance(appContainer, MessageBus.class, messageBus);
     registerComponentInstance(appContainer, VirtualFileManager.class,
-                              new VirtualFileManagerImpl(new VirtualFileSystem[] {myLocalFileSystem, myJarFileSystem},
-                                                         new MessageBusImpl(myApplication, null),
+                              new VirtualFileManagerImpl(new VirtualFileSystem[] {myLocalFileSystem, myJarFileSystem}, messageBus,
                                                          new FileSystemPersistence() {
                                                            @Override
                                                            public void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState) {

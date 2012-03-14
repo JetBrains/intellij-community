@@ -49,8 +49,6 @@ public abstract class AbstractVfsAdapter {
 
   public abstract void setFlag(VirtualFile file, int flag, boolean value);
 
-  public abstract VirtualFile[] getRoots();
-
   public abstract void iterateCachedFilesRecursively(VirtualFile root, VirtualFileVisitor visitor);
 
   public abstract boolean isMock(VirtualFile file);
