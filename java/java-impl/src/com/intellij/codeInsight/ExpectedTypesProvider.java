@@ -1166,6 +1166,9 @@ public class ExpectedTypesProvider {
 
     private ExpectedTypeInfo[] findClassesWithDeclaredMethod(final PsiMethodCallExpression methodCallExpr, final boolean forCompletion) {
       final PsiReferenceExpression reference = methodCallExpr.getMethodExpression();
+      if (reference.getQualifierExpression() instanceof PsiClassObjectAccessExpression) {
+        return ExpectedTypeInfo.EMPTY_ARRAY;
+      }
       final PsiManager manager = methodCallExpr.getManager();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       final PsiMethod[] methods = myClassProvider.findDeclaredMethods(reference.getManager(), reference.getReferenceName());
