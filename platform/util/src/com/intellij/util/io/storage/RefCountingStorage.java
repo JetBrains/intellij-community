@@ -36,6 +36,7 @@ import java.util.zip.InflaterInputStream;
 
 public class RefCountingStorage extends AbstractStorage {
   private final Map<Integer, Future<?>> myPendingWriteRequests = new ConcurrentHashMap<Integer, Future<?>>();
+  private int myPendingWriteRequestsSize;
   private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
     @Override
     public Thread newThread(Runnable runnable) {
@@ -44,6 +45,7 @@ public class RefCountingStorage extends AbstractStorage {
   });
 
   private final boolean myDoNotZipCaches = Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue();
+  private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
   public RefCountingStorage(String path) throws IOException {
     super(path);
@@ -96,26 +98,35 @@ public class RefCountingStorage extends AbstractStorage {
     waitForPendingWriteForRecord(record);
 
     synchronized (myLock) {
-      Future<Object> future = myPendingWriteRequestsExecutor.submit(new Callable<Object>() {
-        @Override
-        public Object call() throws IOException {
-          BufferExposingByteArrayOutputStream s = new BufferExposingByteArrayOutputStream();
-          DeflaterOutputStream out = new DeflaterOutputStream(s);
-          try {
-            out.write(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+      myPendingWriteRequestsSize += bytes.getLength();
+      if (myPendingWriteRequestsSize > MAX_PENDING_WRITE_SIZE) {
+        zipAndWrite(bytes, record, fixedSize);
+      } else {
+        myPendingWriteRequests.put(record, myPendingWriteRequestsExecutor.submit(new Callable<Object>() {
+          @Override
+          public Object call() throws IOException {
+            zipAndWrite(bytes, record, fixedSize);
+            return null;
           }
-          finally {
-            out.close();
-          }
+        }));
+      }
+    }
+  }
 
-          synchronized (myLock) {
-            doWrite(record, fixedSize, s);
-            myPendingWriteRequests.remove(record);
-          }
-          return null;
-        }
-      });
-      myPendingWriteRequests.put(record, future);
+  private void zipAndWrite(ByteSequence bytes, int record, boolean fixedSize) throws IOException {
+    BufferExposingByteArrayOutputStream s = new BufferExposingByteArrayOutputStream();
+    DeflaterOutputStream out = new DeflaterOutputStream(s);
+    try {
+      out.write(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+    }
+    finally {
+      out.close();
+    }
+
+    synchronized (myLock) {
+      doWrite(record, fixedSize, s);
+      myPendingWriteRequestsSize -= bytes.getLength();
+      myPendingWriteRequests.remove(record);
     }
   }
 
