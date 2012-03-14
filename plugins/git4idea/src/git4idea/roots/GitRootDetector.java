@@ -16,6 +16,7 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * <p>
@@ -94,10 +94,10 @@ public class GitRootDetector {
       return roots;
     }
 
-    myPlatformFacade.runReadActionAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
+    myPlatformFacade.runReadAction(new Computable<Object>() {
+      @Nullable @Override public Object compute() {
         if (myProject.isDisposed() || !dir.isDirectory()) {
-          return;
+          return null;
         }
         if (hasGitDir(dir)) {
           roots.add(dir);
@@ -105,6 +105,7 @@ public class GitRootDetector {
         for (VirtualFile child : dir.getChildren()) {
           roots.addAll(scanForRootsInsideDir(child, depth + 1));
         }
+        return null;
       }
     });
 
@@ -118,24 +119,22 @@ public class GitRootDetector {
 
   @Nullable
   private VirtualFile scanForSingleRootAboveDir(@NotNull final VirtualFile projectDir) {
-    final AtomicReference<VirtualFile> parent = new AtomicReference<VirtualFile>();
-    myPlatformFacade.runReadActionAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
+    return myPlatformFacade.runReadAction(new Computable<VirtualFile>() {
+      @Nullable @Override public VirtualFile compute() {
         if (myProject.isDisposed()) {
-          return;
+          return null;
         }
 
         VirtualFile par = projectDir.getParent();
         while (par != null) {
           if (hasGitDir(par)) {
-            parent.set(par);
-            return;
+            return par;
           }
           par = par.getParent();
         }
+        return null;
       }
     });
-    return parent.get();
   }
 
   private static boolean hasGitDir(@NotNull VirtualFile dir) {

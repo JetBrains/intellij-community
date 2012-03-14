@@ -18,6 +18,7 @@ package git4idea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +56,7 @@ public interface PlatformFacade {
   ProjectRootManager getProjectRootManager(@NotNull Project project);
 
   /**
-   * Invokes {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} in AWT and waits if needed.
+   * Invokes {@link com.intellij.openapi.application.Application#runReadAction(Computable)}.
    */
-  void runReadActionAndWaitIfNeeded(@NotNull Runnable runnable);
+  <T> T runReadAction(@NotNull Computable<T> computable);
 }

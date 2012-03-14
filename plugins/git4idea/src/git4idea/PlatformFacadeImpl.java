@@ -19,9 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,12 +53,8 @@ public class PlatformFacadeImpl implements PlatformFacade {
   }
 
   @Override
-  public void runReadActionAndWaitIfNeeded(@NotNull final Runnable runnable) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
-        ApplicationManager.getApplication().runReadAction(runnable);
-      }
-    });
+  public <T> T runReadAction(@NotNull Computable<T> computable) {
+    return ApplicationManager.getApplication().runReadAction(computable);
   }
 
   @NotNull

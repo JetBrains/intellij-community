@@ -24,6 +24,7 @@ import git4idea.PlatformFacade
 import git4idea.tests.TestDialogManager
 import org.jetbrains.annotations.NotNull
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Computable
 
 /**
  * 
@@ -72,8 +73,8 @@ public class GitTestPlatformFacade implements PlatformFacade {
   }
 
   @Override
-  void runReadActionAndWaitIfNeeded(Runnable runnable) {
-    runnable.run()
+  <T> T runReadAction(@NotNull Computable<T> computable) {
+    computable.compute()
   }
 
   @NotNull
