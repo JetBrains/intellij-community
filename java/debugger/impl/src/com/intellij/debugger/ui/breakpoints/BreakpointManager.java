@@ -28,10 +28,12 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerExpressionTextField;
@@ -311,12 +313,10 @@ public class BreakpointManager implements JDOMExternalizable {
 
                   if (e.getMouseEvent().isShiftDown() && breakpoint != null) {
                     breakpoint.LOG_EXPRESSION_ENABLED = true;
-                    final TextWithImports logMessage = DebuggerUtilsEx.getEditorText(editor);
-                    breakpoint.setLogMessage(logMessage != null
-                                             ? logMessage
-                                             : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION,
-                                                                       DebuggerBundle.message("breakpoint.log.message",
-                                                                                              breakpoint.getDisplayName())));
+                    String selection = editor.getSelectionModel().getSelectedText();
+                    String text = selection != null ? selection : DebuggerBundle.message("breakpoint.log.message",
+                                                                                               breakpoint.getDisplayName());
+                    breakpoint.setLogMessage(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, text));
                     breakpoint.SUSPEND_POLICY = DebuggerSettings.SUSPEND_NONE;
 
                     DialogWrapper dialog = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager()
