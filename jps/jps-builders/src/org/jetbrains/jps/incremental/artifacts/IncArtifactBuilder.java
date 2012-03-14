@@ -93,7 +93,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
             final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
             if (sources != null) {
               for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath());
+                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
               }
             }
           }
@@ -105,7 +105,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         final IntArrayList roots = entry.getValue();
         final String sourcePath = entry.getKey();
         for (int i = 0; i < roots.size(); i++) {
-          addFileToProcess(filesToProcess, roots.get(i), sourcePath);
+          addFileToProcess(filesToProcess, roots.get(i), sourcePath, deletedFiles);
         }
         final List<String> outputPaths = srcOutMapping.getState(sourcePath);
         if (outputPaths != null) {
@@ -114,7 +114,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
             final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
             if (sources != null) {
               for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath());
+                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
               }
             }
           }
@@ -168,7 +168,13 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     }
   }
 
-  private static void addFileToProcess(TIntObjectHashMap<Set<String>> filesToProcess, final int rootIndex, final String path) {
+  private static void addFileToProcess(TIntObjectHashMap<Set<String>> filesToProcess,
+                                       final int rootIndex,
+                                       final String path,
+                                       Set<String> deletedFiles) {
+    if (deletedFiles.contains(path)) {
+      return;
+    }
     Set<String> paths = filesToProcess.get(rootIndex);
     if (paths == null) {
       paths = new THashSet<String>();
