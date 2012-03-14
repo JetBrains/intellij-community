@@ -23,10 +23,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.FileSystem;
@@ -684,5 +681,11 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static String getReadableUrl(@NotNull final VirtualFile file) {
     return file.isInLocalFileSystem() ? file.getPresentableUrl() : file.getUrl();
+  }
+
+  @Nullable
+  public static VirtualFile getUserHomeDir() {
+    final String path = SystemProperties.getUserHome();
+    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 }
