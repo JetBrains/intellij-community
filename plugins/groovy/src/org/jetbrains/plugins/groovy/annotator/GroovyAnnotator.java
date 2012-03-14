@@ -644,6 +644,38 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         myHolder.createErrorAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message(key, variable.getName()));
       }
     }
+
+    PsiType type = variable.getDeclaredType();
+    if (type instanceof PsiEllipsisType && !isLastParameter(variable)) {
+      TextRange range = getTypeRange(variable);
+      LOG.assertTrue(range != null, variable.getText());
+      myHolder.createErrorAnnotation(range, GroovyBundle.message("ellipsis.type.is.not.allowed.here"));
+    }
+  }
+
+  @Nullable
+  private static TextRange getTypeRange(GrVariable variable) {
+    GrTypeElement typeElement = variable.getTypeElementGroovy();
+    if (typeElement == null) return null;
+
+    PsiElement sibling = typeElement.getNextSibling();
+    if (sibling != null && sibling.getNode().getElementType() == GroovyTokenTypes.mTRIPLE_DOT) {
+      return new TextRange(typeElement.getTextRange().getStartOffset(), sibling.getTextRange().getEndOffset());
+    }
+
+    return typeElement.getTextRange();
+  }
+
+
+  private static boolean isLastParameter(PsiVariable variable) {
+    if (!(variable instanceof PsiParameter)) return false;
+
+    PsiElement parent = variable.getParent();
+    if (!(parent instanceof PsiParameterList)) return false;
+
+    PsiParameter[] parameters = ((PsiParameterList)parent).getParameters();
+
+    return parameters.length > 0 && parameters[parameters.length - 1] == variable;
   }
 
   private void checkName(GrVariable variable) {

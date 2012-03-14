@@ -222,6 +222,16 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testEachOverRange() throws Exception {doTest();}
 
+  public void testEllipsisParam() {
+    myFixture.configureByText('a.groovy', '''\
+class A {
+  def foo(int... x){}
+  def foo(<error descr="Ellipsis type is not allowed here">int...</error> x, double y) {}
+}
+''')
+    myFixture.checkHighlighting(true, false, false)
+  }
+
   public void testMethodCallWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
   public void testClosureWithDefaultParameters() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
   public void testClosureCallMethodWithInapplicableArguments() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
