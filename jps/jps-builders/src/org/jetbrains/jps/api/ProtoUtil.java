@@ -149,6 +149,10 @@ public class ProtoUtil {
           if (additional != null) {
             libBuilder.setAdditionalDataXml(additional);
           }
+          final String version = sdk.getVersion();
+          if (version != null) {
+            libBuilder.setVersion(version);
+          }
         }
         cmdBuilder.addGlobalLibrary(libBuilder.build());
       }

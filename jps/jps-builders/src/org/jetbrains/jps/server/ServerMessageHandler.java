@@ -76,7 +76,7 @@ class ServerMessageHandler extends SimpleChannelHandler {
           for (JpsRemoteProto.Message.Request.SetupCommand.GlobalLibrary library : setupCommand.getGlobalLibraryList()) {
             libs.add(
               library.hasHomePath()?
-              new SdkLibrary(library.getName(), library.getTypeName(), library.getHomePath(), library.getPathList(), library.hasAdditionalDataXml()? library.getAdditionalDataXml() : null) :
+              new SdkLibrary(library.getName(), library.getTypeName(), library.hasVersion() ? library.getVersion() : null, library.getHomePath(), library.getPathList(), library.hasAdditionalDataXml()? library.getAdditionalDataXml() : null) :
               new GlobalLibrary(library.getName(), library.getPathList())
             );
           }

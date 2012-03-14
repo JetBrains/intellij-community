@@ -301,7 +301,7 @@ class ServerState {
             LOG.info(e);
           }
         }
-        final Sdk jdk = project.createSdk(/*"JavaSDK"*/sdk.getTypeName(), sdk.getName(), sdk.getHomePath(), additionalData);
+        final Sdk jdk = project.createSdk(sdk.getTypeName(), sdk.getName(), sdk.getVersion(), sdk.getHomePath(), additionalData);
         if (jdk != null) {
           jdk.setClasspath(sdk.getPaths());
         }

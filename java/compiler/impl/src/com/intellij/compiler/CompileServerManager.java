@@ -530,7 +530,14 @@ public class CompileServerManager implements ApplicationComponent{
         additionalDataXml = JDOMUtil.writeElement(element, "\n");
       }
       final List<String> paths = convertToLocalPaths(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-      globals.add(new SdkLibrary(name, sdkType.getName(), homePath, paths, additionalDataXml));
+      String versionString = sdk.getVersionString();
+      if (versionString != null && sdkType instanceof JavaSdk) {
+        final JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(versionString);
+        if (version != null) {
+          versionString = version.getDescription();
+        }
+      }
+      globals.add(new SdkLibrary(name, sdkType.getName(), versionString, homePath, paths, additionalDataXml));
     }
   }
 

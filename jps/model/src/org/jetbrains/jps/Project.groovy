@@ -46,13 +46,13 @@ class Project {
   }
 
   def JavaSdk createJavaSdk(String name, String path, Closure initializer) {
-    def sdk = new JavaSdkImpl(this, name, path, initializer)
+    def sdk = new JavaSdkImpl(this, name, null, path, initializer)
     sdks[name] = sdk
     return sdk
   }
 
-  def Sdk createSdk(String typeName, String sdkName, String path, Node additionalData) {
-    def sdk = SdkLoader.createSdk(this, typeName, sdkName, path, additionalData)
+  def Sdk createSdk(String typeName, String sdkName, String version, String path, Node additionalData) {
+    def sdk = SdkLoader.createSdk(this, typeName, sdkName, version, path, additionalData)
     sdks[sdkName] = sdk
     return sdk
   }
