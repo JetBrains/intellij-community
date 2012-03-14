@@ -21,14 +21,14 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
+public class PsiCacheKey<T,H extends PsiElement> extends Key<SoftReference<Pair<Long, T>>> {
   private final Function<H,T> myFunction;
 
   private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<H, T> function) {
@@ -37,33 +37,22 @@ public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
   }
 
   public final T getValue(@NotNull H h) {
-    while (true) {
-      Pair<Long, T> data = h.getUserData(this);
-
-      final long count = h.getManager().getModificationTracker().getJavaStructureModificationCount();
-      if (data == null) {
-        data = new Pair<Long, T>(count, myFunction.fun(h));
-        data = ((UserDataHolderEx)h).putUserDataIfAbsent(this, data);
-      }
-      else if (data.getFirst() != count) {
-        Pair<Long, T> newData = new Pair<Long, T>(count, myFunction.fun(h));
-        if (((UserDataHolderEx)h).replace(this, data, newData)) {
-          data = newData;
-        }
-        else {
-          continue;
-        }
-      }
-
-      return data.getSecond();
+    T result = getCachedValueOrNull(h);
+    if (result != null) {
+      return result;
     }
+
+    result = myFunction.fun(h);
+    final long count = h.getManager().getModificationTracker().getJavaStructureModificationCount();
+    h.putUserData(this, new SoftReference<Pair<Long, T>>(new Pair<Long, T>(count, result)));
+    return result;
   }
 
   @Nullable
   public final T getCachedValueOrNull(@NotNull H h) {
-    Pair<Long, T> data = h.getUserData(this);
-    final long count = h.getManager().getModificationTracker().getJavaStructureModificationCount();
-    if (data == null || data.getFirst() != count) {
+    SoftReference<Pair<Long, T>> ref = h.getUserData(this);
+    Pair<Long, T> data = ref == null ? null : ref.get();
+    if (data == null || data.getFirst() != h.getManager().getModificationTracker().getJavaStructureModificationCount()) {
       return null;
     }
 
