@@ -127,7 +127,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   public boolean USE_INSTANCEOF_ON_EQUALS_PARAMETER = false;
 
-  public boolean HIGHLIGHT_IDENTIFIER_UNDER_CARET = false;
+  public boolean HIGHLIGHT_IDENTIFIER_UNDER_CARET = true;
 
   public boolean OPTIMIZE_IMPORTS_ON_THE_FLY = false;
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = false;
