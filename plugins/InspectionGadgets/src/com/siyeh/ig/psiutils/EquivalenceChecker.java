@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ import java.util.List;
 
 public class EquivalenceChecker {
 
-  private EquivalenceChecker() {
-  }
+  private EquivalenceChecker() {}
 
   public static boolean modifierListsAreEquivalent(
     @Nullable PsiModifierList list1, @Nullable PsiModifierList list2) {
@@ -94,170 +93,74 @@ public class EquivalenceChecker {
              !list2.hasModifierProperty(PsiModifier.VOLATILE));
   }
 
-  public static boolean statementsAreEquivalent(
-    @Nullable PsiStatement statement1,
-    @Nullable PsiStatement statement2) {
-    if (statement1 == null && statement2 == null) {
-      return true;
-    }
-    if (statement1 == null || statement2 == null) {
+  public static boolean statementsAreEquivalent(@Nullable PsiStatement statement1, @Nullable PsiStatement statement2) {
+    if (statement1 == null) {
+      return statement2 == null;
+    } else if (statement2 == null) {
       return false;
     }
     if (statement1.getClass() != statement2.getClass()) {
       return false;
     }
     if (statement1 instanceof PsiAssertStatement) {
-      final PsiAssertStatement assertStatement1 =
-        (PsiAssertStatement)statement1;
-      final PsiAssertStatement assertStatement2 =
-        (PsiAssertStatement)statement2;
-      return assertStatementsAreEquivalent(assertStatement1,
-                                           assertStatement2);
+      return assertStatementsAreEquivalent((PsiAssertStatement)statement1, (PsiAssertStatement)statement2);
     }
     if (statement1 instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement1 =
-        (PsiBlockStatement)statement1;
-      final PsiBlockStatement blockStatement2 =
-        (PsiBlockStatement)statement2;
-      return blockStatementsAreEquivalent(blockStatement1,
-                                          blockStatement2);
+      return blockStatementsAreEquivalent((PsiBlockStatement)statement1, (PsiBlockStatement)statement2);
     }
     if (statement1 instanceof PsiBreakStatement) {
-      final PsiBreakStatement breakStatement1 =
-        (PsiBreakStatement)statement1;
-      final PsiBreakStatement breakStatement2 =
-        (PsiBreakStatement)statement2;
-      return breakStatementsAreEquivalent(breakStatement1,
-                                          breakStatement2);
+      return breakStatementsAreEquivalent((PsiBreakStatement)statement1, (PsiBreakStatement)statement2);
     }
     if (statement1 instanceof PsiContinueStatement) {
-      final PsiContinueStatement continueStatement1 =
-        (PsiContinueStatement)statement1;
-      final PsiContinueStatement continueStatement2 =
-        (PsiContinueStatement)statement2;
-      return continueStatementsAreEquivalent(continueStatement1,
-                                             continueStatement2);
+      return continueStatementsAreEquivalent((PsiContinueStatement)statement1, (PsiContinueStatement)statement2);
     }
     if (statement1 instanceof PsiDeclarationStatement) {
-      final PsiDeclarationStatement declarationStatement1 =
-        (PsiDeclarationStatement)statement1;
-      final PsiDeclarationStatement declarationStatement2 =
-        (PsiDeclarationStatement)statement2;
-      return declarationStatementsAreEquivalent(declarationStatement1,
-                                                declarationStatement2);
+      return declarationStatementsAreEquivalent((PsiDeclarationStatement)statement1, (PsiDeclarationStatement)statement2);
     }
     if (statement1 instanceof PsiDoWhileStatement) {
-      final PsiDoWhileStatement doWhileStatement1 =
-        (PsiDoWhileStatement)statement1;
-      final PsiDoWhileStatement doWhileStatement2 =
-        (PsiDoWhileStatement)statement2;
-      return doWhileStatementsAreEquivalent(
-        doWhileStatement1, doWhileStatement2);
+      return doWhileStatementsAreEquivalent((PsiDoWhileStatement)statement1, (PsiDoWhileStatement)statement2);
     }
     if (statement1 instanceof PsiEmptyStatement) {
       return true;
     }
     if (statement1 instanceof PsiExpressionListStatement) {
-      final PsiExpressionListStatement expressionListStatement1 =
-        (PsiExpressionListStatement)statement1;
-      final PsiExpressionListStatement expressionListStatement2 =
-        (PsiExpressionListStatement)statement2;
-      return expressionListStatementsAreEquivalent(
-        expressionListStatement1,
-        expressionListStatement2);
+      return expressionListStatementsAreEquivalent((PsiExpressionListStatement)statement1, (PsiExpressionListStatement)statement2);
     }
     if (statement1 instanceof PsiExpressionStatement) {
-      final PsiExpressionStatement expressionStatement1 =
-        (PsiExpressionStatement)statement1;
-      final PsiExpressionStatement expressionStatement2 =
-        (PsiExpressionStatement)statement2;
-      return expressionStatementsAreEquivalent(
-        expressionStatement1,
-        expressionStatement2);
+      return expressionStatementsAreEquivalent((PsiExpressionStatement)statement1, (PsiExpressionStatement)statement2);
     }
     if (statement1 instanceof PsiForStatement) {
-      final PsiForStatement forStatement1 =
-        (PsiForStatement)statement1;
-      final PsiForStatement forStatement2 =
-        (PsiForStatement)statement2;
-      return forStatementsAreEquivalent(forStatement1, forStatement2);
+      return forStatementsAreEquivalent((PsiForStatement)statement1, (PsiForStatement)statement2);
     }
     if (statement1 instanceof PsiForeachStatement) {
-      final PsiForeachStatement forEachStatement1 =
-        (PsiForeachStatement)statement1;
-      final PsiForeachStatement forEachStatement2 =
-        (PsiForeachStatement)statement2;
-      return forEachStatementsAreEquivalent(forEachStatement1,
-                                            forEachStatement2);
+      return forEachStatementsAreEquivalent((PsiForeachStatement)statement1, (PsiForeachStatement)statement2);
     }
     if (statement1 instanceof PsiIfStatement) {
-      return ifStatementsAreEquivalent(
-        (PsiIfStatement)statement1,
-        (PsiIfStatement)statement2);
+      return ifStatementsAreEquivalent((PsiIfStatement)statement1, (PsiIfStatement)statement2);
     }
     if (statement1 instanceof PsiLabeledStatement) {
-      final PsiLabeledStatement labeledStatement1 =
-        (PsiLabeledStatement)statement1;
-      final PsiLabeledStatement labeledStatement2 =
-        (PsiLabeledStatement)statement2;
-      return labeledStatementsAreEquivalent(labeledStatement1,
-                                            labeledStatement2);
+      return labeledStatementsAreEquivalent((PsiLabeledStatement)statement1, (PsiLabeledStatement)statement2);
     }
     if (statement1 instanceof PsiReturnStatement) {
-      final PsiReturnStatement returnStatement1 =
-        (PsiReturnStatement)statement1;
-      final PsiReturnStatement returnStatement2 =
-        (PsiReturnStatement)statement2;
-      return returnStatementsAreEquivalent(returnStatement1,
-                                           returnStatement2);
+      return returnStatementsAreEquivalent((PsiReturnStatement)statement1, (PsiReturnStatement)statement2);
     }
     if (statement1 instanceof PsiSwitchStatement) {
-      final PsiSwitchStatement switchStatement1 =
-        (PsiSwitchStatement)statement1;
-      final PsiSwitchStatement switchStatement2 =
-        (PsiSwitchStatement)statement2;
-      return switchStatementsAreEquivalent(switchStatement1,
-                                           switchStatement2);
+      return switchStatementsAreEquivalent((PsiSwitchStatement)statement1, (PsiSwitchStatement)statement2);
     }
     if (statement1 instanceof PsiSwitchLabelStatement) {
-      final PsiSwitchLabelStatement switchLabelStatement1 =
-        (PsiSwitchLabelStatement)statement1;
-      final PsiSwitchLabelStatement switchLabelStatement2 =
-        (PsiSwitchLabelStatement)statement2;
-      return switchLabelStatementsAreEquivalent(switchLabelStatement1,
-                                                switchLabelStatement2);
+      return switchLabelStatementsAreEquivalent((PsiSwitchLabelStatement)statement1, (PsiSwitchLabelStatement)statement2);
     }
     if (statement1 instanceof PsiSynchronizedStatement) {
-      final PsiSynchronizedStatement synchronizedStatement1 =
-        (PsiSynchronizedStatement)statement1;
-      final PsiSynchronizedStatement synchronizedStatement2 =
-        (PsiSynchronizedStatement)statement2;
-      return synchronizedStatementsAreEquivalent(
-        synchronizedStatement1, synchronizedStatement2);
+      return synchronizedStatementsAreEquivalent((PsiSynchronizedStatement)statement1, (PsiSynchronizedStatement)statement2);
     }
     if (statement1 instanceof PsiThrowStatement) {
-      final PsiThrowStatement throwStatement1 =
-        (PsiThrowStatement)statement1;
-      final PsiThrowStatement throwStatement2 =
-        (PsiThrowStatement)statement2;
-      return throwStatementsAreEquivalent(throwStatement1,
-                                          throwStatement2);
+      return throwStatementsAreEquivalent((PsiThrowStatement)statement1, (PsiThrowStatement)statement2);
     }
     if (statement1 instanceof PsiTryStatement) {
-      final PsiTryStatement tryStatement1 =
-        (PsiTryStatement)statement1;
-      final PsiTryStatement tryStatement2 =
-        (PsiTryStatement)statement2;
-      return tryStatementsAreEquivalent(tryStatement1,
-                                        tryStatement2);
+      return tryStatementsAreEquivalent((PsiTryStatement)statement1, (PsiTryStatement)statement2);
     }
     if (statement1 instanceof PsiWhileStatement) {
-      final PsiWhileStatement whileStatement1 =
-        (PsiWhileStatement)statement1;
-      final PsiWhileStatement whileStatement2 =
-        (PsiWhileStatement)statement2;
-      return whileStatementsAreEquivalent(whileStatement1,
-                                          whileStatement2);
+      return whileStatementsAreEquivalent((PsiWhileStatement)statement1, (PsiWhileStatement)statement2);
     }
     final String text1 = statement1.getText();
     final String text2 = statement2.getText();
@@ -290,33 +193,35 @@ public class EquivalenceChecker {
     for (int i = 0; i < size; i++) {
       final PsiLocalVariable var1 = vars1.get(i);
       final PsiLocalVariable var2 = vars2.get(i);
-      if (!localVariableAreEquivalent(var1, var2)) {
+      if (!localVariablesAreEquivalent(var1, var2)) {
         return false;
       }
     }
     return true;
   }
 
-  private static boolean localVariableAreEquivalent(
-    @NotNull PsiLocalVariable var1, @NotNull PsiLocalVariable var2) {
-    final PsiType type1 = var1.getType();
-    final PsiType type2 = var2.getType();
+  private static boolean localVariablesAreEquivalent(
+    @NotNull PsiLocalVariable localVariable1,
+    @NotNull PsiLocalVariable localVariable2) {
+    final PsiType type1 = localVariable1.getType();
+    final PsiType type2 = localVariable2.getType();
     if (!typesAreEquivalent(type1, type2)) {
       return false;
     }
-    final String name1 = var1.getName();
-    final String name2 = var2.getName();
+    final String name1 = localVariable1.getName();
+    final String name2 = localVariable2.getName();
+    if (name1 == null) {
+      return name2 == null;
+    }
     if (!name1.equals(name2)) {
       return false;
     }
-    final PsiExpression initializer1 = var1.getInitializer();
-    final PsiExpression initializer2 = var2.getInitializer();
+    final PsiExpression initializer1 = localVariable1.getInitializer();
+    final PsiExpression initializer2 = localVariable2.getInitializer();
     return expressionsAreEquivalent(initializer1, initializer2);
   }
 
-  private static boolean tryStatementsAreEquivalent(
-    @NotNull PsiTryStatement statement1,
-    @NotNull PsiTryStatement statement2) {
+  private static boolean tryStatementsAreEquivalent(@NotNull PsiTryStatement statement1, @NotNull PsiTryStatement statement2) {
     final PsiCodeBlock tryBlock1 = statement1.getTryBlock();
     final PsiCodeBlock tryBlock2 = statement2.getTryBlock();
     if (!codeBlocksAreEquivalent(tryBlock1, tryBlock2)) {
@@ -337,16 +242,34 @@ public class EquivalenceChecker {
         return false;
       }
     }
-    final PsiParameter[] catchParameters1 =
-      statement1.getCatchBlockParameters();
-    final PsiParameter[] catchParameters2 =
-      statement2.getCatchBlockParameters();
+    final PsiResourceList resourceList1 = statement1.getResourceList();
+    final PsiResourceList resourceList2 = statement2.getResourceList();
+    if (resourceList1 != null) {
+      if (resourceList2 == null) {
+        return false;
+      }
+      if (resourceList1.getResourceVariablesCount() != resourceList2.getResourceVariablesCount()) {
+        return false;
+      }
+      final List<PsiResourceVariable> resourceVariables1 = resourceList1.getResourceVariables();
+      final List<PsiResourceVariable> resourceVariables2 = resourceList2.getResourceVariables();
+      for (int i1 = 0, size = resourceVariables1.size(); i1 < size; i1++) {
+        final PsiResourceVariable variable1 = resourceVariables1.get(i1);
+        final PsiResourceVariable variable2 = resourceVariables2.get(i1);
+        if (!localVariablesAreEquivalent(variable1, variable2)) {
+          return false;
+        }
+      }
+    } else if (resourceList2 != null) {
+      return false;
+    }
+    final PsiParameter[] catchParameters1 = statement1.getCatchBlockParameters();
+    final PsiParameter[] catchParameters2 = statement2.getCatchBlockParameters();
     if (catchParameters1.length != catchParameters2.length) {
       return false;
     }
     for (int i = 0; i < catchParameters2.length; i++) {
-      if (!parametersAreEquivalent(catchParameters2[i],
-                                   catchParameters1[i])) {
+      if (!parametersAreEquivalent(catchParameters2[i], catchParameters1[i])) {
         return false;
       }
     }
@@ -363,6 +286,9 @@ public class EquivalenceChecker {
     }
     final String name1 = parameter1.getName();
     final String name2 = parameter2.getName();
+    if (name1 == null) {
+      return name2 == null;
+    }
     return name1.equals(name2);
   }
 
@@ -424,8 +350,10 @@ public class EquivalenceChecker {
     final PsiParameter parameter1 = statement1.getIterationParameter();
     final PsiParameter parameter2 = statement1.getIterationParameter();
     final String name1 = parameter1.getName();
-    final String name2 = parameter2.getName();
-    if (!name1.equals(name2)) {
+    if (name1 == null) {
+      return parameter2.getName() == null;
+    }
+    if (!name1.equals(parameter2.getName())) {
       return false;
     }
     final PsiType type1 = parameter1.getType();
@@ -616,104 +544,86 @@ public class EquivalenceChecker {
     return expressionListsAreEquivalent(expressions1, expressions2);
   }
 
-  public static boolean expressionsAreEquivalent(
-    @Nullable PsiExpression exp1, @Nullable PsiExpression exp2) {
-    if (exp1 == null && exp2 == null) {
-      return true;
-    }
-    if (exp1 == null || exp2 == null) {
+  public static boolean expressionsAreEquivalent(@Nullable PsiExpression expression1, @Nullable PsiExpression expression2) {
+    expression1 = ParenthesesUtils.stripParentheses(expression1);
+    expression2 = ParenthesesUtils.stripParentheses(expression2);
+    if (expression1 == null) {
+      return expression2 == null;
+    } else if (expression2 == null) {
       return false;
     }
-    final PsiExpression expToCompare1 =
-      ParenthesesUtils.stripParentheses(exp1);
-    final PsiExpression expToCompare2 =
-      ParenthesesUtils.stripParentheses(exp2);
-    if (expToCompare1 == null && expToCompare2 == null) {
-      return true;
-    }
-    if (expToCompare1 == null || expToCompare2 == null) {
+    if (expression1.getClass() != expression2.getClass()) {
       return false;
     }
-    if (expToCompare1.getClass() != expToCompare2.getClass()) {
-      return false;
-    }
-    if (expToCompare1 instanceof PsiThisExpression) {
+    if (expression1 instanceof PsiThisExpression) {
       return true;
     }
-    else if (expToCompare1 instanceof PsiSuperExpression) {
+    else if (expression1 instanceof PsiSuperExpression) {
       return true;
     }
-    else if (expToCompare1 instanceof PsiLiteralExpression) {
-      final String text1 = expToCompare1.getText();
-      final String text2 = expToCompare2.getText();
-      return text1.equals(text2);
+    else if (expression1 instanceof PsiLiteralExpression) {
+      return literalExpressionsAreEquivalent((PsiLiteralExpression)expression1, (PsiLiteralExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiClassObjectAccessExpression) {
-      final String text1 = expToCompare1.getText();
-      final String text2 = expToCompare2.getText();
-      return text1.equals(text2);
+    else if (expression1 instanceof PsiClassObjectAccessExpression) {
+      return classObjectAccessExpressionsAreEquivalent((PsiClassObjectAccessExpression)expression1,
+                                                       (PsiClassObjectAccessExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiReferenceExpression) {
-      return referenceExpressionsAreEquivalent(
-        (PsiReferenceExpression)expToCompare1,
-        (PsiReferenceExpression)expToCompare2);
+    else if (expression1 instanceof PsiReferenceExpression) {
+      return referenceExpressionsAreEquivalent((PsiReferenceExpression)expression1, (PsiReferenceExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiMethodCallExpression) {
-      return methodCallExpressionsAreEquivalent(
-        (PsiMethodCallExpression)expToCompare1,
-        (PsiMethodCallExpression)expToCompare2);
+    else if (expression1 instanceof PsiMethodCallExpression) {
+      return methodCallExpressionsAreEquivalent((PsiMethodCallExpression)expression1, (PsiMethodCallExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiNewExpression) {
-      return newExpressionsAreEquivalent(
-        (PsiNewExpression)expToCompare1,
-        (PsiNewExpression)expToCompare2);
+    else if (expression1 instanceof PsiNewExpression) {
+      return newExpressionsAreEquivalent((PsiNewExpression)expression1, (PsiNewExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiArrayInitializerExpression) {
-      return arrayInitializerExpressionsAreEquivalent(
-        (PsiArrayInitializerExpression)expToCompare1,
-        (PsiArrayInitializerExpression)expToCompare2);
+    else if (expression1 instanceof PsiArrayInitializerExpression) {
+      return arrayInitializerExpressionsAreEquivalent((PsiArrayInitializerExpression)expression1,
+                                                      (PsiArrayInitializerExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiTypeCastExpression) {
-      return typecastExpressionsAreEquivalent(
-        (PsiTypeCastExpression)expToCompare1,
-        (PsiTypeCastExpression)expToCompare2);
+    else if (expression1 instanceof PsiTypeCastExpression) {
+      return typeCastExpressionsAreEquivalent((PsiTypeCastExpression)expression1, (PsiTypeCastExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiArrayAccessExpression) {
-      return arrayAccessExpressionsAreEquivalent(
-        (PsiArrayAccessExpression)expToCompare2,
-        (PsiArrayAccessExpression)expToCompare1);
+    else if (expression1 instanceof PsiArrayAccessExpression) {
+      return arrayAccessExpressionsAreEquivalent((PsiArrayAccessExpression)expression2, (PsiArrayAccessExpression)expression1);
     }
-    else if (expToCompare1 instanceof PsiPrefixExpression) {
-      return prefixExpressionsAreEquivalent(
-        (PsiPrefixExpression)expToCompare1,
-        (PsiPrefixExpression)expToCompare2);
+    else if (expression1 instanceof PsiPrefixExpression) {
+      return prefixExpressionsAreEquivalent((PsiPrefixExpression)expression1, (PsiPrefixExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiPostfixExpression) {
-      return postfixExpressionsAreEquivalent(
-        (PsiPostfixExpression)expToCompare1,
-        (PsiPostfixExpression)expToCompare2);
+    else if (expression1 instanceof PsiPostfixExpression) {
+      return postfixExpressionsAreEquivalent((PsiPostfixExpression)expression1, (PsiPostfixExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiBinaryExpression) {
-      return binaryExpressionsAreEquivalent(
-        (PsiBinaryExpression)expToCompare1,
-        (PsiBinaryExpression)expToCompare2);
+    else if (expression1 instanceof PsiPolyadicExpression) {
+      return polyadicExpressionsAreEquivalent((PsiPolyadicExpression)expression1, (PsiPolyadicExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiAssignmentExpression) {
-      return assignmentExpressionsAreEquivalent(
-        (PsiAssignmentExpression)expToCompare1,
-        (PsiAssignmentExpression)expToCompare2);
+    else if (expression1 instanceof PsiAssignmentExpression) {
+      return assignmentExpressionsAreEquivalent((PsiAssignmentExpression)expression1, (PsiAssignmentExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiConditionalExpression) {
-      return conditionalExpressionsAreEquivalent(
-        (PsiConditionalExpression)expToCompare1,
-        (PsiConditionalExpression)expToCompare2);
+    else if (expression1 instanceof PsiConditionalExpression) {
+      return conditionalExpressionsAreEquivalent((PsiConditionalExpression)expression1, (PsiConditionalExpression)expression2);
     }
-    else if (expToCompare1 instanceof PsiInstanceOfExpression) {
-      return instanceofExpressionsAreEquivalent(
-        (PsiInstanceOfExpression)expToCompare1,
-        (PsiInstanceOfExpression)expToCompare2);
+    else if (expression1 instanceof PsiInstanceOfExpression) {
+      return instanceofExpressionsAreEquivalent((PsiInstanceOfExpression)expression1, (PsiInstanceOfExpression)expression2);
     }
     return false;
+  }
+
+  private static boolean literalExpressionsAreEquivalent(PsiLiteralExpression expression1, PsiLiteralExpression expression2) {
+    final Object value1 = expression1.getValue();
+    final Object value2 = expression2.getValue();
+    if (value1 == null) {
+      return value2 == null;
+    } else if (value2 == null) {
+      return false;
+    }
+    return value1.equals(value2);
+  }
+
+  private static boolean classObjectAccessExpressionsAreEquivalent(PsiClassObjectAccessExpression expression1,
+                                                                   PsiClassObjectAccessExpression expression2) {
+    final PsiTypeElement operand1 = expression1.getOperand();
+    final PsiTypeElement operand2 = expression2.getOperand();
+    return typeElementsAreEquivalent(operand1, operand2);
   }
 
   private static boolean referenceExpressionsAreEquivalent(
@@ -775,10 +685,12 @@ public class EquivalenceChecker {
     if (!expressionsAreEquivalent(operand1, operand2)) {
       return false;
     }
-    final PsiTypeElement typeElement1 =
-      instanceOfExpression1.getCheckType();
-    final PsiTypeElement typeElement2 =
-      instanceOfExpression2.getCheckType();
+    final PsiTypeElement typeElement1 = instanceOfExpression1.getCheckType();
+    final PsiTypeElement typeElement2 = instanceOfExpression2.getCheckType();
+    return typeElementsAreEquivalent(typeElement1, typeElement2);
+  }
+
+  private static boolean typeElementsAreEquivalent(PsiTypeElement typeElement1, PsiTypeElement typeElement2) {
     if (typeElement1 == null) {
       return typeElement2 == null;
     }
@@ -791,54 +703,58 @@ public class EquivalenceChecker {
   }
 
   private static boolean methodCallExpressionsAreEquivalent(
-    @NotNull PsiMethodCallExpression methodExp1,
-    @NotNull PsiMethodCallExpression methodExp2) {
+    @NotNull PsiMethodCallExpression methodCallExpression1,
+    @NotNull PsiMethodCallExpression methodCallExpression2) {
     final PsiReferenceExpression methodExpression1 =
-      methodExp1.getMethodExpression();
+      methodCallExpression1.getMethodExpression();
     final PsiReferenceExpression methodExpression2 =
-      methodExp2.getMethodExpression();
+      methodCallExpression2.getMethodExpression();
     if (!expressionsAreEquivalent(methodExpression1, methodExpression2)) {
       return false;
     }
-    final PsiExpressionList argumentList1 = methodExp1.getArgumentList();
+    final PsiExpressionList argumentList1 =
+      methodCallExpression1.getArgumentList();
     final PsiExpression[] args1 = argumentList1.getExpressions();
-    final PsiExpressionList argumentList2 = methodExp2.getArgumentList();
+    final PsiExpressionList argumentList2 =
+      methodCallExpression2.getArgumentList();
     final PsiExpression[] args2 = argumentList2.getExpressions();
     return expressionListsAreEquivalent(args1, args2);
   }
 
   private static boolean newExpressionsAreEquivalent(
-    @NotNull PsiNewExpression newExp1,
-    @NotNull PsiNewExpression newExp2) {
-    final PsiJavaCodeReferenceElement classRef1 =
-      newExp1.getClassReference();
-    final PsiJavaCodeReferenceElement classRef2 =
-      newExp2.getClassReference();
-    if (classRef1 == null || classRef2 == null) {
+    @NotNull PsiNewExpression newExpression1,
+    @NotNull PsiNewExpression newExpression2) {
+    final PsiJavaCodeReferenceElement classReference1 =
+      newExpression1.getClassReference();
+    final PsiJavaCodeReferenceElement classReference2 =
+      newExpression2.getClassReference();
+    if (classReference1 == null || classReference2 == null) {
       return false;
     }
-    final String text = classRef1.getText();
-    if (!text.equals(classRef2.getText())) {
+    final String text = classReference1.getText();
+    if (!text.equals(classReference2.getText())) {
       return false;
     }
-    final PsiExpression[] arrayDimensions1 = newExp1.getArrayDimensions();
-    final PsiExpression[] arrayDimensions2 = newExp2.getArrayDimensions();
+    final PsiExpression[] arrayDimensions1 =
+      newExpression1.getArrayDimensions();
+    final PsiExpression[] arrayDimensions2 =
+      newExpression2.getArrayDimensions();
     if (!expressionListsAreEquivalent(arrayDimensions1, arrayDimensions2)) {
       return false;
     }
     final PsiArrayInitializerExpression arrayInitializer1 =
-      newExp1.getArrayInitializer();
+      newExpression1.getArrayInitializer();
     final PsiArrayInitializerExpression arrayInitializer2 =
-      newExp2.getArrayInitializer();
+      newExpression2.getArrayInitializer();
     if (!expressionsAreEquivalent(arrayInitializer1, arrayInitializer2)) {
       return false;
     }
-    final PsiExpression qualifier1 = newExp1.getQualifier();
-    final PsiExpression qualifier2 = newExp2.getQualifier();
+    final PsiExpression qualifier1 = newExpression1.getQualifier();
+    final PsiExpression qualifier2 = newExpression2.getQualifier();
     if (!expressionsAreEquivalent(qualifier1, qualifier2)) {
       return false;
     }
-    final PsiExpressionList argumentList1 = newExp1.getArgumentList();
+    final PsiExpressionList argumentList1 = newExpression1.getArgumentList();
     final PsiExpression[] args1;
     if (argumentList1 == null) {
       args1 = null;
@@ -846,7 +762,7 @@ public class EquivalenceChecker {
     else {
       args1 = argumentList1.getExpressions();
     }
-    final PsiExpressionList argumentList2 = newExp2.getArgumentList();
+    final PsiExpressionList argumentList2 = newExpression2.getArgumentList();
     final PsiExpression[] args2;
     if (argumentList2 == null) {
       args2 = null;
@@ -858,112 +774,116 @@ public class EquivalenceChecker {
   }
 
   private static boolean arrayInitializerExpressionsAreEquivalent(
-    @NotNull PsiArrayInitializerExpression arrInitExp1,
-    @NotNull PsiArrayInitializerExpression arrInitExp2) {
-    final PsiExpression[] initializers1 = arrInitExp1.getInitializers();
-    final PsiExpression[] initializers2 = arrInitExp2.getInitializers();
+    @NotNull PsiArrayInitializerExpression arrayInitializerExpression1,
+    @NotNull PsiArrayInitializerExpression arrayInitializerExpression2) {
+    final PsiExpression[] initializers1 =
+      arrayInitializerExpression1.getInitializers();
+    final PsiExpression[] initializers2 =
+      arrayInitializerExpression2.getInitializers();
     return expressionListsAreEquivalent(initializers1, initializers2);
   }
 
-  private static boolean typecastExpressionsAreEquivalent(
-    @NotNull PsiTypeCastExpression typecastExp1,
-    @NotNull PsiTypeCastExpression typecastExp2) {
-    final PsiTypeElement typeElement1 = typecastExp1.getCastType();
-    final PsiTypeElement typeElement2 = typecastExp2.getCastType();
-    if (typeElement1 == null && typeElement2 == null) {
-      return true;
-    }
-    if (typeElement1 == null || typeElement2 == null) {
+  private static boolean typeCastExpressionsAreEquivalent(
+    @NotNull PsiTypeCastExpression typeCastExpression1,
+    @NotNull PsiTypeCastExpression typeCastExpression2) {
+    final PsiTypeElement typeElement1 = typeCastExpression1.getCastType();
+    final PsiTypeElement typeElement2 = typeCastExpression2.getCastType();
+    if (!typeElementsAreEquivalent(typeElement1, typeElement2)) {
       return false;
     }
-    final PsiType type1 = typeElement1.getType();
-    final PsiType type2 = typeElement2.getType();
-    if (!typesAreEquivalent(type1, type2)) {
-      return false;
-    }
-    final PsiExpression operand1 = typecastExp1.getOperand();
-    final PsiExpression operand2 = typecastExp2.getOperand();
+    final PsiExpression operand1 = typeCastExpression1.getOperand();
+    final PsiExpression operand2 = typeCastExpression2.getOperand();
     return expressionsAreEquivalent(operand1, operand2);
   }
 
   private static boolean arrayAccessExpressionsAreEquivalent(
-    @NotNull PsiArrayAccessExpression arrAccessExp2,
-    @NotNull PsiArrayAccessExpression arrAccessExp1) {
+    @NotNull PsiArrayAccessExpression arrayAccessExpression1,
+    @NotNull PsiArrayAccessExpression arrayAccessExpression2) {
     final PsiExpression arrayExpression2 =
-      arrAccessExp2.getArrayExpression();
+      arrayAccessExpression1.getArrayExpression();
     final PsiExpression arrayExpression1 =
-      arrAccessExp1.getArrayExpression();
+      arrayAccessExpression2.getArrayExpression();
     final PsiExpression indexExpression2 =
-      arrAccessExp2.getIndexExpression();
+      arrayAccessExpression1.getIndexExpression();
     final PsiExpression indexExpression1 =
-      arrAccessExp1.getIndexExpression();
+      arrayAccessExpression2.getIndexExpression();
     return expressionsAreEquivalent(arrayExpression2, arrayExpression1)
            && expressionsAreEquivalent(indexExpression2, indexExpression1);
   }
 
   private static boolean prefixExpressionsAreEquivalent(
-    @NotNull PsiPrefixExpression prefixExp1,
-    @NotNull PsiPrefixExpression prefixExp2) {
-    final IElementType tokenType1 = prefixExp1.getOperationTokenType();
-    if (!tokenType1.equals(prefixExp2.getOperationTokenType())) {
+    @NotNull PsiPrefixExpression prefixExpression1,
+    @NotNull PsiPrefixExpression prefixExpression2) {
+    final IElementType tokenType1 = prefixExpression1.getOperationTokenType();
+    if (!tokenType1.equals(prefixExpression2.getOperationTokenType())) {
       return false;
     }
-    final PsiExpression operand1 = prefixExp1.getOperand();
-    final PsiExpression operand2 = prefixExp2.getOperand();
+    final PsiExpression operand1 = prefixExpression1.getOperand();
+    final PsiExpression operand2 = prefixExpression2.getOperand();
     return expressionsAreEquivalent(operand1, operand2);
   }
 
   private static boolean postfixExpressionsAreEquivalent(
-    @NotNull PsiPostfixExpression postfixExp1,
-    @NotNull PsiPostfixExpression postfixExp2) {
-    final IElementType tokenType1 = postfixExp1.getOperationTokenType();
-    if (!tokenType1.equals(postfixExp2.getOperationTokenType())) {
+    @NotNull PsiPostfixExpression postfixExpression1,
+    @NotNull PsiPostfixExpression postfixExpression2) {
+    final IElementType tokenType1 = postfixExpression1.getOperationTokenType();
+    if (!tokenType1.equals(postfixExpression2.getOperationTokenType())) {
       return false;
     }
-    final PsiExpression operand1 = postfixExp1.getOperand();
-    final PsiExpression operand2 = postfixExp2.getOperand();
+    final PsiExpression operand1 = postfixExpression1.getOperand();
+    final PsiExpression operand2 = postfixExpression2.getOperand();
     return expressionsAreEquivalent(operand1, operand2);
   }
 
-  private static boolean binaryExpressionsAreEquivalent(
-    @NotNull PsiBinaryExpression binaryExp1,
-    @NotNull PsiBinaryExpression binaryExp2) {
-    final IElementType tokenType1 = binaryExp1.getOperationTokenType();
-    if (!tokenType1.equals(binaryExp2.getOperationTokenType())) {
+  private static boolean polyadicExpressionsAreEquivalent(
+    @NotNull PsiPolyadicExpression polyadicExpression1,
+    @NotNull PsiPolyadicExpression polyadicExpression2) {
+    final IElementType tokenType1 = polyadicExpression1.getOperationTokenType();
+    final IElementType tokenType2 = polyadicExpression2.getOperationTokenType();
+    if (!tokenType1.equals(tokenType2)) {
       return false;
     }
-    final PsiExpression lhs1 = binaryExp1.getLOperand();
-    final PsiExpression lhs2 = binaryExp2.getLOperand();
-    final PsiExpression rhs1 = binaryExp1.getROperand();
-    final PsiExpression rhs2 = binaryExp2.getROperand();
-    return expressionsAreEquivalent(lhs1, lhs2)
-           && expressionsAreEquivalent(rhs1, rhs2);
+    final PsiExpression[] operands1 = polyadicExpression1.getOperands();
+    final PsiExpression[] operands2 = polyadicExpression2.getOperands();
+    if (operands1.length != operands2.length) {
+      return false;
+    }
+    for (int i = 0, length = operands1.length; i < length; i++) {
+      if (!expressionsAreEquivalent(operands1[i], operands2[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean assignmentExpressionsAreEquivalent(
-    @NotNull PsiAssignmentExpression assignExp1,
-    @NotNull PsiAssignmentExpression assignExp2) {
-    final IElementType tokenType1 = assignExp1.getOperationTokenType();
-    if (!tokenType1.equals(assignExp2.getOperationTokenType())) {
+    @NotNull PsiAssignmentExpression assignmentExpression1,
+    @NotNull PsiAssignmentExpression assignmentExpression2) {
+    final IElementType tokenType1 = assignmentExpression1.getOperationTokenType();
+    if (!tokenType1.equals(assignmentExpression2.getOperationTokenType())) {
       return false;
     }
-    final PsiExpression lhs1 = assignExp1.getLExpression();
-    final PsiExpression lhs2 = assignExp2.getLExpression();
-    final PsiExpression rhs1 = assignExp1.getRExpression();
-    final PsiExpression rhs2 = assignExp2.getRExpression();
+    final PsiExpression lhs1 = assignmentExpression1.getLExpression();
+    final PsiExpression lhs2 = assignmentExpression2.getLExpression();
+    final PsiExpression rhs1 = assignmentExpression1.getRExpression();
+    final PsiExpression rhs2 = assignmentExpression2.getRExpression();
     return expressionsAreEquivalent(lhs1, lhs2)
            && expressionsAreEquivalent(rhs1, rhs2);
   }
 
   private static boolean conditionalExpressionsAreEquivalent(
-    @NotNull PsiConditionalExpression condExp1,
-    @NotNull PsiConditionalExpression condExp2) {
-    final PsiExpression condition1 = condExp1.getCondition();
-    final PsiExpression condition2 = condExp2.getCondition();
-    final PsiExpression thenExpression1 = condExp1.getThenExpression();
-    final PsiExpression thenExpression2 = condExp2.getThenExpression();
-    final PsiExpression elseExpression1 = condExp1.getElseExpression();
-    final PsiExpression elseExpression2 = condExp2.getElseExpression();
+    @NotNull PsiConditionalExpression conditionalExpression1,
+    @NotNull PsiConditionalExpression conditionalExpression2) {
+    final PsiExpression condition1 = conditionalExpression1.getCondition();
+    final PsiExpression condition2 = conditionalExpression2.getCondition();
+    final PsiExpression thenExpression1 =
+      conditionalExpression1.getThenExpression();
+    final PsiExpression thenExpression2 =
+      conditionalExpression2.getThenExpression();
+    final PsiExpression elseExpression1 =
+      conditionalExpression1.getElseExpression();
+    final PsiExpression elseExpression2 =
+      conditionalExpression2.getElseExpression();
     return expressionsAreEquivalent(condition1, condition2)
            && expressionsAreEquivalent(thenExpression1, thenExpression2)
            && expressionsAreEquivalent(elseExpression1, elseExpression2);
