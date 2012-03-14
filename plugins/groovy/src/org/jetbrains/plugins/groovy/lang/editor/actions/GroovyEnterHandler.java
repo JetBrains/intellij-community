@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -116,6 +117,10 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                 EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
     if (StringUtil.isEmpty(text)) {
+      return Result.Continue;
+    }
+
+    if (!(file instanceof GroovyFileBase)) {
       return Result.Continue;
     }
 
