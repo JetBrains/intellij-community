@@ -1147,7 +1147,6 @@ public class Mappings {
             }
 
             if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
-
               for (DependencyContext.S p : propagated) {
                 if (!p.equals(it.name)) {
                   final ClassRepr s = u.reprByName(p);

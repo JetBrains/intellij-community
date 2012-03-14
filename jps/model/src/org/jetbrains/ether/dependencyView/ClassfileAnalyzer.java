@@ -412,6 +412,17 @@ class ClassfileAnalyzer {
         }
 
         @Override
+        public void visitLdcInsn(Object cst) {
+          if (cst instanceof Type) {
+            final Type t = (Type) cst;
+
+            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(t.getClassName())));
+          }
+
+          super.visitLdcInsn(cst);
+        }
+
+        @Override
         public void visitMultiANewArrayInsn(String desc, int dims) {
           final TypeRepr.ArrayType typ = (TypeRepr.ArrayType)TypeRepr.getType(context, context.get(desc));
           final TypeRepr.AbstractType element = typ.getDeepElementType();

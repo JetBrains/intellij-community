@@ -23,7 +23,6 @@
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MODULE_DIR$/lib/axis-src-1_4.zip!/axis-1_4" />
-          <root url="jar://$MODULE_DIR$/lib/axis-src-1_4.zip!/axis-1_4" />
         </SOURCES>
       </library>
     </orderEntry>
