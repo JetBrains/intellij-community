@@ -477,16 +477,18 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     private int myActionClickCount;
 
     @Override
-    public void mousePressed(final MouseEvent e) {
-      if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
+    public void mouseReleased(MouseEvent e) {
+      if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
         final TabInfo info = myTabs.findInfo(e);
         if (info != null) {
           IdeEventQueue.getInstance().blockNextEvents(e);
           FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)info.getObject(), myWindow);
-          return;
         }
       }
+    }
 
+    @Override
+    public void mousePressed(final MouseEvent e) {
       if (UIUtil.isActionClick(e)) {
         if (e.getClickCount() == 1) {
           myActionClickCount = 0;
