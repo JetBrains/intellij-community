@@ -367,6 +367,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
       for (PsiElement element : myElementsToMove) {
         if (element instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)element;
+          LOG.assertTrue(aClass.isPhysical(), aClass);
           /*PsiElement toAdd;
           if (aClass.getContainingFile() instanceof PsiJavaFile && ((PsiJavaFile)aClass.getContainingFile()).getClasses().length > 1) {
             toAdd = aClass;
