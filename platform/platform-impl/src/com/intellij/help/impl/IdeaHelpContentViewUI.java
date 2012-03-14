@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,13 @@
 package com.intellij.help.impl;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.util.ui.GraphicsUtil;
 
 import javax.help.JHelpContentViewer;
 import javax.help.plaf.basic.BasicContentViewerUI;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import java.awt.*;
 import java.net.URL;
 
 /**
@@ -44,8 +46,14 @@ class IdeaHelpContentViewUI extends BasicContentViewerUI{
     String url=u.toExternalForm();
     if(url.startsWith("http") || url.startsWith("ftp")){
       BrowserUtil.launchBrowser(url);
-    }else{
+    } else{
       super.linkActivated(u);
     }
+  }
+
+  @Override
+  public void paint(Graphics g, JComponent c) {
+    GraphicsUtil.setupAntialiasing(g);
+    super.paint(g, c);
   }
 }

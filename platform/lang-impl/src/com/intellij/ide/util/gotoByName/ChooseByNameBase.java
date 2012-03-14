@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -68,6 +67,7 @@ import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1301,7 +1301,7 @@ public abstract class ChooseByNameBase {
     }
 
     protected void paintComponent(final Graphics g) {
-      UISettings.setupAntialiasing(g);
+      GraphicsUtil.setupAntialiasing(g);
       super.paintComponent(g);
     }
 

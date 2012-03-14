@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithExpandableItems;
@@ -192,7 +191,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       @Override
       public void paint(Graphics g) {
         if (myEnableAntialiasing) {
-          UISettings.setupAntialiasing(g);
+          GraphicsUtil.setupAntialiasing(g);
         }
         super.paint(g);
       }
@@ -251,7 +250,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   protected void paintComponent(Graphics g) {
     if (myEnableAntialiasing) {
-      UISettings.setupAntialiasing(g);
+      GraphicsUtil.setupAntialiasing(g);
     }
     super.paintComponent(g);
     myEmptyText.paint(this, g);
@@ -260,7 +259,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   protected void paintChildren(Graphics g) {
     if (myEnableAntialiasing) {
-      UISettings.setupAntialiasing(g);
+      GraphicsUtil.setupAntialiasing(g);
     }
     super.paintChildren(g);
   }

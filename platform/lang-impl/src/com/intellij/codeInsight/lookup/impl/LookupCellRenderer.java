@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.TextRange;
@@ -32,6 +31,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -331,7 +331,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     @Override
     protected void applyAdditionalHints(Graphics g) {
-      UISettings.setupAntialiasing(g);
+      GraphicsUtil.setupAntialiasing(g);
     }
   }
 
