@@ -34,8 +34,8 @@ import java.util.regex.Pattern;
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class PyPIPackageUtil {
   public static Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
-  public static @NonNls String PYPI_URL = "http://pypi.python.org/pypi";
-  public static @NonNls String PYPI_LIST_URL = "http://pypi.python.org/pypi?%3Aaction=index";
+  @NonNls public static String PYPI_URL = "http://pypi.python.org/pypi";
+  @NonNls public static String PYPI_LIST_URL = "http://pypi.python.org/pypi?%3Aaction=index";
   private XmlRpcClient myXmlRpcClient;
   public static PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
@@ -145,20 +145,19 @@ public class PyPIPackageUtil {
     }
   }
 
-
-  public void updatePyPICache(Project project) throws IOException {
-    parsePyPIList(getPyPIListFromWeb(), project);
+  public void updatePyPICache(final PyPackageService service) throws IOException {
+    parsePyPIList(getPyPIListFromWeb(), service);
   }
 
-  public void parsePyPIList(List<String> packages, Project project) {
+  public void parsePyPIList(final List<String> packages, final PyPackageService service) {
     for (String pyPackage : packages) {
       try {
-        Matcher matcher = PYPI_PATTERN.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
+        final Matcher matcher = PYPI_PATTERN.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
         if (matcher.find()) {
-          String packageName = matcher.group(1);
-          String packageVersion = matcher.group(2);
+          final String packageName = matcher.group(1);
+          final String packageVersion = matcher.group(2);
           if (!packageName.contains(" "))
-            PyPackageService.getInstance(project).PY_PACKAGES.put(packageName, packageVersion);
+            service.PY_PACKAGES.put(packageName, packageVersion);
         }
       }
       catch (UnsupportedEncodingException e) {
@@ -214,7 +213,7 @@ public class PyPIPackageUtil {
   public Collection<String> getPackageNames(Project project) throws IOException {
     Map<String, String> pyPIPackages = getPyPIPackages(project);
     if (pyPIPackages.isEmpty()) {
-      updatePyPICache(project);
+      updatePyPICache(PyPackageService.getInstance(project));
       pyPIPackages = getPyPIPackages(project);
     }
     ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
