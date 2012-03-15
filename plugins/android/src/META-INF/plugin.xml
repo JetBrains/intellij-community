@@ -56,7 +56,7 @@
     <action id="Android.RunAndroidSdkManager" class="org.jetbrains.android.actions.RunAndroidSdkManagerAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
-    <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableDdmsAction">
+    <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableAdbServiceAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="first"/>
     </action>
     <!--<action id="GotoAndroidResourceDefinition" class="org.jetbrains.android.actions.GotoResourceAction">
