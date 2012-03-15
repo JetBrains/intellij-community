@@ -382,7 +382,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   private class MyEditorFactoryListener extends EditorFactoryAdapter {
-    public void editorCreated(EditorFactoryEvent event) {
+    public void editorCreated(@NotNull EditorFactoryEvent event) {
       // note that in case of lazy loading of configurables, this event can happen
       // outside of EDT, so the EDT check mustn't be done here
       Editor editor = event.getEditor();
@@ -400,7 +400,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
       }.callMe();
     }
 
-    public void editorReleased(EditorFactoryEvent event) {
+    public void editorReleased(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
       final Document doc = editor.getDocument();

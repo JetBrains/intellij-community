@@ -161,7 +161,7 @@ class DaemonListeners implements Disposable {
 
     EditorFactoryListener editorFactoryListener = new EditorFactoryAdapter() {
       @Override
-      public void editorCreated(EditorFactoryEvent event) {
+      public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
         Project editorProject = editor.getProject();
