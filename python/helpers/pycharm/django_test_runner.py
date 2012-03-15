@@ -1,4 +1,4 @@
-from pycharm.tcunittest import TeamcityTestRunner
+from tcunittest import TeamcityTestRunner
 from django.test.simple import build_suite, build_test, settings, get_app, get_apps, setup_test_environment, teardown_test_environment
 import unittest
 from django.test.testcases import TestCase

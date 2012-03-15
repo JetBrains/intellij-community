@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from pycharm.fix_getpass import fixGetpass
+from fix_getpass import fixGetpass
 from django.core.management import setup_environ, ManagementUtility
 
 import os
@@ -22,7 +22,7 @@ from django.conf import settings
 
 class PycharmTestCommand(Command):
   def get_runner(self):
-    TEST_RUNNER = 'pycharm.django_test_runner.run_tests'
+    TEST_RUNNER = 'django_test_runner.run_tests'
     test_path = TEST_RUNNER.split('.')
     # Allow for Python 2.5 relative paths
     if len(test_path) > 1:
