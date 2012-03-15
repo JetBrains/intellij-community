@@ -110,7 +110,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
-      public void fileWithNoDocumentChanged(final VirtualFile file) {
+      public void fileWithNoDocumentChanged(@NotNull final VirtualFile file) {
         clearNonRepositoryMaps();
       }
     });

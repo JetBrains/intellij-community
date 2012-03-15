@@ -243,7 +243,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
-      public void fileContentReloaded(VirtualFile file, Document document) {
+      public void fileContentReloaded(VirtualFile file, @NotNull Document document) {
         cleanupMemoryStorage();
       }
 
