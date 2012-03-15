@@ -152,7 +152,11 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
   public JComponent getComponent() {
     return myComponent;
   }
-
+  @Override
+  public String getHelpId() {
+    return GradleConstants.HELP_TOPIC_ADJUST_SETTINGS_STEP;
+  }
+  
   @Override
   public void updateStep() {
     if (myOnValidateAttempt) {

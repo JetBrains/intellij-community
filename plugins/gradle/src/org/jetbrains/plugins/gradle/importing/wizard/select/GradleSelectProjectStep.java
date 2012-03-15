@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.config.GradleHomeSettingType;
 import org.jetbrains.plugins.gradle.importing.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.importing.wizard.AbstractImportFromGradleWizardStep;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -84,6 +85,11 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
 
   @Override
   public void updateDataModel() {
+  }
+
+  @Override
+  public String getHelpId() {
+    return GradleConstants.HELP_TOPIC_IMPORT_SELECT_PROJECT_STEP;
   }
 
   @Override

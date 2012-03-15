@@ -23,8 +23,10 @@ public class GradleConstants {
   @NonNls public static final String SYNC_TREE_FILTER_PLACE           = "GRADLE_SYNC_TREE_FILTER_PLACE";
   
   @NonNls public static final String ACTION_GROUP_SYNC_TREE = "Gradle.SyncTreeGroup";
-  
-  @NonNls public static final String HELP_TOPIC_TOOL_WINDOW = "reference.toolwindows.gradle";
+
+  @NonNls public static final String HELP_TOPIC_IMPORT_SELECT_PROJECT_STEP = "reference.dialogs.new.project.import.gradle.page1";
+  @NonNls public static final String HELP_TOPIC_ADJUST_SETTINGS_STEP       = "reference.dialogs.new.project.import.gradle.page2";
+  @NonNls public static final String HELP_TOPIC_TOOL_WINDOW                = "reference.toolwindows.gradle";
   
   public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> DEPENDENCIES_NODE_DESCRIPTOR
     = GradleUtil.buildSyntheticDescriptor(GradleBundle.message("gradle.project.structure.tree.node.dependencies"));
