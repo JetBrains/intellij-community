@@ -1,0 +1,12 @@
+def foo(p) {
+    bar(p, p)
+}
+
+<selection>foo</selection>(new Object())
+-----
+def foo(p) {
+    bar(p, p)
+}
+
+def p = new Object()
+bar(p, p)

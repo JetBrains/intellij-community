@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -493,7 +492,7 @@ public class GroovyInlineMethodUtil {
     setValuesToParameters(method, call, exprs, nameFilter);
   }
 
-   /**
+  /**
    * replaces parameter occurrences in method with its default values (if it's possible)
    *
    * @param method     given method
@@ -553,7 +552,7 @@ public class GroovyInlineMethodUtil {
     GrExpression expression = elementFactory.createExpressionFromText(oldExpression.getText());
 
 
-    if (!canReplaceAllReferencesWithExpression(refs, oldExpression)) {
+    if (GroovyRefactoringUtil.hasSideEffect(expression) && refs.size() > 1 || !hasUnresolvableWriteAccess(refs, oldExpression)) {
       final String oldName = parameter.getName();
       final String newName = InlineMethodConflictSolver.suggestNewName(oldName, method, call);
 
@@ -577,23 +576,21 @@ public class GroovyInlineMethodUtil {
   }
 
   private static String createVariableDefinitionText(GrParameter parameter, GrExpression expression, String varName) {
+    StringBuilder buffer = new StringBuilder();
     final PsiModifierList modifierList = parameter.getModifierList();
-    String modifiers;
-    modifiers = modifierList.getText().trim();
+    buffer.append(modifierList.getText().trim());
+    if (buffer.length() > 0) buffer.append(' ');
 
-    String type;
     final GrTypeElement typeElement = parameter.getTypeElementGroovy();
     if (typeElement != null) {
-      type = typeElement.getText();
-    }
-    else {
-      type = "";
-    }
-    if (modifiers.length() == 0 && type.length() == 0) {
-      modifiers = GrModifier.DEF;
+      buffer.append(typeElement.getText()).append(' ');
     }
 
-    return modifiers + " " + type + " " + varName + " =  " + expression.getText();
+    if (buffer.length() == 0) {
+      buffer.append("def ");
+    }
+    buffer.append(varName).append(" = ").append(expression.getText());
+    return buffer.toString();
   }
 
   /**
@@ -609,7 +606,7 @@ public class GroovyInlineMethodUtil {
     return false;
   }
 
-  private static boolean canReplaceAllReferencesWithExpression(Collection<PsiReference> refs, GrExpression expression) {
+  private static boolean hasUnresolvableWriteAccess(Collection<PsiReference> refs, GrExpression expression) {
     if (containsWriteAccess(refs)) {
       if (expression instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)expression).resolve();
@@ -629,6 +626,7 @@ public class GroovyInlineMethodUtil {
       }
       return false;
     }
+
     return true;
   }
 }

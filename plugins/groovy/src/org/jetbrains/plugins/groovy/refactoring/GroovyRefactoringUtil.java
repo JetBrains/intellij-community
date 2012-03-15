@@ -568,7 +568,15 @@ public abstract class GroovyRefactoringUtil {
         hasSideEffect.set(true);
       }
 
+      @Override
+      public void visitClosure(GrClosableBlock closure) {
+        hasSideEffect.set(true);
+      }
 
+      @Override
+      public void visitUnaryExpression(GrUnaryExpression expression) {
+        hasSideEffect.set(true);
+      }
 
       @Override
       public void visitElement(GroovyPsiElement element) {
