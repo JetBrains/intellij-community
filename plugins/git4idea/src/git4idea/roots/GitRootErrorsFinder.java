@@ -16,6 +16,7 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -104,7 +105,10 @@ public class GitRootErrorsFinder {
         paths.add(mapping.systemIndependentPath());
       }
       else {
-        paths.add(myProject.getBasePath());
+        String basePath = myProject.getBasePath();
+        if (basePath != null) {
+          paths.add(FileUtil.toSystemIndependentName(basePath));
+        }
       }
     }
     return paths;
