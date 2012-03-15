@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.browsers.chrome;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.ide.browsers.BrowserSpecificSettings;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
@@ -30,6 +31,7 @@ public class ChromeSettings extends BrowserSpecificSettings {
   @NonNls public static final String REMOTE_DEBUGGING_PORT_ARG = "--remote-debugging-port=";
   @NonNls public static final String USER_DATA_DIR_ARG = "--user-data-dir=";
   public static final int DEFAULT_REMOTE_SHELL_PORT = 7930;
+  private String myCommandLineOptions = "";
   private String myUserDataDirectoryPath;
   private boolean myUseCustomProfile;
   private boolean myEnableRemoteDebug;
@@ -57,6 +59,15 @@ public class ChromeSettings extends BrowserSpecificSettings {
   @Tag("remote-shell-port")
   public int getRemoteShellPort() {
     return myRemoteShellPort;
+  }
+
+  @Tag("command-line-options")
+  public String getCommandLineOptions() {
+    return myCommandLineOptions;
+  }
+
+  public void setCommandLineOptions(String commandLineOptions) {
+    myCommandLineOptions = commandLineOptions;
   }
 
   public void setEnableRemoteDebug(boolean enableRemoteDebug) {
@@ -94,7 +105,7 @@ public class ChromeSettings extends BrowserSpecificSettings {
       remoteShellArg = ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    return ArrayUtil.mergeArrays(customProfileArg, remoteShellArg);
+    return ArrayUtil.mergeArrays(ParametersList.parse(myCommandLineOptions), ArrayUtil.mergeArrays(customProfileArg, remoteShellArg));
   }
 
   @Override
