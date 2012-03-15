@@ -17,6 +17,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -294,11 +295,12 @@ public class ActivateTaskDialog extends DialogWrapper {
   }
 
   public static class MyTextFieldWithAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<Task> {
-    private final TaskSearchSupport mySearchSupport;
 
-    public MyTextFieldWithAutoCompletionListProvider(@Nullable final Project project) {
+    private final Project myProject;
+
+    public MyTextFieldWithAutoCompletionListProvider(Project project) {
       super(null);
-      mySearchSupport = new TaskSearchSupport(project);
+      myProject = project;
     }
 
     @Override
@@ -308,8 +310,8 @@ public class ActivateTaskDialog extends DialogWrapper {
 
     @NotNull
     @Override
-    public List<Task> getItems(final String prefix, final boolean cached) {
-      return mySearchSupport.getItems(prefix, cached);
+    public List<Task> getItems(final String prefix, final boolean cached, CompletionParameters parameters) {
+      return new TaskSearchSupport(myProject).getItems(prefix, cached, parameters.isAutoPopup());
     }
 
     @Override
@@ -335,7 +337,7 @@ public class ActivateTaskDialog extends DialogWrapper {
         @Override
         public void handleInsert(InsertionContext context, LookupElement item) {
           Document document = context.getEditor().getDocument();
-          String s = task.getId() + ": " + task.getSummary();
+          String s = ((TaskManagerImpl)TaskManager.getManager(context.getProject())).getChangelistName(task);
           s = StringUtil.convertLineSeparators(s);
           document.replaceString(context.getStartOffset(), context.getTailOffset(), s);
           context.getEditor().getCaretModel().moveToOffset(context.getStartOffset() + s.length());
