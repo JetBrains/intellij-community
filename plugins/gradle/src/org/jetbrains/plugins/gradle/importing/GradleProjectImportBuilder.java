@@ -10,10 +10,12 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +83,14 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
     System.setProperty(GradleConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
+    final GradleProject gradleProject = getGradleProject();
+    if (gradleProject != null) {
+      final LanguageLevel gradleLanguageLevel = gradleProject.getLanguageLevel();
+      final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
+      if (gradleLanguageLevel != languageLevelExtension.getLanguageLevel()) {
+        languageLevelExtension.setLanguageLevel(gradleLanguageLevel);
+      }
+    }
     final Runnable task = new Runnable() {
       @Override
       public void run() {
