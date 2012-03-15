@@ -239,23 +239,15 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         FileUtil.writeToFile(myTempFile, path.getBytes(), true);
         return;
       }
-      Collection<XmlSuite> suites;
-      FileInputStream in = new FileInputStream(myData.getSuiteName());
-      try {
-        suites = new Parser(in).parse();
-      }
-      finally {
-        in.close();
-      }
-
+      final Parser parser = new Parser(myData.getSuiteName());
+      final Collection<XmlSuite> suites = parser.parse();
       for (XmlSuite suite : suites) {
         Map<String, String> params = suite.getParameters();
 
         params.putAll(buildTestParams);
 
         final String fileId =
-          (myProject.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml")
-            .replace(' ', '_');
+          FileUtil.sanitizeFileName(myProject.getName() + '_' + suite.getName() + '_' + Integer.toHexString(suite.getName().hashCode()) + ".xml");
         final File suiteFile = new File(PathManager.getSystemPath(), fileId);
         FileWriter fileWriter = new FileWriter(suiteFile);
         try {
