@@ -44,6 +44,15 @@
            class="org.jetbrains.android.actions.AndroidToolsActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+    <action id="Android.RunDdms" class="org.jetbrains.android.actions.AndroidRunDdmsAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
+    <action id="Android.RunHierarchyViewer" class="org.jetbrains.android.actions.AndroidRunHierarchyViewerAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
+    <action id="Android.RunDraw9Patch" class="org.jetbrains.android.actions.AndroidRunDraw9PatchAction">
+      <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
+    </action>
     <action id="Android.ExportSignedPackage" class="org.jetbrains.android.actions.ExportSignedPackageAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
     </action>
@@ -58,9 +67,6 @@
     </action>
     <action id="Android.EnableDdms" class="org.jetbrains.android.actions.AndroidEnableAdbServiceAction">
       <add-to-group group-id="AndroidToolsGroup" anchor="last"/>
-    </action>
-    <action id="Android.RunDdms" class="org.jetbrains.android.actions.AndroidRunDdmsAction">
-      <add-to-group group-id="AndroidToolsGroup" anchor="first"/>
     </action>
     <!--<action id="GotoAndroidResourceDefinition" class="org.jetbrains.android.actions.GotoResourceAction">
       <keyboard-shortcut first-keystroke="control shift alt R" keymap="$default"/>
