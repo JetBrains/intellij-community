@@ -379,22 +379,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
 
     actions.addSeparator();
-    actions.add(new AddScopeAction(myTree){
-      protected InspectionProfileImpl getSelectedProfile() {
-        return mySelectedProfile;
-      }
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        updateOptionsAndDescriptionPanel(myTree.getSelectionPath());
-      }
-    });
-    actions.add(new DeleteScopeAction(myTree){
-      protected InspectionProfileImpl getSelectedProfile() {
-        return mySelectedProfile;
-      }
-    });
+    actions.add(new MyAddScopeAction());
+    actions.add(new MyDeleteScopeAction());
     actions.add(new MoveScopeAction(myTree, "Move Scope Up", IconLoader.getIcon("/actions/moveUp.png"), -1) {
       protected boolean isEnabledFor(int idx, InspectionConfigTreeNode parent) {
         return idx > 0;
@@ -588,6 +574,9 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
       });
     }
+    group.add(Separator.getInstance());
+    group.add(new MyAddScopeAction());
+    group.add(new MyDeleteScopeAction());
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
     return menu.getComponent();
   }
@@ -1143,4 +1132,34 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
+  private class MyAddScopeAction extends AddScopeAction {
+    public MyAddScopeAction() {
+      super(SingleInspectionProfilePanel.this.myTree);
+    }
+
+    protected InspectionProfileImpl getSelectedProfile() {
+      return mySelectedProfile;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      super.actionPerformed(e);
+      final TreePath[] paths = myTree.getSelectionPaths();
+      if (paths != null && paths.length == 1) {
+        updateOptionsAndDescriptionPanel(myTree.getSelectionPath());
+      } else {
+        initOptionsAndDescriptionPanel();
+      }
+    }
+  }
+
+  private class MyDeleteScopeAction extends DeleteScopeAction {
+    public MyDeleteScopeAction() {
+      super(SingleInspectionProfilePanel.this.myTree);
+    }
+
+    protected InspectionProfileImpl getSelectedProfile() {
+      return mySelectedProfile;
+    }
+  }
 }
