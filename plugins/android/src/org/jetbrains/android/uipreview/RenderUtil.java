@@ -116,9 +116,9 @@ public class RenderUtil {
       LOG.debug(e);
     }
 
-    final RenderResources resolver =
+    final Pair<RenderResources, RenderResources> pair =
       factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
-    final RenderService renderService = factory.createService(resolver, config, xdpi, ydpi, callback, minSdkVersion);
+    final RenderService renderService = factory.createService(pair.getFirst(), pair.getSecond(), config, xdpi, ydpi, callback, minSdkVersion);
 
     try {
       return renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet));
@@ -192,9 +192,9 @@ public class RenderUtil {
       rClassName = e.getClassName();
     }
 
-    final RenderResources resolver =
+    final Pair<RenderResources, RenderResources> pair =
       factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
-    final RenderService renderService = factory.createService(resolver, config, xdpi, ydpi, callback, minSdkVersion);
+    final RenderService renderService = factory.createService(pair.getFirst(), pair.getSecond(), config, xdpi, ydpi, callback, minSdkVersion);
 
     final RenderSession session;
     try {

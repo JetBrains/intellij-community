@@ -42,6 +42,7 @@ class RenderService {
 
   private final IProjectCallback myProjectCallback;
   private final RenderResources myResourceResolver;
+  private final RenderResources myLegacyResourceResolver;
   private final LayoutLibrary myLayoutLib;
   private final FolderConfiguration myConfig;
   private final int myMinSdkVersion;
@@ -50,6 +51,7 @@ class RenderService {
 
   RenderService(LayoutLibrary layoutLibrary,
                 @NotNull RenderResources resourceResolver,
+                @NotNull RenderResources legacyResourceResolver,
                 FolderConfiguration config,
                 float xdpi,
                 float ydpi,
@@ -57,6 +59,7 @@ class RenderService {
                 int minSdkVersion) {
     myLayoutLib = layoutLibrary;
     myResourceResolver = resourceResolver;
+    myLegacyResourceResolver = legacyResourceResolver;
     myConfig = config;
     myProjectCallback = projectCallback;
     myMinSdkVersion = minSdkVersion;
@@ -91,8 +94,10 @@ class RenderService {
     final float xdpi = Float.isNaN(myXdpi) ? density.getDpiValue() : myXdpi;
     final float ydpi = Float.isNaN(myYdpi) ? density.getDpiValue() : myYdpi;
 
+    final RenderResources resolver = myLayoutLib.getRevision() > 0 ? myResourceResolver : myLegacyResourceResolver;
+
     final SessionParams params =
-      new SessionParams(parser, RenderingMode.NORMAL, this, dimension.width, dimension.height, density, xdpi, ydpi, myResourceResolver,
+      new SessionParams(parser, RenderingMode.NORMAL, this, dimension.width, dimension.height, density, xdpi, ydpi, resolver,
                         myProjectCallback, minSdkVersion, targetSdkVersion, new SimpleLogger(LOG));
 
     params.setExtendedViewInfoMode(false);
