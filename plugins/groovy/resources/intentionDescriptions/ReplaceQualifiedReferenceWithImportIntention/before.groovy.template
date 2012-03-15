@@ -1,3 +1,0 @@
-def createSemaphore() {
-  new <spot>java.util.concurrent.Semaphore</spot>();
-}

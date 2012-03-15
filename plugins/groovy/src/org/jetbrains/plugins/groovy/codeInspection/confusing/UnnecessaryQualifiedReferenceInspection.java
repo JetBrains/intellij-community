@@ -18,9 +18,11 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -28,12 +30,16 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.intentions.style.ReplaceQualifiedReferenceWithImportIntention;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 /**
@@ -49,7 +55,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
 
-        if (ReplaceQualifiedReferenceWithImportIntention.canBeReplacedWithImport(refElement)) {
+        if (canBeReplacedWithImport(refElement)) {
           registerError(refElement);
         }
       }
@@ -58,8 +64,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
-        if (ReplaceQualifiedReferenceWithImportIntention.canBeReplacedWithImport(referenceExpression) ||
-            isQualifiedStaticMethodWithUnnecessaryQualifier(referenceExpression)) {
+        if (canBeReplacedWithImport(referenceExpression) || isQualifiedStaticMethodWithUnnecessaryQualifier(referenceExpression)) {
           registerError(referenceExpression);
         }
       }
@@ -124,5 +129,45 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
         return GroovyInspectionBundle.message("unnecessary.qualified.reference");
       }
     };
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  private static boolean canBeReplacedWithImport(PsiElement element) {
+    if (element instanceof GrCodeReferenceElement) {
+      if (PsiTreeUtil.getParentOfType(element, GrImportStatement.class, GrPackageDefinition.class) != null) return false;
+    }
+    else if (element instanceof GrReferenceExpression) {
+      if (!GrReferenceAdjuster.seemsToBeQualifiedClassName((GrReferenceExpression)element)) return false;
+    }
+    else {
+      return false;
+    }
+
+    final GrReferenceElement ref = (GrReferenceElement)element;
+    if (ref.getQualifier() == null) return false;
+    if (!(ref.getContainingFile() instanceof GroovyFileBase)) return false;
+
+    final PsiElement resolved = ref.resolve();
+    if (!(resolved instanceof PsiClass)) return false;
+
+    final String name = ((PsiClass)resolved).getName();
+    if (name == null) return false;
+
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
+    final GrReferenceExpression shortedRef = factory.createReferenceExpressionFromText(name, element);
+
+    final GroovyResolveResult resolveResult = shortedRef.advancedResolve();
+    if (resolveResult.getElement() == null || !resolveResult.isAccessible() || !resolveResult.isStaticsOK()) {
+      return true;
+    }
+    if (element.getManager().areElementsEquivalent(resolved, resolveResult.getElement())) {
+      return true;
+    }
+
+    return false;
   }
 }
