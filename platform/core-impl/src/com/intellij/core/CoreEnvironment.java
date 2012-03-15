@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.StaticGetter;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -73,8 +74,8 @@ public class CoreEnvironment {
   private final CoreEncodingRegistry myEncodingRegistry;
   protected final MockApplication myApplication;
   protected MockProject myProject;
-  private final CoreLocalFileSystem myLocalFileSystem;
-  protected final CoreJarFileSystem myJarFileSystem;
+  private final DeprecatedVirtualFileSystem myLocalFileSystem;
+  protected final DeprecatedVirtualFileSystem myJarFileSystem;
   protected final MockFileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
 
@@ -89,8 +90,8 @@ public class CoreEnvironment {
                                       new StaticGetter<FileTypeRegistry>(myFileTypeRegistry),
                                       new StaticGetter<EncodingRegistry>(myEncodingRegistry),
                                       parentDisposable);
-    myLocalFileSystem = new CoreLocalFileSystem();
-    myJarFileSystem = new CoreJarFileSystem();
+    myLocalFileSystem = createLocalFileSystem();
+    myJarFileSystem = createJarFileSystem();
 
     Extensions.registerAreaClass("IDEA_PROJECT", null);
     myProject = new MockProject(myApplication.getPicoContainer(), parentDisposable);
@@ -147,6 +148,14 @@ public class CoreEnvironment {
     myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myPsiManager));
     myProject.registerService(ProjectScopeBuilder.class, new CoreProjectScopeBuilder(myProject, myFileIndexFacade));
     myProject.registerService(DumbService.class, new MockDumbService(myProject));
+  }
+
+  protected DeprecatedVirtualFileSystem createJarFileSystem() {
+    return new CoreJarFileSystem();
+  }
+
+  protected DeprecatedVirtualFileSystem createLocalFileSystem() {
+    return new CoreLocalFileSystem();
   }
 
   public Project getProject() {
@@ -215,11 +224,11 @@ public class CoreEnvironment {
     registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }
 
-  public CoreLocalFileSystem getLocalFileSystem() {
+  public DeprecatedVirtualFileSystem getLocalFileSystem() {
     return myLocalFileSystem;
   }
 
-  public CoreJarFileSystem getJarFileSystem() {
+  public DeprecatedVirtualFileSystem getJarFileSystem() {
     return myJarFileSystem;
   }
 

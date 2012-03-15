@@ -18,9 +18,8 @@ package com.intellij.core;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
-import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
@@ -31,7 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -39,14 +41,14 @@ import java.util.*;
 public class CoreJavaFileManager extends PackageIndex implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
 
-  private final CoreLocalFileSystem myLocalFileSystem;
-  private final CoreJarFileSystem myJarFileSystem;
+  private final DeprecatedVirtualFileSystem myLocalFileSystem;
+  private final DeprecatedVirtualFileSystem myJarFileSystem;
   private final List<File> myClasspath = new ArrayList<File>();
   private VirtualFile[] myClasspathRoots = null;
 
   private final PsiManager myPsiManager;
 
-  public CoreJavaFileManager(PsiManager psiManager, CoreLocalFileSystem localFileSystem, CoreJarFileSystem jarFileSystem) {
+  public CoreJavaFileManager(PsiManager psiManager, DeprecatedVirtualFileSystem localFileSystem, DeprecatedVirtualFileSystem jarFileSystem) {
     myPsiManager = psiManager;
     myLocalFileSystem = localFileSystem;
     myJarFileSystem = jarFileSystem;

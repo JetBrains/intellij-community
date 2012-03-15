@@ -18,6 +18,7 @@ package com.intellij.mock;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -31,13 +32,17 @@ import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
 import java.lang.reflect.Array;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.mock.MockComponentManager");
+
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
   private final MutablePicoContainer myPicoContainer;
+  private final Map<Object, Object> myInitializedComponents = new HashMap<Object, Object>(4096);
 
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
 
@@ -46,10 +51,19 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
       @Override
       @Nullable
       public Object getComponentInstance(final Object componentKey) {
+        final Object initializedComponent = myInitializedComponents.get(componentKey);
+        if (initializedComponent != null) return initializedComponent;
+
         final Object o = super.getComponentInstance(componentKey);
         if (o instanceof Disposable && o != MockComponentManager.this) {
           Disposer.register(MockComponentManager.this, (Disposable)o);
         }
+
+        myInitializedComponents.put(componentKey, o);
+        if (o instanceof BaseComponent && o != MockComponentManager.this) {
+           ((BaseComponent)o).initComponent();
+        }
+
         return o;
       }
     };
@@ -120,6 +134,22 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public void dispose() {
+    disposeComponents();
+  }
+
+  protected void disposeComponents() {
+    Collection<Object> components = myInitializedComponents.values();
+
+    for(Object component: components)    {
+      if (component instanceof BaseComponent) {
+        try {
+          ((BaseComponent)component).disposeComponent();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 
   @Override

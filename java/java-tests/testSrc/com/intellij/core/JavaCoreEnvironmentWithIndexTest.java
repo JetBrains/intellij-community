@@ -19,23 +19,37 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexInitializer;
 import junit.framework.TestCase;
 
-public class JavaCoreEnvironmentTest extends TestCase {
+public class JavaCoreEnvironmentWithIndexTest extends TestCase {
   public void testStart() throws Exception {
     Disposable disposable = new MyDisposable();
-    JavaCoreEnvironment javaCoreEnvironment = new JavaCoreEnvironment(disposable);
-
+    JavaCoreEnvironmentWithIndex javaCoreEnvironment = new JavaCoreEnvironmentWithIndex(disposable);
     try
     {
-    Application application = ApplicationManager.getApplication();
-    FileBasedIndex fileBasedIndex = application.getComponent(FileBasedIndex.class);
+      Application application = ApplicationManager.getApplication();
+      //FileBasedIndex fileBasedIndex = application.getComponent(FileBasedIndex.class);
+      FileBasedIndexInitializer initializer = application.getComponent(FileBasedIndexInitializer.class);
     }
     finally {
       Disposer.dispose(disposable);
     }
   }
+
+  //public void testStart() throws Exception {
+  //  Disposable disposable = new MyDisposable();
+  //  JavaCoreEnvironmentWithIndex javaCoreEnvironment = new JavaCoreEnvironmentWithIndex(disposable);
+  //  try
+  //  {
+  //    Application application = ApplicationManager.getApplication();
+  //    FileBasedIndex fileBasedIndex = application.getComponent(FileBasedIndex.class);
+  //    fileBasedIndex.
+  //  }
+  //  finally {
+  //    Disposer.dispose(disposable);
+  //  }
+  //}
 
   private class MyDisposable implements Disposable {
     @Override
