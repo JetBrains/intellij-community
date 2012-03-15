@@ -91,11 +91,13 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   final static AtomicInteger cnt = new AtomicInteger()
   protected def joinCommit(Closure c1={}) {
     final AtomicBoolean committed = new AtomicBoolean()
+    final AtomicBoolean run = new AtomicBoolean()
     boolean executed=true;
     def closureSeq = cnt.getAndIncrement()
     Runnable r = new Runnable() {
       @Override
       public void run() {
+        run.set(true)
         ApplicationManager.application.invokeLater {
           c1();
           committed.set(true)
@@ -119,7 +121,7 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
       //  println("waiting..." + ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).printStat())
       }
       if (System.currentTimeMillis() - start >= 20000) {
-        fail("too long waiting for a document to be committed. executed: $executed ;")
+        fail("too long waiting for documents to be committed. executed: $executed; r: $r; run: $run; ")
         printThreadDump()
       }
       UIUtil.pump();

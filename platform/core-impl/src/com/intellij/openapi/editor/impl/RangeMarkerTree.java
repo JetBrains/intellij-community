@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
-  private static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
+  private static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal());
 
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;

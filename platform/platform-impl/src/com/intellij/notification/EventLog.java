@@ -122,7 +122,7 @@ public class EventLog implements Notifications {
   }
 
   public static LogEntry formatForLog(@NotNull final Notification notification, String indent) {
-    DocumentImpl logDoc = new DocumentImpl(true);
+    DocumentImpl logDoc = new DocumentImpl("",true);
     AtomicBoolean showMore = new AtomicBoolean(false);
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
     List<RangeMarker> lineSeparators = new ArrayList<RangeMarker>();
@@ -197,8 +197,7 @@ public class EventLog implements Notifications {
   }
 
   private static String getStatusText(DocumentImpl logDoc, AtomicBoolean showMore, List<RangeMarker> lineSeparators, boolean hasHtml) {
-    DocumentImpl statusDoc = new DocumentImpl(true);
-    statusDoc.setText(logDoc.getText());
+    DocumentImpl statusDoc = new DocumentImpl(logDoc.getText(),true);
     List<RangeMarker> statusSeparators = new ArrayList<RangeMarker>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {
@@ -420,6 +419,7 @@ public class EventLog implements Notifications {
     return project.getComponent(ProjectTracker.class);
   }
   public static class FactoryItself implements ToolWindowFactory, DumbAware {
+    @Override
     public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
       final Editor editor = getProjectComponent(project).myConsole.getConsoleEditor();
 

@@ -129,8 +129,9 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         if (results.length == 1) result = (MethodCandidateInfo)results[0];
 
         PsiMethod constructor = result == null ? null : result.getElement();
-        if (constructor != null && expression.getClassReference() != null) {
-          checkDeprecated(constructor, expression.getClassReference(), null, myIgnoreInsideDeprecated, myHolder);
+        if (constructor != null && expression.getClassOrAnonymousClassReference() != null) {
+          if (expression.getClassReference() == null && constructor.getParameterList().getParametersCount() == 0) return;
+          checkDeprecated(constructor, expression.getClassOrAnonymousClassReference(), null, myIgnoreInsideDeprecated, myHolder);
         }
       }
     }

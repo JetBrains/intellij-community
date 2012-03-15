@@ -90,32 +90,34 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     myDocumentCommitThread = documentCommitThread;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
-    myPsiManager.addPsiTreeChangeListener(mySynchronizer);
-    editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
-    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
-      @Override
-      public void fileContentLoaded(final VirtualFile virtualFile, Document document) {
-        PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-          @Override
-          public PsiFile compute() {
-            return getCachedPsiFile(virtualFile);
-          }
-        });
-        fireDocumentCreated(document, psiFile);
-      }
-    });
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
-      @Override
-      public void beforeWriteActionStart(Object action) {
-        documentCommitThread.disable("Write action started: "+ action);
-      }
+    if (!project.isDefault()) {
+      myPsiManager.addPsiTreeChangeListener(mySynchronizer);
+      editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
+      bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+        @Override
+        public void fileContentLoaded(final VirtualFile virtualFile, Document document) {
+          PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+            @Override
+            public PsiFile compute() {
+              return getCachedPsiFile(virtualFile);
+            }
+          });
+          fireDocumentCreated(document, psiFile);
+        }
+      });
+      ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+        @Override
+        public void beforeWriteActionStart(Object action) {
+          documentCommitThread.disable("Write action started: "+ action);
+        }
 
-      @Override
-      public void writeActionFinished(Object action) {
-        documentCommitThread.enable("Write action finished: "+action);
-      }
-    }, myProject);
-    documentCommitThread.enable("project open");
+        @Override
+        public void writeActionFinished(Object action) {
+          documentCommitThread.enable("Write action finished: "+action);
+        }
+      }, myProject);
+      documentCommitThread.enable("project open");
+    }
   }
 
   @Override
@@ -268,6 +270,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @Override
   public boolean performWhenAllCommitted(@NotNull final Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    assert !myProject.isDisposed() : "Already disposed: " + myProject;
     if (myUncommittedDocuments.isEmpty()) {
       action.run();
       return true;
@@ -278,6 +281,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       actionsWhenAllDocumentsAreCommitted.put(PERFORM_ALWAYS_KEY, actions);
     }
     actions.add(action);
+    myDocumentCommitThread.log("PDI: added performWhenAllCommitted", null, false, action, myUncommittedDocuments);
     return false;
   }
 
@@ -329,10 +333,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   }
 
   boolean finishCommit(@NotNull final Document document,
-                       @NotNull final List<Processor<Document>> finishRunnables,
+                       @NotNull final List<Processor<Document>> finishProcessors,
                        final boolean synchronously,
                        @NotNull Object reason) {
-    if (myProject.isDisposed()) return false;
+    assert !myProject.isDisposed() : "Already disposed";
     final boolean[] ok = {true};
     ApplicationManager.getApplication().runWriteAction(new CommitToPsiFileAction(document, myProject) {
       @Override
@@ -345,7 +349,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         try {
           final FileViewProvider viewProvider = getCachedViewProvider(document);
           if (viewProvider != null) {
-            for (Processor<Document> finishRunnable : finishRunnables) {
+            for (Processor<Document> finishRunnable : finishProcessors) {
               success = finishRunnable.process(document);
               if (synchronously) {
                 assert success;
@@ -359,13 +363,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           ok[0] = success;
         }
         finally {
-          myDocumentCommitThread.log("in PDI.finishDoc: ", document, synchronously, success, myUncommittedDocuments);
+          myDocumentCommitThread.log("in PDI.finishDoc: ", null, synchronously, success, myUncommittedDocuments);
           if (success) {
             myUncommittedDocuments.remove(document);
-            myDocumentCommitThread.log("in PDI.finishDoc: removed doc", document, synchronously, success, myUncommittedDocuments);
+            myDocumentCommitThread.log("in PDI.finishDoc: removed doc", null, synchronously, success, myUncommittedDocuments);
           }
           myIsCommitInProgress = false;
-          myDocumentCommitThread.log("in PDI.finishDoc: exit", document, synchronously, success, myUncommittedDocuments);
+          myDocumentCommitThread.log("in PDI.finishDoc: exit", null, synchronously, success, myUncommittedDocuments);
         }
       }
     });
@@ -413,7 +417,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
         finally {
           myIsCommitInProgress = false;
         }
-        assert !myUncommittedDocuments.contains(document) : "Document :"+System.identityHashCode(document);
+        assert !myUncommittedDocuments.contains(document) : "Document :"+ document;
       }
     });
   }
@@ -438,7 +442,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       List<Object> keys = new ArrayList<Object>(actionsWhenAllDocumentsAreCommitted.keySet());
       for (Object key : keys) {
         Runnable action = actionsWhenAllDocumentsAreCommitted.remove(key);
-        myDocumentCommitThread.log("Running after commit runnable: ",document, false, key, action);
+        myDocumentCommitThread.log("Running after commit runnable: ",null, false, key, action);
         action.run();
       }
     }
@@ -567,7 +571,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   @Override
   @NotNull
   public Document[] getUncommittedDocuments() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myUncommittedDocuments.toArray(new Document[myUncommittedDocuments.size()]);
+  }
+
+  public Collection<Document> getUncommittedDocumentsUnsafe() {
+    return myUncommittedDocuments;
   }
 
   @Override
@@ -662,6 +671,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
     if (commitNecessary) {
       myUncommittedDocuments.add(document);
+      myDocumentCommitThread.log("PDI: added to uncommitted", null, false, document, event, myUncommittedDocuments);
 
       myDocumentCommitThread.queueCommit(myProject, document, event);
     }

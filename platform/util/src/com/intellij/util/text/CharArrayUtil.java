@@ -121,6 +121,11 @@ public class CharArrayUtil {
     return null;
   }
 
+  /**
+   * @return the underlying char[] array if any, or the new chara array if not
+   * NOTE RETURNED ARRAY LENGTH MAY HAVE BE DIFFERENT FROM THE seq.length()
+   */
+  @NotNull
   public static char[] fromSequence(CharSequence seq) {
     if (seq instanceof CharSequenceBackedByArray) {
       return ((CharSequenceBackedByArray)seq).getChars();

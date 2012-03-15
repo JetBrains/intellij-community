@@ -54,8 +54,8 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
 
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
   }
   
   @BeforeClass

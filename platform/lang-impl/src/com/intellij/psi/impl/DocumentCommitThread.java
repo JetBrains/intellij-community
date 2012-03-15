@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,8 +31,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -48,7 +49,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -60,19 +60,16 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
-/**
- * User: cdr
- */
 public class DocumentCommitThread implements Runnable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.DocumentCommitThread");
-  private static final Key<CommitStage> COMMIT_STAGE = new Key<CommitStage>("Commit stage");
 
   private final Queue<CommitTask> documentsToCommit = new Queue<CommitTask>(10);
+  private final List<CommitTask> documentsToApplyInEDT = new ArrayList<CommitTask>(10);  // guarded by documentsToCommit
   private volatile boolean isDisposed;
-  private ProgressIndicator myProgressIndicator; // guarded by documentsToCommit
+  private CommitTask currentTask; // guarded by documentsToCommit
   private volatile boolean threadFinished;
   private volatile boolean myEnabled = true; // true if we can do commits. set to false temporarily during the write action.
 
@@ -87,7 +84,22 @@ public class DocumentCommitThread implements Runnable, Disposable {
 
   @Override
   public void dispose() {
-    stopThread();
+    isDisposed = true;
+    synchronized (documentsToCommit) {
+      documentsToCommit.clear();
+    }
+    cancel("Stop thread");
+    wakeUpQueue();
+    while (!threadFinished) {
+      wakeUpQueue();
+      synchronized (documentsToCommit) {
+        try {
+          documentsToCommit.wait(10);
+        }
+        catch (InterruptedException ignored) {
+        }
+      }
+    }
   }
 
   public void disable(@NonNls Object reason) {
@@ -109,119 +121,85 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
   }
 
-  private void stopThread() {
-    isDisposed = true;
-    synchronized (documentsToCommit) {
-      documentsToCommit.clear();
-    }
-    cancel("Stop thread");
-    wakeUpQueue();
-    while (!threadFinished) {
-      wakeUpQueue();
-      synchronized (documentsToCommit) {
-        try {
-          documentsToCommit.wait(10);
-        }
-        catch (InterruptedException ignored) {
-        }
-      }
-    }
-  }
-
   private void cancel(@NonNls Object reason) {
-    log("Canceled", null, false, myProgressIndicator, "Reason: ", reason);
-
-    useIndicator(null);
+    startNewTask(null, reason);
   }
 
-  public boolean queueCommit(@NotNull Project project, @NotNull Document document, @NonNls @NotNull Object reason) {
-    log("queueCommit called", document, false, reason);
+  public void queueCommit(@NotNull final Project project, @NotNull final Document document, @NonNls @NotNull Object reason) {
     assert !isDisposed : "already disposed";
 
-    if (!project.isInitialized()) return false;
+    if (!project.isInitialized()) return;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-    if (psiFile == null) return false;
+    if (psiFile == null) return;
 
-    boolean added = doQueue(document, project, getCommitStage(document), reason);
-    log("doQueue called", document, false, added);
-    return added;
+    doQueue(project, document, reason);
   }
 
-  private boolean doQueue(@NotNull Document document,
-                          @NotNull Project project,
-                          CommitStage start,
-                          @NonNls @NotNull Object reason) {
+  private void doQueue(Project project, Document document, Object reason) {
     synchronized (documentsToCommit) {
-      if (!changeCommitStage(document, start, CommitStage.QUEUED_TO_COMMIT, false)) return false;
+      ProgressIndicatorEx indicator = new DaemonProgressIndicator();
+      CommitTask newTask = new CommitTask(document, project, indicator, reason);
 
-      Object[] documentTasks = documentsToCommit.toArray();
-      for (Object o : documentTasks) {
-        assert o != null : "Null element in:" + documentsToCommit;
-        CommitTask task = (CommitTask)o;
-        if (task.document == document) {
-          ProgressIndicator current = document.getUserData(COMMIT_PROGRESS);
-          if (current == null) {
-            // already queued, not started yet
-            return true;
-          }
-          else {
-            // cancel current commit process to re-queue
-            current.cancel();
-            removeCommitFromQueue(document);
-            break;
-          }
-        }
-      }
-      ProgressIndicator indicator = new ProgressIndicatorBase();
-      indicator.start();
-      documentsToCommit.addLast(new CommitTask(document, project, indicator, reason));
-      log("Queued", document, false, reason);
+      markRemovedFromDocsToCommit(newTask);
+      markRemovedCurrentTask(newTask);
+      markRemovedFromDocsToApplyInEDT(newTask);
+
+      documentsToCommit.addLast(newTask);
+      log("Queued", newTask, false, reason);
+
       wakeUpQueue();
-      return true;
     }
   }
 
   private final StringBuilder log = new StringBuilder();
-  void log(@NonNls String msg, Document document, boolean synchronously, @NonNls Object... args) {
-    if (debug()) {
-      @NonNls
-      String s = (SwingUtilities.isEventDispatchThread() ? "-    " : "-") +
-        msg + (synchronously ? " (sync)" : "") +
-                 (document == null ? "" : "; Document: " + System.identityHashCode(document) +
-                                          "; stage: " + getCommitStage(document))
-                 + "; my indic="+myProgressIndicator + " ||";
+  void log(@NonNls String msg, CommitTask task, boolean synchronously, @NonNls Object... args) {
+    if (true) return;
 
-      for (Object arg : args) {
+    String indent = new SimpleDateFormat("mm:ss:SSSS").format(new Date()) +
+      (SwingUtilities.isEventDispatchThread() ? "-    " : Thread.currentThread().getName().equals("Document commit thread") ? "-  >" : "-");
+    @NonNls
+    String s = indent +
+               msg + (synchronously ? " (sync)" : "") +
+               (task == null ? "" : "; task: " + task+" ("+System.identityHashCode(task)+")");
+
+    for (Object arg : args) {
+      if (!StringUtil.isEmpty(String.valueOf(arg))) {
         s += "; "+arg;
       }
-      System.out.println(s);
-      synchronized (log) {
-        log.append(s).append("\n");
-        if (log.length() > 1000000) {
-          log.delete(0, 1000000);
-        }
+    }
+    if (task != null) {
+      Collection<Document> unc = task.project.isDisposed() ? Collections.<Document>emptyList() :
+        ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(task.project)).getUncommittedDocumentsUnsafe();
+      if (!unc.isEmpty()) {
+        s += "; Uncommitted: " + unc;
       }
+    }
+
+    System.err.println(s);
+
+    log.append(s).append("\n");
+    if (log.length() > 1000000) {
+      log.delete(0, 1000000);
     }
   }
 
-  private static boolean debug() {
-    return false;
-  }
 
+  // cancels all pending commits
   @TestOnly
-  public String getLog() {
-    return log.toString();
-  }
-  private void clearLog() {
-    log.setLength(0);
+  public void cancelAll() {
+    synchronized (documentsToCommit) {
+      cancel("cancel all in tests");
+      markRemovedFromDocsToCommit(null);
+      documentsToCommit.clear();
+      markRemovedFromDocsToApplyInEDT(null);
+      markRemovedCurrentTask(null);
+    }
   }
 
   @TestOnly
   public void clearQueue() {
-    synchronized (documentsToCommit) {
-      documentsToCommit.clear();
-    }
-    clearLog();
+    cancelAll();
+    log.setLength(0);
     disable("end of test");
     wakeUpQueue();
   }
@@ -229,137 +207,196 @@ public class DocumentCommitThread implements Runnable, Disposable {
   private static class CommitTask {
     private final Document document;
     private final Project project;
-    // running = false means document was removed from the queue, should ignore.
-    // canceled = true means commit was canceled, should reschedule for later.
-    private final ProgressIndicator indicator; // progress to commit this doc under.
+    // when queued it's not started 
+    // when dequeued it's started 
+    // when failed it's canceled 
+    private final ProgressIndicatorEx indicator; // progress to commit this doc under.
     private final Object reason;
+    private boolean removed; // task marked as removed, should be ignored.
 
     private CommitTask(@NotNull Document document,
                        @NotNull Project project,
-                       @NotNull ProgressIndicator indicator,
+                       @NotNull ProgressIndicatorEx indicator,
                        @NotNull Object reason) {
       this.document = document;
       this.project = project;
       this.indicator = indicator;
       this.reason = reason;
     }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "Project: " + project.getName()
+             + ", Doc: "+ document +" ("+  StringUtil.first(document.getText(), 12, true).replaceAll("\n"," ")+")"
+             +(indicator.isCanceled() ? " (Canceled)" : "") + (removed ? "Removed" : "");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof CommitTask)) return false;
+
+      CommitTask task = (CommitTask)o;
+
+      return document.equals(task.document) && project.equals(task.project);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = document.hashCode();
+      result = 31 * result + project.hashCode();
+      return result;
+    }
   }
 
-  private static final Key<ProgressIndicator> COMMIT_PROGRESS = Key.create("COMMIT_PROGRESS");
-  private void removeCommitFromQueue(@NotNull Document document) {
-    synchronized (documentsToCommit) {
-      ProgressIndicator indicator = document.getUserData(COMMIT_PROGRESS);
-
-      if (indicator != null && indicator.isRunning()) {
-        indicator.stop(); // mark document as removed
-
-        log("Removed from queue", document, false);
-      }
-      // let our thread know that queue must be polled again
-      wakeUpQueue();
+  private void markRemovedCurrentTask(@Nullable CommitTask newTask) {
+    CommitTask task = currentTask;
+    if (task != null && (task.equals(newTask) || newTask == null)) {
+      task.removed = true;
+      cancel("Sync commit intervened");
     }
+  }
+
+  private void markRemovedFromDocsToApplyInEDT(@Nullable("null means all") CommitTask newTask) {
+    for (int i = documentsToApplyInEDT.size() - 1; i >= 0; i--) {
+      CommitTask task = documentsToApplyInEDT.get(i);
+      if (newTask == null || task.equals(newTask)) {
+        log("Marked as Removed in EDT apply queue", task, false);
+        task.removed = true;
+      }
+    }
+  }
+  private void removeFromDocsToApplyInEDT(CommitTask newTask) {
+    for (int i = documentsToApplyInEDT.size() - 1; i >= 0; i--) {
+      CommitTask task = documentsToApplyInEDT.get(i);
+      if (task.equals(newTask)) {
+        task.removed = true;
+        documentsToApplyInEDT.remove(i);
+        log("Marked and Removed from EDT apply queue (sync commit called)", task, true);
+      }
+    }
+  }
+
+  private void markRemovedFromDocsToCommit(@Nullable("null means all") final CommitTask newTask) {
+    processAll(new Processor<CommitTask>() {
+      @Override
+      public boolean process(CommitTask task) {
+        if (newTask == null || task.equals(newTask)) {
+          task.removed = true;
+          log("marker as Removed in background queue", task, true);
+        }
+        return true;
+      }
+    });
   }
 
   @Override
   public void run() {
     threadFinished = false;
-    while (!isDisposed) {
-      try {
-        boolean success = false;
-        Document document = null;
-        Project project = null;
-        ProgressIndicator indicator = null;
+    try {
+      while (!isDisposed) {
         try {
-          CommitTask task;
-          synchronized (documentsToCommit) {
-            if (!myEnabled || documentsToCommit.isEmpty()) {
-              documentsToCommit.wait();
-              continue;
-            }
-            task = documentsToCommit.pullFirst();
-            document = task.document;
-            indicator = task.indicator;
-            project = task.project;
-
-            log("Pulled", document, false, indicator);
-
-            CommitStage commitStage = getCommitStage(document);
-            Document[] uncommitted = null;
-            if (commitStage != CommitStage.QUEUED_TO_COMMIT
-                || project.isDisposed() || !ArrayUtil.contains(document, uncommitted = PsiDocumentManager.getInstance(project).getUncommittedDocuments())) {
-              List<Document> documents = uncommitted == null ? null : Arrays.asList(uncommitted);
-              log("Abandon and proceeding to next",document, false, commitStage, documents);
-              continue;
-            }
-            if (indicator.isRunning()) {
-              useIndicator(indicator);
-              document.putUserData(COMMIT_PROGRESS, indicator);
-            }
-            else {
-              success = true; // document has been marked as removed, e.g. by synchronous commit
-            }
-          }
-
-          Runnable finishRunnable = null;
-          if (!success && !indicator.isCanceled()) {
-            try {
-              finishRunnable = commit(document, project, null, indicator, false, task.reason);
-              success = finishRunnable != null;
-              log("DCT.commit returned", document, false, finishRunnable, indicator);
-            }
-            finally {
-              document.putUserData(COMMIT_PROGRESS, null);
-            }
-          }
-
-          synchronized (documentsToCommit) {
-            if (indicator.isCanceled()) {
-              success = false;
-            }
-            if (success) {
-              assert !ApplicationManager.getApplication().isDispatchThread();
-              UIUtil.invokeLaterIfNeeded(finishRunnable);
-              log("Invoked later finishRunnable", document, false, success, finishRunnable, indicator);
-            }
-          }
+          pollQueue();
         }
-        catch (ProcessCanceledException e) {
-          cancel(e); // leave queue unchanged
-          log("PCE", document, false, e);
-          success = false;
-        }
-        catch (InterruptedException e) {
-          // app must be closing
-          int i = 0;
-          log("IE", document, false, e);
-          cancel(e);
-        }
-        catch (Throwable e) {
+        catch(Throwable e) {
+          //e.printStackTrace();
           LOG.error(e);
-          cancel(e);
         }
-        synchronized (documentsToCommit) {
-          if (!success && indicator.isRunning()) { // running means sync commit has not intervened
-            // reset status for queue back successfully
-            changeCommitStage(document, CommitStage.WAITING_FOR_PSI_APPLY, CommitStage.QUEUED_TO_COMMIT, false);
-            changeCommitStage(document, CommitStage.COMMITTED, CommitStage.QUEUED_TO_COMMIT, false);
-            doQueue(document, project, CommitStage.QUEUED_TO_COMMIT, "re-added on failure");
-          }
-        }
-      }
-      catch(Throwable e) {
-        e.printStackTrace();
-        //LOG.error(e);
       }
     }
-    threadFinished = true;
+    finally {
+      threadFinished = true;
+    }
     // ping the thread waiting for close
     wakeUpQueue();
     log("Good bye", null, false);
   }
 
+  private void pollQueue() {
+    boolean success = false;
+    Document document = null;
+    Project project = null;
+    CommitTask task = null;
+    try {
+      ProgressIndicator indicator;
+      synchronized (documentsToCommit) {
+        if (!myEnabled || documentsToCommit.isEmpty()) {
+          documentsToCommit.wait();
+          return;
+        }
+        task = documentsToCommit.pullFirst();
+        document = task.document;
+        indicator = task.indicator;
+        project = task.project;
+
+        log("Pulled", task, false, indicator);
+
+        if (project.isDisposed() || !((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).getUncommittedDocumentsUnsafe().contains(document)) {
+          log("Abandon and proceed to next",task, false);
+          return;
+        }
+        
+        if (task.removed) {
+          return; // document has been marked as removed, e.g. by synchronous commit
+        }
+
+        startNewTask(task, "Pulled new task");
+
+        // transfer to documentsToApplyInEDT
+        documentsToApplyInEDT.add(task);
+      }
+
+      Runnable finishRunnable = null;
+      if (indicator.isCanceled()) {
+        success = false;
+      }
+      else {
+        final CommitTask commitTask = task;
+        final Runnable[] result = new Runnable[1];
+        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
+          @Override
+          public void run() {
+            result[0] = commitUnderProgress(commitTask, null, false);
+          }
+        }, commitTask.indicator);
+        finishRunnable = result[0];
+        success = finishRunnable != null;
+        log("commit returned", task, false, finishRunnable, indicator);
+      }
+
+      if (success) {
+        assert !ApplicationManager.getApplication().isDispatchThread();
+        UIUtil.invokeLaterIfNeeded(finishRunnable);
+        log("Invoked later finishRunnable", task, false, success, finishRunnable, indicator);
+      }
+    }
+    catch (ProcessCanceledException e) {
+      cancel(e); // leave queue unchanged
+      log("PCE", task, false, e);
+      success = false;
+    }
+    catch (InterruptedException e) {
+      // app must be closing
+      log("IE", task, false, e);
+      cancel(e);
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      cancel(e);
+    }
+    synchronized (documentsToCommit) {
+      if (!success && !task.removed) { // sync commit has not intervened
+        // reset status for queue back successfully
+        doQueue(project, document, "re-added on failure");
+      }
+      currentTask = null; // do not cancel, it's being invokeLatered
+    }
+  }
+
   public void commitSynchronously(@NotNull Document document, @NotNull Project project, PsiFile excludeFile) {
     assert !isDisposed;
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     if (!project.isInitialized() && !project.isDefault()) {
       @NonNls String s = project + "; Disposed: "+project.isDisposed()+"; Open: "+project.isOpen();
@@ -373,69 +410,59 @@ public class DocumentCommitThread implements Runnable, Disposable {
       throw new RuntimeException(s);
     }
 
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ProgressIndicatorBase indicator = new ProgressIndicatorBase();
+    CommitTask task = new CommitTask(document, project, indicator, "Sync commit");
     synchronized (documentsToCommit) {
-      setCommitStage(document, CommitStage.ABOUT_TO_BE_SYNC_COMMITTED, true);
-      removeCommitFromQueue(document);
+      markRemovedFromDocsToCommit(task);
+      markRemovedCurrentTask(task);
+      removeFromDocsToApplyInEDT(task);
     }
 
-    ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-    indicator.start();
-    log("About to commit sync", document, true, indicator);
-    Runnable finish = commit(document, project, excludeFile, indicator, true, "Sync commit");
-    log("Committed sync", document, true, finish, indicator);
+    log("About to commit sync", task, true, indicator);
 
+    Runnable finish = commitUnderProgress(task, excludeFile, true);
+    log("Committed sync", task, true, finish, indicator);
     assert finish != null;
+
     finish.run();
+
+    // let our thread know that queue must be polled again
+    wakeUpQueue();
   }
 
-  private Runnable commit(@NotNull final Document document,
-                          @NotNull final Project project,
-                          final PsiFile excludeFile,
-                          @NotNull final ProgressIndicator indicator,
-                          final boolean synchronously,
-                          @NotNull final Object reason) {
-    final Runnable[] success = new Runnable[1];
-    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
-      @Override
-      public void run() {
-        success[0] = commitUnderProgress(document, project, excludeFile, indicator, synchronously, reason);
+  private void startNewTask(CommitTask task, Object reason) {
+    synchronized (documentsToCommit) { // sync to prevent overwriting
+      CommitTask cur = currentTask;
+      if (cur != null) {
+        cur.indicator.cancel();
       }
-    }, indicator);
-    return success[0];
-  }
-
-  private void useIndicator(ProgressIndicator indicator) {
-    synchronized (documentsToCommit) { // sync to prevent overwriting indicator
-      assert indicator == null || myProgressIndicator != indicator;
-      if (myProgressIndicator != null) {
-        myProgressIndicator.cancel();
-      }
-      myProgressIndicator = indicator;
+      //log("Start new task", task, false, cur == null ? "" : cur.indicator + " canceled", reason);
+      currentTask = task;
     }
   }
 
   // returns finish commit Runnable (to be invoked later in EDT), or null on failure
-  private Runnable commitUnderProgress(@NotNull final Document document,
-                                       @NotNull final Project project,
+  @Nullable
+  private Runnable commitUnderProgress(@NotNull final CommitTask task,
                                        final PsiFile excludeFile,
-                                       @NotNull final ProgressIndicator indicator,
-                                       final boolean synchronously,
-                                       @NotNull final Object reason) {
-    final List<Processor<Document>> finishRunnables = new SmartList<Processor<Document>>();
+                                       final boolean synchronously) {
+    final Project project = task.project;
+    final Document document = task.document;
+    final List<Processor<Document>> finishProcessors = new SmartList<Processor<Document>>();
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
         if (project.isDisposed()) return;
         final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
-        final FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
+        FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
         if (viewProvider == null) return;
-        final List<PsiFile> psiFiles = viewProvider.getAllFiles();
+        List<PsiFile> psiFiles = viewProvider.getAllFiles();
         for (PsiFile file : psiFiles) {
           if (file.isValid() && file != excludeFile) {
-            Processor<Document> finishRunnable = doCommit(document, file, indicator, synchronously, documentManager);
-            if (finishRunnable != null) {
-              finishRunnables.add(finishRunnable);
+            Processor<Document> finishProcessor = doCommit(task, file, synchronously, documentManager);
+            if (finishProcessor != null) {
+              finishProcessors.add(finishProcessor);
             }
           }
         }
@@ -447,58 +474,66 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
     else {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) {
-        log("Could not start readaction", document, synchronously, ApplicationManager.getApplication().isReadAccessAllowed(), Thread.currentThread());
+        log("Could not start read action", task, synchronously, ApplicationManager.getApplication().isReadAccessAllowed(), Thread.currentThread());
         return null;
       }
     }
 
-    boolean canceled = indicator.isCanceled();
-    if (synchronously) {
-      assert !canceled;
-    }
-    if (canceled || !indicator.isRunning()) {
-      assert !synchronously;
-      return null;
-    }
-    if (!synchronously && !changeCommitStage(document, CommitStage.QUEUED_TO_COMMIT, CommitStage.WAITING_FOR_PSI_APPLY, synchronously)) {
+    boolean canceled = task.indicator.isCanceled();
+    assert !synchronously || !canceled;
+    if (canceled || task.removed) {
       return null;
     }
 
     Runnable finishRunnable = new Runnable() {
       @Override
       public void run() {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+
+        Project project = task.project;
         if (project.isDisposed()) return;
 
+        Document document = task.document;
+
+        synchronized (documentsToCommit) {
+          boolean isValid = !task.removed;
+          for (int i = documentsToApplyInEDT.size() - 1; i >= 0; i--) {
+            CommitTask queuedTask = documentsToApplyInEDT.get(i);
+            boolean taskIsValid = !queuedTask.removed;
+            if (task == queuedTask) { // find the same task in the queue
+              documentsToApplyInEDT.remove(i);
+              isValid &= taskIsValid;
+              log("Task matched, removed from documentsToApplyInEDT", queuedTask, false, task);
+            }
+            else if (!taskIsValid) {
+              documentsToApplyInEDT.remove(i);
+              log("Task invalid, removed from documentsToApplyInEDT", queuedTask, false);
+            }
+          }
+          if (!isValid) {
+            log("Marked as already committed in EDT apply queue, return", task, true);
+            return;
+          }
+        }
+
         PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project);
+        Collection<Document> uncommitted = documentManager.getUncommittedDocumentsUnsafe();
+        FileViewProvider viewProvider = documentManager.getCachedViewProvider(document);
+        //if (!documentManager.getSynchronizer().isInSynchronization(document) && !uncommitted.contains(document)) return; // already committed, must be the sync commit
 
-        CommitStage stage = getCommitStage(document);
-        log("Finish", document, synchronously, project);
-        if (stage != (synchronously ? CommitStage.ABOUT_TO_BE_SYNC_COMMITTED : CommitStage.WAITING_FOR_PSI_APPLY)) {
-          return; // there must be a synchronous commit sneaked in between queued commit and finish commit, or just document changed meanwhile
+        log("Executing later finishCommit", task, false);
+        boolean success = documentManager.finishCommit(document, finishProcessors, synchronously, task.reason);
+        if (synchronously) {
+          assert success;
         }
-
-        boolean success = false;
-        try {
-          success = documentManager.finishCommit(document, finishRunnables, synchronously, reason);
-          log("Finished", document, synchronously, success, Arrays.asList(documentManager.getUncommittedDocuments()));
-          if (synchronously) {
-            assert success;
-          }
-        }
-        finally {
-          if (success) {
-            success = synchronously || changeCommitStage(document, CommitStage.WAITING_FOR_PSI_APPLY, CommitStage.COMMITTED, false);
-          }
-        }
-        List<Document> unc = Arrays.asList(documentManager.getUncommittedDocuments());
-        log("after call finish commit",document, synchronously, unc, success);
+        Collection<Document> unc = documentManager.getUncommittedDocumentsUnsafe();
+        log("after call finishCommit",task, synchronously, success);
         if (synchronously || success) {
           assert !unc.contains(document) : unc;
         }
         if (!success) {
           // add document back to the queue
-          boolean addedBack = queueCommit(project, document, "Re-added back");
-          assert addedBack;
+          queueCommit(project, document, "Re-added back");
         }
       }
     };
@@ -506,11 +541,11 @@ public class DocumentCommitThread implements Runnable, Disposable {
   }
 
   @Nullable("returns runnable to execute under write action in AWT to finish the commit")
-  private Processor<Document> doCommit(@NotNull final Document document,
+  private Processor<Document> doCommit(@NotNull final CommitTask task,
                                        @NotNull final PsiFile file,
-                                       @NotNull ProgressIndicator indicator,
                                        final boolean synchronously,
                                        @NotNull PsiDocumentManager documentManager) {
+    Document document = task.document;
     ((PsiDocumentManagerImpl)documentManager).clearTreeHardRef(document);
     final TextBlock textBlock = TextBlock.get(file);
     if (textBlock.isEmpty()) return null;
@@ -525,7 +560,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
     }
     final String oldPsiText =
-      ApplicationManagerEx.getApplicationEx().isInternal() && !ApplicationManagerEx.getApplicationEx().isUnitTestMode()
+      ApplicationManagerEx.getApplicationEx().isInternal() && ApplicationManagerEx.getApplicationEx().isUnitTestMode()
       ? myTreeElementBeingReparsedSoItWontBeCollected.getText()
       : null;
     int startOffset;
@@ -544,13 +579,13 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
     assertBeforeCommit(document, file, textBlock, chars, oldPsiText, myTreeElementBeingReparsedSoItWontBeCollected);
     BlockSupport blockSupport = BlockSupport.getInstance(file.getProject());
-    final DiffLog diffLog = blockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars, indicator);
+    final DiffLog diffLog = blockSupport.reparseRange(file, startOffset, endOffset, lengthShift, chars, task.indicator);
 
     return new Processor<Document>() {
       @Override
       public boolean process(Document document) {
         ApplicationManager.getApplication().assertWriteAccessAllowed();
-        log("Finishing", document, synchronously, document.getModificationStamp(), startDocModificationTimeStamp);
+        log("Finishing", task, synchronously, document.getModificationStamp(), startDocModificationTimeStamp);
         //if (file.getModificationStamp() != startPsiModificationTimeStamp) return; // optimistic locking failed
         if (document.getModificationStamp() != startDocModificationTimeStamp) {
           return false; // optimistic locking failed
@@ -578,18 +613,20 @@ public class DocumentCommitThread implements Runnable, Disposable {
           SmartPointerManagerImpl.synchronizePointers(file);
         }
 
+        //System.out.println("committed "+task+"; tree length of "+myTreeElementBeingReparsedSoItWontBeCollected+" is " +myTreeElementBeingReparsedSoItWontBeCollected.getTextLength());
+
         return true;
       }
     };
   }
 
 
-  private static void assertBeforeCommit(Document document,
-                                         PsiFile file,
-                                         TextBlock textBlock,
-                                         CharSequence chars,
+  private static void assertBeforeCommit(@NotNull Document document,
+                                         @NotNull PsiFile file,
+                                         @NotNull TextBlock textBlock,
+                                         @NotNull CharSequence chars,
                                          String oldPsiText,
-                                         FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
+                                         @NotNull FileElement myTreeElementBeingReparsedSoItWontBeCollected) {
     int startOffset = textBlock.getStartOffset();
     int psiEndOffset = textBlock.getPsiEndOffset();
     if (oldPsiText != null) {
@@ -661,7 +698,7 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
   }
 
-  public static void doActualPsiChange(@NotNull final PsiFile file, final DiffLog diffLog){
+  public static void doActualPsiChange(@NotNull final PsiFile file, @NotNull final DiffLog diffLog){
     file.getViewProvider().beforeContentsSynchronized();
 
     try {
@@ -690,30 +727,17 @@ public class DocumentCommitThread implements Runnable, Disposable {
     }
   }
 
-  @NotNull
-  static CommitStage getCommitStage(@NotNull Document doc) {
-    CommitStage stage = doc.getUserData(COMMIT_STAGE);
-    if (stage == null) {
-      stage = ((UserDataHolderEx)doc).putUserDataIfAbsent(COMMIT_STAGE, CommitStage.DIRTY);
+  private boolean processAll(final Processor<CommitTask> processor) {
+    final boolean[] result = {true};
+    synchronized (documentsToCommit) {
+      documentsToCommit.process(new Processor<CommitTask>() {
+        @Override
+        public boolean process(CommitTask commitTask) {
+          result[0] &= processor.process(commitTask);
+          return true;
+        }
+      });
     }
-    return stage;
-  }
-
-  private void setCommitStage(@NotNull Document document, @NotNull CommitStage stage, boolean synchronously) {
-    document.putUserData(COMMIT_STAGE, stage);
-    log("Set stage", document, synchronously);
-  }
-
-  private boolean changeCommitStage(@NotNull Document document,
-                                    CommitStage expected,
-                                    @NotNull CommitStage stage,
-                                    boolean synchronously) {
-    boolean replaced = ((UserDataHolderEx)document).replace(COMMIT_STAGE, expected, stage);
-    log("Changed stage", document, synchronously, expected, stage, replaced);
-    return replaced;
-  }
-
-  private static enum CommitStage {
-    DIRTY, QUEUED_TO_COMMIT, WAITING_FOR_PSI_APPLY, COMMITTED, ABOUT_TO_BE_SYNC_COMMITTED
+    return result[0];
   }
 }

@@ -38,7 +38,8 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder>
   protected void setUp() throws Exception {
     super.setUp();
 
-    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
+    String name = getClass().getName() + "." + getName();
+    final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final T moduleFixtureBuilder = projectBuilder.addModule(getModuleBuilderClass());
     moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());

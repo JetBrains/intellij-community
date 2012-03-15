@@ -207,7 +207,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         decodedDocument = new DocumentImpl(outChars);
       }
       else {
-        decodedDocument = new DocumentImpl(true);
+        decodedDocument = new DocumentImpl("", true);
         decodedDocument.setAcceptSlashR(true);
         decodedDocument.replaceString(0,0,outChars);
       }

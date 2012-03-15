@@ -80,6 +80,22 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     return predefinedScopes;
   }
 
+  @Override
+  public NamedScope getPredefinedScope(String name) {
+    final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
+    if (scopesProviders != null) {
+      for (CustomScopesProvider scopesProvider : scopesProviders) {
+        final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx 
+                                 ? ((CustomScopesProviderEx)scopesProvider).getCustomScope(name) 
+                                 : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getCustomScopes());
+        if (scope != null) {
+          return scope;
+        }
+      }
+    }
+    return null;
+  }
+
   public boolean hasRules() {
     return !myRules.isEmpty();
   }

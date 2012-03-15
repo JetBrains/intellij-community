@@ -39,9 +39,9 @@ public class TaskSearchSupport {
     myManager = (TaskManagerImpl)TaskManager.getManager(project);
   }
 
-  public List<Task> getItems(String pattern, boolean cached) {
+  public List<Task> getItems(String pattern, boolean cached, boolean autopopup) {
     final Matcher matcher = getMatcher(pattern);
-    return ContainerUtil.mapNotNull(getTasks(pattern, cached), new NullableFunction<Task, Task>() {
+    return ContainerUtil.mapNotNull(getTasks(pattern, cached, autopopup), new NullableFunction<Task, Task>() {
       public Task fun(Task task) {
         return matcher.matches(task.getId()) || matcher.matches(task.getSummary()) ? task : null;
       }
@@ -64,7 +64,7 @@ public class TaskSearchSupport {
     return myMatcher;
   }
 
-  private List<Task> getTasks(String pattern, boolean cached) {
-    return cached ? myManager.getCachedIssues() : myManager.getIssues(pattern);
+  private List<Task> getTasks(String pattern, boolean cached, boolean autopopup) {
+    return cached ? myManager.getCachedIssues() : myManager.getIssues(pattern, !autopopup);
   }
 }

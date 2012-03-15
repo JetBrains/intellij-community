@@ -22,7 +22,7 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 3/7/12 3:48 PM
  */
-public abstract class GradleAbstractSyncTreeFilterAction extends ToggleAction {
+public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
   
   @NotNull private final MyFilter myFilter;
   @NotNull private final TextAttributesKey myAttributesKey;
@@ -30,7 +30,7 @@ public abstract class GradleAbstractSyncTreeFilterAction extends ToggleAction {
   private Color   myColor;
   private boolean myIconChanged;
 
-  protected GradleAbstractSyncTreeFilterAction(@NotNull AttributesDescriptor descriptor) {
+  protected AbstractGradleSyncTreeFilterAction(@NotNull AttributesDescriptor descriptor) {
     myFilter = new MyFilter(descriptor.getKey());
     myAttributesKey = descriptor.getKey();
     getTemplatePresentation().setText(descriptor.getDisplayName());

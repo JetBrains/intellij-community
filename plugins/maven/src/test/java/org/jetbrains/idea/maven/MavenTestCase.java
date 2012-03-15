@@ -125,7 +125,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void setUpFixtures() throws Exception {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder().getFixture();
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
     myTestFixture.setUp();
   }
 

@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.repo.GitRepository.State.*;
@@ -45,8 +46,8 @@ public class GitRepositoryTest extends GitTest {
   private GitRepository myRepository;
 
   @BeforeMethod
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myRepository = GitRepository.getFullInstance(myRepo.getVFRootDir(), myProject, myProject);
     myReader = new GitRepositoryReader(new File(VfsUtil.virtualToIoFile(myRepository.getRoot()), ".git"));
   }

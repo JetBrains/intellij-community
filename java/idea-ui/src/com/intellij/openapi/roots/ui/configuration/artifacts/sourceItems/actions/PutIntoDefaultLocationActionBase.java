@@ -18,8 +18,11 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.action
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author nik
@@ -36,5 +39,22 @@ public abstract class PutIntoDefaultLocationActionBase extends AnAction {
   @Nullable
   protected String getDefaultPath(PackagingSourceItem item) {
     return myArtifactEditor.getArtifact().getArtifactType().getDefaultPathFor(item);
+  }
+
+  protected static String getTargetLocationText(Set<String> paths) {
+    String target;
+    if (paths.size() == 1) {
+      final String path = StringUtil.trimStart(StringUtil.trimEnd(paths.iterator().next(), "/"), "/");
+      if (path.length() > 0) {
+        target = "/" + path;
+      }
+      else {
+        target = "Output Root";
+      }
+    }
+    else {
+      target = "Default Locations";
+    }
+    return target;
   }
 }

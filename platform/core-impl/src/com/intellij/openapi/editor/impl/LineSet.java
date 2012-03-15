@@ -16,12 +16,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.util.SegmentArrayWithData;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.text.MergingCharSequence;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Data structure specialized for working with document text lines, i.e. stores information about line mapping to document
@@ -35,7 +37,9 @@ public class LineSet{
   private static final int SEPARATOR_MASK = 0x3;
 
   public int findLineIndex(int offset) {
-    return mySegments.findSegmentIndex(offset);
+    int lineIndex = mySegments.findSegmentIndex(offset);
+    assert lineIndex >= 0;
+    return lineIndex;
   }
 
   public LineIterator createIterator() {
@@ -43,7 +47,9 @@ public class LineSet{
   }
 
   final int getLineStart(int index) {
-    return mySegments.getSegmentStart(index);
+    int lineStart = mySegments.getSegmentStart(index);
+    assert lineStart >= 0;
+    return lineStart;
   }
 
   final int getLineEnd(int index) {
@@ -65,8 +71,8 @@ public class LineSet{
     return mySegments.getSegmentCount();
   }
 
-  public void documentCreated(DocumentEvent e) {
-    initSegments(e.getDocument().getCharsSequence(), false);
+  public void documentCreated(@NotNull Document document) {
+    initSegments(document.getCharsSequence(), false);
   }
 
   public void changedUpdate(DocumentEvent e1) {

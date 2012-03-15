@@ -32,6 +32,7 @@ import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.io.*;
+import java.lang.reflect.Method;
 
 import static org.testng.Assert.assertTrue;
 
@@ -56,7 +57,7 @@ public abstract class HgTest extends AbstractVcsTestCase {
   private HgTestRepository myMainRepo;
 
   @BeforeMethod
-  protected void setUp() throws Exception {
+  protected void setUp(final Method testMethod) throws Exception {
     // setting hg executable
     String exec = System.getenv(HG_EXECUTABLE_PATH);
     if (exec != null) {
@@ -75,7 +76,7 @@ public abstract class HgTest extends AbstractVcsTestCase {
       @Override
       public void run() {
         try {
-          initProject(myProjectDir);
+          initProject(myProjectDir, testMethod.getName());
           activateVCS(HgVcs.VCS_NAME);
         } catch (Exception e) {
           e.printStackTrace();

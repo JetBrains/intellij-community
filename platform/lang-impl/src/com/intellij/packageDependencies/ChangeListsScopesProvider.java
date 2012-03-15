@@ -18,10 +18,7 @@ package com.intellij.packageDependencies;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +31,7 @@ import java.util.List;
 /**
  * @author anna
  */
-public class ChangeListsScopesProvider implements CustomScopesProvider {
+public class ChangeListsScopesProvider extends CustomScopesProviderEx {
   private Project myProject;
 
   public static ChangeListsScopesProvider getInstance(Project project) {
@@ -55,20 +52,38 @@ public class ChangeListsScopesProvider implements CustomScopesProvider {
     final List<NamedScope> result = new ArrayList<NamedScope>();
     result.add(createScope(changeListManager.getAffectedFiles(), IdeBundle.message("scope.modified.files")));
     for (ChangeList list : changeListManager.getChangeListsCopy()) {
-      final List<VirtualFile> files = new ArrayList<VirtualFile>();
-      final Collection<Change> changes = list.getChanges();
-      for (Change change : changes) {
-        final ContentRevision afterRevision = change.getAfterRevision();
-        if (afterRevision != null) {
-          final VirtualFile vFile = afterRevision.getFile().getVirtualFile();
-          if (vFile != null) {
-            files.add(vFile);
-          }
-        }
-      }
-      result.add(createScope(files, list.getName()));
+      result.add(createChangeListScope(list));
     }
     return result;
+  }
+
+  private static NamedScope createChangeListScope(@NotNull ChangeList list) {
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final Collection<Change> changes = list.getChanges();
+    for (Change change : changes) {
+      final ContentRevision afterRevision = change.getAfterRevision();
+      if (afterRevision != null) {
+        final VirtualFile vFile = afterRevision.getFile().getVirtualFile();
+        if (vFile != null) {
+          files.add(vFile);
+        }
+      }
+    }
+    return createScope(files, list.getName());
+  }
+
+  @Override
+  public NamedScope getCustomScope(String name) {
+    if (myProject.isDefault()) return null;
+    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    if (IdeBundle.message("scope.modified.files").equals(name)) {
+      return createScope(changeListManager.getAffectedFiles(), IdeBundle.message("scope.modified.files"));
+    }
+    final LocalChangeList changeList = changeListManager.getChangeList(name);
+    if (changeList != null) {
+      return createChangeListScope(changeList);
+    }
+    return null;
   }
 
   private static NamedScope createScope(final List<VirtualFile> files, String changeListName) {

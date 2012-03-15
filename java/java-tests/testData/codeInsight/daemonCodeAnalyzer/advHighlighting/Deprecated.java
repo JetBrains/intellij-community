@@ -75,3 +75,15 @@ class Aaa {
     new Aaa("asdasdad") {};
   }
 }
+
+class Anonym {
+    /**
+     * @deprecated
+     */
+    public Anonym(String sss) {
+        System.out.println(sss);
+    }
+    public void foo() {
+        new <warning descr="'Anonym(java.lang.String)' is deprecated">Anonym</warning>("asdasd") {};
+    }
+}

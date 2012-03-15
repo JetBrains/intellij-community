@@ -22,6 +22,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -38,8 +39,8 @@ public class GitRebaserReorderCommitsTest extends GitTest {
   private VirtualFile myRoot;
   private String myFirstCommit;
 
-  @BeforeMethod @Override protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeMethod @Override protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myRebaser = new GitRebaser(myProject, null);
     myRoot = myRepo.getVFRootDir();
     myFirstCommit = makeCommit();

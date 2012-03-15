@@ -230,7 +230,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(String query) {
-    List<Task> tasks = getIssuesFromRepositories(query, 50, 0, true);
+    return getIssues(query, true);
+  }
+
+  @Override
+  public List<Task> getIssues(String query, boolean forceRequest) {
+    List<Task> tasks = getIssuesFromRepositories(query, 50, 0, forceRequest);
     synchronized (myIssueCache) {
       myTemporaryCache.clear();
       myTemporaryCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));

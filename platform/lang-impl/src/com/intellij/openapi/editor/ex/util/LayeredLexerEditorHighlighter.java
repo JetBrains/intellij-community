@@ -70,6 +70,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @Override
   public MappingSegments getSegments() {
     return (MappingSegments)super.getSegments();
   }
@@ -113,6 +114,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @Override
   public void setText(final CharSequence text) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
     updateLayers();
@@ -132,6 +134,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         }
       };
 
+      @Override
       public void addToken(final int i, final int startOffset, final int endOffset, final int data, final IElementType tokenType) {
         getSegments().setElementLight(i, startOffset, endOffset, data);
         final Mapper mapper = getMappingDocument(tokenType);
@@ -151,6 +154,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
   protected boolean updateLayers() { return false; }
 
+  @Override
   public void documentChanged(DocumentEvent e) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
     final boolean b = updateLayers();
@@ -166,6 +170,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
   }
 
+  @Override
   public HighlighterIterator createIterator(int startOffset) {
     // do NOT synchronize before updateLayers due to deadlock with PsiLock
     final boolean b = updateLayers();
@@ -181,6 +186,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   private class MappingSegments extends SegmentArrayWithData {
     MappedRange[] myRanges = new MappedRange[INITIAL_SIZE];
 
+    @Override
     public void removeAll() {
       if (mySegmentCount != 0) {
         Arrays.fill(myRanges, null);
@@ -191,6 +197,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       super.removeAll();
     }
 
+    @Override
     public void setElementAt(int i, int startOffset, int endOffset, int data) {
       setElementLight(i, startOffset, endOffset, (short)data);
       final MappedRange range = myRanges[i];
@@ -207,6 +214,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       myRanges = reallocateArray(myRanges, i+1);
     }
 
+    @Override
     public void remove(int startIndex, int endIndex) {
       Map<Mapper, Integer> mins = new FactoryMap<Mapper, Integer>() {
         @Override
@@ -238,6 +246,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       super.remove(startIndex, endIndex);
     }
 
+    @Override
     public void replace(int startOffset, @NotNull SegmentArrayWithData data, int len) {
       super.replace(startOffset, data, len);
       for (int i = startOffset; i < startOffset + len; i++) {
@@ -245,6 +254,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
     }
 
+    @Override
     public void insert(@NotNull SegmentArrayWithData segmentArray, final int startIndex) {
       synchronized (LayeredLexerEditorHighlighter.this) {
         super.insert(segmentArray, startIndex);
@@ -305,7 +315,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
 
     private Mapper(LayerDescriptor descriptor) {
-      doc = new DocumentImpl(true);
+      doc = new DocumentImpl("",true);
 
       mySyntaxHighlighter = descriptor.getLayerHighlighter();
       myBackground = descriptor.getBackgroundKey();
@@ -330,14 +340,17 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return new LimitedRangeHighlighterIterator(highlighter.createIterator(rangeStart + shift), rangeStart, rangeEnd);
     }
 
+    @Override
     public Project getProject() {
       return getClient().getProject();
     }
 
+    @Override
     public void repaint(int start, int end) {
       // TODO: map ranges to outer document
     }
 
+    @Override
     public Document getDocument() {
       return LayeredLexerEditorHighlighter.this.getDocument();
     }
@@ -480,6 +493,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       }
     }
 
+    @Override
     public TextAttributes getTextAttributes() {
       if (myCurrentMapper != null) {
         return myCurrentMapper.getAttributes(getTokenType());
@@ -488,6 +502,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return myBaseIterator.getTextAttributes();
     }
 
+    @Override
     public int getStart() {
       if (myLayerIterator != null) {
         return myLayerIterator.getStart() + myLayerStartOffset;
@@ -495,6 +510,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return myBaseIterator.getStart();
     }
 
+    @Override
     public int getEnd() {
       if (myLayerIterator != null) {
         return myLayerIterator.getEnd() + myLayerStartOffset;
@@ -502,10 +518,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return myBaseIterator.getEnd();
     }
 
+    @Override
     public IElementType getTokenType() {
       return myLayerIterator != null ? myLayerIterator.getTokenType() : myBaseIterator.getTokenType();
     }
 
+    @Override
     public void advance() {
       if (myLayerIterator != null) {
         myLayerIterator.advance();
@@ -515,6 +533,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       initLayer(0);
     }
 
+    @Override
     public void retreat() {
       if (myLayerIterator != null) {
         myLayerIterator.retreat();
@@ -525,10 +544,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       initLayer(myBaseIterator.atEnd() ? 0 : myBaseIterator.getEnd() - myBaseIterator.getStart() - 1);
     }
 
+    @Override
     public boolean atEnd() {
       return myBaseIterator.atEnd();
     }
 
+    @Override
     public Document getDocument() {
       return myBaseIterator.getDocument();
     }

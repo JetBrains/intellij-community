@@ -127,6 +127,8 @@
       <reference id="Gradle.SyncTreeFilter.Conflict"/>
       <reference id="Gradle.SyncTreeFilter.Confirmed"/>
     </group>
+    
+    <action id="Gradle.RebuildChangesTree" class="org.jetbrains.plugins.gradle.action.GradleRebuildStructureChangesTreeAction"/>
   </actions>
   
 </idea-plugin>

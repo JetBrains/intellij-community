@@ -1,18 +1,21 @@
 package org.jetbrains.jps.javac;
 
-import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.DefaultFileManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.List;
-import com.sun.tools.javac.util.ListBuffer;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.*;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,6 +28,7 @@ class OptimizedFileManager extends DefaultFileManager {
   private boolean myUseZipFileIndex;
   private final Map<File, Archive> myArchives;
   private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
+  private final Map<InputFileObject, SoftReference<CharBuffer>> myContentCache = new HashMap<InputFileObject, SoftReference<CharBuffer>>();
 
   public OptimizedFileManager() throws Throwable {
     super(new Context(), true, null);
@@ -40,6 +44,33 @@ class OptimizedFileManager extends DefaultFileManager {
     catch (Exception e) {
       myUseZipFileIndex = false;
     }
+  }
+
+  @Override
+  public FileObject getFileForInput(Location location, String packageName, String relativeName) throws IOException {
+    final String name = StringUtil.isEmpty(packageName) ? FileUtil.toSystemIndependentName(relativeName) : (packageName.replace('.', '/') + "/" + FileUtil.toSystemIndependentName(relativeName));
+    return getFileForInput(location, name);
+  }
+
+  @Override
+  public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
+    final String name = className.replace('.', '/') + kind.extension;
+    return getFileForInput(location, name);
+  }
+
+  @Override
+  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
+    java.util.List<InputFileObject> result;
+    if (files instanceof Collection) {
+      result = new ArrayList<InputFileObject>(((Collection)files).size());
+    }
+    else {
+      result = new ArrayList<InputFileObject>();
+    }
+    for (File f: files) {
+      result.add(new InputFileObject(f));
+    }
+    return result;
   }
 
   @Override
@@ -123,7 +154,7 @@ class OptimizedFileManager extends DefaultFileManager {
     if (children != null) {
       for (File child : children) {
         if (isValidFile(child.getName(), fileKinds) && isFile(child)) {
-          final JavaFileObject fe = getRegularFile(child);
+          final JavaFileObject fe = new InputFileObject(child);
           result.append(fe);
         }
       }
@@ -142,7 +173,7 @@ class OptimizedFileManager extends DefaultFileManager {
     }
     else {
       if (isValidFile(name, fileKinds)) {
-        JavaFileObject fe = getRegularFile(file);
+        JavaFileObject fe = new InputFileObject(file);
         result.append(fe);
       }
     }
@@ -166,12 +197,318 @@ class OptimizedFileManager extends DefaultFileManager {
     return fileKinds.contains(kind);
   }
 
+  private JavaFileObject getFileForInput(Location location, String name) throws IOException {
+    Iterable<? extends File> path = getLocation(location);
+    if (path == null) {
+      return null;
+    }
+
+    for (File root : path) {
+      Archive archive = myArchives.get(root);
+      final boolean isFile;
+      if (archive != null) {
+        isFile = true;
+      }
+      else {
+        isFile = isFile(root);
+      }
+      if (isFile) {
+        if (archive == null) {
+          try {
+            archive = openArchive(root);
+          }
+          catch (IOException ex) {
+            log.error("error.reading.file", root, ex.getLocalizedMessage());
+            break;
+          }
+        }
+        if (archive.contains(name)) {
+          int i = name.lastIndexOf('/');
+          String dirname = name.substring(0, i+1);
+          String basename = name.substring(i+1);
+          return archive.getFileObject(dirname, basename);
+        }
+      }
+      else {
+        final File f = new File(root, name.replace('/', File.separatorChar));
+        if (f.exists()) {
+          return new InputFileObject(f);
+        }
+      }
+    }
+    return null;
+  }
+
   //actually Javac doesn't check if this method returns null. It always get substring of the returned string starting from the last dot.
   @Override
   public String inferBinaryName(Location location, JavaFileObject file) {
-      final String name = file.getName();
-      int dot = name.lastIndexOf('.');
-      final String relativePath = dot != -1 ? name.substring(0, dot) : name;
-      return relativePath.replace(File.separatorChar, '.');
+    final String name = file.getName();
+    int dot = name.lastIndexOf('.');
+    final String relativePath = dot != -1 ? name.substring(0, dot) : name;
+    return relativePath.replace(File.separatorChar, '.');
   }
+
+  private class InputFileObject extends BaseFileObject {
+    /** The file's name.
+     */
+    private String name;
+
+    /** The underlying file.
+     */
+    final File f;
+
+    public InputFileObject(File f) {
+      this(f.getName(), f);
+    }
+
+    public InputFileObject(String name, File f) {
+      this.name = name;
+      this.f = f;
+    }
+
+    public InputStream openInputStream() throws IOException {
+      return new FileInputStream(f);
+    }
+
+    public Reader openReader(boolean ignoreEncodingErrors) throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    public OutputStream openOutputStream() throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    public Writer openWriter() throws IOException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Deprecated
+    public String getName() {
+      return name;
+    }
+
+    public boolean isNameCompatible(String cn, JavaFileObject.Kind kind) {
+      String n = cn + kind.extension;
+      if (name.equals(n)) {
+        return true;
+      }
+      if (name.equalsIgnoreCase(n)) {
+        try {
+          // allow for Windows
+          return (f.getCanonicalFile().getName().equals(n));
+        }
+        catch (IOException e) {
+        }
+      }
+      return false;
+    }
+
+    /** @deprecated see bug 6410637 */
+    @Deprecated
+    public String getPath() {
+      return f.getPath();
+    }
+
+    public long getLastModified() {
+      return f.lastModified();
+    }
+
+    public boolean delete() {
+      return f.delete();
+    }
+
+    public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
+      SoftReference<CharBuffer> r = myContentCache.get(this);
+      CharBuffer cb = (r == null ? null : r.get());
+      if (cb == null) {
+        InputStream in = new FileInputStream(f);
+        try {
+          ByteBuffer bb = makeByteBuffer(in);
+          JavaFileObject prev = log.useSource(this);
+          try {
+            cb = decode(bb, ignoreEncodingErrors);
+          }
+          finally {
+            log.useSource(prev);
+          }
+          myByteBufferCache.put(bb); // save for next time
+          if (!ignoreEncodingErrors) {
+            myContentCache.put(this, new SoftReference<CharBuffer>(cb));
+          }
+        }
+        finally {
+          in.close();
+        }
+      }
+      return cb;
+    }
+
+    //public CharBuffer getCharContent(boolean ignoreEncodingErrors) throws IOException {
+    //  final String encodingName = getEncodingName();
+    //  SoftReference<CharBuffer> r = myContentCache.get(this);
+    //  CharBuffer cb = (r == null ? null : r.get());
+    //  if (cb == null) {
+    //    InputStream in = new FileInputStream(f);
+    //    try {
+    //      JavaFileObject prev = log.useSource(this);
+    //      try {
+    //        final char[] chars = FileUtil.loadFileText(f, encodingName);
+    //        cb = CharBuffer.wrap(chars);
+    //      }
+    //      finally {
+    //        log.useSource(prev);
+    //      }
+    //      if (!ignoreEncodingErrors) {
+    //        myContentCache.put(this, new SoftReference<CharBuffer>(cb));
+    //      }
+    //    }
+    //    finally {
+    //      in.close();
+    //    }
+    //  }
+    //  return cb;
+    //}
+
+    @Override
+    public boolean equals(Object other) {
+      if (!(other instanceof InputFileObject)) {
+        return false;
+      }
+      InputFileObject o = (InputFileObject) other;
+      try {
+        return f.equals(o.f) || f.getCanonicalFile().equals(o.f.getCanonicalFile());
+      }
+      catch (IOException e) {
+        return false;
+      }
+    }
+
+    @Override
+    public int hashCode() {
+      return f.hashCode();
+    }
+
+    public URI toUri() {
+      try {
+        return new URI(f.getPath());
+      }
+      catch (URISyntaxException ex) {
+        return f.toURI();
+      }
+    }
+  }
+
+  private ByteBuffer makeByteBuffer(InputStream in) throws IOException {
+    int limit = in.available();
+    if (limit < 1024) {
+      limit = 1024;
+    }
+    ByteBuffer result = myByteBufferCache.get(limit);
+    int position = 0;
+    while (in.available() != 0) {
+      if (position >= limit) {
+        // expand buffer
+        result = ByteBuffer.allocate(limit <<= 1).put((ByteBuffer)result.flip());
+      }
+      final int count = in.read(result.array(), position, limit - position);
+      if (count < 0) {
+        break;
+      }
+      result.position(position += count);
+    }
+    return (ByteBuffer)result.flip();
+  }
+
+  private CharBuffer decode(ByteBuffer inbuf, boolean ignoreEncodingErrors) {
+    CharsetDecoder decoder;
+    String encodingName = getEncodingName();
+    try {
+      Charset charset = (this.charset == null) ? Charset.forName(encodingName) : this.charset;
+      decoder = charset.newDecoder();
+
+      CodingErrorAction action;
+      if (ignoreEncodingErrors) {
+        action = CodingErrorAction.REPLACE;
+      }
+      else {
+        action = CodingErrorAction.REPORT;
+      }
+
+      decoder.onMalformedInput(action).onUnmappableCharacter(action);
+    }
+    catch (IllegalCharsetNameException e) {
+      log.error("unsupported.encoding", encodingName);
+      return (CharBuffer)CharBuffer.allocate(1).flip();
+    }
+    catch (UnsupportedCharsetException e) {
+      log.error("unsupported.encoding", encodingName);
+      return (CharBuffer)CharBuffer.allocate(1).flip();
+    }
+
+    // slightly overestimate the buffer size to avoid reallocation.
+    final float factor = decoder.averageCharsPerByte() * 0.8f + decoder.maxCharsPerByte() * 0.2f;
+    CharBuffer dest = CharBuffer.allocate(10 + (int)(inbuf.remaining() * factor));
+
+    while (true) {
+      CoderResult result = decoder.decode(inbuf, dest, true);
+      dest.flip();
+
+      if (result.isUnderflow()) { // done reading
+        // make sure there is at least one extra character
+        if (dest.limit() == dest.capacity()) {
+          dest = CharBuffer.allocate(dest.capacity()+1).put(dest);
+          dest.flip();
+        }
+        return dest;
+      }
+      else if (result.isOverflow()) { // buffer too small; expand
+        int newCapacity = 10 + dest.capacity() + (int)(inbuf.remaining()*decoder.maxCharsPerByte());
+        dest = CharBuffer.allocate(newCapacity).put(dest);
+      }
+      else if (result.isMalformed() || result.isUnmappable()) {
+        // bad character in input
+
+        // report coding error (warn only pre 1.5)
+        if (!getSource().allowEncodingErrors()) {
+          log.error(new JCDiagnostic.SimpleDiagnosticPosition(dest.limit()), "illegal.char.for.encoding", charset == null ? encodingName : charset.name());
+        }
+        else {
+          log.warning(new JCDiagnostic.SimpleDiagnosticPosition(dest.limit()), "illegal.char.for.encoding", charset == null ? encodingName : charset.name());
+        }
+
+        // skip past the coding error
+        inbuf.position(inbuf.position() + result.length());
+
+        // undo the flip() to prepare the output buffer
+        // for more translation
+        dest.position(dest.limit());
+        dest.limit(dest.capacity());
+        dest.put((char)0xfffd); // backward compatible
+      }
+      else {
+        throw new AssertionError(result);
+      }
+    }
+    // unreached
+  }
+
+  private static class ByteBufferCache {
+    private ByteBuffer cached;
+
+    ByteBuffer get(int capacity) {
+      if (capacity < 20480) {
+        capacity = 20480;
+      }
+      ByteBuffer result = (cached != null && cached.capacity() >= capacity) ?
+                          (ByteBuffer)cached.clear() :
+                          ByteBuffer.allocate(capacity + capacity>>1);
+      cached = null;
+      return result;
+    }
+    void put(ByteBuffer x) {
+      cached = x;
+    }
+  }
+  private final ByteBufferCache myByteBufferCache = new ByteBufferCache();
+
 }

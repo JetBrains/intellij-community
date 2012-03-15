@@ -134,8 +134,9 @@ public abstract class AbstractVcsTestCase {
     return result;
   }
 
-  protected void initProject(final File clientRoot) throws Exception {
-    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
+  protected void initProject(final File clientRoot, String testName) throws Exception {
+    String name = getClass().getName() + "." + testName;
+    final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
     myProjectFixture = testFixtureBuilder.getFixture();
     testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
     myProjectFixture.setUp();
