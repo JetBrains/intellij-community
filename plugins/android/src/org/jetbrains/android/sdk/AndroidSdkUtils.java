@@ -24,11 +24,14 @@ import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
 import com.intellij.CommonBundle;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.OSProcessManager;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -39,6 +42,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -47,6 +51,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
+import org.jetbrains.android.actions.AndroidRunDdmsAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
@@ -464,23 +469,48 @@ public class AndroidSdkUtils {
     return null;
   }
 
-  public static boolean activateDdmsIfNecessary(@NotNull Project project, @Nullable AndroidDebugBridge bridge) {
+  public static boolean activateDdmsIfNecessary(@NotNull Project project, @NotNull Computable<AndroidDebugBridge> bridgeProvider) {
     if (AndroidEnableAdbServiceAction.isAdbServiceEnabled()) {
+      final AndroidDebugBridge bridge = bridgeProvider.compute();
       if (bridge != null && isDdmsCorrupted(bridge)) {
         LOG.info("DDMLIB is corrupted and will be restarted");
         restartDdmlib(project);
       }
     }
     else {
+      final OSProcessHandler ddmsProcessHandler = AndroidRunDdmsAction.getDdmsProcessHandler();
+      if (ddmsProcessHandler != null) {
+        final int r = Messages
+          .showYesNoDialog(project, "DDMS will be closed to activate ADB service. Continue?", "ADB activation", Messages.getQuestionIcon());
+
+        if (r != Messages.YES) {
+          return false;
+        }
+
+        final Runnable destroyingRunnable = new Runnable() {
+          @Override
+          public void run() {
+            if (!ddmsProcessHandler.isProcessTerminated()) {
+              OSProcessManager.getInstance().killProcessTree(ddmsProcessHandler.getProcess());
+              ddmsProcessHandler.waitFor();
+            }
+          }
+        };
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(destroyingRunnable, "Closing DDMS", true, project)) {
+          return false;
+        }
+
+        AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true);
+        return true;
+      }
+
       int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
                                             AndroidBundle.message("android.ddms.disabled.dialog.title"),
                                             Messages.getQuestionIcon());
       if (result != 0) {
         return false;
       }
-      if (!AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true)) {
-        return false;
-      }
+      AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true);
     }
     return true;
   }
