@@ -26,7 +26,7 @@ public class MavenRunConfigurationTest extends IdeaTestCase {
   public void testSaveLoadRunnerParameters() {
     MavenRunConfiguration.MavenSettings s = new MavenRunConfiguration.MavenSettings(myProject);
     s.myRunnerParameters.setWorkingDirPath("some path");
-    s.myRunnerParameters.setGoals(Arrays.asList("clean validate"));
+    s.myRunnerParameters.setGoals(Arrays.asList("clean", "validate"));
     s.myRunnerParameters.setProfilesMap(ImmutableMap.of("prof1", true, "prof2", true, "prof3", false));
 
     Element xml = XmlSerializer.serialize(s);

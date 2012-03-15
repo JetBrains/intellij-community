@@ -107,6 +107,7 @@ public class MavenRunnerParameters implements Cloneable {
   }
 
   public void setGoals(@Nullable List<String> goals) {
+    if (myGoals == goals) return;  // Called from XML Serializer
     myGoals.clear();
 
     if (goals != null) {
