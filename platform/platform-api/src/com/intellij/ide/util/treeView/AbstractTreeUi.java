@@ -27,6 +27,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -751,7 +752,7 @@ public class AbstractTreeUi {
   }
 
   private boolean isAutoExpand(NodeDescriptor descriptor, boolean validate) {
-    if (descriptor == null) return false;
+    if (descriptor == null || isAlwaysExpandedTree()) return false;
 
     boolean autoExpand = getBuilder().isAutoExpandNode(descriptor);
 
@@ -819,6 +820,10 @@ public class AbstractTreeUi {
 
   private boolean isAutoExpand(DefaultMutableTreeNode node) {
     return isAutoExpand(getDescriptorFrom(node));
+  }
+
+  private boolean isAlwaysExpandedTree() {
+    return myTree instanceof AlwaysExpandedTree && ((AlwaysExpandedTree)myTree).isAlwaysExpanded();
   }
 
   private AsyncResult<Boolean> update(final NodeDescriptor nodeDescriptor, boolean now) {
