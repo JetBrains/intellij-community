@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
