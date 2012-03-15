@@ -1,4 +1,4 @@
-from pycharm.tcmessages import TeamcityServiceMessages
+from tcmessages import TeamcityServiceMessages
 import os
 import sys
 
