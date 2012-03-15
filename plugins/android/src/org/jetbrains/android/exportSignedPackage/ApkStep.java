@@ -27,6 +27,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -247,7 +248,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
         }
         Messages.showInfoMessage(myWizard.getProject(), AndroidBundle.message("android.export.package.success.message", apkPath), title);
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -292,7 +293,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
       public void run() {
         Messages.showErrorDialog(myWizard.getProject(), "Error: " + message, CommonBundle.getErrorTitle());
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   @Nullable
