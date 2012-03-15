@@ -29,6 +29,7 @@ import git4idea.status.GitChangeProvider;
 import git4idea.test.GitTestUtil;
 import org.testng.annotations.BeforeMethod;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -54,8 +55,8 @@ public class GitChangeProviderTest extends GitTest {
 
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myChangeProvider = (GitChangeProvider) GitVcs.getInstance(myProject).getChangeProvider();
 
     myFiles = GitTestUtil.createFileStructure(myProject, myRepo, "a.txt", "b.txt", "dir/c.txt", "dir/subdir/d.txt");

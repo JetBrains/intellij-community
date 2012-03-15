@@ -18,7 +18,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.AbstractVcsTestCase;
+import com.intellij.testFramework.AbstractJunitVcsTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public abstract class SvnTestCase extends AbstractVcsTestCase {
+public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected TempDirTestFixture myTempDirFixture;
   private File myWcRoot;
   protected String myRepoUrl;
@@ -78,7 +78,7 @@ public abstract class SvnTestCase extends AbstractVcsTestCase {
           myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
           verify(runSvn("co", myRepoUrl, "."));
 
-          initProject(myWcRoot);
+          initProject(myWcRoot, SvnTestCase.this.getTestName());
           activateVCS(SvnVcs.VCS_NAME);
 
           myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));

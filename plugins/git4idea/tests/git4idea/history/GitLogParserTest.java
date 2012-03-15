@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static git4idea.history.GitLogParser.*;
@@ -106,8 +107,8 @@ public class GitLogParserTest extends GitTest {
 
 
   @BeforeMethod
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myRoot = new LightVirtualFile();
     myRecord = RECORD1; // for single record tests
   }

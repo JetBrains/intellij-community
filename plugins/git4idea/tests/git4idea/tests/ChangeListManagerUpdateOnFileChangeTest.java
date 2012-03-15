@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,8 +45,8 @@ public class ChangeListManagerUpdateOnFileChangeTest extends GitTest {
 
   @Override
   @BeforeMethod
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     myChangeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
     // we'll need a file in all tests => testing file creation here

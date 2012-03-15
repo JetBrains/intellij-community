@@ -35,6 +35,7 @@ import org.zmlx.hg4idea.provider.update.HgRegularUpdater;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -54,8 +55,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
 
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void setUp(Method testMethod) throws Exception {
+    super.setUp(testMethod);
     projectRepoVirtualFile = myRepo.getDir();
     projectRepo = new File(myRepo.getDir().getPath());
     remoteRepo = new File(myParentRepo.getDir().getPath());

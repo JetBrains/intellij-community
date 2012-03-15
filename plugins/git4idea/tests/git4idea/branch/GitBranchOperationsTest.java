@@ -63,7 +63,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
   private TempDirTestFixture myTempDirFixture;
 
   @BeforeMethod
-  public void setup() throws Exception {
+  public void setup(final Method testMethod) throws Exception {
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     myTempDirFixture = fixtureFactory.createTempDirTestFixture();
     myTempDirFixture.setUp();
@@ -75,7 +75,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
       @Override
       public void run() {
         try {
-          initProject(projectDir);
+          initProject(projectDir, testMethod.getName());
           initRepositories(VcsUtil.getVirtualFile(projectDir));
         }
         catch (Exception e) {
