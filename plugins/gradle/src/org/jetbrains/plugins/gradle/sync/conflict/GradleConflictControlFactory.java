@@ -31,10 +31,13 @@ import java.util.Collection;
  */
 public class GradleConflictControlFactory {
   
-  @NotNull private final GradleLibraryDependencyConflictControlFactory myLibraryFactory;
+  @NotNull private final GradleLibraryDependencyConflictControlFactory myLibraryDependencyFactory;
+  @NotNull private final GradleCommonDependencyConflictControlFactory  myCommonDependencyFactory;
 
-  public GradleConflictControlFactory(@NotNull GradleLibraryDependencyConflictControlFactory factory) {
-    myLibraryFactory = factory;
+  public GradleConflictControlFactory(@NotNull GradleLibraryDependencyConflictControlFactory libraryFactory,
+                                      @NotNull GradleCommonDependencyConflictControlFactory commonDependencyFactory) {
+    myLibraryDependencyFactory = libraryFactory;
+    myCommonDependencyFactory = commonDependencyFactory;
   }
 
   /**
@@ -63,12 +66,12 @@ public class GradleConflictControlFactory {
 
       @Override
       public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-        result.set(myLibraryFactory.getControl(libraryDependency, changes));
+        result.set(myLibraryDependencyFactory.getControl(libraryDependency, changes));
       }
 
       @Override
       public void visit(@NotNull ModuleOrderEntry moduleDependency) {
-        
+        result.set(myCommonDependencyFactory.getControl(moduleDependency, changes));
       }
 
       @Override
