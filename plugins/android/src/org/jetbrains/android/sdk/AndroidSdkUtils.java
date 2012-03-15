@@ -43,10 +43,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
@@ -462,25 +465,22 @@ public class AndroidSdkUtils {
   }
 
   public static boolean activateDdmsIfNecessary(@NotNull Project project, @Nullable AndroidDebugBridge bridge) {
-    final boolean ddmsEnabled = AndroidEnableAdbServiceAction.isAdbServiceEnabled();
-    boolean shouldRestartDdms = !ddmsEnabled;
-
-    if (ddmsEnabled && bridge != null && isDdmsCorrupted(bridge)) {
-      shouldRestartDdms = true;
-      LOG.info("DDMLIB is corrupted and will be restarted");
-      AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, false);
-    }
-
-    if (shouldRestartDdms) {
-      if (!ddmsEnabled) {
-        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
-                                              AndroidBundle.message("android.ddms.disabled.dialog.title"),
-                                              Messages.getQuestionIcon());
-        if (result != 0) {
-          return false;
-        }
+    if (AndroidEnableAdbServiceAction.isAdbServiceEnabled()) {
+      if (bridge != null && isDdmsCorrupted(bridge)) {
+        LOG.info("DDMLIB is corrupted and will be restarted");
+        restartDdmlib(project);
       }
-      AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true);
+    }
+    else {
+      int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
+                                            AndroidBundle.message("android.ddms.disabled.dialog.title"),
+                                            Messages.getQuestionIcon());
+      if (result != 0) {
+        return false;
+      }
+      if (!AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true)) {
+        return false;
+      }
     }
     return true;
   }
@@ -513,5 +513,18 @@ public class AndroidSdkUtils {
       }
     }
     return false;
+  }
+
+  public static void restartDdmlib(@NotNull Project project) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
+    boolean hidden = false;
+    if (toolWindow != null && toolWindow.isVisible()) {
+      hidden = true;
+      toolWindow.hide(null);
+    }
+    AndroidSdkData.terminateDdmlib();
+    if (hidden) {
+      toolWindow.show(null);
+    }
   }
 }

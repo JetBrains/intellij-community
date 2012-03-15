@@ -255,10 +255,12 @@ public class AndroidSdkData {
   }
 
   private void doInitializeDdmlib() {
+    doInitializeDdmlib(getAdbPath());
+  }
+
+  private static void doInitializeDdmlib(@NotNull String adbPath) {
     synchronized (myDdmsLock) {
-      String adbPath = getAdbPath();
       if (!myDdmLibInitialized) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myDdmLibInitialized = true;
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableAdbServiceAction.isAdbServiceEnabled());
