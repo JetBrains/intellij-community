@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,20 +203,6 @@ public class ShowFilePathAction extends AnAction {
       return;
     }
 
-    // workaround for Ubuntu 11.10 inability to open file:/path/ URLs
-    try {
-      if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-        Desktop.getDesktop().open(new File(path));
-        return;
-      }
-    }
-    catch (IOException e) {
-      final String message = e.getMessage();
-      if (!new File(path).isDirectory() || message == null || !message.startsWith("Failed to show URI:file")) {
-        throw e;
-      }
-    }
-
     if (SystemInfo.hasXdgOpen) {
       new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
     }
@@ -225,6 +211,9 @@ public class ShowFilePathAction extends AnAction {
     }
     else if (SystemInfo.isKDE) {
       new GeneralCommandLine("kfmclient", "exec", path).createProcess();
+    }
+    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+      Desktop.getDesktop().open(new File(path));
     }
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
