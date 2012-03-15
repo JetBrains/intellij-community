@@ -42,10 +42,10 @@ public final class FileChooserUtil {
     }
     else if (toSelect != null && lastPath != null) {
       if (Boolean.TRUE.equals(descriptor.getUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT))) {
-        return toSelect;
+        return lastPath;
       }
       else {
-        return lastPath;
+        return toSelect;
       }
     }
     else if (toSelect == null) {
