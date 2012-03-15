@@ -119,38 +119,32 @@ public class MavenResumeAction extends AnAction {
         String text = event.getText().trim();
         if (text.isEmpty()) return;
 
+        String textWithoutInfo = "";
+        if (text.startsWith("[INFO] ")) {
+          textWithoutInfo = text.substring("[INFO] ".length()).trim();
+        }
+
         switch (myState) {
           case STATE_INITIAL: // initial state.
-            if (text.equals("[INFO] Reactor build order:")) {
+            if (textWithoutInfo.equalsIgnoreCase("Reactor build order:")) {
               myState = STATE_READING_PROJECT_LIST;
             }
             break;
 
           case STATE_READING_PROJECT_LIST:
-            if (text.equals("[INFO] ------------------------------------------------------------------------")) {
+            if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
               myState = STATE_WAIT_FOR_BUILD;
             }
-            else if (text.startsWith("[INFO]   ")) {
-              String projectName = text.substring("[INFO]   ".length());
-              if (projectName.isEmpty()) {
-                myState = STATE_WTF;
-                log("Empty project name in \"Reactor build order\" section!!! other project names: " + myMavenProjectNames);
-              }
-              else {
-                myMavenProjectNames.add(projectName);
-              }
-            }
-            else {
-              myState = STATE_WTF;
-              log("\"Reactor build order\" doesn't end by \"-----\"!!! it's end by: " + text);
+            else if (textWithoutInfo.length() > 0) {
+              myMavenProjectNames.add(textWithoutInfo);
             }
             break;
 
           case STATE_WAIT_FOR_BUILD:
-            if (text.startsWith("[INFO] Building ")) {
-              String projectName = text.substring("[INFO] Building ".length());
+            if (textWithoutInfo.startsWith("Building ")) {
+              String projectName = textWithoutInfo.substring("Building ".length());
               if (myBuildingProjectIndex > myMavenProjectNames.size() ||
-                  !myMavenProjectNames.get(myBuildingProjectIndex).equals(projectName)) {
+                  !projectName.startsWith(myMavenProjectNames.get(myBuildingProjectIndex))) {
                 myState = STATE_WTF;
                 log(String.format("Invalid project building order. Defined order: %s, error index: %d, invalid line: %s",
                                   myMavenProjectNames, myBuildingProjectIndex, text));
@@ -163,7 +157,7 @@ public class MavenResumeAction extends AnAction {
             break;
 
           case STATE_WAIT_FOR______:
-            if (text.equals("[INFO] ------------------------------------------------------------------------")) {
+            if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
               myState = STATE_WAIT_FOR_BUILD;
             }
             break;
@@ -207,6 +201,21 @@ public class MavenResumeAction extends AnAction {
     for (MavenProject mavenProject : projects) {
       String id = mavenProject.getMavenId().getGroupId() + ':' + mavenProject.getMavenId().getArtifactId() + ':' + mavenProject.getPackaging();
       if (projectName.contains(id)) {
+        if (candidate == null) {
+          candidate = mavenProject;
+        }
+        else {
+          return null;
+        }
+      }
+    }
+
+    if (candidate != null) {
+      return candidate;
+    }
+
+    for (MavenProject mavenProject : projects) {
+      if (projectName.equals(mavenProject.getMavenId().getArtifactId())) {
         if (candidate == null) {
           candidate = mavenProject;
         }

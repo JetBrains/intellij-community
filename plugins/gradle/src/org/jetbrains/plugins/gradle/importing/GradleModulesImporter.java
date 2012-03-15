@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleGroovyEnabler;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.*;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -318,6 +319,21 @@ public class GradleModulesImporter {
         finally {
           writeLock.finish();
         }
+        final GradleSettings settings = GradleSettings.getInstance(intellijProject);
+        final String gradleHome = settings.getGradleHome();
+        if (gradleHome != null) {
+          final GradleGroovyEnabler groovyEnabler = intellijProject.getComponent(GradleGroovyEnabler.class);
+          libraryToPreserve.set(groovyEnabler.setupGroovySdkIfNecessary(gradleHome));
+        }
+
+        // Force refresh the infrastructure in order to apply newly introduce intellij project structure changes
+        final GradleProjectStructureChangesModel changesModel = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
+        if (changesModel != null) {
+          final GradleProject project = changesModel.getGradleProject();
+          if (project != null) {
+            changesModel.update(project);
+          }
+        }
       }
     };
     
@@ -337,21 +353,8 @@ public class GradleModulesImporter {
           }); 
       }
     };
-    
-    Runnable setupGroovyTask = new Runnable() {
-      @Override
-      public void run() {
-        final GradleSettings settings = GradleSettings.getInstance(intellijProject);
-        final String gradleHome = settings.getGradleHome();
-        if (gradleHome != null) {
-          final GradleGroovyEnabler groovyEnabler = intellijProject.getComponent(GradleGroovyEnabler.class);
-          libraryToPreserve.set(groovyEnabler.setupGroovySdkIfNecessary(gradleHome));
-        }
-        resolveDependenciesTask.run();
-      }
-    };
-    
-    UIUtil.invokeLaterIfNeeded(setupGroovyTask);
+
+    UIUtil.invokeLaterIfNeeded(resolveDependenciesTask);
   }
 
   private static void doSetupLibraries(@NotNull Map<GradleModule, Module> moduleMappings,

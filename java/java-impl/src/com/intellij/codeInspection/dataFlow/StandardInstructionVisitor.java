@@ -123,7 +123,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final DfaValue qualifier = memState.pop();
     if (instruction.getExpression().isPhysical() && !memState.applyNotNull(qualifier)) {
       onInstructionProducesNPE(instruction, runner);
-      return DfaInstructionState.EMPTY_ARRAY;
+
+      if (qualifier instanceof DfaVariableValue) {
+        final DfaNotNullValue.Factory factory = runner.getFactory().getNotNullFactory();
+        memState.setVarValue((DfaVariableValue)qualifier, factory.create(((DfaVariableValue)qualifier).getPsiVariable().getType()));
+      }
     }
 
     return nextInstruction(instruction, runner, memState);

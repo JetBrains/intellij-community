@@ -504,28 +504,29 @@ public class JavaCompletionUtil {
     }
     if (plainQualifier != null) {
       Object o = item.getObject();
-      if (containsMember(plainQualifier, o)) {
-        if (!(o instanceof PsiMethod)) {
-          return item;
-        }
+      if (o instanceof PsiMethod) {
         PsiType castType = castTypeItem.getPsiType();
         if (plainQualifier instanceof PsiClassType && castType instanceof PsiClassType) {
           PsiMethod method = (PsiMethod)o;
           PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
           PsiClass plainClass = plainResult.getElement();
-          PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
+          if (plainClass != null && plainClass.findMethodBySignature(method, true) != null) {
+            PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
 
-          if (castClass == null || plainClass == null || !castClass.isInheritor(plainClass, true)) {
-            return item;
-          }
+            if (castClass == null || !castClass.isInheritor(plainClass, true)) {
+              return item;
+            }
 
-          PsiSubstitutor plainSub = plainResult.getSubstitutor();
-          PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
-          if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
-              plainSub.substitute(method.getReturnType()).equals(castSub.substitute(method.getReturnType()))) {
-            return item;
+            PsiSubstitutor plainSub = plainResult.getSubstitutor();
+            PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
+            if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
+                plainSub.substitute(method.getReturnType()).equals(castSub.substitute(method.getReturnType()))) {
+              return item;
+            }
           }
         }
+      } else if (containsMember(plainQualifier, o)) {
+        return item;
       }
     }
 

@@ -47,7 +47,7 @@ import java.util.List;
  */
 public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
-  private static final int    TOOLTIP_DELAY_MILLIS                   = 500;
+  private static final int    TOOLTIP_DELAY_MILLIS                   = 300;
   private static final int    COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
   private static final Comparator<TreePath> PATH_COMPARATOR = new Comparator<TreePath>() {
@@ -59,7 +59,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private final Alarm            myToolbarAppearanceAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm            myToolbarTrackingAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Alarm            myCollapseStateAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm            myCollapseStateAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<JComponent> myToolbarControls        = new ArrayList<JComponent>();
   
   /** Holds list of paths which 'expand/collapse' state should be restored. */
@@ -213,14 +213,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
                                final @NotNull ActionToolbar toolbar,
                                final @NotNull JComponent toolbarComponent)
   {
-    if (mySuppressToolbar || node == myNodeWithActiveToolbar) {
+    if (mySuppressToolbar || node == myNodeWithActiveToolbar || myTree.getSelectionCount() > 1) {
       return;
     }
     myToolbarAppearanceAlarm.cancelAllRequests();
     myToolbarAppearanceAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (myNodeUnderMouse != node) {
+        if (myNodeUnderMouse != node || myTree.getSelectionCount() > 1) {
           return;
         }
         final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
@@ -318,6 +318,9 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         result = myNodeUnderMouse;
       }
       return result;
+    }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return GradleConstants.HELP_TOPIC_TOOL_WINDOW;
     }
     else {
       return super.getData(dataId);

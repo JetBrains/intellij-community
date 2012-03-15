@@ -236,7 +236,10 @@ public class GradleApiFacadeManager {
       GradleLog.LOG.warn("Detected unexpected duplicate tooling api facade instance creation");
       return myFacade.get().first;
     }
-    result.applySettings(getRemoteSettings());
+    if (!StringUtil.isEmpty(newPair.second.getJavaHome())) {
+      GradleLog.LOG.info("Instructing gradle to use java from " + newPair.second.getJavaHome());
+    }
+    result.applySettings(newPair.second);
     RemoteGradleProgressNotificationManager exported = myExportedProgressManager.get();
     if (exported == null) {
       try {

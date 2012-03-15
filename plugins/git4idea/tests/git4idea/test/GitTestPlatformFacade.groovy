@@ -77,6 +77,11 @@ public class GitTestPlatformFacade implements PlatformFacade {
     computable.compute()
   }
 
+  @Override
+  void runReadAction(Runnable runnable) {
+    runnable.run()
+  }
+
   @NotNull
   @Override
   AbstractVcs getVcs(@NotNull Project project) {

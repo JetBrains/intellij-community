@@ -21,6 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +41,8 @@ public class ChromeSettingsConfigurable implements Configurable {
   private TextFieldWithBrowseButton myUserDataDirField;
   private JCheckBox myEnableRemoteDebugCheckBox;
   private JTextField myPortField;
+  private JLabel myCommandLineOptionsLabel;
+  private RawCommandLineEditor myCommandLineOptionsEditor;
   private final String myDefaultUserDirPath;
 
   public ChromeSettingsConfigurable(@NotNull ChromeSettings settings) {
@@ -59,6 +62,7 @@ public class ChromeSettingsConfigurable implements Configurable {
         myPortField.setEnabled(myEnableRemoteDebugCheckBox.isSelected());
       }
     });
+    myCommandLineOptionsLabel.setLabelFor(myCommandLineOptionsEditor.getTextField());
   }
 
   @Override
@@ -70,7 +74,8 @@ public class ChromeSettingsConfigurable implements Configurable {
   public boolean isModified() {
     if (myEnableRemoteDebugCheckBox.isSelected() != mySettings.isEnableRemoteDebug()
         || !myPortField.getText().equals(String.valueOf(mySettings.getRemoteShellPort()))
-        || myUseCustomProfileCheckBox.isSelected() != mySettings.isUseCustomProfile()) {
+        || myUseCustomProfileCheckBox.isSelected() != mySettings.isUseCustomProfile()
+        || !myCommandLineOptionsEditor.getText().equals(mySettings.getCommandLineOptions())) {
       return true;
     }
 
@@ -93,6 +98,7 @@ public class ChromeSettingsConfigurable implements Configurable {
     catch (NumberFormatException ignored) {
       throw new ConfigurationException("Port is not integer!");
     }
+    mySettings.setCommandLineOptions(myCommandLineOptionsEditor.getText());
     mySettings.setUseCustomProfile(myUseCustomProfileCheckBox.isSelected());
     mySettings.setUserDataDirectoryPath(getConfiguredUserDataDirPath());
     mySettings.setEnableRemoteDebug(myEnableRemoteDebugCheckBox.isSelected());
@@ -104,6 +110,7 @@ public class ChromeSettingsConfigurable implements Configurable {
     myPortField.setText(String.valueOf(mySettings.getRemoteShellPort()));
     myPortField.setEnabled(mySettings.isEnableRemoteDebug());
 
+    myCommandLineOptionsEditor.setText(mySettings.getCommandLineOptions());
     myUseCustomProfileCheckBox.setSelected(mySettings.isUseCustomProfile());
     myUserDataDirField.setEnabled(mySettings.isUseCustomProfile());
     String path = mySettings.getUserDataDirectoryPath();

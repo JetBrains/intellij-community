@@ -2,6 +2,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 import java.util.concurrent.Semaphore;
@@ -27,7 +28,7 @@ public class FutureResult<T> implements Future<T> {
     return myValue != null;
   }
 
-  public void set(T result) {
+  public void set(@Nullable T result) {
     assert myValue == null;
 
     myValue = Ref.create(Pair.create((Object)result, true));

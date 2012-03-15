@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -78,8 +79,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   public List<Module> commit(final Project project,
                              ModifiableModuleModel model,
                              ModulesProvider modulesProvider,
-                             ModifiableArtifactModel artifactModel)
-  {
+                             ModifiableArtifactModel artifactModel) {
+    System.setProperty(GradleConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
     final Runnable task = new Runnable() {
       @Override
       public void run() {

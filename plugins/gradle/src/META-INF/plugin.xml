@@ -108,6 +108,7 @@
     <group id="Gradle.ChangeActionsToolbar">
       <reference id="Gradle.RefreshProject"/>
       <reference id="Gradle.OpenScript"/>
+      <reference id="ContextHelp"/>
     </group>
 
     <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="/icons/gradleImport.png"/>

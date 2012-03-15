@@ -57,7 +57,6 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
     List<VirtualFile> roots = myRoots.collect { new GitMockVirtualFile(it) }
     roots.addAll(myPlatformFacade.getProjectRootManager(myProject).getContentRoots())
     roots
-//     new GitRootConverter(myProject, myPlatformFacade).convertRoots(roots)
   }
 
   @Override

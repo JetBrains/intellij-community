@@ -59,54 +59,67 @@ public abstract class AddScopeAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
-    if (nodes.length > 0) {
-      final InspectionConfigTreeNode node = nodes[0];
+    final List<Descriptor> descriptors = new ArrayList<Descriptor>();
+    for (InspectionConfigTreeNode node : nodes) {
       final Descriptor descriptor = node.getDesriptor();
-      if (descriptor != null && node.getScopeName() == null && !getAvailableScopes(descriptor, project).isEmpty()) {
-        presentation.setEnabled(true);
+      if (descriptor != null && node.getScopeName() == null) {
+        descriptors.add(descriptor);
       }
     }
+
+    presentation.setEnabled(!getAvailableScopes(project, descriptors).isEmpty());
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
-    final InspectionConfigTreeNode node = nodes[0];
-    final Descriptor descriptor = node.getDesriptor();
-    LOG.assertTrue(descriptor != null);
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final InspectionProfileEntry tool = descriptor.getTool(); //copy
-    final List<String> availableScopes = getAvailableScopes(descriptor, project);
+    List<Descriptor> descriptors = new ArrayList<Descriptor>();
+    for (InspectionConfigTreeNode node : nodes) {
+      final Descriptor descriptor = node.getDesriptor();
+      if (node.getScopeName() == null && descriptor != null) {
+        descriptors.add(descriptor);
+      }
+    }
 
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final List<String> availableScopes = getAvailableScopes(project, descriptors);
     final int idx = Messages.showChooseDialog(myTree, "Scope:", "Choose Scope", ArrayUtil.toStringArray(availableScopes), availableScopes.get(0), Messages.getQuestionIcon());
     if (idx == -1) return;
     final NamedScope chosenScope = NamedScopesHolder.getScope(project, availableScopes.get(idx));
-    final ScopeToolState scopeToolState = getSelectedProfile().addScope(tool, chosenScope,
-                                                                        getSelectedProfile().getErrorLevel(descriptor.getKey(), chosenScope),
-                                                                        getSelectedProfile().isToolEnabled(descriptor.getKey()));
-    final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());
-    if (node.getChildCount() == 0) {
-      node.add(new InspectionConfigTreeNode(descriptor, scopeToolState, true, true, false));
+
+    for (InspectionConfigTreeNode node : nodes) {
+      final Descriptor descriptor = node.getDesriptor();
+      if (node.getScopeName() != null || descriptor == null) continue;
+      final InspectionProfileEntry tool = descriptor.getTool(); //copy
+      final ScopeToolState scopeToolState = getSelectedProfile().addScope(tool, chosenScope,
+                                                                          getSelectedProfile().getErrorLevel(descriptor.getKey(), chosenScope),
+                                                                          getSelectedProfile().isToolEnabled(descriptor.getKey()));
+      final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());
+      if (node.getChildCount() == 0) {
+        node.add(new InspectionConfigTreeNode(descriptor, scopeToolState, true, true, false));
+      }
+      node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState, false, true, false), 0);
+      node.setInspectionNode(false);
+      node.isProperSetting = getSelectedProfile().isProperSetting(HighlightDisplayKey.find(tool.getShortName()));
+      ((DefaultTreeModel)myTree.getModel()).reload(node);
+      myTree.expandPath(new TreePath(node.getPath()));
     }
-    node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState, false, true, false), 0);
-    node.setInspectionNode(false);
-    node.isProperSetting = getSelectedProfile().isProperSetting(HighlightDisplayKey.find(tool.getShortName()));
-    ((DefaultTreeModel)myTree.getModel()).reload(node);
-    myTree.expandPath(new TreePath(node.getPath()));
     myTree.revalidate();
   }
 
-  private List<String> getAvailableScopes(Descriptor descriptor, Project project) {
+  private List<String> getAvailableScopes(Project project, List<Descriptor> descriptors) {
     final ArrayList<NamedScope> scopes = new ArrayList<NamedScope>();
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       Collections.addAll(scopes, holder.getScopes());
     }
     scopes.remove(DefaultScopesProvider.getAllScope());
     final Set<NamedScope> used = new HashSet<NamedScope>();
-    final List<ScopeToolState> nonDefaultTools = getSelectedProfile().getNonDefaultTools(descriptor.getKey().toString());
-    if (nonDefaultTools != null) {
-      for (ScopeToolState state : nonDefaultTools) {
-        used.add(state.getScope(project));
+    for (Descriptor descriptor : descriptors) {
+      final List<ScopeToolState> nonDefaultTools = getSelectedProfile().getNonDefaultTools(descriptor.getKey().toString());
+      if (nonDefaultTools != null) {
+        for (ScopeToolState state : nonDefaultTools) {
+          used.add(state.getScope(project));
+        }
       }
     }
     scopes.removeAll(used);

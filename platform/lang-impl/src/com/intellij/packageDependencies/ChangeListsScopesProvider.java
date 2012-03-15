@@ -79,7 +79,7 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
     if (IdeBundle.message("scope.modified.files").equals(name)) {
       return createScope(changeListManager.getAffectedFiles(), IdeBundle.message("scope.modified.files"));
     }
-    final LocalChangeList changeList = changeListManager.getChangeList(name);
+    final LocalChangeList changeList = changeListManager.findChangeList(name);
     if (changeList != null) {
       return createChangeListScope(changeList);
     }

@@ -21,7 +21,9 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import git4idea.Notificator;
 import git4idea.PlatformFacade;
 import git4idea.commands.Git;
@@ -74,9 +76,10 @@ public class GitIntegrationEnabler {
     notificator.notifySuccess("", String.format("Added Git %s: %s", pluralize("root", roots.size()), joinRootsPaths(roots)));
   }
 
-  private boolean gitInitOrNotifyError(@NotNull Notificator notificator, @NotNull VirtualFile projectDir) {
+  private boolean gitInitOrNotifyError(@NotNull Notificator notificator, @NotNull final VirtualFile projectDir) {
     try {
       myGit.init(myProject, projectDir);
+      refreshGitDir(projectDir);
       notificator.notifySuccess("", "Created Git repository in \n" + projectDir.getPresentableUrl());
       return true;
     }
@@ -85,6 +88,18 @@ public class GitIntegrationEnabler {
       LOG.error(e);
       return false;
     }
+  }
+
+  private void refreshGitDir(final VirtualFile projectDir) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        myPlatformFacade.runReadAction(new Runnable() {
+          @Override public void run() {
+            LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/.git");
+          }
+        });
+      }
+    });
   }
 
   private void addVcsRoots(@NotNull Collection<VirtualFile> roots) {

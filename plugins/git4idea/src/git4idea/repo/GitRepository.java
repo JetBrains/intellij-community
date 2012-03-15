@@ -26,6 +26,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
+import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,12 +175,12 @@ public final class GitRepository implements Disposable {
     myProject = project;
     Disposer.register(parentDisposable, this);
     
-    myGitDir = myRootDir.findChild(".git");
+    myGitDir = GitUtil.findGitDir(myRootDir);
     assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
     
     myReader = new GitRepositoryReader(VfsUtil.virtualToIoFile(myGitDir));
     
-    myUntrackedFilesHolder = new GitUntrackedFilesHolder(rootDir, project);
+    myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
     Disposer.register(this, myUntrackedFilesHolder);
 
     myMessageBus = project.getMessageBus();
@@ -220,6 +221,11 @@ public final class GitRepository implements Disposable {
   @NotNull
   public VirtualFile getRoot() {
     return myRootDir;
+  }
+
+  @NotNull
+  public VirtualFile getGitDir() {
+    return myGitDir;
   }
 
   @NotNull

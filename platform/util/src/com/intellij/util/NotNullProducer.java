@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.util;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
-/**
- * @author Kirill Likhodedov
- */
-public interface GitRootsListener {
-
-  void gitRootsChanged(Collection<VirtualFile> roots);
-
+public interface NotNullProducer<T> extends Producer<T> {
+  @Override
+  @NotNull
+  T produce();
 }
