@@ -35,7 +35,7 @@ public class GitRootChecker implements VcsRootChecker {
   private final boolean myProjectMappingIsInvalid;
 
   public GitRootChecker(@NotNull Project project, @NotNull PlatformFacade platformFacade) {
-    myErrors = new GitRootErrorsFinder(project, platformFacade).find(new GitRootDetector(project, platformFacade).detect());
+    myErrors = new GitRootErrorsFinder(project, platformFacade).find();
     myProjectMappingIsInvalid = isProjectMappingInvalid();
   }
 

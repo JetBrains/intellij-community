@@ -172,8 +172,7 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
     expected.addAll map.errors.unreg.collect { unreg(it) }
     expected.addAll map.errors.extra.collect { extra(it) }
 
-    Collection<VcsRootError> actual = new GitRootErrorsFinder(myProject, myPlatformFacade).find(
-            new GitRootDetector(myProject, myPlatformFacade).detect())
+    Collection<VcsRootError> actual = new GitRootErrorsFinder(myProject, myPlatformFacade).find()
     assertEquals expected.toSet(), actual.toSet()
   }
 

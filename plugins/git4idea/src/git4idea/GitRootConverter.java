@@ -21,50 +21,40 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
-import git4idea.repo.GitRepositoryManager;
+import git4idea.roots.GitRootDetectInfo;
 import git4idea.roots.GitRootDetector;
-import git4idea.roots.GitRootsListener;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * Given VFS content roots, filters them and returns only those, which are actual Git roots.
  */
-public class GitRootConverter implements AbstractVcs.RootsConvertor, GitRootsListener {
+public class GitRootConverter implements AbstractVcs.RootsConvertor {
 
   @NotNull private final Project myProject;
   @NotNull private final PlatformFacade myPlatformFacade;
 
-  @Nullable private Collection<VirtualFile> myDetectedRoots;
-
   public GitRootConverter(@NotNull Project project, @NotNull PlatformFacade facade) {
     myProject = project;
     myPlatformFacade = facade;
-    myProject.getMessageBus().connect().subscribe(GitRepositoryManager.GIT_ROOTS_CHANGE, this);
   }
 
   @NotNull
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
-    if (myDetectedRoots == null) {
-      myDetectedRoots = new GitRootDetector(myProject, myPlatformFacade).detect().getRoots();
-    }
+    GitRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
 
     ArrayList<VirtualFile> roots = new ArrayList<VirtualFile>();
     if (hasProjectMapping()) {
-      roots.addAll(myDetectedRoots);
+      roots.addAll(detectInfo.getRoots());
     }
 
     HashSet<VirtualFile> listed = new HashSet<VirtualFile>();
     for (VirtualFile f : result) {
       VirtualFile r = GitUtil.gitRootOrNull(f);
       if (r != null && listed.add(r)) {
-        if (!roots.contains(r)) {
-          roots.add(r);
-        }
+        roots.add(r);
       }
     }
     return roots;
@@ -77,11 +67,6 @@ public class GitRootConverter implements AbstractVcs.RootsConvertor, GitRootsLis
       }
     }
     return false;
-  }
-
-  @Override
-  public void gitRootsChanged(Collection<VirtualFile> roots) {
-    myDetectedRoots = roots;
   }
 
 }
