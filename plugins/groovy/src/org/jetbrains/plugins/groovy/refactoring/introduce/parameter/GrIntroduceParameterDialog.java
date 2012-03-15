@@ -325,7 +325,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
   @Nullable
   private PsiType inferClosureReturnType() {
     final ExtractClosureHelperImpl mockHelper =
-      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false);
+      new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false, 0, false, false);
     final PsiType returnType;
     final AccessToken token = WriteAction.start();
     try {
@@ -469,7 +469,8 @@ public class GrIntroduceParameterDialog extends DialogWrapper implements GrIntro
                                                                            getParametersToRemove(),
                                                                            myDelegateViaOverloadingMethodCheckBox.isSelected(),
                                                                            getReplaceFieldsWithGetter(),
-                                                                           myForceReturnCheckBox.isSelected());
+                                                                           myForceReturnCheckBox.isSelected(),
+                                                                           myTypeComboBox.getSelectedType() == null);
       if (toReplaceIn instanceof GrMethod) {
         invokeRefactoring(new ExtractClosureFromMethodProcessor(settings));
       }
