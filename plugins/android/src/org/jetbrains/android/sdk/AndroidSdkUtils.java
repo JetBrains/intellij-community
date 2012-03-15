@@ -44,7 +44,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.actions.AndroidEnableDdmsAction;
+import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -462,13 +462,13 @@ public class AndroidSdkUtils {
   }
 
   public static boolean activateDdmsIfNecessary(@NotNull Project project, @Nullable AndroidDebugBridge bridge) {
-    final boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
+    final boolean ddmsEnabled = AndroidEnableAdbServiceAction.isAdbServiceEnabled();
     boolean shouldRestartDdms = !ddmsEnabled;
 
     if (ddmsEnabled && bridge != null && isDdmsCorrupted(bridge)) {
       shouldRestartDdms = true;
       LOG.info("DDMLIB is corrupted and will be restarted");
-      AndroidEnableDdmsAction.setDdmsEnabled(project, false);
+      AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, false);
     }
 
     if (shouldRestartDdms) {
@@ -480,7 +480,7 @@ public class AndroidSdkUtils {
           return false;
         }
       }
-      AndroidEnableDdmsAction.setDdmsEnabled(project, true);
+      AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true);
     }
     return true;
   }

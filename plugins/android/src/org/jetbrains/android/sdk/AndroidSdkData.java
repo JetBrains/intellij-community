@@ -32,7 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.android.actions.AndroidEnableDdmsAction;
+import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.BufferingFileWrapper;
@@ -261,7 +261,7 @@ public class AndroidSdkData {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         myDdmLibInitialized = true;
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
-        AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
+        AndroidDebugBridge.init(AndroidEnableAdbServiceAction.isAdbServiceEnabled());
         LOG.info("DDMLib initialized");
         final AndroidDebugBridge bridge = AndroidDebugBridge.createBridge(adbPath, true);
         waitUntilConnect(bridge);
