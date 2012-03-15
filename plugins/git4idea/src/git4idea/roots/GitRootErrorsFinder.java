@@ -25,7 +25,6 @@ import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -54,17 +53,18 @@ public class GitRootErrorsFinder {
     Collection<VirtualFile> gitRoots = new GitRootDetector(myProject, myPlatformFacade).detect().getRoots();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
-    errors.addAll(findExtraMappings(mappings, rootsToPaths(gitRoots)));
-    errors.addAll(findUnregisteredRoots(gitRoots));
+    Collection<String> gitPaths = rootsToPaths(gitRoots);
+    errors.addAll(findExtraMappings(mappings, gitPaths));
+    errors.addAll(findUnregisteredRoots(mappings, gitPaths));
     return errors;
   }
 
-  private Collection<VcsRootError> findUnregisteredRoots(Collection<VirtualFile> gitRoots) {
+  private Collection<VcsRootError> findUnregisteredRoots(List<VcsDirectoryMapping> mappings, Collection<String> gitPaths) {
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
-    Collection<VirtualFile> vcsRoots = Arrays.asList(myVcsManager.getRootsUnderVcs(myVcs));
-    for (VirtualFile gitRoot : gitRoots) {
-      if (!vcsRoots.contains(gitRoot)) {
-        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, gitRoot.getPath()));
+    List<String> mappedPaths = mappingsToPaths(mappings);
+    for (String gitPath : gitPaths) {
+      if (!mappedPaths.contains(gitPath)) {
+        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, gitPath));
       }
     }
     return errors;
@@ -95,6 +95,19 @@ public class GitRootErrorsFinder {
       gitPaths.add(root.getPath());
     }
     return gitPaths;
+  }
+
+  private List<String> mappingsToPaths(List<VcsDirectoryMapping> mappings) {
+    List<String> paths = new ArrayList<String>();
+    for (VcsDirectoryMapping mapping : mappings) {
+      if (!mapping.isDefaultMapping()) {
+        paths.add(mapping.systemIndependentPath());
+      }
+      else {
+        paths.add(myProject.getBasePath());
+      }
+    }
+    return paths;
   }
 
 }

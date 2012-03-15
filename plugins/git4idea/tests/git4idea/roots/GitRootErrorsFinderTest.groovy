@@ -123,11 +123,11 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   }
   
   @Test
-  void "Project root, git for a content root below project, then correct"() {
+  void "Project root, git for a content root below project, then error"() {
     doTest content_roots: [".", "content_root"],
-           git:           [""],
+           git:           ["content_root"],
            roots:         [PROJECT],
-           errors:        []
+           errors:        [unreg: ["content_root"]]
   }
   
   @Test
@@ -140,19 +140,19 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
   }
 
   @Test
-  void "Project root, git for full project, content root, linked source, folder below project, then error in folder below"() {
+  void "Project root, git for full project, content root, linked source, folder below project, then errors"() {
     doTest content_roots: [".", "content_root", "../linked_source_root"],
            git:           [".", "content_root", "../linked_source_root", "folder"],
            roots:         [PROJECT],
-           errors:        [unreg: ["folder"]]
+           errors:        [unreg: ["content_root", "../linked_source_root", "folder"]]
   }
 
   @Test
-  void "Project root, root for folder, git for full project, content root, linked source, folder below project, then correct"() {
+  void "Project root, root for folder, git for full project, content root, linked source, folder below project, then errors"() {
     doTest content_roots: [".", "content_root", "../linked_source_root"],
            git:           [".", "content_root", "../linked_source_root", "folder"],
            roots:         [PROJECT, "folder"],
-           errors:        []
+           errors:        [unreg: ["content_root", "../linked_source_root"]]
   }
 
   @Test
@@ -160,7 +160,7 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
     doTest content_roots: [".", "community", "contrib"],
            git:           [".", "community", "contrib"],
            roots:         [PROJECT],
-           errors:        []
+           errors:        [unreg: ["community", "contrib"]]
   }
 
   private void doTest(Map map) {
