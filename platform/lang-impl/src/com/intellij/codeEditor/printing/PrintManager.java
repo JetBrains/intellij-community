@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -35,6 +36,7 @@ import com.intellij.psi.PsiFile;
 
 import java.awt.print.*;
 import java.util.ArrayList;
+import java.util.Collections;
 
 class PrintManager {
   public static void executePrint(DataContext dataContext) {
@@ -159,13 +161,13 @@ class PrintManager {
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList<PsiFile> filesList, boolean isRecursive) {
     PsiFile[] files = psiDirectory.getFiles();
-    for (PsiFile file : files) {
-      filesList.add(file);
-    }
+    Collections.addAll(filesList, files);
     if(isRecursive) {
       PsiDirectory[] directories = psiDirectory.getSubdirectories();
       for (PsiDirectory directory : directories) {
-        addToPsiFileList(directory, filesList, isRecursive);
+        if (!ProjectUtil.DIRECTORY_BASED_PROJECT_DIR.equals(directory.getName())) {
+          addToPsiFileList(directory, filesList, isRecursive);
+        }
       }
     }
   }
