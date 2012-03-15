@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -12,8 +13,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
 import org.jetbrains.plugins.gradle.config.PlatformFacade;
-import org.jetbrains.plugins.gradle.diff.*;
+import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
+import org.jetbrains.plugins.gradle.diff.GradleAbstractEntityPresenceChange;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
+import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyExportedChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyScopeChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
@@ -46,7 +52,21 @@ import java.util.*;
  * @since 1/30/12 4:20 PM
  */
 public class GradleProjectStructureTreeModel extends DefaultTreeModel {
-
+  
+  private static final Function<GradleEntityId, GradleEntityId> SELF_MAPPER = new Function.Self<GradleEntityId, GradleEntityId>();
+  
+  private static final Function<GradleEntityId, GradleEntityId> LIBRARY_DEPENDENCY_TO_LIBRARY_MAPPER
+    = new Function<GradleEntityId, GradleEntityId>()
+  {
+    @Override
+    public GradleEntityId fun(GradleEntityId id) {
+      if (id instanceof GradleLibraryDependencyId) {
+        return ((GradleLibraryDependencyId)id).getLibraryId();
+      }
+      return id;
+    }
+  };
+  
   /**
    * <pre>
    *     ...
@@ -121,6 +141,12 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     if (rebuild) {
       rebuild();
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public GradleProjectStructureNode<GradleProjectId> getRoot() {
+    return (GradleProjectStructureNode<GradleProjectId>)super.getRoot();
   }
 
   public void rebuild() {
@@ -354,23 +380,25 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
 
   private void processNewProjectRenameChange(@NotNull GradleProjectRenameChange change) {
+    getRoot().addConflictChange(change);
   }
 
   private void processNewLanguageLevelChange(@NotNull GradleLanguageLevelChange change) {
+    getRoot().addConflictChange(change);
   }
 
   private void processNewMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
-    for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
-      for (GradleProjectStructureNode<GradleLibraryDependencyId> dependencyNode : holder.getChildren(GradleLibraryDependencyId.class)) {
-        final GradleLibraryDependencyId id = dependencyNode.getDescriptor().getElement();
-        if (change.getLibraryName().equals(id.getDependencyName())) {
-          dependencyNode.addConflictChange(change);
-          break;
-        }
-      }
-    }
+    processDependencyConflictChange(change, LIBRARY_DEPENDENCY_TO_LIBRARY_MAPPER, false);
   }
 
+  private void processNewDependencyScopeChange(@NotNull GradleDependencyScopeChange change) {
+    processDependencyConflictChange(change, SELF_MAPPER, false);
+  }
+
+  private void processNewDependencyExportedChange(@NotNull GradleDependencyExportedChange change) {
+    processDependencyConflictChange(change, SELF_MAPPER, false);
+  }
+  
   private void processNewLibraryDependencyPresenceChange(@NotNull GradleLibraryDependencyPresenceChange change) {
     processNewDependencyPresenceChange(change);
   }
@@ -436,23 +464,25 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   }
   
   private void processObsoleteProjectRenameChange(@NotNull GradleProjectRenameChange change) {
+    getRoot().removeConflictChange(change);
   }
   
   private void processObsoleteLanguageLevelChange(@NotNull GradleLanguageLevelChange change) {
+    getRoot().removeConflictChange(change);
   }
   
   private void processObsoleteMismatchedLibraryPathChange(@NotNull GradleMismatchedLibraryPathChange change) {
-    for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
-      for (GradleProjectStructureNode<GradleLibraryDependencyId> node : holder.getChildren(GradleLibraryDependencyId.class)) {
-        final GradleLibraryDependencyId id = node.getDescriptor().getElement();
-        if (id.getDependencyName().equals(change.getLibraryName())) {
-          node.removeConflictChange(change);
-          break;
-        }
-      }
-    }
+    processDependencyConflictChange(change, LIBRARY_DEPENDENCY_TO_LIBRARY_MAPPER, true);
   }
 
+  private void processObsoleteDependencyScopeChange(@NotNull GradleDependencyScopeChange change) {
+    processDependencyConflictChange(change, SELF_MAPPER, true);
+  }
+
+  private void processObsoleteDependencyExportedChange(@NotNull GradleDependencyExportedChange change) {
+    processDependencyConflictChange(change, SELF_MAPPER, true);
+  }
+  
   private void processObsoleteLibraryDependencyPresenceChange(@NotNull GradleLibraryDependencyPresenceChange change) {
     // We need to remove the corresponding node then.
     GradleLibraryDependencyId id = change.getGradleEntity();
@@ -569,7 +599,27 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       return;
     }
   }
-  
+
+  private void processDependencyConflictChange(@NotNull GradleAbstractConflictingPropertyChange<?> change,
+                                               @NotNull Function<GradleEntityId, GradleEntityId> nodeIdMapper,
+                                               boolean obsolete)
+  {
+    for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
+      for (GradleProjectStructureNode<?> dependencyNode : holder) {
+        if (!change.getEntityId().equals(nodeIdMapper.fun(dependencyNode.getDescriptor().getElement()))) {
+          continue;
+        }
+        if (obsolete) {
+          dependencyNode.removeConflictChange(change);
+        }
+        else {
+          dependencyNode.addConflictChange(change);
+        }
+        break;
+      }
+    }
+  }
+
   private class NodeListener implements GradleProjectStructureNode.Listener {
     
     @Override
@@ -604,10 +654,12 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     @Override public void visit(@NotNull GradleLanguageLevelChange change) { processNewLanguageLevelChange(change); }
     @Override public void visit(@NotNull GradleModulePresenceChange change) { processNewModulePresenceChange(change); }
     @Override public void visit(@NotNull GradleContentRootPresenceChange change) { processNewContentRootPresenceChange(change); }
-
-      @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
+    @Override public void visit(@NotNull GradleLibraryDependencyPresenceChange change) { processNewLibraryDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleModuleDependencyPresenceChange change) { processNewModuleDependencyPresenceChange(change); }
     @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processNewMismatchedLibraryPathChange(change); }
+    @Override public void visit(@NotNull GradleDependencyScopeChange change) { processNewDependencyScopeChange(change); }
+    @Override public void visit(@NotNull GradleDependencyExportedChange change) { processNewDependencyExportedChange(change);
+    }
   }
   
   private class ObsoleteChangesDispatcher implements GradleProjectStructureChangeVisitor {
@@ -622,5 +674,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       processObsoleteModuleDependencyPresenceChange(change); 
     }
     @Override public void visit(@NotNull GradleMismatchedLibraryPathChange change) { processObsoleteMismatchedLibraryPathChange(change); }
+    @Override public void visit(@NotNull GradleDependencyScopeChange change) { processObsoleteDependencyScopeChange(change); }
+    @Override public void visit(@NotNull GradleDependencyExportedChange change) { processObsoleteDependencyExportedChange(change); }
   }
 }

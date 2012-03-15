@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,4 +26,6 @@ public interface IntellijEntityVisitor {
   void visit(@NotNull LibraryOrderEntry libraryDependency);
 
   void visit(@NotNull ModuleOrderEntry moduleDependency);
+  
+  void visit(@NotNull Library library);
 }

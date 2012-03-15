@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
@@ -143,6 +144,11 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
         @Override
         public void visit(@NotNull ModuleOrderEntry moduleDependency) {
           result.set(getWeight(moduleDependency.getOwnerModule(), moduleDependency));
+        }
+
+        @Override
+        public void visit(@NotNull Library library) {
+          result.set(LIBRARY_WEIGHT);
         }
       });
     }

@@ -117,6 +117,11 @@ public class GradleEntityIdMapper {
             GradleEntityOwner.INTELLIJ, moduleDependency.getOwnerModule().getName(), moduleDependency.getModuleName()
           ));
         }
+
+        @Override
+        public void visit(@NotNull Library library) {
+          result.set(new GradleLibraryId(GradleEntityOwner.INTELLIJ, GradleUtil.getLibraryName(library)));
+        }
       });
     }
     final Object r = result.get();

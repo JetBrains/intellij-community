@@ -2,6 +2,8 @@ package org.jetbrains.plugins.gradle.diff;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyExportedChange;
+import org.jetbrains.plugins.gradle.diff.dependency.GradleDependencyScopeChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange;
 import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
@@ -40,5 +42,13 @@ public class GradleProjectStructureChangeVisitorAdapter implements GradleProject
 
   @Override
   public void visit(@NotNull GradleMismatchedLibraryPathChange change) {
+  }
+
+  @Override
+  public void visit(@NotNull GradleDependencyScopeChange change) {
+  }
+
+  @Override
+  public void visit(@NotNull GradleDependencyExportedChange change) {
   }
 }

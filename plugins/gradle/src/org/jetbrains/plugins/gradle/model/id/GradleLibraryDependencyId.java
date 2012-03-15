@@ -27,6 +27,11 @@ public class GradleLibraryDependencyId extends GradleAbstractDependencyId {
     ));
   }
 
+  @NotNull
+  public GradleLibraryId getLibraryId() {
+    return new GradleLibraryId(getOwner(), getDependencyName());
+  }
+  
   @Override
   public String toString() {
     return String.format("library dependency:owner module='%s'|library='%s'", getOwnerModuleName(), getDependencyName());

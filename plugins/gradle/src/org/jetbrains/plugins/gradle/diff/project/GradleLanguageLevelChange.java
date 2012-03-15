@@ -17,9 +17,10 @@ package org.jetbrains.plugins.gradle.diff.project;
 
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
+import org.jetbrains.plugins.gradle.model.id.GradleProjectId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
@@ -28,8 +29,9 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  */
 public class GradleLanguageLevelChange extends GradleAbstractConflictingPropertyChange<LanguageLevel> {
   
-  public GradleLanguageLevelChange(@Nullable LanguageLevel gradleValue, @Nullable LanguageLevel intellijValue) {
-    super(GradleBundle.message("gradle.sync.change.project.language.level.text"), gradleValue, intellijValue);
+  public GradleLanguageLevelChange(@NotNull LanguageLevel gradleValue, @NotNull LanguageLevel intellijValue) {
+    super(new GradleProjectId(GradleEntityOwner.INTELLIJ), GradleBundle.message("gradle.sync.change.project.language.level.text"),
+          gradleValue, intellijValue);
   }
 
   @Override

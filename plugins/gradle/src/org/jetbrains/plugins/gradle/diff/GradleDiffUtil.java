@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
@@ -122,6 +123,10 @@ public class GradleDiffUtil {
           if (module != null) {
             context.register(new GradleModuleDependencyPresenceChange(null, moduleDependency));
           }
+        }
+
+        @Override
+        public void visit(@NotNull Library library) {
         }
       });
     }

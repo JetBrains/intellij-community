@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.testutil
 
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.roots.DependencyScope
 
 /**
  * @author Denis Zhdanov
@@ -57,7 +58,8 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
   protected Object createNode(Object name, Map attributes, Object value) {
     createNode(name, [name: value] + attributes)
   }
-  
+
+  @SuppressWarnings("GroovyUnusedCatchParameter")
   @Override
   protected Object createNode(name, Map attributes) {
     switch (name) {
@@ -77,7 +79,15 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
           return "get$n"(attributes)
         }
         def ownerModule = current
-        def dep = "create${n}Dependency"(ownerModule, "get$n"(attributes))
+        def scope
+        try {
+          scope = DependencyScope.valueOf(attributes.scope)
+        }
+        catch (Exception e) {
+          scope = DependencyScope.COMPILE
+        }
+        boolean exported = attributes.exported
+        def dep = "create${n}Dependency"(ownerModule, "get$n"(attributes), scope, exported)
         "get${n}Dependencies"()[ownerModule] << dep
         return dep
     }
@@ -89,8 +99,8 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
   protected abstract def createContentRoot(module, rootPath, Map paths)
   protected abstract def createLibrary(String name, Map paths)
   protected abstract def applyLibraryPaths(library, Map paths)
-  protected abstract def createLibraryDependency(module, library)
-  protected abstract def createModuleDependency(ownerModule, targetModule)
+  protected abstract def createLibraryDependency(module, library, scope, boolean exported)
+  protected abstract def createModuleDependency(ownerModule, targetModule, scope, boolean exported)
   protected abstract def reset();
 
   protected String getUnique() { "./${COUNTER++}" }

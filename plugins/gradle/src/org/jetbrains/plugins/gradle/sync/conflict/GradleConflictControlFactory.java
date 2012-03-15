@@ -8,10 +8,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitorAdapter;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -34,9 +31,9 @@ import java.util.Collection;
  */
 public class GradleConflictControlFactory {
   
-  @NotNull private final GradleLibraryConflictControlFactory myLibraryFactory;
+  @NotNull private final GradleLibraryDependencyConflictControlFactory myLibraryFactory;
 
-  public GradleConflictControlFactory(@NotNull GradleLibraryConflictControlFactory factory) {
+  public GradleConflictControlFactory(@NotNull GradleLibraryDependencyConflictControlFactory factory) {
     myLibraryFactory = factory;
   }
 
@@ -66,27 +63,16 @@ public class GradleConflictControlFactory {
 
       @Override
       public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-        final Library library = libraryDependency.getLibrary();
-        if (library == null) {
-          return;
-        }
-        
-        GradleProjectStructureChangeVisitor visitor = new GradleProjectStructureChangeVisitorAdapter() {
-          @Override
-          public void visit(@NotNull GradleMismatchedLibraryPathChange change) {
-            result.set(myLibraryFactory.getControl(library, change));
-          }
-        };
-        for (GradleProjectStructureChange change : changes) {
-          if (result.get() != null) {
-            return;
-          }
-          change.invite(visitor);
-        }
+        result.set(myLibraryFactory.getControl(libraryDependency, changes));
       }
 
       @Override
       public void visit(@NotNull ModuleOrderEntry moduleDependency) {
+        
+      }
+
+      @Override
+      public void visit(@NotNull Library library) {
       }
     });
     return result.get();

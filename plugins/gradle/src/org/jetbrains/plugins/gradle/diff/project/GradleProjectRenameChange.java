@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.diff.project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.diff.GradleAbstractConflictingPropertyChange;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
+import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
+import org.jetbrains.plugins.gradle.model.id.GradleProjectId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
@@ -14,7 +16,8 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 public class GradleProjectRenameChange extends GradleAbstractConflictingPropertyChange<String> {
 
   public GradleProjectRenameChange(@NotNull String gradleName, @NotNull String intellijName) {
-    super(GradleBundle.message("gradle.sync.change.project.name.text"), gradleName, intellijName);
+    super(new GradleProjectId(GradleEntityOwner.INTELLIJ), GradleBundle.message("gradle.sync.change.project.name.text"),
+          gradleName, intellijName);
   }
 
   @Override

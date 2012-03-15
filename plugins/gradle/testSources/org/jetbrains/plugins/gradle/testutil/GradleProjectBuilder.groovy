@@ -42,9 +42,11 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
   }
 
   @Override
-  protected createModuleDependency(ownerModule, targetModule) {
+  protected createModuleDependency(ownerModule, targetModule, scope, boolean exported) {
     def result = new GradleModuleDependency(ownerModule, targetModule)
     ownerModule.addDependency(result)
+    result.setScope(scope)
+    result.setExported(exported)
     result
   }
 
@@ -56,9 +58,11 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
   }
 
   @Override
-  protected createLibraryDependency(module, library) {
+  protected createLibraryDependency(module, library, scope, boolean exported) {
     def result = new GradleLibraryDependency(module, library)
     module.addDependency(result)
+    result.setScope(scope)
+    result.setExported(exported)
     result
   }
 

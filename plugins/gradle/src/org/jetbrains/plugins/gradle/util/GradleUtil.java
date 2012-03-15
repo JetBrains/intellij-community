@@ -39,6 +39,7 @@ import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
+import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -56,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleUtil {
 
-  public static final String PATH_SEPARATOR                         = "/";
+  public static final String PATH_SEPARATOR = "/";
 
   private GradleUtil() {
   }
@@ -235,6 +236,9 @@ public class GradleUtil {
     else if (entity instanceof ModuleOrderEntry) {
       visitor.visit(((ModuleOrderEntry)entity));
     }
+    else if (entity instanceof Library) {
+      visitor.visit(((Library)entity));
+    }
   }
 
   @NotNull
@@ -310,6 +314,16 @@ public class GradleUtil {
     }
     assert false;
     return "unknown-lib";
+  }
+
+  /**
+   * @return    {@link MatrixControlBuilder} with predefined set of columns ('gradle' and 'intellij')
+   */
+  @NotNull
+  public static MatrixControlBuilder getConflictChangeBuilder() {
+    final String gradle = GradleBundle.message("gradle.name");
+    final String intellij = GradleBundle.message("gradle.ide");
+    return new MatrixControlBuilder(gradle, intellij);
   }
   
   private interface TaskUnderProgress {

@@ -1,21 +1,18 @@
 package org.jetbrains.plugins.gradle.testutil
 
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.openapi.module.Module
-
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.LibraryOrderEntry
-
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
-
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.roots.OrderRootType
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.roots.ModuleOrderEntry
-import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot
 import com.intellij.openapi.roots.ContentEntry
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.java.LanguageLevel
+import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot
+import org.jetbrains.plugins.gradle.util.GradleUtil
 
 /** 
  * @author Denis Zhdanov
@@ -64,13 +61,15 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   }
 
   @Override
-  protected createModuleDependency(ownerModule, targetModule) {
+  protected createModuleDependency(ownerModule, targetModule, scope, boolean exported) {
     def stub = [:]
     def result = stub as ModuleOrderEntry
     stub.accept = { policy, defaultValue -> policy.visitModuleOrderEntry(result, defaultValue) }
     stub.getModule = { targetModule }
     stub.getOwnerModule = { ownerModule }
     stub.getModuleName = { targetModule.name }
+    stub.getScope = { scope }
+    stub.isExported = { exported }
     result
   }
 
@@ -88,13 +87,15 @@ class IntellijProjectBuilder extends AbstractProjectBuilder {
   }
 
   @Override
-  protected createLibraryDependency(module, library) {
+  protected createLibraryDependency(module, library, scope, boolean exported) {
     def stub = [:]
     def result = stub as LibraryOrderEntry
     stub.accept = { policy, defaultValue -> policy.visitLibraryOrderEntry(result, defaultValue) }
     stub.getLibraryName = { library.name }
     stub.getLibrary = { library }
     stub.getOwnerModule = { module }
+    stub.getScope = { scope }
+    stub.isExported = { exported }
     result
   }
 
