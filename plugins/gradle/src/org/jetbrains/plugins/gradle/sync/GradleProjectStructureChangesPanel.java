@@ -59,7 +59,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private final Alarm            myToolbarAppearanceAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Alarm            myToolbarTrackingAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Alarm            myCollapseStateAlarm   = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm            myCollapseStateAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<JComponent> myToolbarControls        = new ArrayList<JComponent>();
   
   /** Holds list of paths which 'expand/collapse' state should be restored. */

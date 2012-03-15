@@ -8,6 +8,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.HashMap;
 import org.gradle.tooling.*;
+import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
@@ -398,6 +399,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     RemoteGradleProcessSettings settings = mySettings.get();
     if (settings != null) {
       connector.useInstallation(new File(settings.getGradleHome()));
+      if (settings.isVerboseApi() && connector instanceof DefaultGradleConnector) {
+        ((DefaultGradleConnector)connector).setVerboseLogging(true);
+      }
     }
     connector.forProjectDirectory(projectDir);
     ProjectConnection connection = connector.connect();
