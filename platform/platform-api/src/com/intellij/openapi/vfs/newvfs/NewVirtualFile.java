@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
-  private volatile long myModificationStamp = LocalTimeCounter.currentTime();
+  private final AtomicLong myModificationStamp = new AtomicLong(LocalTimeCounter.currentTime());
 
   public boolean isValid() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -75,11 +76,11 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   }
 
   public long getModificationStamp() {
-    return myModificationStamp;
+    return myModificationStamp.get();
   }
 
   public void setModificationStamp(long modificationStamp) {
-    myModificationStamp = modificationStamp;
+    myModificationStamp.set(modificationStamp);
   }
 
   public abstract void setWritable(boolean writable) throws IOException;
