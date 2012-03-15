@@ -23,7 +23,7 @@ package com.intellij.analysis;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.ProjectProductionScope;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class PackagesScopesProvider implements CustomScopesProvider {
+public class PackagesScopesProvider extends CustomScopesProviderEx {
   private final NamedScope myProjectProductionScope;
   private final List<NamedScope> myScopes;
 
