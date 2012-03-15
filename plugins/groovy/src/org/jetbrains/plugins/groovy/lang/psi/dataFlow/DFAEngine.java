@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
@@ -77,6 +78,7 @@ public class DFAEngine<E> {
         visited[instr.num()] = true;
 
         while (!workList.isEmpty()) {
+          ProgressManager.checkCanceled();
           final Instruction curr = workList.remove();
           final int num = curr.num();
           final E oldE = info.get(num);

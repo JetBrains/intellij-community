@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.mock;
 
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -255,5 +256,10 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @Override
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
     return 0;
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull VirtualFile file) {
+    return null;
   }
 }

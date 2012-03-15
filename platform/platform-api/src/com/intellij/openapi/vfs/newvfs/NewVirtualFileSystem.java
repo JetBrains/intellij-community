@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
@@ -32,6 +30,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author max
+ */
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new HashMap<VirtualFileListener, VirtualFileListener>();
 
@@ -150,4 +151,14 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    */
   @FileUtil.FileBooleanAttributes
   public abstract int getBooleanAttributes(@NotNull final VirtualFile file, @FileUtil.FileBooleanAttributes int flags);
+
+  /**
+   * Reads various file attributes in one shot (to reduce the number of native I/O calls).
+   *
+   * @param file file to get attributes of.
+   * @return attributes of a given file, or <code>null</code> if the file doesn't exist.
+   * @since 11.1
+   */
+  @Nullable
+  public abstract FileAttributes getAttributes(@NotNull VirtualFile file);
 }

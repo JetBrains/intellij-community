@@ -499,10 +499,10 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
-  public VirtualFile getCanonicalFile() {
+  public NewVirtualFile getCanonicalFile() {
     if (getFlagInt(HAS_SYMLINK_FLAG)) {
       final String path = getCanonicalPath();
-      return path != null ? getFileSystem().findFileByPath(path) : null;
+      return path != null ? (NewVirtualFile)getFileSystem().findFileByPath(path) : null;
     }
     return this;
   }

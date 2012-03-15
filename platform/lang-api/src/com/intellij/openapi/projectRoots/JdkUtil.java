@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,9 +113,10 @@ public class JdkUtil {
     return null;
   }
 
-  public static boolean checkForJdk(File file) {
-    file = new File(file.getAbsolutePath() + File.separator + "bin");
-    if (!file.exists()) return false;
+  public static boolean checkForJdk(final File homePath) {
+    File binPath = new File(homePath.getAbsolutePath() + File.separator + "bin");
+    if (!binPath.exists()) return false;
+
     FileFilter fileFilter = new FileFilter() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
@@ -124,21 +125,34 @@ public class JdkUtil {
                Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "javah");
       }
     };
-    File[] children = file.listFiles(fileFilter);
-    return children != null && children.length >= 2;
+    File[] children = binPath.listFiles(fileFilter);
+
+    return children != null && children.length >= 2 &&
+           checkForRuntime(homePath.getAbsolutePath());
   }
 
-  public static boolean checkForJre(String file) {
-    File ioFile = new File(new File(file.replace('/', File.separatorChar)).getAbsolutePath() + File.separator + "bin");
-    if (!ioFile.exists()) return false;
+  public static boolean checkForJre(String homePath) {
+    homePath = new File(FileUtil.toSystemDependentName(homePath)).getAbsolutePath();
+    File binPath = new File(homePath + File.separator + "bin");
+    if (!binPath.exists()) return false;
+
     FileFilter fileFilter = new FileFilter() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public boolean accept(File f) {
         return !f.isDirectory() && Comparing.strEqual(FileUtil.getNameWithoutExtension(f), "java");
       }
     };
-    File[] children = ioFile.listFiles(fileFilter);
-    return children != null && children.length >= 1;
+    File[] children = binPath.listFiles(fileFilter);
+
+    return children != null && children.length >= 1 &&
+           checkForRuntime(homePath);
+  }
+
+  public static boolean checkForRuntime(final String homePath) {
+    return new File(homePath + File.separator + "jre" + File.separator + "lib" + File.separator + "rt.jar").exists() ||
+           new File(homePath + File.separator + "lib" + File.separator + "rt.jar").exists() ||
+           new File(homePath + File.separator + ".." + File.separator + "Classes" + File.separator + "classes.jar").exists() ||
+           new File(homePath + File.separator + "jre" + File.separator + "lib" + File.separator + "vm.jar").exists();
   }
 
   public static GeneralCommandLine setupJVMCommandLine(final String exePath,

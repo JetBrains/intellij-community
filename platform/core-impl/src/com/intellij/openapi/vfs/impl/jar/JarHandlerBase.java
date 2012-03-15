@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -223,5 +224,13 @@ public class JarHandlerBase {
     }
 
     return getEntryInfo(fileOrDirectory) != null;
+  }
+
+  @Nullable
+  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
+    synchronized (lock) {
+      final ZipEntry entry = convertToEntry(file);
+      return entry != null ? new FileAttributes(entry.isDirectory(), false, false, entry.getSize(), entry.getTime(), false) : null;
+    }
   }
 }
