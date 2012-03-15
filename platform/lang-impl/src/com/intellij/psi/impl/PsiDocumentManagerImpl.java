@@ -556,7 +556,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if(viewProvider != null) component.doPostponedFormatting(viewProvider);
   }
 
-  private void fireDocumentCreated(Document document, PsiFile file) {
+  private void fireDocumentCreated(@NotNull Document document, PsiFile file) {
     for (Listener listener : myListeners) {
       listener.documentCreated(document, file);
     }
