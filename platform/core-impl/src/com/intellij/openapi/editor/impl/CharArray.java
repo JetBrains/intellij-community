@@ -15,34 +15,38 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceBackedByArray;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author cdr
  */
 abstract class CharArray implements CharSequenceBackedByArray {
-  
-  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
-  private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
-  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
-  private static final boolean DEBUG_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.debug.bulk.processing");
-  
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
 
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
+
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  private static final boolean DEBUG_DEFERRED_PROCESSING = LOG.isDebugEnabled() || Boolean.getBoolean("idea.document.debug.bulk.processing")
+                                                           || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   /**
    * We can't exclude possibility of situation when <code>'defer changes'</code> state is {@link #setDeferredChangeMode(boolean) entered}
    * but not exited, hence, we want to perform automatic flushing if necessary in order to avoid memory leaks. This constant holds
@@ -51,179 +55,232 @@ abstract class CharArray implements CharSequenceBackedByArray {
    */
   private static final int MAX_DEFERRED_CHANGES_NUMBER = 10000;
 
-  private final AtomicReference<TextChangesStorage> myDeferredChangesStorage = new AtomicReference<TextChangesStorage>();
+  private final TextChangesStorage myDeferredChangesStorage;
 
-  private int myStart;
-  /**
-   * This class implements {@link #subSequence(int, int)} by creating object of the same class that partially shares the same
-   * data as the object on which the method is called. So, this field may define interested end offset (if it's non-negative).
-   */
-  private int myEnd   = -1;
-  private int myCount = 0;
+  private volatile int myStart; // start offset in myArray (used as an optimization when call substring())
+  private volatile int myCount;
 
-  private CharSequence          myOriginalSequence;
-  private char[]                myArray;
-  private SoftReference<String> myStringRef; // buffers String value - for not to generate it every time
-  private int                   myBufferSize;
-  private int                   myDeferredShift;
-  private boolean               myDeferredChangeMode;
+  private volatile CharSequence myOriginalSequence;
+  private volatile char[] myArray;
+  private volatile Reference<String> myStringRef; // buffers String value - for not to generate it every time
+  private volatile int myBufferSize;
+  private volatile  int myDeferredShift;
+  private volatile boolean myDeferredChangeMode;
+  // this lock is for mutual exclusion during read action access
+  // (some fields are changed in read action too)
+  private final Lock lock = new ReentrantLock();
 
   // We had a problems with bulk document text processing, hence, debug facilities were introduced. The fields group below work with them.
   // The main idea is to hold all history of bulk processing iteration in order to be able to retrieve it from client and reproduce the
   // problem.
   
-  /** Flag the identifies if current char array should debug bulk processing. */
-  private final boolean              myDebugDeferredProcessing;
-  
+  private final boolean myDebug = isDebug();
+
+  boolean isDebug() {
+    return DEBUG_DEFERRED_PROCESSING;
+  }
+
   /**
    * Duplicate instance of the current char array that is used during debug processing as follows - apply every text change
    * from the bulk changes group to this instance immediately in order to be able to check if the current 'deferred change-aware'
    * instance functionally behaves at the same way as 'straightforward' one.
    */
-  private       CharArray            myDebugArray;
+  private CharArray myDebugArray;
 
-  /** Holds deferred changes create during the current bulk processing iteration. */
-  private       List<TextChangeImpl> myDebugDeferredChanges;
-  
-  /** Document text on bulk processing start. */
-  private       String               myDebugTextOnBatchUpdateStart;
+  /**
+   * Holds deferred changes create during the current bulk processing iteration.
+   */
+  private List<TextChangeImpl> myDebugDeferredChanges;
 
-  // max chars to hold, bufferSize == 0 means unbounded
-  CharArray(int bufferSize) {
-    this(bufferSize, new TextChangesStorage(), null, -1, -1);
-  }
+  /**
+   * Document text on bulk processing start.
+   */
+  private String myDebugTextOnBatchUpdateStart;
 
-  private CharArray(final int bufferSize, @NotNull TextChangesStorage deferredChangesStorage, @Nullable char[] data, int start, int end) {
-    this(bufferSize, deferredChangesStorage, data, start, end, DEBUG_DEFERRED_PROCESSING);
-  }
-  
-  private CharArray(final int bufferSize, @NotNull TextChangesStorage deferredChangesStorage, @Nullable char[] data, int start, int end,
-                    boolean debugDeferredProcessing)
-  {
+  // bufferSize == 0 means unbounded
+  CharArray(final int bufferSize, @NotNull char[] data, int length) {
     myBufferSize = bufferSize;
-    myDeferredChangesStorage.set(deferredChangesStorage);
-    if (data == null) {
-      myOriginalSequence = "";
-    }
-    else {
-      myArray = data;
-      myCount = end - start;
-    }
-    if (start >= 0 && end >= 0) {
-      myStart = start;
-      myEnd = end;
-    }
+    myDeferredChangesStorage = new TextChangesStorage();
+    myArray = Arrays.copyOf(data, length);
+    myCount = length;
 
-    myDebugDeferredProcessing = debugDeferredProcessing;
-    if (myDebugDeferredProcessing) {
-      
-      myDebugArray = new CharArray(bufferSize, new TextChangesStorage(), data == null ? null : Arrays.copyOf(data, data.length),
-                                   start, end, false)
-      {
+    if (myDebug) {
+      myDebugArray = new CharArray(bufferSize, data, length) {
         @NotNull
         @Override
-        protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
-                                                    int offset,
+        protected DocumentEvent beforeChangedUpdate(int offset,
                                                     CharSequence oldString,
                                                     CharSequence newString,
                                                     boolean wholeTextReplaced) {
-          return new DocumentEventImpl(subj, offset, oldString, newString, -1, wholeTextReplaced);
+          return CharArray.this.beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
         }
 
         @Override
         protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
         }
+
+        @Override
+        protected void assertWriteAccess() {
+        }
+
+        @Override
+        protected void assertReadAccess() {
+        }
+
+        @Override
+        boolean isDebug() {
+          return false;
+        }
       };
       myDebugDeferredChanges = new ArrayList<TextChangeImpl>();
     }
+    assertConsistency();
   }
 
   public void setBufferSize(int bufferSize) {
+    assert bufferSize >= 0 : bufferSize;
     myBufferSize = bufferSize;
+    assertConsistency();
+  }
+
+  private DocumentEvent startChange(int offset,
+                                    @Nullable CharSequence oldString,
+                                    @Nullable CharSequence newString,
+                                    boolean wholeTextReplaced) {
+    assert myStart == 0; // can't change substring
+    assertWriteAccess();
+    assertConsistency();
+
+    return beforeChangedUpdate(offset, oldString, newString, wholeTextReplaced);
   }
 
   @NotNull
-  protected abstract DocumentEvent beforeChangedUpdate(DocumentImpl subj,
-                                                       int offset,
+  protected abstract DocumentEvent beforeChangedUpdate(int offset,
                                                        @Nullable CharSequence oldString,
                                                        @Nullable CharSequence newString,
                                                        boolean wholeTextReplaced);
   protected abstract void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp);
 
-  public void setText(@Nullable final DocumentImpl subj, final CharSequence chars) {
-    myOriginalSequence = chars;
-    myArray = null;
-    myCount = chars.length();
-    myStringRef = null;
-    TextChangesStorage storage = myDeferredChangesStorage.get();
-    storage.getLock().lock();
-    try {
-      if (isSubSequence()) {
-        myDeferredChangesStorage.set(new TextChangesStorage());
-        myStart = 0;
-        myEnd = -1;
-      }
-      else {
-        storage.clear();
-      }
-    }
-    finally {
-      storage.getLock().unlock();
-    }
-    
-    if (subj != null) {
-      trimToSize(subj);
-    }
+  protected abstract void assertWriteAccess();
+  protected abstract void assertReadAccess();
 
-    if (myDebugDeferredProcessing) {
-      myDebugArray.setText(subj, chars);
+  private void setText(@NotNull CharSequence chars) {
+    assertConsistency();
+    myOriginalSequence = chars.toString();
+    myArray = null;
+    myStringRef = null;
+    myCount = chars.length();
+    assert myStart == 0; // can't change substring
+    myDeferredChangesStorage.clear();
+    trimToSize();
+
+    if (myDebug) {
+      myDebugArray.setText(chars);
       myDebugDeferredChanges.clear();
+    }
+    assertConsistency();
+  }
+
+  private void assertConsistency() {
+    if (isDeferredChangeMode()) {
+      assert myOriginalSequence == null;
+    }
+    CharSequence originalSequence = myOriginalSequence;
+    int origLen = originalSequence == null ? -1 : originalSequence.length();
+    String string = myStringRef == null ? null : myStringRef.get();
+    int stringLen = string == null ? -1 : string.length();
+    char[] array = myArray;
+    assert origLen == stringLen || origLen==-1 || stringLen==-1;
+
+    int count = myCount + myDeferredShift;
+    assert count == origLen || origLen==-1;
+    assert count == stringLen || stringLen==-1;
+    if (array != null) {
+      assert myCount <= array.length;
+    }
+    if (myDebug) {
+      if (array != null && originalSequence != null) {
+        assert new String(array, myStart, myCount).equals(originalSequence);
+      }
+      if (!isDeferredChangeMode() && array != null && string != null) {
+        assert new String(array, myStart, myCount).equals(string);
+      }
+      if (originalSequence != null && string != null) {
+        assert string.equals(originalSequence.toString());
+      }
+
+      myDebugArray.assertConsistency();
+
+      String str = myStringRef == null ? null : myStringRef.get();
+      if (str == null) {
+        if (hasDeferredChanges()) {
+          str = doSubString(0, myCount + myDeferredShift).toString();
+        }
+        else if (myOriginalSequence != null) {
+          str = myOriginalSequence.toString();
+        }
+        else {
+          str = new String(myArray, myStart, myCount);
+        }
+      }
+      assert count == str.length();
+      if (isDeferredChangeMode()) {
+        String expected = myDebugArray.toString();
+        checkStrings("toString()", expected, str);
+      }
     }
   }
 
-  public void replace(DocumentImpl subj,
-                      int startOffset, int endOffset, CharSequence toDelete, CharSequence newString, long newModificationStamp,
+  public void replace(int startOffset,
+                      int endOffset,
+                      @NotNull CharSequence toDelete,
+                      @NotNull CharSequence newString,
+                      long newModificationStamp,
                       boolean wholeTextReplaced) {
-    final DocumentEvent event = beforeChangedUpdate(subj, startOffset, toDelete, newString, wholeTextReplaced);
+    final DocumentEvent event = startChange(startOffset, toDelete, newString, wholeTextReplaced);
+
     startOffset += myStart;
     endOffset += myStart;
     doReplace(startOffset, endOffset, newString);
     afterChangedUpdate(event, newModificationStamp);
+    assertConsistency();
   }
 
-  private void doReplace(int startOffset, int endOffset, CharSequence newString) {
+  private void doReplace(int startOffset, int endOffset, @NotNull CharSequence newString) {
     prepareForModification();
 
     if (isDeferredChangeMode()) {
       storeChange(new TextChangeImpl(newString, startOffset, endOffset));
-      if (myDebugDeferredProcessing) {
+      if (myDebug) {
         myDebugArray.doReplace(startOffset, endOffset, newString);
       }
-      return;
     }
-    
-    int newLength = newString.length();
-    int oldLength = endOffset - startOffset;
+    else {
+      int newLength = newString.length();
+      int oldLength = endOffset - startOffset;
 
-    CharArrayUtil.getChars(newString, myArray, startOffset, Math.min(newLength, oldLength));
+      CharArrayUtil.getChars(newString, myArray, startOffset, Math.min(newLength, oldLength));
+      myStringRef = null;
 
-    if (newLength > oldLength) {
-      doInsert(newString.subSequence(oldLength, newLength), endOffset);
-    }
-    else if (newLength < oldLength) {
-      doRemove(startOffset + newLength, startOffset + oldLength);
+      if (newLength > oldLength) {
+        doInsert(newString.subSequence(oldLength, newLength), endOffset);
+      }
+      else if (newLength < oldLength) {
+        doRemove(startOffset + newLength, startOffset + oldLength);
+      }
     }
   }
 
-  public void remove(DocumentImpl subj, int startIndex, int endIndex, CharSequence toDelete) {
-    DocumentEvent event = beforeChangedUpdate(subj, startIndex, toDelete, null, false);
+  public void remove(int startIndex, int endIndex, @NotNull CharSequence toDelete) {
+    DocumentEvent event = startChange(startIndex, toDelete, null, false);
     startIndex += myStart;
     endIndex += myStart;
     doRemove(startIndex, endIndex);
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
+    assertConsistency();
   }
 
-  private void doRemove(final int startIndex, final int endIndex) {
+  private void doRemove(int startIndex, int endIndex) {
     if (startIndex == endIndex) {
       return;
     }
@@ -231,46 +288,49 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
     if (isDeferredChangeMode()) {
       storeChange(new TextChangeImpl("", startIndex, endIndex));
-      if (myDebugDeferredProcessing) {
+      if (myDebug) {
         myDebugArray.doRemove(startIndex, endIndex);
       }
-      return;
     }
-    
-    if (endIndex < myCount) {
-      System.arraycopy(myArray, endIndex, myArray, startIndex, myCount - endIndex);
+    else {
+      if (endIndex < myCount) {
+        System.arraycopy(myArray, endIndex, myArray, startIndex, myCount - endIndex);
+        myStringRef = null;
+      }
+      myCount -= endIndex - startIndex;
     }
-    myCount -= endIndex - startIndex;
   }
 
-  public void insert(DocumentImpl subj, CharSequence s, int startIndex) {
-    DocumentEvent event = beforeChangedUpdate(subj, startIndex, null, s, false);
+  public void insert(@NotNull CharSequence s, int startIndex) {
+    DocumentEvent event = startChange(startIndex, null, s, false);
     startIndex += myStart;
     doInsert(s, startIndex);
 
     afterChangedUpdate(event, LocalTimeCounter.currentTime());
-    trimToSize(subj);
+    trimToSize();
+    assertConsistency();
   }
 
-  private void doInsert(final CharSequence s, final int startIndex) {
+  private void doInsert(@NotNull CharSequence s, final int startIndex) {
     prepareForModification();
 
     if (isDeferredChangeMode()) {
       storeChange(new TextChangeImpl(s, startIndex));
-      if (myDebugDeferredProcessing) {
+      if (myDebug) {
         myDebugArray.doInsert(s, startIndex);
       }
-      return;
     }
-    
-    int insertLength = s.length();
-    myArray = relocateArray(myArray, myCount + insertLength);
-    if (startIndex < myCount) {
-      System.arraycopy(myArray, startIndex, myArray, startIndex + insertLength, myCount - startIndex);
+    else {
+      int insertLength = s.length();
+      myArray = resizeArray(myArray, myCount + insertLength);
+      if (startIndex < myCount) {
+        System.arraycopy(myArray, startIndex, myArray, startIndex + insertLength, myCount - startIndex);
+      }
+
+      CharArrayUtil.getChars(s, myArray, startIndex);
+      myCount += insertLength;
+      myStringRef = null;
     }
-    
-    CharArrayUtil.getChars(s, myArray, startIndex);
-    myCount += insertLength;
   }
 
   /**
@@ -281,66 +341,57 @@ abstract class CharArray implements CharSequenceBackedByArray {
    */
   private void storeChange(@NotNull TextChangeImpl change) {
     if (!change.isWithinBounds(length())) {
-      LOG.error(String.format(
-        "Invalid change attempt detected - given change bounds are not within the current char array. Change: %d:%d-%d",
-        change.getText().length(), change.getStart(), change.getEnd()
-      ), dumpState());
+      LOG.error(
+        "Invalid change attempt detected - given change bounds are not within the current char array. Change: " +
+        change.getText().length()+":" + change.getStart()+"-" + change.getEnd(), dumpState());
       return;
     }
-    TextChangesStorage storage = myDeferredChangesStorage.get();
-    storage.getLock().lock();
-    try {
-      doStoreChange(change);
+    if (myDeferredChangesStorage.size() >= MAX_DEFERRED_CHANGES_NUMBER) {
+      flushDeferredChanged();
     }
-    finally {
-      storage.getLock().unlock();
-    }
-  }
-  
-  private void doStoreChange(@NotNull TextChangeImpl change) {
-    TextChangesStorage storage = myDeferredChangesStorage.get();
-    if (storage.size() >= MAX_DEFERRED_CHANGES_NUMBER) {
-      flushDeferredChanged(storage);
-    }
-    storage.store(change);
+    myDeferredChangesStorage.store(change);
     myDeferredShift += change.getDiff();
 
-    if (myDebugDeferredProcessing) {
+    if (myDebug) {
       myDebugDeferredChanges.add(change);
     }
   }
-  
+
   private void prepareForModification() {
     if (myOriginalSequence != null) {
       myArray = new char[myOriginalSequence.length()];
       CharArrayUtil.getChars(myOriginalSequence, myArray, 0);
+      myCount = myArray.length;
       myOriginalSequence = null;
+      myStart = 0;
     }
     myStringRef = null;
+
+    assertConsistency();
   }
 
+  @NotNull
   public CharSequence getCharArray() {
-    if (myOriginalSequence != null) return myOriginalSequence;
-    return this;
+    assertReadAccess();
+    assertConsistency();
+    CharSequence originalSequence = myOriginalSequence;
+    return originalSequence == null ? this : originalSequence;
   }
 
   public String toString() {
-    String str = myStringRef != null ? myStringRef.get() : null;
+    assertConsistency();
+    String str = myStringRef == null ? null : myStringRef.get();
     if (str == null) {
-      if (myOriginalSequence != null) {
-        str = myOriginalSequence.toString();
-      }
-      else if (!hasDeferredChanges()) {
-        str = new String(myArray, myStart, myCount);
-      }
-      else {
+      if (hasDeferredChanges()) {
         str = substring(0, length()).toString();
       }
+      else if (myOriginalSequence != null) {
+        str = myOriginalSequence.toString();
+      }
+      else {
+        str = new String(myArray, myStart, myCount);
+      }
       myStringRef = new SoftReference<String>(str);
-    }
-    if (myDebugDeferredProcessing && isDeferredChangeMode()) {
-      String expected = myDebugArray.toString();
-      checkStrings("toString()", expected, str);
     }
     return str;
   }
@@ -348,10 +399,10 @@ abstract class CharArray implements CharSequenceBackedByArray {
   @Override
   public final int length() {
     final int result = myCount + myDeferredShift;
-    if (myDebugDeferredProcessing && isDeferredChangeMode()) {
+    if (myDebug && isDeferredChangeMode()) {
       int expected = myDebugArray.length();
       if (expected != result) {
-        dumpDebugInfo(String.format("Incorrect length() processing. Expected: '%s', actual: '%s'", expected, result));
+        dumpDebugInfo("Incorrect length() processing. Expected: '" + expected + "', actual: '" + result + "'");
       }
     }
     return result;
@@ -363,144 +414,113 @@ abstract class CharArray implements CharSequenceBackedByArray {
       throw new IndexOutOfBoundsException("Wrong offset: " + i + "; count:" + length());
     }
     i += myStart;
-    if (myOriginalSequence != null) return myOriginalSequence.charAt(i);
     final char result;
     if (hasDeferredChanges()) {
-      TextChangesStorage storage = myDeferredChangesStorage.get();
-      storage.getLock().lock();
-      try {
-        result = storage.charAt(myArray, i);
-      }
-      finally {
-        storage.getLock().unlock();
-      }
+      result = myDeferredChangesStorage.charAt(myArray, i);
+    }
+    else if (myOriginalSequence != null) {
+      result = myOriginalSequence.charAt(i);
     }
     else {
       result = myArray[i];
     }
 
-    if (myDebugDeferredProcessing && isDeferredChangeMode()) {
+    if (myDebug && isDeferredChangeMode()) {
       char expected = myDebugArray.charAt(i);
       if (expected != result) {
-        dumpDebugInfo(
-          String.format("Incorrect charAt() processing for index %d. Expected: '%c', actual: '%c'", i, expected, result)
-        );
+        dumpDebugInfo("Incorrect charAt() processing for index " + i + ". Expected: '" + expected + "', actual: '" + result + "'");
       }
     }
     return result;
   }
 
   @Override
+  @NotNull
   public CharSequence subSequence(final int start, final int end) {
+    assertReadAccess();
+    assertConsistency();
     if (start == 0 && end == length()) return this;
     if (myOriginalSequence != null) {
       return myOriginalSequence.subSequence(start, end);
     }
-    if (hasDeferredChanges()) {
-      return new CharArray(myBufferSize, myDeferredChangesStorage.get(), myArray, myStart + start, myStart + end) {
-        @NotNull
-        @Override
-        protected DocumentEvent beforeChangedUpdate(DocumentImpl subj,
-                                                    int offset,
-                                                    CharSequence oldString,
-                                                    CharSequence newString,
-                                                    boolean wholeTextReplaced) {
-          return new DocumentEventImpl(subj, offset, oldString, newString, LocalTimeCounter.currentTime(), wholeTextReplaced);
-        }
-
-        @Override
-        protected void afterChangedUpdate(@NotNull DocumentEvent event, long newModificationStamp) {
-        }
-
-        @Override
-        public char[] getChars() {
-          char[] chars = CharArray.this.getChars();
-          char[] result = new char[end - start];
-          System.arraycopy(chars, start, result, 0, result.length);
-          return result;
-        }
-      };
-    }
-    else {
-      // We don't use the same approach as with 'defer changes' mode because the former is the new experimental one and this one
-      // is rather mature, hence, we just minimizes the risks that something is wrong within the new approach.
-      return new CharArrayCharSequence(myArray, start, end);
-    }
+    flushDeferredChanged();
+    return new CharArrayCharSequence(myArray, start, end);
   }
 
-  private boolean isSubSequence() {
-    return myEnd >= 0;
-  }
-  
   @Override
+  @NotNull
   public char[] getChars() {
-    if (myOriginalSequence != null) {
-      if (myArray == null) {
-        myArray = CharArrayUtil.fromSequence(myOriginalSequence);
-      }
-    }
-    flushDeferredChanged(myDeferredChangesStorage.get());
-    if (myDebugDeferredProcessing && isDeferredChangeMode()) {
-      char[] expected = myDebugArray.getChars();
-      for (int i = 0, max = length(); i < max; i++) {
-        if (myArray[i] != expected[i]) {
-          dumpDebugInfo(String.format("getChars(). Index: %d, expected: %c, actual: %c", i, expected[i], myArray[i]));
-          break;
+    assertReadAccess();
+    assertConsistency();
+    char[] array = myArray;
+    CharSequence originalSequence = myOriginalSequence;
+    if (hasDeferredChanges() || originalSequence != null && array == null) {
+      // slow track
+      lock.lock();
+      try {
+        flushDeferredChanged();
+        if (myOriginalSequence != null && myArray == null) {
+          myArray = array = ArrayUtil.realloc(CharArrayUtil.fromSequence(myOriginalSequence), myOriginalSequence.length());
+          myStringRef = null;
         }
       }
+      finally {
+        lock.unlock();
+      }
+      assertConsistency();
     }
-    return myArray;
+    return array;
   }
 
   @Override
-  public void getChars(final char[] dst, final int dstOffset) {
-    flushDeferredChanged(myDeferredChangesStorage.get());
-    if (myOriginalSequence != null) {
-      CharArrayUtil.getChars(myOriginalSequence,dst, dstOffset);
-    }
-    else {
+  public void getChars(@NotNull final char[] dst, final int dstOffset) {
+    assertReadAccess();
+    assertConsistency();
+    flushDeferredChanged();
+    if (myOriginalSequence == null) {
       System.arraycopy(myArray, myStart, dst, dstOffset, length());
     }
+    else {
+      CharArrayUtil.getChars(myOriginalSequence, dst, dstOffset);
+    }
 
-    if (myDebugDeferredProcessing && isDeferredChangeMode()) {
+    if (myDebug && isDeferredChangeMode()) {
       char[] expected = new char[dst.length];
       myDebugArray.getChars(expected, dstOffset);
       for (int i = dstOffset, j = myStart; i < dst.length && j < myArray.length; i++, j++) {
         if (expected[i] != myArray[j]) {
-          dumpDebugInfo(String.format("getChars(char[], int). Given array of length %d, offset %d. Found char '%c' at index %d, " +
-                                      "expected to find '%c'", dst.length, dstOffset, myArray[j], i, expected[i]));
+          dumpDebugInfo("getChars(char[], int). Given array of length " + dst.length + ", offset " + dstOffset + ". Found char '" + myArray[j] +
+                        "' at index " + i + ", expected to find '" + expected[i] + "'");
           break;
         }
       }
     }
   }
 
+  @NotNull
   public CharSequence substring(final int start, final int end) {
+    assertReadAccess();
+    final CharSequence result = doSubString(start, end);
+
+    assertConsistency();
+    return result;
+  }
+
+  private CharSequence doSubString(int start, int end) {
     if (start == end) return "";
     final CharSequence result;
     if (myOriginalSequence == null) {
-      TextChangesStorage storage = myDeferredChangesStorage.get();
-      storage.getLock().lock();
-      try {
-        result = storage.substring(myArray, start + myStart, end + myStart);
-      }
-      finally {
-        storage.getLock().unlock();
-      }
+      result = myDeferredChangesStorage.substring(myArray, start + myStart, end + myStart);
     }
     else {
       result = myOriginalSequence.subSequence(start, end);
     }
-
-    if (myDebugDeferredProcessing && isDeferredChangeMode()) {
-      String expected = myDebugArray.substring(start, end).toString();
-      checkStrings(String.format("substring(%d, %d)", start, end), expected, result.toString());
-    }
     return result;
   }
 
-  private static char[] relocateArray(char[] array, int index) {
-    if (index < array.length) {
+  @NotNull
+  private static char[] resizeArray(@NotNull char[] array, int newSize) {
+    if (newSize < array.length) {
       return array;
     }
 
@@ -508,7 +528,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     if (newArraySize == 0) {
       newArraySize = 16;
     }
-    while (newArraySize <= index) {
+    while (newArraySize <= newSize) {
       newArraySize = newArraySize * 12 / 10 + 1;
     }
     char[] newArray = new char[newArraySize];
@@ -516,24 +536,26 @@ abstract class CharArray implements CharSequenceBackedByArray {
     return newArray;
   }
 
-  private void trimToSize(DocumentImpl subj) {
+  private void trimToSize() {
     if (myBufferSize != 0 && length() > myBufferSize) {
-      flushDeferredChanged(myDeferredChangesStorage.get());
+      flushDeferredChanged();
+
       // make a copy
-      remove(subj, 0, myCount - myBufferSize, getCharArray().subSequence(0, myCount - myBufferSize).toString());
+      int endIndex = myCount - myBufferSize;
+      String toDelete = getCharArray().subSequence(0, endIndex).toString();
+      remove(0, endIndex, toDelete);
     }
   }
 
   /**
-   * @return    <code>true</code> if this object is at {@link #setDeferredChangeMode(boolean) defer changes} mode;
-   *            <code>false</code> otherwise
+   * @return    <code>true</code> if this object is in the defer changes mode, see {@link #setDeferredChangeMode(boolean)};
    */
   public boolean isDeferredChangeMode() {
-    return !DISABLE_DEFERRED_PROCESSING && myDeferredChangeMode;
+    return myDeferredChangeMode;
   }
 
   public boolean hasDeferredChanges() {
-    return !myDeferredChangesStorage.get().isEmpty();
+    return !myDeferredChangesStorage.isEmpty();
   }
   
   /**
@@ -552,9 +574,9 @@ abstract class CharArray implements CharSequenceBackedByArray {
    *   </li>
    *   <li>
    *     Number of target changes are applied to the current object via standard API
-   *     ({@link #insert(DocumentImpl, CharSequence, int) insert},
-   *     {@link #remove(DocumentImpl, int, int, CharSequence) remove} and
-   *     {@link #replace(DocumentImpl, int, int, CharSequence, CharSequence, long, boolean) replace});
+   *     ({@link #insert(CharSequence, int) insert},
+   *     {@link #remove(int, int, CharSequence) remove} and
+   *     {@link #replace(int, int, java.lang.CharSequence, java.lang.CharSequence, long, boolean)});
    *   </li>
    *   <li>
    *     Client of this class indicates that <code>'massive change time'</code> is over by calling this method with <code>'false'</code>
@@ -571,108 +593,109 @@ abstract class CharArray implements CharSequenceBackedByArray {
    * @param deferredChangeMode    flag that defines if <code>'defer changes'</code> mode should be used by the current object
    */
   public void setDeferredChangeMode(boolean deferredChangeMode) {
-    if (deferredChangeMode && myDebugDeferredProcessing) {
-      myDebugArray.setText(null, myDebugTextOnBatchUpdateStart = toString());
-      myDebugDeferredChanges.clear();
+    if (!DISABLE_DEFERRED_PROCESSING) {
+      if (deferredChangeMode) {
+        if (myDebug) {
+          myDebugArray.setText(myDebugTextOnBatchUpdateStart = toString());
+          myDebugDeferredChanges.clear();
+        }
+        prepareForModification();
+        myDeferredChangeMode = deferredChangeMode;
+      }
+      else {
+        myDeferredChangeMode = deferredChangeMode;
+        flushDeferredChanged();
+      }
     }
-    myDeferredChangeMode = deferredChangeMode;
-    if (!deferredChangeMode) {
-      flushDeferredChanged(myDeferredChangesStorage.get());
-    }
+    assertConsistency();
   }
 
-  private void flushDeferredChanged(@NotNull TextChangesStorage storage) {
-    storage.getLock().lock();
-    try {
-      doFlushDeferredChanged();
-    }
-    finally {
-      storage.getLock().unlock();
-    }
-  }
-  
-  private void doFlushDeferredChanged() {
-    TextChangesStorage storage = myDeferredChangesStorage.get();
-    List<TextChangeImpl> changes = storage.getChanges();
+  private void flushDeferredChanged() {
+    List<TextChangeImpl> changes = myDeferredChangesStorage.getChanges();
     if (changes.isEmpty()) {
       return;
     }
 
-    char[] beforeMerge = null;
-    final boolean inPlace;
-    if (myDebugDeferredProcessing) {
-      beforeMerge = new char[myArray.length];
-      System.arraycopy(myArray, 0, beforeMerge, 0, myArray.length);
-    }
-    
-    BulkChangesMerger changesMerger = BulkChangesMerger.INSTANCE;
-    if (myArray.length < length()) {
-      myArray = changesMerger.mergeToCharArray(myArray, myCount, changes);
-      inPlace = false;
-    }
-    else {
-      changesMerger.mergeInPlace(myArray, myCount, changes);
-      inPlace = true;
-    }
+    lock.lock();
+    try {
+      char[] beforeMerge = null;
+      if (myDebug) {
+        beforeMerge = new char[myArray.length];
+        System.arraycopy(myArray, 0, beforeMerge, 0, myArray.length);
+      }
 
-    if (myDebugDeferredProcessing) {
-      for (int i = 0, max = length(); i < max; i++) {
-        if (myArray[i] != myDebugArray.myArray[i]) {
-          dumpDebugInfo(String.format(
-            "flushDeferredChanged(). Index %d, expected: '%c', actual '%c'. Text before merge: '%s', merge inplace: %b",
-            i, myDebugArray.myArray[i], myArray[i], Arrays.toString(beforeMerge), inPlace));
-          break;
+      BulkChangesMerger changesMerger = BulkChangesMerger.INSTANCE;
+      final boolean inPlace;
+      if (myArray.length < length()) {
+        myArray = changesMerger.mergeToCharArray(myArray, myCount, changes);
+        inPlace = false;
+      }
+      else {
+        changesMerger.mergeInPlace(myArray, myCount, changes);
+        inPlace = true;
+      }
+
+      myCount += myDeferredShift;
+      myDeferredShift = 0;
+      myDeferredChangesStorage.clear();
+      myDeferredChangeMode = false;
+      myStringRef = null;
+
+      if (myDebug) {
+        for (int i = 0, max = length(); i < max; i++) {
+          if (myArray[i] != myDebugArray.myArray[i]) {
+            dumpDebugInfo("flushDeferredChanged(). Index " + i + ", expected: '" + myDebugArray.myArray[i]+"', actual '" +
+                          myArray[i]+"'. Text before merge: '" + Arrays.toString(beforeMerge)+"', merge inplace: "+inPlace);
+            break;
+          }
         }
       }
     }
-    
-    myCount += myDeferredShift;
-    myDeferredShift = 0;
-    storage.clear();
-    myDeferredChangeMode = false;
+    finally {
+      lock.unlock();
+    }
+    assertConsistency();
   }
 
+  @NonNls
   @NotNull
-  public String dumpState() {
-    return String.format(
-      "deferred changes mode: %b, length: %d (data array length: %d, deferred shift: %d); view offsets: [%d; %d]; deferred changes: %s",
-      isDeferredChangeMode(), length(), myCount, myDeferredShift, myStart, myEnd, myDeferredChangesStorage
-    );
+  private String dumpState() {
+    return "deferred changes mode: " + isDeferredChangeMode()+", length: " + length()+" (data array length: " + myCount+
+           ", deferred shift: " + myDeferredShift+"); view offsets: [" + myStart+"; "+myCount+"]; deferred changes: "+myDeferredChangesStorage;
   }
   
-  private void checkStrings(@NotNull String operation, @NotNull String expected, @NotNull String actual) {
+  private void checkStrings(@NonNls @NotNull String operation, @NotNull String expected, @NotNull String actual) {
     if (expected.equals(actual)) {
       return;
     }
     for (int i = 0, max = Math.min(expected.length(), actual.length()); i < max; i++) {
       if (actual.charAt(i) != expected.charAt(i)) {
-        dumpDebugInfo(String.format(
-          "Incorrect %s processing. Expected length: %d, actual length: %d. Unmatched symbol at %d - expected: '%c', " +
-          "actual: '%c', expected document: '%s', actual document: '%s'",
-          operation, expected.length(), actual.length(), i, expected.charAt(i), actual.charAt(i), expected, actual
-        ));
+        dumpDebugInfo(
+          "Incorrect " +
+          operation+" processing. Expected length: " +
+          expected.length()+", actual length: " +
+          actual.length()+". Unmatched symbol at " +
+          i+" - expected: '" +
+          expected.charAt(i)+"', " +
+          "actual: '" +
+          actual.charAt(i)+"', expected document: '" +
+          expected+"', actual document: '" +
+          actual+"'"
+        );
         return;
       }
     }
-    dumpDebugInfo(String.format(
-      "Incorrect %s processing. Expected length: %d, actual length: %d, expected: '%s', actual: '%s'",
-      operation, expected.length(), actual.length(), expected, actual
-    ));
+    dumpDebugInfo("Incorrect " + operation+" processing. Expected length: " + expected.length()+", actual length: " +
+      actual.length()+", expected: '" + expected+"', actual: '" + actual+"'");
   }
 
-  private void dumpDebugInfo(@NotNull String problem) {
-    //LOG.error(String.format(
-    //  "/***********************************************************\n" +
-    //  " * Please email idea.log to Denis.Zhdanov@jetbrains.com\n" +
-    //  " ***********************************************************/\n" +
-    //  "Incorrect CharArray processing detected: '%s'. Start: %d, end: %d, text on batch update start: '%s', deferred changes history: %s, "
-    //  + "current deferred changes: %s",
-    //  problem, myStart, myEnd, myDebugTextOnBatchUpdateStart, myDebugDeferredChanges, myDeferredChangesStorage
-    //));
-    LOG.error(String.format(
-      "Incorrect CharArray processing detected: '%s'. Start: %d, end: %d, text on batch update start: '%s', deferred changes history: %s, "
-      + "current deferred changes: %s",
-      problem, myStart, myEnd, myDebugTextOnBatchUpdateStart, myDebugDeferredChanges, myDeferredChangesStorage
-    ));
+  private void dumpDebugInfo(@NonNls @NotNull String problem) {
+    LOG.error(
+      "Incorrect CharArray processing detected: " + problem +
+      ". Start: " + myStart
+      + ", count: " + myCount + ", text on batch update start: " +
+      myDebugTextOnBatchUpdateStart + ", deferred changes history: " +
+      myDebugDeferredChanges + ", current deferred changes: " + myDeferredChangesStorage
+    );
   }
 }

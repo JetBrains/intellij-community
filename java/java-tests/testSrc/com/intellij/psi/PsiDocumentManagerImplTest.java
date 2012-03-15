@@ -52,6 +52,11 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertSame(document, FileDocumentManager.getInstance().getDocument(vFile));
   }
 
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
+  }
+
   private static LightVirtualFile createFile() {
     return new LightVirtualFile("foo.java");
   }
@@ -99,6 +104,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     final TextBlock block = TextBlock.get(file);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         block.performAtomically(new Runnable() {
           @Override
@@ -117,6 +123,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = new MockDocument();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
       }
@@ -132,6 +139,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
       }
@@ -148,6 +156,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     final Document document = getPsiDocumentManager().getDocument(file);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         getPsiDocumentManager().documentChanged(new DocumentEventImpl(document, 0, "", "", document.getModificationStamp(), false));
       }
@@ -182,6 +191,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           getPsiDocumentManager()
             .documentChanged(new DocumentEventImpl(alienDocument, 0, "", "", alienDocument.getModificationStamp(), false));
@@ -225,6 +235,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         document.insertString(0, "class X {}");
       }
@@ -250,6 +261,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     };
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         document.insertString(0, "/**/");
         boolean executed = getPsiDocumentManager().cancelAndRunWhenAllCommitted("xxx", action);
@@ -268,6 +280,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     count.set(0);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         document.insertString(0, "/**/");
         boolean executed = getPsiDocumentManager().performWhenAllCommitted(action);
@@ -291,8 +304,51 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     }
   }
 
-  @Override
-  protected boolean isRunInWriteAction() {
-    return false;
+  public void testDocumentFromAlienProjectGetsCommittedInBackground() throws Exception {
+    LightVirtualFile virtualFile = createFile();
+    PsiFile file = getPsiManager().findFile(virtualFile);
+
+    final Document document = getPsiDocumentManager().getDocument(file);
+
+    File temp = createTempDirectory();
+    final Project alienProject = createProject(new File(temp, "alien.ipr"), DebugUtil.currentStackTrace());
+    boolean succ2 = ProjectManagerEx.getInstanceEx().openProject(alienProject);
+    assertTrue(succ2);
+
+
+    try {
+      PsiManager alienManager = PsiManager.getInstance(alienProject);
+
+      final PsiFile alienFile = alienManager.findFile(virtualFile);
+      assertNotNull(alienFile);
+      final PsiDocumentManagerImpl alienDocManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(alienProject);
+      final Document alienDocument = alienDocManager.getDocument(alienFile);
+      assertSame(document, alienDocument);
+      assertEquals(0, alienDocManager.getUncommittedDocuments().length);
+      assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          document.setText("xxx");
+          assertOrderedEquals(getPsiDocumentManager().getUncommittedDocuments(), document);
+          assertOrderedEquals(alienDocManager.getUncommittedDocuments(), alienDocument);
+        }
+      });
+      assertEquals("xxx", document.getText());
+      assertEquals("xxx", alienDocument.getText());
+
+      while (!getPsiDocumentManager().isCommitted(document)) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      long start = System.currentTimeMillis();
+      while (!alienDocManager.isCommitted(alienDocument) && System.currentTimeMillis()-start < 20000) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+      assertTrue("Still not committed: "+alienDocument, alienDocManager.isCommitted(alienDocument));
+    }
+    finally {
+      ProjectUtil.closeAndDispose(alienProject);
+    }
   }
 }

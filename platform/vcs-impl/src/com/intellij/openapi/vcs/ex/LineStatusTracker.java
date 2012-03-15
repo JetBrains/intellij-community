@@ -293,6 +293,7 @@ public class LineStatusTracker {
     private int myLinesBeforeChange;
     private final VcsDirtyScopeManager myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
+    @Override
     public void beforeDocumentChange(DocumentEvent e) {
       myApplication.assertWriteAccessAllowed();
 
@@ -346,6 +347,7 @@ public class LineStatusTracker {
       return result;
     }
 
+    @Override
     public void documentChanged(final DocumentEvent e) {
       myApplication.assertWriteAccessAllowed();
 
@@ -646,7 +648,7 @@ public class LineStatusTracker {
   }
 
   public static LineStatusTracker createOn(@Nullable VirtualFile virtualFile, final Document doc, final Project project) {
-    final Document document = new DocumentImpl(true);
+    final Document document = new DocumentImpl("",true);
     return new LineStatusTracker(doc, document, project, virtualFile);
   }
 
