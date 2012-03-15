@@ -61,6 +61,7 @@
     
     <!--Conflict UI components-->
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleProjectConflictControlFactory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleCommonDependencyConflictControlFactory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleLibraryDependencyConflictControlFactory"/>
 

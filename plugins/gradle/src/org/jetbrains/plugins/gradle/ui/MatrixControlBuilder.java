@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.Arrays;
 
@@ -34,27 +35,36 @@ import java.util.Arrays;
 public class MatrixControlBuilder {
   
   private final DefaultTableModel myModel = new DefaultTableModel();
-  private final JComponent result;
+
+  private final JBTable     myTable;
+  private final JComponent  myResult;
+  private final int[]       myColumnWidths;
+  private final FontMetrics myFontMetrics;
 
   public MatrixControlBuilder(@NotNull String ... columns) {
     myModel.addColumn(""); // Row name
     for (String column : columns) {
       myModel.addColumn(column);
     }
-    final JBTable table = new JBTable(myModel) {
+    myTable = new JBTable(myModel) {
       @Override
       public Dimension getPreferredScrollableViewportSize() {
         return getPreferredSize();
       }
     };
-    table.setStriped(true);
+    myTable.setStriped(true);
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     renderer.setHorizontalAlignment(SwingConstants.CENTER);
-    for (int i = 1/* don't align row name */, max = table.getColumnCount(); i < max; i++) {
-      table.getColumnModel().getColumn(i).setCellRenderer(renderer);
+    for (int i = 1/* don't align row name */, max = myTable.getColumnCount(); i < max; i++) {
+      myTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
     }
-    //table.setDefaultRenderer(String.class, renderer);
-    result = ScrollPaneFactory.createScrollPane(table);
+    myResult = ScrollPaneFactory.createScrollPane(myTable);
+    
+    myColumnWidths = new int[columns.length + 1/*'name' column*/];
+    myFontMetrics = myTable.getFontMetrics(myTable.getFont());
+    for (int i = 0; i < columns.length; i++) {
+      myColumnWidths[i + 1] = myFontMetrics.stringWidth(columns[i]);
+    }
   }
   
   /**
@@ -82,10 +92,18 @@ public class MatrixControlBuilder {
     rowData[0] = name;
     System.arraycopy(values, 0, rowData, 1, values.length);
     myModel.addRow(rowData);
+
+    for (int i = 0; i < rowData.length; i++) {
+      myColumnWidths[i] = Math.max(myFontMetrics.stringWidth(rowData[i].toString()), myColumnWidths[i]);
+    }
   }
   
   @NotNull
   public JComponent build() {
-    return result;
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    for (int i = 0; i < myColumnWidths.length; i++) {
+      columnModel.getColumn(i).setMinWidth(myColumnWidths[i] + 4);
+    }
+    return myResult;
   }
 }
