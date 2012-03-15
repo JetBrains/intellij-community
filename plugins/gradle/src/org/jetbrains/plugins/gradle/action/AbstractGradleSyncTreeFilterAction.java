@@ -1,15 +1,19 @@
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
@@ -70,6 +74,16 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
+    
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    if (project == null || StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedProjectPath())) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    else {
+      e.getPresentation().setEnabled(true);
+    }
+    
     if (myIconChanged) {
       e.getPresentation().setIcon(getTemplatePresentation().getIcon());
       myIconChanged = false;
