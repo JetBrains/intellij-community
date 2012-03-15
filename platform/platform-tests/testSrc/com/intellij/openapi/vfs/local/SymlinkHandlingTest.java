@@ -245,6 +245,26 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertEquals(linkContent, fileContent);
   }
 
+  public void testFindByLinkParentPath() throws Exception {
+    final File topDir = FileUtil.createTempDirectory("topDir.", null);
+    final File subDir1 = FileUtil.createTempDirectory(topDir, "subDir1.", null);
+    final File link = createTempLink(subDir1.getAbsolutePath(), "link");
+    final VirtualFile vLink = refreshAndFind(link);
+    assertNotNull(link.getPath(), vLink);
+
+    final File subDir2 = FileUtil.createTempDirectory(topDir, "subDir2.", null);
+    final File subChild = FileUtil.createTempFile(subDir2, "subChild.", ".txt", true);
+    final VirtualFile vSubChild = refreshAndFind(subChild);
+    assertNotNull(subChild.getPath(), vSubChild);
+
+    final String relPath = "../" + subDir2.getName() + "/" + subChild.getName();
+    VirtualFile vSubChildRel;
+    vSubChildRel = vLink.findFileByRelativePath(relPath);
+    assertEquals(vSubChild, vSubChildRel);
+    vSubChildRel = LocalFileSystem.getInstance().findFileByPath(vLink.getPath() + "/" + relPath);
+    assertEquals(vSubChild, vSubChildRel);
+  }
+
   // todo[r.sh] use NIO2 API after migration to JDK 7
   private static File createTempLink(final String target, final String link) throws InterruptedException, ExecutionException {
     final boolean isAbsolute = SystemInfo.isUnix && StringUtil.startsWithChar(link, '/') ||
