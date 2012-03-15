@@ -86,6 +86,7 @@
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
 
     <projectService
       serviceInterface="git4idea.history.wholeTree.LogFactoryService"

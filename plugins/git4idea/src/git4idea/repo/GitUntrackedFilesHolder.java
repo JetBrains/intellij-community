@@ -175,6 +175,12 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     }
   }
 
+  public void invalidate() {
+    synchronized (LOCK) {
+      myReady = false;
+    }
+  }
+
   /**
    * Resets the list of untracked files after retrieving the full list of them from Git.
    */
