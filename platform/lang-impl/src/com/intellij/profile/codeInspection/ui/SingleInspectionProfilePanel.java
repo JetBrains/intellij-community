@@ -568,7 +568,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private JPopupMenu compoundPopup() {
-    final JPopupMenu popup = new JPopupMenu(InspectionsBundle.message("inspection.error.level.popup.menu.title"));
+    final DefaultActionGroup group = new DefaultActionGroup();
     final SeverityRegistrar severityRegistrar = ((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar();
     TreeSet<HighlightSeverity> severities = new TreeSet<HighlightSeverity>(severityRegistrar);
     severities.add(HighlightSeverity.ERROR);
@@ -581,12 +581,15 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     for (HighlightSeverity severity : severities) {
       final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
-      final JMenuItem item = new JMenuItem(renderSeverity(level.getSeverity()));
-      item.setIcon(level.getIcon()); //todo correct position
-      item.addActionListener(new LevelSelection(level));
-      popup.add(item);
+      group.add(new AnAction(renderSeverity(severity), renderSeverity(severity), level.getIcon()) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          setNewHighlightingLevel(level);
+        }
+      });
     }
-    return popup;
+    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    return menu.getComponent();
   }
 
   static String renderSeverity(HighlightSeverity severity) {
@@ -1051,6 +1054,57 @@ public class SingleInspectionProfilePanel extends JPanel {
     super.setVisible(aFlag);
   }
 
+  private void setNewHighlightingLevel(final HighlightDisplayLevel level) {
+    final int[] rows = myTree.getSelectionRows();
+    final boolean showOptionsAndDescriptorPanels = rows != null && rows.length == 1;
+    for (int i = 0; rows != null && i < rows.length; i++) {
+      final InspectionConfigTreeNode node = (InspectionConfigTreeNode)myTree.getPathForRow(rows[i]).getLastPathComponent();
+      final InspectionConfigTreeNode parent = (InspectionConfigTreeNode)node.getParent();
+      if (node.getUserObject() instanceof Descriptor) {
+        updateErrorLevel(node, showOptionsAndDescriptorPanels, level);
+        updateUpHierarchy(node, parent);
+      }
+      else {
+        node.isProperSetting = false;
+        for (int j = 0; j < node.getChildCount(); j++) {
+          final InspectionConfigTreeNode child = (InspectionConfigTreeNode)node.getChildAt(j);
+          if (child.getUserObject() instanceof Descriptor) {     //group node
+            updateErrorLevel(child, showOptionsAndDescriptorPanels, level);
+          }
+          else {                                               //root node
+            child.isProperSetting = false;
+            for (int k = 0; k < child.getChildCount(); k++) {
+              final InspectionConfigTreeNode descriptorNode = (InspectionConfigTreeNode)child.getChildAt(k);
+              if (descriptorNode.getUserObject() instanceof Descriptor) {
+                updateErrorLevel(descriptorNode, showOptionsAndDescriptorPanels, level);
+              }
+              child.isProperSetting |= descriptorNode.isProperSetting;
+            }
+          }
+          node.isProperSetting |= child.isProperSetting;
+        }
+        updateUpHierarchy(node, parent);
+      }
+    }
+    if (rows != null && rows.length == 1) {
+      updateOptionsAndDescriptionPanel(myTree.getPathForRow(rows[0]));
+    }
+    else {
+      initOptionsAndDescriptionPanel();
+    }
+    repaintTableData();
+  }
+
+  private void updateErrorLevel(final InspectionConfigTreeNode child,
+                                final boolean showOptionsAndDescriptorPanels, final HighlightDisplayLevel level) {
+    final HighlightDisplayKey key = child.getDesriptor().getKey();
+    mySelectedProfile.setErrorLevel(key, level, child.isInspectionNode() || child.isByDefault() ? -1 : child.getParent().getIndex(child));
+    child.isProperSetting = mySelectedProfile.isProperSetting(key);
+    if (showOptionsAndDescriptorPanels) {
+      updateOptionsAndDescriptionPanel(new TreePath(child.getPath()));
+    }
+  }
+
   private class LevelSelection implements ActionListener {
     private final HighlightDisplayLevel myLevel;
 
@@ -1059,53 +1113,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     public void actionPerformed(ActionEvent e) {
-      final int[] rows = myTree.getSelectionRows();
-      final boolean showOptionsAndDescriptorPanels = rows != null && rows.length == 1;
-      for (int i = 0; rows != null && i < rows.length; i++) {
-        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)myTree.getPathForRow(rows[i]).getLastPathComponent();
-        final InspectionConfigTreeNode parent = (InspectionConfigTreeNode)node.getParent();
-        if (node.getUserObject() instanceof Descriptor) {
-          updateErrorLevel(node, showOptionsAndDescriptorPanels);
-          updateUpHierarchy(node, parent);
-        }
-        else {
-          node.isProperSetting = false;
-          for (int j = 0; j < node.getChildCount(); j++) {
-            final InspectionConfigTreeNode child = (InspectionConfigTreeNode)node.getChildAt(j);
-            if (child.getUserObject()instanceof Descriptor) {     //group node
-              updateErrorLevel(child, showOptionsAndDescriptorPanels);
-            }
-            else {                                               //root node
-              child.isProperSetting = false;
-              for (int k = 0; k < child.getChildCount(); k++) {
-                final InspectionConfigTreeNode descriptorNode = (InspectionConfigTreeNode)child.getChildAt(k);
-                if (descriptorNode.getUserObject()instanceof Descriptor) {
-                  updateErrorLevel(descriptorNode, showOptionsAndDescriptorPanels);
-                }
-                child.isProperSetting |= descriptorNode.isProperSetting;
-              }
-            }
-            node.isProperSetting |= child.isProperSetting;
-          }
-          updateUpHierarchy(node, parent);
-        }
-      }
-      if (rows != null && rows.length == 1) {
-        updateOptionsAndDescriptionPanel(myTree.getPathForRow(rows[0]));
-      }
-      else {
-        initOptionsAndDescriptionPanel();
-      }
-      repaintTableData();
-    }
-
-    private void updateErrorLevel(final InspectionConfigTreeNode child, final boolean showOptionsAndDescriptorPanels) {
-      final HighlightDisplayKey key = child.getDesriptor().getKey();
-      mySelectedProfile.setErrorLevel(key, myLevel, child.isInspectionNode() || child.isByDefault() ? -1 : child.getParent().getIndex(child));
-      child.isProperSetting = mySelectedProfile.isProperSetting(key);
-      if (showOptionsAndDescriptorPanels) {
-        updateOptionsAndDescriptionPanel(new TreePath(child.getPath()));
-      }
+      setNewHighlightingLevel(myLevel);
     }
   }
 
