@@ -27,8 +27,9 @@ import java.util.regex.Pattern;
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleLibraryManager {
 
-  private static final Pattern GRADLE_JAR_FILE_PATTERN;
-  private static final Pattern ANY_GRADLE_JAR_FILE_PATTERN;
+  public static final Pattern  GRADLE_JAR_FILE_PATTERN;
+  public static final Pattern  ANY_GRADLE_JAR_FILE_PATTERN;
+  
   private static final String[] GRADLE_START_FILE_NAMES;
   @NonNls private static final String GRADLE_ENV_PROPERTY_NAME;
   static {

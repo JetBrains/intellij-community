@@ -12,6 +12,8 @@ import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
  */
 public class GradleConstants {
 
+  @NonNls public static final String NEWLY_IMPORTED_PROJECT = "gradle.newly.imported";
+  
   @NonNls public static final String EXTENSION           = "gradle";
   @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
   

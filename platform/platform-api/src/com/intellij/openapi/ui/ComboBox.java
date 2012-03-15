@@ -76,7 +76,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
       arrowButton.addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
-          if (!mySwingPopup) {
+          if (!isSwingPopup()) {
             e.consume();
             setPopupVisible(true);
           }
@@ -114,6 +114,9 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
             myJBPopup.cancel();
           }
         });
+      }
+      else if (!visible) {
+        super.setPopupVisible(visible);
       }
       return;
     }

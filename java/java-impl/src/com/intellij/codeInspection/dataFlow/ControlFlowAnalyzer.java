@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -1431,6 +1432,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
 
     DfaValue dfaValue = myFactory.create(expression);
+    PsiElement resolved = expression.resolve();
     if (dfaValue instanceof DfaVariableValue) {
       DfaVariableValue dfaVariable = (DfaVariableValue)dfaValue;
       PsiVariable psiVariable = dfaVariable.getPsiVariable();
@@ -1442,12 +1444,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression != null) {
       qualifierExpression.accept(this);
-      if (expression.resolve() instanceof PsiField) {
+      if (resolved instanceof PsiField) {
         addInstruction(new FieldReferenceInstruction(expression, null));
       }
       else {
         addInstruction(new PopInstruction());
       }
+    }
+
+    if (dfaValue == null && resolved instanceof PsiField) {
+      // Accessing a field from another instance
+      dfaValue = myFactory.getTypeFactory().create(((PsiField)resolved).getType(),
+                                                   NullableNotNullManager.isNullable((PsiModifierListOwner)resolved));
     }
 
     addInstruction(new PushInstruction(dfaValue, expression));

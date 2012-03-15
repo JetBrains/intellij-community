@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Range;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -563,6 +564,10 @@ public final class TreeUtil {
 
       if (visible.width < bounds.width) {
         bounds.width = visible.width;
+      }
+
+      if (tree instanceof Tree && !((Tree)tree).isHorizontalAutoScrollingEnabled()) {
+        bounds.x = 0;
       }
 
       final Rectangle b1 = bounds;

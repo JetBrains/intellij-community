@@ -93,12 +93,17 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected boolean isEventIgnored(final VirtualFileEvent event, boolean putInDirty) {
     if (event.isFromRefresh()) return true;
-    boolean vcsIgnored = myVcsManager.getVcsFor(event.getFile()) != myVcs ||
-                (!myVcsManager.isFileInContent(event.getFile())) || myChangeListManager.isIgnoredFile(event.getFile());
+    boolean vcsIgnored = !isUnderMyVcs(event.getFile());
     if (vcsIgnored) {
       myDirtyFiles.add(event.getFile());
     }
     return vcsIgnored;
+  }
+
+  private boolean isUnderMyVcs(VirtualFile file) {
+    return myVcsManager.getVcsFor(file) == myVcs &&
+           (myVcsManager.isFileInContent(file)) &&
+           !myChangeListManager.isIgnoredFile(file);
   }
 
   protected void executeAdd() {
@@ -308,7 +313,10 @@ public abstract class VcsVFSListener implements Disposable {
 
   private class MyVirtualFileAdapter extends VirtualFileAdapter {
     public void fileCreated(final VirtualFileEvent event) {
-      VcsVFSListener.this.fileAdded(event, event.getFile());
+      VirtualFile file = event.getFile();
+      if (isUnderMyVcs(file)) {
+        VcsVFSListener.this.fileAdded(event, file);
+      }
     }
 
     public void fileCopied(final VirtualFileCopyEvent event) {
@@ -385,8 +393,11 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public void beforeContentsChange(VirtualFileEvent event) {
-      assert !event.getFile().isDirectory();
-      VcsVFSListener.this.beforeContentsChange(event, event.getFile());
+      VirtualFile file = event.getFile();
+      assert !file.isDirectory();
+      if (isUnderMyVcs(file)) {
+        VcsVFSListener.this.beforeContentsChange(event, file);
+      }
     }
   }
 

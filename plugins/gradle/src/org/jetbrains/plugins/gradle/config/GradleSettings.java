@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,10 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
 
   @Override
   public GradleSettings getState() {
+    if (StringUtil.isEmpty(getLinkedProjectPath())) {
+      // Don't save state for the gradle-unaware projects.
+      return null;
+    }
     myExpandStates.get().clear();
     if (PRESERVE_EXPAND_STATE) {
       myExpandStates.get().putAll(myWorkingExpandStates.get());

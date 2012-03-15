@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.util.xmlb.XmlSerializer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Every component which would like to persist its state across IDEA restarts
@@ -28,9 +29,11 @@ import com.intellij.util.xmlb.XmlSerializer;
 public interface PersistentStateComponent<T> {
   /**
    * @return a component state. All properties and public fields are serialized. Only values, which differ
-   * from default (i.e. the value of newly instantiated class) are serialized.
+   * from default (i.e. the value of newly instantiated class) are serialized. <code>null</code> value indicates
+   * that no state should be stored
    * @see XmlSerializer
    */
+  @Nullable
   T getState();
 
   /**

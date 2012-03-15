@@ -44,6 +44,7 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
   private final boolean myForceReturn;
 
   private PsiType myType = null;
+  private boolean myForceDef;
 
   public ExtractClosureHelperImpl(IntroduceParameterInfo info,
                                   String name,
@@ -51,9 +52,10 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
                                   TIntArrayList toRemove,
                                   boolean generateDelegate,
                                   int replaceFieldsWithGetters,
-                                  boolean forceReturn) {
+                                  boolean forceReturn, boolean forceDef) {
     super(info);
     myForceReturn = forceReturn;
+    myForceDef = forceDef;
     myOwner = info.getToReplaceIn();
     myToSearchFor = info.getToSearchFor();
     myName = name;
@@ -102,6 +104,8 @@ public class ExtractClosureHelperImpl extends ExtractInfoHelperBase implements G
 
   @Override
   public PsiType getSelectedType() {
+    if (myForceDef) return null;
+
     if (myType == null) {
       final GrClosableBlock closure = ExtractClosureProcessorBase.generateClosure(this);
       PsiType type = closure.getType();
