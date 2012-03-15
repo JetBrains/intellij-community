@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -380,5 +381,20 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       regular = isDir == 0 ? FileUtil.BA_REGULAR : 0;
     }
     return exists | isDir | regular;
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
+    final JarHandler handler = getHandler(file);
+    if (handler == null) return null;
+
+    if (file.getParent() == null) {
+      final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+      final VirtualFile originalFile = localFileSystem.findFileByIoFile(handler.getOriginalFile());
+      assert originalFile != null : file;
+      return localFileSystem.getAttributes(originalFile);
+    }
+
+    return handler.getAttributes(file);
   }
 }
