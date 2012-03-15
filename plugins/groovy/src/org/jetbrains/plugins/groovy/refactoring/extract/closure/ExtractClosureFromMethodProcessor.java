@@ -274,7 +274,8 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
     @NotNull
     @Override
     public PsiType getForcedType() {
-      return myHelper.getSelectedType();
+      PsiType type = myHelper.getSelectedType();
+      return type != null ? type : PsiType.getJavaLangObject(PsiManager.getInstance(myProject), GlobalSearchScope.allScope(myProject));
     }
 
     @NotNull
