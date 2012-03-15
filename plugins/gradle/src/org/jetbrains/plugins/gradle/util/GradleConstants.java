@@ -24,6 +24,7 @@ public class GradleConstants {
   
   @NonNls public static final String ACTION_GROUP_SYNC_TREE = "Gradle.SyncTreeGroup";
   
+  @NonNls public static final String HELP_TOPIC_TOOL_WINDOW = "reference.toolwindows.gradle";
   
   public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> DEPENDENCIES_NODE_DESCRIPTOR
     = GradleUtil.buildSyntheticDescriptor(GradleBundle.message("gradle.project.structure.tree.node.dependencies"));

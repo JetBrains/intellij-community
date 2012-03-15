@@ -319,6 +319,9 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
       }
       return result;
     }
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return GradleConstants.HELP_TOPIC_TOOL_WINDOW;
+    }
     else {
       return super.getData(dataId);
     }
