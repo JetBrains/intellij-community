@@ -97,6 +97,10 @@ public class CompletionParameters {
     return myInvocationCount;
   }
 
+  public boolean isAutoPopup() {
+    return myInvocationCount == 0;
+  }
+
   public boolean isRelaxedMatching() {
     return myRelaxedMatching;
   }
