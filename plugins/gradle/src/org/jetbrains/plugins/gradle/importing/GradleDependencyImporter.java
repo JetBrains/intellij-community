@@ -2,10 +2,7 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.util.ui.UIUtil;
@@ -86,7 +83,9 @@ public class GradleDependencyImporter {
               assert false;
               continue;
             }
-            moduleRootModel.addModuleOrderEntry(intellijModuleDependency);
+            final ModuleOrderEntry orderEntry = moduleRootModel.addModuleOrderEntry(intellijModuleDependency);
+            orderEntry.setScope(dependency.getScope());
+            orderEntry.setExported(dependency.isExported());
           }
         }
         finally {
