@@ -581,7 +581,8 @@
   <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
 
   <!-- TemplateManagerActions -->
-  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"/>
+  <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EscapeHandler"
+                       id="templateEscape" order="after hide-hints"/>
   <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.template.impl.editorActions.EnterHandler"
                        id="templateEnter" order="before editorEnter"/>
   <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.template.impl.editorActions.HomeHandler"/>
