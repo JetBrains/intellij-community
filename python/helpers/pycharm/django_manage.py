@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-from pycharm.fix_getpass import fixGetpass
+from fix_getpass import fixGetpass
 import os
 from django.core.management import execute_manager
 
 try:
   from runpy import run_module
 except ImportError:
-  from pycharm.runpy_compat import run_module
+  from runpy_compat import run_module
 
 manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:

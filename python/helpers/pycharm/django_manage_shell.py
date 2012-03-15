@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from pycharm.fix_getpass import fixGetpass
+from fix_getpass import fixGetpass
 import os
 from django.core import management
 import sys
@@ -7,7 +7,7 @@ import sys
 try:
   from runpy import run_module
 except ImportError:
-  from pycharm.runpy_compat import run_module
+  from runpy_compat import run_module
 
 
 def run():

@@ -25,7 +25,7 @@ finally:
   if f:
     f.close()
 
-from pycharm.fix_getpass import fixGetpass
+from fix_getpass import fixGetpass
 fixGetpass()
 
 #prependable = os.getenv("PYCHARM_PREPEND_SYSPATH")
