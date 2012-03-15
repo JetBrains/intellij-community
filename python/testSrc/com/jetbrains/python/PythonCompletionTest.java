@@ -244,6 +244,10 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testDictKeys3() { //PY-5546
+    doTest();
+  }
+
   public void testNoParensForDecorator() {  // PY-2210
     doTest();
   }

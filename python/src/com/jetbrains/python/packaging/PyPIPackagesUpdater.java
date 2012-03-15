@@ -43,7 +43,7 @@ public class PyPIPackagesUpdater implements StartupActivity {
         @Override
         public void run() {
           try {
-            PyPIPackageUtil.INSTANCE.updatePyPICache(project);
+            PyPIPackageUtil.INSTANCE.updatePyPICache(service);
             service.LAST_TIME_CHECKED = System.currentTimeMillis();
           }
           catch (IOException e) {

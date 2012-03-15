@@ -102,6 +102,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     return false;
   }
 
+  @Override
   public void updateUI(final CallArgumentsMapping prev_result, final ParameterInfoUIContext context) {
     if (prev_result == null) return;
     final PyArgumentList arglist = prev_result.getArgumentList();
@@ -169,7 +170,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     int last_param_index = marked.getImplicitOffset();
     final List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(arglist.getArguments());
     for (PyExpression arg : flat_args) {
-      can_offer_next &= !(arg instanceof  PyKeywordArgument);
       final boolean must_highlight = arg.getTextRange().contains(current_param_offset);
       PsiElement seeker = arg;
       while (seeker != arglist && seeker != null && !result.getPlainMappedParams().containsKey(seeker)) {
@@ -228,15 +228,16 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     // highlight the next parameter to be filled
     if (can_offer_next) {
       int highlight_index = Integer.MAX_VALUE; // initially beyond reason = no highlight
+      PyNamedParameter parameter = n_param_list.get(last_param_index);
       if (last_param_index < raw_params.size() - 1 || flat_args.size() == 0) { // last_param not at end, or no args
-        if (flat_args.size() == 0) highlight_index = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
+        if (flat_args.isEmpty()) highlight_index = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
         else {
-          if (n_param_list.get(last_param_index).isPositionalContainer()) highlight_index = last_param_index; // stick to *arg
+          if (parameter.isPositionalContainer()) highlight_index = last_param_index; // stick to *arg
           else highlight_index = last_param_index+1; // highlight next
         }
       }
       else if (last_param_index == raw_params.size() - 1) { // we're right after the end of param list
-        if (n_param_list.get(last_param_index).isPositionalContainer()) highlight_index = last_param_index; // stick to *arg
+        if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) highlight_index = last_param_index; // stick to *arg
       }
       if (highlight_index < n_param_list.size()) {
         hint_flags.get(param_indexes.get(n_param_list.get(highlight_index))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);

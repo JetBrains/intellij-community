@@ -48,60 +48,60 @@ public class PyDictCreationInspection extends PyInspection {
           return;
         }
         final PyExpression target = node.getTargets()[0];
-        String name = target.getName();
+        final String name = target.getName();
         if (name == null) {
           return;
         }
 
         PyStatement statement = PsiTreeUtil.getNextSiblingOfType(node, PyStatement.class);
-        DictCreationQuickFix quickFix = null;
-        boolean availableFix = false;
 
-loop:
         while (statement instanceof PyAssignmentStatement) {
-          PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)statement;
-          for (Pair<PyExpression, PyExpression> targetToValue : assignmentStatement.getTargetsToValuesMapping()) {
-            if (targetToValue.first instanceof PySubscriptionExpression) {
-              PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targetToValue.first;
-              if (name.equals(subscriptionExpression.getOperand().getName()) &&
-                  subscriptionExpression.getIndexExpression() != null &&
-                  !referencesTarget(targetToValue.second, target)) {
-                if (!availableFix) {
-                  quickFix = new DictCreationQuickFix(node);
-                  availableFix = true;
-                }
-                continue;
-              }
-            }
-            break loop;
-          }
-
-          if (quickFix == null) {
+          final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)statement;
+          final List<Pair<PyExpression, PyExpression>> targets = getDictTargets(target, name, assignmentStatement);
+          if (targets == null)
             return;
+          if (!targets.isEmpty()) {
+            registerProblem(node, "This dictionary creation could be rewritten as a dictionary literal", new DictCreationQuickFix(node));
+            break;
           }
-          quickFix.addStatement(assignmentStatement);
           statement = PsiTreeUtil.getNextSiblingOfType(assignmentStatement, PyStatement.class);
-        }
-        
-        if (availableFix) {
-          registerProblem(node, "This dictionary creation could be rewritten as a dictionary literal", quickFix);
         }
       }
     }
+  }
 
-    private boolean referencesTarget(PyExpression expression, final PyExpression target) {
-      final List<PsiElement> refs = new ArrayList<PsiElement>();
-      expression.accept(new PyRecursiveElementVisitor() {
-        @Override
-        public void visitPyReferenceExpression(PyReferenceExpression node) {
-          super.visitPyReferenceExpression(node);
-          final PsiPolyVariantReference ref = node.getReference(resolveWithoutImplicits());
-          if (ref.isReferenceTo(target)) {
-            refs.add(node);
-          }
+  @Nullable
+  public static List<Pair<PyExpression, PyExpression>> getDictTargets(@NotNull final PyExpression target,
+                                                                      @NotNull final String name,
+                                                                      @NotNull final PyAssignmentStatement assignmentStatement) {
+    final List<Pair<PyExpression, PyExpression>> targets = new ArrayList<Pair<PyExpression, PyExpression>>();
+    for (Pair<PyExpression, PyExpression> targetToValue : assignmentStatement.getTargetsToValuesMapping()) {
+      if (targetToValue.first instanceof PySubscriptionExpression) {
+        final PySubscriptionExpression subscriptionExpression = (PySubscriptionExpression)targetToValue.first;
+        if (name.equals(subscriptionExpression.getOperand().getName()) &&
+            subscriptionExpression.getIndexExpression() != null &&
+            !referencesTarget(targetToValue.second, target)) {
+          targets.add(targetToValue);
         }
-      });
-      return !refs.isEmpty();
+      }
+      else
+        return null;
     }
+    return targets;
+  }
+
+  private static boolean referencesTarget(@NotNull final PyExpression expression, @NotNull final PsiElement target) {
+    final List<PsiElement> refs = new ArrayList<PsiElement>();
+    expression.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        super.visitPyReferenceExpression(node);
+        final PsiPolyVariantReference ref = node.getReference();
+        if (ref.isReferenceTo(target)) {
+          refs.add(node);
+        }
+      }
+    });
+    return !refs.isEmpty();
   }
 }

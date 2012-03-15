@@ -15,15 +15,12 @@ public class PythonSdkSelectStep extends ModuleWizardStep {
   protected final PythonSdkChooserPanel myPanel;
   protected final PythonModuleBuilder mySettingsHolder;
 
-  private final Icon myIcon;
   private final String myHelp;
 
   public PythonSdkSelectStep(@NotNull final PythonModuleBuilder settingsHolder,
-                           @Nullable final Icon icon,
                            @Nullable final String helpId,
                            @Nullable final Project project) {
     super();
-    myIcon = icon;
     mySettingsHolder = settingsHolder;
     myPanel = new PythonSdkChooserPanel(project);
     myHelp = helpId;
@@ -53,7 +50,7 @@ public class PythonSdkSelectStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return myIcon;
+    return ICON;
   }
 
   public boolean validate() {

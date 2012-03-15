@@ -6,11 +6,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.PyDictCreationInspection;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,45 +22,57 @@ import java.util.List;
  */
 public class DictCreationQuickFix implements LocalQuickFix {
   private final PyAssignmentStatement myStatement;
-  private final List<PyAssignmentStatement> myStatements = new ArrayList<PyAssignmentStatement>();
-
-  public DictCreationQuickFix(PyAssignmentStatement statement) {
+  public DictCreationQuickFix(@NotNull final PyAssignmentStatement statement) {
     myStatement = statement;
   }
 
-  public void addStatement(PyAssignmentStatement statement) {
-    myStatements.add(statement);
-  }
-
+  @Override
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.dict.creation");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INSP.GROUP.python");
   }
 
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    List<String> statements = Lists.newArrayList();
-    for (PyExpression expression: ((PyDictLiteralExpression) myStatement.getAssignedValue()).getElements()) {
-      statements.add(expression.getText());
-    }
-
-
-    for (PyAssignmentStatement statement: myStatements) {
-      for (Pair<PyExpression, PyExpression> targetToValue : statement.getTargetsToValuesMapping()) {
-        PySubscriptionExpression target = (PySubscriptionExpression)targetToValue.first;
-        PyExpression indexExpression = target.getIndexExpression();
-        assert indexExpression != null;
-        statements.add(indexExpression.getText() + ": " + targetToValue.second.getText());
+  @Override
+  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    final List<String> statements = Lists.newArrayList();
+    final PyExpression assignedValue = myStatement.getAssignedValue();
+    if (assignedValue instanceof PyDictLiteralExpression) {
+      for (PyExpression expression: ((PyDictLiteralExpression)assignedValue).getElements()) {
+        statements.add(expression.getText());
       }
-      statement.delete();
-    }
 
-    myStatement.getAssignedValue().replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(myStatement),
-                                "{" + StringUtil.join(statements, ", ") + "}"));
+      PyStatement statement = PsiTreeUtil.getNextSiblingOfType(myStatement, PyStatement.class);
+      while (statement instanceof PyAssignmentStatement) {
+        final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)statement;
+        final PyExpression target = myStatement.getTargets()[0];
+        final String targetName = target.getName();
+        if (targetName != null) {
+          final List<Pair<PyExpression, PyExpression>> targetsToValues =
+                              PyDictCreationInspection.getDictTargets(target, targetName, assignmentStatement);
+          final PyStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PyStatement.class);
+          if (targetsToValues == null || targetsToValues.isEmpty()) break;
+          for (Pair<PyExpression, PyExpression> targetToValue : targetsToValues) {
+            final PySubscriptionExpression subscription = (PySubscriptionExpression)targetToValue.first;
+            final PyExpression indexExpression = subscription.getIndexExpression();
+            assert indexExpression != null;
+            statements.add(indexExpression.getText() + ": " + targetToValue.second.getText());
+            statement.delete();
+          }
+          statement = nextStatement;
+        }
+      }
+
+      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myStatement),
+                                                                    "{" + StringUtil.join(statements, ", ") + "}");
+      if (expression != null)
+        assignedValue.replace(expression);
+    }
   }
 }

@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 
 import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
@@ -64,6 +65,7 @@ public class PyByteLiteralInspection extends PyInspection {
         if (charsetString != null && !Charset.forName(charsetString).equals(Charset.forName("US-ASCII")))
           default_bytes = false;
       } catch (UnsupportedCharsetException exception) {}
+        catch (IllegalCharsetNameException e) {}
 
       boolean hasNonAscii = false;
 
