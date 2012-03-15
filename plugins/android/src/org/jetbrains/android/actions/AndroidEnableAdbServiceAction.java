@@ -15,21 +15,28 @@
  */
 package org.jetbrains.android.actions;
 
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
-import org.jetbrains.android.sdk.AndroidSdkData;
+import org.jetbrains.android.run.AndroidDebugRunner;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -63,21 +70,48 @@ public class AndroidEnableAdbServiceAction extends ToggleAction {
     setAdbServiceEnabled(project, state);
   }
 
-  public static void setAdbServiceEnabled(Project project, boolean state) {
+  public static boolean setAdbServiceEnabled(Project project, boolean state) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    if (!state && !closeAndroidDebugSessions(project)) {
+      return false;
+    }
+
     boolean oldState = isAdbServiceEnabled();
     PropertiesComponent.getInstance().setValue(ENABLE_ADB_SERVICE_PROPERTY_NAME, Boolean.toString(state));
     if (oldState != state) {
-      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(AndroidLogcatToolWindowFactory.TOOL_WINDOW_ID);
-      boolean hidden = false;
-      if (toolWindow != null && toolWindow.isVisible()) {
-        hidden = true;
-        toolWindow.hide(null);
-      }
-      AndroidSdkData.terminateDdmlib();
-      if (hidden) {
-        toolWindow.show(null);
+      AndroidSdkUtils.restartDdmlib(project);
+    }
+    return true;
+  }
+
+  private static boolean closeAndroidDebugSessions(@NotNull Project project) {
+    final List<Pair<ProcessHandler, RunContentDescriptor>> pairs = new ArrayList<Pair<ProcessHandler, RunContentDescriptor>>();
+    final ProcessHandler[] processes = ExecutionManager.getInstance(project).getRunningProcesses();
+
+    for (ProcessHandler process : processes) {
+      final RunContentDescriptor descriptor = process.getUserData(AndroidDebugRunner.ANDROID_PROCESS_HANDLER);
+      if (descriptor != null) {
+        pairs.add(Pair.create(process, descriptor));
       }
     }
+
+    if (pairs.size() == 0) {
+      return true;
+    }
+
+    final StringBuilder s = new StringBuilder();
+
+    for (Pair<ProcessHandler, RunContentDescriptor> pair : pairs) {
+      if (s.length() > 0) {
+        s.append('\n');
+      }
+      s.append(pair.getSecond().getDisplayName());
+    }
+
+    final int r = Messages.showYesNoDialog(AndroidBundle.message("android.debug.sessions.will.be.closed") + s,
+                                           AndroidBundle.message("android.activate.adb.service.title"), Messages.getQuestionIcon());
+    return r == Messages.YES;
   }
 
   @Override

@@ -51,7 +51,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
-import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
@@ -669,8 +668,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
         myConsole.printHyperlink(AndroidBundle.message("restart.adb.fix.text"), new HyperlinkInfo() {
           @Override
           public void navigate(Project project) {
-            AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, false);
-            AndroidEnableAdbServiceAction.setAdbServiceEnabled(project, true);
+            AndroidSdkUtils.restartDdmlib(project);
+
             final ProcessHandler processHandler = getProcessHandler();
             if (!processHandler.isProcessTerminated()) {
               processHandler.destroyProcess();
