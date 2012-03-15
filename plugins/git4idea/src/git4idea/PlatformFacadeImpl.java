@@ -57,6 +57,11 @@ public class PlatformFacadeImpl implements PlatformFacade {
     return ApplicationManager.getApplication().runReadAction(computable);
   }
 
+  @Override
+  public void runReadAction(@NotNull Runnable runnable) {
+    ApplicationManager.getApplication().runReadAction(runnable);
+  }
+
   @NotNull
   @Override
   public AbstractVcs getVcs(@NotNull Project project) {

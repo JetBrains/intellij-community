@@ -59,4 +59,6 @@ public interface PlatformFacade {
    * Invokes {@link com.intellij.openapi.application.Application#runReadAction(Computable)}.
    */
   <T> T runReadAction(@NotNull Computable<T> computable);
+
+  void runReadAction(@NotNull Runnable runnable);
 }
