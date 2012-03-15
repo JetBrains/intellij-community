@@ -15,31 +15,29 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SafeDeleteFix implements IntentionAction {
-  private final PsiElement myElement;
-
+public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public SafeDeleteFix(@NotNull PsiElement element) {
-    myElement = element;
+    super(element);
   }
 
   @Override
   @NotNull
   public String getText() {
     return QuickFixBundle.message("safe.delete.text",
-                                  HighlightMessageUtil.getSymbolName(myElement, PsiSubstitutor.EMPTY));
+                                  HighlightMessageUtil.getSymbolName(getStartElement(), PsiSubstitutor.EMPTY));
   }
 
   @Override
@@ -49,14 +47,13 @@ public class SafeDeleteFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myElement.isValid() && myElement.getManager().isInProject(myElement);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myElement.getContainingFile())) return;
-    SafeDeleteHandler.invoke(project, new PsiElement[]{myElement}, false);
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    SafeDeleteHandler.invoke(project, new PsiElement[]{startElement}, false);
   }
 
   @Override
