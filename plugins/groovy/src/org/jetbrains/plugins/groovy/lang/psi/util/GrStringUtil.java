@@ -242,20 +242,20 @@ public class GrStringUtil {
     buffer.append(hexCode);
   }
 
-  public static String escapeSymbolsForGString(String s, boolean escapeDoubleQuotes, boolean forInjection) {
+  public static String escapeSymbolsForGString(String s, boolean isSingleLine, boolean forInjection) {
     StringBuilder b = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeDoubleQuotes ? "$\"" : "$", forInjection, true, b);
+    escapeStringCharacters(s.length(), s, isSingleLine ? "$\"" : "$", isSingleLine, true, b);
     if (!forInjection) {
-      unescapeCharacters(b, escapeDoubleQuotes ? "'" : "'\"", true);
+      unescapeCharacters(b, isSingleLine ? "'" : "'\"", true);
     }
     return b.toString();
   }
 
-  public static String escapeSymbolsForString(String s, boolean escapeQuotes, boolean forInjection) {
+  public static String escapeSymbolsForString(String s, boolean isSingleLine, boolean forInjection) {
     final StringBuilder builder = new StringBuilder();
-    escapeStringCharacters(s.length(), s, escapeQuotes ? "'" : "", forInjection, true, builder);
+    escapeStringCharacters(s.length(), s, isSingleLine ? "'" : "", isSingleLine, true, builder);
     if (!forInjection) {
-      unescapeCharacters(builder, escapeQuotes ? "$\"" : "$'\"", true);
+      unescapeCharacters(builder, isSingleLine ? "$\"" : "$'\"", true);
     }
     return builder.toString();
   }
