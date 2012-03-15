@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +29,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * @author max
+ */
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
   private final AtomicLong myModificationStamp = new AtomicLong(LocalTimeCounter.currentTime());
 
@@ -50,6 +49,9 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   public abstract NewVirtualFileSystem getFileSystem();
 
   public abstract NewVirtualFile getParent();
+
+  @Nullable
+  public abstract NewVirtualFile getCanonicalFile();
 
   @Nullable
   public abstract NewVirtualFile findChild(@NotNull @NonNls final String name);
