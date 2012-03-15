@@ -1319,6 +1319,16 @@ public class FileUtil {
     return path;
   }
 
+  @NotNull
+  public static File[] notNullize(@Nullable File[] files) {
+    return notNullize(files, ArrayUtil.EMPTY_FILE_ARRAY);
+  }
+
+  @NotNull
+  public static File[] notNullize(@Nullable File[] files, @NotNull File[] defaultFiles) {
+    return files == null ? defaultFiles : files;
+  }
+
   public static boolean isHashBangLine(CharSequence firstCharsIfText, String marker) {
     if (firstCharsIfText == null) {
       return false;
