@@ -89,14 +89,18 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private Set<VirtualFile> myPossiblyTrackedFiles = new HashSet<VirtualFile>();
   private boolean myReady;   // if false, total refresh is needed
   private final Object LOCK = new Object();
+  private final GitRepositoryManager myRepositoryManager;
 
-  GitUntrackedFilesHolder(@NotNull VirtualFile root, @NotNull Project project) {
-    myProject = project;
-    myRoot = root;
-    myRepositoryFiles = GitRepositoryFiles.getInstance(root);
-    myChangeListManager = ChangeListManager.getInstance(project);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+  GitUntrackedFilesHolder(@NotNull GitRepository repository) {
+    myProject = repository.getProject();
+    myRoot = repository.getRoot();
+    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myGit = ServiceManager.getService(Git.class);
+
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
+    assert myRepositoryManager != null;
+    myRepositoryFiles = GitRepositoryFiles.getInstance(repository.getGitDir());
   }
 
   void setupVfsListener(@NotNull Project project) {
@@ -302,7 +306,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
-    final GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForFile(file);
+    final GitRepository repository = myRepositoryManager.getRepositoryForFile(file);
     return repository != null && repository.getRoot().equals(myRoot);
   }
   

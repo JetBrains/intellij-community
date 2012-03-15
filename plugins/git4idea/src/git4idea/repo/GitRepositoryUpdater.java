@@ -50,11 +50,10 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     myRepository = repository;
     VirtualFile root = repository.getRoot();
 
-    VirtualFile gitDir = root.findChild(".git");
-    assert gitDir != null;
+    VirtualFile gitDir = repository.getGitDir();
     LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
     
-    myRepositoryFiles = GitRepositoryFiles.getInstance(root);
+    myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
     visitGitDirVfs(gitDir);
     myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());

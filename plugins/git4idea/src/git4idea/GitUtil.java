@@ -48,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.*;
@@ -91,6 +92,43 @@ public class GitUtil {
    */
   private GitUtil() {
     // do nothing
+  }
+
+  @Nullable
+  public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
+    VirtualFile child = rootDir.findChild(".git");
+    if (child == null) {
+      return null;
+    }
+    if (child.isDirectory()) {
+      return child;
+    }
+
+    // this is standard for submodules, although probably it can
+    String content = readFile(child);
+    String pathToDir;
+    String prefix = "gitdir:";
+    if (content.startsWith(prefix)) {
+      pathToDir = content.substring(prefix.length()).trim();
+    }
+    else {
+      pathToDir = content;
+    }
+    return VcsUtil.getVirtualFile(pathToDir);
+  }
+
+  @NotNull
+  private static String readFile(@NotNull VirtualFile file) {
+    Exception exception = null;
+    for (int attempts = 0; attempts < 3; attempts++) {
+      try {
+        return new String(file.contentsToByteArray());
+      }
+      catch (IOException e) {
+        exception = e;
+      }
+    }
+    throw new RuntimeException("Couldn't read " + file, exception);
   }
 
   /**
