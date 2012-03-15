@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -67,32 +68,45 @@ public class AndroidEnableAdbServiceAction extends ToggleAction {
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    setAdbServiceEnabled(project, state);
+    if (state) {
+      setAdbServiceEnabled(project, true);
+    }
+    else {
+      disableAdbService(project);
+    }
   }
 
-  public static boolean setAdbServiceEnabled(Project project, boolean state) {
+  public static boolean disableAdbService(Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (!state && !closeAndroidDebugSessions(project)) {
+    if (!askForClosingDebugSessions(project)) {
       return false;
     }
+    setAdbServiceEnabled(project, false);
+    return true;
+  }
 
+  public static void setAdbServiceEnabled(Project project, boolean state) {
     boolean oldState = isAdbServiceEnabled();
     PropertiesComponent.getInstance().setValue(ENABLE_ADB_SERVICE_PROPERTY_NAME, Boolean.toString(state));
     if (oldState != state) {
       AndroidSdkUtils.restartDdmlib(project);
     }
-    return true;
   }
 
-  private static boolean closeAndroidDebugSessions(@NotNull Project project) {
+  private static boolean askForClosingDebugSessions(@NotNull Project project) {
     final List<Pair<ProcessHandler, RunContentDescriptor>> pairs = new ArrayList<Pair<ProcessHandler, RunContentDescriptor>>();
-    final ProcessHandler[] processes = ExecutionManager.getInstance(project).getRunningProcesses();
 
-    for (ProcessHandler process : processes) {
-      final RunContentDescriptor descriptor = process.getUserData(AndroidDebugRunner.ANDROID_PROCESS_HANDLER);
-      if (descriptor != null) {
-        pairs.add(Pair.create(process, descriptor));
+    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
+      final ProcessHandler[] processes = ExecutionManager.getInstance(p).getRunningProcesses();
+
+      for (ProcessHandler process : processes) {
+        if (!process.isProcessTerminated()) {
+          final RunContentDescriptor descriptor = process.getUserData(AndroidDebugRunner.ANDROID_PROCESS_HANDLER);
+          if (descriptor != null) {
+            pairs.add(Pair.create(process, descriptor));
+          }
+        }
       }
     }
 
@@ -109,8 +123,8 @@ public class AndroidEnableAdbServiceAction extends ToggleAction {
       s.append(pair.getSecond().getDisplayName());
     }
 
-    final int r = Messages.showYesNoDialog(AndroidBundle.message("android.debug.sessions.will.be.closed") + s,
-                                           AndroidBundle.message("android.activate.adb.service.title"), Messages.getQuestionIcon());
+    final int r = Messages.showYesNoDialog(project, AndroidBundle.message("android.debug.sessions.will.be.closed", s),
+                                           AndroidBundle.message("android.disable.adb.service.title"), Messages.getQuestionIcon());
     return r == Messages.YES;
   }
 
