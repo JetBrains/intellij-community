@@ -651,28 +651,29 @@ public class OverrideImplementUtil {
                                                             Collection<PsiMethodMember> candidates,
                                                             boolean copyJavadoc,
                                                             boolean insertOverrideWherePossible) {
-    try{
+    try {
       int offset = editor.getCaretModel().getOffset();
       if (aClass.getLBrace() == null) {
         PsiClass psiClass = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createClass("X");
         aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
       }
-      
+
       int lbraceOffset = aClass.getLBrace().getTextOffset();
       List<PsiGenerationInfo<PsiMethod>> resultMembers;
       if (offset <= lbraceOffset || aClass.isEnum()) {
         resultMembers = new ArrayList<PsiGenerationInfo<PsiMethod>>();
         for (PsiMethodMember candidate : candidates) {
-          Collection<PsiMethod> prototypes = overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(),
-                                                             copyJavadoc, insertOverrideWherePossible);
-          for (PsiMethod prototype : prototypes) {
+          Collection<PsiMethod> prototypes =
+            overrideOrImplementMethod(aClass, candidate.getElement(), candidate.getSubstitutor(), copyJavadoc, insertOverrideWherePossible);
+          List<PsiGenerationInfo<PsiMethod>> infos = convert2GenerationInfos(prototypes);
+          for (PsiGenerationInfo<PsiMethod> info : infos) {
             PsiElement anchor = getDefaultAnchorToOverrideOrImplement(aClass, candidate.getElement(), candidate.getSubstitutor());
-            PsiElement result = GenerateMembersUtil.insert(aClass, prototype, anchor, true);
-            resultMembers.add(createGenerationInfo((PsiMethod)result));
+            info.insert(aClass, anchor, true);
+            resultMembers.add(info);
           }
         }
       }
-      else{
+      else {
         List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertOverrideWherePossible);
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
       }
@@ -681,7 +682,7 @@ public class OverrideImplementUtil {
         resultMembers.get(0).positionCaret(editor, true);
       }
     }
-    catch(IncorrectOperationException e){
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
