@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -148,6 +149,16 @@ public class PluginDownloader {
       setDescriptor(descriptor);
      }
     return true;
+  }
+
+  public static void replaceLib(String libPath, String libName, File fromFile) throws IOException {
+    final File source = new File(libPath, libName);
+
+    StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(source);
+    StartupActionScriptManager.addActionCommand(deleteOld);
+
+    StartupActionScriptManager.ActionCommand addNew = new StartupActionScriptManager.CopyCommand(fromFile, source);
+    StartupActionScriptManager.addActionCommand(addNew);
   }
 
   @Nullable
