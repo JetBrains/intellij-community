@@ -97,7 +97,7 @@ public class Win32Kernel {
   }
 
   @Nullable
-  FileInfo doGetInfo(String path) {
+  private FileInfo doGetInfo(String path) {
     FileInfo info = myCache.get(path);
     if (info == null) {
       info = myKernel.getInfo(path.replace('/', '\\'));

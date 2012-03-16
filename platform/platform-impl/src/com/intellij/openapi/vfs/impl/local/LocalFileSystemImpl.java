@@ -22,8 +22,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -47,13 +45,16 @@ import java.io.IOException;
 import java.util.*;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
+
   private final JBReentrantReadWriteLock LOCK = LockFactory.createReadWriteLock();
-  private final JBLock WRITE_LOCK = LOCK.writeLock();
+  final JBLock WRITE_LOCK = LOCK.writeLock();
 
   private final List<WatchRequestImpl> myRootsToWatch = new ArrayList<WatchRequestImpl>();
   private WatchRequest[] myCachedNormalizedRequests = null;
 
   private final FileWatcher myWatcher;
+
+  private final LocalFileSystemBase myNativeFileSystem;
 
   private static class WatchRequestImpl implements WatchRequest {
     public final String myRootPath;
@@ -131,6 +132,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     if (myWatcher.isOperational()) {
       new StoreRefreshStatusThread().start();
     }
+    myNativeFileSystem = null;
   }
 
   @Override
@@ -469,6 +471,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     return false;
   }
 
+  @NonNls
+  public String toString() {
+    return "LocalFileSystem";
+  }
+
+
   @Override
   public void refreshWithoutFileWatcher(final boolean asynchronous) {
     Runnable heavyRefresh = new Runnable() {
@@ -491,12 +499,33 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @Override
-  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(file.getPath()));
+  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
+    if (myNativeFileSystem == null) return super.exists(fileOrDirectory);
+    else return myNativeFileSystem.exists(fileOrDirectory);
   }
 
-  @NonNls
-  public String toString() {
-    return "LocalFileSystem";
+  @Override
+  public long getTimeStamp(@NotNull final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.getTimeStamp(file);
+    else return myNativeFileSystem.getTimeStamp(file);
+  }
+
+  @Override
+  public boolean isDirectory(@NotNull final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.isDirectory(file);
+    else return myNativeFileSystem.isDirectory(file);
+  }
+
+  @Override
+  public boolean isWritable(@NotNull final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.isWritable(file);
+    else return myNativeFileSystem.isWritable(file);
+  }
+
+  @Override
+  @NotNull
+  public String[] list(@NotNull final VirtualFile file) {
+    if (myNativeFileSystem == null) return super.list(file);
+    else return myNativeFileSystem.list(file);
   }
 }

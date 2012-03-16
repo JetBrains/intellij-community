@@ -16,7 +16,6 @@
 
 package com.intellij.mock;
 
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -256,10 +255,5 @@ public class MockLocalFileSystem extends LocalFileSystem {
   @Override
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
     return 0;
-  }
-
-  @Override
-  public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return null;
   }
 }

@@ -16,7 +16,6 @@
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -224,13 +223,5 @@ public class JarHandlerBase {
     }
 
     return getEntryInfo(fileOrDirectory) != null;
-  }
-
-  @Nullable
-  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    synchronized (lock) {
-      final ZipEntry entry = convertToEntry(file);
-      return entry != null ? new FileAttributes(entry.isDirectory(), false, false, entry.getSize(), entry.getTime(), false) : null;
-    }
   }
 }
