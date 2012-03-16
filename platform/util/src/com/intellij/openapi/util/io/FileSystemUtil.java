@@ -44,7 +44,7 @@ public class FileSystemUtil {
 
     // todo: move IdeaWin32 interface to this package, add mediator
 
-    if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
+    if (false && (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD)) {
       try {
         mediator = new JnaUnixMediatorImpl();
         mediator.getAttributes("/");  // quick test
@@ -192,13 +192,24 @@ public class FileSystemUtil {
     public FileAttributes getAttributes(@NotNull final String path) throws Exception {
       final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
       try {
-        final Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "posix:permissions,*", myNoFollowLinkOptions);
-        return new FileAttributes((Boolean)attributes.get("isDirectory"),
-                                  (Boolean)attributes.get("isSymbolicLink"),
-                                  (Boolean)attributes.get("isOther"),
-                                  (Long)attributes.get("size"),
-                                  (Long)myToMillis.invoke(attributes.get("lastModifiedTime")),
-                                  decodePermissions(attributes.get("permissions")));
+        if (SystemInfo.isWindows) {
+          final Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "dos:*", myNoFollowLinkOptions);
+          return new FileAttributes((Boolean)attributes.get("isDirectory"),
+                                    (Boolean)attributes.get("isSymbolicLink"),
+                                    (Boolean)attributes.get("isOther"),
+                                    (Long)attributes.get("size"),
+                                    (Long)myToMillis.invoke(attributes.get("lastModifiedTime")),
+                                    !(Boolean)attributes.get("readonly"));
+        }
+        else {
+          final Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "posix:*", myNoFollowLinkOptions);
+          return new FileAttributes((Boolean)attributes.get("isDirectory"),
+                                    (Boolean)attributes.get("isSymbolicLink"),
+                                    (Boolean)attributes.get("isOther"),
+                                    (Long)attributes.get("size"),
+                                    (Long)myToMillis.invoke(attributes.get("lastModifiedTime")),
+                                    decodePermissions(attributes.get("permissions")));
+        }
       }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
