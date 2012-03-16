@@ -181,7 +181,7 @@
     <annotator language="XML" implementationClass="org.jetbrains.android.AndroidColorAnnotator" order="first"/>
     <xml.elementDescriptorProvider implementation="org.jetbrains.android.dom.AndroidDomElementDescriptorProvider" order="first"/>
 
-    <facet.toolWindow id="Android Logcat"
+    <facet.toolWindow id="Android"
                       facetIdList="android"
                       anchor="bottom"
                       icon="/icons/android.png"
