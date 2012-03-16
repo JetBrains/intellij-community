@@ -329,7 +329,7 @@ public class PluginDownloader {
 
     if (fileName == null || !PathUtil.isValidFileName(fileName)) {
       FileUtil.delete(file);
-      throw new IOException("Invalid filename returned by a server");
+      throw new IOException("Invalid filename returned by the server");
     }
 
     return fileName;
