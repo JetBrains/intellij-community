@@ -658,8 +658,12 @@ public class XmlUtil {
         startFrom = xmlConditionalSection.getBodyStart();
       }
       else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
-        XmlTag tag = (XmlTag)element;
-        if (!processXInclude(deepFlag, wideFlag, tag)) return false;
+        final PsiElement[] inclusion = getXIncludedTags((XmlTag)element);
+        if (inclusion != null) {
+          for (PsiElement psiElement : inclusion) {
+            if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
+          }
+        }
       }
 
       for (PsiElement child = startFrom; child != null; child = child.getNextSibling()) {
@@ -669,27 +673,19 @@ public class XmlUtil {
       return true;
     }
 
-    private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, @NotNull final XmlTag xincludeTag) {
-
-      final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new CachedValueProvider<PsiElement[]>() {
-          public Result<PsiElement[]> compute() {
-            PsiElement[] result = RecursionManager.doPreventingRecursion(xincludeTag, true, new NullableComputable<PsiElement[]>() {
-              @Override
-              public PsiElement[] compute() {
-                return computeInclusion(xincludeTag);
-              }
-            });
-            return Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-          }
-        });
-
-      if (inclusion != null) {
-        for (PsiElement psiElement : inclusion) {
-          if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
+    @Nullable
+    private static PsiElement[] getXIncludedTags(final XmlTag xincludeTag) {
+      return CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new CachedValueProvider<PsiElement[]>() {
+        public Result<PsiElement[]> compute() {
+          PsiElement[] result = RecursionManager.doPreventingRecursion(xincludeTag, true, new NullableComputable<PsiElement[]>() {
+            @Override
+            public PsiElement[] compute() {
+              return computeInclusion(xincludeTag);
+            }
+          });
+          return Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
         }
-      }
-
-      return true;
+      });
     }
 
     @Nullable
