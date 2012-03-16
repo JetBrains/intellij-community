@@ -45,8 +45,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
 
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
-  private static final boolean DEBUG_DEFERRED_PROCESSING = LOG.isDebugEnabled() || Boolean.getBoolean("idea.document.debug.bulk.processing")
-                                                           || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean DEBUG_DEFERRED_PROCESSING = LOG.isDebugEnabled() || Boolean.getBoolean("idea.document.debug.bulk.processing");
   /**
    * We can't exclude possibility of situation when <code>'defer changes'</code> state is {@link #setDeferredChangeMode(boolean) entered}
    * but not exited, hence, we want to perform automatic flushing if necessary in order to avoid memory leaks. This constant holds
