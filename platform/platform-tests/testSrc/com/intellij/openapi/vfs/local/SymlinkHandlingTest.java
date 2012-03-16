@@ -23,7 +23,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -211,38 +210,6 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertTrue("link=" + link + ", vLink=" + vLink,
                vLink != null && vLink.isDirectory() && vLink.isSymLink());
     assertEquals(2, vLink.getChildren().length);
-  }
-
-  public void testContentSynchronization() throws Exception {
-    final File file = FileUtil.createTempFile("file.", ".txt");
-    final VirtualFile vFile = refreshAndFind(file);
-    assertNotNull(file.getPath(), vFile);
-    assertTrue(file.getPath(), vFile.isValid());
-
-    final File link1 = createTempLink(file.getPath(), "link1-" + file.getName());
-    final File link2 = createTempLink(file.getPath(), "link2-" + link1.getName());
-    final VirtualFile vLink = refreshAndFind(link2);
-    assertNotNull(link2.getPath(), vLink);
-    assertTrue(link2.getPath(), vLink.isValid());
-
-    String fileContent = VfsUtilCore.loadText(vFile);
-    assertEquals("", fileContent);
-    String linkContent = VfsUtilCore.loadText(vLink);
-    assertEquals("", linkContent);
-
-    fileContent = "new content";
-    vFile.setBinaryContent(fileContent.getBytes());
-    assertEquals(fileContent.length(), vLink.getLength());
-    assertEquals(fileContent.length(), vFile.getLength());
-    linkContent = VfsUtilCore.loadText(vLink);
-    assertEquals(fileContent, linkContent);
-
-    linkContent = "newer content";
-    vLink.setBinaryContent(linkContent.getBytes());
-    assertEquals(linkContent.length(), vLink.getLength());
-    assertEquals(linkContent.length(), vFile.getLength());
-    fileContent = VfsUtilCore.loadText(vFile);
-    assertEquals(linkContent, fileContent);
   }
 
   // todo[r.sh] use NIO2 API after migration to JDK 7

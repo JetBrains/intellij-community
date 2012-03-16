@@ -128,7 +128,7 @@ public class RefreshWorker {
         else {
           long currentTimestamp = persistence.getTimeStamp(file);
           long upToDateTimestamp = delegate.getTimeStamp(file);
-          long currentLength = SystemInfo.isUnix ? persistence.getLengthNoFollow(file) : -1;
+          long currentLength = SystemInfo.isUnix ? persistence.getLength(file) : -1;
           long upToDateLength = SystemInfo.isUnix ? delegate.getLength(file) : -1;
 
           if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {
