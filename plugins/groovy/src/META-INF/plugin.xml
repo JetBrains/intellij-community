@@ -213,6 +213,8 @@
     <lang.surroundDescriptor language="Groovy"
                              implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.GroovySurroundDescriptor"/>
     <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
+    <importFilteringRule implementation="org.jetbrains.plugins.groovy.findUsages.GrImportFilteringRule"/>
+
     <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
