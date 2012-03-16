@@ -17,8 +17,8 @@ package com.intellij.ui.mac;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -133,7 +133,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       }
     }
 
-    return FileChooserUtil.getChosenFiles(myChooserDescriptor, files);
+    return files;
   }
 
   private static void setLastSelectedPath(final VirtualFile selectedPath) {
