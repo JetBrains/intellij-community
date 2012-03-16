@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * Provides low-level search and find usages services for a project, like finding references
  * to an element, finding overriding / inheriting elements, finding to do items and so on.
  *
- * @see com.intellij.psi.PsiManager#getSearchHelper()
+ * Use {@link com.intellij.psi.search.PsiSearchHelper.SERVICE#getInstance}() to get a search helper instance.
  */
 public interface PsiSearchHelper extends PsiTodoSearchHelper {
   class SERVICE {
