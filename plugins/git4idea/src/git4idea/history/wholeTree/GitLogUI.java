@@ -49,7 +49,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -59,11 +62,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
-import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1455,6 +1457,19 @@ public class GitLogUI implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       rootsChanged(myRootsUnderVcs);
+      updateRefs();
+    }
+
+    private void updateRefs() {
+      for (VirtualFile root : myRootsUnderVcs) {
+        try {
+          CachedRefs cachedRefs = new LowLevelAccessImpl(myProject, root).getRefs();
+          myUIRefresh.reportSymbolicRefs(root, cachedRefs);
+        }
+        catch (VcsException e) {
+          LOG.warn("Couldn't update references in repository " + root, e);
+        }
+      }
     }
   }
 
