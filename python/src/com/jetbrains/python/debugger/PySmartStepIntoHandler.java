@@ -86,7 +86,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
 
     @Override
     public String getText() {
-      return myElement.getText();
+      return myElement.getText() + "()";
     }
 
     public String getFunctionName() {
