@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl.references;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
@@ -498,22 +499,25 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = Lists.newArrayList();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
+    final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
+                                          (PyQualifiedExpression)originalElement : myElement;
+    final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
     // include our own names
-    final int underscores = PyUtil.getInitialUnderscores(myElement.getName());
-    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(myElement);
+    final int underscores = PyUtil.getInitialUnderscores(element.getName());
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element);
     final ScopeOwner owner = realContext instanceof ScopeOwner ? (ScopeOwner)realContext : ScopeUtil.getScopeOwner(realContext);
     if (owner != null) {
       PyResolveUtil.scopeCrawlUp(processor, owner, null);
     }
 
     // in a call, include function's arg names
-    PythonDataflowUtil.collectFunctionArgNames(myElement, ret);
+    PythonDataflowUtil.collectFunctionArgNames(element, ret);
 
     // include builtin names
     processor.setNotice("__builtin__");
-    final PyFile builtinsFile = PyBuiltinCache.getInstance(getElement()).getBuiltinsFile();
+    final PyFile builtinsFile = PyBuiltinCache.getInstance(element).getBuiltinsFile();
     if (builtinsFile != null) {
       PyResolveUtil.scopeCrawlUp(processor, builtinsFile, null);
     }
