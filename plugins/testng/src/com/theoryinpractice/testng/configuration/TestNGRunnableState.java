@@ -34,7 +34,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -151,6 +150,15 @@ public class TestNGRunnableState extends JavaCommandLineState {
             final String testRunDebugId = consoleProperties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
             final TestNGResults resultsView = console.getResultsView();
             final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+            final GlobalSearchScope librariesScope = config.getPersistantData().getScope().getSourceScope(config).getLibrariesScope();
+
+            final String incompatibilityMessage = TestNGVersionChecker.getVersionIncompatibilityMessage(project, librariesScope,
+                                                                                                        PathUtil.getJarPathForClass(AfterClass.class));
+            if (incompatibilityMessage != null) {
+              toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.ERROR, incompatibilityMessage, null, new TestNGVersionChecker.MyCopyJarListener(librariesScope, project));
+              TestsUIUtil.NOTIFICATION_GROUP.createNotification(incompatibilityMessage, MessageType.ERROR).notify(project);
+            }
+
             if (!Comparing.strEqual(toolWindowManager.getActiveToolWindowId(), testRunDebugId)) {
               final MessageType type = resultsView == null || resultsView.getStatus() == MessageHelper.SKIPPED_TEST
                                        ? MessageType.WARNING
@@ -237,7 +245,13 @@ public class TestNGRunnableState extends JavaCommandLineState {
 
     LOG.info("Language level is " + effectiveLanguageLevel.toString());
     LOG.info("is15 is " + is15);
-
+    final String pathToBundledJar = PathUtil.getJarPathForClass(AfterClass.class);
+    final String incompatibilityMessage = TestNGVersionChecker
+      .getVersionIncompatibilityMessage(project, config.getPersistantData().getScope().getSourceScope(config).getLibrariesScope(),
+                                        pathToBundledJar);
+    if (incompatibilityMessage != null) {
+      javaParameters.getClassPath().add(pathToBundledJar);
+    }
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
@@ -266,9 +280,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
     }
 
-    javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
-                                      new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar")
-                                        .getPath());//todo !do not hard code lib name!
+    if (incompatibilityMessage == null) {
+      javaParameters.getClassPath().add(pathToBundledJar);
+    }
 
     try {
       port = NetUtils.findAvailableSocketPort();
