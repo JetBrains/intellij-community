@@ -30,11 +30,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.HashSet;
 
 /**
  * User: anna
@@ -84,7 +87,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
     final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     final PsiMethod prototype = (PsiMethod)method.getContainingClass().addBefore(generateMethodPrototype(method, parameter), method);
-
+    RefactoringUtil.fixJavadocsForParams(prototype, new HashSet<PsiParameter>(Arrays.asList(prototype.getParameterList().getParameters())));
     TemplateBuilderImpl builder = new TemplateBuilderImpl(prototype);
 
     PsiCodeBlock body = prototype.getBody();
