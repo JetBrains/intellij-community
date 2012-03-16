@@ -86,6 +86,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private String myProcessorPath = "";
   private final Map<Module, String> myProcessedModules = new HashMap<Module, String>();
   private final Map<String, String> myModuleNames = new HashMap<String, String>();
+  private boolean myAddNotNullAssertions = true;
 
 
   public CompilerConfigurationImpl(Project project, ModuleManager moduleManager) {
@@ -300,6 +301,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return isResourceFile(virtualFile.getName(), virtualFile.getParent());
   }
 
+  @Override
+  public boolean isAddNotNullAssertions() {
+    return myAddNotNullAssertions;
+  }
+
+  @Override
+  public void setAddNotNullAssertions(boolean enabled) {
+    myAddNotNullAssertions = enabled;
+  }
+
   public boolean isAnnotationProcessorsEnabled() {
     return myEnableAnnotationProcessors;
   }
@@ -509,9 +520,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @NonNls private static final String WILDCARD_RESOURCE_PATTERNS = "wildcardResourcePatterns";
   @NonNls private static final String ENTRY = "entry";
   @NonNls private static final String NAME = "name";
+  @NonNls private static final String ADD_NOTNULL_ASSERTIONS = "addNotNullAssertions";
 
   public void readExternal(Element parentNode) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, parentNode);
+
+    final Element notNullAssertions = parentNode.getChild(ADD_NOTNULL_ASSERTIONS);
+    if (notNullAssertions != null) {
+      myAddNotNullAssertions = Boolean.valueOf(notNullAssertions.getAttributeValue("enabled", "true"));
+    }
 
     Element node = parentNode.getChild(EXCLUDE_FROM_COMPILE);
     if (node != null) {
@@ -599,6 +616,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
+
+    if (myAddNotNullAssertions != true) {
+      final Element notNullAssertions = new Element(ADD_NOTNULL_ASSERTIONS);
+      notNullAssertions.setAttribute("enabled", String.valueOf(myAddNotNullAssertions));
+      parentNode.addContent(notNullAssertions);
+    }
 
     if(myExcludedEntriesConfiguration.getExcludeEntryDescriptions().length > 0) {
       Element newChild = new Element(EXCLUDE_FROM_COMPILE);

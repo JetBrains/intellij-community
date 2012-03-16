@@ -835,7 +835,7 @@ public class BackendCompilerWrapper {
     private ClassParsingThread(final boolean isJdk16, String outputDir) {
       myIsJdk16 = isJdk16;
       myOutputDir = FileUtil.toSystemIndependentName(outputDir);
-      myAddNotNullAssertions = CompilerWorkspaceConfiguration.getInstance(myProject).ASSERT_NOT_NULL;
+      myAddNotNullAssertions = CompilerConfiguration.getInstance(myProject).isAddNotNullAssertions();
     }
 
     private volatile boolean processing;
