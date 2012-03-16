@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
@@ -52,14 +53,14 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private AddEditRemovePanel<EditLocationDialog.NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
   private HtmlLanguageLevelForm myHtmlLanguageLevelForm;
-  private final Project myProject;
+  @Nullable private final Project myProject;
   private final List<EditLocationDialog.NameLocationPair> myNewPairs;
 
-  public ExternalResourceConfigurable(Project project) {
+  public ExternalResourceConfigurable(@Nullable Project project) {
     this(project, Collections.<EditLocationDialog.NameLocationPair>emptyList());
   }
 
-  public ExternalResourceConfigurable(Project project, List<EditLocationDialog.NameLocationPair> newResources) {
+  public ExternalResourceConfigurable(@Nullable Project project, List<EditLocationDialog.NameLocationPair> newResources) {
     myProject = project;
     myNewPairs = newResources;
   }
@@ -93,9 +94,11 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     myExtPanel.setRenderer(1, new PathRenderer());
 
     JTable table = myExtPanel.getTable();
-    TableColumn column = table.getColumn(table.getColumnName(2));
-    column.setMaxWidth(50);
-    column.setCellEditor(JBTable.createBooleanEditor());
+    if (myProject != null) {
+      TableColumn column = table.getColumn(table.getColumnName(2));
+      column.setMaxWidth(50);
+      column.setCellEditor(JBTable.createBooleanEditor());
+    }
 
     table.getModel().addTableModelListener(new TableModelListener() {
       public void tableChanged(TableModelEvent e) {
@@ -116,22 +119,27 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
         return editIgnoreLocation(o);
       }
     };
-    myHtmlLanguageLevelForm = new HtmlLanguageLevelForm(myProject);
-    myHtmlLanguageLevelForm.addListener(new HtmlLanguageLevelForm.MyListener() {
-      @Override
-      public void doctypeChanged() {
-        if (!myHtmlLanguageLevelForm.getDoctype().equals(myDefaultHtmlDoctype)) {
-          setModified(true);
+    if (myProject != null) {
+      myHtmlLanguageLevelForm = new HtmlLanguageLevelForm(myProject);
+      myHtmlLanguageLevelForm.addListener(new HtmlLanguageLevelForm.MyListener() {
+        @Override
+        public void doctypeChanged() {
+          if (!myHtmlLanguageLevelForm.getDoctype().equals(myDefaultHtmlDoctype)) {
+            setModified(true);
+          }
         }
-      }
-    });
+      });
+    }
 
     myPanel.add(myExtPanel,
-                new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0));
+                new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     myPanel.add(myIgnorePanel,
-                new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0, 0));
-    myPanel.add(myHtmlLanguageLevelForm.getContentPanel(),
-                new GridBagConstraints(0, 2, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
+                new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+    if (myProject != null) {
+      myPanel.add(myHtmlLanguageLevelForm.getContentPanel(),
+                  new GridBagConstraints(0, 2, 1, 1, 1, 0, GridBagConstraints.SOUTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0),
+                                         0, 0));
+    }
 
     myExtPanel.setData(myPairs);
     myIgnorePanel.setData(myIgnoredUrls);
@@ -151,11 +159,16 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       public void run() {
         ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
-        manager.clearAllResources(myProject);
+        if (myProject == null) {
+          manager.clearAllResources();
+        }
+        else {
+          manager.clearAllResources(myProject);
+        }
         for (Object myPair : myPairs) {
           EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)myPair;
           String s = FileUtil.toSystemIndependentName(pair.myLocation);
-          if (pair.myShared) {
+          if (myProject == null || pair.myShared) {
             manager.addResource(pair.myName, s);
           }
           else {
@@ -167,7 +180,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
           String url = (String)myIgnoredUrl;
           manager.addIgnoredResource(url);
         }
-        manager.setDefaultHtmlDoctype(myHtmlLanguageLevelForm.getDoctype(), myProject);
+        if (myProject != null) {
+          manager.setDefaultHtmlDoctype(myHtmlLanguageLevelForm.getDoctype(), myProject);
+        }
       }
     });
 
@@ -181,13 +196,15 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     String[] urls = manager.getAvailableUrls();
     for (String url : urls) {
-      String loc = manager.getResourceLocation(url, myProject);
+      String loc = myProject == null ? manager.getResourceLocation(url, (String)null) : manager.getResourceLocation(url, myProject);
       myPairs.add(new EditLocationDialog.NameLocationPair(url, FileUtil.toSystemDependentName(loc), true));
     }
-    urls = manager.getAvailableUrls(myProject);
-    for (String url : urls) {
-      String loc = manager.getResourceLocation(url, myProject);
-      myPairs.add(new EditLocationDialog.NameLocationPair(url, FileUtil.toSystemDependentName(loc), false));
+    if (myProject != null) {
+      urls = manager.getAvailableUrls(myProject);
+      for (String url : urls) {
+        String loc = manager.getResourceLocation(url, myProject);
+        myPairs.add(new EditLocationDialog.NameLocationPair(url, FileUtil.toSystemDependentName(loc), false));
+      }
     }
 
     Collections.sort(myPairs);
@@ -211,8 +228,10 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       }
      }
 
-    myDefaultHtmlDoctype = manager.getDefaultHtmlDoctype(myProject);
-    myHtmlLanguageLevelForm.resetFromDoctype(myDefaultHtmlDoctype);
+    if (myProject != null) {
+      myDefaultHtmlDoctype = manager.getDefaultHtmlDoctype(myProject);
+      myHtmlLanguageLevelForm.resetFromDoctype(myDefaultHtmlDoctype);
+    }
 
     setModified(!myNewPairs.isEmpty());
   }
@@ -321,9 +340,18 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
-  private static class ExtUrlsTableModel extends AddEditRemovePanel.TableModel<EditLocationDialog.NameLocationPair> {
-    final String[] myNames =
-      {XmlBundle.message("column.name.edit.external.resource.uri"), XmlBundle.message("column.name.edit.external.resource.location"), "Project"};
+  private class ExtUrlsTableModel extends AddEditRemovePanel.TableModel<EditLocationDialog.NameLocationPair> {
+    final String[] myNames;
+
+    {
+      List<String> names = new ArrayList<String>();
+      names.add(XmlBundle.message("column.name.edit.external.resource.uri"));
+      names.add(XmlBundle.message("column.name.edit.external.resource.location"));
+      if (myProject != null) {
+        names.add("Project");
+      }
+      myNames = ArrayUtil.toStringArray(names);
+    }
 
     public int getColumnCount() {
       return myNames.length;
