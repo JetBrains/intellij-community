@@ -528,4 +528,14 @@ public class PythonCompletionTest extends PyTestCase {
   public void testOldStyleClassAttributes() {
     doTest();
   }
+
+  // PY-5821
+  public void testGlobalName() {
+    doTest();
+  }
+
+  // PY-6037
+  public void testExceptName() {
+    doTest();
+  }
 }
