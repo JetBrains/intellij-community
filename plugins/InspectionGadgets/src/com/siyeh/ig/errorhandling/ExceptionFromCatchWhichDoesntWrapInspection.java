@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,13 +32,13 @@ import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ExceptionFromCatchWhichDoesntWrapInspection
-  extends BaseInspection {
+public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean ignoreGetMessage = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreCantWrap = false;
 
   @Override
   @NotNull
@@ -61,8 +61,10 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.option"), this,
-                                          "ignoreGetMessage");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.option"), "ignoreGetMessage");
+    panel.addCheckbox(InspectionGadgetsBundle.message("exception.from.catch.which.doesntwrap.ignore.cant.wrap.option"), "ignoreCantWrap");
+    return panel;
   }
 
   @Override
@@ -90,6 +92,33 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
       final PsiExpression exception = statement.getException();
       if (exception == null) {
         return;
+      }
+      if (ignoreCantWrap) {
+        final PsiType thrownType = exception.getType();
+        if (thrownType instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)thrownType;
+          final PsiClass exceptionClass = classType.resolve();
+          if (exceptionClass != null) {
+            final PsiMethod[] constructors = exceptionClass.getConstructors();
+            final PsiClassType throwableType = PsiType.getJavaLangThrowable(statement.getManager(), statement.getResolveScope());
+            boolean canWrap = false;
+            outer:
+            for (PsiMethod constructor : constructors) {
+              final PsiParameterList parameterList = constructor.getParameterList();
+              final PsiParameter[] parameters = parameterList.getParameters();
+              for (PsiParameter constructorParameter : parameters) {
+                final PsiType type = constructorParameter.getType();
+                if (throwableType.equals(type)) {
+                  canWrap = true;
+                  break outer;
+                }
+              }
+            }
+            if (!canWrap) {
+              return;
+            }
+          }
+        }
       }
       final ReferenceFinder visitor = new ReferenceFinder(parameter);
       exception.accept(visitor);
