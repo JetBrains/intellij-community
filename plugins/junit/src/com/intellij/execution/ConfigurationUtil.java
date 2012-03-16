@@ -98,11 +98,11 @@ public class ConfigurationUtil {
         public boolean process(final PsiMember annotated) {
           final PsiClass containingClass = annotated instanceof PsiClass ? (PsiClass)annotated : annotated.getContainingClass();
           if (containingClass != null && annotated instanceof PsiMethod == isMethod) {
-            if (scope.contains(PsiUtilBase.getVirtualFile(containingClass)) && ApplicationManager.getApplication().runReadAction(
+            if (ApplicationManager.getApplication().runReadAction(
               new Computable<Boolean>() {
                 @Override
                 public Boolean compute() {
-                  return testClassFilter.isAccepted(containingClass);
+                  return scope.contains(PsiUtilBase.getVirtualFile(containingClass)) && testClassFilter.isAccepted(containingClass);
                 }
               })) {
               found.add(containingClass);
