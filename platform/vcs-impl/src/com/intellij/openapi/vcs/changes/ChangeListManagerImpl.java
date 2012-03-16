@@ -792,7 +792,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, final String comment) {
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment) {
     return ApplicationManager.getApplication().runReadAction(new Computable<LocalChangeList>() {
       @Override
       public LocalChangeList compute() {
