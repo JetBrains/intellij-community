@@ -43,7 +43,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.search.LightIndexPatternSearch;
 import com.intellij.psi.impl.search.TodoItemsCreator;
 import com.intellij.psi.search.IndexPatternOccurrence;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.PairConsumer;
@@ -65,7 +65,7 @@ public class TodoCheckinHandlerWorker {
   private final TodoFilter myTodoFilter;
   private final boolean myIncludePattern;
   private final PsiManager myPsiManager;
-  private final PsiSearchHelper mySearchHelper;
+  private final PsiTodoSearchHelper mySearchHelper;
 
   private final List<TodoItem> myAddedOrEditedTodos;
   private final List<TodoItem> myInChangedTodos;
@@ -81,7 +81,7 @@ public class TodoCheckinHandlerWorker {
     myTodoFilter = todoFilter;
     myIncludePattern = includePattern;
     myPsiManager = PsiManager.getInstance(project);
-    mySearchHelper = PsiSearchHelper.SERVICE.getInstance(project);
+    mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(project);
     myAddedOrEditedTodos = new ArrayList<TodoItem>();
     myInChangedTodos = new ArrayList<TodoItem>();
     mySkipped = new SmartList<Pair<FilePath,String>>();

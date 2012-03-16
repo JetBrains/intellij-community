@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see com.intellij.psi.PsiManager#getSearchHelper()
  */
-public interface PsiSearchHelper extends PsiTodoSearchHelper {
+public interface PsiSearchHelper {
   class SERVICE {
     private SERVICE() {
     }

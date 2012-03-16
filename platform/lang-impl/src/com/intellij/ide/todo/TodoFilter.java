@@ -18,7 +18,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +52,7 @@ public class TodoFilter implements Cloneable{
    * @return <code>true</code> if and only if specified <code>psiFile</code> has
    * <code>TodoItem</code>s accepted by the filter.
    */
-  public boolean accept(PsiSearchHelper searchHelper,PsiFile psiFile){
+  public boolean accept(PsiTodoSearchHelper searchHelper,PsiFile psiFile){
     for(Iterator<TodoPattern> i=iterator();i.hasNext();){
       TodoPattern todoPattern= i.next();
       if(searchHelper.getTodoItemsCount(psiFile,todoPattern)>0){

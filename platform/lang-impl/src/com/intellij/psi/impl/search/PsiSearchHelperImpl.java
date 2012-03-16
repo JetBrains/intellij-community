@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.concurrency.JobUtil;
-import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -28,7 +27,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -38,7 +40,6 @@ import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -55,11 +56,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PsiSearchHelperImpl implements PsiSearchHelper {
+
+public class PsiSearchHelperImpl implements PsiSearchHelper  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
 
   private final PsiManagerEx myManager;
-  private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
   @Override
   @NotNull
@@ -77,81 +78,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   public PsiSearchHelperImpl(PsiManagerEx manager) {
     myManager = manager;
-  }
-
-  @Override
-  @NotNull
-  public PsiFile[] findFilesWithTodoItems() {
-    return CacheManager.SERVICE.getInstance(myManager.getProject()).getFilesWithTodoItems();
-  }
-
-  @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file) {
-    return findTodoItems(file, 0, file.getTextLength());
-  }
-
-  @Override
-  @NotNull
-  public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
-    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
-    if (occurrences.isEmpty()) {
-      return EMPTY_TODO_ITEMS;
-    }
-
-    return processTodoOccurences(startOffset, endOffset, occurrences);
-  }
-
-  private TodoItem[] processTodoOccurences(int startOffset, int endOffset, Collection<IndexPatternOccurrence> occurrences) {
-    List<TodoItem> items = new ArrayList<TodoItem>(occurrences.size());
-    TextRange textRange = new TextRange(startOffset, endOffset);
-    final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-    for(IndexPatternOccurrence occurrence: occurrences) {
-      TextRange occurrenceRange = occurrence.getTextRange();
-      if (textRange.contains(occurrenceRange)) {
-        items.add(todoItemsCreator.createTodo(occurrence));
-      }
-    }
-
-    return items.toArray(new TodoItem[items.size()]);
-  }
-
-  @NotNull
-  @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file) {
-    return findTodoItemsLight(file, 0, file.getTextLength());
-  }
-
-  @NotNull
-  @Override
-  public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
-    final Collection<IndexPatternOccurrence> occurrences =
-      LightIndexPatternSearch.SEARCH.createQuery(new IndexPatternSearch.SearchParameters(file, TodoIndexPatternProvider.getInstance())).findAll();
-
-    if (occurrences.isEmpty()) {
-      return EMPTY_TODO_ITEMS;
-    }
-
-    return processTodoOccurences(startOffset, endOffset, occurrences);
-  }
-
-  @Override
-  public int getTodoItemsCount(@NotNull PsiFile file) {
-    int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), TodoIndexPatternProvider.getInstance());
-    if (count != -1) return count;
-    return findTodoItems(file).length;
-  }
-
-  @Override
-  public int getTodoItemsCount(@NotNull PsiFile file, @NotNull TodoPattern pattern) {
-    int count = CacheManager.SERVICE.getInstance(myManager.getProject()).getTodoCount(file.getVirtualFile(), pattern.getIndexPattern());
-    if (count != -1) return count;
-    TodoItem[] items = findTodoItems(file);
-    count = 0;
-    for (TodoItem item : items) {
-      if (item.getPattern().equals(pattern)) count++;
-    }
-    return count;
   }
 
   @Override

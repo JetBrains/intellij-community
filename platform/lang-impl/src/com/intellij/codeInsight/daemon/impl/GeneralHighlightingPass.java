@@ -60,7 +60,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
-import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
@@ -839,7 +839,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                      @NotNull ProperTextRange priorityRange,
                                      @NotNull Collection<HighlightInfo> result,
                                      @NotNull Collection<HighlightInfo> outsideResult) {
-    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
+    PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
     if (todoItems.length == 0) return;
 

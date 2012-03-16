@@ -23,7 +23,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 
@@ -44,7 +43,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
   private boolean myAreModulesShown;
 
 
-  protected final PsiSearchHelper mySearchHelper;
+  protected final PsiTodoSearchHelper mySearchHelper;
   /**
    * Current <code>TodoFilter</code>. If no filter is set then this field is <code>null</code>.
    */
@@ -54,7 +53,7 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     super(project);
     myArePackagesShown=true;
     mySummaryElement=new ToDoSummary();
-    mySearchHelper= PsiSearchHelper.SERVICE.getInstance(project);
+    mySearchHelper= PsiTodoSearchHelper.SERVICE.getInstance(project);
   }
 
   final void setTreeBuilder(TodoTreeBuilder builder){
