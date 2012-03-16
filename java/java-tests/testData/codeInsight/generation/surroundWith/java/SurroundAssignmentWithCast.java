@@ -1,6 +1,6 @@
 class Test {
   void foo(int a, double b) {
-    if (((<caret>) (a + b + 1))) {
+    if (<selection><caret>a = b</selection>) {
 
     }
   }
