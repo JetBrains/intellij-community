@@ -29,14 +29,14 @@ public class PythonTestConfigurationType implements ConfigurationType {
     return ConfigurationTypeUtil.findConfigurationType(PythonTestConfigurationType.class);
   }
 
-  private final static Icon ICON = IconLoader.getIcon(
-    "/com/jetbrains/python/icons/pythonTests.png");
+  private static final Icon ICON = IconLoader.getIcon("/com/jetbrains/python/icons/pythonTests.png");
 
   private static class PythonUnitTestConfigurationFactory extends ConfigurationFactory {
     protected PythonUnitTestConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }
 
+    @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonUnitTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
@@ -52,6 +52,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonDocTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
@@ -67,6 +68,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PyTestRunConfiguration("", new RunConfigurationModule(project), this);
     }
@@ -82,6 +84,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonNoseTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
@@ -97,6 +100,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonAtTestRunConfiguration(new RunConfigurationModule(project), this, "");
     }
@@ -128,6 +132,7 @@ public class PythonTestConfigurationType implements ConfigurationType {
     return ID;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return new ConfigurationFactory[] {PY_UNITTEST_FACTORY, PY_DOCTEST_FACTORY, PY_NOSETEST_FACTORY,
         PY_PYTEST_FACTORY, PY_ATTEST_FACTORY};

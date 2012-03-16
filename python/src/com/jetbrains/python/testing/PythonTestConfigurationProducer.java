@@ -10,6 +10,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.facet.Facet;
@@ -300,4 +301,15 @@ abstract public class PythonTestConfigurationProducer extends RuntimeConfigurati
   public int compareTo(Object o) {
     return PREFERED;
   }
+
+  @Override
+  public ConfigurationType getConfigurationType() {
+    return new PythonTestConfigurationType() {
+      @Override
+      public String getDisplayName() {
+        return getConfigurationFactory().getName();
+      }
+    };
+  }
+
 }
