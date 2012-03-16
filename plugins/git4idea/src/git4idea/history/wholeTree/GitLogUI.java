@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -1608,9 +1607,6 @@ public class GitLogUI implements Disposable {
     public void actionPerformed(AnActionEvent e) {
       final MultiMap<VirtualFile, GitCommit> commits = getSelectedCommitsAndCheck();
       if (commits.isEmpty()) return;
-      final int result = Messages.showOkCancelDialog("You are going to cherry-pick changes into current branch. Continue?", "Cherry-pick",
-                                                     Messages.getQuestionIcon());
-      if (result != 0) return;
       for (GitCommit commit : commits.values()) {
         myIdsInProgress.add(commit.getShortHash());
       }
