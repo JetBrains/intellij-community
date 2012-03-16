@@ -44,7 +44,7 @@ public class FileSystemUtil {
 
     // todo: move IdeaWin32 interface to this package, add mediator
 
-    if (false && (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD)) {
+    if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
       try {
         mediator = new JnaUnixMediatorImpl();
         mediator.getAttributes("/");  // quick test
