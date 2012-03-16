@@ -34,8 +34,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
 import git4idea.GitVcs;
+import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,10 @@ public class GitInit extends DumbAwareAction {
     fcd.setTitle(GitBundle.getString("init.destination.directory.title"));
     fcd.setDescription(GitBundle.getString("init.destination.directory.description"));
     fcd.setHideIgnored(false);
-    final VirtualFile baseDir = project.getBaseDir();
+    VirtualFile baseDir = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    if (baseDir == null) {
+      baseDir = project.getBaseDir();
+    }
     final VirtualFile root = FileChooser.chooseFile(project, fcd, baseDir);
     if (root == null) {
       return;
