@@ -228,6 +228,10 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
   }
 
+  public String getFileNameToCreate() {
+    return getCanonicalText();
+  }
+
   private static boolean caseSensitivityApplies(PsiDirectory context, boolean caseSensitive) {
     VirtualFileSystem fs = context.getVirtualFile().getFileSystem();
     return fs instanceof NewVirtualFileSystem && ((NewVirtualFileSystem)fs).isCaseSensitive() == caseSensitive;

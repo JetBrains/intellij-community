@@ -54,7 +54,7 @@ public class FileReferenceQuickFixProvider {
     int index = reference.getIndex();
 
     if (index < 0) return Collections.emptyList();
-    final String newFileName = reference.getCanonicalText();
+    final String newFileName = reference.getFileNameToCreate();
 
     // check if we could create file
     if (newFileName.length() == 0 ||
