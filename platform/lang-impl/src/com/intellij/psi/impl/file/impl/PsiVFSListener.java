@@ -38,6 +38,7 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiVFSListener extends VirtualFileAdapter {
@@ -623,7 +624,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
 
   private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
     @Override
-    public void fileWithNoDocumentChanged(VirtualFile file) {
+    public void fileWithNoDocumentChanged(@NotNull VirtualFile file) {
       final PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
       if (psiFile != null) {
         ApplicationManager.getApplication().runWriteAction(

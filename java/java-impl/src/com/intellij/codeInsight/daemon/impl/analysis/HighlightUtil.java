@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -955,7 +955,11 @@ public class HighlightUtil {
       return null;
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (value == null) {
+      // todo[r.sh] clean this mess up
+      if (value != null) {
+        if (!StringUtil.endsWithChar(text, '\'')) return JavaErrorMessages.message("unclosed.char.literal");
+      }
+      else {
         if (!StringUtil.startsWithChar(text, '\'')) return null;
         if (StringUtil.endsWithChar(text, '\'')) {
           if (text.length() == 1) return JavaErrorMessages.message("illegal.line.end.in.character.literal");

@@ -51,7 +51,7 @@ import static com.intellij.execution.process.ProcessOutputTypes.STDERR;
 public class AndroidDebugRunner extends DefaultProgramRunner {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidDebugRunner");
 
-  private static final Key<RunContentDescriptor> ANDROID_PROCESS_HANDLER = new Key<RunContentDescriptor>("ANDROID_PROCESS_HANDLER");
+  public static final Key<RunContentDescriptor> ANDROID_PROCESS_HANDLER = new Key<RunContentDescriptor>("ANDROID_PROCESS_HANDLER");
   private static final Object myReaderLock = new Object();
 
   private static final Object myDebugLock = new Object();

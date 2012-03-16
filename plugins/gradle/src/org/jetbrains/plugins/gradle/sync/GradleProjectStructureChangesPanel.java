@@ -73,6 +73,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   private Object                          myNodeUnderMouse;
   private Object                          myNodeWithActiveToolbar;
   private Balloon                         myToolbar;
+  private JComponent                      myToolbarComponent;
   private boolean                         mySuppressToolbar;
   private boolean                         mySuppressCollapseTracking;
 
@@ -226,7 +227,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         final Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
         SwingUtilities.convertPointFromScreen(mouseLocation, myTree);
         final TreePath path = myTree.getPathForLocation(mouseLocation.x, mouseLocation.y);
-        if (path == null) {
+        if (path == null && !isUnderMouse(myToolbarComponent)) {
           hideToolbar();
           return;
         }
@@ -252,6 +253,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           .createBalloon();
         Disposer.register(getProject(), balloon);
         Point hintPosition = GradleUtil.getHintPosition(node, myTree);
+        myToolbarComponent = toolbarComponent;
         myToolbar = balloon;
         myNodeWithActiveToolbar = node;
         balloon.show(new RelativePoint(myTree, hintPosition), Balloon.Position.below);
@@ -269,9 +271,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         if (myToolbar == null) {
           return;
         }
-        final Point location = MouseInfo.getPointerInfo().getLocation();
-        SwingUtilities.convertPointFromScreen(location, GradleProjectStructureChangesPanel.this);
-        if (GradleProjectStructureChangesPanel.this.contains(location)) {
+        if (isUnderMouse(GradleProjectStructureChangesPanel.this) || isUnderMouse(myToolbarComponent)) {
           myToolbarTrackingAlarm.addRequest(this, delayMillis);
         }
         else {
@@ -280,6 +280,15 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
       }
     }, delayMillis);
   }
+
+  private static boolean isUnderMouse(@Nullable JComponent component) {
+    if (component == null) {
+      return false;
+    }
+    final Point location = MouseInfo.getPointerInfo().getLocation();
+    SwingUtilities.convertPointFromScreen(location, component);
+    return component.contains(location);
+  }
   
   private void hideToolbar() {
     final Balloon toolbar = myToolbar;
@@ -287,6 +296,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     if (toolbar != null && !toolbar.isDisposed()) {
       toolbar.hide();
       myToolbar = null;
+      myToolbarComponent = null;
       myToolbarAppearanceAlarm.cancelAllRequests();
       myToolbarTrackingAlarm.cancelAllRequests();
     }

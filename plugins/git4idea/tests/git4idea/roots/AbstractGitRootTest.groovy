@@ -19,6 +19,7 @@ import git4idea.test.GitMockVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import git4idea.test.GitTestPlatformFacade
+import git4idea.test.GitMockProject
 
 /**
  * 
@@ -39,10 +40,7 @@ class AbstractGitRootTest {
    */
   Project initProject(Collection<String> gitRoots, Collection<String> projectStructure, Collection<String> contentRoots = []) {
     String projectDir = createDirs(gitRoots)
-    Project project = [
-      getBaseDir: { new GitMockVirtualFile(projectDir) },
-      isDisposed: { false }
-    ] as Project
+    Project project = new GitMockProject(projectDir)
     createProjectStructure(project, projectStructure);
     createProjectStructure(project, contentRoots);
 

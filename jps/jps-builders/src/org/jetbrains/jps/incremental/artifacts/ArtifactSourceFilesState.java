@@ -83,11 +83,12 @@ public class ArtifactSourceFilesState {
     myDeletedFiles.clear();
     getOrCreateInstructions().processRoots(new ArtifactRootProcessor() {
       @Override
-      public void process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
+      public boolean process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
         final File rootFile = root.getRootFile();
         if (rootFile.exists()) {
           processRecursively(rootFile, rootIndex, root.getFilter(), currentPaths);
         }
+        return true;
       }
     });
     final ArtifactSourceToOutputMapping mapping = getOrCreateSrcOutMapping();

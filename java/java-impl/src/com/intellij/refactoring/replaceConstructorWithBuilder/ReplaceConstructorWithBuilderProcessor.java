@@ -45,6 +45,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,6 +157,14 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       builderClass.add(method);
     }
 
+    //fix visibilities
+    final PsiMethod constructor = getWorkingConstructor();
+    VisibilityUtil.escalateVisibility(constructor, builderClass);
+    PsiClass containingClass = constructor.getContainingClass();
+    while (containingClass != null) {
+      VisibilityUtil.escalateVisibility(containingClass, builderClass);
+      containingClass = containingClass.getContainingClass();
+    }
   }
 
   private void createSetter(PsiClass builderClass, ParameterData parameterData, PsiField field) {
@@ -221,13 +230,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   private PsiMethod createMethodSignature(String createMethodName) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     final StringBuffer buf = new StringBuffer();
-    PsiMethod constructor = getMostCommonConstructor();
-    if (constructor == null){
-      constructor = myConstructors[0];
-      if (constructor.getParameterList().getParametersCount() == 0) {
-        constructor = myConstructors[1];
-      }
-    }
+    final PsiMethod constructor = getWorkingConstructor();
     for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
       final String pureParamName = styleManager.variableNameToPropertyName(parameter.getName(), VariableKind.PARAMETER);
       if (buf.length() > 0) buf.append(", ");
@@ -243,6 +246,17 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
                                                buf.toString() +
                                                ")" +
                                                ";\n}", constructor);
+  }
+
+  private PsiMethod getWorkingConstructor() {
+    PsiMethod constructor = getMostCommonConstructor();
+    if (constructor == null){
+      constructor = myConstructors[0];
+      if (constructor.getParameterList().getParametersCount() == 0) {
+        constructor = myConstructors[1];
+      }
+    }
+    return constructor;
   }
 
   @Nullable

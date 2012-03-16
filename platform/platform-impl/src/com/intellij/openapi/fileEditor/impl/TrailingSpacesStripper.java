@@ -52,7 +52,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
   }
 
   @Override
-  public void beforeDocumentSaving(Document document) {
+  public void beforeDocumentSaving(@NotNull Document document) {
     strip(document);
   }
 

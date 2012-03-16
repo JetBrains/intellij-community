@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.regex.Matcher;
 
 /**
  * @author nik
@@ -114,11 +115,10 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
 
   @Nullable
   private static String getGradleJarVersion(VirtualFile file) {
-    // TODO den implement
-    //final Matcher matcher = GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
-    //if (matcher.matches()) {
-    //  return matcher.group(2);
-    //}
+    final Matcher matcher = GradleLibraryManager.GRADLE_JAR_FILE_PATTERN.matcher(file.getName());
+    if (matcher.matches()) {
+      return matcher.group(2);
+    }
     return null;
   }
 }

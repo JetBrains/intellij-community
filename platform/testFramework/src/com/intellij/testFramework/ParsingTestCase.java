@@ -61,6 +61,8 @@ import java.io.IOException;
 import java.util.Set;
 
 public abstract class ParsingTestCase extends PlatformLiteFixture {
+  protected static boolean OVERWRITE_TESTDATA = false;
+
   protected String myFilePrefix = "";
   protected String myFileExt;
   @NonNls protected final String myFullDataPath;
@@ -270,21 +272,29 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   private static void doCheckResult(String myFullDataPath, String targetDataName, String text) throws IOException {
+    text = text.trim();
+    String expectedFileName = myFullDataPath + File.separatorChar + targetDataName;
+    if (OVERWRITE_TESTDATA) {
+      writeFile(expectedFileName, text);
+      System.out.println("File " + expectedFileName + " created.");
+    }
     try {
-      text = text.trim();
       String expectedText = doLoadFile(myFullDataPath, targetDataName);
       assertEquals(targetDataName, expectedText, text);
     }
     catch(FileNotFoundException e){
-      String fullName = myFullDataPath + File.separatorChar + targetDataName;
-      FileWriter writer = new FileWriter(fullName);
-      try {
-        writer.write(text);
-      }
-      finally {
-        writer.close();
-      }
-      fail("No output text found. File " + fullName + " created.");
+      writeFile(expectedFileName, text);
+      fail("No output text found. File " + expectedFileName + " created.");
+    }
+  }
+
+  private static void writeFile(String fullName, String text) throws IOException {
+    FileWriter writer = new FileWriter(fullName);
+    try {
+      writer.write(text);
+    }
+    finally {
+      writer.close();
     }
   }
 

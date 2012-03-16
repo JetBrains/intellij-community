@@ -22,10 +22,11 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public interface FileDocumentSynchronizationVetoer {
   ExtensionPointName<FileDocumentSynchronizationVetoer> EP_NAME = ExtensionPointName.create("com.intellij.fileDocumentSynchronizationVetoer");
 
-  boolean maySaveDocument(Document document);
-  boolean mayReloadFileContent(VirtualFile file, Document document);
+  boolean maySaveDocument(@NotNull Document document);
+  boolean mayReloadFileContent(VirtualFile file, @NotNull Document document);
 }

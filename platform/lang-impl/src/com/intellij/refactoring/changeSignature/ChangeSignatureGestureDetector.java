@@ -214,7 +214,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   @Override
-  public void editorCreated(EditorFactoryEvent event) {
+  public void editorCreated(@NotNull EditorFactoryEvent event) {
     final Editor editor = event.getEditor();
     if (editor.getProject() != myProject) return;
     addDocListener(editor.getDocument());
@@ -233,7 +233,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   @Override
-  public void editorReleased(EditorFactoryEvent event) {
+  public void editorReleased(@NotNull EditorFactoryEvent event) {
     final EditorEx editor = (EditorEx)event.getEditor();
     final Document document = editor.getDocument();
 

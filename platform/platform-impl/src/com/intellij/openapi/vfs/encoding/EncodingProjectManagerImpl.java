@@ -72,10 +72,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     myEditorSettings = editorSettings;
     documentManager.addListener(new PsiDocumentManager.Listener() {
       @Override
-      public void documentCreated(Document document, PsiFile psiFile) {
-        if (document != null) {
-          ((EncodingManagerImpl)EncodingManager.getInstance()).queueUpdateEncodingFromContent(document);
-        }
+      public void documentCreated(@NotNull Document document, PsiFile psiFile) {
+        ((EncodingManagerImpl)EncodingManager.getInstance()).queueUpdateEncodingFromContent(document);
       }
 
       @Override

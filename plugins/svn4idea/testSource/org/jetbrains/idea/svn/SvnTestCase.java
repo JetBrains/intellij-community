@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -17,7 +32,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.pending.MockChangeListManagerGate;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractJunitVcsTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -37,6 +51,7 @@ import java.util.List;
  */
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected TempDirTestFixture myTempDirFixture;
+  private File myRepoRoot;
   private File myWcRoot;
   protected String myRepoUrl;
   private ChangeListManagerGate myGate;
@@ -57,8 +72,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
           myTempDirFixture = fixtureFactory.createTempDirTestFixture();
           myTempDirFixture.setUp();
 
-          final File svnRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
-          svnRoot.mkdir();
+          myRepoRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
+          assert myRepoRoot.mkdir() || myRepoRoot.isDirectory() : myRepoRoot;
 
           File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
           if (!pluginRoot.isDirectory()) {
@@ -69,12 +84,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
           }
           myClientBinaryPath = new File(pluginRoot, "testData/svn/bin");
 
-          ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), svnRoot, null);
+          ZipUtil.extract(new File(pluginRoot, "testData/svn/newrepo.zip"), myRepoRoot, null);
 
           myWcRoot = new File(myTempDirFixture.getTempDirPath(), "wcroot");
-          myWcRoot.mkdir();
+          assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
 
-          myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(svnRoot.getPath());
+          myRepoUrl = "file:///" + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
 
           initProject(myWcRoot, SvnTestCase.this.getTestName());
           activateVCS(SvnVcs.VCS_NAME);
@@ -84,19 +99,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
           myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
           myRefreshCopiesStub = new AtomicSectionsAware() {
-            @Override
-            public void enter() {
-            }
-            @Override
-            public void exit() {
-            }
-            @Override
-            public boolean shouldExitAsap() {
-              return false;
-            }
-            @Override
-            public void checkShouldExit() throws ProcessCanceledException {
-            }
+            @Override public void enter() { }
+            @Override public void exit() { }
+            @Override public boolean shouldExitAsap() { return false; }
+            @Override public void checkShouldExit() throws ProcessCanceledException { }
           };
 
           final SvnVcs vcs = SvnVcs.getInstance(myProject);
@@ -110,10 +116,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
         }
       }
     });
-          // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
-          ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-          VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-          changeListManager.ensureUpToDate(false);
+
+    // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    changeListManager.ensureUpToDate(false);
   }
 
   @After
@@ -123,6 +130,14 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       public void run() {
         try {
           tearDownProject();
+
+          if (myWcRoot != null && myWcRoot.exists()) {
+            FileUtil.delete(myWcRoot);
+          }
+          if (myRepoRoot != null && myRepoRoot.exists()) {
+            FileUtil.delete(myRepoRoot);
+          }
+
           if (myTempDirFixture != null) {
             myTempDirFixture.tearDown();
             myTempDirFixture = null;
@@ -155,17 +170,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     verify(runSvn("up"));
   }
 
-  protected List<Change> getAllChanges() throws VcsException {
-    return getChangesInScope(getAllDirtyScope());
-  }
-
-  protected List<Change> getChangesForFile(VirtualFile file) throws VcsException {
-    return getChangesInScope(getDirtyScopeForFile(file));
-  }
-
   protected List<Change> getChangesInScope(final VcsDirtyScope dirtyScope) throws VcsException {
     ChangeProvider changeProvider = SvnVcs.getInstance(myProject).getChangeProvider();
-    assert changeProvider != null;
     MockChangelistBuilder builder = new MockChangelistBuilder();
     changeProvider.getChanges(dirtyScope, builder, new EmptyProgressIndicator(), myGate);
     return builder.getChanges();

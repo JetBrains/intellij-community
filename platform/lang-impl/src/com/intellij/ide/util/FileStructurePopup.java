@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -49,6 +50,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
@@ -76,6 +78,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 
@@ -101,7 +104,7 @@ public class FileStructurePopup implements Disposable {
 
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
   private boolean myShouldNarrowDown = true;
-  private Tree myTree;
+  private FileStructureTree myTree;
   private FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
   private TreeSpeedSearch mySpeedSearch;
@@ -154,13 +157,9 @@ public class FileStructurePopup implements Disposable {
         return "structure view tree structure(model=" + myTreeModel + ")";
       }
     };
-    myTree = new JBTreeWithHintProvider(new DefaultMutableTreeNode(myTreeStructure.getRootElement())) {
-      @Override
-      protected PsiElement getPsiElementForHint(Object selectedValue) {
-        //noinspection ConstantConditions
-        return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
-      }
-    };
+
+    myTree = new FileStructureTree(myTreeStructure.getRootElement(), Registry.is("fast.tree.expand.in.structure.view"));
+
     myTree.setCellRenderer(new NodeRenderer() {
       @Override
       protected void doAppend(@NotNull @Nls String fragment,
@@ -180,8 +179,6 @@ public class FileStructurePopup implements Disposable {
         SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, selected, this);
       }
     });
-    myTree.setRootVisible(false);
-    myTree.setShowsRootHandles(true);
 
     mySpeedSearch = new MyTreeSpeedSearch();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
@@ -271,7 +268,7 @@ public class FileStructurePopup implements Disposable {
     }
 
     //final long cur = System.currentTimeMillis();
-    myAbstractTreeBuilder.expandAll(new Runnable() {
+    final Runnable expandIsDone = new Runnable() {
       @Override
       public void run() {
         //System.out.println(System.currentTimeMillis() - cur);
@@ -286,7 +283,14 @@ public class FileStructurePopup implements Disposable {
           }
         });
       }
-    });
+    };
+
+    //if (myTree.isAlwaysExpanded() || true) {
+      expandIsDone.run();
+    //} else {
+    //  myAbstractTreeBuilder.expandAll(expandIsDone);
+    //}
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
       alarm.addRequest(new Runnable() {
@@ -901,6 +905,61 @@ public class FileStructurePopup implements Disposable {
         return 0;
       }
 
+    }
+  }
+
+  class FileStructureTree extends JBTreeWithHintProvider implements AlwaysExpandedTree {
+    private final boolean fast;
+
+    public FileStructureTree(Object rootElement, boolean fastExpand) {
+      super(new DefaultMutableTreeNode(rootElement));
+      if (fastExpand) {
+        boolean newValueIsSet;
+        try {
+          final Field field = JTree.class.getDeclaredField("expandedState");
+          field.setAccessible(true);
+          field.set(this, new Hashtable() {
+            @Override
+            public synchronized Object get(Object key) {
+              return Boolean.TRUE;
+            }
+          });
+          newValueIsSet = true;
+        }
+        catch (Exception e) {
+          newValueIsSet = false;
+        }
+        fast = newValueIsSet;
+      } else {
+        fast = false;
+      }
+
+      //TODO[kb]: hack expanded states in getUI().treeState
+
+      setRootVisible(false);
+      setShowsRootHandles(true);
+      setHorizontalAutoScrollingEnabled(false);
+    }
+
+    @Override
+    public boolean isAlwaysExpanded() {
+      return fast;
+    }
+
+    @Override
+    public boolean isExpanded(TreePath path) {
+      return fast || super.isExpanded(path);
+    }
+
+    @Override
+    public boolean isExpanded(int row) {
+      return fast || super.isExpanded(row);
+    }
+
+    @Override
+    protected PsiElement getPsiElementForHint(Object selectedValue) {
+      //noinspection ConstantConditions
+      return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
     }
   }
 }

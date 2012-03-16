@@ -30,12 +30,15 @@ import java.util.Collection;
  * @since 3/2/12 3:03 PM
  */
 public class GradleConflictControlFactory {
-  
+
+  @NotNull private final GradleProjectConflictControlFactory           myProjectFactory;
   @NotNull private final GradleLibraryDependencyConflictControlFactory myLibraryDependencyFactory;
   @NotNull private final GradleCommonDependencyConflictControlFactory  myCommonDependencyFactory;
 
-  public GradleConflictControlFactory(@NotNull GradleLibraryDependencyConflictControlFactory libraryFactory,
+  public GradleConflictControlFactory(@NotNull GradleProjectConflictControlFactory factory,
+                                      @NotNull GradleLibraryDependencyConflictControlFactory libraryFactory,
                                       @NotNull GradleCommonDependencyConflictControlFactory commonDependencyFactory) {
+    myProjectFactory = factory;
     myLibraryDependencyFactory = libraryFactory;
     myCommonDependencyFactory = commonDependencyFactory;
   }
@@ -54,6 +57,7 @@ public class GradleConflictControlFactory {
     GradleUtil.dispatch(entity, new IntellijEntityVisitor() {
       @Override
       public void visit(@NotNull Project project) {
+        result.set(myProjectFactory.getControl(changes));
       }
 
       @Override
