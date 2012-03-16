@@ -603,12 +603,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   @NotNull
   public CharSequence getCharsSequence() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
-      @Override
-      public CharSequence compute() {
-        return myText.getCharArray();
-      }
-    });
+    return myText.getCharArray();
   }
 
 
