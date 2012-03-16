@@ -20,6 +20,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -38,6 +40,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -143,7 +146,25 @@ public class FileReferenceQuickFixProvider {
       isdirectory = false;
     }
 
-    final CreateFileFix action = new CreateFileFix(isdirectory, newFileName, directory);
+    final CreateFileFix action = new CreateFileFix(isdirectory, newFileName, directory) {
+      @Override
+      protected String getFileText() {
+        if (!isdirectory) {
+          String templateName = reference.getNewFileTemplateName();
+          if (templateName != null) {
+            FileTemplate template = FileTemplateManager.getInstance().getTemplate(templateName);
+            if (template != null) {
+              try {
+                return template.getText(FileTemplateManager.getInstance().getDefaultProperties());
+              } catch (IOException ex) {
+                throw new RuntimeException(ex);
+              }
+            }
+          }
+        }
+        return super.getFileText();
+      }
+    };
     QuickFixAction.registerQuickFixAction(info, action);
     return Arrays.asList(action);
   }
