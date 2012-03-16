@@ -58,12 +58,12 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void "test no hard refs to AST after highlighting"() {
-    def sup = myFixture.addFileToProject 'sup.java', 'class Super { Super() {} }'
+    def sup = myFixture.addFileToProject('sup.java', 'class Super { Super() {} }')
     assert sup.findElementAt(0) // load AST
     assert !((PsiFileImpl)sup).stub
     LeakHunter.checkLeak(sup, MethodElement)
 
-    def foo = myFixture.addFileToProject 'a.java', 'class Foo extends Super { void bar() { bar(); } }'
+    def foo = myFixture.addFileToProject('a.java', 'class Foo extends Super { void bar() { bar(); } }')
     myFixture.configureFromExistingVirtualFile(foo.virtualFile)
     myFixture.doHighlighting()
 
