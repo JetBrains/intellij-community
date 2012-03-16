@@ -1131,6 +1131,8 @@ public class KeyVO {
 Util.foo()<caret>'''
   }
 
+  public void testUseDescendantStaticImport() { doBasicTest() }
+
   public void testPreferInterfacesInImplements() {
     myFixture.addClass('interface FooIntf {}')
     myFixture.addClass('class FooClass {}')
