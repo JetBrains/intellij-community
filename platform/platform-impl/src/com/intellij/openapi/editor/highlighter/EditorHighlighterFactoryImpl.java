@@ -54,7 +54,7 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
   }
 
   @Override
-  public EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile vFile, final EditorColorsScheme settings, final Project project) {
+  public EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile vFile, @NotNull final EditorColorsScheme settings, final Project project) {
     final FileType fileType = vFile.getFileType();
     if (fileType instanceof LanguageFileType) {
       LanguageFileType substFileType = substituteFileType(((LanguageFileType)fileType).getLanguage(), vFile, project);
