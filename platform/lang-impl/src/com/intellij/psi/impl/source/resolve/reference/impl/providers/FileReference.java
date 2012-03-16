@@ -65,25 +65,6 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
   
   public static final FileReference[] EMPTY = new FileReference[0];
-  private static final TObjectHashingStrategy<ResolveResult> RESOLVE_RESULT_HASHING_STRATEGY = new TObjectHashingStrategy<ResolveResult>() {
-    @Override
-    public int computeHashCode(ResolveResult object) {
-      PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)object.getElement();
-      if (fileSystemItem == null) {
-        return 0;
-      }
-      VirtualFile file = fileSystemItem.getVirtualFile();
-      return file == null ? 0 : file.hashCode();
-    }
-
-    @Override
-    public boolean equals(ResolveResult o1, ResolveResult o2) {
-      PsiFileSystemItem element1 = (PsiFileSystemItem)o1.getElement();
-      PsiFileSystemItem element2 = (PsiFileSystemItem)o2.getElement();
-      if (element1 == null || element2 == null) return Comparing.equal(element1, element2);
-      return Comparing.equal(element1.getVirtualFile(), element2.getVirtualFile());
-    }
-  };
 
   private static final TObjectHashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiElement>() {
     @Override
@@ -158,7 +139,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       return new ResolveResult[] { new PsiElementResolveResult(getElement().getContainingFile())};
     }
     final Collection<PsiFileSystemItem> contexts = getContexts();
-    final Collection<ResolveResult> result = new THashSet<ResolveResult>(RESOLVE_RESULT_HASHING_STRATEGY);
+    final Collection<ResolveResult> result = new THashSet<ResolveResult>();
     for (final PsiFileSystemItem context : contexts) {
       if (context != null) {
         innerResolveInContext(referenceText, context, result, caseSensitive);
