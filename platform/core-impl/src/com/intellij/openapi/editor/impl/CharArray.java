@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.ArrayUtil;
@@ -371,7 +370,6 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   @NotNull
   public CharSequence getCharArray() {
-    assertReadAccess();
     assertConsistency();
     CharSequence originalSequence = myOriginalSequence;
     return originalSequence == null ? this : originalSequence;
