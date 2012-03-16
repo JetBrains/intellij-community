@@ -16,6 +16,7 @@
 package com.intellij.psi
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.java.JavaFileElement
 import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.testFramework.LeakHunter
@@ -54,6 +55,23 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
     LeakHunter.checkLeak(mainClass, MethodElement, { MethodElement node ->
       superClass == node.psi.parent
     } as Processor<MethodElement>)
+  }
+
+  public void "test no hard refs to AST after highlighting"() {
+    def sup = myFixture.addFileToProject 'sup.java', 'class Super { Super() {} }'
+    assert sup.findElementAt(0) // load AST
+    assert !((PsiFileImpl)sup).stub
+    LeakHunter.checkLeak(sup, MethodElement)
+
+    def foo = myFixture.addFileToProject 'a.java', 'class Foo extends Super { void bar() { bar(); } }'
+    myFixture.configureFromExistingVirtualFile(foo.virtualFile)
+    myFixture.doHighlighting()
+
+    assert !((PsiFileImpl)foo).stub
+    assert ((PsiFileImpl)foo).treeElement
+
+    LeakHunter.checkLeak(foo, MethodElement)
+    LeakHunter.checkLeak(sup, MethodElement)
   }
 
 }
