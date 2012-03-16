@@ -27,13 +27,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author max
  */
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
-  private final AtomicLong myModificationStamp = new AtomicLong(LocalTimeCounter.currentTime());
+  private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
   public boolean isValid() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -78,11 +77,11 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   }
 
   public long getModificationStamp() {
-    return myModificationStamp.get();
+    return myModificationStamp;
   }
 
   public void setModificationStamp(long modificationStamp) {
-    myModificationStamp.set(modificationStamp);
+    myModificationStamp = modificationStamp;
   }
 
   public abstract void setWritable(boolean writable) throws IOException;
