@@ -20,12 +20,14 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xmlb.JDOMXIncluder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -40,6 +42,11 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
     myXincludeTag = xincludeTag;
   }
 
+  @NotNull
+  public static PsiElement[] getIncludedTags(XmlTag xincludeTag) {
+    return CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
+  }
+
   public Result<PsiElement[]> compute() {
     PsiElement[] result = RecursionManager.doPreventingRecursion(myXincludeTag, true, new NullableComputable<PsiElement[]>() {
       @Override
@@ -47,20 +54,17 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
         return computeInclusion(myXincludeTag);
       }
     });
-    return Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    return Result.create(result == null ? PsiElement.EMPTY_ARRAY : result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
   }
 
-  private static XmlTag[] extractXpointer(XmlTag rootTag, @Nullable final String xpointer) {
+  private static XmlTag[] extractXpointer(@NotNull XmlTag rootTag, @Nullable final String xpointer) {
     if (xpointer != null) {
       Matcher matcher = JDOMXIncluder.XPOINTER_PATTERN.matcher(xpointer);
       if (matcher.matches()) {
         String pointer = matcher.group(1);
         matcher = JDOMXIncluder.CHILDREN_PATTERN.matcher(pointer);
-
-        if (matcher.matches()) {
-          final String rootTagName = matcher.group(1);
-
-          if (rootTagName.equals(rootTag.getName())) return rootTag.getSubTags();
+        if (matcher.matches() && matcher.group(1).equals(rootTag.getName())) {
+          return rootTag.getSubTags();
         }
       }
     }

@@ -654,11 +654,8 @@ public class XmlUtil {
         startFrom = xmlConditionalSection.getBodyStart();
       }
       else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
-        final PsiElement[] inclusion = getXIncludedTags((XmlTag)element);
-        if (inclusion != null) {
-          for (PsiElement psiElement : inclusion) {
-            if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
-          }
+        for (PsiElement psiElement : InclusionProvider.getIncludedTags((XmlTag)element)) {
+          if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
         }
       }
 
@@ -667,11 +664,6 @@ public class XmlUtil {
       }
 
       return true;
-    }
-
-    @Nullable
-    private static PsiElement[] getXIncludedTags(final XmlTag xincludeTag) {
-      return CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new InclusionProvider(xincludeTag));
     }
 
     private boolean processElement(PsiElement child, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
