@@ -22,6 +22,7 @@ import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,9 +53,15 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private AddEditRemovePanel<String> myIgnorePanel;
   private HtmlLanguageLevelForm myHtmlLanguageLevelForm;
   private final Project myProject;
+  private final List<EditLocationDialog.NameLocationPair> myNewPairs;
 
   public ExternalResourceConfigurable(Project project) {
+    this(project, Collections.<EditLocationDialog.NameLocationPair>emptyList());
+  }
+
+  public ExternalResourceConfigurable(Project project, List<EditLocationDialog.NameLocationPair> newResources) {
     myProject = project;
+    myNewPairs = newResources;
   }
 
   public String getDisplayName() {
@@ -147,7 +154,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
         manager.clearAllResources(myProject);
         for (Object myPair : myPairs) {
           EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)myPair;
-          String s = pair.myLocation.replace('\\', '/');
+          String s = FileUtil.toSystemIndependentName(pair.myLocation);
           if (pair.myShared) {
             manager.addResource(pair.myName, s);
           }
@@ -169,18 +176,18 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   public void reset() {
 
-    myPairs = new ArrayList<EditLocationDialog.NameLocationPair>();
+    myPairs = new ArrayList<EditLocationDialog.NameLocationPair>(myNewPairs);
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
     String[] urls = manager.getAvailableUrls();
     for (String url : urls) {
       String loc = manager.getResourceLocation(url, myProject);
-      myPairs.add(new EditLocationDialog.NameLocationPair(url, loc, true));
+      myPairs.add(new EditLocationDialog.NameLocationPair(url, FileUtil.toSystemDependentName(loc), true));
     }
     urls = manager.getAvailableUrls(myProject);
     for (String url : urls) {
       String loc = manager.getResourceLocation(url, myProject);
-      myPairs.add(new EditLocationDialog.NameLocationPair(url, loc, false));
+      myPairs.add(new EditLocationDialog.NameLocationPair(url, FileUtil.toSystemDependentName(loc), false));
     }
 
     Collections.sort(myPairs);
@@ -194,12 +201,20 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     if (myExtPanel != null) {
       myExtPanel.setData(myPairs);
       myIgnorePanel.setData(myIgnoredUrls);
-    }
+      if (!myNewPairs.isEmpty()) {
+        ListSelectionModel selectionModel = myExtPanel.getTable().getSelectionModel();
+        selectionModel.clearSelection();
+        for (EditLocationDialog.NameLocationPair newPair : myNewPairs) {
+          int index = myPairs.indexOf(newPair);
+          selectionModel.addSelectionInterval(index, index);
+        }
+      }
+     }
 
     myDefaultHtmlDoctype = manager.getDefaultHtmlDoctype(myProject);
     myHtmlLanguageLevelForm.resetFromDoctype(myDefaultHtmlDoctype);
 
-    setModified(false);
+    setModified(!myNewPairs.isEmpty());
   }
 
   public void disposeUIResources() {
