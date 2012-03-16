@@ -1364,8 +1364,13 @@ public class HighlightUtil {
     return qname == null || !Character.isLowerCase(qname.charAt(0));
   }
 
-  static String buildProblemWithAccessDescription(PsiJavaCodeReferenceElement reference, JavaResolveResult result) {
-    PsiModifierListOwner refElement = (PsiModifierListOwner)result.getElement();
+  static String buildProblemWithAccessDescription(final PsiJavaCodeReferenceElement reference, final JavaResolveResult result) {
+    return buildProblemWithAccessDescription(reference, result, result.getElement());
+  }
+
+  static String buildProblemWithAccessDescription(final PsiJavaCodeReferenceElement reference, final JavaResolveResult result, final PsiElement resolved) {
+    assert resolved instanceof PsiModifierListOwner : resolved;
+    PsiModifierListOwner refElement = (PsiModifierListOwner)resolved;
     String symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
 
     if (refElement.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -2276,13 +2281,14 @@ public class HighlightUtil {
 
 
   @Nullable
-  public static HighlightInfo checkReference(PsiJavaCodeReferenceElement ref, JavaResolveResult result) {
+  public static HighlightInfo checkReference(final PsiJavaCodeReferenceElement ref, final JavaResolveResult result) {
     if (suppressed(Kind.REFERENCE, ref)) return null;
 
-    PsiElement refName = ref.getReferenceNameElement();
+    final PsiElement refName = ref.getReferenceNameElement();
 
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
-    PsiElement resolved = result.getElement();
+    final PsiElement resolved = result.getElement();
+
     HighlightInfo highlightInfo = checkMemberReferencedBeforeConstructorCalled(ref, resolved);
     if (highlightInfo != null) return highlightInfo;
 
@@ -2292,7 +2298,7 @@ public class HighlightUtil {
       PsiReferenceExpression referenceToMethod = ((PsiMethodCallExpression)granny).getMethodExpression();
       PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
       if (qualifierExpression == ref) {
-        PsiElement qualifier = resolved;
+        @SuppressWarnings("UnnecessaryLocalVariable") PsiElement qualifier = resolved;
         if (qualifier != null && !(qualifier instanceof PsiClass) && !(qualifier instanceof PsiVariable)) {
           return HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, qualifierExpression, "Qualifier must be an expression");
         }
@@ -2327,8 +2333,8 @@ public class HighlightUtil {
 
     if (!result.isValidResult() && !PsiUtil.isInsideJavadocComment(ref)) {
       if (!result.isAccessible()) {
-        String description = buildProblemWithAccessDescription(ref, result);
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
+        String description = buildProblemWithAccessDescription(ref, result, resolved);
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refName, description);
         if (result.isStaticsScopeCorrect()) {
           registerAccessQuickFixAction((PsiMember)resolved, ref, info, result.getCurrentFileResolveScope());
           if (ref instanceof PsiReferenceExpression) {
@@ -2340,7 +2346,7 @@ public class HighlightUtil {
 
       if (!result.isStaticsScopeCorrect()) {
         String description = buildProblemWithStaticDescription(resolved);
-        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, ref.getReferenceNameElement(), description);
+        HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.WRONG_REF, refName, description);
         registerStaticProblemQuickFixAction(resolved, info, ref);
         if (ref instanceof PsiReferenceExpression) {
           QuickFixAction.registerQuickFixAction(info, new RenameWrongRefFix((PsiReferenceExpression)ref));
