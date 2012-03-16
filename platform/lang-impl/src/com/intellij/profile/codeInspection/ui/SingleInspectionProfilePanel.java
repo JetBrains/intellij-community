@@ -59,7 +59,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -262,12 +261,12 @@ public class SingleInspectionProfilePanel extends JPanel {
   public static ModifiableModel createNewProfile(final int initValue,
                                                  ModifiableModel selectedProfile,
                                                  JPanel parent,
-                                                 String profileName) {
-
+                                                 String profileName, 
+                                                 Set<String> existingProfileNames) {
     profileName = Messages.showInputDialog(parent, profileName, "Create New Inspection Profile", Messages.getQuestionIcon());
     if (profileName == null) return null;
     final ProfileManager profileManager = selectedProfile.getProfileManager();
-    if (ArrayUtil.find(profileManager.getAvailableProfileNames(), profileName) != -1) {
+    if (existingProfileNames.contains(profileName)) {
       Messages.showErrorDialog(InspectionsBundle.message("inspection.unable.to.create.profile.message", profileName),
                                InspectionsBundle.message("inspection.unable.to.create.profile.dialog.title"));
       return null;
