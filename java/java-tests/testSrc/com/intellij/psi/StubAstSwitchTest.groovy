@@ -33,7 +33,9 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     ApplicationManager.application.runWriteAction { file.virtualFile.setBinaryContent(file.virtualFile.contentsToByteArray()) }
     assert file.stub
 
-    //assert cls == PsiTreeUtil.findElementOfClassAtOffset(file, 1, PsiClass, false)
+    //todo
+    //either: assert !cls.valid
+    //or: assert cls == PsiTreeUtil.findElementOfClassAtOffset(file, 1, PsiClass, false)
     //assert !file.stub
 
   }
