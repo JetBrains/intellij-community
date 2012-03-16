@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
@@ -101,7 +102,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     //search for initializer to inline
     if (invokedOnReference) {
       LOG.assertTrue(editor != null, "null editor but invokedOnReference==true");
-      final PsiReference ref = TargetElementUtilBase.findReference(editor);
+      final PsiReference ref = TargetElementUtil.findReference(editor);
       LOG.assertTrue(ref != null);
 
       PsiElement cur = ref.getElement();
@@ -123,7 +124,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
             }
           });
 
-          LOG.assertTrue(instruction != null);
+          LOG.assertTrue(instruction != null, "flow owner = " + controlFlowOwner.getText() + "\nref = " + finalCur.getText());
           final BitSet prev = writes.get(instruction.num());
           if (prev.cardinality() == 1) {
             writeInstr = flow[prev.nextSetBit(0)];
