@@ -62,6 +62,7 @@ public class Splash extends JDialog implements StartupProgress {
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         mySplashIsVisible = true;
+        myProgressLastPosition = 0;
         paintProgress(g);
       }
     };
