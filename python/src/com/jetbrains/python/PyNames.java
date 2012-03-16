@@ -17,6 +17,7 @@ public class PyNames {
   }
 
   public static final String INIT = "__init__";
+  public static final String DICT = "__dict__";
   public static final String DOT_PY = ".py";
   public static final String INIT_DOT_PY = INIT + DOT_PY;
 
