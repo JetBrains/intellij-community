@@ -32,8 +32,8 @@
     <extensionPoint name="defaultImportContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor"/>
     <extensionPoint name="astTransformContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.AstTransformContributor"/>
     <extensionPoint name="closureMissingMethodContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor"/>
-    <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrVariableEnhancer"/>
-    <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.GrReferenceTypeEnhancer"/>
+    <extensionPoint name="variableEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer"/>
+    <extensionPoint name="referenceTypeEnhancer" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer"/>
     <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter"/>
     <extensionPoint name="expectedTypesContributor" interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
     <extensionPoint name="classSubstitutor" interface="org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor"/>
@@ -49,7 +49,7 @@
     <extensionPoint name="unresolvedHighlightFileFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
     <extensionPoint name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.configSlurper.ConfigSlurperSupport"/>
 
-    <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator"/>
+    <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
     <extensionPoint name="classDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyClassDescriptor"/>
     <extensionPoint name="methodDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyMethodDescriptorExtension"/>
 
@@ -110,7 +110,7 @@
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiMethodCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiExpressionCategory"/>
 
-    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.ClosureParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.gant.GantMemberContributor"/>
 

@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.lang.psi;
+package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiType;
