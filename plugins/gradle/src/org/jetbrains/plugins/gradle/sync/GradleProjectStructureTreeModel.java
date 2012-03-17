@@ -244,8 +244,17 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
     for (GradleProjectStructureNode<?> node = toRemove.pollLast(); node != null; node = toRemove.pollLast()) {
       final GradleProjectStructureNode<?> parent = node.getParent();
-      if (parent != null) {
-        parent.remove(node);
+      if (parent == null) {
+        continue;
+      }
+      parent.remove(node);
+      
+      // Clear caches.
+      final GradleEntityId id = node.getDescriptor().getElement();
+      if (id instanceof GradleModuleId) {
+        String moduleName = ((GradleModuleId)id).getModuleName();
+        myModules.remove(moduleName);
+        myModuleDependencies.remove(moduleName);
       }
     }
   }
