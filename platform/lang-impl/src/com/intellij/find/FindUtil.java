@@ -70,16 +70,18 @@ import java.util.List;
 public class FindUtil {
   private static final Key<Direction> KEY = Key.create("FindUtil.KEY");
 
-  private FindUtil() {}
+  private FindUtil() {
+  }
 
-  @Nullable static VirtualFile getVirtualFile(@NotNull Editor myEditor) {
+  @Nullable
+  static VirtualFile getVirtualFile(@NotNull Editor myEditor) {
     Project project = myEditor.getProject();
-    PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument()):null;
+    PsiFile file = project != null ? PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument()) : null;
     return file != null ? file.getVirtualFile() : null;
   }
 
   public static void initStringToFindWithSelection(FindModel findModel, Editor editor) {
-    if (editor != null){
+    if (editor != null) {
       String s = editor.getSelectionModel().getSelectedText();
       FindModel.initStringToFindNoMultiline(findModel, s);
     }
@@ -93,12 +95,20 @@ public class FindUtil {
         if (selectedText.indexOf("\n") != -1) {
           return true;
         }
-        final Document document = editor.getDocument();
-        final int line = document.getLineNumber(selectionModel.getSelectionStart());
-        final String lineText = document.getText(new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
-        if (lineText.trim().equals(selectedText)) {
-          return true;
-        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isWholeLineSelection(Editor editor) {
+    SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
+    if (selectionModel != null) {
+      String selectedText = selectionModel.getSelectedText();
+      final Document document = editor.getDocument();
+      final int line = document.getLineNumber(selectionModel.getSelectionStart());
+      final String lineText = document.getText(new TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line)));
+      if (lineText.trim().equals(selectedText)) {
+        return true;
       }
     }
     return false;
@@ -110,21 +120,21 @@ public class FindUtil {
     final SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
     String selectedText = selectionModel != null ? selectionModel.getSelectedText() : null;
     if (!StringUtil.isEmpty(selectedText)) {
-      if (isMultilineSelection(editor)) {
-        if (replace){
-          isGlobal = false;
-          stringToFind = model.getStringToFind();
-        } else {
-          model.setMultiline(true);
-        }
+      if (replace && (isMultilineSelection(editor) || isWholeLineSelection(editor))) {
+        isGlobal = false;
+        stringToFind = model.getStringToFind();
+      } else if (isMultilineSelection(editor)) {
+        model.setMultiline(true);
       }
       if (stringToFind == null) {
         stringToFind = selectedText;
       }
-    } else {
+    }
+    else {
       if (firstSearch) {
         stringToFind = "";
-      } else {
+      }
+      else {
         stringToFind = model.getStringToFind();
       }
     }
@@ -289,7 +299,7 @@ public class FindUtil {
   public static void findAllAndShow(final Project project, final Editor editor, final FindModel findModel) {
     List<Usage> usages = findAll(project, editor, findModel);
     if (usages == null) return;
-    final UsageTarget[] usageTargets = { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) };
+    final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind())};
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
     UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
   }
@@ -367,7 +377,7 @@ public class FindUtil {
     else {
       editor.putUserData(KEY, null);
       offset = editor.getCaretModel().getOffset();
-      if (!model.isForward() && offset > 0 ) {
+      if (!model.isForward() && offset > 0) {
         offset--;
       }
     }
@@ -471,14 +481,14 @@ public class FindUtil {
     Document document = editor.getDocument();
 
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-        return false;
+      return false;
     }
 
     document.startGuardedBlockChecking();
     boolean toPrompt = model.isPromptOnReplace();
 
     if (!toPrompt) {
-      ((DocumentEx) document).setInBulkUpdate(true);
+      ((DocumentEx)document).setInBulkUpdate(true);
     }
     try {
       toPrompt = doReplace(project, editor, model, document, offset, toPrompt, delegate);
@@ -488,7 +498,7 @@ public class FindUtil {
     }
     finally {
       if (!toPrompt) {
-        ((DocumentEx) document).setInBulkUpdate(false);
+        ((DocumentEx)document).setInBulkUpdate(false);
       }
       document.stopGuardedBlockChecking();
     }
@@ -502,7 +512,7 @@ public class FindUtil {
     final FindModel model = (FindModel)aModel.clone();
     int occurrences = 0;
 
-    List<Pair<TextRange,String>> rangesToChange = new ArrayList<Pair<TextRange, String>>();
+    List<Pair<TextRange, String>> rangesToChange = new ArrayList<Pair<TextRange, String>>();
 
     boolean replaced = false;
     boolean reallyReplaced = false;
@@ -542,11 +552,11 @@ public class FindUtil {
         }
         if (promptResult == FindManager.PromptResult.ALL) {
           toPrompt = false;
-          ((DocumentEx) document).setInBulkUpdate(true);
+          ((DocumentEx)document).setInBulkUpdate(true);
         }
       }
       int newOffset;
-      if (delegate == null || delegate.shouldReplace(result, toReplace)){
+      if (delegate == null || delegate.shouldReplace(result, toReplace)) {
         boolean reallyReplace = toPrompt;
         if (reallyReplace) {
           //[SCR 7258]
@@ -568,7 +578,6 @@ public class FindUtil {
         newOffset += model.isForward() ? 1 : -1;
       }
       offset = newOffset;
-
     }
 
     if (replaced) {
@@ -588,7 +597,8 @@ public class FindUtil {
           newText.append(text, offsetBefore, range.getStartOffset()); //before change
           if (delegate == null || delegate.shouldReplace(range, replace)) {
             newText.append(replace);
-          } else {
+          }
+          else {
             newText.append(text.subSequence(range.getStartOffset(), range.getEndOffset()));
           }
           offsetBefore = range.getEndOffset();
@@ -616,7 +626,8 @@ public class FindUtil {
             });
           }
         }, null, document);
-      } else {
+      }
+      else {
         if (reallyReplaced) {
           if (caretOffset > document.getTextLength()) {
             caretOffset = document.getTextLength();
@@ -637,9 +648,9 @@ public class FindUtil {
     if (starts.length == 0) {
       return false;
     }
-    return new TextRange(starts[0], ends[starts.length-1]).contains(range);
+    return new TextRange(starts[0], ends[starts.length - 1]).contains(range);
   }
-  
+
   private static boolean selectionStrictlyContainsRange(SelectionModel selection, TextRange range) {
     int[] starts = selection.getBlockSelectionStarts();
     int[] ends = selection.getBlockSelectionEnds();
@@ -667,7 +678,8 @@ public class FindUtil {
     if (isFound && !model.isGlobal()) {
       if (!selectionMayContainRange(selection, result)) {
         isFound = false;
-      } else if (!selectionStrictlyContainsRange(selection, result)) {
+      }
+      else if (!selectionStrictlyContainsRange(selection, result)) {
         final int[] starts = selection.getBlockSelectionStarts();
         for (int newOffset : starts) {
           if (newOffset > result.getStartOffset()) {
@@ -808,13 +820,19 @@ public class FindUtil {
     JComponent component = HintUtil.createInformationLabel(JDOMUtil.escapeText(message, false, false));
     final LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
-                               HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                               0, false);
+                                                     HintManager.HIDE_BY_ANY_KEY |
+                                                     HintManager.HIDE_BY_TEXT_CHANGE |
+                                                     HintManager.HIDE_BY_SCROLLING,
+                                                     0, false);
   }
 
-  public static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, @NotNull String stringToReplace,
-                                     boolean reallyReplace,
-                                     List<Pair<TextRange, String>> rangesToChange) {
+  public static TextRange doReplace(final Project project,
+                                    final Document document,
+                                    final FindModel model,
+                                    FindResult result,
+                                    @NotNull String stringToReplace,
+                                    boolean reallyReplace,
+                                    List<Pair<TextRange, String>> rangesToChange) {
     final int startOffset = result.getStartOffset();
     final int endOffset = result.getEndOffset();
 
@@ -825,7 +843,7 @@ public class FindUtil {
     else {
       final String converted = StringUtil.convertLineSeparators(stringToReplace);
       TextRange textRange = new TextRange(startOffset, endOffset);
-      rangesToChange.add(Pair.create(textRange,converted));
+      rangesToChange.add(Pair.create(textRange, converted));
 
       newOffset = endOffset;
     }
@@ -858,10 +876,10 @@ public class FindUtil {
   }
 
   public static int doReplace(Project project,
-                               final Document document,
-                               final int startOffset,
-                               final int endOffset,
-                               final String stringToReplace) {
+                              final Document document,
+                              final int startOffset,
+                              final int endOffset,
+                              final String stringToReplace) {
     final String converted = StringUtil.convertLineSeparators(stringToReplace);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
@@ -885,6 +903,6 @@ public class FindUtil {
   }
 
   public interface ReplaceDelegate {
-    boolean shouldReplace(TextRange range, String replace) ;
+    boolean shouldReplace(TextRange range, String replace);
   }
 }
