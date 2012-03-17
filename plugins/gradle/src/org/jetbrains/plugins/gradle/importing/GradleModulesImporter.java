@@ -360,8 +360,10 @@ public class GradleModulesImporter {
   private static void doSetupLibraries(@NotNull Map<GradleModule, Module> moduleMappings,
                                        @NotNull GradleProject gradleProject,
                                        @NotNull Project intellijProject,
-                                       @Nullable Library libraryToPreserve)
-  {
+                                       @Nullable Library libraryToPreserve) {
+    if (intellijProject.isDisposed()) {
+      return;
+    }
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();
 
