@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +49,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    final GradleProjectStructureTreeModel model = GradleDataKeys.SYNC_TREE_MODEL.getData(e.getDataContext());
+    final GradleProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (model == null) {
       return false;
     }
@@ -59,7 +59,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final GradleProjectStructureTreeModel treeModel = GradleDataKeys.SYNC_TREE_MODEL.getData(e.getDataContext());
+    final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (treeModel == null) {
       return;
     }
