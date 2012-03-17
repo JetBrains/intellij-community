@@ -55,6 +55,7 @@ public class MatrixControlBuilder {
         return getPreferredSize();
       }
     };
+    myTable.setFocusable(false);
     myTable.setStriped(true);
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     renderer.setHorizontalAlignment(SwingConstants.CENTER);
