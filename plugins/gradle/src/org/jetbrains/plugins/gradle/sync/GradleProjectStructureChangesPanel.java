@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
@@ -36,7 +35,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -248,7 +249,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           hideToolbar();
           return;
         }
-        final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(toolbarComponent)
+        final Balloon balloon = GradleUtil.getBalloonBuilder(toolbarComponent, getProject())
           .setFillColor(myTree.getBackground())
           .createBalloon();
         Disposer.register(getProject(), balloon);

@@ -2,9 +2,11 @@ package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -21,6 +23,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -32,6 +35,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +56,9 @@ import java.awt.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -63,6 +70,9 @@ import java.util.concurrent.TimeUnit;
 public class GradleUtil {
 
   public static final String PATH_SEPARATOR = "/";
+
+  private static final Map<Project, List<Balloon>> PROJECT_BALLOONS     = new WeakHashMap<Project, List<Balloon>>();
+  private static final List<Balloon>               APPLICATION_BALLOONS = new CopyOnWriteArrayList<Balloon>();
 
   private GradleUtil() {
   }
@@ -96,7 +106,9 @@ public class GradleUtil {
    * @param message      message to show
    */
   public static void showBalloon(@NotNull JComponent component, @NotNull MessageType messageType, @NotNull String message) {
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType, null);
+    final BalloonBuilder delegate = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType, null);
+    BalloonBuilder balloonBuilder = new GradleBalloonBuilder(delegate, APPLICATION_BALLOONS);
+    ApplicationBalloonsDisposeActivator.ensureActivated();
     Balloon balloon = balloonBuilder.setFadeoutTime(TimeUnit.SECONDS.toMillis(1)).createBalloon();
     Dimension size = component.getSize();
     Balloon.Position position;
@@ -381,6 +393,35 @@ public class GradleUtil {
     return new MatrixControlBuilder(gradle, intellij);
   }
   
+  /**
+   * Wraps {@link JBPopupFactory#createBalloonBuilder(JComponent) default api} in order to take care of automatic balloon disposing
+   * on project close.
+   * 
+   * @param content  target balloon content
+   * @param project  project that should be used to bound target balloon's lifecycle to 
+   * @return         balloon builder to use.
+   */
+  @NotNull
+  public static BalloonBuilder getBalloonBuilder(@NotNull JComponent content, @NotNull final Project project) {
+    List<Balloon> balloons = PROJECT_BALLOONS.get(project);
+    if (balloons == null) {
+      PROJECT_BALLOONS.put(project, balloons = new CopyOnWriteArrayList<Balloon>());
+      final List<Balloon> b = balloons;
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          for (Balloon balloon : b) {
+            if (!balloon.isDisposed()) {
+              Disposer.dispose(balloon);
+            }
+          }
+          PROJECT_BALLOONS.remove(project);
+        }
+      });
+    }
+    return new GradleBalloonBuilder(JBPopupFactory.getInstance().createBalloonBuilder(content), balloons);
+  }
+
   private interface TaskUnderProgress {
     void execute(@NotNull ProgressIndicator indicator);
   }
@@ -404,5 +445,24 @@ public class GradleUtil {
         return file.isDirectory() || GradleConstants.EXTENSION.equals(file.getExtension());
       }
     };
+  }
+
+  /**
+   * Serves the same purpose as the {@link DescriptorHolder} but for application-level balloons releasing.
+   */
+  private static class ApplicationBalloonsDisposeActivator {
+    static {
+      Disposer.register(ApplicationManager.getApplication(), new Disposable() {
+        @Override
+        public void dispose() {
+          for (Balloon balloon : APPLICATION_BALLOONS) {
+            if (!balloon.isDisposed()) {
+              Disposer.dispose(balloon);
+            }
+          }
+        }
+      });
+    }
+    static void ensureActivated() { /* the real job is at the static init block. */ }
   }
 }
