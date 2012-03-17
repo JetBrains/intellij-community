@@ -40,6 +40,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.TextComponentUndoProvider;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -83,6 +84,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private JTextComponent mySearchField;
   private JTextComponent myReplaceField;
+  private TextComponentUndoProvider mySearchUndo;
+  private TextComponentUndoProvider myReplaceUndo;
 
   private Getter<JTextComponent> mySearchFieldGetter = new Getter<JTextComponent>() {
     @Override
@@ -255,7 +258,13 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private void configureLeadPanel() {
     JPanel myLeadPanel = createLeadPane();
     add(myLeadPanel, BorderLayout.WEST);
+
+    if (mySearchUndo != null) {
+      mySearchUndo.dispose();
+    }
     mySearchField = createTextField(myLeadPanel);
+    mySearchUndo = new TextComponentUndoProvider(mySearchField);
+
     setupSearchFieldListener();
 
     if (myActionsToolbar == null) {
@@ -468,7 +477,12 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private void configureReplacementPane() {
     myReplacementPane = createLeadPane();
+
+    if (myReplaceUndo != null) {
+      myReplaceUndo.dispose();
+    }
     myReplaceField = createTextField(myReplacementPane);
+    myReplaceUndo = new TextComponentUndoProvider(myReplaceField);
 
     if (myToolbarComponent instanceof ActionToolbarImpl) {
       new ShowMoreOptions(myToolbarComponent, myReplaceField);
@@ -730,6 +744,12 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     IdeFocusManager.getInstance(myProject).requestFocus(myEditor.getContentComponent(), false);
     mySearchResults.dispose();
     myLivePreview.cleanUp();
+    if (mySearchUndo != null) {
+      mySearchUndo.dispose();
+    }
+    if (myReplaceUndo != null){
+      myReplaceUndo.dispose();
+    }
     myEditor.setHeaderComponent(null);
   }
 
