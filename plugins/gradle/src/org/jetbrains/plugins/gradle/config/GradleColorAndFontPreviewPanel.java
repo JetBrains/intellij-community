@@ -185,6 +185,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
           GridBagConstraints constraints = new GridBagConstraints();
           myNodeRenderPanel.add(component, constraints);
           constraints.weightx = 1;
+          constraints.anchor = GridBagConstraints.CENTER;
           myNodeRenderPanel.add(mySelectedElementSignPanel, constraints);
         }
         
@@ -279,7 +280,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     ArrowPanel() {
       super(new BorderLayout());
       // Reserve enough horizontal space.
-      add(new JLabel("intellij"));
+      add(new JLabel("intelli"));
     }
 
     public void setPaint(boolean paint) {
@@ -298,10 +299,24 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
       g2.setRenderingHints(renderHints);
 
       FontMetrics fontMetrics = getFontMetrics(getFont());
-      int unit = fontMetrics.charWidth('a');
+      int unit = fontMetrics.charWidth('a') * 2 / 3;
+      int yShift = 0;
+      final Dimension size = getSize();
+      if (size != null) {
+        yShift = size.height / 2 - unit;
+        if (size.height % 2 != 0) {
+          // Prefer 'draw below the center' to 'draw above the center'.
+          yShift++;
+        }
+      }
       int q = unit / 4;
-      int[] x = {0, unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0};
-      int[] y = {unit, 0, unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
+      int[] x = {0,    unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0   };
+      int[] y = {unit, 0,        unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
+      if (yShift != 0) {
+        for (int i = 0; i < y.length; i++) {
+          y[i] += yShift;
+        }
+      }
       g2.fillPolygon(x, y, x.length);
     }
   }
