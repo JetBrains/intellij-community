@@ -253,6 +253,9 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
           .createBalloon();
         Disposer.register(getProject(), balloon);
         Point hintPosition = GradleUtil.getHintPosition(node, myTree);
+        if (hintPosition == null) {
+          return;
+        }
         myToolbarComponent = toolbarComponent;
         myToolbar = balloon;
         myNodeWithActiveToolbar = node;

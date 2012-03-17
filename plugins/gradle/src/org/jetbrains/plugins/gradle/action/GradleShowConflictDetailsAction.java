@@ -70,6 +70,9 @@ public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeA
       return;
     }
     final Point hintPosition = GradleUtil.getHintPosition(node, tree);
+    if (hintPosition == null) {
+      return;
+    }
     final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(control).setFillColor(tree.getBackground()).createBalloon();
     final GradleUiListener publisher = project.getMessageBus().syncPublisher(GradleUiListener.TOPIC);
     publisher.beforeConflictUiShown();
