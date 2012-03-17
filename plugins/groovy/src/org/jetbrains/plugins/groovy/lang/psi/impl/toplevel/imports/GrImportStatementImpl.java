@@ -168,15 +168,15 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   private static boolean processAllMembers(PsiScopeProcessor processor, PsiClass clazz, ResolveState state) {
-    for (PsiField field : clazz.getFields()) {
+    for (PsiField field : clazz.getAllFields()) {
       if (field.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, field, state)) return false;
     }
 
-    for (PsiMethod method : clazz.getMethods()) {
+    for (PsiMethod method : clazz.getAllMethods()) {
       if (method.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, method, state)) return false;
     }
 
-    for (PsiClass inner : clazz.getInnerClasses()) {
+    for (PsiClass inner : clazz.getAllInnerClasses()) {
       if (inner.hasModifierProperty(PsiModifier.STATIC) && !ResolveUtil.processElement(processor, inner, state)) return false;
     }
 

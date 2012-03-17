@@ -260,7 +260,7 @@ class GitRepositoryReader {
     GitBranch currentBranch = readCurrentBranch();
     markActiveBranch(localBranches, currentBranch);
 
-    return new GitBranchesCollection(currentBranch, localBranches, remoteBranches);
+    return new GitBranchesCollection(localBranches, remoteBranches);
   }
   
   /**
@@ -356,7 +356,7 @@ class GitRepositoryReader {
         }
       });
     }
-    return new GitBranchesCollection(null, localBranches, remoteBranches);
+    return new GitBranchesCollection(localBranches, remoteBranches);
   }
 
     

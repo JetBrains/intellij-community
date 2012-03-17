@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -49,7 +48,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -59,11 +61,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.browser.*;
-import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1455,6 +1456,19 @@ public class GitLogUI implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       rootsChanged(myRootsUnderVcs);
+      updateRefs();
+    }
+
+    private void updateRefs() {
+      for (VirtualFile root : myRootsUnderVcs) {
+        try {
+          CachedRefs cachedRefs = new LowLevelAccessImpl(myProject, root).getRefs();
+          myUIRefresh.reportSymbolicRefs(root, cachedRefs);
+        }
+        catch (VcsException e) {
+          LOG.warn("Couldn't update references in repository " + root, e);
+        }
+      }
     }
   }
 
@@ -1592,10 +1606,7 @@ public class GitLogUI implements Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       final MultiMap<VirtualFile, GitCommit> commits = getSelectedCommitsAndCheck();
-      if (commits == null) return;
-      final int result = Messages.showOkCancelDialog("You are going to cherry-pick changes into current branch. Continue?", "Cherry-pick",
-                                                     Messages.getQuestionIcon());
-      if (result != 0) return;
+      if (commits.isEmpty()) return;
       for (GitCommit commit : commits.values()) {
         myIdsInProgress.add(commit.getShortHash());
       }
@@ -1622,20 +1633,31 @@ public class GitLogUI implements Disposable {
     }
 
     // newest first
-    @Nullable
+    @NotNull
     private MultiMap<VirtualFile, GitCommit> getSelectedCommitsAndCheck() {
-      if (myJBTable == null) return null;
+      if (myJBTable == null) {
+        return MultiMap.emptyInstance();
+      }
       final int[] rows = myJBTable.getSelectedRows();
       final MultiMap<VirtualFile, GitCommit> hashes = new MultiMap<VirtualFile, GitCommit>();
 
       for (int row : rows) {
         final CommitI commitI = myTableModel.getCommitAt(row);
-        if (commitI == null) return null;
-        if (commitI.holdsDecoration()) return null;
-        if (myIdsInProgress.contains(commitI.getHash())) return null;
+        if (commitI == null) {
+          return MultiMap.emptyInstance();
+
+        }
+        if (commitI.holdsDecoration()) {
+          return MultiMap.emptyInstance();
+        }
+        if (myIdsInProgress.contains(commitI.getHash())) {
+          return MultiMap.emptyInstance();
+        }
         final VirtualFile root = commitI.selectRepository(myRootsUnderVcs);
         final GitCommit gitCommit = myDetailsCache.convert(root, commitI.getHash());
-        if (gitCommit == null) return null;
+        if (gitCommit == null) {
+          return MultiMap.emptyInstance();
+        }
         hashes.putValue(root, gitCommit);
       }
       return hashes;
@@ -1649,7 +1671,9 @@ public class GitLogUI implements Disposable {
 
     private boolean enabled() {
       final MultiMap<VirtualFile, GitCommit> commitsAndCheck = getSelectedCommitsAndCheck();
-      if (commitsAndCheck == null) return false;
+      if (commitsAndCheck.isEmpty()) {
+        return false;
+      }
       for (VirtualFile root : commitsAndCheck.keySet()) {
         final SymbolicRefsI refs = myRefs.get(root);
         final String currentBranch = refs == null ? null : (refs.getCurrent() == null ? null : refs.getCurrent().getName());

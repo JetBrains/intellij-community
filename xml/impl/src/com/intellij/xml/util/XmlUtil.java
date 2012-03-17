@@ -34,9 +34,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -61,7 +59,6 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
@@ -75,7 +72,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.regex.Matcher;
 
 /**
  * @author Mike
@@ -658,8 +654,9 @@ public class XmlUtil {
         startFrom = xmlConditionalSection.getBodyStart();
       }
       else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
-        XmlTag tag = (XmlTag)element;
-        if (!processXInclude(deepFlag, wideFlag, tag)) return false;
+        for (PsiElement psiElement : InclusionProvider.getIncludedTags((XmlTag)element)) {
+          if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
+        }
       }
 
       for (PsiElement child = startFrom; child != null; child = child.getNextSibling()) {
@@ -667,70 +664,6 @@ public class XmlUtil {
       }
 
       return true;
-    }
-
-    private boolean processXInclude(final boolean deepFlag, final boolean wideFlag, @NotNull final XmlTag xincludeTag) {
-
-      final PsiElement[] inclusion = CachedValuesManager.getManager(xincludeTag.getProject()).getCachedValue(xincludeTag, new CachedValueProvider<PsiElement[]>() {
-          public Result<PsiElement[]> compute() {
-            PsiElement[] result = RecursionManager.doPreventingRecursion(xincludeTag, true, new NullableComputable<PsiElement[]>() {
-              @Override
-              public PsiElement[] compute() {
-                return computeInclusion(xincludeTag);
-              }
-            });
-            return Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-          }
-        });
-
-      if (inclusion != null) {
-        for (PsiElement psiElement : inclusion) {
-          if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
-        }
-      }
-
-      return true;
-    }
-
-    @Nullable
-    private static PsiElement[] computeInclusion(final XmlTag xincludeTag) {
-      final XmlFile included = XmlIncludeHandler.resolveXIncludeFile(xincludeTag);
-      final XmlDocument document = included != null ? included.getDocument() : null;
-      final XmlTag rootTag = document != null ? document.getRootTag() : null;
-      if (rootTag != null) {
-        final String xpointer = xincludeTag.getAttributeValue("xpointer", XINCLUDE_URI);
-        final XmlTag[] includeTag = extractXpointer(rootTag, xpointer);
-        PsiElement[] result = new PsiElement[includeTag.length];
-        for (int i = 0; i < includeTag.length; i++) {
-          XmlTag xmlTag = includeTag[i];
-          final PsiElement psiElement = xmlTag.copy();
-          psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
-          psiElement.putUserData(ORIGINAL_ELEMENT, PsiAnchor.create(xmlTag));
-          result[i] = psiElement;
-        }
-        return result;
-      }
-
-      return null;
-    }
-
-    private static XmlTag[] extractXpointer(XmlTag rootTag, @Nullable final String xpointer) {
-
-      if (xpointer != null) {
-        Matcher matcher = JDOMXIncluder.XPOINTER_PATTERN.matcher(xpointer);
-        if (matcher.matches()) {
-          String pointer = matcher.group(1);
-          matcher = JDOMXIncluder.CHILDREN_PATTERN.matcher(pointer);
-
-          if (matcher.matches()) {
-            final String rootTagName = matcher.group(1);
-
-            if (rootTagName.equals(rootTag.getName())) return rootTag.getSubTags();
-          }
-        }
-      }
-
-      return new XmlTag[]{rootTag};
     }
 
     private boolean processElement(PsiElement child, boolean deepFlag, boolean wideFlag, boolean processIncludes) {
@@ -757,7 +690,6 @@ public class XmlUtil {
       }
       return true;
     }
-
   }
 
   private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref, boolean cacheValue) {
