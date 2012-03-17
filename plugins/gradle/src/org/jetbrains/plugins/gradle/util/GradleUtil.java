@@ -267,16 +267,19 @@ public class GradleUtil {
   }
 
   /**
-   * Allows to calculate the position to use for showing hint for the given node of the given tree.
+   * Tries to calculate the position to use for showing hint for the given node of the given tree.
    * 
    * @param node  target node for which a hint should be shown
    * @param tree  target tree that contains given node
-   * @return      preferred hint position (in coordinates relative to the given tree)
+   * @return      preferred hint position (in coordinates relative to the given tree) if it's possible to calculate the one;
+   *              <code>null</code> otherwise
    */
-  @NotNull
+  @Nullable
   public static Point getHintPosition(@NotNull GradleProjectStructureNode<?> node, @NotNull Tree tree) {
     final Rectangle bounds = tree.getPathBounds(new TreePath(node.getPath()));
-    assert bounds != null;
+    if (bounds == null) {
+      return null;
+    }
     final Icon icon = ((GradleProjectStructureNode)node).getDescriptor().getOpenIcon();
     int xAdjustment = 0;
     if (icon != null) {
