@@ -2,6 +2,9 @@ package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -22,7 +25,11 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,11 +42,9 @@ import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.model.intellij.IntellijEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
+import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
-import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
+import org.jetbrains.plugins.gradle.ui.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -319,6 +324,53 @@ public class GradleUtil {
     return "unknown-lib";
   }
 
+  /**
+   * Tries to find the current {@link GradleProjectStructureTreeModel} instance.
+   * 
+   * @param context  target context (if defined)
+   * @return         current {@link GradleProjectStructureTreeModel} instance (if any has been found); <code>null</code> otherwise
+   */
+  @Nullable
+  public static GradleProjectStructureTreeModel getProjectStructureTreeModel(@Nullable DataContext context) {
+    if (context != null) {
+      final GradleProjectStructureTreeModel model = GradleDataKeys.SYNC_TREE_MODEL.getData(context);
+      if (model != null) {
+        return model;
+      }
+    }
+
+    if (context == null) {
+      return null;
+    }
+    
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return null;
+    }
+    
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(GradleConstants.TOOL_WINDOW_ID);
+    if (toolWindow == null) {
+      return null;
+    }
+
+    final ContentManager contentManager = toolWindow.getContentManager();
+    if (contentManager == null) {
+      return null;
+    }
+
+    for (Content content : contentManager.getContents()) {
+      final JComponent component = content.getComponent();
+      if (component instanceof DataProvider) {
+        final Object data = ((DataProvider)component).getData(GradleDataKeys.SYNC_TREE_MODEL.getName());
+        if (data instanceof GradleProjectStructureTreeModel) {
+          return (GradleProjectStructureTreeModel)data;
+        }
+      }
+    }
+    return null;
+  }
+  
   /**
    * @return    {@link MatrixControlBuilder} with predefined set of columns ('gradle' and 'intellij')
    */
