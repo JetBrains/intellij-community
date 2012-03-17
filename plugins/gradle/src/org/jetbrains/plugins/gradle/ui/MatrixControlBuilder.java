@@ -32,7 +32,12 @@ import java.util.Arrays;
  */
 public class MatrixControlBuilder {
   
-  private final DefaultTableModel myModel = new DefaultTableModel();
+  private final DefaultTableModel myModel = new DefaultTableModel() {
+    @Override
+    public boolean isCellEditable(int row, int column) {
+      return false;
+    }
+  };
 
   private final JBTable     myTable;
   private final JComponent  myResult;
