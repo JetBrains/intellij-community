@@ -24,6 +24,7 @@ public class GradleLinkToProjectAction extends AnAction implements DumbAware {
   public GradleLinkToProjectAction() {
     getTemplatePresentation().setText(GradleBundle.message("gradle.action.link.project.text"));
     getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.link.project.description"));
+    getTemplatePresentation().setText(GradleBundle.message("gradle.toolwindow.linked.action.text"));
   }
 
   @Override

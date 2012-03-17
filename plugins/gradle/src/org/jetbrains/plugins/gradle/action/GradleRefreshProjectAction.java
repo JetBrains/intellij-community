@@ -20,7 +20,7 @@ import java.io.File;
 
 /**
  * Forces the 'gradle' plugin to retrieve the most up-to-date info about the
- * {@link GradleSettings#LINKED_PROJECT_FILE_PATH linked gradle project} and update all affected control if necessary
+ * {@link GradleSettings#getLinkedProjectPath() linked gradle project} and update all affected control if necessary
  * (like project structure UI, tasks list etc).
  * 
  * @author Denis Zhdanov
