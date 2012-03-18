@@ -6,7 +6,6 @@ import com.intellij.application.options.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.application.options.colors.PreviewPanel;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -76,8 +75,8 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
       gradleLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_LOCAL_CHANGE
     );
 
-    String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name",
-                                                      ApplicationNamesInfo.getInstance().getProductName());
+    String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name");
+                                                      //ApplicationNamesInfo.getInstance().getProductName());
     DefaultMutableTreeNode intellijLibrary = createNode(
       intellijLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     );

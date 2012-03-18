@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
@@ -33,12 +32,13 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
   );
 
   public static final AttributesDescriptor INTELLIJ_LOCAL = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
+    GradleBundle.message("gradle.sync.change.type.intellij"),
+    //GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
     GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
   );
 
   public static final AttributesDescriptor NO_CHANGE = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.unchanged", ApplicationNamesInfo.getInstance().getProductName()),
+    GradleBundle.message("gradle.sync.change.type.unchanged"),
     GradleTextAttributes.NO_CHANGE
   );
   
