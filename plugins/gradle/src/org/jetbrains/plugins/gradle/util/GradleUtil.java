@@ -442,7 +442,7 @@ public class GradleUtil {
         if (!super.isFileVisible(file, showHiddenFiles)) {
           return false;
         }
-        return file.isDirectory() || GradleConstants.EXTENSION.equals(file.getExtension());
+        return file.isDirectory() || GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getExtension());
       }
     };
   }
