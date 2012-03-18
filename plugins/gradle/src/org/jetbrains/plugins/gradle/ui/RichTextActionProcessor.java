@@ -55,6 +55,7 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
       }
     };
     result.setForeground(UIUtil.getInactiveTextColor().darker().darker().darker());
+    result.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     
     result.addMouseListener(new MouseAdapter() {
       @Override
