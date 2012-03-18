@@ -45,7 +45,11 @@
       <keyboard-shortcut first-keystroke="control alt W"/>
     </action>
     <action id="EditorToggleStickySelection">
+      <keyboard-shortcut first-keystroke="control SPACE"/>
       <keyboard-shortcut first-keystroke="control shift 2"/>
+    </action>
+    <action id="EditorSwapSelectionBoundaries">
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="X"/>
     </action>
     <action id="ToggleBookmark2" />
     <action id="AutoIndentLines">
@@ -161,7 +165,6 @@
       <keyboard-shortcut first-keystroke="alt G"/>
     </action>
     <action id="CodeCompletion">
-      <keyboard-shortcut first-keystroke="control SPACE"/>
       <keyboard-shortcut first-keystroke="alt SLASH"/>
     </action>
     <action id="ReloadFromDisk">
