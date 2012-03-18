@@ -3,20 +3,15 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
-
-import java.io.File;
 
 /**
  * Forces the 'gradle' plugin to retrieve the most up-to-date info about the
@@ -45,15 +40,8 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
 
   @Override
   protected void doActionPerformed(@NotNull final Project project, @NotNull final String linkedProjectPath) {
-    final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(linkedProjectPath));
-    if (file != null) {
-      final FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      final Document document = documentManager.getDocument(file);
-      if (document != null) {
-        documentManager.saveDocument(document);
-      }
-    }
-    
+    // We save all documents because there is more than one target 'build.gradle' file in case of multi-module gradle project.
+    FileDocumentManager.getInstance().saveAllDocuments();
     GradleUtil.refreshProject(project);
   }
 }
