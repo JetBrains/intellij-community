@@ -67,8 +67,8 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
       GradleTextAttributes.CHANGE_CONFLICT
     );
 
-    String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.confirmed.name");
-    DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.CONFIRMED_CONFLICT);
+    String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
+    DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.NO_CHANGE);
 
     String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.gradle.name");
     DefaultMutableTreeNode gradleLibrary = createNode(
@@ -81,12 +81,12 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
       intellijLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     );
     
-    String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
-    DefaultMutableTreeNode syncLibrary = createNode(syncLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.NO_CHANGE);
+    //String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
+    //DefaultMutableTreeNode syncLibrary = createNode(syncLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.NO_CHANGE);
     
     module.add(gradleLibrary);
     module.add(intellijLibrary);
-    module.add(syncLibrary);
+    //module.add(syncLibrary);
     root.add(module);
     
     mySelectedNode = root;
