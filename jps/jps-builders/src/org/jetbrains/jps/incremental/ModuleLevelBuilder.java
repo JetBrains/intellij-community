@@ -151,19 +151,38 @@ public abstract class ModuleLevelBuilder extends Builder {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
-    final Set<Module> allowedModules = ProjectPaths.getModulesWithDependentsRecursively(currentChunk, true);
+
+    final Set<Module> chunkModules = currentChunk.getModules();
+    final Map<Module, Set<Module>> cache = new HashMap<Module, Set<Module>>();
     final List<Pair<File, Module>> result = new ArrayList<Pair<File, Module>>();
+
     for (File file : affected) {
       final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
       if (moduleAndRoot == null) {
         continue;
       }
       final Module moduleOfFile = moduleAndRoot.module;
-      if (!allowedModules.contains(moduleOfFile)) {
-        result.add(Pair.create(file, moduleOfFile));
+      if (chunkModules.contains(moduleOfFile)) {
+        continue;
       }
+      Set<Module> moduleOfFileWithDependencies = cache.get(moduleOfFile);
+      if (moduleOfFileWithDependencies == null) {
+        moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
+        cache.put(moduleOfFile, moduleOfFileWithDependencies);
+      }
+      if (intersects(moduleOfFileWithDependencies, chunkModules)) {
+        continue;
+      }
+      result.add(Pair.create(file, moduleOfFile));
     }
     return result;
+  }
+
+  private static boolean intersects(Set<Module> set1, Set<Module> set2) {
+    if (set1.size() < set2.size()) {
+      return new HashSet<Module>(set1).removeAll(set2);
+    }
+    return new HashSet<Module>(set2).removeAll(set1);
   }
 
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws IOException {
