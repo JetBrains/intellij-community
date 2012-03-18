@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.android.designer.propertyTable;
 
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.propertyTable.editors.BooleanEditor;
+import com.intellij.android.designer.propertyTable.renderers.BooleanRenderer;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
@@ -24,25 +27,51 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
+import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
  */
 public class AttributeProperty extends Property<RadViewComponent> {
-  private final LabelPropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   private final AttributeDefinition myDefinition;
-  private final PropertyEditor myEditor = new AbstractTextFieldEditor() {
-    @Override
-    public Object getValue() throws Exception {
-      return myTextField.getText();
-    }
-  };
+  private final PropertyRenderer myRenderer;
+  private final PropertyEditor myEditor;
 
-  public AttributeProperty(Property parent, @NotNull AttributeDefinition definition) {
-    super(parent, definition.getName());
+  public AttributeProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
+    super(null, name);
     myDefinition = definition;
+
+    Set<AttributeFormat> formats = definition.getFormats();
+    if (formats.contains(AttributeFormat.Boolean)) {
+      myRenderer = new BooleanRenderer();
+      myEditor = new BooleanEditor();
+    }
+    else {
+      myRenderer = new LabelPropertyRenderer(null);
+
+      if (formats.contains(AttributeFormat.Enum)) {
+
+      }
+      else {
+
+      }
+
+      myEditor = new AbstractTextFieldEditor() {
+        @Override
+        public Object getValue() throws Exception {
+          return myTextField.getText();
+        }
+      };
+    }
+  }
+
+  @Override
+  public Property createForNewPresentation() {
+    return new AttributeProperty(getName(), myDefinition);
   }
 
   @Override

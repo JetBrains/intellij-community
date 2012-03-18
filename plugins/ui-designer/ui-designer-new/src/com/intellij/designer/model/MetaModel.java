@@ -20,6 +20,8 @@ import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -34,6 +36,10 @@ public class MetaModel {
   private String myIconPath;
   private Icon myIcon;
   private String myCreation;
+  private List<String> myNormalProperties = Collections.emptyList();
+  private List<String> myImportantProperties = Collections.emptyList();
+  private List<String> myExpertProperties = Collections.emptyList();
+  private List<String> myDeprecatedProperties = Collections.emptyList();
 
   public MetaModel(Class<RadComponent> model, String target, String tag) {
     myModel = model;
@@ -96,5 +102,37 @@ public class MetaModel {
   public void setPaletteItem(@NotNull Item paletteItem) {
     myPaletteItem = paletteItem;
     myPaletteItem.setMetaModel(this);
+  }
+
+  public boolean isNormalProperty(String name) {
+    return myNormalProperties.contains(name);
+  }
+
+  public void setNormalProperties(List<String> normalProperties) {
+    myNormalProperties = normalProperties;
+  }
+
+  public boolean isImportantProperty(String name) {
+    return myImportantProperties.contains(name);
+  }
+
+  public void setImportantProperties(List<String> importantProperties) {
+    myImportantProperties = importantProperties;
+  }
+
+  public boolean isExpertProperty(String name) {
+    return myExpertProperties.contains(name);
+  }
+
+  public void setExpertProperties(List<String> expertProperties) {
+    myExpertProperties = expertProperties;
+  }
+
+  public boolean isDeprecatedProperty(String name) {
+    return myDeprecatedProperties.contains(name);
+  }
+
+  public void setDeprecatedProperties(List<String> deprecatedProperties) {
+    myDeprecatedProperties = deprecatedProperties;
   }
 }
