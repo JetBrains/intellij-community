@@ -36,6 +36,8 @@ import java.util.*;
  */
 @SuppressWarnings("unchecked")
 public class PropertyParser {
+  public static final String KEY = "PROPERTY_PARSER";
+
   private AttributeDefinitions myDefinitions;
   private ProjectClassLoader myClassLoader;
   private Map<String, List<Property>> myCachedProperties;
@@ -66,7 +68,13 @@ public class PropertyParser {
   public void load(RadViewComponent component) throws Exception {
     ViewInfo info = component.getViewInfo();
     if (info == null) {
-      component.setProperties(Collections.<Property>emptyList());
+      String target = component.getMetaModel().getTarget();
+      if (target == null) {
+        component.setProperties(Collections.<Property>emptyList());
+      }
+      else {
+        component.setProperties(load(myClassLoader.loadClass(target)));
+      }
     }
     else {
       component.setProperties(load(myClassLoader.loadClass(info.getClassName())));

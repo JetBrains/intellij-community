@@ -18,6 +18,7 @@ package com.intellij.android.designer.model;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlTag;
 
 import javax.swing.*;
@@ -82,6 +83,18 @@ public class RadViewComponent extends RadComponent {
   @Override
   public Point convertPoint(Component component, int x, int y) {
     return SwingUtilities.convertPoint(component, x, y, myNativeComponent);
+  }
+
+  @Override
+  public void delete() throws Exception {
+    getParent().getChildren().remove(this);
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        myTag.delete();
+      }
+    });
   }
 
   @Override

@@ -15,17 +15,17 @@
  */
 package com.intellij.android.designer.model;
 
-import com.android.ide.common.rendering.api.RenderSession;
-import com.android.ide.common.rendering.api.Result;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.editors.AbstractTextFieldEditor;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -54,15 +54,7 @@ public class AttributeProperty extends Property<RadViewComponent> {
       value = attribute.getValue();
     }
 
-    if (value == null) {
-      Object viewObject = component.getViewInfo().getViewObject();
-      RenderSession session = component.getRoot().getClientProperty(ModelParser.SESSION);
-      Result result = session.getProperty(viewObject, myDefinition.getName());
-      if (result.isSuccess()) {
-        value = result.getData();
-      }
-    }
-    return value;
+    return value == null ? "" : value;
   }
 
   @Override
@@ -70,26 +62,17 @@ public class AttributeProperty extends Property<RadViewComponent> {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        component.getTag().setAttribute("android:" + myDefinition.getName(), (String)value);
+        if (StringUtil.isEmpty((String)value)) {
+          XmlAttribute attribute = getAttribute(component);
+          if (attribute != null) {
+            attribute.delete();
+          }
+        }
+        else {
+          component.getTag().setAttribute("android:" + myDefinition.getName(), (String)value);
+        }
       }
     });
-    Object viewObject = component.getViewInfo().getViewObject();
-    viewObject.getClass().getMethod("setBackgroundColor", int.class).invoke(viewObject, 0xEE09AA);
-    /*RenderSession session = component.getRoot().getClientProperty(ModelParser.SESSION);
-    Result result = session.setProperty(viewObject, myDefinition.getName(), (String)value);
-    if (!result.isSuccess()) {
-      System.out.println(
-        "No set property value(" +
-        myDefinition +
-        "): " +
-        result.getErrorMessage() +
-        " : " +
-        result.getStatus() +
-        " : " +
-        result.getData() +
-        " : " +
-        result.getException());
-    }*/
   }
 
   @Override
@@ -99,34 +82,12 @@ public class AttributeProperty extends Property<RadViewComponent> {
 
   @Override
   public void setDefaultValue(RadViewComponent component) throws Exception {
-    final XmlAttribute attribute = getAttribute(component);
-    if (attribute != null) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          attribute.delete();
-        }
-      });
-
-      Object viewObject = component.getViewInfo().getViewObject();
-      RenderSession session = component.getRoot().getClientProperty(ModelParser.SESSION);
-      Result result = session.setProperty(viewObject, myDefinition.getName(), null);
-      if (!result.isSuccess()) {
-        System.out.println(
-          "No set default property value(" +
-          myDefinition +
-          "): " +
-          result.getErrorMessage() +
-          " : " +
-          result.getStatus() +
-          " : " +
-          result.getData() +
-          " : " +
-          result.getException());
-      }
+    if (getAttribute(component) != null) {
+      setValue(component, null);
     }
   }
 
+  @Nullable
   private XmlAttribute getAttribute(RadViewComponent component) {
     return component.getTag().getAttribute("android:" + myDefinition.getName());
   }

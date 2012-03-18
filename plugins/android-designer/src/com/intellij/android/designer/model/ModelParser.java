@@ -21,9 +21,12 @@ import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -35,8 +38,6 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ModelParser extends XmlRecursiveElementVisitor {
-  public static final String SESSION = "RENDER_LIB_SESSION";
-
   private final MetaManager myMetaManager;
   private final XmlFile myXmlFile;
   private RadViewComponent myRootComponent;
@@ -97,7 +98,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     }
   }
 
-  private static RadViewComponent createComponent(XmlTag tag, MetaModel metaModel) throws Exception {
+  public static RadViewComponent createComponent(XmlTag tag, MetaModel metaModel) throws Exception {
     RadViewComponent component = (RadViewComponent)metaModel.getModel().newInstance();
     component.setMetaModel(metaModel);
     component.setTag(tag);
@@ -108,6 +109,26 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     }
 
     return component;
+  }
+
+  public static void setComponentTag(final XmlTag parentTag, final RadViewComponent component, final XmlTag nextTag) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        Language language = StdFileTypes.XML.getLanguage();
+        XmlTag xmlTag =
+          XmlElementFactory.getInstance(parentTag.getProject()).createTagFromText(component.getMetaModel().getCreation(), language);
+
+        if (nextTag == null) {
+          xmlTag = parentTag.addSubTag(xmlTag, false);
+        }
+        else {
+          xmlTag = (XmlTag)parentTag.addBefore(xmlTag, nextTag);
+        }
+
+        component.setTag(xmlTag);
+      }
+    });
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -151,7 +172,6 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
     rootComponent.setNativeComponent(nativeComponent);
     rootComponent.setBounds(0, 0, nativeComponent.getWidth(), nativeComponent.getHeight());
-    rootComponent.setClientProperty(SESSION, session);
   }
 
   private static void updateComponent(RadViewComponent component,

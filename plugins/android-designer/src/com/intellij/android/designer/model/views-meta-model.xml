@@ -79,6 +79,10 @@
   </meta>
 
   <palette>
+    <group name="Widgets">
+      <item tag="Button"/>
+      <item tag="TextView"/>
+    </group>
   </palette>
 
 </meta-model>
