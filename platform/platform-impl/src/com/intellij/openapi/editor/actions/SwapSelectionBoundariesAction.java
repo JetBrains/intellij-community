@@ -16,34 +16,50 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 
 /**
- * Allows to toggle {@link EditorEx#isStickySelection() sticky selection} for editors.
- * <p/>
- * Thread-safe.
+ * Provides functionality similar to the emacs
+ * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Setting-Mark.html">exchange-point-and-mark</a>.
  * 
  * @author Denis Zhdanov
- * @since 4/20/11 3:28 PM
+ * @since 3/18/12 3:14 PM
  */
-public class ToggleStickySelectionModeAction extends EditorAction {
+public class SwapSelectionBoundariesAction extends EditorAction {
 
-  public ToggleStickySelectionModeAction() {
+  public SwapSelectionBoundariesAction() {
     super(new Handler());
   }
-
-  static class Handler extends EditorActionHandler {
+  
+  private static class Handler extends EditorActionHandler {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       if (!(editor instanceof EditorEx)) {
         return;
       }
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      if (!selectionModel.hasSelection()) {
+        return;
+      }
       
-      EditorEx ex = (EditorEx)editor;
-      ex.setStickySelection(!ex.isStickySelection());
+      EditorEx editorEx = (EditorEx)editor;
+      final int start = selectionModel.getSelectionStart();
+      final int end = selectionModel.getSelectionEnd();
+      final CaretModel caretModel = editor.getCaretModel();
+      boolean moveToEnd = caretModel.getOffset() == start;
+      editorEx.setStickySelection(false);
+      editorEx.setStickySelection(true);
+      if (moveToEnd) {
+        caretModel.moveToOffset(end);
+      }
+      else {
+        caretModel.moveToOffset(start);
+      }
     }
   }
 }
