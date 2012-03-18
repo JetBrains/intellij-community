@@ -181,6 +181,16 @@ public class ProjectPaths {
     return sourcePaths;
   }
 
+  public static Set<Module> getModulesWithDependentsRecursively(final ModuleChunk chunk, final boolean includeTests) {
+    final Set<Module> result = new HashSet<Module>();
+    collectPathsRecursively(chunk, ClasspathKind.compile(includeTests), new PathsGetter() {
+      public void apply(Module module, ClasspathKind kind) {
+        result.add(module);
+      }
+    });
+    return result;
+  }
+
   private interface PathsGetter {
     void apply(Module module, ClasspathKind kind);
   }
