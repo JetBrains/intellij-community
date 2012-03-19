@@ -216,8 +216,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     dumpFileStatus(SvnFileStatus.EXTERNAL);
     dumpFileStatus(SvnFileStatus.OBSTRUCTED);
 
-    myEntriesFileListener = new SvnEntriesFileListener(project);
-
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
@@ -225,8 +223,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     if (myProject.isDefault()) {
       myChangeListListener = null;
+      myEntriesFileListener = null;
     }
     else {
+      myEntriesFileListener = new SvnEntriesFileListener(project);
       upgradeIfNeeded(bus);
 
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
@@ -297,10 +297,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           SvnConfiguration.SvnSupportOptions supportOptions = null;
           try {
             ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
+            supportOptions = myConfiguration.getSupportOptions(myProject);
 
-            supportOptions = myConfiguration.getSupportOptions();
-
-            upgradeToRecentVersion(supportOptions);
             if (! supportOptions.changeListsSynchronized()) {
               processChangeLists(lists);
             }
@@ -363,30 +361,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  private void upgradeToRecentVersion(final SvnConfiguration.SvnSupportOptions supportOptions) {
-    if (! supportOptions.upgradeTo16Asked()) {
-      final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
-
-      if (workingCopyChecker.upgradeNeeded()) {
-
-        Notifications.Bus.notify(new Notification(getDisplayName(), SvnBundle.message("upgrade.format.to16.question.title"),
-                                                  "Old format Subversion working copies <a href=\"\">could be upgraded to version 1.6</a>.",
-                                                  NotificationType.INFORMATION, new NotificationListener() {
-            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
-                  SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text.reference"))),
-                  SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
-              if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
-                workingCopyChecker.doUpgrade();
-              }
-
-              notification.expire();
-            }
-          }));
-      }
-    }
-  }
-
   @Override
   public void activate() {
     createPool();
@@ -397,7 +371,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     
     SvnApplicationSettings.getInstance().svnActivated();
-    VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
+    if (myEntriesFileListener != null) {
+      VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
+    }
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
     FrameStateManager.getInstance().addListener(myFrameStateListener);
@@ -512,8 +488,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myVcsListener != null) {
       vcsManager.removeVcsListener(myVcsListener);
     }
-    
-    VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
+
+    if (myEntriesFileListener != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
+    }
     SvnApplicationSettings.getInstance().svnDeactivated();
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
@@ -600,7 +578,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public SVNStatusClient createStatusClient() {
     SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    client.setIgnoreExternals(true);
+    client.setIgnoreExternals(false);
     return client;
   }
 
@@ -731,8 +709,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myAnnotationProvider;
   }
 
-  public SvnEntriesFileListener getSvnEntriesFileListener() {
-    return myEntriesFileListener;
+  public void addEntriesListener(final SvnEntriesListener listener) {
+    if (myEntriesFileListener != null) {
+      myEntriesFileListener.addListener(listener);
+    }
+  }
+
+  public void removeEntriesListener(final SvnEntriesListener listener) {
+    if (myEntriesFileListener != null) {
+      myEntriesFileListener.removeListener(listener);
+    }
   }
 
   public DiffProvider getDiffProvider() {
@@ -997,33 +983,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         SvnUtil.getDepth(this, file)));
     }
     return infos;
-  }
-
-  private class SvnWorkingCopyChecker {
-    private List<WCInfo> myAllWcInfos;
-
-    public boolean upgradeNeeded() {
-      myAllWcInfos = getAllWcInfos();
-      for (WCInfo info : myAllWcInfos) {
-        if (! WorkingCopyFormat.ONE_DOT_SIX.equals(info.getFormat())) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    public void doUpgrade() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          final SvnFormatWorker formatWorker = new SvnFormatWorker(myProject, WorkingCopyFormat.ONE_DOT_SIX, myAllWcInfos);
-          // additionally ask about working copies with roots above the project root
-          formatWorker.checkForOutsideCopies();
-          if (formatWorker.haveStuffToConvert()) {
-            ProgressManager.getInstance().run(formatWorker);
-          }
-        }
-      });
-    }
   }
 
   @Override

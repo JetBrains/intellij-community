@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,8 @@ public class MainImpl {
   private MainImpl() { }
 
   /**
-   * Is called from PluginManager via reflection.
+   * Called from PluginManager via reflection.
    */
-  @SuppressWarnings("UnusedDeclaration")
   protected static void start(final String[] args) {
     if (System.getProperty("idea.platform.prefix") == null) {
       System.setProperty("idea.platform.prefix", "Idea");
@@ -66,8 +65,7 @@ public class MainImpl {
 
     Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
       public void run() {
-        LOG.info(
-          "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
+        LOG.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
       }
     });
     LOG.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
@@ -86,7 +84,7 @@ public class MainImpl {
     // http://weblogs.java.net/blog/shan_man/archive/2005/06/improved_drag_g.html
     System.setProperty("sun.swing.enableImprovedDragGesture", "");
 
-    if (SystemInfo.isWindows && !SystemInfo.isWindows9x) {
+    if (SystemInfo.isWindows && !SystemInfo.isWindows9x && !StartupUtil.isHeadless) {
       final Logger LOG = Logger.getInstance(LOG_CATEGORY);
       try {
         if (SystemInfo.isAMD64) {

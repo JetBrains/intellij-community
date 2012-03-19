@@ -285,13 +285,21 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
   @Override
   public void setGlobalScheme(EditorColorsScheme scheme) {
-    mySchemesManager.setCurrentSchemeName(scheme == null ? DefaultColorSchemesManager.getInstance().getAllSchemes()[0].getName() : scheme.getName());
+    mySchemesManager.setCurrentSchemeName(scheme == null ? getDefaultScheme().getName() : scheme.getName());
     fireChanges(scheme);
+  }
+
+  private static DefaultColorsScheme getDefaultScheme() {
+    return DefaultColorSchemesManager.getInstance().getAllSchemes()[0];
   }
 
   @Override
   public EditorColorsScheme getGlobalScheme() {
-    return mySchemesManager.getCurrentScheme();
+    final EditorColorsScheme scheme = mySchemesManager.getCurrentScheme();
+    if (scheme == null) {
+      return getDefaultScheme();
+    }
+    return scheme;
   }
 
   @Override
