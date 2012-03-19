@@ -163,7 +163,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 }
               }
               registerProblem(packageReferenceExpression, String.format("Package '%s' is not listed in project requirements", packageName),
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
+                              ProblemHighlightType.WEAK_WARNING, null,
                               new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)),
                               new IgnoreRequirementFix(Collections.singleton(packageName)));
             }
