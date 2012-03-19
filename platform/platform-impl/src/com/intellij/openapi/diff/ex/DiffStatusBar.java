@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.diff.ex;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,8 +108,7 @@ public class DiffStatusBar extends JPanel {
       }
     };
     setLayout(new BorderLayout());
-    setBorder(BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(),
-                                                 BorderFactory.createEmptyBorder(3, 20, 3, 20)));
+    setBorder(BorderFactory.createEmptyBorder(3, 20, 3, 20));
 
     add(myTextLabel, BorderLayout.WEST);
     Box box = Box.createHorizontalBox();
