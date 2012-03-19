@@ -303,7 +303,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   public static boolean passiveValidation(final Project project, final SVNURL url) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
+    final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(project);
     return validationImpl(project, url, configuration, passiveManager, false, null, null, false);
   }
 

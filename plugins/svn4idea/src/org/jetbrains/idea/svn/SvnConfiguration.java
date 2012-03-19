@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.annotate.AnnotationListener;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.dialogs.SvnInteractiveAuthenticationProvider;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
@@ -87,7 +88,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private boolean myIsKeepLocks;
   private boolean myAutoUpdateAfterCommit;
   private boolean myRemoteStatus;
-  private final Project myProject;
   private SvnAuthenticationManager myAuthManager;
   private SvnAuthenticationManager myPassiveAuthManager;
   private SvnAuthenticationManager myInteractiveManager;
@@ -146,7 +146,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   }
 
   public SvnConfiguration(final Project project) {
-    myProject = project;
     myAnnotationListeners = new ArrayList<AnnotationListener>();
   }
 
@@ -210,10 +209,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     }
   }
 
-  public SvnSupportOptions getSupportOptions() {
+  public SvnSupportOptions getSupportOptions(Project project) {
     if (mySupportOptions == null) {
       // used to be kept in SvnBranchConfigurationManager
-      mySupportOptions = new SvnSupportOptions(SvnBranchConfigurationManager.getInstance(myProject).getSupportValue());
+      mySupportOptions = new SvnSupportOptions(SvnBranchConfigurationManager.getInstance(project).getSupportValue());
     }
     return mySupportOptions;
   }
@@ -234,6 +233,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     File dir = path == null ? new File(IdeaSubversionConfigurationDirectory.getPath()) : new File(path);
     SVNConfigFile.createDefaultConfiguration(dir);
 
+    clear();
+  }
+
+  public void clear() {
     myOptions = null;
     myAuthManager = null;
     myPassiveAuthManager = null;
@@ -244,12 +247,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public void setUseDefaultConfiguation(boolean useDefault) {
     myIsUseDefaultConfiguration = useDefault;
-    myOptions = null;
-    myAuthManager = null;
-    myPassiveAuthManager = null;
-    myInteractiveManager = null;
-    myInteractiveProvider = null;
-    RUNTIME_AUTH_CACHE.clear();
+    clear();
   }
 
   public ISVNOptions getOptions(Project project) {
@@ -277,7 +275,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public SvnAuthenticationManager getAuthenticationManager(final SvnVcs svnVcs) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
-        myAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
+        myAuthManager = new SvnAuthenticationManager(svnVcs.getProject(), new File(getConfigurationDirectory()));
       getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, RUNTIME_AUTH_CACHE));
@@ -286,9 +284,9 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     return myAuthManager;
   }
 
-  public SvnAuthenticationManager getPassiveAuthenticationManager() {
+  public SvnAuthenticationManager getPassiveAuthenticationManager(Project project) {
     if (myPassiveAuthManager == null) {
-      myPassiveAuthManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
+      myPassiveAuthManager = new SvnAuthenticationManager(project, new File(getConfigurationDirectory()));
       myPassiveAuthManager.setAuthenticationProvider(new ISVNAuthenticationProvider() {
         @Override
         public SVNAuthentication requestClientAuthentication(String kind,
@@ -312,7 +310,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public SvnAuthenticationManager getInteractiveManager(final SvnVcs svnVcs) {
     if (myInteractiveManager == null) {
-      myInteractiveManager = new SvnAuthenticationManager(myProject, new File(getConfigurationDirectory()));
+      myInteractiveManager = new SvnAuthenticationManager(svnVcs.getProject(), new File(getConfigurationDirectory()));
       myInteractiveManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
       myInteractiveProvider = new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager);
       myInteractiveManager.setAuthenticationProvider(myInteractiveProvider);
@@ -517,7 +515,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private static final List<String> ourAuthKinds = Arrays.asList(ISVNAuthenticationManager.PASSWORD, ISVNAuthenticationManager.SSH,
     ISVNAuthenticationManager.SSL, ISVNAuthenticationManager.USERNAME, "svn.ssl.server", "svn.ssh.server");
 
-  public void clearAuthenticationDirectory() {
+  public void clearAuthenticationDirectory(@Nullable Project project) {
     final File authDir = new File(getConfigurationDirectory(), "auth");
     if (authDir.exists()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
@@ -540,7 +538,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
             FileUtil.delete(dir);
           }
         }
-      }, "button.text.clear.authentication.cache", false, myProject);
+      }, "button.text.clear.authentication.cache", false, project);
     }
   }
   
