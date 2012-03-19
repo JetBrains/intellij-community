@@ -290,7 +290,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     for (PsiReference reference : ReferencesSearch.search(var, new LocalSearchScope(scope)).findAll()) {
       if (reference instanceof GrReferenceExpression &&
           (PsiUtil.isLValue((GrReferenceExpression)reference) ||
-           ((GrReferenceExpression)reference).getParent() instanceof GrPostfixExpression)) {
+           ((GrReferenceExpression)reference).getParent() instanceof GrUnaryExpression &&
+           ((GrUnaryExpression)((GrReferenceExpression)reference).getParent()).isPostfix())) {
         if (hasAssignment) {
           return true;
         }

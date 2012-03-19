@@ -168,10 +168,6 @@ public abstract class GroovyElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitPostfixExpression(GrPostfixExpression expression) {
-    visitUnaryExpression(expression);
-  }
-
   public void visitRegexExpression(GrRegex expression) {
     visitGStringExpression(expression);
   }

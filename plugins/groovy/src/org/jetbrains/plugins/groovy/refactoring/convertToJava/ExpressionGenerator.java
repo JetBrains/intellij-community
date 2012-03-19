@@ -669,7 +669,7 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitUnaryExpression(GrUnaryExpression expression) {
-    final boolean postfix = expression instanceof GrPostfixExpression;
+    final boolean postfix = expression.isPostfix();
 
     final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
     final PsiElement resolved = resolveResult.getElement();
@@ -816,12 +816,12 @@ public class ExpressionGenerator extends Generator {
 
   private static void writeSimpleUnary(GrExpression operand, GrUnaryExpression unary, ExpressionGenerator generator) {
     String opTokenText = unary.getOperationToken().getText();
-    boolean isPrefix = !(unary instanceof GrPostfixExpression);
-    if (isPrefix) {
+    boolean isPostfix = unary.isPostfix();
+    if (!isPostfix) {
       generator.getBuilder().append(opTokenText);
     }
     operand.accept(generator);
-    if (!isPrefix) {
+    if (isPostfix) {
       generator.getBuilder().append(opTokenText);
     }
   }

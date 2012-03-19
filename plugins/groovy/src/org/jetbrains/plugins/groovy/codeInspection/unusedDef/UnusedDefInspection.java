@@ -24,6 +24,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import gnu.trove.TIntHashSet;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -44,8 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -97,9 +99,9 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     for (int i = 0; i < dfaResult.size(); i++) {
       final Instruction instruction = flow[i];
       if (instruction instanceof ReadWriteVariableInstruction) {
-        final ReadWriteVariableInstruction varInsn = (ReadWriteVariableInstruction) instruction;
-        if (!varInsn.isWrite()) {
-          final String varName = varInsn.getVariableName();
+        final ReadWriteVariableInstruction varInst = (ReadWriteVariableInstruction) instruction;
+        if (!varInst.isWrite()) {
+          final String varName = varInst.getVariableName();
           TIntObjectHashMap<TIntHashSet> e = dfaResult.get(i);
           e.forEachValue(new TObjectProcedure<TIntHashSet>() {
             public boolean execute(TIntHashSet reaching) {
@@ -125,13 +127,13 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
         final PsiElement element = instruction.getElement();
         if (element == null) return true;
         PsiElement toHighlight = null;
-        if (isLocalAssignment(element) && isUsedInToplevelFlowOnly(element)) {
+        if (isLocalAssignment(element) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {
           if (element instanceof GrReferenceExpression) {
             PsiElement parent = element.getParent();
             if (parent instanceof GrAssignmentExpression) {
               toHighlight = ((GrAssignmentExpression)parent).getLValue();
             }
-            if (parent instanceof GrPostfixExpression) {
+            if (parent instanceof GrUnaryExpression && ((GrUnaryExpression)parent).isPostfix()) {
               toHighlight = parent;
             }
           }
@@ -147,7 +149,15 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     });
   }
 
-  private static boolean isUsedInToplevelFlowOnly(PsiElement element) {
+  private static boolean isIncOrDec(PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof GrUnaryExpression)) return false;
+
+    IElementType type = ((GrUnaryExpression)parent).getOperationTokenType();
+    return type == GroovyTokenTypes.mINC || type == GroovyTokenTypes.mDEC;
+  }
+
+  private static boolean isUsedInTopLevelFlowOnly(PsiElement element) {
     GrVariable var = null;
     if (element instanceof GrVariable) {
       var = (GrVariable) element;

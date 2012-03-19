@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -499,7 +498,6 @@ public class ControlFlowUtils {
 
   public static boolean isIncOrDecOperand(GrReferenceExpression referenceExpression) {
     final PsiElement parent = referenceExpression.getParent();
-    if (parent instanceof GrPostfixExpression) return true;
     if (parent instanceof GrUnaryExpression) {
       final IElementType opType = ((GrUnaryExpression)parent).getOperationTokenType();
       return opType == GroovyTokenTypes.mDEC || opType == GroovyTokenTypes.mINC;
