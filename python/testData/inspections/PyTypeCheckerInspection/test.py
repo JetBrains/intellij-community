@@ -528,3 +528,18 @@ def test_bad_subsription_expr():
     r"""[<error descr="']' expected">\</error><error descr="Statement expected, found Py:BACKSLASH">t</error><error descr="End of statement expected">\</error><error descr="Statement expected, found Py:BACKSLASH">r</error><error descr="End of statement expected">\</error><error descr="Statement expected, found Py:BACKSLASH">v</error><error descr="End of statement expected">]</error><error descr="Statement expected, found Py:RBRACKET">"</error>""
     """
 
+
+# PY-5873
+def test_type_of_raise_exception():
+    def f1(x):
+        """
+        :type x: int
+        """
+        pass
+
+    class C:
+        def f(self):
+            raise NotImplementedError()
+
+    x = C()
+    f1(x.f())
