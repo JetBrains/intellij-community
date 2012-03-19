@@ -136,10 +136,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
         if (packageName != null && !myIgnoredPackages.contains(packageName)) {
           final Collection<String> stdlibPackages = PyStdlibUtil.getPackages();
           if (stdlibPackages != null) {
-            for (String name : stdlibPackages) {
-              if (packageName.equals(name)) {
-                return;
-              }
+            if (stdlibPackages.contains(packageName)) {
+              return;
             }
           }
           final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
