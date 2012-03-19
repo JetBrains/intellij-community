@@ -527,6 +527,7 @@ public class FileStructurePopup implements Disposable {
         final AbstractTreeNode selectedNode = getSelectedNode();
         if (selectedNode != null) {
           if (selectedNode.canNavigateToSource()) {
+            myPopup.cancel();
             selectedNode.navigate(true);
             succeeded.set(true);
           }
@@ -538,13 +539,9 @@ public class FileStructurePopup implements Disposable {
           succeeded.set(false);
         }
 
-
         IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
       }
     }, "Navigate", null);
-    if (succeeded.get()) {
-      myPopup.cancel();
-    }
     return succeeded.get();
   }
 
