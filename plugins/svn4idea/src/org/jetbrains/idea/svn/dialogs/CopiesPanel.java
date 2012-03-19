@@ -39,6 +39,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
@@ -73,6 +74,7 @@ public class CopiesPanel {
   private int myTextHeight;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
+  private final static String CLEANUP = "CLEANUP";
   private final static String FIX_DEPTH = "FIX_DEPTH";
   private final static String CONFIGURE_BRANCHES = "CONFIGURE_BRANCHES";
   private final static String MERGE_FROM = "MERGE_FROM";
@@ -195,6 +197,9 @@ public class CopiesPanel {
             } else if (MERGE_FROM.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Merge From")) return;
               mergeFrom(wcInfo, root, editorPane);
+            } else if (CLEANUP.equals(e.getDescription())) {
+              if (! checkRoot(root, wcInfo.getPath(), " invoke Cleanup")) return;
+              new CleanupWorker(new VirtualFile[] {root}, myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
             }
           }
         }
@@ -261,6 +266,9 @@ public class CopiesPanel {
     }
     if (info.isIsWcRoot()) {
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><i>").append("Working copy root</i></td></tr>");
+    }
+    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
+      sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CLEANUP).append("\">Cleanup</a></td></tr>");
     }
     sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");
     sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(MERGE_FROM).append("\"><b>Merge From...</b></a></i></td></tr>");
