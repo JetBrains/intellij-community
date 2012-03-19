@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
   public static boolean passiveValidation(final Project project, final SVNURL url) {
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager();
+    final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(project);
     return validationImpl(project, url, configuration, passiveManager, false, null, null, false);
   }
 

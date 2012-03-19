@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class BranchesLoader {
     final List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
 
     final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final ISVNAuthenticationManager passiveManager = passive ? configuration.getPassiveAuthenticationManager() : configuration.getInteractiveManager(
+    final ISVNAuthenticationManager passiveManager = passive ? configuration.getPassiveAuthenticationManager(project) : configuration.getInteractiveManager(
             SvnVcs.getInstance(project));
 
     final SVNLogClient logClient = new SVNLogClient(passiveManager, configuration.getOptions(project));
