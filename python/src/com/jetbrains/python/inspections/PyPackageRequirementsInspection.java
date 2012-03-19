@@ -140,6 +140,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
+          if ("setuptools".equals(packageName)) {
+            return;
+          }
           final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
             final List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
