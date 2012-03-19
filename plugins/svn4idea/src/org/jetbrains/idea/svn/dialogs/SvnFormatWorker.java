@@ -31,6 +31,10 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.wc.ISVNEventHandler;
+import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
@@ -117,16 +121,28 @@ public class SvnFormatWorker extends Task.Backgroundable {
       myBeforeChangeLists = ChangeListManager.getInstance(myProject).getChangeListsCopy();
     }
     final SVNWCClient wcClient = myVcs.createWCClient();
-
+    wcClient.setEventHandler(new ISVNEventHandler() {
+      @Override
+      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+      }
+      @Override
+      public void checkCancelled() throws SVNCancelException {
+        if (indicator.isCanceled()) throw new SVNCancelException();
+      }
+    });
     try {
       for (WCInfo wcInfo : myWcInfos) {
         File path = new File(wcInfo.getPath());
         if (! wcInfo.isIsWcRoot()) {
           path = SvnUtil.getWorkingCopyRoot(path);
         }
-        indicator.setText(SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
-                                            SvnUtil.formatRepresentation(wcInfo.getFormat()), SvnUtil.formatRepresentation(myNewFormat)));
+        indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath()));
         try {
+          if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(myNewFormat)) {
+            wcClient.doCleanup(path);
+          }
+          indicator.setText(SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
+                                              SvnUtil.formatRepresentation(wcInfo.getFormat()), SvnUtil.formatRepresentation(myNewFormat)));
           wcClient.doSetWCFormat(path, myNewFormat.getFormat());
         } catch (Throwable e) {
           myExceptions.add(e);

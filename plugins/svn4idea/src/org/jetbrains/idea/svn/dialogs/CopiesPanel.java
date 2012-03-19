@@ -153,33 +153,6 @@ public class CopiesPanel {
     return myRefreshLabel;
   }
 
-  private JTextField createField(final String text) {
-    final JTextField field = new JTextField(text) {
-      public Dimension getPreferredSize() {
-        Dimension preferredSize = super.getPreferredSize();
-        return new Dimension(preferredSize.width, myTextHeight);
-      }
-    };
-    field.setBackground(UIUtil.getPanelBackground());
-    field.setEditable(false);                               
-    final Border lineBorder = BorderFactory.createLineBorder(UIUtil.getPanelBackground());
-    final DottedBorder dotted = new DottedBorder(UIUtil.getActiveTextColor());
-    field.setBorder(lineBorder);
-    //field.setFocusable(false);
-    field.setHorizontalAlignment(JTextField.RIGHT);
-    field.setCaretPosition(0);
-    field.addFocusListener(new FocusAdapter() {
-      public void focusGained(FocusEvent e) {
-        field.setBorder(dotted);
-      }
-
-      public void focusLost(FocusEvent e) {
-        field.setBorder(lineBorder);
-      }
-    });
-    return field;
-  }
-
   private void updateList(final List<WCInfo> infoList) {
     myPanel.removeAll();
     final Insets nullIndent = new Insets(1, 3, 1, 0);
@@ -340,6 +313,7 @@ public class CopiesPanel {
     final String newMode = dialog.getUpgradeMode();
     if (! wcInfo.getFormat().getOption().equals(newMode)) {
       final WorkingCopyFormat newFormat = WorkingCopyFormat.getInstance(newMode);
+      ApplicationManager.getApplication().saveAll();
       final Task.Backgroundable task = new SvnFormatWorker(myProject, newFormat, wcInfo) {
         @Override
         public void onSuccess() {
