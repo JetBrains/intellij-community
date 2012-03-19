@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenPluginCustomParameterValueCo
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter;
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
+import org.jetbrains.idea.maven.dom.model.MavenDomPluginManagement;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
@@ -52,9 +53,21 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       return;
     }
 
+    boolean isInPluginManagement = isInPluginManagement(config);
+
     for (ParameterData each : collectParameters(pluginModel, config)) {
-      registerPluginParameter(r, each);
+      registerPluginParameter(isInPluginManagement, r, each);
     }
+  }
+
+  private static boolean isInPluginManagement(MavenDomConfiguration config) {
+    DomElement pluginNode = config.getParent();
+    if (pluginNode == null) return false;
+
+    DomElement pluginsNode = pluginNode.getParent();
+    if (pluginsNode == null) return false;
+
+    return pluginsNode.getParent() instanceof MavenDomPluginManagement;
   }
 
   private static Collection<ParameterData> collectParameters(MavenDomPluginModel pluginModel, MavenDomConfiguration config) {
@@ -124,15 +137,15 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     }
   }
 
-  private static void registerPluginParameter(DomExtensionsRegistrar r, final ParameterData parameter) {
+  private static void registerPluginParameter(boolean isInPluginManagement, DomExtensionsRegistrar r, final ParameterData parameter) {
     String paramName = parameter.parameter.getName().getStringValue();
     String alias = parameter.parameter.getAlias().getStringValue();
 
-    registerPluginParameter(r, parameter, paramName);
-    if (alias != null) registerPluginParameter(r, parameter, alias);
+    registerPluginParameter(isInPluginManagement, r, parameter, paramName);
+    if (alias != null) registerPluginParameter(isInPluginManagement, r, parameter, alias);
   }
 
-  private static void registerPluginParameter(DomExtensionsRegistrar r, final ParameterData data, final String parameterName) {
+  private static void registerPluginParameter(boolean isInPluginManagement, DomExtensionsRegistrar r, final ParameterData data, final String parameterName) {
     DomExtension e;
     if (isCollection(data.parameter)) {
       e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
@@ -149,7 +162,9 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       e = r.registerFixedNumberChildExtension(new XmlName(parameterName), MavenDomConfigurationParameter.class);
 
       addValueConverter(e, data.parameter);
-      addRequiredAnnotation(e, data);
+      if (!isInPluginManagement) {
+        addRequiredAnnotation(e, data);
+      }
     }
 
     e.setDeclaringElement(data.parameter);
