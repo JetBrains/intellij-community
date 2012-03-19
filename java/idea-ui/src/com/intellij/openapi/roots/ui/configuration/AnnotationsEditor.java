@@ -22,23 +22,17 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TableUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -48,8 +42,6 @@ import java.util.List;
  */
 public class AnnotationsEditor extends ModuleElementsEditor {
   private JTable myTable;
-  private JButton myAddPathButton;
-  private JButton myRemoveButton;
 
   public static final String NAME = ProjectBundle.message("project.roots.external.annotations.tab.title");
   public static final Icon ICON = IconLoader.getIcon("/modules/annotation.png");
@@ -82,10 +74,8 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   }
 
   public JComponent createComponentImpl() {
-    final JPanel mainPanel = new JPanel(new BorderLayout(5, 10));
-    mainPanel.setPreferredSize(new Dimension(-1, 200));
     final DefaultTableModel tableModel = createModel();
-    myTable = new Table(tableModel);
+    myTable = new JBTable(tableModel);
     myTable.setIntercellSpacing(new Dimension(0, 0));
     myTable.setDefaultRenderer(TableItem.class, new MyRenderer());
     myTable.setShowGrid(false);
@@ -94,43 +84,43 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     myTable.setShowVerticalLines(false);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    myAddPathButton = new JButton(ProjectBundle.message("module.javadoc.add.path.button"));
-    myAddPathButton.addActionListener(new AddPathActionListener());
-
-
-    myRemoveButton = new JButton(ProjectBundle.message("module.javadoc.remove.button"));
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final List removedItems = TableUtil.removeSelectedItems(myTable);
-        if (removedItems.size() > 0) {
+    JPanel tablePanel = ToolbarDecorator.createDecorator(myTable)
+      .setAddAction(new AnActionButtonRunnable() {
+      @Override
+      public void run(AnActionButton button) {
+        FileChooserDescriptor myDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+              myDescriptor.setTitle(ProjectBundle.message("add.external.annotations.path.title"));
+              myDescriptor.setDescription(ProjectBundle.message("add.external.annotations.path.description"));
+        VirtualFile[] files = FileChooser.chooseFiles(myTable, myDescriptor);
+        final MyTableModel tableModel = (MyTableModel)myTable.getModel();
+        boolean changes = false;
+        for (final VirtualFile file : files) {
+          if (file != null) {
+            tableModel.addTableItem(new TableItem(file));
+            changes = true;
+          }
+        }
+        if (changes) {
           saveData();
+          TableUtil.selectRows(myTable, new int[] {tableModel.getRowCount() - 1});
         }
       }
-    });
-
-    final JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(myAddPathButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myRemoveButton, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
-
-    mainPanel.add(ScrollPaneFactory.createScrollPane(myTable), BorderLayout.CENTER);
-    mainPanel.add(panel, BorderLayout.EAST);
-    mainPanel.add(new JBLabel(ProjectBundle.message("project.roots.external.annotations.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER), BorderLayout.NORTH);
-
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        if (e.getValueIsAdjusting()) {
-          return;
+    }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          final List removedItems = TableUtil.removeSelectedItems(myTable);
+          if (removedItems.size() > 0) {
+            saveData();
+          }
         }
-        final int selectedIndex = myTable.getSelectedRow();
-        myRemoveButton.setEnabled(selectedIndex >= 0);
-      }
-    });
-    if (tableModel.getRowCount() > 0) {
-      TableUtil.selectRows(myTable, new int[] {0});
-    }
-    else {
-      myRemoveButton.setEnabled(false);
-    }
+      }).createPanel();
+
+
+    final JPanel mainPanel = new JPanel(new BorderLayout());
+
+    mainPanel.add(tablePanel, BorderLayout.CENTER);
+    mainPanel.add(new JBLabel(ProjectBundle.message("project.roots.external.annotations.description"), UIUtil.ComponentStyle.SMALL,
+                              UIUtil.FontColor.BRIGHTER), BorderLayout.NORTH);
     return mainPanel;
   }
 
@@ -147,7 +137,6 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     if (myTable != null) {
       final DefaultTableModel tableModel = createModel();
       myTable.setModel(tableModel);
-      myRemoveButton.setEnabled(tableModel.getRowCount() > 0);
     }
   }
 
@@ -187,40 +176,6 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
     public void addTableItem(TableItem item) {
       addRow(new Object[] {item});
-    }
-  }
-
-  private abstract class MyAddAction implements ActionListener {
-    protected abstract VirtualFile[] getFiles();
-
-    public void actionPerformed(ActionEvent e) {
-      VirtualFile[] files = getFiles();
-      final MyTableModel tableModel = (MyTableModel)myTable.getModel();
-      boolean changes = false;
-      for (final VirtualFile file : files) {
-        if (file != null) {
-          tableModel.addTableItem(new TableItem(file));
-          changes = true;
-        }
-      }
-      if (changes) {
-        saveData();
-        TableUtil.selectRows(myTable, new int[] {tableModel.getRowCount() - 1});
-      }
-    }
-  }
-
-  private class AddPathActionListener extends MyAddAction{
-    private final FileChooserDescriptor myDescriptor;
-
-    public AddPathActionListener() {
-      myDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      myDescriptor.setTitle(ProjectBundle.message("add.external.annotations.path.title"));
-      myDescriptor.setDescription(ProjectBundle.message("add.external.annotations.path.description"));
-    }
-
-    protected VirtualFile[] getFiles() {
-      return FileChooser.chooseFiles(myTable, myDescriptor);
     }
   }
 }
