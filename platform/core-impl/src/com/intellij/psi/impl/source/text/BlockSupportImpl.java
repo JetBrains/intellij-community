@@ -112,14 +112,14 @@ public class BlockSupportImpl extends BlockSupport {
         final TextRange textRange = node.getTextRange();
         final IReparseableElementType reparseable = (IReparseableElementType)elementType;
 
-        if (reparseable.getLanguage() == baseLanguage) {
+        if (baseLanguage.isKindOf(reparseable.getLanguage())) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
           assertFileLength(file, newFileText, node, elementType, start, end);
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
-          if (reparseable.isParsable(newTextStr, project)) {
+          if (reparseable.isParsable(newTextStr, baseLanguage, project)) {
             ASTNode chameleon = reparseable.createNode(newTextStr);
             if (chameleon != null) {
               DummyHolder holder = DummyHolderFactory.createHolder(fileImpl.getManager(), null, node.getPsi(), charTable);

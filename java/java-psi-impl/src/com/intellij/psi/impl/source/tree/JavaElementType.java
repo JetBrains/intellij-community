@@ -165,7 +165,7 @@ public interface JavaElementType {
     }
 
     @Override
-    public int getErrorsCount(final CharSequence seq, final Project project) {
+    public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
       final Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
 
       lexer.start(seq);

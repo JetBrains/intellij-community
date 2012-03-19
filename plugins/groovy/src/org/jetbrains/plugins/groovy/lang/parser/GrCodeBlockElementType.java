@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.ICompositeElementType;
@@ -47,7 +48,7 @@ public abstract class GrCodeBlockElementType extends IErrorCounterReparseableEle
   public abstract GrBlockImpl createNode(final CharSequence text);
 
   @Override
-  public int getErrorsCount(final CharSequence seq, final Project project) {
+  public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
     final Lexer lexer = new GroovyLexer();
 
     lexer.start(seq);
