@@ -308,9 +308,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @Nullable private final Document myRequirementsTxt;
     @Nullable private final PyArgumentList mySetupArgumentList;
     @NotNull private final String myPackageName;
-    private final LanguageLevel myLanguageLevel;
+    @NotNull private final LanguageLevel myLanguageLevel;
 
-    private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, LanguageLevel languageLevel) {
+    private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, @NotNull LanguageLevel languageLevel) {
       myPackageName = packageName;
       myLanguageLevel = languageLevel;
       myRequirementsTxt = PyPackageUtil.findRequirementsTxt(module);
