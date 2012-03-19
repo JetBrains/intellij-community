@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ElementProducer;
@@ -89,8 +88,11 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   }
 
   protected ToolbarDecorator initPositionAndBorder() {
-    myToolbarPosition = SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
-    myBorder = new CustomLineBorder(0, SystemInfo.isMac ? 0 : 1, 0, 0);
+    myToolbarPosition = UIUtil.isUnderAquaLookAndFeel() ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
+    myBorder = new CustomLineBorder(0,
+                                    myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
+                                    myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
+                                    myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     final JComponent c = getComponent();
     if (c != null) {
       c.setBorder(IdeBorderFactory.createEmptyBorder(0));
@@ -180,6 +182,10 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
 
   public ToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
     myToolbarPosition = position;
+    myBorder = new CustomLineBorder(0,
+                                    myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
+                                    myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
+                                    myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     return this;
   }
 
