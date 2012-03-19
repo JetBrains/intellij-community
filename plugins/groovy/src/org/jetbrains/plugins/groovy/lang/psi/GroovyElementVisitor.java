@@ -439,4 +439,8 @@ public abstract class GroovyElementVisitor {
   public void visitTypeParameterList(GrTypeParameterList list) {
     visitElement(list);
   }
+
+  public  void visitClassInitializer(GrClassInitializer initializer) {
+    visitElement(initializer);
+  }
 }
