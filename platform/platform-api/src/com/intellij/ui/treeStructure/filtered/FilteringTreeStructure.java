@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,9 +69,11 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       for (Object d : delegates) {
         FilteringNode n = new FilteringNode(node, d);
         boolean isDuplicate = myDescriptors2Nodes.containsKey(d);
-        myDescriptors2Nodes.put(d, n);
-        nodes.add(n);
-        addToCache(n, isDuplicate);
+        if (!isDuplicate) {
+          myDescriptors2Nodes.put(d, n);
+          nodes.add(n);
+          addToCache(n, isDuplicate);
+        }
       }
       myNodesCache.put(node, nodes);
     }
