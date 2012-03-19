@@ -413,17 +413,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (name == null) return;
 
       if (ControlFlowUtils.isIncOrDecOperand(refExpr) && !myAssertionsOnly) {
-        final ReadWriteVariableInstruction i = new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, false);
+        final InstructionImpl i = new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, false);
         addNode(i);
         addNode(new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, true));
-        if (refExpr.getParent() instanceof GrUnaryExpression) {
-          addNode(new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, false));
-        }
         checkPending(i);
       }
       else {
-        final ReadWriteVariableInstruction i =
-          new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, !myAssertionsOnly && PsiUtil.isLValue(refExpr));
+        final InstructionImpl i = new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, !myAssertionsOnly && PsiUtil.isLValue(refExpr));
         addNode(i);
         checkPending(i);
       }
@@ -563,10 +559,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
       GrVariable variable = clause.getDeclaredVariable();
       if (variable != null) {
-        ReadWriteVariableInstruction writeInsn =
+        ReadWriteVariableInstruction writeInst =
           new ReadWriteVariableInstruction(variable.getName(), variable, myInstructionNumber++, true);
-        checkPending(writeInsn);
-        addNode(writeInsn);
+        checkPending(writeInst);
+        addNode(writeInst);
       }
     }
 
@@ -755,6 +751,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     Set<Pair<InstructionImpl, GroovyPsiElement>> pendingAfterTry = new LinkedHashSet<Pair<InstructionImpl, GroovyPsiElement>>(myPending);
 
+    @SuppressWarnings("unchecked")
     List<InstructionImpl>[] throwers = new List[catchClauses.length];
 
     for (int i = 0; i < catchClauses.length; i++) {
@@ -877,9 +874,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     super.visitVariable(variable);
     if (variable.getInitializerGroovy() != null ||
         variable.getParent() instanceof GrTupleDeclaration && ((GrTupleDeclaration)variable.getParent()).getInitializerGroovy() != null) {
-      ReadWriteVariableInstruction writeInsn = new ReadWriteVariableInstruction(variable.getName(), variable, myInstructionNumber++, true);
-      checkPending(writeInsn);
-      addNode(writeInsn);
+      ReadWriteVariableInstruction writeInst = new ReadWriteVariableInstruction(variable.getName(), variable, myInstructionNumber++, true);
+      checkPending(writeInst);
+      addNode(writeInst);
     }
   }
 
