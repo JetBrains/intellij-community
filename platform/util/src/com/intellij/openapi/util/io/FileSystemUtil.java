@@ -88,8 +88,11 @@ public class FileSystemUtil {
   }
 
   public static boolean isSymLink(@NotNull final String path) {
-    final FileAttributes attributes = getAttributes(path);
-    return attributes != null && attributes.isSymlink;
+    if (SystemInfo.areSymLinksSupported) {
+      final FileAttributes attributes = getAttributes(path);
+      return attributes != null && attributes.isSymlink;
+    }
+    return false;
   }
 
   public static boolean isSymLink(@NotNull final File file) {

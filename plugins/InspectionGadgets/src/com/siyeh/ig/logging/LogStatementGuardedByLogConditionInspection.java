@@ -18,7 +18,6 @@ package com.siyeh.ig.logging;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -26,8 +25,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.FormBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -80,47 +79,16 @@ public class LogStatementGuardedByLogConditionInspection
 
   @Override
   public JComponent createOptionsPanel() {
-    final GridBagLayout layout = new GridBagLayout();
-    final JPanel panel = new JPanel(layout);
-
-    final JLabel classNameLabel = new JLabel(
-      InspectionGadgetsBundle.message("logger.name.option"));
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JLabel classNameLabel = new JLabel(InspectionGadgetsBundle.message("logger.name.option"));
     classNameLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-    final TextField loggerClassNameField =
-      new TextField(this, "loggerClassName");
-    final ListTable table = new ListTable(new ListWrappingTableModel(
-      Arrays.asList(logMethodNameList, logConditionMethodNameList),
-      InspectionGadgetsBundle.message("log.method.name"),
-      InspectionGadgetsBundle.message("log.condition.text")));
-    final JScrollPane scrollPane =
-      ScrollPaneFactory.createScrollPane(table);
-    UiUtils.setScrollPaneSize(scrollPane, 7, 25);
-    final ActionToolbar toolbar = UiUtils.createAddRemoveToolbar(table);
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.ipady = 10;
-
-    constraints.anchor = GridBagConstraints.NORTHEAST;
-    panel.add(classNameLabel, constraints);
-
-    constraints.gridx = 1;
-    constraints.ipady = 0;
-    constraints.weightx = 1.0;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(loggerClassNameField, constraints);
-
-    constraints.gridwidth = 2;
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    panel.add(toolbar.getComponent(), constraints);
-
-    constraints.weighty = 1.0;
-    constraints.gridy = 1;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(scrollPane, constraints);
-
+    final TextField loggerClassNameField = new TextField(this, "loggerClassName");
+    final ListTable table = new ListTable(new ListWrappingTableModel(Arrays.asList(logMethodNameList, logConditionMethodNameList),
+                                                                     InspectionGadgetsBundle.message("log.method.name"),
+                                                                     InspectionGadgetsBundle.message("log.condition.text")));
+    final JPanel tablePanel = UiUtils.createAddRemovePanel(table);
+    panel.add(tablePanel, BorderLayout.CENTER);
+    panel.add(FormBuilder.createFormBuilder().addLabeledComponent(classNameLabel, loggerClassNameField).getPanel(), BorderLayout.NORTH);
     return panel;
   }
 

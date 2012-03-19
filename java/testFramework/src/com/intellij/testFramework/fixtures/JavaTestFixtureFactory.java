@@ -15,6 +15,8 @@
  */
 package com.intellij.testFramework.fixtures;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author yole
  */
@@ -41,8 +43,15 @@ public abstract class JavaTestFixtureFactory {
 
   public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture);
 
+  /**
+   *
+   * @deprecated use {@link JavaTestFixtureFactory#createFixtureBuilder(String)}
+   */
   //also implicitly initializes ourInstance and registers java module fixture builder
   public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder() {
     return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
+  }
+  public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name) {
+    return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
   }
 }

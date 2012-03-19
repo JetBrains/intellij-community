@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -34,7 +34,11 @@ import java.util.Set;
 
 public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspection {
 
+  @SuppressWarnings("PublicField")
   public boolean ignoreJavaDoc = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAnnotations = false;
 
   @Override
   @NotNull
@@ -55,8 +59,12 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "abstract.method.overrides.abstract.method.ignore.different.javadoc.option"), this, "ignoreJavaDoc");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message(
+      "abstract.method.overrides.abstract.method.ignore.different.javadoc.option"), "ignoreJavaDoc");
+    panel.addCheckbox(InspectionGadgetsBundle.message(
+      "abstract.method.overrides.abstract.method.ignore.different.annotations.option"), "ignoreAnnotations");
+    return panel;
   }
 
   private static class AbstractMethodOverridesAbstractMethodFix extends InspectionGadgetsFix {
@@ -83,7 +91,6 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
 
   private class AbstractMethodOverridesAbstractMethodVisitor extends BaseInspectionVisitor {
 
-
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       //no call to super, so we don't drill into anonymous classes
@@ -105,16 +112,59 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         if (!isAbstract(superMethod)) {
           continue;
         }
-        if (!methodsHaveSameReturnTypes(method, superMethod) ||
-            !haveSameExceptionSignatures(method, superMethod)) {
+        if (!methodsHaveSameReturnTypes(method, superMethod) || !haveSameExceptionSignatures(method, superMethod)) {
           continue;
         }
         if (ignoreJavaDoc && !haveSameJavaDoc(method, superMethod)) {
           return;
         }
+        if (ignoreAnnotations && !methodsHaveSameAnnotations(method, superMethod)) {
+          return;
+        }
         registerMethodError(method);
         return;
       }
+    }
+
+    private boolean methodsHaveSameAnnotations(PsiMethod method, PsiMethod superMethod) {
+      if (!haveSameAnnotations(method, superMethod)) {
+        return false;
+      }
+      final PsiParameterList superParameterList = superMethod.getParameterList();
+      final PsiParameter[] superParameters = superParameterList.getParameters();
+      final PsiParameterList parameterList = method.getParameterList();
+      final PsiParameter[] parameters = parameterList.getParameters();
+      for (int i = 0, length = superParameters.length; i < length; i++) {
+        final PsiParameter superParameter = superParameters[i];
+        final PsiParameter parameter = parameters[i];
+        if (!haveSameAnnotations(parameter, superParameter)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    private boolean haveSameAnnotations(PsiModifierListOwner owner1, PsiModifierListOwner owner2) {
+      final PsiModifierList modifierList = owner1.getModifierList();
+      final PsiModifierList superModifierList = owner2.getModifierList();
+      if (superModifierList == null) {
+        return modifierList == null;
+      } else if (modifierList == null) {
+        return false;
+      }
+      final PsiAnnotation[] superAnnotations = superModifierList.getAnnotations();
+      final PsiAnnotation[] annotations = modifierList.getAnnotations();
+      final Set<PsiAnnotation> annotationsSet = new HashSet<PsiAnnotation>(Arrays.asList(superAnnotations));
+      for (PsiAnnotation annotation : annotations) {
+        final String qualifiedName = annotation.getQualifiedName();
+        if ("java.lang.Override".equals(qualifiedName)) {
+          continue;
+        }
+        if (!annotationsSet.contains(annotation)) {
+          return false;
+        }
+      }
+      return true;
     }
 
     private boolean haveSameJavaDoc(PsiMethod method, PsiMethod superMethod) {
