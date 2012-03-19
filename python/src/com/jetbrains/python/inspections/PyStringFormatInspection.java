@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -115,7 +116,7 @@ public class PyStringFormatInspection extends PyInspection {
           return 1;
         }
         else if (rightExpression instanceof PyReferenceExpression) {
-          if ("self.__dict__".equals(rightExpression.getText())) return -1;
+          if (PyNames.DICT.equals(rightExpression.getName())) return -1;
 
           final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
           if (!(pyElement instanceof PyExpression)) {
