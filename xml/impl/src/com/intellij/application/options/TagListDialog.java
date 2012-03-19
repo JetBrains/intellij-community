@@ -15,28 +15,55 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 
-public class TagListDialog extends DialogWrapper{
-  private final JPanel myPanel = new JPanel(new BorderLayout());
+public class TagListDialog extends DialogWrapper {
+  private final JPanel myPanel;
   private final JList myList = new JBList(new DefaultListModel());
   private ArrayList<String> myData;
 
   public TagListDialog(String title) {
     super(true);
-    myPanel.add(createToolbar(), BorderLayout.NORTH);
-    myPanel.add(createList(), BorderLayout.CENTER);
+    myPanel = ToolbarDecorator.createDecorator(myList)
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          final String tagName = Messages.showInputDialog(ApplicationBundle.message("editbox.enter.tag.name"),
+                                                          ApplicationBundle.message("title.tag.name"), Messages.getQuestionIcon());
+          if (tagName != null) {
+            while (myData.contains(tagName)) {
+              myData.remove(tagName);
+            }
+            myData.add(tagName);
+            updateData();
+            myList.setSelectedIndex(myData.size() - 1);
+          }
+        }
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          int selectedIndex = myList.getSelectedIndex();
+          if (selectedIndex >= 0) {
+            myData.remove(selectedIndex);
+            updateData();
+            if (selectedIndex >= myData.size()) {
+              selectedIndex -= 1;
+            }
+            if (selectedIndex >= 0) {
+              myList.setSelectedIndex(selectedIndex);
+            }
+          }
+        }
+      }).disableUpDownActions().createPanel();
     setTitle(title);
     init();
   }
@@ -57,74 +84,8 @@ public class TagListDialog extends DialogWrapper{
     }
   }
 
-  public ArrayList<String> getData(){
+  public ArrayList<String> getData() {
     return myData;
-  }
-
-  private JComponent createList() {
-    return ScrollPaneFactory.createScrollPane(myList);
-  }
-
-  private JComponent createToolbar() {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
-                                                           createActionGroup(),
-                                                           true).getComponent();
-  }
-
-  private ActionGroup createActionGroup() {
-    final DefaultActionGroup result = new DefaultActionGroup();
-    final AnAction addAction = createAddAction();
-    addAction.registerCustomShortcutSet(CommonShortcuts.INSERT, myList);
-    result.add(addAction);
-
-    final AnAction deleteAction = createDeleteAction();
-    deleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myList);
-    result.add(deleteAction);
-    return result;
-  }
-
-  private AnAction createDeleteAction() {
-    return new IconWithTextAction(ApplicationBundle.message("action.remove"), null, PlatformIcons.DELETE_ICON) {
-      public void update(AnActionEvent e) {
-        final int selectedIndex = myList.getSelectedIndex();
-        if (selectedIndex >= 0) {
-          e.getPresentation().setEnabled(true);
-        } else {
-          e.getPresentation().setEnabled(false);
-        }
-      }
-
-      public void actionPerformed(AnActionEvent e) {
-        int selectedIndex = myList.getSelectedIndex();
-        if (selectedIndex >= 0) {
-          myData.remove(selectedIndex);
-          updateData();
-          if (selectedIndex >= myData.size()) {
-            selectedIndex -= 1;
-          }
-          if (selectedIndex >= 0) {
-            myList.setSelectedIndex(selectedIndex);
-          }
-        }
-      }
-    };
-  }
-
-  private AnAction createAddAction() {
-    return new IconWithTextAction(ApplicationBundle.message("action.add"), null, PlatformIcons.ADD_ICON){
-      public void actionPerformed(AnActionEvent e) {
-        final String tagName = Messages.showInputDialog(ApplicationBundle.message("editbox.enter.tag.name"),
-                                                        ApplicationBundle.message("title.tag.name"), Messages.getQuestionIcon());
-        if (tagName != null) {
-          while (myData.contains(tagName)) {
-            myData.remove(tagName);
-          }
-          myData.add(tagName);
-          updateData();
-          myList.setSelectedIndex(myData.size() - 1);
-        }
-      }
-    };
   }
 
   protected JComponent createCenterPanel() {
