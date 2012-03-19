@@ -71,7 +71,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Trove4j" level="project" />
   </component>
 </module>
 
