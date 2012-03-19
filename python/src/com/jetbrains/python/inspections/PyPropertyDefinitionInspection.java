@@ -288,11 +288,14 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
       if (allowed ^ hasReturns) {
         if (allowed && callable instanceof PyFunction) {
-          // one last chance: maybe there's no return but a single 'raise', see PY-4043
-          PyStatementList stmt_list = ((PyFunction)callable).getStatementList();
-          if (stmt_list != null) {
-            PyStatement[] stmts = stmt_list.getStatements();
-            if (stmts.length == 1 && stmts[0] instanceof PyRaiseStatement) return;
+          // one last chance: maybe there's no return but a 'raise' statement, see PY-4043, PY-5048
+          PyStatementList statementList = ((PyFunction)callable).getStatementList();
+          if (statementList != null) {
+            for (PyStatement stmt : statementList.getStatements()) {
+              if (stmt instanceof PyRaiseStatement) {
+                return;
+              }
+            }
           }
         }
         registerProblem(being_checked, message);
