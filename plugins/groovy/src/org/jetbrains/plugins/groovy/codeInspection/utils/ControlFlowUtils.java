@@ -53,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
 
@@ -673,7 +672,7 @@ public class ControlFlowUtils {
   }
 
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, final PsiElement place, boolean ahead, boolean writeAccessOnly) {
-    LOG.assertTrue(GroovyRefactoringUtil.isLocalVariable(local), local.getClass());
+    LOG.assertTrue(!(local instanceof GrField), local.getClass());
 
     final GrControlFlowOwner owner = findControlFlowOwner(local);
     assert owner != null;

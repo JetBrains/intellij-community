@@ -408,6 +408,9 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedAssignment" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unused.assignment" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedIncOrDec" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="unused.inc.dec" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyVariableNotAssigned" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unassigned.access" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection"/>

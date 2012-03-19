@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
@@ -248,8 +249,8 @@ class A {
   public void testByteArrayArgument() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testForLoopWithNestedEndlessLoop() throws Exception {doTest(new UnassignedVariableAccessInspection());}
-  public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedDefInspection());}
-  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection()); }
+  public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());}
+  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
 
   public void testArrayLikeAccess() throws Exception {doTest();}
 
