@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.editor;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -47,7 +48,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
   @NotNull
   public Runnable processFile(PsiFile file) {
-    return new MyProcessor((GroovyFile)file, false);
+    return file instanceof GroovyFile ? new MyProcessor((GroovyFile)file, false) : EmptyRunnable.INSTANCE;
   }
 
   public List<GrImportStatement> findUnusedImports(GroovyFile file, Set<GrImportStatement> usedImports) {
