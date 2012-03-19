@@ -27,7 +27,6 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
   private static final Map<String, Helper> HELPERS = new HashMap<String, Helper>();
   static {
     HELPERS.put(GradleConstants.SYNC_TREE_CONTEXT_MENU_PLACE, new ContextMenuHelper());
-    HELPERS.put(GradleConstants.SYNC_TREE_FLOATING_TOOLBAR_PLACE, new FloatingToolbarHelper());
   }
   
   @SuppressWarnings("unchecked")
@@ -96,27 +95,6 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
     public void updatePresentation(@Nullable Collection<GradleProjectStructureNode<?>> nodes, @NotNull Presentation presentation) {
       presentation.setVisible(true);
       presentation.setEnabled(nodes != null && !nodes.isEmpty());
-    }
-  }
-  
-  private static class FloatingToolbarHelper implements Helper {
-    @SuppressWarnings("unchecked")
-    @Nullable
-    @Override
-    public Collection<GradleProjectStructureNode<?>> getTargetNodes(@NotNull AnActionEvent e) {
-      List<GradleProjectStructureNode<?>> result = new ArrayList<GradleProjectStructureNode<?>>();
-      final GradleProjectStructureNode<?> node = GradleDataKeys.SYNC_TREE_NODE_UNDER_MOUSE.getData(e.getDataContext());
-      if (node != null) {
-        result.add(node);
-      }
-      return result;
-    }
-
-    @Override
-    public void updatePresentation(@Nullable Collection<GradleProjectStructureNode<?>> nodes, @NotNull Presentation presentation) {
-      boolean active = nodes != null && !nodes.isEmpty();
-      presentation.setVisible(active);
-      presentation.setEnabled(active);
     }
   }
 }
