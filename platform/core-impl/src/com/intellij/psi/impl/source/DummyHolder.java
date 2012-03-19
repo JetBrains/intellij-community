@@ -52,8 +52,10 @@ public class DummyHolder extends PsiFileImpl {
 
   protected static Language language(PsiElement context, Language defaultLanguage) {
     if (context == null) return defaultLanguage;
+    PsiFile file = context.getContainingFile();
+    if (file == null) return defaultLanguage;
     Language contextLanguage = context.getLanguage();
-    Language language = context.getContainingFile().getLanguage();
+    Language language = file.getLanguage();
     if (language.isKindOf(contextLanguage)) return language;
     return contextLanguage;
   }

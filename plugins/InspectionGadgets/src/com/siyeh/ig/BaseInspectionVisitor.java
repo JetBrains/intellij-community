@@ -173,7 +173,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   protected final void registerError(@NotNull PsiElement location,
                                      Object... infos) {
-    if (location.getTextLength() == 0) {
+    if (location.getTextLength() == 0 && !(location instanceof PsiFile)) {
       return;
     }
     final InspectionGadgetsFix[] fixes = createFixes(infos);
