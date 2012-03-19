@@ -730,7 +730,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory();
+                myConfiguration.clearAuthenticationDirectory(getProject());
               }
               catch (Exception e) {
                 throw new RuntimeException(e);
@@ -875,7 +875,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
             @Override
             public void run() {
               try {
-                myConfiguration.clearAuthenticationDirectory();
+                myConfiguration.clearAuthenticationDirectory(getProject());
               }
               catch (Exception e) {
                 throw new RuntimeException(e);

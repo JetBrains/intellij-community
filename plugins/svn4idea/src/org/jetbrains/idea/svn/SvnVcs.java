@@ -298,7 +298,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           try {
             ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
-            supportOptions = myConfiguration.getSupportOptions();
+            supportOptions = myConfiguration.getSupportOptions(myProject);
 
             upgradeToRecentVersion(supportOptions);
             if (! supportOptions.changeListsSynchronized()) {

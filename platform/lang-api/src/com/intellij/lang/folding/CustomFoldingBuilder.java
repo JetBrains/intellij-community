@@ -22,6 +22,7 @@ import java.util.List;
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
   private CustomFoldingProvider myDefaultProvider;
+  private static final int MAX_LOOKUP_DEPTH = 10;
 
   @NotNull
   @Override
@@ -29,7 +30,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
     List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
     if (CustomFoldingProvider.getAllProviders().length > 0) {
       myDefaultProvider = null;
-      addCustomFoldingRegionsRecursively(null, root.getNode(), descriptors);
+      addCustomFoldingRegionsRecursively(null, root.getNode(), descriptors, 0);
     }
     buildLanguageFoldRegions(descriptors, root, document, quick);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
@@ -57,7 +58,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
   private void addCustomFoldingRegionsRecursively(@Nullable FoldingStack foldingStack,
                                                   @NotNull ASTNode node,
-                                                  List<FoldingDescriptor> descriptors) {
+                                                  List<FoldingDescriptor> descriptors,
+                                                  int currDepth) {
     FoldingStack localFoldingStack = isCustomFoldingRoot(node) || foldingStack == null ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (isCustomRegionStart(child)) {
@@ -72,7 +74,9 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
         }
       }
       else {
-        addCustomFoldingRegionsRecursively(localFoldingStack, child, descriptors);
+        if (currDepth < MAX_LOOKUP_DEPTH) {
+          addCustomFoldingRegionsRecursively(localFoldingStack, child, descriptors, currDepth + 1);
+        }
       }
     }
   }

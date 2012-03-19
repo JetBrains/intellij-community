@@ -16,10 +16,10 @@
 package org.intellij.plugins.xpathView.ui;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.DataManager;
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,8 +30,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.ui.*;
-import com.intellij.util.IconUtil;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
@@ -120,19 +122,36 @@ public class EditContextDialog extends DialogWrapper {
         public void run(AnActionButton button) {
           myVariableTableModel.removeVariable(myVariableTable.getSelectedRow());
         }
-      }).createPanel();
+      }).disableUpDownActions().createPanel();
     UIUtil.addBorder(p, IdeBorderFactory.createTitledBorder("Variables", false));
 
     final JPanel n = ToolbarDecorator.createDecorator(myNamespaceTable)
-      .addExtraAction(myContextProvider.getContextElement() != null ? null :
-                      AnActionButton.fromAction(new AddAction(myNamespaceTableModel, myUnresolvedPrefixes)))
-      .setRemoveAction(
+      .setAddAction(myContextProvider.getContextElement() != null ? null : new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          final ExternalResourceManager erm = ExternalResourceManager.getInstance();
+          final List<String> allURIs = new ArrayList<String>(Arrays.asList(erm.getResourceUrls(null, true)));
+          final Collection<Namespace> namespaces = myNamespaceTableModel.getNamespaces();
+          for (Namespace namespace : namespaces) {
+            allURIs.remove(namespace.getUri());
+          }
+          Collections.sort(allURIs);
+
+          final DataContext dataContext = DataManager.getInstance().getDataContext(myNamespaceTable);
+          final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+          final AddNamespaceDialog dlg = new AddNamespaceDialog(project, myUnresolvedPrefixes, allURIs, AddNamespaceDialog.Mode.EDITABLE);
+          dlg.show();
+          if (dlg.isOK()) {
+            myNamespaceTableModel.addNamespace(new Namespace(dlg.getPrefix(), dlg.getURI()));
+          }
+        }
+      }).setRemoveAction(
         myContextProvider.getContextElement() != null ? null : new AnActionButtonRunnable() {
           @Override
           public void run(AnActionButton button) {
             myNamespaceTableModel.removeNamespace(myNamespaceTable.getSelectedRow());
           }
-        }).setButtonComparator("Add", "Remove").createPanel();
+        }).disableUpDownActions().createPanel();
     UIUtil.addBorder(n, IdeBorderFactory.createTitledBorder("Namespaces", false));
 
     int extendedState = myDimensionService.getExtendedState(getDimensionServiceKey());
@@ -488,39 +507,6 @@ public class EditContextDialog extends DialogWrapper {
     @Nullable
     public Set<QName> getElements(boolean forValidation) {
       return myContextProvider.getElements(forValidation);
-    }
-  }
-
-  private static class AddAction extends AnAction {
-    private NamespaceTableModel myNamespaceTableModel;
-    private Set<String> myUnresolvedPrefixes;
-
-    public AddAction(NamespaceTableModel model, Set<String> prefixes) {
-      super("Add", "Add", IconUtil.getAddRowIcon());
-      myNamespaceTableModel = model;
-      myUnresolvedPrefixes = prefixes;
-      setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(true);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      final ExternalResourceManager erm = ExternalResourceManager.getInstance();
-      final List<String> allURIs = new ArrayList<String>(Arrays.asList(erm.getResourceUrls(null, true)));
-      final Collection<Namespace> namespaces = myNamespaceTableModel.getNamespaces();
-      for (Namespace namespace : namespaces) {
-        allURIs.remove(namespace.getUri());
-      }
-      Collections.sort(allURIs);
-
-      final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
-      final AddNamespaceDialog dlg = new AddNamespaceDialog(project, myUnresolvedPrefixes, allURIs, AddNamespaceDialog.Mode.EDITABLE);
-      dlg.show();
-      if (dlg.isOK()) {
-        myNamespaceTableModel.addNamespace(new Namespace(dlg.getPrefix(), dlg.getURI()));
-      }
     }
   }
 }

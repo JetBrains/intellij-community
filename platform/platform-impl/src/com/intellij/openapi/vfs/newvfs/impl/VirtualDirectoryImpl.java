@@ -73,7 +73,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private final NewVirtualFileSystem myFS;
 
   // guarded by this
-  protected Object myChildren; // Either HashMap<String, VFile> or VFile[]
+  private Object myChildren; // Either HashMap<String, VFile> or VFile[]
 
   public VirtualDirectoryImpl(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull NewVirtualFileSystem fs, final int id) {
     super(name, parent, id);
@@ -379,8 +379,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   private synchronized Collection<VirtualFile> getInDbChildren() {
-    if (myChildren instanceof VirtualFileSystemEntry[]) {
-      return Arrays.asList((VirtualFile[])myChildren);
+    VirtualFileSystemEntry[] children = asArray();
+    if (children != null) {
+      return Arrays.asList((VirtualFile[])children);
     }
 
     if (!ourPersistence.wereChildrenAccessed(this)) {
@@ -404,13 +405,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @NotNull
   public synchronized VirtualFile[] getChildren() {
-    if (myChildren instanceof VirtualFileSystemEntry[]) {
-      return (VirtualFileSystemEntry[])myChildren;
+    VirtualFileSystemEntry[] children = asArray();
+    if (children != null) {
+      return children;
     }
 
     Pair<String[], int[]> pair = PersistentFS.listAll(this);
     final int[] childrenIds = pair.second;
-    VirtualFileSystemEntry[] children;
     if (childrenIds.length == 0) {
       children = EMPTY_ARRAY;
     }
@@ -454,7 +455,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public NewVirtualFile findChildByIdIfCached(int id) {
-    final VirtualFile[] a = asArray();
+    final VirtualFile[] a;
+    synchronized (this) {
+      a = asArray();
+    }
     if (a != null) {
       for (VirtualFile file : a) {
         NewVirtualFile withId = (NewVirtualFile)file;
@@ -477,12 +481,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return null;
   }
 
+  // MUST BE CALLED UNDER this LOCK
   @Nullable
   private VirtualFileSystemEntry[] asArray() {
-    if (myChildren instanceof VirtualFileSystemEntry[]) return (VirtualFileSystemEntry[])myChildren;
+    Object children = myChildren;
+    if (children instanceof VirtualFileSystemEntry[]) return (VirtualFileSystemEntry[])children;
     return null;
   }
 
+  // MUST BE CALLED UNDER this LOCK
   @Nullable
   private Map<String, VirtualFileSystemEntry> asMap() {
     if (myChildren instanceof Map) {
@@ -530,7 +537,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public synchronized boolean allChildrenLoaded() {
-    return myChildren instanceof VirtualFileSystemEntry[];
+    return asArray() != null;
   }
 
   @NotNull

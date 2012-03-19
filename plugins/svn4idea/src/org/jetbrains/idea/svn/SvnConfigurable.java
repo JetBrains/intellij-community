@@ -103,7 +103,7 @@ public class SvnConfigurable implements Configurable {
                                                              Messages.getWarningIcon());
           if (result == 0) {
             SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            SvnConfiguration.getInstance(myProject).clearAuthenticationDirectory();
+            SvnConfiguration.getInstance(myProject).clearAuthenticationDirectory(myProject);
           }
         }
 

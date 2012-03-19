@@ -67,7 +67,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static org.jetbrains.android.util.AndroidUtils.VIEW_CLASS_NAME;
@@ -204,20 +206,14 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
         return;
       }
 
-      final ResourceElement createdElement =
-        doCreate(module, dialog.getResourceName(), ResourceType.STRING, dialog.getFileName(), dialog.getDirectoryName(), value);
-
-      if (createdElement != null) {
-        resName = createdElement.getName().getValue();
+      resName = dialog.getResourceName();
+      if (!doCreate(module, resName, ResourceType.STRING, dialog.getFileName(), dialog.getDirNames(), value)) {
+        return;
       }
     }
     else {
       assert ApplicationManager.getApplication().isUnitTestMode();
-      doCreate(facet.getModule(), resName, ResourceType.STRING, "strings.xml", "values", value);
-    }
-
-    if (resName == null) {
-      return;
+      doCreate(facet.getModule(), resName, ResourceType.STRING, "strings.xml", Collections.singletonList("values"), value);
     }
 
     if (file instanceof PsiJavaFile) {
@@ -358,19 +354,18 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     return true;
   }
 
-  @Nullable
-  private static ResourceElement doCreate(@NotNull Module module,
-                                          @NotNull String resourceName,
-                                          @NotNull ResourceType resourceType,
-                                          @NotNull String fileName,
-                                          @NotNull String dirName,
-                                          @NotNull String value) {
+  private static boolean doCreate(@NotNull Module module,
+                                  @NotNull String resourceName,
+                                  @NotNull ResourceType resourceType,
+                                  @NotNull String fileName,
+                                  @NotNull List<String> dirNames,
+                                  @NotNull String value) {
     final Project project = module.getProject();
     final AndroidFacet facet = AndroidFacet.getInstance(module);
     assert facet != null;
 
     try {
-      return addValueResource(facet, resourceName, resourceType, fileName, dirName, value);
+      return addValueResource(facet, resourceName, resourceType, fileName, dirNames, value);
     }
     catch (Exception e) {
       final String message = CreateElementActionBase.filterMessage(e.getMessage());
@@ -382,36 +377,52 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
         LOG.info(e);
         reportError(project, message);
       }
-      return null;
+      return false;
     }
   }
 
-  @Nullable
-  public static ResourceElement addValueResource(@NotNull AndroidFacet facet,
-                                                 @NotNull String resourceName,
-                                                 @NotNull ResourceType resourceType,
-                                                 @NotNull String fileName,
-                                                 @NotNull String dirName,
-                                                 @NotNull String value) throws Exception {
-    final VirtualFile resFile = findOrCreateResourceFile(facet, fileName, dirName);
-    if (resFile == null ||
-        !ReadonlyStatusHandler.ensureFilesWritable(facet.getModule().getProject(), resFile)) {
-      return null;
+  private static boolean addValueResource(@NotNull AndroidFacet facet,
+                                          @NotNull String resourceName,
+                                          @NotNull ResourceType resourceType,
+                                          @NotNull String fileName,
+                                          @NotNull List<String> dirNames,
+                                          @NotNull String value) throws Exception {
+    if (dirNames.size() == 0) {
+      return false;
+    }
+    final VirtualFile[] resFiles = new VirtualFile[dirNames.size()];
+
+    for (int i = 0, n = dirNames.size(); i < n; i++) {
+      final VirtualFile resFile = findOrCreateResourceFile(facet, fileName, dirNames.get(i));
+      if (resFile == null) {
+        return false;
+      }
+      resFiles[i] = resFile;
+    }
+    
+    if (!ReadonlyStatusHandler.ensureFilesWritable(facet.getModule().getProject(), resFiles)) {
+      return false;
+    }
+    final Resources[] resourcesElements = new Resources[resFiles.length];
+
+    for (int i = 0; i < resFiles.length; i++) {
+      final Resources resources = AndroidUtils.loadDomElement(facet.getModule(), resFiles[i], Resources.class);
+      if (resources == null) {
+        reportError(facet.getModule().getProject(), AndroidBundle.message("not.resource.file.error", fileName));
+        return false;
+      }
+      resourcesElements[i] = resources;
     }
 
-    final Resources resources = AndroidUtils.loadDomElement(facet.getModule(), resFile, Resources.class);
-    if (resources == null) {
-      reportError(facet.getModule().getProject(), AndroidBundle.message("not.resource.file.error", fileName));
-      return null;
-    }
+    for (Resources resources : resourcesElements) {
+      final ResourceElement element = AndroidResourceUtil.addValueResource(resourceType.getName(), resources);
+      element.getName().setValue(resourceName);
 
-    final ResourceElement element = AndroidResourceUtil.addValueResource(resourceType.getName(), resources);
-    element.getName().setValue(resourceName);
-
-    if (value.length() > 0) {
-      element.setStringValue(value);
+      if (value.length() > 0) {
+        element.setStringValue(value);
+      }
     }
-    return element;
+    return true;
   }
 
   @Nullable

@@ -113,45 +113,40 @@ public class PathEditor {
     myList = new JBList(getListModel());
     myList.setCellRenderer(createListCellRenderer(myList));
 
-    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions();
-    toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        final VirtualFile[] added = doAdd();
-        if (added.length > 0) {
-          setModified(true);
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList).disableUpDownActions()
+      .setAddAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          final VirtualFile[] added = doAdd();
+          if (added.length > 0) {
+            setModified(true);
+          }
+          requestDefaultFocus();
+          setSelectedRoots(added);
         }
-        requestDefaultFocus();
-        setSelectedRoots(added);
-      }
-    });
-
-    toolbarDecorator.setRemoveAction(new AnActionButtonRunnable() {
-      @Override
-      public void run(AnActionButton button) {
-        int[] idxs = myList.getSelectedIndices();
-        doRemoveItems(idxs, myList);
-      }
-    });
+      }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          int[] idxs = myList.getSelectedIndices();
+          doRemoveItems(idxs, myList);
+        }
+      }).setAddActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          return myEnabled;
+        }
+      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          Object[] values = getSelectedRoots();
+          return values.length > 0 && myEnabled;
+        }
+      });
 
     addToolbarButtons(toolbarDecorator);
 
     myPanel = toolbarDecorator.createPanel();
     myPanel.setBorder(null);
-
-    ToolbarDecorator.findAddButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        return myEnabled;
-      }
-    });
-    ToolbarDecorator.findRemoveButton(myPanel).addCustomUpdater(new AnActionButtonUpdater() {
-      @Override
-      public boolean isEnabled(AnActionEvent e) {
-        Object[] values = getSelectedRoots();
-        return values.length > 0 && myEnabled;
-      }
-    });
 
     return myPanel;
   }

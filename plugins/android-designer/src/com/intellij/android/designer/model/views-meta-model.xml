@@ -21,6 +21,19 @@
     <palette title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
   </meta>
 
+  <meta class="android.view.View">
+    <properties
+        important="id background"
+        expert="tag scrollX scrollY fitsSystemWindows scrollbars scrollbarStyle isScrollContainer fadeScrollbars scrollbarFadeDuration scrollbarDefaultDelayBeforeFade scrollbarSize scrollbarThumbHorizontal scrollbarThumbVertical scrollbarTrackHorizontal scrollbarTrackVertical scrollbarAlwaysDrawHorizontalTrack scrollbarAlwaysDrawVerticalTrack fadingEdge requiresFadingEdge fadingEdgeLength nextFocusLeft nextFocusRight nextFocusUp nextFocusDown nextFocusForward saveEnabled filterTouchesWhenObscured drawingCacheQuality keepScreenOn duplicateParentState soundEffectsEnabled hapticFeedbackEnabled contentDescription overScrollMode translationX translationY transformPivotX transformPivotY rotation rotationX rotationY scaleX scaleY verticalScrollbarPosition layerType layoutDirection textDirection"
+        />
+  </meta>
+
+  <meta class="class android.view.ViewGroup">
+    <properties
+        expert="animateLayoutChanges clipChildren clipToPadding layoutAnimation animationCache persistentDrawingCache alwaysDrawnWithCache addStatesFromChildren descendantFocusability splitMotionEvents"
+    />
+  </meta>
+
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.widget.Button"
         tag="Button">
@@ -28,6 +41,11 @@
 
     <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
              tooltip="Represents a push-button widget."/>
+
+    <properties
+        important="onClick"
+        expert="editable password autoLink linksClickable numeric digits phoneNumber inputMethod autoText inputType textIsSelectable"
+    />
 
     <creation>
       <![CDATA[
@@ -48,6 +66,11 @@
     <palette title="TextView" icon="/com/intellij/android/designer/icons/TextView.png"
              tooltip="Displays text to the user and optionally allows them to edit it."/>
 
+    <properties
+        important="text hint textColor typeface textStyle gravity editable enabled"
+        expert="bufferType textScaleX cursorVisible scrollHorizontally includeFontPadding shadowDx shadowDy shadowRadius freezesText drawableTop drawableLeft drawableStart drawablePadding lineSpacingExtra lineSpacingMultiplier imeOptions privateImeOptions imeActionLabel imeActionId editorExtras textSelectHandleLeft textSelectHandleRight textSelectHandle textEditPasteWindowLayout textEditNoPasteWindowLayout textEditSideNoPasteWindowLayout textEditSuggestionItemLayout textCursorDrawable textAllCaps maxEms ems minEms"
+    />
+
     <creation>
       <![CDATA[
           <TextView
@@ -67,6 +90,10 @@
     <palette title="LinearLayout" icon="/com/intellij/android/designer/icons/LinearLayout.png"
              tooltip="A Layout that arranges its children in a single column or a single row."/>
 
+    <properties
+        important="orientation gravity"
+    />
+
     <creation>
       <![CDATA[
           <LinearLayout
@@ -82,6 +109,9 @@
     <group name="Widgets">
       <item tag="Button"/>
       <item tag="TextView"/>
+    </group>
+    <group name="Containers">
+      <item tag="LinearLayout"/>
     </group>
   </palette>
 

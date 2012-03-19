@@ -21,6 +21,8 @@ import com.intellij.ide.palette.PaletteGroup;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -78,7 +80,8 @@ public abstract class MetaManager {
 
   @SuppressWarnings("unchecked")
   private void loadModel(ClassLoader classLoader, Element element) throws Exception {
-    Class<RadComponent> model = (Class<RadComponent>)classLoader.loadClass(element.getAttributeValue("model"));
+    String modelValue = element.getAttributeValue("model");
+    Class<RadComponent> model = modelValue == null ? null : (Class<RadComponent>)classLoader.loadClass(modelValue);
     String target = element.getAttributeValue("class");
     String tag = element.getAttributeValue(TAG);
 
@@ -95,15 +98,42 @@ public abstract class MetaManager {
     }
 
     Element palette = element.getChild("palette");
-    meta.setPaletteItem(
-      new Item(palette.getAttributeValue("title"), palette.getAttributeValue("icon"), palette.getAttributeValue("tooltip")));
+    if (palette != null) {
+      meta.setPaletteItem(
+        new Item(palette.getAttributeValue("title"), palette.getAttributeValue("icon"), palette.getAttributeValue("tooltip")));
+    }
 
     Element creation = element.getChild("creation");
     if (creation != null) {
       meta.setCreation(creation.getTextTrim());
     }
 
-    myTag2Model.put(tag, meta);
+    Element properties = element.getChild("properties");
+    if (properties != null) {
+      Attribute normal = properties.getAttribute("normal");
+      if (normal != null) {
+        meta.setNormalProperties(StringUtil.split(normal.getValue(), " "));
+      }
+
+      Attribute important = properties.getAttribute("important");
+      if (important != null) {
+        meta.setImportantProperties(StringUtil.split(important.getValue(), " "));
+      }
+
+      Attribute expert = properties.getAttribute("expert");
+      if (expert != null) {
+        meta.setExpertProperties(StringUtil.split(expert.getValue(), " "));
+      }
+
+      Attribute deprecated = properties.getAttribute("deprecated");
+      if (deprecated != null) {
+        meta.setDeprecatedProperties(StringUtil.split(deprecated.getValue(), " "));
+      }
+    }
+
+    if (tag != null) {
+      myTag2Model.put(tag, meta);
+    }
 
     if (target != null) {
       myTarget2Model.put(target, meta);
