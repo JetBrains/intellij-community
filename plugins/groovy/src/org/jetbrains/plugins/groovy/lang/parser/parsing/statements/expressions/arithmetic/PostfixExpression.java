@@ -40,7 +40,7 @@ public class PostfixExpression implements GroovyElementTypes {
   }
 
   private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
-    if (ParserUtils.getToken(builder, TokenSets.POSTFIXES)) {
+    if (ParserUtils.getToken(builder, TokenSets.POSTFIX_UNARY_OP_SET)) {
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(POSTFIX_EXPRESSION);
       subParse(builder, newMarker);
