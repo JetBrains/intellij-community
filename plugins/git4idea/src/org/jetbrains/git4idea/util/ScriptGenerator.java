@@ -17,7 +17,7 @@ package org.jetbrains.git4idea.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilLight;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -149,8 +149,8 @@ public class ScriptGenerator {
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   public File generate() throws IOException {
-    File scriptPath = myTempDir != null ? FileUtil.createTempFile(myTempDir, myPrefix, SCRIPT_EXT, true)
-                                        : FileUtil.createTempFile(myPrefix, SCRIPT_EXT);
+    File scriptPath = myTempDir != null ? FileUtilLight.createTempFile(myTempDir, myPrefix, SCRIPT_EXT, true)
+                                        : FileUtilLight.createTempFile(myPrefix, SCRIPT_EXT);
     scriptPath.deleteOnExit();
     PrintWriter out = new PrintWriter(new FileWriter(scriptPath));
     try {
@@ -172,7 +172,7 @@ public class ScriptGenerator {
     finally {
       out.close();
     }
-    FileUtil.setExecutableAttribute(scriptPath.getPath(), true);
+    FileUtilLight.setExecutableAttribute(scriptPath.getPath(), true);
     return scriptPath;
   }
 

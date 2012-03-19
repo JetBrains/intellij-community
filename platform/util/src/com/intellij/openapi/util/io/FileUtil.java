@@ -35,7 +35,6 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -44,7 +43,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-public class FileUtil {
+public class FileUtil extends FileUtilLight {
   public static final int MEGABYTE = 1024 * 1024;
   @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
@@ -58,7 +57,6 @@ public class FileUtil {
 
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
   private static final long CHANNELS_COPYING_LIMIT = 5L * MEGABYTE;
-  private static String ourCanonicalTempPathCache = null;
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
   public static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
   public static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
@@ -183,63 +181,6 @@ public class FileUtil {
         continue;
       }
       return parentFile;
-    }
-  }
-
-  @NotNull
-  public static String loadFile(@NotNull File file) throws IOException {
-    return loadFile(file, null, false);
-  }
-
-  @NotNull
-  public static String loadFile(@NotNull File file, boolean convertLineSeparators) throws IOException {
-    return loadFile(file, null, convertLineSeparators);
-  }
-
-  @NotNull
-  public static String loadFile(@NotNull File file, String encoding) throws IOException {
-    return loadFile(file, encoding, false);
-  }
-
-  @NotNull
-  public static String loadFile(@NotNull File file, String encoding, boolean convertLineSeparators) throws IOException {
-    final String s = new String(loadFileText(file, encoding));
-    return convertLineSeparators ? StringUtil.convertLineSeparators(s) : s;
-  }
-
-  @NotNull
-  public static char[] loadFileText(@NotNull File file) throws IOException {
-    return loadFileText(file, null);
-  }
-
-  @NotNull
-  public static char[] loadFileText(@NotNull File file, @NonNls String encoding) throws IOException {
-    InputStream stream = new FileInputStream(file);
-    Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
-    try {
-      return loadText(reader, (int)file.length());
-    }
-    finally {
-      reader.close();
-    }
-  }
-
-  @NotNull
-  public static char[] loadText(@NotNull Reader reader, int length) throws IOException {
-    char[] chars = new char[length];
-    int count = 0;
-    while (count < chars.length) {
-      int n = reader.read(chars, count, chars.length - count);
-      if (n <= 0) break;
-      count += n;
-    }
-    if (count == chars.length) {
-      return chars;
-    }
-    else {
-      char[] newChars = new char[count];
-      System.arraycopy(chars, 0, newChars, 0, count);
-      return newChars;
     }
   }
 
@@ -394,120 +335,6 @@ public class FileUtil {
     }
     System.arraycopy(bytes, 0, result, result.length - total, total);
     return result;
-  }
-
-  @NotNull
-  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    File file = doCreateTempFile(prefix, suffix);
-    file.delete();
-    file.mkdir();
-    file.deleteOnExit();
-    return file;
-  }
-
-  @NotNull
-  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    File file = doCreateTempFile(prefix, suffix, dir);
-    file.delete();
-    file.mkdir();
-    file.deleteOnExit();
-    return file;
-  }
-
-  @NotNull
-  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, final boolean create)
-    throws IOException {
-    return createTempFile(dir, prefix, suffix, create, true);
-  }
-
-  public static File createTempFile(@NonNls final File dir,
-                                    @NotNull @NonNls String prefix,
-                                    @Nullable @NonNls String suffix,
-                                    final boolean create,
-                                    boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(prefix, suffix, dir);
-    file.delete();
-    if (create) {
-      file.createNewFile();
-    }
-    if (deleteOnExit) {
-      file.deleteOnExit();
-    }
-    return file;
-  }
-
-  @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
-  }
-
-  @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(prefix, suffix);
-    file.delete();
-    file.createNewFile();
-    if (deleteOnExit) {
-      file.deleteOnExit();
-    }
-    return file;
-  }
-
-  @NotNull
-  private static File doCreateTempFile(String prefix, String suffix) throws IOException {
-    return doCreateTempFile(prefix, suffix, new File(getTempDirectory()));
-  }
-
-  @NotNull
-  private static File doCreateTempFile(@NotNull String prefix, String suffix, final File dir) throws IOException {
-    dir.mkdirs();
-
-    if (prefix.length() < 3) {
-      prefix = (prefix + "___").substring(0, 3);
-    }
-
-    int exceptionsCount = 0;
-    while (true) {
-      try {
-        //noinspection SSBasedInspection
-        final File temp = File.createTempFile(prefix, suffix, dir);
-        return normalizeFile(temp);
-      }
-      catch (IOException e) { // Win32 createFileExclusively access denied
-        if (++exceptionsCount >= 100) {
-          throw e;
-        }
-      }
-    }
-  }
-
-  private static File normalizeFile(File temp) throws IOException {
-    final File canonical = temp.getCanonicalFile();
-    return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
-  }
-
-  public static String getTempDirectory() {
-    if (ourCanonicalTempPathCache == null) {
-      ourCanonicalTempPathCache = calcCanonicalTempPath();
-    }
-    return ourCanonicalTempPathCache;
-  }
-
-  @TestOnly
-  public static void resetCanonicalTempPathCache(final String tempPath) {
-    ourCanonicalTempPathCache = tempPath;
-  }
-
-  private static String calcCanonicalTempPath() {
-    final File file = new File(System.getProperty("java.io.tmpdir"));
-    try {
-      final String canonical = file.getCanonicalPath();
-      if (!SystemInfo.isWindows || !canonical.contains(" ")) {
-        return canonical;
-      }
-    }
-    catch (IOException ignore) {
-    }
-    return file.getAbsolutePath();
   }
 
   public static void asyncDelete(@NotNull File file) {
@@ -1130,20 +957,6 @@ public class FileUtil {
     }
   }
 
-  /**
-   * Set executable attribute, it makes sense only on non-windows platforms.
-   *
-   * @param path           the path to use
-   * @param executableFlag new value of executable attribute
-   * @throws IOException if there is a problem with setting the flag
-   */
-  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
-    final File file = new File(path);
-    if (!file.setExecutable(executableFlag) && file.canExecute() != executableFlag) {
-      LOG.warn("Can't set executable attribute of '" + path + "' to " + executableFlag);
-    }
-  }
-
   public static void appendToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text.getBytes("UTF-8"), true);
   }
@@ -1296,20 +1109,6 @@ public class FileUtil {
     return false;
   }
   
-  @NotNull
-  public static File generateRandomTemporaryPath() throws IOException {
-    File file = new File(getTempDirectory(), UUID.randomUUID().toString());
-    int i = 0;
-    while (file.exists() && i < 5) {
-      file = new File(getTempDirectory(), UUID.randomUUID().toString());
-      ++i;
-    }
-    if (file.exists()) {
-      throw new IOException("Couldn't generate unique random path.");
-    }
-    return normalizeFile(file);
-  }
-
   @Nullable
   public static String getLocationRelativeToUserHome(@Nullable final String path) {
     if (path == null) return null;
