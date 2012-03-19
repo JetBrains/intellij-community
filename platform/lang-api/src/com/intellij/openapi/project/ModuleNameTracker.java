@@ -27,7 +27,7 @@ import java.util.Map;
  * User: ksafonov
  */
 public abstract class ModuleNameTracker extends ModuleAdapter {
-  private Map<Module, String> myModulesNames = new HashMap<Module, String>();
+  private final Map<Module, String> myModulesNames = new HashMap<Module, String>();
   private final Project myProject;
 
   public ModuleNameTracker(Project project) {
