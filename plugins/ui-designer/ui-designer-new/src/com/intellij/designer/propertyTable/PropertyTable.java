@@ -109,6 +109,10 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
     ancestorInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
 
+    actionMap.put("restoreDefault", new MyRestoreDefaultAction());
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "restoreDefault");
+    ancestorInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "restoreDefault");
+
     actionMap.put("expandCurrent", new MyExpandCurrentAction(true));
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0), "expandCurrent");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
@@ -562,6 +566,13 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     Throwable cause = e.getCause();
     String message = cause == null ? e.getMessage() : cause.getMessage();
 
+    if (cause == null) {
+      e.printStackTrace();
+    }
+    else {
+      cause.printStackTrace();
+    }
+
     if (message == null || message.length() == 0) {
       message = DesignerBundle.message("designer.properties.no_message.error");
     }
@@ -693,6 +704,13 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
   }
 
+  private class MyRestoreDefaultAction extends AbstractAction {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      restoreDefaultValue();
+    }
+  }
+
   private class MouseTableListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent e) {
@@ -807,6 +825,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
         if (component instanceof JComboBox) {
           component.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+          component.putClientProperty("tableCellEditor", this);
         }
         else if (component instanceof JCheckBox) {
           component.putClientProperty("JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);

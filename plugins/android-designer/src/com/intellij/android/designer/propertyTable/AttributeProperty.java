@@ -17,13 +17,16 @@ package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.BooleanEditor;
+import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
 import com.intellij.android.designer.propertyTable.renderers.BooleanRenderer;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.editors.AbstractTextFieldEditor;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
@@ -31,6 +34,9 @@ import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Set;
 
 /**
@@ -54,18 +60,19 @@ public class AttributeProperty extends Property<RadViewComponent> {
       myRenderer = new LabelPropertyRenderer(null);
 
       if (formats.contains(AttributeFormat.Enum)) {
-
+        myEditor = new StringsComboEditor(definition.getValues());
+      }
+      else if (formats.contains(AttributeFormat.Reference)) {
+        myEditor = new TextDialogEditor();
       }
       else {
-
+        myEditor = new AbstractTextFieldEditor() {
+          @Override
+          public Object getValue() throws Exception {
+            return myTextField.getText();
+          }
+        };
       }
-
-      myEditor = new AbstractTextFieldEditor() {
-        @Override
-        public Object getValue() throws Exception {
-          return myTextField.getText();
-        }
-      };
     }
   }
 
@@ -130,5 +137,37 @@ public class AttributeProperty extends Property<RadViewComponent> {
   @Override
   public PropertyEditor getEditor() {
     return myEditor;
+  }
+
+  private static class TextDialogEditor extends PropertyEditor {
+    private TextFieldWithBrowseButton myTextField;
+
+    public TextDialogEditor() {
+      myTextField = new TextFieldWithBrowseButton(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          // TODO: Auto-generated method stub
+        }
+      });
+      myTextField.getTextField().setBorder(null);
+    }
+
+    @NotNull
+    @Override
+    public JComponent getComponent(@Nullable RadComponent component, Object value) {
+      myTextField.setText(value == null ? "" : value.toString());
+      myTextField.getTextField().setBorder(null);
+      return myTextField;
+    }
+
+    @Override
+    public Object getValue() throws Exception {
+      return myTextField.getText();
+    }
+
+    @Override
+    public void updateUI() {
+      SwingUtilities.updateComponentTreeUI(myTextField);
+    }
   }
 }

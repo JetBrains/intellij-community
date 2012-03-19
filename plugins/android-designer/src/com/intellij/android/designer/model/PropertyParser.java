@@ -95,8 +95,6 @@ public class PropertyParser {
     if (properties == null) {
       properties = new ArrayList<Property>();
 
-      System.out.println("--- " + componentClass + " -----------------");
-
       StyleableDefinition definitions = myDefinitions.getStyleableByName(component);
       if (definitions != null) {
         for (AttributeDefinition definition : definitions.getAttributes()) {
@@ -118,8 +116,6 @@ public class PropertyParser {
           }
 
           properties.add(property);
-
-          System.out.println(definition + " = " + Arrays.toString(definition.getValues()));
         }
       }
 
