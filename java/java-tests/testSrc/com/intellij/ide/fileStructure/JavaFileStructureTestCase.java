@@ -17,6 +17,7 @@ package com.intellij.ide.fileStructure;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
+import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.testFramework.FileStructureTestBase;
@@ -50,6 +51,11 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
 
   public void setShowAnonymous(boolean show) throws Exception {
     myPopup.setTreeActionState(JavaAnonymousClassesNodeProvider.class, show);
+    update();
+  }
+
+  public void setShowParents(boolean show) throws Exception {
+    myPopup.setTreeActionState(JavaInheritedMembersNodeProvider.class, show);
     update();
   }
 
