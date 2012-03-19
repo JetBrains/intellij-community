@@ -216,7 +216,7 @@ public class PyPackageManager {
     }
     args.addAll(extraArgs);
     for (PyRequirement req : requirements) {
-      args.add(req.toString());
+      args.addAll(req.toOptions());
     }
     try {
       runPythonHelper(PACKAGING_TOOL, args);
@@ -397,7 +397,7 @@ public class PyPackageManager {
       final String name = fields.get(0);
       final String version = fields.get(1);
       final String location = fields.get(2);
-      if (!"Python".equals(name) && !"wsgiref".equals(name)) {
+      if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, location, new ArrayList<PyRequirement>()));
       }
     }
