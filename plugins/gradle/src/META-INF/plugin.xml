@@ -98,6 +98,9 @@
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.plugins.gradle.config.GradlePatcher</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.plugins.gradle.config.GradleGroovyEnabler</implementation-class>
     </component>
   </project-components>
