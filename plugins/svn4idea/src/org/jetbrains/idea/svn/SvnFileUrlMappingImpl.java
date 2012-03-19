@@ -247,13 +247,15 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
+          if (myProject.isDisposed()) return;
           synchronized (myMonitor) {
             myMapping.copyFrom(mapping);
             myMoreRealMapping.copyFrom(groupedMapping);
           }
+          // all listeners are asynchronous
+          myProject.getMessageBus().syncPublisher(SvnVcs.ROOTS_RELOADED).run();
         }
       });
-      myProject.getMessageBus().syncPublisher(SvnVcs.ROOTS_RELOADED).run();
     }
   }
 
