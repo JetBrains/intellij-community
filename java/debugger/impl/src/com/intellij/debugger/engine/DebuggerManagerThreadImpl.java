@@ -106,24 +106,30 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     invoke(command);
 
     if (currentCommand != null) {
-      assert !myDisposed;
-      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this);
+      final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
       alarm.addRequest(new Runnable() {
         public void run() {
-          if (currentCommand == myEvents.getCurrentEvent()) {
-            // if current command is still in progress, cancel it
-            getCurrentRequest().interrupt();
-            try {
-              getCurrentRequest().join();
+          try {
+            if (currentCommand == myEvents.getCurrentEvent()) {
+              // if current command is still in progress, cancel it
+              getCurrentRequest().interrupt();
+              try {
+                getCurrentRequest().join();
+              }
+              catch (InterruptedException ignored) {
+              }
+              catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+              finally {
+                if (!myDisposed) {
+                  startNewWorkerThread();
+                }
+              }
             }
-            catch (InterruptedException ignored) {
-            }
-            catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-            finally {
-              startNewWorkerThread();
-            }
+          }
+          finally {
+            Disposer.dispose(alarm);
           }
         }
       }, terminateTimeout);

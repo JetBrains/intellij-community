@@ -2,17 +2,16 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Use {@link BuilderService} to register implementations of this class
@@ -103,6 +102,18 @@ public abstract class ModuleLevelBuilder extends Builder {
           context.processMessage(new ProgressMessage("Found " + newlyAffectedFiles.size() + " affected files"));
 
           if (!newlyAffectedFiles.isEmpty()) {
+
+
+            if (LOG.isDebugEnabled()) {
+              final List<Pair<File, Module>> wrongFiles = checkAffectedFilesInCorrectModules(context, chunk, newlyAffectedFiles);
+              if (!wrongFiles.isEmpty()) {
+                LOG.debug("Wrong affected files for module chunk " + chunk.getName() + ": ");
+                for (Pair<File, Module> pair : wrongFiles) {
+                  LOG.debug("\t[" + pair.second.getName() + "] " + pair.first.getPath());
+                }
+              }
+            }
+
             for (File file : newlyAffectedFiles) {
               context.markDirtyIfNotDeleted(file);
             }
@@ -133,6 +144,45 @@ public abstract class ModuleLevelBuilder extends Builder {
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages
     }
+  }
+
+
+  private static List<Pair<File, Module>> checkAffectedFilesInCorrectModules(CompileContext context, ModuleChunk currentChunk, Collection<File> affected) {
+    if (affected.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    final Set<Module> chunkModules = currentChunk.getModules();
+    final Map<Module, Set<Module>> cache = new HashMap<Module, Set<Module>>();
+    final List<Pair<File, Module>> result = new ArrayList<Pair<File, Module>>();
+
+    for (File file : affected) {
+      final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
+      if (moduleAndRoot == null) {
+        continue;
+      }
+      final Module moduleOfFile = moduleAndRoot.module;
+      if (chunkModules.contains(moduleOfFile)) {
+        continue;
+      }
+      Set<Module> moduleOfFileWithDependencies = cache.get(moduleOfFile);
+      if (moduleOfFileWithDependencies == null) {
+        moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
+        cache.put(moduleOfFile, moduleOfFileWithDependencies);
+      }
+      if (intersects(moduleOfFileWithDependencies, chunkModules)) {
+        continue;
+      }
+      result.add(Pair.create(file, moduleOfFile));
+    }
+    return result;
+  }
+
+  private static boolean intersects(Set<Module> set1, Set<Module> set2) {
+    if (set1.size() < set2.size()) {
+      return new HashSet<Module>(set1).removeAll(set2);
+    }
+    return new HashSet<Module>(set2).removeAll(set1);
   }
 
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws IOException {

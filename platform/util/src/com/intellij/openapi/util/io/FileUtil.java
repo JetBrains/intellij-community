@@ -28,6 +28,8 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.MagicConstant;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +62,10 @@ public class FileUtil {
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
   public static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
   public static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
+
+  public static final TObjectHashingStrategy<String> T_HASHING_STRATEGY = SystemInfo.isFileSystemCaseSensitive
+                                                                          ? TObjectHashingStrategy.CANONICAL
+                                                                          : CaseInsensitiveStringHashingStrategy.INSTANCE;
 
   @Nullable
   public static String getRelativePath(File base, File file) {

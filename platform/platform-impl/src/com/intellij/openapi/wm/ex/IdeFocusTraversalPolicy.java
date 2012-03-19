@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -126,7 +127,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicyExt {
     }
 
     /** TODO[anton,vova] implement Policy in Editor component instead */
-    if (component instanceof EditorComponentImpl) {
+    if (component instanceof EditorComponentImpl || component instanceof EditorWindowHolder) {
       return true;
     }
 

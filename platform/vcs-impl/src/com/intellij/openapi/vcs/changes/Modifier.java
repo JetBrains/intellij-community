@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.vcs.changes.local.*;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class Modifier implements ChangeListsWriteOperations {
     myCommandQueue = new LinkedList<ChangeListCommand>();
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, final String comment) {
+  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment) {
     final AddList command = new AddList(name, comment);
     impl(command);
     return command.getNewListCopy();

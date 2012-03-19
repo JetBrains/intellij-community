@@ -39,7 +39,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -54,6 +54,7 @@ import java.util.*;
 public class GroovyShellAction extends DumbAwareAction {
 
   private static final String GROOVY_SHELL_LAST_MODULE = "Groovy.Shell.LastModule";
+  public static final Key<Boolean> GROOVY_SHELL_FILE = Key.create("GROOVY_SHELL_FILE");
 
   private static List<Module> getGroovyCompatibleModules(Project project) {
     ArrayList<Module> result = new ArrayList<Module>();
@@ -149,6 +150,7 @@ public class GroovyShellAction extends DumbAwareAction {
 
           GroovyFileImpl file = (GroovyFileImpl)res.getConsole().getFile();
           assert file.getContext() == null;
+          file.putUserData(GROOVY_SHELL_FILE, Boolean.TRUE);
 
           file.setContext(shellRunner.getContext(module));
 

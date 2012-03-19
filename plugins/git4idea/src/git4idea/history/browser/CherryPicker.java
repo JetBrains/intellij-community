@@ -17,6 +17,7 @@ package git4idea.history.browser;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -28,68 +29,85 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitVcs;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 
 public class CherryPicker {
+
+  private static final Logger LOG = Logger.getInstance(CherryPicker.class);
+
   private final GitVcs myVcs;
   private final List<GitCommit> myCommits;
+  @NotNull private final CheckinEnvironment myCheckinEnvironment;
   private final LowLevelAccess myAccess;
 
   private final List<VcsException> myExceptions;
   private final List<VcsException> myWarnings;
-  private final List<FilePath> myDirtyFiles;
-  private final List<String> myMessagesInOrder;
-  private final Map<String, Collection<FilePath>> myFilesToMove;
   private boolean myConflictsExist;
+  private final ChangeListManager myChangeListManager;
+
+  private final List<CherryPickedData> myCherryPickedData;
 
   public CherryPicker(GitVcs vcs, final List<GitCommit> commits, LowLevelAccess access) {
     myVcs = vcs;
     myCommits = commits;
     myAccess = access;
 
+    myChangeListManager = PeriodicalTasksCloser.getInstance().safeGetComponent(myVcs.getProject(), ChangeListManager.class);
+    CheckinEnvironment ce = myVcs.getCheckinEnvironment();
+    LOG.assertTrue(ce != null);
+    myCheckinEnvironment = ce;
+
     myExceptions = new ArrayList<VcsException>();
     myWarnings = new ArrayList<VcsException>();
-
-    myDirtyFiles = new ArrayList<FilePath>();
-    myMessagesInOrder = new ArrayList<String>(commits.size());
-    myFilesToMove = new HashMap<String, Collection<FilePath>>();
+    myCherryPickedData = new ArrayList<CherryPickedData>();
   }
 
   public void execute() {
-    final CheckinEnvironment ce = myVcs.getCheckinEnvironment();
-
-    for (int i = 0; i < myCommits.size(); i++) {
-      cherryPickStep(ce, i);
+    for (GitCommit commit : myCommits) {
+      cherryPickStep(commit);
     }
 
     // remove those that are in newer lists
     checkListsForSamePaths();
 
-    for (FilePath file : myDirtyFiles) {
-      VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getPath());
-      if (vf != null) {
-        vf.refresh(false, false);
-      }
-    }
+    refreshChangedFiles();
     findAndProcessChangedForVcs();
 
     showResults();
   }
 
+  private void refreshChangedFiles() {
+    for (FilePath file : getAllChangedFiles()) {
+      VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getPath());
+      if (vf != null) {
+        vf.refresh(false, false);
+      }
+    }
+  }
+
+  @NotNull
+  private Collection<FilePath> getAllChangedFiles() {
+    Collection<FilePath> files = new ArrayList<FilePath>();
+    for (CherryPickedData data : myCherryPickedData) {
+      files.addAll(data.getFiles());
+    }
+    return files;
+  }
+
   private void findAndProcessChangedForVcs() {
-    final ChangeListManager clm = PeriodicalTasksCloser.getInstance().safeGetComponent(myVcs.getProject(), ChangeListManager.class);
-    clm.invokeAfterUpdate(new Runnable() {
+    myChangeListManager.invokeAfterUpdate(new Runnable() {
       public void run() {
-        moveToCorrectLists(clm);
+        moveToCorrectLists();
       }
-    }, InvokeAfterUpdateMode.SILENT, "", new Consumer<VcsDirtyScopeManager>() {
+    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "", new Consumer<VcsDirtyScopeManager>() {
       public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-        vcsDirtyScopeManager.filePathsDirty(myDirtyFiles, null);
+        vcsDirtyScopeManager.filePathsDirty(getAllChangedFiles(), null);
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.defaultModalityState());
   }
 
   private void showResults() {
@@ -98,7 +116,8 @@ public class CherryPicker {
       showOverChangesView(project, "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
     } else {
       if (myExceptions.isEmpty()) {
-        showOverChangesView(project, "Unresolved conflicts while cherry-picking. Resolve conflicts, then commit changes", MessageType.WARNING);
+        showOverChangesView(project, "Unresolved conflicts while cherry-picking. Resolve conflicts, then commit changes",
+                            MessageType.WARNING);
       } else {
         showOverChangesView(project, "Errors in cherry-pick", MessageType.ERROR);
       }
@@ -109,33 +128,46 @@ public class CherryPicker {
     }
   }
 
-  private void moveToCorrectLists(ChangeListManager clm) {
-    for (Map.Entry<String, Collection<FilePath>> entry : myFilesToMove.entrySet()) {
-      final Collection<FilePath> filePaths = entry.getValue();
-      final String message = entry.getKey();
+  private void moveToCorrectLists() {
+    for (CherryPickedData pickedData : myCherryPickedData) {
+      final Collection<FilePath> filePaths = pickedData.getFiles();
+      final String message = pickedData.getCommitMessage();
 
       if (filePaths.isEmpty()) continue;
 
-      final List<Change> changes = new ArrayList<Change>(filePaths.size());
-      for (FilePath filePath : filePaths) {
-        changes.add(clm.getChange(filePath));
-      }
-      if (! changes.isEmpty()) {
-        final LocalChangeList cl = clm.addChangeList(message, null);
-        clm.moveChangesTo(cl, changes.toArray(new Change[changes.size()]));
+      final List<Change> changes = pathsToChanges(filePaths);
+      pickedData.setChanges(changes);
+      if (!changes.isEmpty()) {
+        final LocalChangeList cl = myChangeListManager.addChangeList(message, null);
+        pickedData.setChangeList(cl);
+        myChangeListManager.moveChangesTo(cl, changes.toArray(new Change[changes.size()]));
       }
     }
   }
 
+  @NotNull
+  private List<Change> pathsToChanges(@NotNull Collection<FilePath> filePaths) {
+    final List<Change> changes = new ArrayList<Change>(filePaths.size());
+    for (FilePath filePath : filePaths) {
+      changes.add(myChangeListManager.getChange(filePath));
+    }
+    return changes;
+  }
+
   private void checkListsForSamePaths() {
+    List<String> myMessagesInOrder = new ArrayList<String>(myCherryPickedData.size());
+    Map<String, Collection<FilePath>> myFilesToMove = new HashMap<String, Collection<FilePath>>(myCherryPickedData.size());
+    for (CherryPickedData data : myCherryPickedData) {
+      myMessagesInOrder.add(data.getCommitMessage());
+      myFilesToMove.put(data.getCommitMessage(), data.getFiles());
+    }
     final GroupOfListsProcessor listsProcessor = new GroupOfListsProcessor();
     listsProcessor.process(myMessagesInOrder, myFilesToMove);
     final Set<String> lostSet = listsProcessor.getHaveLostSomething();
     markFilesMovesToNewerLists(myWarnings, lostSet, myFilesToMove);
   }
 
-  private void cherryPickStep(CheckinEnvironment ce, int i) {
-    final GitCommit commit = myCommits.get(i);
+  private void cherryPickStep(@NotNull GitCommit commit) {
     try {
       if (!myAccess.cherryPick(commit)) {
         myConflictsExist = true;
@@ -147,15 +179,14 @@ public class CherryPicker {
     final List<Change> changes = commit.getChanges();
 
     final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
-    String message = ce.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
+    String message = myCheckinEnvironment.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
     message = (message == null) ? commit.getDescription() + " (cherry picked from commit " + commit.getShortHash() + ")" : message;
 
-    myMessagesInOrder.add(message);
-    myFilesToMove.put(message, paths);
-    myDirtyFiles.addAll(paths);
+    myCherryPickedData.add(new CherryPickedData(message, paths));
   }
 
-  private void markFilesMovesToNewerLists(List<VcsException> exceptions, Set<String> lostSet, Map<String, Collection<FilePath>> filesToMove) {
+  private static void markFilesMovesToNewerLists(List<VcsException> exceptions, Set<String> lostSet,
+                                                 Map<String, Collection<FilePath>> filesToMove) {
     if (! lostSet.isEmpty()) {
       final StringBuilder sb = new StringBuilder("Some changes are moved from following list(s) to other:");
       boolean first = true;
@@ -208,4 +239,42 @@ public class CherryPicker {
       return myHaveLostSomething;
     }
   }
+
+  private static class CherryPickedData {
+
+    private final String myCommitMessage;
+    private final Collection<FilePath> myFiles;
+    private LocalChangeList myChangeList;
+    private Collection<Change> myChanges;
+
+    private CherryPickedData(@NotNull String message, @NotNull Collection<FilePath> files) {
+      myCommitMessage = message;
+      myFiles = files;
+    }
+
+    public Collection<Change> getChanges() {
+      return myChanges;
+    }
+
+    public LocalChangeList getChangeList() {
+      return myChangeList;
+    }
+
+    public String getCommitMessage() {
+      return myCommitMessage;
+    }
+
+    public Collection<FilePath> getFiles() {
+      return myFiles;
+    }
+
+    public void setChanges(List<Change> changes) {
+      myChanges = changes;
+    }
+
+    public void setChangeList(LocalChangeList changeList) {
+      myChangeList = changeList;
+    }
+  }
+
 }

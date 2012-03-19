@@ -16,7 +16,6 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.model.RadComponent;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,16 +27,17 @@ import java.util.List;
  */
 public abstract class Property<T extends RadComponent> {
   private final Property myParent;
-  @NotNull private final String myName;
+  private final String myName;
   private boolean myImportant;
   private boolean myExpert;
   private boolean myDeprecated;
 
-  public Property(Property parent, @NotNull @NonNls String name) {
+  public Property(@Nullable Property parent, @NotNull String name) {
     myParent = parent;
     myName = name;
   }
 
+  public abstract Property createForNewPresentation();
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Hierarchy

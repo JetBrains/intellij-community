@@ -514,7 +514,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private void fireFileWithNoDocumentChanged(final VirtualFile file) {
+  private void fireFileWithNoDocumentChanged(@NotNull VirtualFile file) {
     myMultiCaster.fileWithNoDocumentChanged(file);
   }
 
@@ -634,7 +634,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myMultiCaster.unsavedDocumentsDropped();
   }
 
-  private boolean fireBeforeFileContentReload(final VirtualFile file, final Document document) {
+  private boolean fireBeforeFileContentReload(final VirtualFile file, @NotNull Document document) {
     for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
       try {
         if (!vetoer.mayReloadFileContent(file, document)) {

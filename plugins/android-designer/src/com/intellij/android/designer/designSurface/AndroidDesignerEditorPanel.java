@@ -33,6 +33,7 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -45,7 +46,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.uipreview.*;
+import org.jetbrains.android.uipreview.LayoutDeviceConfiguration;
+import org.jetbrains.android.uipreview.LocaleData;
+import org.jetbrains.android.uipreview.RenderUtil;
+import org.jetbrains.android.uipreview.RenderingException;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -127,19 +131,22 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        checkRenderer(false);
+        checkRenderer();
 
         RootView rootView = new RootView(mySession.getImage(), 30, 20);
         parser.updateRootComponent(mySession, rootView);
+        RadViewComponent newRootComponent = parser.getRootComponent();
 
-        new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget()).loadRecursive(parser.getRootComponent());
+        PropertyParser propertyParser = new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget());
+        newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);
+        propertyParser.loadRecursive(newRootComponent);
 
         JPanel rootPanel = new JPanel(null);
         rootPanel.setBackground(Color.WHITE);
         rootPanel.add(rootView);
 
         removeNativeRoot();
-        myRootComponent = parser.getRootComponent();
+        myRootComponent = newRootComponent;
         myLayeredPane.add(rootPanel, LAYER_COMPONENT);
 
         runnable.run();
@@ -157,24 +164,20 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        updateRenderer(false);
+        checkRenderer();
+
+        RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+        RootView rootView = (RootView)rootComponent.getNativeComponent();
+        rootView.setImage(mySession.getImage());
+        ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+
+        myLayeredPane.repaint();
       }
     });
   }
 
-  private void updateRenderer(boolean render) throws Throwable {
-    checkRenderer(render);
-
-    RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
-    RootView rootView = (RootView)rootComponent.getNativeComponent();
-    rootView.setImage(mySession.getImage());
-    ModelParser.updateRootComponent(rootComponent, mySession, rootView);
-
-    myLayeredPane.repaint();
-  }
-
-  private void checkRenderer(boolean render) throws Throwable {
-    Result result = render ? mySession.render() : mySession.getResult();
+  private void checkRenderer() throws Throwable {
+    Result result = mySession.getResult();
     if (!result.isSuccess()) {
       System.out.println(
         "No session: " + result.getErrorMessage() + " : " + result.getStatus() + " : " + result.getData() + " : " + result.getException());
@@ -251,7 +254,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           mySession = RenderUtil
             .createRenderSession(getProject(), layoutXmlText, myFile, manager.getSelectedTarget(), facet, config, xdpi, ydpi,
                                  manager.getSelectedTheme());
-          System.out.println(mySession + " | " + mySession.getClass());
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
@@ -337,8 +339,14 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   @NotNull
-  protected ComponentCreationFactory createCreationFactory(Item paletteItem) {
-    return null;  // TODO: Auto-generated method stub
+  protected ComponentCreationFactory createCreationFactory(final Item paletteItem) {
+    return new ComponentCreationFactory() {
+      @NotNull
+      @Override
+      public RadComponent create() throws Exception {
+        return ModelParser.createComponent(null, paletteItem.getMetaModel());
+      }
+    };
   }
 
   @Override
@@ -351,7 +359,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     try {
       myPSIChangeListener.stop();
       operation.run();
-      updateRenderer(true);
+      updateRenderer();
       return true;
     }
     catch (Throwable e) {
@@ -370,7 +378,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       for (EditOperation operation : operations) {
         operation.execute();
       }
-      updateRenderer(true);
+      updateRenderer();
     }
     catch (Throwable e) {
       showError("Execute command", e);

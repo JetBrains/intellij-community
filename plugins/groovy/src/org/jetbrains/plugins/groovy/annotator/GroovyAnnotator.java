@@ -40,9 +40,7 @@ import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -1729,7 +1727,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         annotation = holder.createInfoAnnotation(toHighlight, message);
       }
       // todo implement for nested classes
-      if (refElement.getQualifier() == null) {
+      if (refElement.getQualifier() == null || PsiTreeUtil.getParentOfType(refElement, GrImportStatement.class) != null) {
         registerCreateClassByTypeFix(refElement, annotation);
         registerAddImportFixes(refElement, annotation);
         UnresolvedReferenceQuickFixProvider.registerReferenceFixes(refElement, new QuickFixActionRegistrarAdapter(annotation));

@@ -78,7 +78,9 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   public void processRoots(ArtifactRootProcessor processor) throws IOException {
     int i = 0;
     for (Map.Entry<ArtifactSourceRoot, Collection<DestinationInfo>> entry : myInstructions.entrySet()) {
-      processor.process(entry.getKey(), i, entry.getValue());
+      if (!processor.process(entry.getKey(), i, entry.getValue())) {
+        break;
+      }
       i++;
     }
   }

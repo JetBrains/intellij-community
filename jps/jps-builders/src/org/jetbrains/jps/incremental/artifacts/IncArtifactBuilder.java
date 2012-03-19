@@ -50,6 +50,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     final ArtifactSorter sorter = new ArtifactSorter(context.getProject());
     final Map<String, String> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
     for (String artifactName : sorter.getArtifactsSortedByInclusion()) {
+      context.checkCanceled();
       final Artifact artifact = artifactsMap.get(artifactName);
       if (artifact != null) {
         final String selfIncluding = selfIncludingNameMap.get(artifactName);
@@ -128,14 +129,17 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       }
 
       deleteOutdatedFiles(filesToDelete, context, srcOutMapping, outSrcMapping);
+      context.checkCanceled();
 
       final ArtifactInstructionsBuilder instructions = state.getOrCreateInstructions();
       final Set<JarInfo> changedJars = new THashSet<JarInfo>();
       instructions.processRoots(new ArtifactRootProcessor() {
         @Override
-        public void process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
+        public boolean process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
+          if (context.isCanceled()) return false;
+
           final Set<String> sourcePaths = filesToProcess.get(rootIndex);
-          if (sourcePaths == null) return;
+          if (sourcePaths == null) return true;
 
           for (String sourcePath : sourcePaths) {
             if (!root.containsFile(sourcePath)) continue;//todo[nik] this seems to be unnecessary
@@ -150,8 +154,10 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
               }
             }
           }
+          return true;
         }
       });
+      context.checkCanceled();
 
       JarsBuilder builder = new JarsBuilder(changedJars, context, srcOutMapping, outSrcMapping, instructions);
       final boolean processed = builder.buildJars();

@@ -341,7 +341,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       child = this;
     }
     else if (name.equals("..")) {
-      child = getParent();
+      if (isSymLink()) {
+        final VirtualFile canonicalFile = getCanonicalFile();
+        child = canonicalFile != null ? canonicalFile.getParent() : null;
+      }
+      else {
+        child = getParent();
+      }
     }
     else {
       child = findChild(name);

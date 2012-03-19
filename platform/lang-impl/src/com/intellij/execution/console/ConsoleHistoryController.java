@@ -108,10 +108,7 @@ public class ConsoleHistoryController {
           saveHistory();
         }
       });
-      String consoleContent = loadHistory();
-      if (consoleContent != null) {
-        setConsoleText(consoleContent, false, false);
-      }
+      loadHistory(myId);
     }
     configureActions();
     myLastSaveStamp = getCurrentTimeStamp();
@@ -135,37 +132,44 @@ public class ConsoleHistoryController {
     myBrowseHistory.registerCustomShortcutSet(myBrowseHistory.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
   }
 
-  private File getFile() {
-    final StringBuilder sb = new StringBuilder().append(PathManager.getSystemPath()).append(File.separator).append("userHistory").
-      append(File.separator).append(myType).append(Long.toHexString(StringHash.calc(myId))).append(".hist.xml");
-    return new File(sb.toString());
+  private String getHistoryFilePath(final String id) {
+    return PathManager.getSystemPath() + File.separator +
+           "userHistory" + File.separator +
+           myType + Long.toHexString(StringHash.calc(id)) + ".hist.xml";
   }
 
-
-  @Nullable
-  private String loadHistory() {
-    final File file = getFile();
-    if (!file.exists()) return null;
+  /**
+   * Use this method if you decided to change the id for your console but don't want your users to loose their current histories
+   * @param id previous id id
+   * @return true if some text has been loaded; otherwise false
+   */
+  public boolean loadHistory(String id) {
+    File file = new File(getHistoryFilePath(id));
+    if (!file.exists()) return false;
     HierarchicalStreamReader xmlReader = null;
     try {
       xmlReader = new XppReader(new FileReader(file));
-      return loadHistory(xmlReader);
+      String text = loadHistory(xmlReader, id);
+      if (text != null) {
+        setConsoleText(text, false, false);
+        return true;
+      }
     }
     catch (Exception ex) {
       LOG.error(ex);
-      return null;
     }
     finally {
       if (xmlReader != null) {
         xmlReader.close();
       }
     }
+    return false;
   }
 
   private void saveHistory() {
     if (myLastSaveStamp == getCurrentTimeStamp()) return;
 
-    final File file = getFile();
+    final File file = new File(getHistoryFilePath(myId));
     final File dir = file.getParentFile();
     if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
       LOG.error("failed to create folder: "+dir.getAbsolutePath());
@@ -279,10 +283,10 @@ public class ConsoleHistoryController {
 
 
   @Nullable
-  private String loadHistory(final HierarchicalStreamReader in) {
+  private String loadHistory(final HierarchicalStreamReader in, final String expectedId) {
     if (!in.getNodeName().equals("console-history")) return null;
     final String id = in.getAttribute("id");
-    if (!myId.equals(id)) return null;
+    if (!expectedId.equals(id)) return null;
     final ArrayList<String> entries = new ArrayList<String>();
     String consoleContent = null;
     while (in.hasMoreChildren()) {

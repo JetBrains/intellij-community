@@ -95,7 +95,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
       bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
         @Override
-        public void fileContentLoaded(final VirtualFile virtualFile, Document document) {
+        public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
           PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
             @Override
             public PsiFile compute() {
@@ -556,7 +556,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if(viewProvider != null) component.doPostponedFormatting(viewProvider);
   }
 
-  private void fireDocumentCreated(Document document, PsiFile file) {
+  private void fireDocumentCreated(@NotNull Document document, PsiFile file) {
     for (Listener listener : myListeners) {
       listener.documentCreated(document, file);
     }

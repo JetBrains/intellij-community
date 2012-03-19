@@ -15,43 +15,103 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.Set;
 
 /**
  * @author Max Medvedev
  */
 public class GrDGMTypeCalculator extends GrCallExpressionTypeCalculator {
+  private static final Set<String> mySet = new HashSet<String>();
+
+  static {
+    mySet.add("unique");
+    mySet.add("findAll");
+    mySet.add("grep");
+    mySet.add("collectMany");
+    mySet.add("split");
+    mySet.add("plus");
+    mySet.add("intersect");
+    mySet.add("leftShift");
+  }
+
   @Override
-  protected PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod resolvedMethod) {
-    if (resolvedMethod instanceof GrGdkMethod) {
-      resolvedMethod = ((GrGdkMethod)resolvedMethod).getStaticMethod();
+  protected PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod resolved) {
+    if (resolved instanceof GrGdkMethod) {
+      resolved = ((GrGdkMethod)resolved).getStaticMethod();
     }
 
-    final PsiClass containingClass = resolvedMethod.getContainingClass();
+    final PsiClass containingClass = resolved.getContainingClass();
     if (containingClass == null || !GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName())) return null;
 
-    final String name = resolvedMethod.getName();
+    GrExpression qualifier = getQualifier(callExpression);
+    if (qualifier == null) return null;
 
+    String name = resolved.getName();
     if ("find".equals(name)) {
-      final GrExpression invoked = callExpression.getInvokedExpression();
-      if (invoked instanceof GrReferenceExpression) {
-        final GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
-        if (qualifier != null) {
-          final PsiType type = qualifier.getType();
-          if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
+      final PsiType type = qualifier.getType();
+      if (type instanceof PsiArrayType) return ((PsiArrayType)type).getComponentType();
+    }
+
+    if (isSimilarCollectionReturner(resolved)) {
+      PsiType returnType = resolved.getReturnType();
+      if (returnType instanceof PsiClassType) {
+        PsiClass rr = ((PsiClassType)returnType).resolve();
+        if (rr != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(rr.getQualifiedName())) {
+          PsiType type = qualifier.getType();
+          if (type instanceof PsiArrayType) return createArrayList(((PsiArrayType)type).getComponentType(), callExpression.getProject());
+          return type;
         }
       }
     }
 
     return null;
+  }
+
+  @Nullable
+  private static PsiType createArrayList(PsiType type, Project project) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiClass arrayList =
+      JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST, GlobalSearchScope.allScope(project));
+    if (arrayList == null) return null;
+
+    PsiTypeParameter[] parameters = arrayList.getTypeParameters();
+    if (parameters.length != 1) return null;
+
+    return factory.createType(arrayList, type);
+  }
+
+  private static boolean isSimilarCollectionReturner(PsiMethod resolved) {
+    PsiParameter[] params = resolved.getParameterList().getParameters();
+    if (params.length == 0) return false;
+
+    if (mySet.contains(resolved.getName())) return true;
+
+    PsiType type = params[0].getType();
+    return type instanceof PsiArrayType || GroovyPsiManager.isInheritorCached(type, CommonClassNames.JAVA_UTIL_COLLECTION);
+  }
+
+  @Nullable
+  private static GrExpression getQualifier(GrMethodCall callExpression) {
+    GrExpression invoked = callExpression.getInvokedExpression();
+    if (invoked instanceof GrReferenceExpression) {
+      return ((GrReferenceExpression)invoked).getQualifier();
+    }
+    else {
+      return null;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,15 +51,13 @@ public class MathRandomCastToIntInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiTypeCastExpression expression =
-      (PsiTypeCastExpression)infos[0];
+    final PsiTypeCastExpression expression = (PsiTypeCastExpression)infos[0];
     final PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiBinaryExpression)) {
+    if (!(parent instanceof PsiPolyadicExpression)) {
       return null;
     }
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)parent;
-    final IElementType tokenType = binaryExpression.getOperationTokenType();
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    final IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (JavaTokenType.ASTERISK != tokenType) {
       return null;
     }
@@ -75,47 +73,39 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTypeCastExpression)) {
         return;
       }
-      final PsiTypeCastExpression typeCastExpression =
-        (PsiTypeCastExpression)parent;
+      final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
       final PsiElement grandParent = typeCastExpression.getParent();
-      if (!(grandParent instanceof PsiBinaryExpression)) {
+      if (!(grandParent instanceof PsiPolyadicExpression)) {
         return;
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)grandParent;
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)grandParent;
       final PsiExpression operand = typeCastExpression.getOperand();
       if (operand == null) {
         return;
       }
       @NonNls final StringBuilder newExpression = new StringBuilder();
       newExpression.append("(int)(");
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      if (typeCastExpression.equals(lhs)) {
-        newExpression.append(operand.getText());
-      }
-      else {
-        newExpression.append(lhs.getText());
-      }
-      newExpression.append(binaryExpression.getOperationSign().getText());
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
-        return;
-      }
-      if (typeCastExpression.equals(rhs)) {
-        newExpression.append(operand.getText());
-      }
-      else {
-        newExpression.append(rhs.getText());
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (final PsiExpression expression : operands) {
+        final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(expression);
+        if (token != null) {
+          newExpression.append(token.getText());
+        }
+        if (typeCastExpression.equals(expression)) {
+          newExpression.append(operand.getText());
+        }
+        else {
+          newExpression.append(expression.getText());
+        }
       }
       newExpression.append(')');
-      replaceExpression(binaryExpression, newExpression.toString());
+      replaceExpression(polyadicExpression, newExpression.toString());
     }
   }
 

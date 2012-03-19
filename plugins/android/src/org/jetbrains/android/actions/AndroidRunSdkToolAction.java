@@ -59,8 +59,8 @@ public abstract class AndroidRunSdkToolAction extends AnAction {
       }
       sdkPath = sdks[index];
     }
-    doRunTool(sdkPath);
+    doRunTool(project, sdkPath);
   }
 
-  protected abstract void doRunTool(@NotNull String sdkPath);
+  protected abstract void doRunTool(@NotNull Project project, @NotNull String sdkPath);
 }

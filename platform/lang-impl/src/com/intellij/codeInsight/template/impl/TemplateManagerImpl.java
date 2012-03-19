@@ -69,7 +69,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public void projectOpened() {
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
-      public void editorReleased(EditorFactoryEvent event) {
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
         if (editor.getProject() != null && editor.getProject() != myProject) return;
         if (myProject.isDisposed() || !myProject.isOpen()) return;

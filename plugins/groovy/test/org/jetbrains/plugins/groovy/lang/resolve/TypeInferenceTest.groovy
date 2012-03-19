@@ -267,7 +267,7 @@ map = new X()
 map['i'] += 2
 ''') as GroovyFile
     GrAssignmentExpression assignment = file.topStatements[2] as GrAssignmentExpression
-    assertTrue(assignment.getLValue().getType().equalsToText(CommonClassNames.JAVA_UTIL_DATE))
+    assertTrue(assignment.LValue.type.equalsToText(CommonClassNames.JAVA_UTIL_DATE))
   }
 
   void testAllTypeParamsAreSubstituted() {
@@ -309,12 +309,44 @@ X<String, Integer> x = [:]
   }
 
   void testRawCollectionsInCasts() {
-    def file = myFixture.configureByText('_a.groovy', '''\
+    doTest('''\
 String[] a = ["a"]
 def b = a as ArrayList
 def cc = b[0]
-print c<caret>c''')
-    def ref = (GrReferenceExpression)file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assertEquals(String.canonicalName, ref.type.canonicalText)
+print c<caret>c''', String.canonicalName)
+  }
+
+  void testFind() {
+    doTest('''\
+def arr =  ['1', '2', '3'] as String[]
+def found = arr.find({it=='1'})
+print fou<caret>nd''', String.canonicalName)
+  }
+
+  void testFindAll() {
+    doTest('''\
+def arr =  ['1', '2', '3']
+def found = arr.findAll({it==1})
+print fou<caret>nd''', 'java.util.ArrayList<java.lang.String>')
+  }
+
+  void testFindAllForArray() {
+    doTest('''\
+def arr =  ['1', '2', '3'] as String[]
+def found = arr.findAll({it==1})
+print fou<caret>nd''', 'java.util.ArrayList<java.lang.String>')
+  }
+
+  void testFindAllForSet() {
+    doTest('''\
+def arr =  ['1', '2', '3'] as Set<String>
+def found = arr.findAll({it==1})
+print fou<caret>nd''', 'java.util.Set<java.lang.String>')
+  }
+
+  private void doTest(String text, String type) {
+    def file = myFixture.configureByText('_.groovy', text)
+    def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
+    assertEquals(type, ref.type.canonicalText)
   }
 }

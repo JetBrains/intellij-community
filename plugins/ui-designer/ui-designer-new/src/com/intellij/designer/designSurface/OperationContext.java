@@ -85,6 +85,10 @@ public final class OperationContext {
     return is(PASTE);
   }
 
+  public boolean isTree() {
+    return myArea.isTree();
+  }
+
   public EditableArea getArea() {
     return myArea;
   }

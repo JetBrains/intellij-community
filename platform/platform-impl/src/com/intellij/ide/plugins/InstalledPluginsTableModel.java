@@ -568,7 +568,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           if (wasUpdated) {
             myPanel.setToolTipText("Plugin was updated to the newest version. Changes will be available after restart");
           } else {
-            myPanel.setToolTipText("Plugin would be activated after restart.");
+            myPanel.setToolTipText("Plugin will be activated after restart.");
           }
         }
         myBundledLabel.setForeground(grayedFg);

@@ -28,6 +28,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class RadLayout {
+  protected RadComponent myContainer;
+
+  public void setContainer(RadComponent container) {
+    myContainer = container;
+  }
+
   public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection);
 
   @Nullable

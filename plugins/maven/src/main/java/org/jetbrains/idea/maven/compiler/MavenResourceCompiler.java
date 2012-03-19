@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -98,9 +96,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static Set<String> createPathsSet() {
-    return SystemInfo.isFileSystemCaseSensitive
-           ? new THashSet<String>()
-           : new THashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+    return new THashSet<String>(FileUtil.T_HASHING_STRATEGY);
   }
 
   private void saveCache(final Project project) {

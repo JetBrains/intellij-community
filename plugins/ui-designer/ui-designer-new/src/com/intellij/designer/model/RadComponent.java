@@ -117,6 +117,7 @@ public abstract class RadComponent {
 
   public void setLayout(RadLayout layout) {
     myLayout = layout;
+    myLayout.setContainer(this);
   }
 
   @Nullable

@@ -333,7 +333,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
   }
 
-  private static int findProperty(List<Property> properties, Property property) {
+  public static int findProperty(List<Property> properties, Property property) {
     String name = property.getName();
     int size = properties.size();
 

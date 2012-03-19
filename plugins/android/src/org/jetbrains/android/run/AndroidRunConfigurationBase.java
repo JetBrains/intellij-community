@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.run;
 
+import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.Log;
 import com.android.sdklib.internal.avd.AvdInfo;
 import com.android.sdklib.internal.avd.AvdManager;
@@ -37,6 +38,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -181,7 +183,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (module == null) {
       throw new ExecutionException("Module is not found");
     }
-    AndroidFacet facet = AndroidFacet.getInstance(module);
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet == null) {
       throw new ExecutionException(AndroidBundle.message("no.facet.error", module.getName()));
     }
@@ -196,15 +198,20 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       return null;
     }
 
-    if (platform.getSdkData().getDebugBridge(getProject()) == null) return null;
-
     boolean debug = DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId());
     if (debug) {
-      if (!AndroidSdkUtils.activateDdmsIfNecessary(facet.getModule().getProject(),
-                                                   facet.getDebugBridge())) {
+      if (!AndroidSdkUtils.activateDdmsIfNecessary(facet.getModule().getProject(), new Computable<AndroidDebugBridge>() {
+        @Nullable
+        @Override
+        public AndroidDebugBridge compute() {
+          return facet.getDebugBridge();
+        }
+      })) {
         return null;
       }
     }
+
+    if (platform.getSdkData().getDebugBridge(getProject()) == null) return null;
 
     String aPackage = getPackageName(facet);
     if (aPackage == null) return null;

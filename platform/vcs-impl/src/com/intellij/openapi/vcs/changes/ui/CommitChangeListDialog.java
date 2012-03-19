@@ -107,7 +107,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private static final String DETAILS_SHOW_OPTION = "CommitChangeListDialog.DETAILS_SHOW_OPTION_";
   private JPanel myDetailsPanel;
   private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
-  private String myOkActionText;
+  private final String myOkActionText;
   private final ZipperUpdater myZipperUpdater;
   private final Runnable myRefreshDetails;
 
@@ -171,7 +171,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
-                                   final CommitExecutor executor, final String comment) {
+                                      @Nullable final CommitExecutor executor, final String comment) {
     if (executor == null) {
       return commitChanges(project, changes, initialSelection, collectExecutors(project, changes), true, comment);
     }
@@ -767,10 +767,10 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         name = checkinEnvironment.getCheckinOperationName();
       }
       else {
-        name = VcsBundle.message("commit.dialog.default.commit.operation.name");
+        name = VcsBundle.getString("commit.dialog.default.commit.operation.name");
       }
     }
-    return name != null ? name : VcsBundle.message("commit.dialog.default.commit.operation.name");
+    return name != null ? name : VcsBundle.getString("commit.dialog.default.commit.operation.name");
   }
 
   @Override

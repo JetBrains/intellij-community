@@ -38,6 +38,10 @@ public abstract class CompilerConfiguration {
 
   public abstract void addResourceFilePattern(String namePattern) throws MalformedPatternException;
 
+  public abstract boolean isAddNotNullAssertions();
+
+  public abstract void setAddNotNullAssertions(boolean enabled);
+
   public abstract boolean isAnnotationProcessorsEnabled();
 
   public abstract void setAnnotationProcessorsEnabled(boolean enableAnnotationProcessors);

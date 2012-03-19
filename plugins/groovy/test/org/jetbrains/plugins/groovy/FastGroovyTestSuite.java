@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest;
 /**
  * @author Max Medvedev
  */
-public class CoreFastGroovyTestSuite {
+public class FastGroovyTestSuite {
 
   public static Test suite() throws Throwable {
     TestCaseLoader loader = new TestCaseLoader("", true);

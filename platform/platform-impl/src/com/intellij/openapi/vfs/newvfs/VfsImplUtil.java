@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,29 +24,31 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class VfsImplUtil {
-  
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
   
   @NonNls private static final String FILE_SEPARATORS = "/" + File.separator;
 
-  private VfsImplUtil() {
-  }
+  private VfsImplUtil() { }
 
   @Nullable
-  public static VirtualFile findFileByPath(NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
+  public static NewVirtualFile findFileByPath(@NotNull final NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
     final String normalizedPath = vfs.normalize(path);
     if (normalizedPath == null) return null;
     final String basePath = vfs.extractRootPath(normalizedPath);
     NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, vfs);
     if (file == null || !file.exists()) return null;
+    if (normalizedPath.length() < basePath.length()) return null;
 
-    if (normalizedPath.length() < basePath.length()) {
-      return null;
-    }
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
-        file = file.getParent();
+        if (file.isSymLink()) {
+          final NewVirtualFile canonicalFile = file.getCanonicalFile();
+          file = canonicalFile != null ? canonicalFile.getParent() : null;
+        }
+        else {
+          file = file.getParent();
+        }
       }
       else {
         file = file.findChild(pathElement);
@@ -60,7 +61,7 @@ public class VfsImplUtil {
   }
 
   @Nullable
-  public static VirtualFile findFileByPathIfCached(NewVirtualFileSystem vfs, @NotNull @NonNls String path) {
+  public static NewVirtualFile findFileByPathIfCached(@NotNull final NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
     final String normalizedPath = vfs.normalize(path);
     if (normalizedPath == null) return null;
     final String basePath = vfs.extractRootPath(normalizedPath);
@@ -70,7 +71,14 @@ public class VfsImplUtil {
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
-        file = file.getParent();
+        if (file.isSymLink()) {
+          final String canonicalPath = file.getCanonicalPath();
+          final NewVirtualFile canonicalFile = canonicalPath != null ? findFileByPathIfCached(vfs, canonicalPath) : null;
+          file = canonicalFile != null ? canonicalFile.getParent() : null;
+        }
+        else {
+          file = file.getParent();
+        }
       }
       else {
         file = file.findChildIfCached(pathElement);
@@ -83,18 +91,27 @@ public class VfsImplUtil {
   }
 
   @Nullable
-  public static VirtualFile refreshAndFindFileByPath(NewVirtualFileSystem vfs, @NotNull final String path) {
+  public static NewVirtualFile refreshAndFindFileByPath(@NotNull final NewVirtualFileSystem vfs, @NotNull @NonNls final String path) {
     final String normalizedPath = vfs.normalize(path);
     if (normalizedPath == null) return null;
     final String basePath = vfs.extractRootPath(normalizedPath);
     NewVirtualFile file = ManagingFS.getInstance().findRoot(basePath, vfs);
     if (file == null || !file.exists()) return null;
 
-    LOG.assertTrue(basePath.length() <= normalizedPath.length(), vfs + " failed to extract root path: " + basePath + " from " + normalizedPath);
+    LOG.assertTrue(basePath.length() <= normalizedPath.length(),
+                   vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "'");
+
     for (String pathElement : StringUtil.tokenize(normalizedPath.substring(basePath.length()), FILE_SEPARATORS)) {
       if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
       if ("..".equals(pathElement)) {
-        file = file.getParent();
+        if (file.isSymLink()) {
+          final String canonicalPath = file.getCanonicalPath();
+          final NewVirtualFile canonicalFile = canonicalPath != null ? refreshAndFindFileByPath(vfs, canonicalPath) : null;
+          file = canonicalFile != null ? canonicalFile.getParent() : null;
+        }
+        else {
+          file = file.getParent();
+        }
       }
       else {
         file = file.refreshAndFindChild(pathElement);

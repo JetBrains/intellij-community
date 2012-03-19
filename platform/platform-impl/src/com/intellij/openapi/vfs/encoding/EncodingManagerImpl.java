@@ -105,7 +105,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }, this);
     editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
       @Override
-      public void editorCreated(EditorFactoryEvent event) {
+      public void editorCreated(@NotNull EditorFactoryEvent event) {
         queueUpdateEncodingFromContent(event.getEditor().getDocument());
       }
     }, this);

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLogger;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
@@ -73,7 +74,7 @@ public class JarsBuilder {
     myContext = context;
   }
 
-  public boolean buildJars() throws IOException {
+  public boolean buildJars() throws IOException, ProjectBuildException {
     myContext.processMessage(new ProgressMessage("Building archives..."));
 
     final JarInfo[] sortedJars = sortJars();
@@ -84,6 +85,7 @@ public class JarsBuilder {
     myBuiltJars = new HashMap<JarInfo, File>();
     try {
       for (JarInfo jar : sortedJars) {
+        myContext.checkCanceled();
         buildJar(jar);
       }
 

@@ -73,7 +73,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbCompileInBackground.setSelected(workspaceConfiguration.COMPILE_IN_BACKGROUND);
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
-    myCbAssertNotNull.setSelected(workspaceConfiguration.ASSERT_NOT_NULL);
+    myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
     myCbUseCompileServer.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
     myCbMakeProjectOnSave.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     myCbMakeProjectOnSave.setEnabled(workspaceConfiguration.USE_COMPILE_SERVER);
@@ -101,10 +101,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     workspaceConfiguration.COMPILE_IN_BACKGROUND = myCbCompileInBackground.isSelected();
     workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
-    workspaceConfiguration.ASSERT_NOT_NULL = myCbAssertNotNull.isSelected();
     workspaceConfiguration.USE_COMPILE_SERVER = myCbUseCompileServer.isSelected();
     workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbMakeProjectOnSave.isSelected();
 
+    configuration.setAddNotNullAssertions(myCbAssertNotNull.isSelected());
     configuration.removeResourceFilePatterns();
     String extensionString = myResourcePatternsField.getText().trim();
     applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
@@ -162,11 +162,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     isModified |= ComparingUtils.isModified(myCbCompileInBackground, workspaceConfiguration.COMPILE_IN_BACKGROUND);
     isModified |= ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    isModified |= ComparingUtils.isModified(myCbAssertNotNull, workspaceConfiguration.ASSERT_NOT_NULL);
     isModified |= ComparingUtils.isModified(myCbUseCompileServer, workspaceConfiguration.USE_COMPILE_SERVER);
     isModified |= ComparingUtils.isModified(myCbMakeProjectOnSave, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    isModified |= ComparingUtils.isModified(myCbAssertNotNull, compilerConfiguration.isAddNotNullAssertions());
     isModified |= ComparingUtils.isModified(myCbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     isModified |= ComparingUtils.isModified(myResourcePatternsField, patternsToString(compilerConfiguration.getResourceFilePatterns()));
 

@@ -203,7 +203,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
       });
       EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
         @Override
-        public void editorCreated(EditorFactoryEvent event) {
+        public void editorCreated(@NotNull EditorFactoryEvent event) {
           if (event.getEditor().getDocument() == myNewDocument) {
             new AnAction() {
               @Override
@@ -221,7 +221,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
         }
 
         @Override
-        public void editorReleased(EditorFactoryEvent event) {
+        public void editorReleased(@NotNull EditorFactoryEvent event) {
           if (event.getEditor().getDocument() == myNewDocument) {
             Disposer.dispose(MyHandler.this);
             myReleased = true;
