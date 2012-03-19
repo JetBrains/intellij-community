@@ -50,6 +50,7 @@ class DragHelper extends MouseDragHelper {
     if (myDragSource == null || !myDragSource.canBeDraggedOut()) return false;
 
     TabLabel label = myTabs.myInfo2Label.get(myDragSource);
+    if (label == null) return false;
 
     int dX = dragToScreenPoint.x - startScreenPoint.x;
     int dY = dragToScreenPoint.y - startScreenPoint.y;

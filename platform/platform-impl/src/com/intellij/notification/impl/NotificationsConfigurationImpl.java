@@ -172,6 +172,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   }
 
   public synchronized void loadState(final Element state) {
+    myIdToSettingsMap.clear();
     for (@NonNls Element child : (Iterable<? extends Element>)state.getChildren("notification")) {
       final NotificationSettings settings = NotificationSettings.load(child);
       if (settings != null) {
