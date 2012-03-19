@@ -12,13 +12,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConsoleVisitorFilter implements PythonVisitorFilter {
   @Override
-  public boolean isSupported(@NotNull Class visitorClass, @NotNull PsiFile file) {
+  public boolean isSupported(@NotNull final Class visitorClass, @NotNull final PsiFile file) {
     //if we're in console
     if (PydevConsoleRunner.isInPydevConsole(file)) {
       //inspections
-      if (visitorClass == PyUnusedLocalInspectionVisitor.class || visitorClass == PyUnboundLocalVariableInspection.Visitor.class ||
-          visitorClass == PyStatementEffectInspection.Visitor.class || visitorClass == PySingleQuotedDocstringInspection.Visitor.class ||
-          visitorClass == PyDocstringInspection.Visitor.class) {
+      if (visitorClass == PyUnusedLocalInspection.class || visitorClass == PyUnboundLocalVariableInspection.class ||
+          visitorClass == PyStatementEffectInspection.class || visitorClass == PySingleQuotedDocstringInspection.class ||
+          visitorClass == PyDocstringInspection.class) {
         return false;
       }
 

@@ -6,12 +6,14 @@ import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.PySuppressInspectionFix;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +65,12 @@ public abstract class PyInspection extends LocalInspectionTool implements Custom
 
   @Override
   public boolean isSuppressedFor(PsiElement element) {
-    return isSuppressedForParent(element, PyStatement.class) ||
+    final PsiFile file = element.getContainingFile();
+    boolean isAccepted = true;
+    if (file instanceof PyFileImpl) {
+      isAccepted = ((PyFileImpl)file).isAcceptedFor(this.getClass());
+    }
+    return !isAccepted || isSuppressedForParent(element, PyStatement.class) ||
            isSuppressedForParent(element, PyFunction.class) ||
            isSuppressedForParent(element, PyClass.class) ||
            isSuppressForCodeFragment(element);
