@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>AbstractMethodOverridesAbstractMethod.java</file>
+    <line>30</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Abstract method overrides abstract method</problem_class>
+    <description>Abstract method &lt;code&gt;three()&lt;/code&gt; overrides abstract method #loc</description>
+  </problem>
+
+</problems>
