@@ -15,7 +15,7 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilLight;
 import com.intellij.util.ArrayUtil;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
@@ -302,7 +302,7 @@ public class SSHMain {
       if (file.exists()) {
         // if encrypted ask user for passphrase
         String passphrase = null;
-        char[] text = FileUtil.loadFileText(file);
+        char[] text = FileUtilLight.loadFileText(file);
         if (isEncryptedKey(text)) {
           // need to ask passphrase from user
           int i;
