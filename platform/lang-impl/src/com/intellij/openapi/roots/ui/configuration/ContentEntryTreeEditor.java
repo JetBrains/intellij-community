@@ -144,7 +144,7 @@ public class ContentEntryTreeEditor {
     final ContentEntry entry = contentEntryEditor.getContentEntry();
     assert entry != null : contentEntryEditor;
     final VirtualFile file = entry.getFile();
-    assert file != null : entry;
+    assert file != null : entry.getUrl();
     myDescriptor.setRoots(file);
 
     final Runnable init = new Runnable() {
