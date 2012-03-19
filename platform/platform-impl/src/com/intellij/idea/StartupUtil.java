@@ -122,14 +122,22 @@ public class StartupUtil {
   private static boolean checkTmpIsAccessible() {
     if (!SystemInfo.isUnix || SystemInfo.isMac) return true;
 
+    final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+    if (!tmpDir.isDirectory()) {
+      showError("Inaccessible Temp Directory", "Temp directory '" + tmpDir + "' does not exist.\n" +
+                                               "Please set 'java.io.tmpdir' system property to point to an existing directory.");
+      return false;
+    }
+
     final File tmp;
     try {
-      tmp = FileUtil.createTempFile("idea_check_", ".tmp");
+      //noinspection SSBasedInspection
+      tmp = File.createTempFile("idea_tmp_check_", ".sh", tmpDir);
       FileUtil.writeToFile(tmp, "#!/bin/sh\n" +
                                 "exit 0");
     }
     catch (IOException e) {
-      showError("Inaccessible Temp Directory", e.getMessage() + " (" + FileUtil.getTempDirectory() + ").\n" +
+      showError("Inaccessible Temp Directory", e.getMessage() + " (" + tmpDir + ").\n" +
                                                "Temp directory is not accessible.\n" +
                                                "Please set 'java.io.tmpdir' system property to point to a writable directory.");
       return false;
