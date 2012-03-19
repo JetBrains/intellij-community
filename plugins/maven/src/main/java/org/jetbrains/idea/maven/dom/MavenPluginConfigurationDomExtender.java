@@ -53,7 +53,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       return;
     }
 
-    boolean isInPluginManagement = isInPluginManagement(config);
+    boolean isInPluginManagement = false;// isInPluginManagement(config);
 
     for (ParameterData each : collectParameters(pluginModel, config)) {
       registerPluginParameter(isInPluginManagement, r, each);
