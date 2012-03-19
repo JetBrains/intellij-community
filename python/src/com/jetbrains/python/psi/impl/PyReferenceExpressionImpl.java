@@ -222,7 +222,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (pyClass != null) {
           Property property = pyClass.findProperty(name);
           if (property != null) {
-            final Maybe<PyFunction> accessor = property.getByDirection(AccessDirection.of(this));
+            final Maybe<Callable> accessor = property.getByDirection(AccessDirection.of(this));
             if (!accessor.isDefined()) {
               return Ref.create(null);
             }

@@ -16,7 +16,7 @@ public class PyClassicPropertyTest extends PyTestCase {
 
   public void testV1() throws Exception {
     Property p;
-    Maybe<PyFunction> accessor;
+    Maybe<Callable> accessor;
     p = myClass.findProperty("v1");
     assertNotNull(p);
     assertNull(p.getDoc());
@@ -40,7 +40,7 @@ public class PyClassicPropertyTest extends PyTestCase {
 
   public void testV2() throws Exception {
     Property p;
-    Maybe<PyFunction> accessor;
+    Maybe<Callable> accessor;
     p = myClass.findProperty("v2");
     assertNotNull(p);
     assertEquals("doc of v2", p.getDoc());
@@ -65,7 +65,7 @@ public class PyClassicPropertyTest extends PyTestCase {
 
   public void testV3() throws Exception {
     Property p;
-    Maybe<PyFunction> accessor;
+    Maybe<Callable> accessor;
     p = myClass.findProperty("v3");
     assertNotNull(p);
     assertNull(p.getDoc());
@@ -73,7 +73,7 @@ public class PyClassicPropertyTest extends PyTestCase {
     assertEquals("v3", site.getText());
 
     accessor = p.getGetter();
-    assertFalse(accessor.isDefined());
+    assertTrue(accessor.isDefined());
 
     accessor = p.getSetter();
     assertTrue(accessor.isDefined());
@@ -88,7 +88,7 @@ public class PyClassicPropertyTest extends PyTestCase {
   /* NOTE: we don't support this yet
   public void testV4() throws Exception {
     Property p;
-    Maybe<PyFunction> accessor;
+    Maybe<Callable> accessor;
     p = myClass.findProperty("v4");
     assertNotNull(p);
     assertEquals("otherworldly", p.getDoc());
