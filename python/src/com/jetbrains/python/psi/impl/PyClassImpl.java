@@ -5,10 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -496,8 +493,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return proc.getResult();
   }
 
-  private final static Maybe<PyFunction> UNKNOWN_CALL = new Maybe<PyFunction>(); // denotes _not_ a PyFunction, actually
-  private final static Maybe<PyFunction> NONE = new Maybe<PyFunction>(null); // denotes an explicit None
+  private final static Maybe<Callable> UNKNOWN_CALL = new Maybe<Callable>(); // denotes _not_ a PyFunction, actually
+  private final static Maybe<Callable> NONE = new Maybe<Callable>(null); // denotes an explicit None
 
   /**
    * @param name name of the property
@@ -545,9 +542,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     for (Map.Entry<String, List<PyFunction>> entry: grouped.entrySet()) {
-      Maybe<PyFunction> getter = NONE;
-      Maybe<PyFunction> setter = NONE;
-      Maybe<PyFunction> deleter = NONE;
+      Maybe<Callable> getter = NONE;
+      Maybe<Callable> setter = NONE;
+      Maybe<Callable> deleter = NONE;
       String doc = null;
       final String decoratorName = entry.getKey();
       for (PyFunction method : entry.getValue()) {
@@ -557,13 +554,13 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
             final PyQualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
               if (qname.matches(PyNames.PROPERTY)) {
-                getter = new Maybe<PyFunction>(method);
+                getter = new Maybe<Callable>(method);
               }
               else if (useAdvancedSyntax && qname.matches(decoratorName, "setter")) {
-                setter = new Maybe<PyFunction>(method);
+                setter = new Maybe<Callable>(method);
               }
               else if (useAdvancedSyntax && qname.matches(decoratorName, "deleter")) {
-                deleter = new Maybe<PyFunction>(method);
+                deleter = new Maybe<Callable>(method);
               }
             }
           }
@@ -578,14 +575,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
-  private Maybe<PyFunction> fromPacked(Maybe<String> maybeName) {
+  private Maybe<Callable> fromPacked(Maybe<String> maybeName) {
     if (maybeName.isDefined()) {
       final String value = maybeName.value();
       if (value == null || PyNames.NONE.equals(value)) {
         return NONE;
       }
       PyFunction method = findMethodByName(value, true);
-      if (method != null) return new Maybe<PyFunction>(method);
+      if (method != null) return new Maybe<Callable>(method);
     }
     return UNKNOWN_CALL;
   }
@@ -599,9 +596,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)substub;
           PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
           if (prop != null && (name == null || name.equals(targetStub.getName()))) {
-            Maybe<PyFunction> getter = fromPacked(prop.getGetter());
-            Maybe<PyFunction> setter = fromPacked(prop.getSetter());
-            Maybe<PyFunction> deleter = fromPacked(prop.getDeleter());
+            Maybe<Callable> getter = fromPacked(prop.getGetter());
+            Maybe<Callable> setter = fromPacked(prop.getSetter());
+            Maybe<Callable> deleter = fromPacked(prop.getDeleter());
             String doc = prop.getDoc();
             if (getter != NONE || setter != NONE || deleter != NONE) {
               final PropertyImpl property = new PropertyImpl(targetStub.getName(), getter, setter, deleter, doc, targetStub.getPsi());
@@ -706,10 +703,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
-  private static class PropertyImpl extends PropertyBunch<PyFunction> implements Property {
+  private static class PropertyImpl extends PropertyBunch<Callable> implements Property {
     private final String myName;
 
-    private PropertyImpl(String name, Maybe<PyFunction> getter, Maybe<PyFunction> setter, Maybe<PyFunction> deleter, String doc, PyTargetExpression site) {
+    private PropertyImpl(String name, Maybe<Callable> getter, Maybe<Callable> setter, Maybe<Callable> deleter, String doc, PyTargetExpression site) {
       myName = name;
       myDeleter = deleter;
       myGetter = getter;
@@ -728,7 +725,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
     @NotNull
     @Override
-    public Maybe<PyFunction> getByDirection(@NotNull AccessDirection direction) {
+    public Maybe<Callable> getByDirection(@NotNull AccessDirection direction) {
       switch (direction) {
         case READ:    return myGetter;
         case WRITE:   return mySetter;
@@ -737,12 +734,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       throw new IllegalArgumentException("Unknown direction " + PyUtil.nvl(direction));
     }
 
+    @Nullable
     @Override
-    protected PyFunction translate(@NotNull PyReferenceExpression ref) {
-      if (PyNames.NONE.equals(ref.getName())) return null; // short-circuit a common case
-      PsiElement something = ref.getReference().resolve();
-      if (something instanceof PyFunction) {
-        return (PyFunction)something;
+    protected Callable translate(@NotNull PyExpression expr) {
+      if (PyNames.NONE.equals(expr.getName())) return null; // short-circuit a common case
+      if (expr instanceof Callable) {
+        return (Callable)expr;
+      }
+      final PsiReference ref = expr.getReference();
+      if (ref != null) {
+        PsiElement something = ref.resolve();
+        if (something instanceof Callable) {
+          return (Callable)something;
+        }
       }
       return null;
     }

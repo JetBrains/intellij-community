@@ -4,7 +4,6 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.impl.PropertyBunch;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
@@ -23,11 +22,10 @@ import java.io.IOException;
  */
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 
+  @Nullable
   @Override
-  protected String translate(@NotNull PyReferenceExpression ref) {
-    final String name = ref.getName();
-    assert name != null;
-    return name;
+  protected String translate(@NotNull PyExpression ref) {
+    return ref.getName();
   }
 
   private static final String IMPOSSIBLE_NAME = "#";
