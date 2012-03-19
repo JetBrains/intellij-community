@@ -42,7 +42,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     return candidates;
   }
 
-  private Collection<String> findInDirectory(VirtualFile rootDir) {
+  public static Collection<String> findInDirectory(VirtualFile rootDir) {
     List<String> candidates = new ArrayList<String>();
     if (rootDir != null) {
       VirtualFile[] suspects = rootDir.getChildren();
@@ -59,7 +59,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     return candidates;
   }
 
-  private Collection<String> findInterpreter(VirtualFile dir) {
+  private static Collection<String> findInterpreter(VirtualFile dir) {
     List<String> candidates = new ArrayList<String>();
     for (VirtualFile child : dir.getChildren()) {
       if (!child.isDirectory()) {
