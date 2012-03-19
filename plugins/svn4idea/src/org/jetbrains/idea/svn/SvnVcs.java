@@ -297,10 +297,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           SvnConfiguration.SvnSupportOptions supportOptions = null;
           try {
             ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
-
             supportOptions = myConfiguration.getSupportOptions(myProject);
 
-            upgradeToRecentVersion(supportOptions);
             if (! supportOptions.changeListsSynchronized()) {
               processChangeLists(lists);
             }
@@ -359,30 +357,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         catch (SVNException e) {
           // left in default list
         }
-      }
-    }
-  }
-
-  private void upgradeToRecentVersion(final SvnConfiguration.SvnSupportOptions supportOptions) {
-    if (! supportOptions.upgradeTo16Asked()) {
-      final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
-
-      if (workingCopyChecker.upgradeNeeded()) {
-
-        Notifications.Bus.notify(new Notification(getDisplayName(), SvnBundle.message("upgrade.format.to16.question.title"),
-                                                  "Old format Subversion working copies <a href=\"\">could be upgraded to version 1.6</a>.",
-                                                  NotificationType.INFORMATION, new NotificationListener() {
-            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              final int upgradeAnswer = Messages.showYesNoDialog(SvnBundle.message("upgrade.format.to16.question.text",
-                  SvnBundle.message("label.where.svn.format.can.be.changed.text", SvnBundle.message("action.show.svn.map.text.reference"))),
-                  SvnBundle.message("upgrade.format.to16.question.title"), Messages.getWarningIcon());
-              if (DialogWrapper.OK_EXIT_CODE == upgradeAnswer) {
-                workingCopyChecker.doUpgrade();
-              }
-
-              notification.expire();
-            }
-          }));
       }
     }
   }
@@ -1009,33 +983,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
         SvnUtil.getDepth(this, file)));
     }
     return infos;
-  }
-
-  private class SvnWorkingCopyChecker {
-    private List<WCInfo> myAllWcInfos;
-
-    public boolean upgradeNeeded() {
-      myAllWcInfos = getAllWcInfos();
-      for (WCInfo info : myAllWcInfos) {
-        if (! WorkingCopyFormat.ONE_DOT_SIX.equals(info.getFormat())) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    public void doUpgrade() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          final SvnFormatWorker formatWorker = new SvnFormatWorker(myProject, WorkingCopyFormat.ONE_DOT_SIX, myAllWcInfos);
-          // additionally ask about working copies with roots above the project root
-          formatWorker.checkForOutsideCopies();
-          if (formatWorker.haveStuffToConvert()) {
-            ProgressManager.getInstance().run(formatWorker);
-          }
-        }
-      });
-    }
   }
 
   @Override
