@@ -384,7 +384,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
             @Nullable
             private PyKeywordArgument generateRequiresKwarg(PyElementGenerator generator) {
-              final String text = String.format("foo(requires=[\"%s\"])", myPackageName);
+              final String text = String.format("foo(requires=['%s'])", myPackageName);
               final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
               PyKeywordArgument installRequiresArg = null;
               if (generated instanceof PyCallExpression) {
