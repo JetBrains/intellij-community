@@ -24,13 +24,13 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
     return "filtering";
   }
 
-  public void testSimple()throws Exception{checkTree("f");}
-  public void testReturnValue()throws Exception{checkTree("point");}
-  public void testAnonymousType()throws Exception{checkTree("point");}
-  public void testCamel()throws Exception{checkTree("sohe");}
-  public void testCamel2()throws Exception{checkTree("soHe");}
-  public void testSelectLeafFirst()throws Exception{checkTree("clear");}
-  public void testSelectLeafFirst2()throws Exception{checkTree("clear");}
-  public void testSelectLeafFirst3()throws Exception{checkTree("clear");}
-  public void testSelectLeafFirst4()throws Exception{checkTree("clear");}
+  public void testSimple()            throws Exception {checkTree("f");}
+  public void testReturnValue()       throws Exception {checkTree("point");}
+  public void testAnonymousType()     throws Exception {checkTree("point");}
+  public void testCamel()             throws Exception {checkTree("sohe");}
+  public void testCamel2()            throws Exception {checkTree("soHe");}
+  public void testSelectLeafFirst()   throws Exception {checkTree("clear");}
+  public void testSelectLeafFirst2()  throws Exception {checkTree("clear");}
+  public void testSelectLeafFirst3()  throws Exception {checkTree("clear");}
+  public void testSelectLeafFirst4()  throws Exception {checkTree("clear");}
 }
