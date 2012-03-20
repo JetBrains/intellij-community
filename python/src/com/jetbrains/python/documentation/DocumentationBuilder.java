@@ -490,11 +490,12 @@ class DocumentationBuilder {
 
   private void addModulePath(PyFile followed) {
     // what to prepend to a module description?
-    String path = VfsUtil.urlToPath(followed.getUrl());
-    if ("".equals(path)) {
+    final VirtualFile file = followed.getVirtualFile();
+    if (file == null) {
       myProlog.addWith(TagSmall, $(PyBundle.message("QDOC.module.path.unknown")));
     }
     else {
+      final String path = file.getPath();
       RootFinder finder = new RootFinder(path);
       RootVisitorHost.visitRoots(followed, finder);
       final String root_path = finder.getResult();
