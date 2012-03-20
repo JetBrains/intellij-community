@@ -135,7 +135,9 @@ public abstract class AbstractRefreshablePanel<T> implements RefreshablePanel {
         cause = e;
       }
       LOG.info(e);
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, cause.getMessage() == null ? e.getMessage() : cause.getMessage(), MessageType.ERROR);
+      String message = cause.getMessage() == null ? e.getMessage() : cause.getMessage();
+      message = message == null ? "Unknown error" : message;
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
 
     @Override
