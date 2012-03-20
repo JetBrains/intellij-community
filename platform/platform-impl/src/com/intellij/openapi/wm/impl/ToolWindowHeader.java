@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -430,7 +431,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
         }
       };
 
-      myButton.setHoveringEnabled(true);
+      myButton.setHoveringEnabled(!SystemInfo.isMac);
       setContent(myButton);
       setOpaque(false);
 
