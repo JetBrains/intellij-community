@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -244,12 +245,26 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     //do not go inside closures except gstring injections
     if (closure.getParent() instanceof GrStringInjection) {
       super.visitClosure(closure);
+      return;
     }
-    else {
-      //create instruction for closure to use it in inline local refactoring
-      final InstructionImpl i = new InstructionImpl(closure, myInstructionNumber++);
+
+    Set<String> names = new HashSet<String>();
+
+    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getControlFlow());
+    for (ReadWriteVariableInstruction read : reads) {
+      names.add(read.getVariableName());
+    }
+
+    for (String name : names) {
+      ReadWriteVariableInstruction i = new ReadWriteVariableInstruction(name, closure, myInstructionNumber++, READ);
       addNode(i);
+      checkPending(i);
     }
+
+
+    InstructionImpl i = new InstructionImpl(closure, myInstructionNumber++);
+    addNode(i);
+    checkPending(i);
   }
 
   public void visitBreakStatement(GrBreakStatement breakStatement) {
@@ -868,10 +883,64 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitMethod(GrMethod method) {
   }
 
-  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
-    if (typeDefinition instanceof GrAnonymousClassDefinition) {
-      super.visitTypeDefinition(typeDefinition);
+  @Override
+  public void visitClassInitializer(GrClassInitializer initializer) {
+  }
+
+  public void visitTypeDefinition(final GrTypeDefinition typeDefinition) {
+    if (!(typeDefinition instanceof GrAnonymousClassDefinition)) return;
+
+    final Set<String> vars = new HashSet<String>();
+    typeDefinition.acceptChildren(new GroovyRecursiveElementVisitor() {
+      private void collectVars(Instruction[] flow) {
+        ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow);
+        for (ReadWriteVariableInstruction instruction : reads) {
+          vars.add(instruction.getVariableName());
+        }
+      }
+
+      @Override
+      public void visitField(GrField field) {
+        GrExpression initializer = field.getInitializerGroovy();
+        if (initializer != null) {
+          Instruction[] flow = new ControlFlowBuilder(field.getProject()).buildControlFlow(initializer);
+          collectVars(flow);
+        }
+      }
+
+      @Override
+      public void visitMethod(GrMethod method) {
+        GrOpenBlock block = method.getBlock();
+        if (block != null) {
+          collectVars(block.getControlFlow());
+        }
+      }
+
+      @Override
+      public void visitClassInitializer(GrClassInitializer initializer) {
+        GrOpenBlock block = initializer.getBlock();
+        collectVars(block.getControlFlow());
+      }
+
+      @Override
+      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+        typeDefinition.acceptChildren(this);
+      }
+    });
+
+    PsiField[] fields = typeDefinition.getAllFields();
+    for (PsiField field : fields) {
+      vars.remove(field.getName());
     }
+
+    for (String var : vars) {
+      ReadWriteVariableInstruction i = new ReadWriteVariableInstruction(var, typeDefinition, myInstructionNumber++, READ);
+      addNode(i);
+      checkPending(i);
+    }
+    InstructionImpl i = new InstructionImpl(typeDefinition, myInstructionNumber++);
+    addNode(i);
+    checkPending(i);
   }
 
   public void visitVariable(GrVariable variable) {
