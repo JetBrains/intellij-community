@@ -28,7 +28,12 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
 
   @NotNull
   public PyParameterList getParameterList() {
-    return childToPsiNotNull(PyElementTypes.PARAMETER_LIST_SET, 0);
+    final PyElement child = childToPsi(PyElementTypes.PARAMETER_LIST_SET, 0);
+    if (child == null) {
+      throw new RuntimeException("parameter list must not be null; text=" + getText());
+    }
+    //noinspection unchecked
+    return (PyParameterList)child;
   }
 
   @Nullable
