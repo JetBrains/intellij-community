@@ -51,4 +51,12 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
   protected IStubElementType getStubElementType() {
     return PyElementTypes.PARAMETER_LIST;
   }
+
+  @Override
+  public boolean shouldCreateStub(ASTNode node) {
+    if (node.getTreeParent().getElementType() == PyElementTypes.LAMBDA_EXPRESSION) {
+      return false;
+    }
+    return super.shouldCreateStub(node);
+  }
 }
