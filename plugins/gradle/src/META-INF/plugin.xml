@@ -33,7 +33,7 @@
     <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
     <colorAndFontPanelFactory implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontPanelFactory"/>
     <colorAndFontDescriptorProvider implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleInitialProjectRefresher"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleStartupActivity"/>
 
     <!--Structure diff calculators-->
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
@@ -97,9 +97,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.gradle.config.GradlePatcher</implementation-class>
     </component>
   </project-components>
   
