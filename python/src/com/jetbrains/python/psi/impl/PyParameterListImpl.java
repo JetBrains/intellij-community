@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
@@ -159,6 +160,21 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
 
   public PyElement getElementNamed(final String the_name) {
     return IterHelper.findName(iterateNames(), the_name);
+  }
+
+  @Override
+  @Nullable
+  public PyNamedParameter findParameterByName(@NotNull final String name) {
+    final Ref<PyNamedParameter> result = new Ref<PyNamedParameter>();
+    ParamHelper.walkDownParamArray(getParameters(), new ParamHelper.ParamVisitor() {
+      @Override
+      public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+        if (name.equals(param.getName())) {
+          result.set(param);
+        }
+      }
+    });
+    return result.get();
   }
 
   public boolean mustResolveOutside() {

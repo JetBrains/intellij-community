@@ -18,6 +18,10 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    */
   PyParameter[] getParameters();
 
+  @Nullable
+  PyNamedParameter findParameterByName(@NotNull String name);
+
+
   /**
    * Adds a paramter to list, after all other parameters.
    * @param param what to add
