@@ -111,7 +111,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
                      "; stubTree=" + stubTree;
     PsiElement each = this;
     while (each != null) {
-      message += "\n each=" + each + " of class " + each.getClass();
+      message += "\n each of class " + each.getClass();
       if (each instanceof StubBasedPsiElementBase) {
         message += "; node=" + ((StubBasedPsiElementBase)each).myNode + "; stub=" + ((StubBasedPsiElementBase)each).myStub;
         each = ((StubBasedPsiElementBase)each).getParentByStub();
