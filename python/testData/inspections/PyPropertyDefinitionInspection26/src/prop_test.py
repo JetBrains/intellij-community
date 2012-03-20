@@ -19,13 +19,13 @@ class A(object):
     return self._x
 
   @boo.setter # name mismatch
-  def boo1(self, x): 
+  def boo1(self, x):
     self._x = x
 
   @boo.deleter # name mismatch
-  def boo2(self): 
+  def boo2(self):
     pass
- 
+
   @property
   def moo(self): # should return
     pass
@@ -36,14 +36,19 @@ class A(object):
 
   @moo.deleter
   def moo(self): # shouldn't return
-    return self._x 
+    return self._x
 
   @qoo.setter # unknown qoo is reported in ref inspection
   def qoo(self, v):
-    self._x = v 
+    self._x = v
 
   @property
   def futuroo(self):
+    raise NotImplementedError("Override!") # ok though no return
+
+  @property
+  def futuroo(self):
+    """Docstring."""
     raise NotImplementedError("Override!") # ok though no return
 
   @property

@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.102" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.104" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -842,6 +842,17 @@ class ModuleRedeclarator(object):
         (bin_collections_name, "deque", "__init__"): ("(self, iterable=(), maxlen=None)", None), # doc string blatantly lies
         (bin_collections_name, "defaultdict", "__init__"): ("(self, default_factory=None, **kwargs)", None), # doc string incomplete
 
+        ("_struct", None, "pack"): ("(fmt, *args)", BYTES_LIT),
+        ("_struct", None, "pack_into"): ("(fmt, buffer, offset, *args)", None),
+        ("_struct", None, "unpack"): ("(fmt, string)", None),
+        ("_struct", None, "unpack_from"): ("(fmt, buffer, offset=0)", None),
+        ("_struct", None, "calcsize"): ("(fmt)", INT_LIT),
+        ("_struct", "Struct", "__init__"): ("(self, fmt)", None),
+        ("_struct", "Struct", "pack"): ("(self, *args)", BYTES_LIT),
+        ("_struct", "Struct", "pack_into"): ("(self, buffer, offset, *args)", None),
+        ("_struct", "Struct", "unpack"): ("(self, string)", None),
+        ("_struct", "Struct", "unpack_from"): ("(self, buffer, offset=0)", None),
+
         ("datetime", "date", "__new__"): ("(cls, year=None, month=None, day=None)", None),
         ("datetime", "date", "fromordinal"): ("(cls, ordinal)", "date(1,1,1)"),
         ("datetime", "date", "fromtimestamp"): ("(cls, timestamp)", "date(1,1,1)"),
@@ -1042,6 +1053,10 @@ class ModuleRedeclarator(object):
             ("zipimporter", 'archive'): ('r', G_STR),
             ("zipimporter", '_files'): ('r', G_DICT),
         },
+        "_struct": {
+            ("Struct", "size"): ('r', G_INT),
+            ("Struct", "format"): ('r', G_STR),
+        },
         "datetime": {
             ("datetime", "hour"): ('r', G_INT),
             ("datetime", "minute"): ('r', G_INT),
@@ -1107,6 +1122,10 @@ class ModuleRedeclarator(object):
     KNOWN_DECORATORS = {
         ("dict", "fromkeys"): "staticmethod",
         ("object", "__subclasshook__"): "classmethod",
+        ("bytearray", "fromhex"): "classmethod",
+        ("bytes", "fromhex"): "classmethod",
+        ("bytearray", "maketrans"): "staticmethod",
+        ("bytes", "maketrans"): "staticmethod",
     }
 
     def isSkippedInModule(self, p_module, p_value):

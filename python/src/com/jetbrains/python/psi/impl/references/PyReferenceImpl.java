@@ -508,7 +508,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final int underscores = PyUtil.getInitialUnderscores(element.getName());
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element);
     final ScopeOwner owner = realContext instanceof ScopeOwner ? (ScopeOwner)realContext : ScopeUtil.getScopeOwner(realContext);
-    if (owner != null) {
+    if (owner != null && originalElement != null) {
       PyResolveUtil.scopeCrawlUp(processor, owner, null);
     }
 

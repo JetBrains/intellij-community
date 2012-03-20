@@ -119,8 +119,10 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           else {
             // @property; we only check getter, others are checked by visitPyFunction
             // getter is always present with this form
-            final PyFunction function = property.getGetter().valueOrNull();
-            checkGetter(function, getFunctionMarkingElement(function));
+            final Callable callable = property.getGetter().valueOrNull();
+            if (callable instanceof PyFunction) {
+              checkGetter(callable, getFunctionMarkingElement((PyFunction)callable));
+            }
           }
           return false;  // always want more
         }
@@ -278,7 +280,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
                    (element instanceof PyYieldExpression);
           }
         });
-        hasReturns = returnStatements.length > 0; 
+        hasReturns = returnStatements.length > 0;
       }
       else {
         PyReferenceExpression callSite = being_checked instanceof PyReferenceExpression ? (PyReferenceExpression) being_checked : null;
@@ -286,11 +288,14 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
       if (allowed ^ hasReturns) {
         if (allowed && callable instanceof PyFunction) {
-          // one last chance: maybe there's no return but a single 'raise', see PY-4043
-          PyStatementList stmt_list = ((PyFunction)callable).getStatementList();
-          if (stmt_list != null) {
-            PyStatement[] stmts = stmt_list.getStatements();
-            if (stmts.length == 1 && stmts[0] instanceof PyRaiseStatement) return;
+          // one last chance: maybe there's no return but a 'raise' statement, see PY-4043, PY-5048
+          PyStatementList statementList = ((PyFunction)callable).getStatementList();
+          if (statementList != null) {
+            for (PyStatement stmt : statementList.getStatements()) {
+              if (stmt instanceof PyRaiseStatement) {
+                return;
+              }
+            }
           }
         }
         registerProblem(being_checked, message);

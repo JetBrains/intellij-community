@@ -541,6 +541,10 @@ public class ResolveImportUtil {
         components.set(0, "functools");
         return PyQualifiedName.fromComponents(components);
       }
+      else if (head.equals("_struct")) {
+        components.set(0, "struct");
+        return PyQualifiedName.fromComponents(components);
+      }
       else if (head.equals("_io") || head.equals("_pyio") || head.equals("_fileio")) {
         components.set(0, "io");
         return PyQualifiedName.fromComponents(components);

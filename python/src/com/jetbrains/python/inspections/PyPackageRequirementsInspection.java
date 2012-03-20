@@ -90,14 +90,21 @@ public class PyPackageRequirementsInspection extends PyInspection {
         }
         final Sdk sdk = PythonSdkType.findPythonSdk(module);
         if (sdk != null) {
-          final List<PyRequirement> unsatisfied = findUnsatisfiedRequirements(module, sdk);
+          final List<PyRequirement> unsatisfied = findUnsatisfiedRequirements(module, sdk, myIgnoredPackages);
           if (unsatisfied != null && !unsatisfied.isEmpty()) {
             final boolean plural = unsatisfied.size() > 1;
             String msg = String.format("Package requirement%s %s %s not satisfied",
                                        plural ? "s" : "",
                                        requirementsToString(unsatisfied),
                                        plural ? "are" : "is");
-            registerProblem(node, msg, new InstallRequirementsFix(null, module, sdk, unsatisfied));
+            final Set<String> unsatisfiedNames = new HashSet<String>();
+            for (PyRequirement req : unsatisfied) {
+              unsatisfiedNames.add(req.getName());
+            }
+            registerProblem(node, msg,
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
+                            new InstallRequirementsFix(null, module, sdk, unsatisfied),
+                            new IgnoreRequirementFix(unsatisfiedNames));
           }
         }
       }
@@ -129,11 +136,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
         if (packageName != null && !myIgnoredPackages.contains(packageName)) {
           final Collection<String> stdlibPackages = PyStdlibUtil.getPackages();
           if (stdlibPackages != null) {
-            for (String name : stdlibPackages) {
-              if (packageName.equals(name)) {
-                return;
-              }
+            if (stdlibPackages.contains(packageName)) {
+              return;
             }
+          }
+          if ("setuptools".equals(packageName)) {
+            return;
           }
           final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
@@ -156,9 +164,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 }
               }
               registerProblem(packageReferenceExpression, String.format("Package '%s' is not listed in project requirements", packageName),
-                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
+                              ProblemHighlightType.WEAK_WARNING, null,
                               new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)),
-                              new IgnoreRequirementFix(packageName));
+                              new IgnoreRequirementFix(Collections.singleton(packageName)));
             }
           }
         }
@@ -177,7 +185,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   @Nullable
-  private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk) {
+  private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
+                                                                 @NotNull Set<String> ignoredPackages) {
     final PyPackageManager manager = PyPackageManager.getInstance(sdk);
     List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
     if (requirements != null) {
@@ -190,7 +199,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       }
       final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
       for (PyRequirement req : requirements) {
-        if (!req.match(packages)) {
+        if (!ignoredPackages.contains(req.getName()) && !req.match(packages)) {
           unsatisfied.add(req);
         }
       }
@@ -216,7 +225,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     public InstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
                                   @NotNull List<PyRequirement> unsatisfied) {
-      myName = name != null ? name : "Install requirements";
+      final boolean plural = unsatisfied.size() > 1;
+      myName = name != null ? name : String.format("Install requirement%s", plural ? "s" : "");
       myModule = module;
       mySdk = sdk;
       myUnsatisfied = unsatisfied;
@@ -252,16 +262,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static class IgnoreRequirementFix implements LocalQuickFix {
-    @NotNull private final String myPackageName;
+    @NotNull private final Set<String> myPackageNames;
 
-    public IgnoreRequirementFix(@NotNull String packageName) {
-      myPackageName = packageName;
+    public IgnoreRequirementFix(@NotNull Set<String> packageNames) {
+      myPackageNames = packageNames;
     }
 
     @NotNull
     @Override
     public String getName() {
-      return String.format("Ignore package requirement '%s'", myPackageName);
+      final boolean plural = myPackageNames.size() > 1;
+      return String.format("Ignore requirement%s", plural ? "s" : "");
     }
 
     @NotNull
@@ -277,8 +288,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
         final PyPackageRequirementsInspection inspection = PyPackageRequirementsInspection.getInstance(element);
         if (inspection != null) {
           final JDOMExternalizableStringList ignoredPackages = inspection.ignoredPackages;
-          if (!ignoredPackages.contains(myPackageName)) {
-            ignoredPackages.add(myPackageName);
+          boolean changed = false;
+          for (String name : myPackageNames) {
+            if (!ignoredPackages.contains(name)) {
+              ignoredPackages.add(name);
+              changed = true;
+            }
+          }
+          if (changed) {
             final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
             InspectionProfileManager.getInstance().fireProfileChanged(profile);
           }
@@ -292,9 +309,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @Nullable private final Document myRequirementsTxt;
     @Nullable private final PyArgumentList mySetupArgumentList;
     @NotNull private final String myPackageName;
-    private final LanguageLevel myLanguageLevel;
+    @NotNull private final LanguageLevel myLanguageLevel;
 
-    private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, LanguageLevel languageLevel) {
+    private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, @NotNull LanguageLevel languageLevel) {
       myPackageName = packageName;
       myLanguageLevel = languageLevel;
       myRequirementsTxt = PyPackageUtil.findRequirementsTxt(module);
@@ -368,7 +385,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
             @Nullable
             private PyKeywordArgument generateRequiresKwarg(PyElementGenerator generator) {
-              final String text = String.format("foo(requires=[\"%s\"])", myPackageName);
+              final String text = String.format("foo(requires=['%s'])", myPackageName);
               final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
               PyKeywordArgument installRequiresArg = null;
               if (generated instanceof PyCallExpression) {
