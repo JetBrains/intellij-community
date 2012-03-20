@@ -18,38 +18,52 @@ package com.intellij.designer.propertyTable.editors;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.DialogWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Alexander Lobas
  */
-public class ComboEditor extends PropertyEditor {
+public abstract class ComboEditor extends PropertyEditor {
   protected final ComboBox myCombo;
+  private boolean myCancelled;
 
   public ComboEditor() {
     myCombo = new ComboBox(-1);
     myCombo.setBorder(null);
     myCombo.addPopupMenuListener(new PopupMenuListener() {
+
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        // TODO: Auto-generated method stub
+        myCancelled = false;
       }
 
       @Override
       public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        // TODO: Auto-generated method stub
+        if (!myCancelled) {
+          fireValueCommitted(true, true);
+        }
       }
 
       @Override
       public void popupMenuCanceled(PopupMenuEvent e) {
-        // TODO: Auto-generated method stub
+        myCancelled = true;
       }
     });
+    myCombo.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        myCancelled = true;
+        fireEditingCancelled();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   @Override
@@ -59,16 +73,5 @@ public class ComboEditor extends PropertyEditor {
     if (renderer instanceof JComponent) {
       SwingUtilities.updateComponentTreeUI((JComponent)renderer);
     }
-  }
-
-  @Override
-  public Object getValue() throws Exception {
-    return null;  // TODO: Auto-generated method stub
-  }
-
-  @NotNull
-  @Override
-  public JComponent getComponent(@Nullable RadComponent component, Object value) {
-    return null;  // TODO: Auto-generated method stub
   }
 }

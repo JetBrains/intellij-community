@@ -57,7 +57,8 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     }
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
-    if(context.getDebuggerSession() != null) {
+    final DebuggerSession session = context.getDebuggerSession();
+    if(session != null && session.isAttached()) {
       final DebugProcessImpl process = context.getDebugProcess();
       process.getManagerThread().invoke(new DebuggerCommandImpl() {
         protected void action() throws Exception {
@@ -310,6 +311,6 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
       return;
     }
     DebuggerSession debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().getDebuggerSession();
-    presentation.setEnabled(debuggerSession != null);
+    presentation.setEnabled(debuggerSession != null && debuggerSession.isAttached());
   }
 }

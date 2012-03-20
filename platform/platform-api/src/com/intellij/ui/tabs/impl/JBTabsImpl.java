@@ -337,7 +337,9 @@ public class JBTabsImpl extends JComponent
 
     BufferedImage img;
     if (cmp.isShowing()) {
-      img = new BufferedImage(cmp.getWidth(), cmp.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      final int width = cmp.getWidth();
+      final int height = cmp.getHeight();
+      img = new BufferedImage(width > 0 ? width : 500, height > 0 ? height : 500, BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = img.createGraphics();
       cmp.paint(g);
     } else {

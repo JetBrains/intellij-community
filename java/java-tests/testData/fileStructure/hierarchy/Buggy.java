@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.lang.Object;
 
-package com.intellij.psi.impl.source;
-
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerUtil;
-import com.intellij.util.CharTable;
-
-/**
- * @author ven
- */
-public class ParsingContext {
-  private final CharTable myTable;
-  
-  public ParsingContext(final CharTable table) {
-    myTable = table;
-  }
-
-  public CharTable getCharTable() {
-    return myTable;
-  }
-
-  public CharSequence tokenText(Lexer lexer) {
-    return LexerUtil.internToken(lexer, myTable);
-  }
+class Buggy extends Object implements BuggyInterface {
+  public void getA(){}
+  public void getB(){}
+  public void getC(){}
+  public void getD(){}
+  public void getE(){}
+  public void getF(){}
+  public void getA1(){}
+  public void getA2(){}
+  public void getA3(){}
+  public void getA4(){}
+  public void getA5(){}
+  public void getA6(){}
+  public void getA7(){}
+  public void getA8(){}
 }

@@ -40,14 +40,18 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    actionPerformed(project, true, null);
+    actionPerformed(project, true, null, UpdateSettings.getInstance());
   }
 
-  public static void actionPerformed(Project project, final boolean enableLink, final @Nullable PluginHostsConfigurable hostsConfigurable) {
+  public static void actionPerformed(Project project,
+                                     final boolean enableLink,
+                                     final @Nullable PluginHostsConfigurable hostsConfigurable,
+                                     final UpdateSettings instance) {
     ProgressManager.getInstance().run(new Task.Modal(project, "Checking for updates", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final CheckForUpdateResult result = UpdateChecker.checkForUpdates(UpdateSettings.getInstance(), PropertiesComponent.getInstance(),
+        indicator.setIndeterminate(true);
+        final CheckForUpdateResult result = UpdateChecker.checkForUpdates(instance, PropertiesComponent.getInstance(),
                                                                           true
         );
 
@@ -60,7 +64,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
               return;
             }
 
-            UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+            instance.LAST_TIME_CHECKED = System.currentTimeMillis();
             UpdateChecker.showUpdateResult(result, updatedPlugins, true, enableLink, true);
           }
         });

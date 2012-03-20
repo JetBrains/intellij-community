@@ -159,7 +159,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @Override
   protected void notifySuccess(@NotNull String message) {
-    if (!myLocalBranch) {
+    if (isRemoteBranch() || isMasterBranch()) {
       super.notifySuccess(message);
     }
     else {
@@ -167,6 +167,14 @@ class GitMergeOperation extends GitBranchOperation {
       Notificator.getInstance(myProject).notify(GitVcs.NOTIFICATION_GROUP_ID, "", description, NotificationType.INFORMATION,
                                                         new DeleteMergedLocalBranchNotificationListener());
     }
+  }
+
+  private boolean isMasterBranch() {
+    return myBranchToMerge.equals("master");
+  }
+
+  private boolean isRemoteBranch() {
+    return !myLocalBranch;
   }
 
   private boolean resolveConflicts() {

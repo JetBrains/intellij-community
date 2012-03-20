@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static Set<String> createPathsSet() {
-    return new THashSet<String>(FileUtil.T_HASHING_STRATEGY);
+    return new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
   }
 
   private void saveCache(final Project project) {

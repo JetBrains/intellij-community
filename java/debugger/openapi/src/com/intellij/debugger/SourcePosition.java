@@ -16,6 +16,7 @@
 package com.intellij.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -38,6 +39,7 @@ import java.util.List;
  * Time: 8:23:06 PM
  */
 public abstract class SourcePosition implements Navigatable{
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.SourcePosition");
   @NotNull
   public abstract PsiFile getFile();
 
@@ -158,7 +160,13 @@ public abstract class SourcePosition implements Navigatable{
 
     protected int calcLine() {
       final PsiFile file = getFile();
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      Document document = null;
+      try {
+        document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
       if (document != null) {
         try {
           return document.getLineNumber(calcOffset());

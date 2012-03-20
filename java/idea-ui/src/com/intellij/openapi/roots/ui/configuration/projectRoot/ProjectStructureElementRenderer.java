@@ -53,8 +53,7 @@ class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
       setToolTipText(null);
       setFont(UIUtil.getTreeFont());
 
-      SimpleTextAttributes textAttributes =
-        selected && hasFocus ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      SimpleTextAttributes textAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       if (node.isDisplayInBold()) {
         textAttributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
       }
@@ -74,6 +73,13 @@ class ProjectStructureElementRenderer extends ColoredTreeCellRenderer {
             textAttributes = textAttributes.derive(style, foreground, null, waveColor);
             setToolTipText(problemsHolder.composeTooltipMessage());
           }
+
+          append(displayName, textAttributes);
+          String description = projectStructureElement.getDescription();
+          if (description != null) {
+            append(" (" + description + ")", SimpleTextAttributes.GRAY_ATTRIBUTES, false);
+          }
+          return;
         }
       }
       append(displayName, textAttributes);

@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public interface Git {
 
-  void init(Project project, VirtualFile root) throws VcsException;
+  GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
   Set<VirtualFile> untrackedFiles(@NotNull Project project,

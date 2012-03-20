@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
@@ -403,7 +404,7 @@ public class EventLog implements Notifications {
 
       myProjectModel.addNotification(notification);
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
         @Override
         public void run() {
           if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {

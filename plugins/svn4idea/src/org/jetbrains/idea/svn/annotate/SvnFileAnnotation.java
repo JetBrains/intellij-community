@@ -181,7 +181,7 @@ public class SvnFileAnnotation implements FileAnnotation {
     myFile = file;
     myContents = contents;
     myBaseRevision = baseRevision;
-    myVcs.getSvnEntriesFileListener().addListener(myListener);
+    myVcs.addEntriesListener(myListener);
     myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
     myShowMergeSources = myConfiguration.SHOW_MERGE_SOURCES_IN_ANNOTATE;
 
@@ -199,7 +199,7 @@ public class SvnFileAnnotation implements FileAnnotation {
   }
 
   public void dispose() {
-    myVcs.getSvnEntriesFileListener().removeListener(myListener);
+    myVcs.removeEntriesListener(myListener);
   }
 
   public LineAnnotationAspect[] getAspects() {

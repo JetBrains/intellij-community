@@ -65,6 +65,7 @@ public class Mappings {
 
   private final File myRootDir;
   private DependencyContext myContext;
+  private final DependencyContext.S myInitName;
   private org.jetbrains.ether.dependencyView.Logger<DependencyContext.S> myDebugS;
 
   private static void debug(final String s) {
@@ -129,6 +130,7 @@ public class Mappings {
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
+    myInitName = myContext.get("<init>");
     myDebugS = base.myDebugS;
     myRootDir.mkdirs();
     createImplementation();
@@ -143,6 +145,7 @@ public class Mappings {
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
     createImplementation();
+    myInitName = myContext.get("<init>");
   }
 
   private void createImplementation() throws IOException {
@@ -369,7 +372,7 @@ public class Mappings {
       return new MethodRepr.Predicate() {
         @Override
         public boolean satisfy(final MethodRepr m) {
-          if (!m.name.equals(than.name) || m.argumentTypes.length != than.argumentTypes.length) {
+          if (m.name.equals(myInitName) || !m.name.equals(than.name) || m.argumentTypes.length != than.argumentTypes.length) {
             return false;
           }
 
@@ -666,17 +669,19 @@ public class Mappings {
                             final Set<DependencyContext.S> dependents) {
       affectedUsages.add(rootUsage);
 
-      for (DependencyContext.S p : subclasses) {
-        final Collection<DependencyContext.S> deps = myClassToClassDependency.get(p);
+      if (subclasses != null) {
+        for (DependencyContext.S p : subclasses) {
+          final Collection<DependencyContext.S> deps = myClassToClassDependency.get(p);
 
-        if (deps != null) {
-          dependents.addAll(deps);
+          if (deps != null) {
+            dependents.addAll(deps);
+          }
+
+          debug("Affect method usage referenced of class ", p);
+
+          affectedUsages
+            .add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
         }
-
-        debug("Affect method usage referenced of class ", p);
-
-        affectedUsages
-          .add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
       }
     }
 
@@ -801,7 +806,10 @@ public class Mappings {
     }
   }
 
-  private boolean incrementalDecision(final DependencyContext.S owner, final Proto member, final Collection<File> affectedFiles) {
+  private boolean incrementalDecision(final DependencyContext.S owner,
+                                      final Proto member,
+                                      final Collection<File> affectedFiles,
+                                      DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util(this);
 
@@ -837,19 +845,33 @@ public class Mappings {
 
       if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
         final String f = myContext.getValue(fileName);
-        debug("Adding: ", f);
-        affectedFiles.add(new File(f));
+        final File file = new File(f);
+        if (filter.accept(file)) {
+          debug("Adding: ", f);
+          affectedFiles.add(file);
+        }
       }
     }
 
     return true;
   }
 
+  public interface DependentFilesFilter {
+    DependentFilesFilter ALL_FILES = new DependentFilesFilter() {
+      @Override
+      public boolean accept(File file) {
+        return true;
+      }
+    };
+
+    boolean accept(File file);
+  }
+
   public boolean differentiate(final Mappings delta,
                                final Collection<String> removed,
                                final Collection<File> filesToCompile,
                                final Collection<File> compiledFiles,
-                               final Collection<File> affectedFiles) {
+                               final Collection<File> affectedFiles, DependentFilesFilter filter) {
     synchronized (myLock) {
       debug("Begin of Differentiate:");
 
@@ -921,7 +943,7 @@ public class Mappings {
 
           if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
             debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
-            if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+            if (!incrementalDecision(it.outerClassName, it, affectedFiles, filter)) {
               debug("End of Differentiate, returning false");
               return false;
             }
@@ -965,7 +987,7 @@ public class Mappings {
 
               if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
                 debug("Removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
-                if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+                if (!incrementalDecision(it.outerClassName, it, affectedFiles, filter)) {
                   debug("End of Differentiate, returning false");
                   return false;
                 }
@@ -1007,7 +1029,7 @@ public class Mappings {
 
             Collection<DependencyContext.S> propagated = null;
 
-            if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !myContext.getValue(m.name).equals("<init>")) {
+            if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !m.name.equals(myInitName)) {
               final ClassRepr oldIt = getReprByName(it.name);
 
               if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) {
@@ -1075,15 +1097,22 @@ public class Mappings {
                   else {
                     debug("Current method does not override that found");
 
-                    final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, cc.name);
-                    final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+                    final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, it.name);
 
-                    if (deps != null) {
-                      dependants.addAll(deps);
+                    final Option<Boolean> inheritorOf = self.isInheritorOf(cc.name, it.name);
+
+                    if (inheritorOf.isValue() && inheritorOf.value()) {
+                      final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+
+                      if (deps != null) {
+                        dependants.addAll(deps);
+                      }
+
+                      u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
                     }
 
                     debug("Affecting method usages for that found");
-                    u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
+                    u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
                   }
                 }
               }
@@ -1184,8 +1213,9 @@ public class Mappings {
 
                       if (source != null) {
                         final String f = myContext.getValue(source);
-                        debug("Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ",
-                              p);
+                        debug(
+                          "Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ",
+                          p);
                         debug("Affecting subclass source file ", f);
                         affectedFiles.add(new File(f));
                       }
@@ -1304,8 +1334,9 @@ public class Mappings {
 
                 if (r != null && sourceFileName != null) {
                   if (r.isLocal) {
-                    debug("Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ",
-                          sourceFileName);
+                    debug(
+                      "Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ",
+                      sourceFileName);
                     affectedFiles.add(new File(myContext.getValue(sourceFileName)));
                   }
                   else {
@@ -1382,7 +1413,7 @@ public class Mappings {
 
             if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
               debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-              if (!incrementalDecision(it.name, f, affectedFiles)) {
+              if (!incrementalDecision(it.name, f, affectedFiles, filter)) {
                 debug("End of Differentiate, returning false");
                 return false;
               }
@@ -1403,7 +1434,7 @@ public class Mappings {
             if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
               if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
                 debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-                if (!incrementalDecision(it.name, field, affectedFiles)) {
+                if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
                   debug("End of Differentiate, returning false");
                   return false;
                 }
@@ -1619,40 +1650,46 @@ public class Mappings {
 
         if (delta.isDifferentiated()) {
           for (DependencyContext.S c : delta.getChangedClasses()) {
-            myClassToSubclasses.remove(c);
-
             final Collection<DependencyContext.S> subClasses = delta.myClassToSubclasses.get(c);
-
             if (subClasses != null) {
-              myClassToSubclasses.put(c, subClasses);
+              myClassToSubclasses.replace(c, subClasses);
+            }
+            else {
+              myClassToSubclasses.remove(c);
             }
 
-            myClassToSourceFile.remove(c);
-
             final DependencyContext.S sourceFile = delta.myClassToSourceFile.get(c);
-
             if (sourceFile != null) {
               myClassToSourceFile.put(c, sourceFile);
+            }
+            else {
+              myClassToSourceFile.remove(c);
             }
           }
 
           for (DependencyContext.S f : delta.getChangedFiles()) {
-            mySourceFileToClasses.remove(f);
             final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
             if (classes != null) {
-              mySourceFileToClasses.put(f, classes);
+              mySourceFileToClasses.replace(f, classes);
+            }
+            else {
+              mySourceFileToClasses.remove(f);
             }
 
-            mySourceFileToUsages.remove(f);
             final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
             if (clusters != null) {
-              mySourceFileToUsages.put(f, clusters);
+              mySourceFileToUsages.replace(f, clusters);
+            }
+            else {
+              mySourceFileToUsages.remove(f);
             }
 
-            mySourceFileToAnnotationUsages.remove(f);
             final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
             if (usages != null) {
-              mySourceFileToAnnotationUsages.put(f, usages);
+              mySourceFileToAnnotationUsages.replace(f, usages);
+            }
+            else {
+              mySourceFileToAnnotationUsages.remove(f);
             }
           }
         }
@@ -1697,8 +1734,7 @@ public class Mappings {
             changed |= past.addAll(now);
 
             if (changed) {
-              myClassToClassDependency.remove(aClass);
-              myClassToClassDependency.put(aClass, past);
+              myClassToClassDependency.replace(aClass, past);
             }
           }
         }

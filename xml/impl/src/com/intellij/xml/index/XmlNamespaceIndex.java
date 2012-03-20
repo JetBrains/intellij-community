@@ -45,7 +45,8 @@ public class XmlNamespaceIndex extends XmlIndex<String> {
   }
 
   public static List<IndexedRelevantResource<String, String>> getResourcesByNamespace(String namespace, final Project project, Module module) {
-    List<IndexedRelevantResource<String, String>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project);
+    List<IndexedRelevantResource<String, String>> resources = IndexedRelevantResource.getResources(NAME, namespace, module, project,
+                                                                                                   null);
     Collections.sort(resources);
     return resources;
   }

@@ -103,6 +103,11 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
       setErrorText("Project name can't be empty");
       return;
     }
+    if (myLocationField.getText().indexOf('$') >= 0) {
+      setOKActionEnabled(false);
+      setErrorText("Project directory name must not contain the $ character");
+      return;
+    }
     DirectoryProjectGenerator generator = getProjectGenerator();
     if (generator != null) {
       String baseDirPath = myLocationField.getTextField().getText();

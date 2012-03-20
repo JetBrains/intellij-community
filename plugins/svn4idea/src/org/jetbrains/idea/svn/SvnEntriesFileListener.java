@@ -15,11 +15,10 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -36,10 +35,15 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
   private final Project myProject;
   private final Collection<SvnEntriesListener> myListeners = new ArrayList<SvnEntriesListener>();
   private final ProjectLevelVcsManager myVcsManager;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnEntriesFileListener");
+  private ChangeListManager myChangeListManager;
+  private VcsDirtyScopeManager myDirtyScopeManager;
 
   public SvnEntriesFileListener(final Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
+    myChangeListManager = ChangeListManager.getInstance(myProject);
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
   public void fileCreated(VirtualFileEvent event) {
@@ -72,6 +76,13 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
       return;
     }
     final VirtualFile file = event.getFile();
+    if (isWcDbFile(file)) {
+      LOG.debug("wc.db had changed");
+      // all that we have now? or all?
+      final List<File> affectedPaths = myChangeListManager.getAffectedPaths();
+      myDirtyScopeManager.filePathsDirty(ObjectsConvertor.convert(affectedPaths, ObjectsConvertor.FILE_FILEPATH, ObjectsConvertor.NOT_NULL), null);
+      return;
+    }
     if (isEntriesFile(file) && file.getParent() != null) {
       VirtualFile parent = file.getParent();
       if (parent != null) {
@@ -116,7 +127,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
       if (SvnVcs.VCS_NAME.equals(vcsFor.getName())) {
         final RootUrlInfo path = ((SvnVcs)vcsFor).getSvnFileUrlMapping().getWcRootForFilePath(new File(parent.getPath()));
         if (path != null && WorkingCopyFormat.ONE_DOT_SEVEN.equals(path.getFormat())) {
-          VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(
+          myDirtyScopeManager.filePathsDirty(
             Collections.<FilePath>singletonList(new FilePathImpl(new File(file.getPath()), file.isDirectory())), null);
         }
       }
@@ -158,7 +169,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
     final List<VirtualFile> files = new ArrayList<VirtualFile>(children.length + 1);
     files.add(parent);
     Collections.addAll(files, children);
-    VcsDirtyScopeManager.getInstance(myProject).filesDirty(files, null);
+    myDirtyScopeManager.filesDirty(files, null);
     /*
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     final VirtualFile[] children = parent.getChildren();
@@ -175,6 +186,11 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
 
   private static boolean isEntriesFile(final VirtualFile file) {
     VirtualFile parent = file.getParent();
-    return !file.isDirectory() && SvnUtil.ENTRIES_FILE_NAME.equals(file.getName()) && parent != null && SvnUtil.SVN_ADMIN_DIR_NAME.equals(parent.getName());
+    return ! file.isDirectory() && SvnUtil.ENTRIES_FILE_NAME.equals(file.getName()) && parent != null && SvnUtil.SVN_ADMIN_DIR_NAME.equals(parent.getName());
+  }
+
+  private static boolean isWcDbFile(final VirtualFile file) {
+    VirtualFile parent = file.getParent();
+    return ! file.isDirectory() && SvnUtil.WC_DB_FILE_NAME.equals(file.getName()) && parent != null && SvnUtil.SVN_ADMIN_DIR_NAME.equals(parent.getName());
   }
 }

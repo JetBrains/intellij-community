@@ -460,4 +460,9 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     }
     return null;
   }
+
+  @Override
+  public String toString() {
+    return myName == null ? myValue : myValue + " " + myName;
+  }
 }
