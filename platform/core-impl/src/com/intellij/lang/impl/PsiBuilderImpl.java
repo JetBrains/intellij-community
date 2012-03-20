@@ -423,6 +423,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       return myType;
     }
 
+    @Override
     public void remapTokenType(IElementType type) {
       //assert myType != null && type != null;
       myType = type;
@@ -547,6 +548,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
       return myParsed;
     }
 
+    @Override
     public ASTNodeBuilder getBuilder() {
       return myBuilder;
     }
