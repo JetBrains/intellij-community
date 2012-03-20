@@ -50,7 +50,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
-  public static boolean CHECK_DOCUMENT_CONSISTENCY = true;
+  public static boolean CHECK_DOCUMENT_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
 
   private final CopyOnWriteArrayList<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
