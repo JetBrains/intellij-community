@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.options;
 
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.RawCommandLineEditor;
 
 import javax.swing.*;
@@ -24,6 +25,10 @@ import javax.swing.*;
  *         Date: Mar 30, 2004
  */
 public class ComparingUtils {
+  public static boolean isModified(TextFieldWithBrowseButton field, String value) {
+    return !field.getText().equals(value);
+  }
+
   public static boolean isModified(JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
