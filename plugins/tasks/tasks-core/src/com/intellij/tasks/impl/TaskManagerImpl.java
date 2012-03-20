@@ -735,6 +735,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
+        LOG.warn("Cannot connect to " + repository, e);
         myBadRepositories.add(repository);
         if (forceRequest) {
           notifyAboutConnectionFailure(repository);
