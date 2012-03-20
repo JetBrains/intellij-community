@@ -175,7 +175,8 @@ public abstract class GotoActionBase extends AnAction {
       @Override
       public void onClose() {
         ourLastStrings.put(myInAction, Pair.create(popup.getEnteredText(), popup.getSelectedIndex()));
-        if (startedAction.equals(myInAction)) {
+        //noinspection ConstantConditions
+        if (startedAction != null && startedAction.equals(myInAction)) {
           myInAction = null;
         }
         if (filter != null) {
