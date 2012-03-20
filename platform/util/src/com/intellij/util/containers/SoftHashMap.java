@@ -48,6 +48,7 @@ public final class SoftHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
+      if (myHash != o.hashCode()) return false;
       Object t = get();
       Object u = ((Key)o).get();
       if (t == null || u == null) return false;

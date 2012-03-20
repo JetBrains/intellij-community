@@ -578,7 +578,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public SVNStatusClient createStatusClient() {
     SVNStatusClient client = new SVNStatusClient(getPool(), myConfiguration.getOptions(myProject));
     client.getOperationsFactory().setAuthenticationManager(myConfiguration.getAuthenticationManager(this));
-    client.setIgnoreExternals(true);
+    client.setIgnoreExternals(false);
     return client;
   }
 

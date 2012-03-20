@@ -99,6 +99,26 @@ public class StartupUtil {
     return true;
   }
 
+  private synchronized static boolean checkSystemFolders() {
+    final String configPath = PathManager.getConfigPath();
+    if (configPath == null || !new File(configPath).isDirectory()) {
+      showError("Invalid config path", "Config path '" + configPath + "' is invalid.\n" +
+                                       "If you have modified the 'idea.config.path' property please make sure it is correct,\n" +
+                                       "otherwise please re-install the IDE.");
+      return false;
+    }
+
+    final String systemPath = PathManager.getSystemPath();
+    if (systemPath == null || !new File(systemPath).isDirectory()) {
+      showError("Invalid system path", "System path '" + systemPath + "' is invalid.\n" +
+                                       "If you have modified the 'idea.system.path' property please make sure it is correct,\n" +
+                                       "otherwise please re-install the IDE.");
+      return false;
+    }
+
+    return true;
+  }
+
   private synchronized static boolean lockSystemFolders(String[] args) {
     if (ourLock == null) {
       ourLock = new SocketLock();
@@ -169,12 +189,14 @@ public class StartupUtil {
       return false;
     }
 
-
     return true;
   }
 
   static boolean checkStartupPossible(String[] args) {
-    return checkJdkVersion() && lockSystemFolders(args) && checkTmpIsAccessible();
+    return checkJdkVersion() &&
+           checkTmpIsAccessible() &&
+           checkSystemFolders() &&
+           lockSystemFolders(args);
   }
 
   static void runStartupWizard() {
