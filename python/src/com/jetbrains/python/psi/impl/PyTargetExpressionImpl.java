@@ -283,15 +283,23 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             }
           }
           if (PyABCUtil.isSubclass(pyClass, PyNames.ITERATOR)) {
-            PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
-            if (next == null) {
-              next = pyClass.findMethodByName(PyNames.DUNDER_NEXT, true);
+            final PyFunction iter = pyClass.findMethodByName(PyNames.ITER, true);
+            PyType iterMethodType = null;
+            if (iter != null) {
+              iterMethodType = getContextSensitiveType(iter, context, source);
             }
-            if (next instanceof PyFunctionImpl) {
-              type = ((PyFunctionImpl)next).getReturnType(context, source, new HashMap<PyExpression, PyNamedParameter>());
+            if (iterMethodType instanceof PyCollectionType) {
+              final PyCollectionType collectionType = (PyCollectionType)iterMethodType;
+              type = collectionType.getElementType(context);
             }
-            else if (next != null) {
-              type = next.getReturnType(context, null);
+            if (type == null) {
+              PyFunction next = pyClass.findMethodByName(PyNames.NEXT, true);
+              if (next == null) {
+                next = pyClass.findMethodByName(PyNames.DUNDER_NEXT, true);
+              }
+              if (next != null) {
+                type = getContextSensitiveType(next, context, source);
+              }
             }
           }
         }
@@ -305,6 +313,15 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
+                                                @NotNull PyExpression source) {
+    if (function instanceof PyFunctionImpl) {
+      return ((PyFunctionImpl)function).getReturnType(context, source, new HashMap<PyExpression, PyNamedParameter>());
+    }
+    return function.getReturnType(context, null);
   }
 
   @Nullable
