@@ -34,14 +34,17 @@ public enum ResourceRelevance {
   SOURCE,
   MAPPED;
 
-  public static ResourceRelevance getRelevance(VirtualFile resource, @Nullable Module module, ProjectFileIndex fileIndex) {
+  public static ResourceRelevance getRelevance(VirtualFile resource,
+                                               @Nullable Module module,
+                                               ProjectFileIndex fileIndex,
+                                               @Nullable GlobalSearchScope additionalScope) {
     boolean inTest = fileIndex.isInTestSourceContent(resource);
     if (module != null) {
       GlobalSearchScope scope = module.getModuleRuntimeScope(inTest);
       Module resourceModule = fileIndex.getModuleForFile(resource);
       if (resourceModule != null &&
           (resourceModule == module || scope.isSearchInModuleContent(resourceModule)) ||
-        scope.contains(resource)) {
+        scope.contains(resource) || (additionalScope != null && additionalScope.contains(resource))) {
         return inTest || fileIndex.isInSource(resource) ? SOURCE : LIBRARY;
       }
     }

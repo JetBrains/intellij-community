@@ -27,15 +27,15 @@ import java.awt.*;
  * @since 3/7/12 3:48 PM
  */
 public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
-  
-  @NotNull private final MyFilter myFilter;
-  @NotNull private final TextAttributesKey myAttributesKey;
+
+  @NotNull private final GradleProjectStructureNodeFilter myFilter;
+  @NotNull private final TextAttributesKey                myAttributesKey;
 
   private Color   myColor;
   private boolean myIconChanged;
 
   protected AbstractGradleSyncTreeFilterAction(@NotNull AttributesDescriptor descriptor) {
-    myFilter = new MyFilter(descriptor.getKey());
+    myFilter = createFilter(descriptor.getKey());
     myAttributesKey = descriptor.getKey();
     getTemplatePresentation().setText(descriptor.getDisplayName());
     updateIcon(EditorColorsManager.getInstance().getGlobalScheme());
@@ -90,6 +90,10 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
     }
   }
 
+  public static GradleProjectStructureNodeFilter createFilter(@NotNull TextAttributesKey key) {
+    return new MyFilter(key);
+  }
+  
   private void updateIcon(@Nullable EditorColorsScheme scheme) {
     if (scheme == null) {
       return;

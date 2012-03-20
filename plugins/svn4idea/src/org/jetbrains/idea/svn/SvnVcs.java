@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,8 +298,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
           try {
             ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
 
-            supportOptions = myConfiguration.getSupportOptions();
-            if (!supportOptions.changeListsSynchronized()) {
+            supportOptions = myConfiguration.getSupportOptions(myProject);
+
+            if (! supportOptions.changeListsSynchronized()) {
               processChangeLists(lists);
             }
           }

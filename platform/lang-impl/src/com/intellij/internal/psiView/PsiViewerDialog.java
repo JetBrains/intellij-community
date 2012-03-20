@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -719,7 +719,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @Override
   protected Action[] createActions() {
-    AbstractAction copyPsi = new AbstractAction("Co&py PSI") {
+    AbstractAction copyPsi = new AbstractAction("Cop&y PSI") {
       @Override
       public void actionPerformed(ActionEvent e) {
         PsiElement element = parseText(myEditor.getDocument().getText());

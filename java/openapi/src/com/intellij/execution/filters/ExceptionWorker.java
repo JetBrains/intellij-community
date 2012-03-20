@@ -30,6 +30,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -40,6 +41,9 @@ import java.awt.*;
  * Time: 8:36 PM
  */
 public class ExceptionWorker {
+  @NonNls private static final String AT = "at";
+  private static final String AT_PREFIX = AT + " ";
+  private static final String STANDALONE_AT = " " + AT + " ";
 
   private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager
     .getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
@@ -73,12 +77,12 @@ public class ExceptionWorker {
 
     final int lparenthIndex = myInfo.third.getStartOffset();
     final int rparenthIndex = myInfo.third.getEndOffset();
-    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex);
+    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
 
     final int colonIndex = fileAndLine.lastIndexOf(':');
-    if (colonIndex <= 0) return;
+    if (colonIndex < 0) return;
 
-    final String lineString = fileAndLine.substring(colonIndex + 1).trim();
+    final String lineString = fileAndLine.substring(colonIndex + 1);
     try {
       final int lineNumber = Integer.parseInt(lineString);
       final PsiManager manager = PsiManager.getInstance(myProject);
@@ -142,18 +146,34 @@ public class ExceptionWorker {
     return myInfo;
   }
 
+  //todo [roma] regexp
   @Nullable
   static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
-    int lparenIdx = line.indexOf('(');
-    int rparenIdx = line.indexOf(')', lparenIdx + 1);
-    if (lparenIdx < 0 || rparenIdx <= lparenIdx) return null;
+    int startIdx;
+    if (line.startsWith(AT_PREFIX)){
+      startIdx = 0;
+    }
+    else{
+      startIdx = line.indexOf(STANDALONE_AT);
+      if (startIdx < 0) {
+        startIdx = line.indexOf(AT_PREFIX);
+      }
 
-    int dotIdx = line.lastIndexOf('.', lparenIdx);
-    int startIdx = handleSpaces(line, dotIdx, -1, false);
-    if (startIdx == dotIdx) return null;
+      if (startIdx < 0) {
+        startIdx = -1;
+      }
+    }
+
+    final int lparenIdx = line.indexOf('(', startIdx);
+    if (lparenIdx < 0) return null;
+    final int dotIdx = line.lastIndexOf('.', lparenIdx);
+    if (dotIdx < 0 || dotIdx < startIdx) return null;
+
+    final int rparenIdx = line.indexOf(')', lparenIdx);
+    if (rparenIdx < 0) return null;
 
     // class, method, link
-    return Trinity.create(new TextRange(startIdx + 1, handleSpaces(line, dotIdx, -1, true)),
+    return Trinity.create(new TextRange(startIdx + 1 + (startIdx >= 0 ? AT.length() : 0), handleSpaces(line, dotIdx, -1, true)),
                           new TextRange(handleSpaces(line, dotIdx + 1, 1, true), handleSpaces(line, lparenIdx + 1, -1, true)),
                           new TextRange(lparenIdx, rparenIdx));
   }

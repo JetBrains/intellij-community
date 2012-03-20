@@ -21,7 +21,6 @@ public class GradleConstants {
 
   @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE        = "GRADLE_SYNC_CHANGES_TOOLBAR";
   @NonNls public static final String SYNC_TREE_CONTEXT_MENU_PLACE     = "GRADLE_SYNC_TREE_CONTEXT_MENU_PLACE";
-  @NonNls public static final String SYNC_TREE_FLOATING_TOOLBAR_PLACE = "GRADLE_SYNC_TREE_FLOATING_TOOLBAR_PLACE";
   @NonNls public static final String SYNC_TREE_FILTER_PLACE           = "GRADLE_SYNC_TREE_FILTER_PLACE";
   
   @NonNls public static final String ACTION_GROUP_SYNC_TREE = "Gradle.SyncTreeGroup";

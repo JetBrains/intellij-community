@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -57,7 +59,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";
   public static final String HTTPS = "https";
-  private final Project myProject;
+  private Project myProject;
   private File myConfigDirectory;
   private PersistentAuthenticationProviderProxy myPersistentAuthenticationProviderProxy;
   private SvnConfiguration myConfig;
@@ -81,6 +83,22 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       myPersistentAuthenticationProviderProxy.setProject(myProject);
     }
     myInteraction = new MySvnAuthenticationInteraction(myProject);
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        myProject = null;
+        if (myPersistentAuthenticationProviderProxy != null) {
+          myPersistentAuthenticationProviderProxy.myProject = null;
+          myPersistentAuthenticationProviderProxy = null;
+        }
+        if (myConfig != null) {
+          myConfig.clear();
+          myConfig = null;
+        }
+        myInteraction = null;
+
+      }
+    });
   }
 
   public void setArtificialSaving(boolean artificialSaving) {

@@ -42,7 +42,7 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
     GradleTextAttributes.NO_CHANGE
   );
   
-  private static final AttributesDescriptor[] DESCRIPTORS = { CONFLICT, /*CONFIRMED,*/ GRADLE_LOCAL, INTELLIJ_LOCAL, NO_CHANGE };
+  public static final AttributesDescriptor[] DESCRIPTORS = { CONFLICT, /*CONFIRMED,*/ GRADLE_LOCAL, INTELLIJ_LOCAL, NO_CHANGE };
 
   @NotNull
   @Override

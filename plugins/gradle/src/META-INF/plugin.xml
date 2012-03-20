@@ -76,6 +76,7 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
+    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
   </extensions>
 
   <project-components>
@@ -98,7 +99,7 @@
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.gradle.config.GradleGroovyEnabler</implementation-class>
+      <implementation-class>org.jetbrains.plugins.gradle.config.GradlePatcher</implementation-class>
     </component>
   </project-components>
   

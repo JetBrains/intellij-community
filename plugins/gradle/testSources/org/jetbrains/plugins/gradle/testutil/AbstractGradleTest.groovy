@@ -1,24 +1,28 @@
 package org.jetbrains.plugins.gradle.testutil
 
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.action.AbstractGradleSyncTreeFilterAction
+import org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider
+import org.jetbrains.plugins.gradle.config.PlatformFacade
+import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator
+import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
 import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel
+import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext
 import org.junit.Before
 import org.picocontainer.MutablePicoContainer
 import org.picocontainer.defaults.DefaultPicoContainer
-import org.jetbrains.plugins.gradle.diff.*
 
 import static org.junit.Assert.fail
-import org.jetbrains.plugins.gradle.config.PlatformFacade
-import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator
-import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
 
 /**
  * @author Denis Zhdanov
@@ -33,6 +37,7 @@ public abstract class AbstractGradleTest {
   def changesBuilder
   def treeChecker
   def container
+  private Map<TextAttributesKey, GradleProjectStructureNodeFilter> treeFilters = [:]
 
   @Before
   public void setUp() {
@@ -57,6 +62,10 @@ public abstract class AbstractGradleTest {
     configureContainer(container)
 
     changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel
+    
+    for (d in GradleColorAndFontDescriptorsProvider.DESCRIPTORS) {
+      treeFilters[d.key] = AbstractGradleSyncTreeFilterAction.createFilter(d.key)
+    }
   }
 
   protected void configureContainer(MutablePicoContainer container) {
@@ -125,5 +134,9 @@ public abstract class AbstractGradleTest {
         return weightA - weightB
       }
     }
+  }
+
+  protected def applyTreeFilter(TextAttributesKey toShow) {
+    treeModel.addFilter(treeFilters[toShow])
   }
 }

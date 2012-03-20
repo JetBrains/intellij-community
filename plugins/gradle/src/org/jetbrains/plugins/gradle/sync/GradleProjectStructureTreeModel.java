@@ -90,7 +90,7 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   private final NewChangesDispatcher                  myNewChangesDispatcher      = new NewChangesDispatcher();
 
   @NotNull private final Project                                   myProject;
-  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final PlatformFacade                            myPlatformFacade;
   @NotNull private final GradleProjectStructureHelper              myProjectStructureHelper;
   @NotNull private final Comparator<GradleProjectStructureNode<?>> myNodeComparator;
   @NotNull private final GradleProjectStructureChangesModel        myChangesModel;
@@ -226,16 +226,13 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     while (!toProcess.isEmpty()) {
       final GradleProjectStructureNode<?> current = toProcess.pop();
       toRemove.add(current);
-      for (GradleProjectStructureNodeFilter filter : myFilters) {
-        if (filter.isVisible(current)) {
-          toRemove.remove(current);
-          // Keep all nodes up to the hierarchy.
-          for (GradleProjectStructureNode<?> parent = current.getParent(); parent != null; parent = parent.getParent()) {
-            if (!toRemove.remove(parent)) {
-              break;
-            }
+      if (passFilters(current)) {
+        toRemove.remove(current);
+        // Keep all nodes up to the hierarchy.
+        for (GradleProjectStructureNode<?> parent = current.getParent(); parent != null; parent = parent.getParent()) {
+          if (!toRemove.remove(parent)) {
+            break;
           }
-          break;
         }
       }
       for (GradleProjectStructureNode<?> child : current) {
@@ -271,6 +268,22 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
   public void removeFilter(@NotNull GradleProjectStructureNodeFilter filter) {
     myFilters.remove(filter);
     rebuild();
+  }
+
+  /**
+   * @param node    node to check
+   * @return        <code>true</code> if active filters allow to show given node; <code>false</code> otherwise
+   */
+  private boolean passFilters(@NotNull GradleProjectStructureNode<?> node) {
+    if (myFilters.isEmpty()) {
+      return true;
+    }
+    for (GradleProjectStructureNodeFilter filter : myFilters) {
+      if (filter.isVisible(node)) {
+        return true;
+      }
+    }
+    return false;
   }
   
   @NotNull
@@ -357,6 +370,24 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       node.sortChildren();
     }
   }
+
+  private void removeModuleNodeIfEmpty(@NotNull GradleProjectStructureNode<GradleModuleId> node) {
+    if (node.getChildCount() != 0) {
+      return;
+    }
+    node.removeFromParent();
+    myModules.remove(node.getDescriptor().getElement().getModuleName());
+  }
+
+  private void removeModuleDependencyNodeIfEmpty(@NotNull GradleProjectStructureNode<GradleSyntheticId> node,
+                                                 @NotNull GradleModuleId moduleId)
+  {
+    if (node.getChildCount() != 0) {
+      return;
+    }
+    node.removeFromParent();
+    myModuleDependencies.remove(moduleId.getModuleName());
+  }
   
   /**
    * Asks current model to update its state in accordance with the given changes.
@@ -416,7 +447,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     processNewDependencyPresenceChange(change);
   }
   
-  private <I extends GradleAbstractDependencyId> void processNewDependencyPresenceChange(@NotNull GradleAbstractEntityPresenceChange<I> change) {
+  private <I extends GradleAbstractDependencyId> void processNewDependencyPresenceChange(
+    @NotNull GradleAbstractEntityPresenceChange<I> change)
+  {
     I id = change.getGradleEntity();
     TextAttributesKey attributes = GradleTextAttributes.GRADLE_LOCAL_CHANGE;
     if (id == null) {
@@ -434,6 +467,12 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleProjectStructureNode<I> newNode = buildNode(id, id.getDependencyName());
     dependenciesNode.add(newNode);
     newNode.setAttributes(attributes);
+
+    if (!passFilters(newNode)) {
+      newNode.removeFromParent();
+      removeModuleDependencyNodeIfEmpty(dependenciesNode, id.getOwnerModuleId());
+      removeModuleNodeIfEmpty(getModuleNode(id.getOwnerModuleId()));
+    }
   }
 
   private void processNewModulePresenceChange(@NotNull GradleModulePresenceChange change) {
@@ -450,6 +489,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     assert id != null;
     final GradleProjectStructureNode<GradleModuleId> moduleNode = getModuleNode(id);
     moduleNode.setAttributes(key);
+    
+    if (!passFilters(moduleNode)) {
+      removeModuleNodeIfEmpty(moduleNode);
+    }
   }
 
   private void processNewContentRootPresenceChange(@NotNull GradleContentRootPresenceChange change) {
@@ -470,6 +513,11 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     GradleProjectStructureNode<GradleContentRootId> contentRootNode = buildContentRootNode(id);
     moduleNode.add(contentRootNode);
     contentRootNode.setAttributes(key);
+
+    if (!passFilters(contentRootNode)) {
+      contentRootNode.removeFromParent();
+      removeModuleNodeIfEmpty(moduleNode);
+    }
   }
   
   private void processObsoleteProjectRenameChange(@NotNull GradleProjectRenameChange change) {

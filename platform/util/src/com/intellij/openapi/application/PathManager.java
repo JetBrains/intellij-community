@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,11 +156,11 @@ public class PathManager {
   public static boolean ensureConfigFolderExists(final boolean createIfNotExists) {
     getConfigPathWithoutDialog();
 
-    File file = new File(ourConfigPath);
+    final File file = new File(ourConfigPath);
     if (createIfNotExists && !file.exists()) {
-      file.mkdirs();
-      return true;
+      return file.mkdirs();  // shouldn't copy configs if failed to create new directory
     }
+
     return false;
   }
 
