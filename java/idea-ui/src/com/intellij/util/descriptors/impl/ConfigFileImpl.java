@@ -1,4 +1,3 @@
-
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.project.Project;
@@ -22,36 +21,30 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ConfigFileImpl implements ConfigFile {
   @NotNull private ConfigFileInfo myInfo;
-  private VirtualFilePointer myFilePointer;
-  private PsiFile myPsiFile;
+  private final VirtualFilePointer myFilePointer;
+  private volatile PsiFile myPsiFile;
   private final ConfigFileContainerImpl myContainer;
   private final Project myProject;
   private long myModificationCount;
-  private final Object myPsiFileLock = new Object();
-  private final VirtualFilePointerListener myListener = new VirtualFilePointerListener() {
-    public void beforeValidityChanged(final VirtualFilePointer[] pointers) {
-    }
-
-    public void validityChanged(final VirtualFilePointer[] pointers) {
-      synchronized (myPsiFileLock) {
-        myPsiFile = null;
-      }
-      onChange();
-    }
-  };
 
   public ConfigFileImpl(@NotNull final ConfigFileContainerImpl container, @NotNull final ConfigFileInfo configuration) {
     myContainer = container;
     myInfo = configuration;
-    setUrl(configuration.getUrl());
+    final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
+    myFilePointer = pointerManager.create(configuration.getUrl(), this, new VirtualFilePointerListener() {
+      @Override
+      public void beforeValidityChanged(final VirtualFilePointer[] pointers) {
+      }
+
+      @Override
+      public void validityChanged(final VirtualFilePointer[] pointers) {
+        myPsiFile = null;
+        onChange();
+      }
+    });
+    onChange();
     Disposer.register(container, this);
     myProject = myContainer.getProject();
-  }
-
-  private void setUrl(String url) {
-    final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
-    myFilePointer = pointerManager.create(url, this, myListener);
-    onChange();
   }
 
   private void onChange() {
@@ -59,6 +52,7 @@ public class ConfigFileImpl implements ConfigFile {
     myContainer.fireDescriptorChanged(this);
   }
 
+  @Override
   public String getUrl() {
     return myFilePointer.getUrl();
   }
@@ -67,17 +61,16 @@ public class ConfigFileImpl implements ConfigFile {
     myInfo = info;
   }
 
+  @Override
   @Nullable
   public VirtualFile getVirtualFile() {
     return myFilePointer.getFile();
   }
 
+  @Override
   @Nullable
   public PsiFile getPsiFile() {
-    PsiFile psiFile;
-    synchronized (myPsiFileLock) {
-      psiFile = myPsiFile;
-    }
+    PsiFile psiFile = myPsiFile;
 
     if (psiFile != null && psiFile.isValid()) {
       return psiFile;
@@ -88,27 +81,29 @@ public class ConfigFileImpl implements ConfigFile {
 
     psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
 
-    synchronized (myPsiFileLock) {
-      myPsiFile = psiFile;
-    }
+    myPsiFile = psiFile;
 
     return psiFile;
   }
 
+  @Override
   @Nullable
   public XmlFile getXmlFile() {
     final PsiFile file = getPsiFile();
     return file instanceof XmlFile ? (XmlFile)file : null;
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   @NotNull
   public ConfigFileInfo getInfo() {
     return myInfo;
   }
 
+  @Override
   public boolean isValid() {
     final PsiFile psiFile = getPsiFile();
     if (psiFile == null || !psiFile.isValid()) {
@@ -122,12 +117,14 @@ public class ConfigFileImpl implements ConfigFile {
   }
 
 
+  @Override
   @NotNull
   public ConfigFileMetaData getMetaData() {
     return myInfo.getMetaData();
   }
 
 
+  @Override
   public long getModificationCount() {
     return myModificationCount;
   }

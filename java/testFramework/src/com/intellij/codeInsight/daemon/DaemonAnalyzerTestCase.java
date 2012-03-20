@@ -109,7 +109,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).cleanupForNextTest();
 
     final LocalInspectionTool[] tools = configureLocalInspectionTools();
     for (LocalInspectionTool tool : tools) {
