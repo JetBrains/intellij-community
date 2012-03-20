@@ -12,6 +12,7 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -30,7 +31,7 @@ public class PythonPsiManager extends AbstractProjectComponent implements PsiTre
     myPsiManager.addTreeChangePreprocessor(this);
   }
 
-  public void treeChanged(PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     if (!(event.getFile() instanceof PyFile)) return;
     boolean changedInsideCodeBlock = false;
 
