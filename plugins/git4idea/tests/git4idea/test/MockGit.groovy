@@ -22,6 +22,7 @@ import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
 import git4idea.push.GitPushSpec
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.NotNull
 
 /**
  * 
@@ -30,8 +31,9 @@ import git4idea.repo.GitRepository
 class MockGit implements Git {
 
   @Override
-  void init(Project project, VirtualFile root) {
+  GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners) {
     new File(root.path, ".git").mkdir()
+    new GitCommandResult(true, 0, Collections.emptyList(), Collections.emptyList())
   }
 
   @Override

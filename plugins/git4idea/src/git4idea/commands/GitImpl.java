@@ -50,17 +50,15 @@ public class GitImpl implements Git {
 
   /**
    * Calls 'git init' on the specified directory.
-   * // TODO use common format
    */
   @Override
-  public void init(Project project, VirtualFile root) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.INIT);
-    h.setSilent(false);
-    h.setNoSSH(true);
-    h.run();
-    if (!h.errors().isEmpty()) {
-      throw h.errors().get(0);
+  public GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners) {
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
+    for (GitLineHandlerListener listener : listeners) {
+      h.addLineListener(listener);
     }
+    h.setSilent(false);
+    return run(h);
   }
 
   /**
