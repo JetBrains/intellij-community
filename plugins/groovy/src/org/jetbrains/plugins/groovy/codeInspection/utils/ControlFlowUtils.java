@@ -647,10 +647,10 @@ public class ControlFlowUtils {
   @Nullable
   public static GrControlFlowOwner findControlFlowOwner(PsiElement place) {
     if (place instanceof GrCodeBlock) {
-      place = place.getParent();
+      place = place.getContext();
     }
     while (true) {
-      place = place.getParent();
+      place = place.getContext();
       if (place == null) return null;
       if (place instanceof GrClosableBlock) return (GrClosableBlock)place;
       if (place instanceof GrMethod) return ((GrMethod)place).getBlock();
