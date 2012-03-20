@@ -10,8 +10,6 @@ import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
 /**
  * @author yole
  */
@@ -153,15 +151,6 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     //return false;
   }
 
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
-    return new ArrayList<PyElement>(ParamHelper.collectNamedParameters(this));
-  }
-
-  public PyElement getElementNamed(final String the_name) {
-    return IterHelper.findName(iterateNames(), the_name);
-  }
-
   @Override
   @Nullable
   public PyNamedParameter findParameterByName(@NotNull final String name) {
@@ -175,10 +164,6 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       }
     });
     return result.get();
-  }
-
-  public boolean mustResolveOutside() {
-    return true;
   }
 
   public String getPresentableText(final boolean includeDefaultValue) {
