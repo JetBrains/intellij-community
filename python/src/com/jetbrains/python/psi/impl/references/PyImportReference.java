@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -20,7 +19,10 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.impl.ResolveResultList;
-import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -187,7 +189,6 @@ public class PyImportReference extends PyReferenceImpl {
 
     public Object[] execute() {
       int relative_level = -1;
-      Condition<PsiElement> node_filter = new PyResolveUtil.FilterNameNotIn(myNamesAlready);
       InsertHandler<LookupElement> insertHandler = null;
 
       // NOTE: could use getPointInImport()

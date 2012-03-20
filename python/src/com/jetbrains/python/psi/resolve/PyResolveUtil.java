@@ -24,7 +24,6 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -317,35 +316,4 @@ public class PyResolveUtil {
     }
 
   }
-
-  /**
-   * Accepts only names not contained in a given collection.
-   */
-  public static class FilterNameNotIn implements Condition<PsiElement> {
-    private final Collection<String> myNames;
-
-    public FilterNameNotIn(Collection<String> names) {
-      myNames = names;
-    }
-
-    public boolean value(PsiElement target) {
-      if (target instanceof PsiNamedElement) {
-        return !myNames.contains(((PsiNamedElement)target).getName());
-      }
-      else if (target instanceof PyReferenceExpression) {
-        return !myNames.contains(((PyReferenceExpression)target).getReferencedName());
-      }
-      else if (target instanceof NameDefiner) {
-        NameDefiner definer = (NameDefiner)target;
-        for (PyElement expr : definer.iterateNames()) {
-          if (expr != null) {
-            String referencedName = expr.getName();
-            if (myNames.contains(referencedName)) return false;
-          }
-        }
-      }
-      return true; // nothing failed us
-    }
-  }
-
 }
