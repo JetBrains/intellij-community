@@ -17,7 +17,6 @@ import org.jetbrains.plugins.gradle.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -52,7 +51,9 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
 
       @Override
       public void onImportEnd(@NotNull Object entity) {
-        myImportCounter.decrementAndGet(); 
+        if (myImportCounter.decrementAndGet() <= 0) {
+          scheduleUpdate();
+        }
       }
     });    
   }
@@ -66,12 +67,21 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         if (myImportCounter.get() <= 0) {
-          scheduleUpdate();
+          // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes
+          // triggered by gradle.
+          rebuildTreeModel();
         }
       }
     });
   }
 
+  private void rebuildTreeModel() {
+    final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(myProject);
+    if (treeModel != null) {
+      treeModel.rebuild();
+    }
+  }
+  
   private void scheduleUpdate() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -115,6 +125,8 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
             return;
           }
 
+          // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes.
+          rebuildTreeModel();
           GradleUtil.refreshProject(myProject);
         }
       });

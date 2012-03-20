@@ -359,7 +359,12 @@ public class GradleUtil {
     if (project == null) {
       return null;
     }
-    
+
+    return getProjectStructureTreeModel(project);
+  }
+
+  @Nullable
+  public static GradleProjectStructureTreeModel getProjectStructureTreeModel(@NotNull Project project) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     final ToolWindow toolWindow = toolWindowManager.getToolWindow(GradleConstants.TOOL_WINDOW_ID);
     if (toolWindow == null) {
@@ -382,7 +387,7 @@ public class GradleUtil {
     }
     return null;
   }
-  
+
   /**
    * @return    {@link MatrixControlBuilder} with predefined set of columns ('gradle' and 'intellij')
    */
