@@ -50,6 +50,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(new Task.Modal(project, "Checking for updates", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
         final CheckForUpdateResult result = UpdateChecker.checkForUpdates(instance, PropertiesComponent.getInstance(),
                                                                           true
         );
