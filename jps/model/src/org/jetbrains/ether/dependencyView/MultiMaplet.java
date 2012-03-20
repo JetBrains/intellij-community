@@ -30,6 +30,7 @@ interface MultiMaplet<K, V> {
   Collection<V> get(final K key);
   void put(final K key, final V value);
   void put(final K key, final Collection<V> value);
+  void replace(final K key, final Collection<V> value);
   void putAll(MultiMaplet<K,V> m);
   void replaceAll(MultiMaplet<K, V> m);
   void remove(final K key);

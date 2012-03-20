@@ -1650,40 +1650,46 @@ public class Mappings {
 
         if (delta.isDifferentiated()) {
           for (DependencyContext.S c : delta.getChangedClasses()) {
-            myClassToSubclasses.remove(c);
-
             final Collection<DependencyContext.S> subClasses = delta.myClassToSubclasses.get(c);
-
             if (subClasses != null) {
-              myClassToSubclasses.put(c, subClasses);
+              myClassToSubclasses.replace(c, subClasses);
+            }
+            else {
+              myClassToSubclasses.remove(c);
             }
 
-            myClassToSourceFile.remove(c);
-
             final DependencyContext.S sourceFile = delta.myClassToSourceFile.get(c);
-
             if (sourceFile != null) {
               myClassToSourceFile.put(c, sourceFile);
+            }
+            else {
+              myClassToSourceFile.remove(c);
             }
           }
 
           for (DependencyContext.S f : delta.getChangedFiles()) {
-            mySourceFileToClasses.remove(f);
             final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
             if (classes != null) {
-              mySourceFileToClasses.put(f, classes);
+              mySourceFileToClasses.replace(f, classes);
+            }
+            else {
+              mySourceFileToClasses.remove(f);
             }
 
-            mySourceFileToUsages.remove(f);
             final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
             if (clusters != null) {
-              mySourceFileToUsages.put(f, clusters);
+              mySourceFileToUsages.replace(f, clusters);
+            }
+            else {
+              mySourceFileToUsages.remove(f);
             }
 
-            mySourceFileToAnnotationUsages.remove(f);
             final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
             if (usages != null) {
-              mySourceFileToAnnotationUsages.put(f, usages);
+              mySourceFileToAnnotationUsages.replace(f, usages);
+            }
+            else {
+              mySourceFileToAnnotationUsages.remove(f);
             }
           }
         }
@@ -1728,8 +1734,7 @@ public class Mappings {
             changed |= past.addAll(now);
 
             if (changed) {
-              myClassToClassDependency.remove(aClass);
-              myClassToClassDependency.put(aClass, past);
+              myClassToClassDependency.replace(aClass, past);
             }
           }
         }
