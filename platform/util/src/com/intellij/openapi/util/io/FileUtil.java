@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
@@ -35,6 +34,7 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.util.rt.FileUtilRt;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -45,7 +45,20 @@ import java.util.regex.Pattern;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtil extends FileUtilLight {
   public static final int MEGABYTE = 1024 * 1024;
+
   @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";
+
+  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY;
+  static {
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final TObjectHashingStrategy<String> canonical = TObjectHashingStrategy.CANONICAL;
+      PATH_HASHING_STRATEGY = canonical;
+    }
+    else {
+      PATH_HASHING_STRATEGY = CaseInsensitiveStringHashingStrategy.INSTANCE;
+    }
+  }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
 
@@ -57,13 +70,11 @@ public class FileUtil extends FileUtilLight {
 
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
   private static final long CHANNELS_COPYING_LIMIT = 5L * MEGABYTE;
-  private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
-  public static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
-  public static final Object/* java.io.FileSystem */ JAVA_IO_FILESYSTEM;
 
-  public static final TObjectHashingStrategy<String> T_HASHING_STRATEGY = SystemInfo.isFileSystemCaseSensitive
-                                                                          ? TObjectHashingStrategy.CANONICAL
-                                                                          : CaseInsensitiveStringHashingStrategy.INSTANCE;
+  private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
+
+  private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
+  private static final Object JAVA_IO_FILESYSTEM; // java.io.FileSystem
 
   @Nullable
   public static String getRelativePath(File base, File file) {
