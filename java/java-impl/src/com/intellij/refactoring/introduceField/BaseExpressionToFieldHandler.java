@@ -218,9 +218,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return false;
   }
 
-  public static void setModifiers(PsiField field, Settings settings, final boolean declareStatic) {
+  public static void setModifiers(PsiField field, Settings settings) {
     if (!settings.isIntroduceEnumConstant()) {
-      if (declareStatic) {
+      if (settings.isDeclareStatic()) {
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
       }
       if (settings.isDeclareFinal()) {
@@ -711,7 +711,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                          createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
                                      myParentClass);
 
-        setModifiers(myField, mySettings, mySettings.isDeclareStatic());
+        setModifiers(myField, mySettings);
         myField = appendField(initializer, initializerPlace, destClass, myParentClass, myAnchorElement, myField);
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());

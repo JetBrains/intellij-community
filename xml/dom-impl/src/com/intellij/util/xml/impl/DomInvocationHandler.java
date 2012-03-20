@@ -80,7 +80,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         converter =  myManager.getConverterManager().getConverterByClass(parameter);
       }
       if (converter == null) {
-        LOG.error("No converter specified: String<->" + parameter.getName() + "; method=" + method);
+        throw new AssertionError("No converter specified: String<->" + parameter.getName() + "; method=" + method + "; place=" + myChildDescription);
       }
       return converter;
     }
