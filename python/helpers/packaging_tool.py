@@ -15,13 +15,13 @@ def error(message, retcode):
     sys.exit(retcode)
 
 def error_no_pip():
-    error("Python package management tool 'pip' not found. Please install 'pip'", ERROR_NO_PACKAGING_TOOLS)
+    error("Python package management tool 'pip' not found. Please install 'pip' manually", ERROR_NO_PACKAGING_TOOLS)
 
 def do_list():
     try:
         import pkg_resources
     except ImportError:
-        error("Python package management tools not found. Please install 'setuptools' or 'distribute'", ERROR_NO_PACKAGING_TOOLS)
+        error("Python package management tools not found. Please install 'setuptools' or 'distribute' manually", ERROR_NO_PACKAGING_TOOLS)
     for pkg in pkg_resources.working_set:
         print('\t'.join([pkg.project_name, pkg.version, pkg.location]))
 
