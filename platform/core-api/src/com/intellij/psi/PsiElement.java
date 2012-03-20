@@ -269,7 +269,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the element which was actually added (either <code>element</code> or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
-  PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException;
+  PsiElement addBefore(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException;
 
   /**
    * Adds a child to this PSI element, after the specified anchor element.
@@ -279,7 +279,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the element which was actually added (either <code>element</code> or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
-  PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException;
+  PsiElement addAfter(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException;
 
   /**
    * Checks if it is possible to add the specified element as a child to this element,

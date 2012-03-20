@@ -15,6 +15,7 @@
  */
 package git4idea.actions;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -30,12 +31,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,13 +79,13 @@ public class GitInit extends DumbAwareAction {
       }
     }
 
-    GitVcs vcs = GitVcs.getInstance(project);
     Git git = ServiceManager.getService(Git.class);
-    try {
-      git.init(project, root);
-    } catch (VcsException ex) {
-      if (vcs == null || vcs.getExecutableValidator().isExecutableValid()) {
-        GitUIUtil.showOperationErrors(project, Collections.singleton(ex), "git init");
+    GitVcs vcs = GitVcs.getInstance(project);
+    GitCommandResult result = git.init(project, root);
+    if (!result.success()) {
+      if (vcs != null && vcs.getExecutableValidator().isExecutableValid()) {
+        GitUIUtil.notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, project, "Git init failed", result.getErrorOutputAsHtmlString(),
+                         NotificationType.ERROR, null);
       }
       return;
     }

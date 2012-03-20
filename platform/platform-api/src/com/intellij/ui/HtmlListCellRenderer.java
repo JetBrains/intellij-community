@@ -90,6 +90,15 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
     }
   }
 
+  public void append(SimpleColoredText text) {
+    int length = text.getTexts().size();
+    for (int i = 0; i < length; i++) {
+      String fragment = text.getTexts().get(i);
+      SimpleTextAttributes attributes = text.getAttributes().get(i);
+      append(fragment, attributes);
+    }
+  }
+
   private static void formatStyle(final StringBuilder builder, final SimpleTextAttributes attributes) {
     final Color fgColor = attributes.getFgColor();
     final Color bgColor = attributes.getBgColor();

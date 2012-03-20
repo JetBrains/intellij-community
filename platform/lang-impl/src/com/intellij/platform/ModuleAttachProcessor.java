@@ -70,12 +70,15 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
         token.finish();
       }
     }
-    for(String file: projectDir.list()) {
-      if (FileUtil.getExtension(file).equals("iml")) {
-        VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
-        if (imlFile != null) {
-          attachModule(project, imlFile, callback);
-          return true;
+    final String[] files = projectDir.list();
+    if (files != null) {
+      for(String file: files) {
+        if (FileUtil.getExtension(file).equals("iml")) {
+          VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
+          if (imlFile != null) {
+            attachModule(project, imlFile, callback);
+            return true;
+          }
         }
       }
     }

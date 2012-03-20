@@ -484,17 +484,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitUnaryExpression(GrUnaryExpression expression) {
-    //prefix only
-    LOG.assertTrue(!(expression instanceof GrPostfixExpression));
-
-    if (expression.getOperationToken() == myChild1) {
-      createSpaceInCode(mySettings.SPACE_AROUND_UNARY_OPERATOR);
-    }
-  }
-
-  @Override
-  public void visitPostfixExpression(GrPostfixExpression expression) {
-    if (expression.getOperationToken() == myChild2) {
+    if (!expression.isPostfix() && expression.getOperationToken() == myChild1 ||
+        expression.isPostfix() && expression.getOperationToken() == myChild2) {
       createSpaceInCode(mySettings.SPACE_AROUND_UNARY_OPERATOR);
     }
   }

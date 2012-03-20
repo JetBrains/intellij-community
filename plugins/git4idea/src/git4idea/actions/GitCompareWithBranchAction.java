@@ -142,7 +142,11 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     if (repository == null || repository.isFresh() || noBranchesToCompare(repository)) {
       presentation.setEnabled(false);
       presentation.setVisible(true);
+      return;
     }
+
+    presentation.setEnabled(true);
+    presentation.setVisible(true);
   }
 
   private static boolean noBranchesToCompare(@NotNull GitRepository repository) {

@@ -154,23 +154,25 @@ public class CompileDriver {
 
     myGenerationCompilerModuleToOutputDirMap = new HashMap<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>>();
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class, myCompilerFilter);
-    final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
-    final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
-    for (Module module : allModules) {
-      for (IntermediateOutputCompiler compiler : generatingCompilers) {
-        final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
-        final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
-        final Pair<IntermediateOutputCompiler, Module> pair = new Pair<IntermediateOutputCompiler, Module>(compiler, module);
-        final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
-        myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
-      }
-      if (config.isAnnotationProcessorsEnabled()) {
-        if (config.isAnnotationProcessingEnabled(module)) {
-          final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
-          if (path != null) {
-            lookupVFile(lfs, path);  // ensure the file is created and added to VFS
+    if (!useCompileServer()) {
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
+      final IntermediateOutputCompiler[] generatingCompilers = CompilerManager.getInstance(myProject).getCompilers(IntermediateOutputCompiler.class, myCompilerFilter);
+      final Module[] allModules = ModuleManager.getInstance(myProject).getModules();
+      final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+      for (Module module : allModules) {
+        for (IntermediateOutputCompiler compiler : generatingCompilers) {
+          final VirtualFile productionOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, false));
+          final VirtualFile testOutput = lookupVFile(lfs, CompilerPaths.getGenerationOutputPath(compiler, module, true));
+          final Pair<IntermediateOutputCompiler, Module> pair = new Pair<IntermediateOutputCompiler, Module>(compiler, module);
+          final Pair<VirtualFile, VirtualFile> outputs = new Pair<VirtualFile, VirtualFile>(productionOutput, testOutput);
+          myGenerationCompilerModuleToOutputDirMap.put(pair, outputs);
+        }
+        if (config.isAnnotationProcessorsEnabled()) {
+          if (config.isAnnotationProcessingEnabled(module)) {
+            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+            if (path != null) {
+              lookupVFile(lfs, path);  // ensure the file is created and added to VFS
+            }
           }
         }
       }

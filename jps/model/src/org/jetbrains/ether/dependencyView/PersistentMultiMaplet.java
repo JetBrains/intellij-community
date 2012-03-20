@@ -67,6 +67,21 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
+  public void replace(K key, Collection<V> value) {
+    try {
+      if (value == null) {
+        myMap.remove(key);
+      }
+      else {
+        myMap.put(key, value);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public void put(final K key, final Collection<V> value) {
     try {
       myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
@@ -149,9 +164,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void replaceAll(MultiMaplet<K, V> m) {
     for (Map.Entry<K, Collection<V>> entry : m.entrySet()) {
-      final K key = entry.getKey();
-      remove(key);
-      put(key, entry.getValue());
+      replace(entry.getKey(), entry.getValue());
     }
   }
 

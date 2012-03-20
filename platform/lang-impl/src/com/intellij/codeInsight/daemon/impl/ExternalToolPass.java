@@ -50,6 +50,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
 
   private final Map<ExternalAnnotator, MyData> myAnnotator2DataMap;
 
+  private final ExternalToolPassFactory myExternalToolPassFactory;
+
   private static class MyData {
     final PsiFile myPsiRoot;
     final Object myCollectedInfo;
@@ -61,7 +63,8 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     }
   }
 
-  public ExternalToolPass(@NotNull PsiFile file,
+  public ExternalToolPass(@NotNull ExternalToolPassFactory externalToolPassFactory,
+                          @NotNull PsiFile file,
                           @NotNull Editor editor,
                           int startOffset,
                           int endOffset) {
@@ -72,6 +75,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
 
     myAnnotator2DataMap = new HashMap<ExternalAnnotator, MyData>();
+    myExternalToolPassFactory = externalToolPassFactory;
   }
 
   @Override
@@ -159,7 +163,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       r.run();
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(r);
+      myExternalToolPassFactory.scheduleExternalActivity(myFile, r);
     }
   }
 
