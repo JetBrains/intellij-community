@@ -115,7 +115,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       dir("rt") {
         fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
       }
-      jar("util.jar") { module("util") }
+
+      jar("util.jar") {
+        module("util")
+        module("util-rt")
+      }
 
       jar("openapi.jar") {
         openapiModules.each { module it}
