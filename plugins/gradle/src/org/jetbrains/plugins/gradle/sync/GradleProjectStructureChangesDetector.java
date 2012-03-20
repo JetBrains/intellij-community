@@ -52,7 +52,9 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
       @Override
       public void onImportEnd(@NotNull Object entity) {
         if (myImportCounter.decrementAndGet() <= 0) {
-          scheduleUpdate();
+          // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes
+          // triggered by gradle.
+          rebuildTreeModel();
         }
       }
     });    
@@ -67,9 +69,7 @@ public class GradleProjectStructureChangesDetector extends AbstractProjectCompon
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         if (myImportCounter.get() <= 0) {
-          // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes
-          // triggered by gradle.
-          rebuildTreeModel();
+          scheduleUpdate();
         }
       }
     });
