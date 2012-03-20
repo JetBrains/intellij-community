@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.JavaParserUtil;
@@ -120,7 +121,7 @@ public interface JavaDocElementType {
     }
 
     @Override
-    public boolean isParsable(final CharSequence buffer, final Project project) {
+    public boolean isParsable(final CharSequence buffer, Language fileLanguage, final Project project) {
       final JavaLexer lexer = new JavaLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       lexer.start(buffer);
       if (lexer.getTokenType() == DOC_COMMENT) {

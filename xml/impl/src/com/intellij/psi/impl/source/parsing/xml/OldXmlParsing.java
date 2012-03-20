@@ -22,8 +22,6 @@ import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.ParsingContext;
-import com.intellij.psi.impl.source.parsing.TokenProcessor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -49,10 +47,10 @@ public class OldXmlParsing implements XmlElementType {
   public static final TokenSet XML_COMMENT_BIT_SET =
     TokenSet.create(new IElementType[]{XML_COMMENT_START, XML_COMMENT_CHARACTERS, XML_COMMENT_END});
 
-  private final ParsingContext myContext;
+  private final XmlParsingContext myContext;
   private int myLastTokenEnd = -1;
 
-  public OldXmlParsing(ParsingContext context) {
+  public OldXmlParsing(XmlParsingContext context) {
     myContext = context;
   }
 
@@ -931,13 +929,13 @@ public class OldXmlParsing implements XmlElementType {
     }
   }
 
-  public static class WhiteSpaceAndCommentsProcessor implements TokenProcessor {
-    public static final TokenProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
+  public static class WhiteSpaceAndCommentsProcessor {
+    public static final WhiteSpaceAndCommentsProcessor INSTANCE = new WhiteSpaceAndCommentsProcessor();
 
     private WhiteSpaceAndCommentsProcessor() {
     }
 
-    public TreeElement process(Lexer lexer, ParsingContext context) {
+    public TreeElement process(Lexer lexer, XmlParsingContext context) {
       TreeElement first = null;
       TreeElement last = null;
       while (isTokenValid(lexer.getTokenType())) {
@@ -972,7 +970,7 @@ public class OldXmlParsing implements XmlElementType {
       return tokenType != null && XML_WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType);
     }
 
-    private TreeElement parseComment(Lexer lexer, ParsingContext context) {
+    private TreeElement parseComment(Lexer lexer, XmlParsingContext context) {
       final CompositeElement comment = ASTFactory.composite(XML_COMMENT);
 
       while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
@@ -990,8 +988,8 @@ public class OldXmlParsing implements XmlElementType {
                                          int startOffset,
                                          int endOffset,
                                          int state,
-                                         TokenProcessor processor,
-                                         ParsingContext context) {
+                                         WhiteSpaceAndCommentsProcessor processor,
+                                         XmlParsingContext context) {
     if (state < 0) {
       lexer.start(lexer.getBufferSequence(), startOffset, endOffset);
     }
@@ -1039,9 +1037,9 @@ public class OldXmlParsing implements XmlElementType {
     }
   }
 
-  public static void insertMissingTokensInTreeBody(TreeElement leaf, Lexer lexer,
-                                                   TokenProcessor processor,
-                                                   ParsingContext context,
+  private static void insertMissingTokensInTreeBody(TreeElement leaf, Lexer lexer,
+                                                   WhiteSpaceAndCommentsProcessor processor,
+                                                   XmlParsingContext context,
                                                    ASTNode endToken) {
     final TreeUtil.CommonParentState commonParents = new TreeUtil.CommonParentState();
     while (leaf != null) {
