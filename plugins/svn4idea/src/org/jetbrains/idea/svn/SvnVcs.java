@@ -216,8 +216,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     dumpFileStatus(SvnFileStatus.EXTERNAL);
     dumpFileStatus(SvnFileStatus.OBSTRUCTED);
 
-    myEntriesFileListener = new SvnEntriesFileListener(project);
-
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     myAddConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, this);
     myDeleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, this);
@@ -225,8 +223,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     if (myProject.isDefault()) {
       myChangeListListener = null;
+      myEntriesFileListener = null;
     }
     else {
+      myEntriesFileListener = new SvnEntriesFileListener(project);
       upgradeIfNeeded(bus);
 
       myChangeListListener = new SvnChangelistListener(myProject, createChangelistClient());
@@ -397,7 +397,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
     
     SvnApplicationSettings.getInstance().svnActivated();
-    VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
+    if (myEntriesFileListener != null) {
+      VirtualFileManager.getInstance().addVirtualFileListener(myEntriesFileListener);
+    }
     // this will initialize its inner listener for committed changes upload
     LoadedRevisionsCache.getInstance(myProject);
     FrameStateManager.getInstance().addListener(myFrameStateListener);
@@ -512,8 +514,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myVcsListener != null) {
       vcsManager.removeVcsListener(myVcsListener);
     }
-    
-    VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
+
+    if (myEntriesFileListener != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myEntriesFileListener);
+    }
     SvnApplicationSettings.getInstance().svnDeactivated();
     if (myCommittedChangesProvider != null) {
       myCommittedChangesProvider.deactivate();
@@ -731,8 +735,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return myAnnotationProvider;
   }
 
-  public SvnEntriesFileListener getSvnEntriesFileListener() {
-    return myEntriesFileListener;
+  public void addEntriesListener(final SvnEntriesListener listener) {
+    if (myEntriesFileListener != null) {
+      myEntriesFileListener.addListener(listener);
+    }
+  }
+
+  public void removeEntriesListener(final SvnEntriesListener listener) {
+    if (myEntriesFileListener != null) {
+      myEntriesFileListener.removeListener(listener);
+    }
   }
 
   public DiffProvider getDiffProvider() {
