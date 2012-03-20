@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -30,21 +31,25 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * @author Max Medvedev
  */
 public class GrUnusedIncDecInspection extends BaseInspection {
+  private static final Logger LOG = Logger.getInstance(GrUnusedIncDecInspection.class);
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new GrUnusedIncDecInspectionVisitor();
@@ -87,7 +92,26 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       PsiElement resolved = ((GrReferenceExpression)operand).resolve();
       if (!(resolved instanceof GrVariable) || resolved instanceof GrField) return;
 
-      List<ReadWriteVariableInstruction> accesses = ControlFlowUtils.findAccess((GrVariable)resolved, expression.getOperand(), true, false);
+      final GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(expression);
+      assert owner != null;
+      GrControlFlowOwner ownerOfDeclaration = ControlFlowUtils.findControlFlowOwner(resolved);
+      if (ownerOfDeclaration != owner) return;
+
+      final Instruction cur = ControlFlowUtils.findInstruction(operand, owner.getControlFlow());
+
+      if (cur == null) {
+        LOG.error("no instruction found in flow." + "operand: " + operand.getText() + " cfo: " + owner.getText());
+      }
+
+      //get write access for inc or dec
+      Iterable<? extends Instruction> successors = cur.allSuccessors();
+      Iterator<? extends Instruction> iterator = successors.iterator();
+      LOG.assertTrue(iterator.hasNext());
+      Instruction writeAccess = iterator.next();
+      LOG.assertTrue(!iterator.hasNext());
+
+      List<ReadWriteVariableInstruction> accesses = ControlFlowUtils.findAccess((GrVariable)resolved, true, false, writeAccess);
+
       boolean allAreWrite = true;
       for (ReadWriteVariableInstruction access : accesses) {
         if (!access.isWrite()) {

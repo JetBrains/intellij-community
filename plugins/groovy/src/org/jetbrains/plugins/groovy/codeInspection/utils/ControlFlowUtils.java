@@ -679,15 +679,21 @@ public class ControlFlowUtils {
 
     final Instruction cur = findInstruction(place, owner.getControlFlow());
 
-    if (cur == null) throw new IllegalArgumentException("place is not in the flow");
+    if (cur == null) {
+      throw new IllegalArgumentException("place is not in the flow");
+    }
 
+    return findAccess(local, ahead, writeAccessOnly, cur);
+  }
+
+  public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, boolean ahead, boolean writeAccessOnly, Instruction cur) {
     String name = local.getName();
-    
+
     final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
     final HashSet<Instruction> visited = new HashSet<Instruction>();
-    
+
     visited.add(cur);
-    
+
     Queue<Instruction> queue = new ArrayDeque<Instruction>();
 
     for (Instruction i : ahead ? cur.allSuccessors() : cur.allPredecessors()) {
@@ -695,11 +701,11 @@ public class ControlFlowUtils {
         queue.add(i);
       }
     }
-    
+
     while (true) {
       Instruction instruction = queue.poll();
       if (instruction == null) break;
-      
+
       if (instruction instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)instruction;
         if (name.equals(rw.getVariableName())) {
@@ -707,13 +713,13 @@ public class ControlFlowUtils {
             result.add(rw);
             continue;
           }
-          
+
           if (!writeAccessOnly) {
             result.add(rw);
           }
         }
       }
-      
+
       for (Instruction i : ahead ? instruction.allSuccessors() : instruction.allPredecessors()) {
         if (visited.add(i)) {
           queue.add(i);
@@ -723,9 +729,9 @@ public class ControlFlowUtils {
 
     return result;
   }
-  
+
   @Nullable
-  private static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
+  public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
     return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
       @Override
       public boolean value(Instruction instruction) {
