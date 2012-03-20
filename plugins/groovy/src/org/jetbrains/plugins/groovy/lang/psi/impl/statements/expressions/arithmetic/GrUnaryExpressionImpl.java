@@ -126,6 +126,11 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
+  public boolean isPostfix() {
+    return getFirstChild() instanceof GrExpression;
+  }
+
+  @Override
   public PsiElement getElement() {
     return this;
   }

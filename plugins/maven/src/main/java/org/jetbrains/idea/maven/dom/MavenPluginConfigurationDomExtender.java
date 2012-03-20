@@ -17,7 +17,9 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -34,13 +36,15 @@ import org.jetbrains.idea.maven.dom.converters.MavenPluginCustomParameterValueCo
 import org.jetbrains.idea.maven.dom.model.MavenDomConfiguration;
 import org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter;
 import org.jetbrains.idea.maven.dom.model.MavenDomPluginExecution;
-import org.jetbrains.idea.maven.dom.model.MavenDomPluginManagement;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomMojo;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
   public static final Key<ParameterData> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
@@ -53,21 +57,26 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       return;
     }
 
-    boolean isInPluginManagement = false;// isInPluginManagement(config);
+    boolean isInPluginManagement = isInPluginManagement(config);
 
     for (ParameterData each : collectParameters(pluginModel, config)) {
       registerPluginParameter(isInPluginManagement, r, each);
     }
   }
 
-  private static boolean isInPluginManagement(MavenDomConfiguration config) {
-    DomElement pluginNode = config.getParent();
-    if (pluginNode == null) return false;
+  private static boolean isInPluginManagement(MavenDomConfiguration pluginNode) {
+    XmlElement xmlElement = pluginNode.getXmlElement();
+    if (xmlElement == null) return false;
 
-    DomElement pluginsNode = pluginNode.getParent();
-    if (pluginsNode == null) return false;
+    PsiElement pluginTag = xmlElement.getParent();
+    if (pluginTag == null) return false;
 
-    return pluginsNode.getParent() instanceof MavenDomPluginManagement;
+    PsiElement pluginsTag = pluginTag.getParent();
+    if (pluginsTag == null) return false;
+
+    PsiElement pluginManagementTag = pluginsTag.getParent();
+
+    return pluginManagementTag instanceof XmlTag && "pluginManagement".equals(((XmlTag)pluginManagementTag).getName());
   }
 
   private static Collection<ParameterData> collectParameters(MavenDomPluginModel pluginModel, MavenDomConfiguration config) {

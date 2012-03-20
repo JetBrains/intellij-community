@@ -253,8 +253,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel = new JPanel();
     myPanel = new SimpleToolWindowPanel(true).setProvideQuickActions(false);
     myPanel.setContent(myViewContentPanel);
-
-    myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
   }
 
   public String getName() {

@@ -82,6 +82,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
   }
 
   private static void passInner(GrControlFlowOwner owner) {
+    System.out.println(owner.getText());
     System.out.println(ControlFlowUtils.dumpControlFlow(owner.getControlFlow()));
   }
 }

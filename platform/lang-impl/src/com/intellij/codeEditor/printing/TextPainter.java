@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -92,8 +91,6 @@ public class TextPainter implements Printable {
                             myPrintSettings.FOOTER_HEADER_FONT_SIZE);
     myFileName = fileName;
     mySegmentEnd = myDocument.getTextLength();
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     myFileType = psiFile.getFileType();
 
