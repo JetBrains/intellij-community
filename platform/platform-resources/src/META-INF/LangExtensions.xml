@@ -293,6 +293,8 @@
 
   <projectService serviceInterface="com.intellij.psi.impl.cache.CacheManager"
                   serviceImplementation="com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl"/>
+  <projectService serviceInterface="com.intellij.psi.impl.cache.TodoCacheManager"
+                  serviceImplementation="com.intellij.psi.impl.cache.impl.TodoIndexCacheManagerImpl"/>
   <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
                   serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
   <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,8 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -34,18 +31,15 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
-import com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.IndexPattern;
-import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * @author Eugene Zhuravlev
@@ -141,72 +135,5 @@ public class IndexCacheManagerImpl implements CacheManager{
       }
     }
     return true;
-  }
-
-  @Override
-  @NotNull
-  public PsiFile[] getFilesWithTodoItems() {
-    if (myProject.isDefault()) {
-      return PsiFile.EMPTY_ARRAY;
-    }
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    final Set<PsiFile> allFiles = new HashSet<PsiFile>();
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    for (IndexPattern indexPattern : IndexPatternUtil.getIndexPatterns()) {
-      final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
-        TodoIndex.NAME,
-        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          for (VirtualFile file : files) {
-            if (projectFileIndex.isInContent(file)) {
-              final PsiFile psiFile = myPsiManager.findFile(file);
-              if (psiFile != null) {
-                allFiles.add(psiFile);
-              }
-            }
-          }
-        }
-      });
-    }
-    return allFiles.isEmpty() ? PsiFile.EMPTY_ARRAY : PsiUtilCore.toPsiFileArray(allFiles);
-  }
-
-  @Override
-  public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
-    if (myProject.isDefault()) {
-      return 0;
-    }
-    if (file instanceof VirtualFileWindow) return -1;
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    int count = 0;
-    for (IndexPattern indexPattern : patternProvider.getIndexPatterns()) {
-      count += fetchCount(fileBasedIndex, file, indexPattern);
-    }
-    return count;
-  }
-   
-  @Override
-  public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
-    if (myProject.isDefault()) {
-      return 0;
-    }
-    if (file instanceof VirtualFileWindow) return -1;
-    return fetchCount(FileBasedIndex.getInstance(), file, pattern);
-  }
-
-  private int fetchCount(final FileBasedIndex fileBasedIndex, final VirtualFile file, final IndexPattern indexPattern) {
-    final int[] count = {0};
-    fileBasedIndex.processValues(
-      TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), file,
-      new FileBasedIndex.ValueProcessor<Integer>() {
-        @Override
-        public boolean process(final VirtualFile file, final Integer value) {
-          count[0] += value.intValue();
-          return true;
-        }
-      }, GlobalSearchScope.fileScope(myProject, file));
-    return count[0];
   }
 }
