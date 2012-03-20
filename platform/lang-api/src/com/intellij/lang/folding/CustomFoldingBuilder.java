@@ -58,7 +58,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
   private void addCustomFoldingRegionsRecursively(@Nullable FoldingStack foldingStack,
                                                   @NotNull ASTNode node,
-                                                  List<FoldingDescriptor> descriptors,
+                                                  @NotNull List<FoldingDescriptor> descriptors,
                                                   int currDepth) {
     FoldingStack localFoldingStack = isCustomFoldingRoot(node) || foldingStack == null ? new FoldingStack(node) : foldingStack;
     for (ASTNode child = node.getFirstChildNode(); child != null; child = child.getTreeNext()) {
@@ -196,7 +196,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
   }
 
   private static class FoldingStack extends Stack<ASTNode> {
-    private ASTNode owner;
+    private final ASTNode owner;
 
     public FoldingStack(@NotNull ASTNode owner) {
       super(1);
@@ -205,7 +205,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
     @NotNull
     public ASTNode getOwner() {
-      return this.owner;
+      return owner;
     }
   }
 }

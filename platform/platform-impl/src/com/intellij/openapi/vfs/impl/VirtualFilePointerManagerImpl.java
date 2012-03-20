@@ -72,7 +72,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   synchronized void clearPointerCaches(String url, VirtualFilePointerListener listener) {
     TreeMap<String, VirtualFilePointerImpl> urlToPointer = myUrlToPointerMaps.get(listener);
-    if (urlToPointer == null && ApplicationManager.getApplication().isUnitTestMode()) return;
     assert urlToPointer != null;
     urlToPointer.remove(VfsUtil.urlToPath(url));
     if (urlToPointer.isEmpty()) {
@@ -146,12 +145,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     int separatorIndex = url.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (separatorIndex < 0) return "";
     return url.substring(separatorIndex + JarFileSystem.JAR_SEPARATOR.length());
-  }
-
-  @TestOnly
-  public synchronized void cleanupForNextTest() {
-    myUrlToPointerMaps.clear();
-    myContainers.clear();
   }
 
   /**
@@ -339,7 +332,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       VirtualFilePointerListener listener = entry.getKey();
       TreeMap<String, VirtualFilePointerImpl> map = entry.getValue();
       for (VirtualFilePointerImpl pointer : map.values()) {
-        myUrlToPointerMaps.clear();
+        //myUrlToPointerMaps.clear();
         pointer.throwNotDisposedError("Not disposed pointer: listener="+listener);
       }
     }

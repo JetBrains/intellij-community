@@ -20,13 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.Notificator;
 import git4idea.PlatformFacade;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -77,15 +77,15 @@ public class GitIntegrationEnabler {
   }
 
   private boolean gitInitOrNotifyError(@NotNull Notificator notificator, @NotNull final VirtualFile projectDir) {
-    try {
-      myGit.init(myProject, projectDir);
+    GitCommandResult result = myGit.init(myProject, projectDir);
+    if (result.success()) {
       refreshGitDir(projectDir);
       notificator.notifySuccess("", "Created Git repository in \n" + projectDir.getPresentableUrl());
       return true;
     }
-    catch (VcsException e) {
-      notificator.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), e.getMessage());
-      LOG.error(e);
+    else {
+      notificator.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), result.getErrorOutputAsHtmlString());
+      LOG.info(result.getErrorOutputAsHtmlString());
       return false;
     }
   }

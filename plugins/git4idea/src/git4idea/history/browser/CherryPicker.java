@@ -103,11 +103,11 @@ public class CherryPicker {
       public void run() {
         moveToCorrectLists();
       }
-    }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "", new Consumer<VcsDirtyScopeManager>() {
+    }, InvokeAfterUpdateMode.SILENT, "", new Consumer<VcsDirtyScopeManager>() {
       public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
         vcsDirtyScopeManager.filePathsDirty(getAllChangedFiles(), null);
       }
-    }, ModalityState.defaultModalityState());
+    }, ModalityState.NON_MODAL);
   }
 
   private void showResults() {
