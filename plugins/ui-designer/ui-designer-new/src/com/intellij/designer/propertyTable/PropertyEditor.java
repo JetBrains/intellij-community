@@ -29,7 +29,7 @@ public abstract class PropertyEditor {
   private final EventListenerList myListenerList = new EventListenerList();
 
   @NotNull
-  public abstract JComponent getComponent(@Nullable RadComponent component, Object value);
+  public abstract JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value);
 
   @Nullable
   public JComponent getPreferredFocusedComponent(@NotNull JComponent component) {

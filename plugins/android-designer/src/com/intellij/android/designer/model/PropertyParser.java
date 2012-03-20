@@ -16,9 +16,11 @@
 package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.AttributeProperty;
 import com.intellij.android.designer.propertyTable.FlagProperty;
+import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
@@ -33,6 +35,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidTargetData;
 import org.jetbrains.android.uipreview.ProjectClassLoader;
 import org.jetbrains.android.uipreview.RenderServiceFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -43,12 +46,14 @@ import java.util.*;
 public class PropertyParser {
   public static final String KEY = "PROPERTY_PARSER";
 
+  private final Module myModule;
   private MetaManager myMetaManager;
   private AttributeDefinitions myDefinitions;
   private ProjectClassLoader myClassLoader;
   private Map<String, List<Property>> myCachedProperties;
 
   public PropertyParser(Module module, IAndroidTarget target) throws Exception {
+    myModule = module;
     myMetaManager = ViewsMetaManager.getInstance(module.getProject());
     myCachedProperties = myMetaManager.getCache(target.hashString());
     if (myCachedProperties == null) {
@@ -165,5 +170,10 @@ public class PropertyParser {
     }
 
     return properties;
+  }
+
+  @NotNull
+  public ResourceDialog createResourceDialog(ResourceType... types) {
+    return new ResourceDialog(myModule, types);
   }
 }
