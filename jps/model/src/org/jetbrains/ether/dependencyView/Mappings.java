@@ -65,6 +65,7 @@ public class Mappings {
 
   private final File myRootDir;
   private DependencyContext myContext;
+  private final DependencyContext.S myInitName;
   private org.jetbrains.ether.dependencyView.Logger<DependencyContext.S> myDebugS;
 
   private static void debug(final String s) {
@@ -129,6 +130,7 @@ public class Mappings {
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
+    myInitName = myContext.get("<init>");
     myDebugS = base.myDebugS;
     myRootDir.mkdirs();
     createImplementation();
@@ -143,6 +145,7 @@ public class Mappings {
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
     createImplementation();
+    myInitName = myContext.get("<init>");
   }
 
   private void createImplementation() throws IOException {
@@ -369,7 +372,7 @@ public class Mappings {
       return new MethodRepr.Predicate() {
         @Override
         public boolean satisfy(final MethodRepr m) {
-          if (!m.name.equals(than.name) || m.argumentTypes.length != than.argumentTypes.length) {
+          if (m.name.equals(myInitName) || !m.name.equals(than.name) || m.argumentTypes.length != than.argumentTypes.length) {
             return false;
           }
 
@@ -666,17 +669,19 @@ public class Mappings {
                             final Set<DependencyContext.S> dependents) {
       affectedUsages.add(rootUsage);
 
-      for (DependencyContext.S p : subclasses) {
-        final Collection<DependencyContext.S> deps = myClassToClassDependency.get(p);
+      if (subclasses != null) {
+        for (DependencyContext.S p : subclasses) {
+          final Collection<DependencyContext.S> deps = myClassToClassDependency.get(p);
 
-        if (deps != null) {
-          dependents.addAll(deps);
+          if (deps != null) {
+            dependents.addAll(deps);
+          }
+
+          debug("Affect method usage referenced of class ", p);
+
+          affectedUsages
+            .add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
         }
-
-        debug("Affect method usage referenced of class ", p);
-
-        affectedUsages
-          .add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
       }
     }
 
@@ -1007,7 +1012,7 @@ public class Mappings {
 
             Collection<DependencyContext.S> propagated = null;
 
-            if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !myContext.getValue(m.name).equals("<init>")) {
+            if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !m.name.equals(myInitName)) {
               final ClassRepr oldIt = getReprByName(it.name);
 
               if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) {
@@ -1075,15 +1080,22 @@ public class Mappings {
                   else {
                     debug("Current method does not override that found");
 
-                    final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, cc.name);
-                    final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+                    final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, it.name);
 
-                    if (deps != null) {
-                      dependants.addAll(deps);
+                    final Option<Boolean> inheritorOf = self.isInheritorOf(cc.name, it.name);
+
+                    if (inheritorOf.isValue() && inheritorOf.value()) {
+                      final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+
+                      if (deps != null) {
+                        dependants.addAll(deps);
+                      }
+
+                      u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
                     }
 
                     debug("Affecting method usages for that found");
-                    u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
+                    u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
                   }
                 }
               }
@@ -1184,8 +1196,9 @@ public class Mappings {
 
                       if (source != null) {
                         final String f = myContext.getValue(source);
-                        debug("Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ",
-                              p);
+                        debug(
+                          "Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ",
+                          p);
                         debug("Affecting subclass source file ", f);
                         affectedFiles.add(new File(f));
                       }
@@ -1304,8 +1317,9 @@ public class Mappings {
 
                 if (r != null && sourceFileName != null) {
                   if (r.isLocal) {
-                    debug("Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ",
-                          sourceFileName);
+                    debug(
+                      "Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ",
+                      sourceFileName);
                     affectedFiles.add(new File(myContext.getValue(sourceFileName)));
                   }
                   else {
