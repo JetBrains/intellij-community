@@ -46,7 +46,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
 
   @Nullable
   private PsiElement resolveParameter(PyFunction owner) {
-    return owner.getParameterList().getElementNamed(getCanonicalText());
+    return owner.getParameterList().findParameterByName(getCanonicalText());
   }
 
   @NotNull
