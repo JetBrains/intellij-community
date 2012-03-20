@@ -5803,7 +5803,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (last != null && !(last instanceof EditorComponentImpl)) return;
 
       final Editor editor = getEditor(source);
-      if (action == MOVE && !editor.isViewer()) {
+      if (action == MOVE && !editor.isViewer() && myDraggedRange != null) {
         if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
           return;
         }
