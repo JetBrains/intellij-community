@@ -24,7 +24,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 public interface DocumentBulkUpdateListener {
-  Topic<DocumentBulkUpdateListener> TOPIC = Topic.create("Bulk document change notifcation like reformat, etc.", DocumentBulkUpdateListener.class);
+  Topic<DocumentBulkUpdateListener> TOPIC = Topic.create("Bulk document change notification like reformat, etc.", DocumentBulkUpdateListener.class);
 
   void updateStarted(@NotNull Document doc);
   void updateFinished(@NotNull Document doc);
