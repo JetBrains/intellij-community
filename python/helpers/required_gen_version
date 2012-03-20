@@ -6,7 +6,7 @@
 
 (default) 1.92 # anything not explicitly marked
 
-(built-in) 1.101 # skeletons of all built-in modules are built together
+(built-in) 1.104 # skeletons of all built-in modules are built together
 # Note: modules like itertools, etc are "(built-in)" and are ignored if given separately
 
 _fileio 1.101
@@ -14,6 +14,7 @@ _io 1.101
 sys 1.101
 thread 1.102
 _thread 1.102
+_struct 1.103
 
 PyQt4.Qsci 1.94
 PyQt4.QtAssistant 1.94

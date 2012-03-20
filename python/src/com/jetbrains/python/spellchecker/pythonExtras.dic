@@ -6,3 +6,4 @@ doctests
 unittest
 unittests
 virtualenv
+idna

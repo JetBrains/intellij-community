@@ -4,16 +4,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author vlan
  */
 public class PyStdlibUtil {
-  @Nullable private static Collection<String> PACKAGES = loadStdlibPackagesList();
+  @Nullable private static Set<String> PACKAGES = loadStdlibPackagesList();
 
   private PyStdlibUtil() {
   }
@@ -24,13 +27,13 @@ public class PyStdlibUtil {
   }
 
   @Nullable
-  private static Collection<String> loadStdlibPackagesList() {
+  private static Set<String> loadStdlibPackagesList() {
     final Logger log = Logger.getInstance(PyStdlibUtil.class.getName());
     final String helperPath = PythonHelpersLocator.getHelperPath("/tools/stdlib_packages.txt");
     try {
       final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(helperPath)));
       try {
-        final List<String> result = new ArrayList<String>();
+        final Set<String> result = new HashSet<String>();
         String line;
         while ((line = reader.readLine()) != null) {
           result.add(line);

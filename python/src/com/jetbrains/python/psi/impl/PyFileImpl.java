@@ -130,7 +130,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
   }
 
-  private boolean isAcceptedFor(@NotNull Class visitorClass) {
+  public boolean isAcceptedFor(@NotNull Class visitorClass) {
     final FileViewProvider viewProvider = getViewProvider();
     final Language lang;
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {

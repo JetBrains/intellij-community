@@ -370,6 +370,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     private final TypeEvalContext myContext;
     private PyType myResult = null;
     private boolean myHasReturns = false;
+    private boolean myHasRaises = false;
 
     public ReturnVisitor(PyFunction function, final TypeEvalContext context) {
       myFunction = function;
@@ -392,8 +393,14 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
 
+    @Override
+    public void visitPyRaiseStatement(PyRaiseStatement node) {
+      myHasRaises = true;
+    }
+
+    @Nullable
     PyType result() {
-      return myHasReturns ? myResult : PyNoneType.INSTANCE;
+      return myHasReturns || myHasRaises ? myResult : PyNoneType.INSTANCE;
     }
   }
 
