@@ -23,13 +23,13 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.FileMonitor;
 import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
+import org.jetbrains.util.rt.FileUtilRt;
 import org.objectweb.asm.ClassWriter;
 
 import javax.tools.*;
@@ -91,10 +91,10 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
     cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
     cp.add(getResourcePath(TIntHash.class));  // trove
+    cp.add(getResourcePath(FileUtilRt.class));  // util-rt module
     cp.add(getResourcePath(FileUtil.class));  // util module
     cp.add(getResourcePath(Pointer.class));  // jna.jar
     cp.add(getResourcePath(CacheBuilder.class));  // guava
-    cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(org.objectweb.asm.commons.EmptyVisitor.class));  // asm-commons
     cp.add(getResourcePath(MacroExpander.class));  // jps-model
@@ -136,10 +136,10 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
     cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
     cp.add(getResourcePath(TIntHash.class));  // trove
+    cp.add(getResourcePath(FileUtilRt.class));  // util-rt module
     cp.add(getResourcePath(FileUtil.class));  // util module
     cp.add(getResourcePath(Pointer.class));  // jna.jar
     cp.add(getResourcePath(CacheBuilder.class));  // guava
-    cp.add(getResourcePath(FileMonitor.class));  // jna-utils.jar
     cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();

@@ -33,21 +33,23 @@ public abstract class Logger {
     Logger getInstance(@NotNull @NonNls final String category);
   }
 
-  private static final Factory ourFactory;
-  static {
-    Factory factory;
-    try {
-      factory = new IdeaFactory();
+  private static Factory ourFactory;
+
+  private synchronized static Factory getFactory() {
+    if (ourFactory == null) {
+      try {
+        ourFactory = new IdeaFactory();
+      }
+      catch (Throwable t) {
+        ourFactory = new JavaFactory();
+      }
     }
-    catch (Exception e) {
-      factory = new JavaFactory();
-    }
-    ourFactory = factory;
+    return ourFactory;
   }
 
   @NotNull
   public static Logger getInstance(@NotNull @NonNls final String category) {
-    return ourFactory.getInstance(category);
+    return getFactory().getInstance(category);
   }
 
   public void info(@Nullable @NonNls final String message) {
