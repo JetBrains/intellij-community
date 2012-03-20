@@ -45,7 +45,7 @@ public class YAMLPsiManager implements ProjectComponent, PsiTreeChangePreprocess
   public void disposeComponent() {
   }
 
-  public void treeChanged(final PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull final PsiTreeChangeEventImpl event) {
     if (!(event.getFile() instanceof YAMLFile)) return;
     boolean changedInsideCodeBlock = false;
 
