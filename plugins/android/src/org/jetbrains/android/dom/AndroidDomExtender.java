@@ -249,7 +249,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
       @Nullable
       public PsiClass compute() {
-        return c.getSuperClass();
+        return c.isValid() ? c.getSuperClass() : null;
       }
     });
   }

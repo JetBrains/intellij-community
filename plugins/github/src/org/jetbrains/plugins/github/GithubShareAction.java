@@ -18,12 +18,10 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.actions.RefreshAction;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
@@ -210,11 +208,6 @@ public class GithubShareAction extends DumbAwareAction {
   private boolean performFirstCommitIfRequired(final Project project, final VirtualFile root) {
     final GitVcs gitVcs = GitVcs.getInstance(project);
     if (gitVcs == null){
-      Messages.showErrorDialog(project, "Cannot find git initialized", "Failed to share");
-      return false;
-    }
-    final VcsOutgoingChangesProvider<CommittedChangeList> provider = gitVcs.getOutgoingChangesProvider();
-    if (provider == null) {
       Messages.showErrorDialog(project, "Cannot find git initialized", "Failed to share");
       return false;
     }

@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -54,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
 
@@ -499,7 +497,6 @@ public class ControlFlowUtils {
 
   public static boolean isIncOrDecOperand(GrReferenceExpression referenceExpression) {
     final PsiElement parent = referenceExpression.getParent();
-    if (parent instanceof GrPostfixExpression) return true;
     if (parent instanceof GrUnaryExpression) {
       final IElementType opType = ((GrUnaryExpression)parent).getOperationTokenType();
       return opType == GroovyTokenTypes.mDEC || opType == GroovyTokenTypes.mINC;
@@ -650,10 +647,10 @@ public class ControlFlowUtils {
   @Nullable
   public static GrControlFlowOwner findControlFlowOwner(PsiElement place) {
     if (place instanceof GrCodeBlock) {
-      place = place.getParent();
+      place = place.getContext();
     }
     while (true) {
-      place = place.getParent();
+      place = place.getContext();
       if (place == null) return null;
       if (place instanceof GrClosableBlock) return (GrClosableBlock)place;
       if (place instanceof GrMethod) return ((GrMethod)place).getBlock();
@@ -675,22 +672,28 @@ public class ControlFlowUtils {
   }
 
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, final PsiElement place, boolean ahead, boolean writeAccessOnly) {
-    LOG.assertTrue(GroovyRefactoringUtil.isLocalVariable(local), local.getClass());
+    LOG.assertTrue(!(local instanceof GrField), local.getClass());
 
     final GrControlFlowOwner owner = findControlFlowOwner(local);
     assert owner != null;
 
     final Instruction cur = findInstruction(place, owner.getControlFlow());
 
-    if (cur == null) throw new IllegalArgumentException("place is not in the flow");
+    if (cur == null) {
+      throw new IllegalArgumentException("place is not in the flow");
+    }
 
+    return findAccess(local, ahead, writeAccessOnly, cur);
+  }
+
+  public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, boolean ahead, boolean writeAccessOnly, Instruction cur) {
     String name = local.getName();
-    
+
     final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
     final HashSet<Instruction> visited = new HashSet<Instruction>();
-    
+
     visited.add(cur);
-    
+
     Queue<Instruction> queue = new ArrayDeque<Instruction>();
 
     for (Instruction i : ahead ? cur.allSuccessors() : cur.allPredecessors()) {
@@ -698,11 +701,11 @@ public class ControlFlowUtils {
         queue.add(i);
       }
     }
-    
+
     while (true) {
       Instruction instruction = queue.poll();
       if (instruction == null) break;
-      
+
       if (instruction instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction rw = (ReadWriteVariableInstruction)instruction;
         if (name.equals(rw.getVariableName())) {
@@ -710,13 +713,13 @@ public class ControlFlowUtils {
             result.add(rw);
             continue;
           }
-          
+
           if (!writeAccessOnly) {
             result.add(rw);
           }
         }
       }
-      
+
       for (Instruction i : ahead ? instruction.allSuccessors() : instruction.allPredecessors()) {
         if (visited.add(i)) {
           queue.add(i);
@@ -726,9 +729,9 @@ public class ControlFlowUtils {
 
     return result;
   }
-  
+
   @Nullable
-  private static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
+  public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
     return ContainerUtil.find(controlFlow, new Condition<Instruction>() {
       @Override
       public boolean value(Instruction instruction) {

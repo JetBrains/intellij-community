@@ -78,9 +78,9 @@ public class ResolveUtil {
   }
 
   /**
-   * 
+   *
    * @param place - place to start tree walk up
-   * @param processor 
+   * @param processor
    * @param processNonCodeMethods - this parameter tells us if we need non code members. But non code members are started to process only after we walk up any code block or script
    * @return
    */
@@ -95,10 +95,6 @@ public class ResolveUtil {
 
     while (run != null) {
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
-      if (run instanceof GrClosableBlock) {
-        PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
-        if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
-      }
       if (processNonCodeMethods) {
         if (!doProcessNonCodeMembers) {
           if (run instanceof GrCodeBlock) doProcessNonCodeMembers = true;
@@ -115,6 +111,9 @@ public class ResolveUtil {
             }
           }
           else if (run instanceof GrClosableBlock) {
+            PsiClass superClass = getLiteralSuperClass((GrClosableBlock)run);
+            if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+
             if (!GdkMethodUtil.categoryIteration((GrClosableBlock)run, processor)) return false;
             if (!GdkMethodUtil.withIteration((GrClosableBlock)run, processor, place)) return false;
           }

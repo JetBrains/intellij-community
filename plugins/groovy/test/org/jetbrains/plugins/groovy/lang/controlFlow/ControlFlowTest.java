@@ -55,6 +55,8 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testIfInstanceofElse() throws Throwable { doTest(); }
   public void testReturnMapFromClosure() {doTest();}
   public void testSwitchInTryWithThrows() {doTest();}
+  public void testClosure() {doTest();}
+  public void testAnonymous() {doTest();}
 
   public void doTest() {
     final List<String> input = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");

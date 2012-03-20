@@ -1,0 +1,19 @@
+def foo(b, c) {
+  <begin>[].each (new Closure(this, this) {
+    void call() {
+     b.plus(c)
+    }
+  })<end>
+}
+-----
+def foo(b, c) {
+    testMethod(b, c)
+}
+
+private testMethod(b, c) {
+    [].each(new Closure(this, this) {
+        void call() {
+            b.plus(c)
+        }
+    })
+}

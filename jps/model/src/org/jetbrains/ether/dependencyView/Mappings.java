@@ -806,7 +806,10 @@ public class Mappings {
     }
   }
 
-  private boolean incrementalDecision(final DependencyContext.S owner, final Proto member, final Collection<File> affectedFiles) {
+  private boolean incrementalDecision(final DependencyContext.S owner,
+                                      final Proto member,
+                                      final Collection<File> affectedFiles,
+                                      DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util(this);
 
@@ -842,19 +845,33 @@ public class Mappings {
 
       if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
         final String f = myContext.getValue(fileName);
-        debug("Adding: ", f);
-        affectedFiles.add(new File(f));
+        final File file = new File(f);
+        if (filter.accept(file)) {
+          debug("Adding: ", f);
+          affectedFiles.add(file);
+        }
       }
     }
 
     return true;
   }
 
+  public interface DependentFilesFilter {
+    DependentFilesFilter ALL_FILES = new DependentFilesFilter() {
+      @Override
+      public boolean accept(File file) {
+        return true;
+      }
+    };
+
+    boolean accept(File file);
+  }
+
   public boolean differentiate(final Mappings delta,
                                final Collection<String> removed,
                                final Collection<File> filesToCompile,
                                final Collection<File> compiledFiles,
-                               final Collection<File> affectedFiles) {
+                               final Collection<File> affectedFiles, DependentFilesFilter filter) {
     synchronized (myLock) {
       debug("Begin of Differentiate:");
 
@@ -926,7 +943,7 @@ public class Mappings {
 
           if (it.isAnnotation() && it.policy == RetentionPolicy.SOURCE) {
             debug("Annotation, retention policy = SOURCE => a switch to non-incremental mode requested");
-            if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+            if (!incrementalDecision(it.outerClassName, it, affectedFiles, filter)) {
               debug("End of Differentiate, returning false");
               return false;
             }
@@ -970,7 +987,7 @@ public class Mappings {
 
               if (removedtargets.contains(ElementType.LOCAL_VARIABLE)) {
                 debug("Removed target contains LOCAL_VARIABLE => a switch to non-incremental mode requested");
-                if (!incrementalDecision(it.outerClassName, it, affectedFiles)) {
+                if (!incrementalDecision(it.outerClassName, it, affectedFiles, filter)) {
                   debug("End of Differentiate, returning false");
                   return false;
                 }
@@ -1396,7 +1413,7 @@ public class Mappings {
 
             if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
               debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-              if (!incrementalDecision(it.name, f, affectedFiles)) {
+              if (!incrementalDecision(it.name, f, affectedFiles, filter)) {
                 debug("End of Differentiate, returning false");
                 return false;
               }
@@ -1417,7 +1434,7 @@ public class Mappings {
             if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
               if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
                 debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-                if (!incrementalDecision(it.name, field, affectedFiles)) {
+                if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
                   debug("End of Differentiate, returning false");
                   return false;
                 }

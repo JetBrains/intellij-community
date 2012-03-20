@@ -77,8 +77,9 @@ public abstract class ModuleLevelBuilder extends Builder {
 
         final HashSet<File> affectedBeforeDif = new HashSet<File>(allAffectedFiles);
 
+        final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
         final boolean incremental = globalMappings.differentiate(
-          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles
+          delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter
         );
 
         if (LOG.isDebugEnabled()) {
@@ -103,13 +104,13 @@ public abstract class ModuleLevelBuilder extends Builder {
 
           if (!newlyAffectedFiles.isEmpty()) {
 
-
             if (LOG.isDebugEnabled()) {
-              final List<Pair<File, Module>> wrongFiles = checkAffectedFilesInCorrectModules(context, chunk, newlyAffectedFiles);
+              final List<Pair<File, Module>> wrongFiles = checkAffectedFilesInCorrectModules(context, newlyAffectedFiles, moduleBasedFilter);
               if (!wrongFiles.isEmpty()) {
                 LOG.debug("Wrong affected files for module chunk " + chunk.getName() + ": ");
                 for (Pair<File, Module> pair : wrongFiles) {
-                  LOG.debug("\t[" + pair.second.getName() + "] " + pair.first.getPath());
+                  final String name = pair.second != null? pair.second.getName() : "null";
+                  LOG.debug("\t[" + name + "] " + pair.first.getPath());
                 }
               }
             }
@@ -146,43 +147,18 @@ public abstract class ModuleLevelBuilder extends Builder {
     }
   }
 
-
-  private static List<Pair<File, Module>> checkAffectedFilesInCorrectModules(CompileContext context, ModuleChunk currentChunk, Collection<File> affected) {
+  private static List<Pair<File, Module>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
-
-    final Set<Module> chunkModules = currentChunk.getModules();
-    final Map<Module, Set<Module>> cache = new HashMap<Module, Set<Module>>();
     final List<Pair<File, Module>> result = new ArrayList<Pair<File, Module>>();
-
     for (File file : affected) {
-      final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
-      if (moduleAndRoot == null) {
-        continue;
+      if (!moduleBasedFilter.accept(file)) {
+        final RootDescriptor moduleAndRoot = context.getModuleAndRoot(file);
+        result.add(Pair.create(file, moduleAndRoot != null? moduleAndRoot.module : null));
       }
-      final Module moduleOfFile = moduleAndRoot.module;
-      if (chunkModules.contains(moduleOfFile)) {
-        continue;
-      }
-      Set<Module> moduleOfFileWithDependencies = cache.get(moduleOfFile);
-      if (moduleOfFileWithDependencies == null) {
-        moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
-        cache.put(moduleOfFile, moduleOfFileWithDependencies);
-      }
-      if (intersects(moduleOfFileWithDependencies, chunkModules)) {
-        continue;
-      }
-      result.add(Pair.create(file, moduleOfFile));
     }
     return result;
-  }
-
-  private static boolean intersects(Set<Module> set1, Set<Module> set2) {
-    if (set1.size() < set2.size()) {
-      return new HashSet<Module>(set1).removeAll(set2);
-    }
-    return new HashSet<Module>(set2).removeAll(set1);
   }
 
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected) throws IOException {
@@ -219,6 +195,42 @@ public abstract class ModuleLevelBuilder extends Builder {
   private static Set<String> getRemovedPaths(CompileContext context) {
     final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
     return removed != null? removed : Collections.<String>emptySet();
+  }
+
+  private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter{
+    private final CompileContext myContext;
+    private final Set<Module> myChunkModules;
+    private final Map<Module, Set<Module>> myCache = new HashMap<Module, Set<Module>>();
+
+    private ModulesBasedFileFilter(CompileContext context, ModuleChunk chunk) {
+      myContext = context;
+      myChunkModules = chunk.getModules();
+    }
+
+    @Override
+    public boolean accept(File file) {
+      final RootDescriptor moduleAndRoot = myContext.getModuleAndRoot(file);
+      if (moduleAndRoot == null) {
+        return true;
+      }
+      final Module moduleOfFile = moduleAndRoot.module;
+      if (myChunkModules.contains(moduleOfFile)) {
+        return true;
+      }
+      Set<Module> moduleOfFileWithDependencies = myCache.get(moduleOfFile);
+      if (moduleOfFileWithDependencies == null) {
+        moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
+        myCache.put(moduleOfFile, moduleOfFileWithDependencies);
+      }
+      return intersects(moduleOfFileWithDependencies, myChunkModules);
+    }
+
+    private static boolean intersects(Set<Module> set1, Set<Module> set2) {
+      if (set1.size() < set2.size()) {
+        return new HashSet<Module>(set1).removeAll(set2);
+      }
+      return new HashSet<Module>(set2).removeAll(set1);
+    }
   }
 
 }

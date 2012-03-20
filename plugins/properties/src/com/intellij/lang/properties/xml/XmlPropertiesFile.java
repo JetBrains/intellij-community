@@ -31,6 +31,7 @@ import java.util.*;
  */
 public class XmlPropertiesFile implements PropertiesFile {
 
+  private static final Key<CachedValue<PropertiesFile>> KEY = Key.create("xml properties file");
   private final XmlFile myFile;
   private final List<IProperty> myProperties = new ArrayList<IProperty>();
   private final MultiMap<String, IProperty> myPropertiesMap = new MultiMap<String, IProperty>();
@@ -42,7 +43,7 @@ public class XmlPropertiesFile implements PropertiesFile {
 
   public static PropertiesFile getPropertiesFile(final XmlFile file) {
     CachedValuesManager manager = CachedValuesManager.getManager(file.getProject());
-    return manager.getCachedValue(file, Key.<CachedValue<PropertiesFile>>create("xml properties file"),
+    return manager.getCachedValue(file, KEY,
                                   new CachedValueProvider<PropertiesFile>() {
                                     @Override
                                     public Result<PropertiesFile> compute() {
@@ -104,13 +105,13 @@ public class XmlPropertiesFile implements PropertiesFile {
   @NotNull
   @Override
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @NotNull
   @Override
   public PsiElement addPropertyAfter(@NotNull Property property, @Nullable Property anchor) throws IncorrectOperationException {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override

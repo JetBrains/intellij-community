@@ -3,8 +3,8 @@
 Groovy script
   Unary expression
     PsiElement(!)('!')
-    Postfix expression
-      Postfix expression
+    Unary expression
+      Unary expression
         Literal
           PsiElement(Integer)('3')
         PsiElement(++)('++')
