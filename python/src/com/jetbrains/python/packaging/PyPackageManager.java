@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilLight;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
@@ -206,7 +207,7 @@ public class PyPackageManager {
     args.add("install");
     final File buildDir;
     try {
-      buildDir = FileUtil.createTempDirectory("packaging", null);
+      buildDir = FileUtilLight.createTempDirectory("packaging", null);
     }
     catch (IOException e) {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
