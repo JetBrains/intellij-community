@@ -1163,7 +1163,8 @@ public class ProjectWrapper {
 
           final Collection<File> affected = new HashSet<File>();
 
-          final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected);
+          final boolean incremental = dependencyMapping.differentiate(delta, removed, files, compiled, affected,
+                                                                      Mappings.DependentFilesFilter.ALL_FILES);
 
           for (File a : affected) {
             affectedFiles.add(FileUtil.toSystemIndependentName(a.getAbsolutePath()));
