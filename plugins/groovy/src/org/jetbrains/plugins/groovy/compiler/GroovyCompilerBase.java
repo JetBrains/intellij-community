@@ -274,7 +274,8 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
       sink.add(outputDir.getPath(), items, VfsUtil.toVirtualFileArray(toRecompile));
     }
     catch (ExecutionException e) {
-      LOG.error(e);
+      LOG.info(e);
+      compileContext.addMessage(CompilerMessageCategory.ERROR, "Error running Groovy compiler: " + e.getMessage(), null, -1, -1);
     }
   }
 
