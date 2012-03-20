@@ -74,7 +74,7 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public void replace(K key, Collection<V> value) {
-    if (value == null || value.isEmpty()) {
+    if (value == null) {
       myMap.remove(key);
     }
     else {

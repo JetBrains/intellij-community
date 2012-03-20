@@ -69,7 +69,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void replace(K key, Collection<V> value) {
     try {
-      if (value == null || value.isEmpty()) {
+      if (value == null) {
         myMap.remove(key);
       }
       else {
