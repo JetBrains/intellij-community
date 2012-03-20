@@ -81,4 +81,15 @@ public class SimpleColoredText {
   public ArrayList<SimpleTextAttributes> getAttributes() {
     return myAttributes;
   }
+
+  public SimpleColoredText derive(SimpleTextAttributes attributes, boolean override) {
+    SimpleColoredText result = new SimpleColoredText();
+    for (int i = 0; i < myTexts.size(); i++) {
+      SimpleTextAttributes overridden = override
+                                        ? SimpleTextAttributes.merge(myAttributes.get(i), attributes)
+                                        : SimpleTextAttributes.merge(attributes, myAttributes.get(i));
+      result.append(myTexts.get(i), overridden);
+    }
+    return result;
+  }
 }

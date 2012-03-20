@@ -140,6 +140,10 @@ public class Comparing {
     return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
   }
 
+  public static int compare(boolean o1, boolean o2) {
+    return o1 == o2 ? 0 : o1 ? 1 : -1;
+  }
+
   public static int compare(int o1, int o2) {
     return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
   }

@@ -20,7 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public class SideEffectChecker {
@@ -69,19 +72,6 @@ public class SideEffectChecker {
       }
       super.visitNewExpression(expression);
       mayHaveSideEffects = true;
-    }
-
-    public void visitPostfixExpression(
-        @NotNull GrPostfixExpression expression) {
-      if (mayHaveSideEffects) {
-        return;
-      }
-      super.visitPostfixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType.equals(GroovyTokenTypes.mINC) ||
-          tokenType.equals(GroovyTokenTypes.mDEC)) {
-        mayHaveSideEffects = true;
-      }
     }
 
     public void visitUnaryExpression(
