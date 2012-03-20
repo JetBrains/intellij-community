@@ -21,20 +21,23 @@ import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.config.impl.TargetChooserDialog;
 import com.intellij.lang.ant.config.impl.configuration.UIPropertyBinding;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.config.ListProperty;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -45,32 +48,34 @@ import java.util.List;
  */
 public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private static final ListProperty<BuildFileProperty> ANT_PROPERTIES = ListProperty.create("ant-properties");
-  private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN = new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.name.column.name")) {
-    public String valueOf(BuildFileProperty buildFileProperty) {
-      return buildFileProperty.getPropertyName();
-    }
+  private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN =
+    new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.name.column.name")) {
+      public String valueOf(BuildFileProperty buildFileProperty) {
+        return buildFileProperty.getPropertyName();
+      }
 
-    public boolean isCellEditable(BuildFileProperty buildFileProperty) {
-      return USER_PROPERTY_CONDITION.value(buildFileProperty);
-    }
+      public boolean isCellEditable(BuildFileProperty buildFileProperty) {
+        return USER_PROPERTY_CONDITION.value(buildFileProperty);
+      }
 
-    public void setValue(BuildFileProperty buildFileProperty, String name) {
-      buildFileProperty.setPropertyName(name);
-    }
-  };
-  private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN = new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.value.column.name")) {
-    public boolean isCellEditable(BuildFileProperty buildFileProperty) {
-      return USER_PROPERTY_CONDITION.value(buildFileProperty);
-    }
+      public void setValue(BuildFileProperty buildFileProperty, String name) {
+        buildFileProperty.setPropertyName(name);
+      }
+    };
+  private static final ColumnInfo<BuildFileProperty, String> VALUE_COLUMN =
+    new ColumnInfo<BuildFileProperty, String>(AntBundle.message("edit.ant.properties.value.column.name")) {
+      public boolean isCellEditable(BuildFileProperty buildFileProperty) {
+        return USER_PROPERTY_CONDITION.value(buildFileProperty);
+      }
 
-    public String valueOf(BuildFileProperty buildFileProperty) {
-      return buildFileProperty.getPropertyValue();
-    }
+      public String valueOf(BuildFileProperty buildFileProperty) {
+        return buildFileProperty.getPropertyValue();
+      }
 
-    public void setValue(BuildFileProperty buildFileProperty, String value) {
-      buildFileProperty.setPropertyValue(value);
-    }
-  };
+      public void setValue(BuildFileProperty buildFileProperty, String value) {
+        buildFileProperty.setPropertyValue(value);
+      }
+    };
   private static final ColumnInfo[] PROPERTY_COLUMNS = new ColumnInfo[]{NAME_COLUMN, VALUE_COLUMN};
   private static final Condition<BuildFileProperty> USER_PROPERTY_CONDITION = new Condition<BuildFileProperty>() {
     @Override
@@ -84,8 +89,6 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JCheckBox myRunTargetCheckBox;
   private FixedSizeButton mySelectTargetButton;
   private JBTable myPropertiesTable;
-  private JButton myAddButton;
-  private JButton myRemoveButton;
   private JPanel myPropertiesPanel;
   private AntBuildTarget myTarget;
   private final boolean myPostProcessing;
@@ -111,10 +114,59 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       }
     });
 
+    myPropertiesTable = new JBTable();
     UIPropertyBinding.Composite binding = new UIPropertyBinding.Composite();
     myBinding = binding.bindList(myPropertiesTable, PROPERTY_COLUMNS, ANT_PROPERTIES);
-    myBinding.addAddFacility(myAddButton, NewInstanceFactory.fromClass(BuildFileProperty.class));
-    myBinding.addRemoveFacility(myRemoveButton, USER_PROPERTY_CONDITION);
+    myPropertiesPanel.add(
+      ToolbarDecorator.createDecorator(myPropertiesTable)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
+            if (myPropertiesTable.isEditing() && !myPropertiesTable.getCellEditor().stopCellEditing()) {
+              return;
+            }
+            BuildFileProperty item = new BuildFileProperty();
+            ArrayList<BuildFileProperty> items = new ArrayList<BuildFileProperty>(model.getItems());
+            items.add(item);
+            model.setItems(items);
+            int newIndex = model.indexOf(item);
+            ListSelectionModel selectionModel = myPropertiesTable.getSelectionModel();
+            selectionModel.clearSelection();
+            selectionModel.setSelectionInterval(newIndex, newIndex);
+            ColumnInfo[] columns = model.getColumnInfos();
+            for (int i = 0; i < columns.length; i++) {
+              ColumnInfo column = columns[i];
+              if (column.isCellEditable(item)) {
+                myPropertiesTable.requestFocusInWindow();
+                myPropertiesTable.editCellAt(newIndex, i);
+                break;
+              }
+            }
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          TableUtil.removeSelectedItems(myPropertiesTable);
+        }
+      }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+        @Override
+        public boolean isEnabled(AnActionEvent e) {
+          final ListSelectionModel selectionModel = myPropertiesTable.getSelectionModel();
+          ListTableModel<BuildFileProperty> model = (ListTableModel<BuildFileProperty>)myPropertiesTable.getModel();
+          boolean enable = false;
+          if (!selectionModel.isSelectionEmpty()) {
+            enable = true;
+            for (int i : myPropertiesTable.getSelectedRows()) {
+              if (AntArtifactProperties.isPredefinedProperty(model.getItems().get(i).getPropertyName())) {
+                enable = false;
+                break;
+              }
+            }
+          }
+          return enable;
+        }
+      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
   private void selectTarget() {
@@ -135,9 +187,6 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     }
     final boolean enabled = myTarget != null && myRunTargetCheckBox.isSelected();
     UIUtil.setEnabled(myPropertiesPanel, enabled, true);
-    if (enabled) {
-      myBinding.updateRemoveButton(myRemoveButton, USER_PROPERTY_CONDITION);
-    }
   }
 
   public String getTabName() {
