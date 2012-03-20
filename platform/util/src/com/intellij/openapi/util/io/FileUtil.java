@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-public class FileUtil extends FileUtilLight {
+public class FileUtil extends FileUtilRt {
   public static final int MEGABYTE = 1024 * 1024;
 
   @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";

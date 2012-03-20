@@ -107,6 +107,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/usageView.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/util.iml" filepath="$PROJECT_DIR$/platform/util/util.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util-rt/util-rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/util-rt.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" filepath="$PROJECT_DIR$/platform/vcs-api/vcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" filepath="$PROJECT_DIR$/platform/vcs-impl/vcs-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" filepath="$PROJECT_DIR$/platform/xdebugger-api/xdebugger-api.iml" group="platform" />

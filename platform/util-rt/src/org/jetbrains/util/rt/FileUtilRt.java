@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.util.io;
+package org.jetbrains.util.rt;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +24,16 @@ import java.io.*;
 import java.util.UUID;
 
 /**
- * This is a light version of {@link FileUtil}.
- * It is used by scripts loaded externally and almost independent of IDEA, so add here as few dependencies as possible.
+ * Stripped-down version of {@code com.intellij.openapi.util.io.FileUtil}.
+ * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
+ *
+ * @since 12.0
  */
-public class FileUtilLight {
-
-  private static String ourCanonicalTempPathCache = null;
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+public class FileUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
 
+  private static String ourCanonicalTempPathCache = null;
 
   @NotNull
   public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
@@ -55,8 +54,7 @@ public class FileUtilLight {
   }
 
   @NotNull
-  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, final boolean create)
-    throws IOException {
+  public static File createTempFile(@NonNls File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean create) throws IOException {
     return createTempFile(dir, prefix, suffix, create, true);
   }
 
@@ -122,7 +120,7 @@ public class FileUtilLight {
 
   private static File normalizeFile(File temp) throws IOException {
     final File canonical = temp.getCanonicalFile();
-    return SystemInfo.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
+    return SystemInfoRt.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
   }
 
   public static String getTempDirectory() {
@@ -136,7 +134,7 @@ public class FileUtilLight {
     final File file = new File(System.getProperty("java.io.tmpdir"));
     try {
       final String canonical = file.getCanonicalPath();
-      if (!SystemInfo.isWindows || !canonical.contains(" ")) {
+      if (!SystemInfoRt.isWindows || !canonical.contains(" ")) {
         return canonical;
       }
     }
@@ -169,7 +167,7 @@ public class FileUtilLight {
    *
    * @param path           the path to use
    * @param executableFlag new value of executable attribute
-   * @throws IOException if there is a problem with setting the flag
+   * @throws java.io.IOException if there is a problem with setting the flag
    */
   public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
     final File file = new File(path);
@@ -189,14 +187,14 @@ public class FileUtilLight {
   }
 
   @NotNull
-  public static String loadFile(@NotNull File file, String encoding) throws IOException {
+  public static String loadFile(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
     return loadFile(file, encoding, false);
   }
 
   @NotNull
-  public static String loadFile(@NotNull File file, String encoding, boolean convertLineSeparators) throws IOException {
+  public static String loadFile(@NotNull File file, @Nullable @NonNls String encoding, boolean convertLineSeparators) throws IOException {
     final String s = new String(loadFileText(file, encoding));
-    return convertLineSeparators ? StringUtil.convertLineSeparators(s) : s;
+    return convertLineSeparators ? StringUtilRt.convertLineSeparators(s) : s;
   }
 
   @NotNull
@@ -205,8 +203,9 @@ public class FileUtilLight {
   }
 
   @NotNull
-  public static char[] loadFileText(@NotNull File file, @NonNls String encoding) throws IOException {
+  public static char[] loadFileText(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
     InputStream stream = new FileInputStream(file);
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
     try {
       return loadText(reader, (int)file.length());
@@ -234,5 +233,4 @@ public class FileUtilLight {
       return newChars;
     }
   }
-
 }
