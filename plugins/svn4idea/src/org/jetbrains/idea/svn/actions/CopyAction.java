@@ -137,8 +137,10 @@ public class CopyAction extends BasicAction {
         throw new VcsException("Invalid repository root path for " + baseUrl);
       }
     }
-    SVNCommitClient commitClient = activeVcs.createCommitClient();
-    commitClient.doMkDir(dirsToCreate.toArray(new SVNURL[dirsToCreate.size()]), comment);
+    if (! dirsToCreate.isEmpty()) {
+      SVNCommitClient commitClient = activeVcs.createCommitClient();
+      commitClient.doMkDir(dirsToCreate.toArray(new SVNURL[dirsToCreate.size()]), comment);
+    }
   }
 
   private static boolean dirExists(Project project, final SVNURL url, final SVNWCClient client) throws SVNException {
