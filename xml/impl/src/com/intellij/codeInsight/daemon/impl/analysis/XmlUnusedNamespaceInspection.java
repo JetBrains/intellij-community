@@ -324,9 +324,11 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     public static void removeReferenceText(PsiReference ref) {
       PsiElement element = ref.getElement();
       PsiFile file = element.getContainingFile();
-      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       TextRange range = ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
+      Document document = manager.getDocument(file);
       assert document != null;
+      manager.doPostponedOperationsAndUnblockDocument(document);
       document.deleteString(range.getStartOffset(), range.getEndOffset());
     }
 
