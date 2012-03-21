@@ -177,14 +177,15 @@ public class SvnRecursiveStatusWalker {
       if (! myMetCurrentItem && myCurrentItem.isIsInnerCopyRoot()) {
         myMetCurrentItem = true;
         final SVNStatus statusInner = SvnUtil.getStatus(SvnVcs.getInstance(myProject), myCurrentItem.getPath().getIOFile());
+        if (statusInner == null)  return;
 
         final SVNStatusType status = statusInner.getNodeStatus();
         if (SVNStatusType.OBSTRUCTED.equals(status) || SVNStatusType.STATUS_IGNORED.equals(status) ||
-          SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
-          SVNStatusType.UNKNOWN.equals(status)) {
+            SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
+            SVNStatusType.UNKNOWN.equals(status)) {
           return;
         }
-        if (myCurrentItem.getPath().getVirtualFile() != null || statusInner != null) {
+        if (myCurrentItem.getPath().getVirtualFile() != null) {
           myReceiver.processCopyRoot(myCurrentItem.getPath().getVirtualFile(), statusInner.getURL(),
                                      WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
         }
