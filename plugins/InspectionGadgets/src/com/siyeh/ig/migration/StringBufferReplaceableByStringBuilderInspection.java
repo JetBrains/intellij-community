@@ -29,6 +29,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -60,6 +61,27 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     return new StringBufferMayBeStringBuilderFix();
+  }
+
+  @Nullable
+  private static PsiNewExpression getNewStringBuffer(PsiExpression expression) {
+    if (expression == null) {
+      return null;
+    }
+    else if (expression instanceof PsiNewExpression) {
+      return (PsiNewExpression)expression;
+    }
+    else if (expression instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
+      if (!"append".equals(methodName)) {
+        return null;
+      }
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      return getNewStringBuffer(qualifier);
+    }
+    return null;
   }
 
   private static class StringBufferMayBeStringBuilderFix
@@ -99,8 +121,8 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     private static void replaceWithStringBuilder(PsiJavaCodeReferenceElement newClassReference,
                                                  PsiTypeElement newTypeElement,
                                                  PsiVariable variable) {
-      final PsiExpression initializer = variable.getInitializer();
-      if (!(initializer instanceof PsiNewExpression)) {
+      final PsiExpression initializer = getNewStringBuffer(variable.getInitializer());
+      if (initializer == null) {
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)initializer;
@@ -162,7 +184,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       if (initializer == null) {
         return false;
       }
-      if (!isNewStringBuffer(initializer)) {
+      if (getNewStringBuffer(initializer) == null) {
         return false;
       }
       if (VariableAccessUtils.variableIsAssigned(variable, context)) {
@@ -181,26 +203,6 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
         return false;
       }
       return true;
-    }
-
-    private static boolean isNewStringBuffer(PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      else if (expression instanceof PsiNewExpression) {
-        return true;
-      }
-      else if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if (!"append".equals(methodName)) {
-          return false;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        return isNewStringBuffer(qualifier);
-      }
-      return false;
     }
   }
 }
