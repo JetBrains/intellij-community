@@ -75,7 +75,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   private final boolean myDebug = isDebug();
 
   boolean isDebug() {
-    return DEBUG_DEFERRED_PROCESSING;
+    return DEBUG_DEFERRED_PROCESSING || DocumentImpl.CHECK_DOCUMENT_CONSISTENCY;
   }
 
   /**
@@ -180,6 +180,8 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   private void assertConsistency() {
+    if (!myDebug) return;
+
     if (isDeferredChangeMode()) {
       assert myOriginalSequence == null;
     }
@@ -187,45 +189,48 @@ abstract class CharArray implements CharSequenceBackedByArray {
     int origLen = originalSequence == null ? -1 : originalSequence.length();
     String string = myStringRef == null ? null : myStringRef.get();
     int stringLen = string == null ? -1 : string.length();
-    char[] array = myArray;
     assert origLen == stringLen || origLen==-1 || stringLen==-1;
 
     int count = myCount + myDeferredShift;
     assert count == origLen || origLen==-1;
     assert count == stringLen || stringLen==-1;
-    if (array != null) {
-      assert myCount <= array.length;
+    final String stringFromCharArray;
+
+    if (myArray != null) {
+      assert myCount <= myArray.length;
+      stringFromCharArray = new String(myArray, myStart, myCount);
+    } else {
+      stringFromCharArray = null;
     }
-    if (myDebug) {
-      if (array != null && originalSequence != null) {
-        assert new String(array, myStart, myCount).equals(originalSequence);
-      }
-      if (!isDeferredChangeMode() && array != null && string != null) {
-        assert new String(array, myStart, myCount).equals(string);
-      }
-      if (originalSequence != null && string != null) {
-        assert string.equals(originalSequence.toString());
-      }
 
-      myDebugArray.assertConsistency();
+    if (stringFromCharArray != null && originalSequence != null) {
+      assert stringFromCharArray.equals(originalSequence);
+    }
+    if (!isDeferredChangeMode() && stringFromCharArray != null && string != null) {
+      assert stringFromCharArray.equals(string);
+    }
+    if (originalSequence != null && string != null) {
+      assert string.equals(originalSequence.toString());
+    }
 
-      String str = myStringRef == null ? null : myStringRef.get();
-      if (str == null) {
-        if (hasDeferredChanges()) {
-          str = doSubString(0, myCount + myDeferredShift).toString();
-        }
-        else if (myOriginalSequence != null) {
-          str = myOriginalSequence.toString();
-        }
-        else {
-          str = new String(myArray, myStart, myCount);
-        }
+    myDebugArray.assertConsistency();
+
+    String str = myStringRef == null ? null : myStringRef.get();
+    if (str == null) {
+      if (hasDeferredChanges()) {
+        str = doSubString(0, myCount + myDeferredShift).toString();
       }
-      assert count == str.length();
-      if (isDeferredChangeMode()) {
-        String expected = myDebugArray.toString();
-        checkStrings("toString()", expected, str);
+      else if (myOriginalSequence != null) {
+        str = myOriginalSequence.toString();
       }
+      else {
+        str = stringFromCharArray;
+      }
+    }
+    assert count == str.length();
+    if (isDeferredChangeMode()) {
+      String expected = myDebugArray.toString();
+      checkStrings("toString()", expected, str);
     }
   }
 

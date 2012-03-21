@@ -99,6 +99,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
     myBus = ApplicationManager.getApplication().getMessageBus();
     InvocationHandler handler = new InvocationHandler() {
+      @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         multicast(method, args);
         return null;
@@ -135,17 +136,21 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "FileDocumentManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   @Nullable
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
@@ -167,6 +172,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
           document.addDocumentListener(
             new DocumentAdapter() {
+              @Override
               public void documentChanged(DocumentEvent e) {
                 final Document document = e.getDocument();
                 myUnsavedDocuments.add(document);
@@ -205,6 +211,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return EditorFactory.getInstance().createDocument(text);
   }
 
+  @Override
   @Nullable
   public Document getCachedDocument(@NotNull VirtualFile file) {
     Reference<Document> reference = file.getUserData(DOCUMENT_KEY);
@@ -222,6 +229,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
     synchronized (lock) {
       virtualFile.putUserData(DOCUMENT_KEY, new SoftReference<Document>(document) {
+        @Override
         public Document get() {
           return document;
         }
@@ -230,6 +238,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @Override
   @Nullable
   public VirtualFile getFile(@NotNull Document document) {
     return document.getUserData(FILE_KEY);
@@ -269,6 +278,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     });
   }
 
+  @Override
   public void saveAllDocuments() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -293,11 +303,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @Override
   public void saveDocument(@NotNull final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myUnsavedDocuments.contains(document)) return;
 
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
+      @Override
       public void run() {
         _saveDocument(document);
       }
@@ -394,6 +406,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return lineSeparator;
   }
 
+  @Override
   @NotNull
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file != null ? LoadTextUtil.getDetectedLineSeparator(file) : null;
@@ -421,6 +434,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return false;
   }
 
+  @Override
   public void reloadFiles(final VirtualFile... files) {
     for (VirtualFile file : files) {
       if (file.exists()) {
@@ -432,6 +446,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @Override
   @NotNull
   public Document[] getUnsavedDocuments() {
     if (myUnsavedDocuments.isEmpty()) {
@@ -442,15 +457,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return list.toArray(new Document[list.size()]);
   }
 
+  @Override
   public boolean isDocumentUnsaved(@NotNull Document document) {
     return myUnsavedDocuments.contains(document);
   }
 
+  @Override
   public boolean isFileModified(@NotNull VirtualFile file) {
     final Document doc = getCachedDocument(file);
     return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
 
+  @Override
   public void propertyChanged(final VirtualFilePropertyEvent event) {
     if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
       final VirtualFile file = event.getFile();
@@ -459,6 +477,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
       ApplicationManager.getApplication().runWriteAction(
         new ExternalChangeAction() {
+          @Override
           public void run() {
             document.setReadOnly(!event.getFile().isWritable());
           }
@@ -478,6 +497,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) == null;
   }
 
+  @Override
   public void contentsChanged(VirtualFileEvent event) {
     if (event.isFromSave()) return;
     final VirtualFile file = event.getFile();
@@ -499,6 +519,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       LOG.info("  oldFileStamp:" + oldFileStamp);
 
       Runnable askReloadRunnable = new Runnable() {
+        @Override
         public void run() {
           if (!file.isValid()) return;
           if (askReloadFromDisk(file, document)) {
@@ -518,6 +539,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myMultiCaster.fileWithNoDocumentChanged(file);
   }
 
+  @Override
   public void reloadFromDisk(@NotNull final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final VirtualFile file = getFile(document);
@@ -527,9 +549,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(file);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(
           new ExternalChangeAction.ExternalDocumentChange(document, project) {
+            @Override
             public void run() {
               boolean wasWritable = document.isWritable();
               DocumentEx documentEx = (DocumentEx)document;
@@ -558,6 +582,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
     builder.addCancelAction().setText(UIBundle.message("file.cache.conflict.keep.memory.changes.button"));
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
+      @Override
       public void actionPerformed(ActionEvent e) {
         String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
@@ -591,6 +616,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   protected void reportErrorOnSave(final IOException e) {
     // invokeLater here prevents attempt to show dialog in write action
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Messages.showMessageDialog(
           UIBundle.message("cannot.save.file.with.error.error.message", e.getMessage()),
@@ -601,9 +627,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     });
   }
 
+  @Override
   public void fileCreated(VirtualFileEvent event) {
   }
 
+  @Override
   public void fileDeleted(VirtualFileEvent event) {
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
@@ -611,22 +639,28 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
+  @Override
   public void fileMoved(VirtualFileMoveEvent event) {
   }
 
+  @Override
   public void fileCopied(VirtualFileCopyEvent event) {
     fileCreated(event);
   }
 
+  @Override
   public void beforePropertyChange(VirtualFilePropertyEvent event) {
   }
 
+  @Override
   public void beforeContentsChange(VirtualFileEvent event) {
   }
 
+  @Override
   public void beforeFileDeletion(VirtualFileEvent event) {
   }
 
+  @Override
   public void beforeFileMovement(VirtualFileMoveEvent event) {
   }
 

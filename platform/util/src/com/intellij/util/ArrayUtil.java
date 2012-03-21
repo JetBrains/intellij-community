@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NotNull;
@@ -31,20 +30,20 @@ import java.util.List;
 /**
  * Author: msk
  */
-public class ArrayUtil {
-  public static final short[] EMPTY_SHORT_ARRAY = new short[0];
-  public static final char[] EMPTY_CHAR_ARRAY = new char[0];
-  public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-  public static final int[] EMPTY_INT_ARRAY = new int[0];
-  public static final boolean[] EMPTY_BOOLEAN_ARRAY = new boolean[0];
-  @SuppressWarnings({"SSBasedInspection"}) public static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-  @SuppressWarnings({"SSBasedInspection"}) public static final String[] EMPTY_STRING_ARRAY = new String[0];
-  @SuppressWarnings({"SSBasedInspection"}) public static final Class[] EMPTY_CLASS_ARRAY = new Class[0];
-  public static final long[] EMPTY_LONG_ARRAY = new long[0];
-  public static final Collection[] EMPTY_COLLECTION_ARRAY = new Collection[0];
+public class ArrayUtil extends ArrayUtilRt {
+  public static final short[] EMPTY_SHORT_ARRAY = ArrayUtilRt.EMPTY_SHORT_ARRAY;
+  public static final char[] EMPTY_CHAR_ARRAY = ArrayUtilRt.EMPTY_CHAR_ARRAY;
+  public static final byte[] EMPTY_BYTE_ARRAY = ArrayUtilRt.EMPTY_BYTE_ARRAY;
+  public static final int[] EMPTY_INT_ARRAY = ArrayUtilRt.EMPTY_INT_ARRAY;
+  public static final boolean[] EMPTY_BOOLEAN_ARRAY = ArrayUtilRt.EMPTY_BOOLEAN_ARRAY;
+  public static final Object[] EMPTY_OBJECT_ARRAY = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+  public static final String[] EMPTY_STRING_ARRAY = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  public static final Class[] EMPTY_CLASS_ARRAY = ArrayUtilRt.EMPTY_CLASS_ARRAY;
+  public static final long[] EMPTY_LONG_ARRAY = ArrayUtilRt.EMPTY_LONG_ARRAY;
+  public static final Collection[] EMPTY_COLLECTION_ARRAY = ArrayUtilRt.EMPTY_COLLECTION_ARRAY;
+  public static final File[] EMPTY_FILE_ARRAY = ArrayUtilRt.EMPTY_FILE_ARRAY;
+  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = ArrayUtilRt.EMPTY_RUNNABLE_ARRAY;
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(EMPTY_CHAR_ARRAY);
-  public static final File[] EMPTY_FILE_ARRAY = new File[0];
-  public static final Runnable[] EMPTY_RUNNABLE_ARRAY = new Runnable[0];
 
   public static final ArrayFactory<String> STRING_ARRAY_FACTORY = new ArrayFactory<String>() {
     @Override
@@ -125,13 +124,13 @@ public class ArrayUtil {
 
   @NotNull
   public static <T> T[] toObjectArray(@NotNull Collection<T> collection, @NotNull Class<T> aClass) {
-    T[] array = (T[])Array.newInstance(aClass, collection.size());
+    @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(aClass, collection.size());
     return collection.toArray(array);
   }
 
   @NotNull
   public static <T> T[] toObjectArray(@NotNull Class<T> aClass, Object... source) {
-    T[] array = (T[])Array.newInstance(aClass, source.length);
+    @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(aClass, source.length);
     System.arraycopy(source, 0, array, 0, array.length);
     return array;
   }
@@ -141,12 +140,6 @@ public class ArrayUtil {
     if (collection.isEmpty()) return EMPTY_OBJECT_ARRAY;
     //noinspection SSBasedInspection
     return collection.toArray(new Object[collection.size()]);
-  }
-
-  @NotNull
-  public static String[] toStringArray(@NotNull Collection<String> collection) {
-    if (collection.isEmpty()) return EMPTY_STRING_ARRAY;
-    return ContainerUtil.toArray(collection, new String[collection.size()]);
   }
 
   @NotNull

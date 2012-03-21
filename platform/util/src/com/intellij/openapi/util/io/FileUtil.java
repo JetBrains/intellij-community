@@ -34,7 +34,6 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.util.rt.FileUtilRt;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -61,12 +60,6 @@ public class FileUtil extends FileUtilRt {
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
-
-  private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
-    protected byte[] initialValue() {
-      return new byte[1024 * 20];
-    }
-  };
 
   // do not use channels to copy files larger than 5 Mb because of possible MapFailed error
   private static final long CHANNELS_COPYING_LIMIT = 5L * MEGABYTE;
@@ -215,31 +208,6 @@ public class FileUtil extends FileUtilRt {
       stream.close();
     }
     return bytes;
-  }
-
-  @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
-    byte[] bytes = new byte[length];
-    int count = 0;
-    while (count < length) {
-      int n = stream.read(bytes, count, length - count);
-      if (n <= 0) break;
-      count += n;
-    }
-    return bytes;
-  }
-
-  @NotNull
-  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    final byte[] bytes = BUFFER.get();
-    while (true) {
-      int n = stream.read(bytes, 0, bytes.length);
-      if (n <= 0) break;
-      buffer.write(bytes, 0, n);
-    }
-    buffer.close();
-    return buffer.toByteArray();
   }
 
   public static boolean processFirstBytes(@NotNull InputStream stream, int length, @NotNull Processor<ByteSequence> processor) throws IOException {

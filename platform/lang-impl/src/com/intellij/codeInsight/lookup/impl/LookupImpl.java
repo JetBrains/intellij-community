@@ -890,8 +890,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
-    assert myLookupStartMarker.isValid();
-    assert !myChangeGuard;
+    assert myLookupStartMarker != null : "null start before";
+    assert myLookupStartMarker.isValid() : "invalid start";
+    assert !myChangeGuard : "already in change";
 
     myChangeGuard = true;
     final Document document = myEditor.getDocument();
@@ -911,7 +912,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       document.removeDocumentListener(spy);
       myChangeGuard = false;
     }
-    if (!myLookupStartMarker.isValid() || myDisposed) {
+    if (myDisposed || !myLookupStartMarker.isValid()) {
       hide();
       return false;
     }

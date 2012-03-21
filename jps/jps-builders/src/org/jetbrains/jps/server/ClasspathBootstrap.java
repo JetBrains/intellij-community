@@ -29,7 +29,7 @@ import org.codehaus.groovy.GroovyException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
-import org.jetbrains.util.rt.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.objectweb.asm.ClassWriter;
 
 import javax.tools.*;

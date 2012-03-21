@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -743,8 +744,24 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
   private void notifyIncomingChangesUpdated(@Nullable final Collection<CommittedChangeList> receivedChanges) {
     final Collection<CommittedChangeList> changes = receivedChanges == null ? myCachedIncomingChangeLists : receivedChanges;
     if (changes == null) {
-      final List<CommittedChangeList> lists = loadIncomingChanges(false);
-      myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(new ArrayList<CommittedChangeList>(lists));
+      final Application application = ApplicationManager.getApplication();
+      final Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+          final List<CommittedChangeList> lists = loadIncomingChanges(false);
+          application.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              myBus.syncPublisher(COMMITTED_TOPIC).incomingChangesUpdated(new ArrayList<CommittedChangeList>(lists));
+            }
+          });
+        }
+      };
+      if (application.isDispatchThread()) {
+        myTaskQueue.run(runnable);
+      } else {
+        runnable.run();
+      }
       return;
     }
     final ArrayList<CommittedChangeList> listCopy = new ArrayList<CommittedChangeList>(changes);

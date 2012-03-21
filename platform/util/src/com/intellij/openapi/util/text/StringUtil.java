@@ -27,7 +27,6 @@ import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.util.rt.StringUtilRt;
 
 import java.beans.Introspector;
 import java.io.ByteArrayInputStream;
@@ -155,16 +154,6 @@ public class StringUtil extends StringUtilRt {
     return newText!= null ? newText.toString():"";
   }
 
-  @NotNull
-  public static String getShortName(@NotNull String fqName) {
-    return getShortName(fqName, '.');
-  }
-
-  @NotNull
-  public static String getShortName(@NotNull Class aClass) {
-    return getShortName(aClass.getName());
-  }
-
   /**
    * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case insensitive
    */
@@ -225,32 +214,6 @@ public class StringUtil extends StringUtilRt {
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
-  public static boolean charsEqualIgnoreCase(char a, char b) {
-    return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
-  }
-
-  public static char toUpperCase(char a) {
-    if (a < 'a') {
-      return a;
-    }
-    if (a >= 'a' && a <= 'z') {
-      return (char)(a + ('A' - 'a'));
-    }
-    return Character.toUpperCase(a);
-  }
-
-  public static char toLowerCase(final char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') {
-      return a;
-    }
-
-    if (a >= 'A' && a <= 'Z') {
-      return (char)(a + ('a' - 'A'));
-    }
-
-    return Character.toLowerCase(a);
-  }
-
   public static String stripHtml(String html, boolean convertBreaks) {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");
@@ -262,15 +225,6 @@ public class StringUtil extends StringUtilRt {
   @Nullable
   public static String toLowerCase(@Nullable final String str) {
     return str == null ? null : str.toLowerCase();
-  }
-
-  @NotNull
-  public static String getShortName(@NotNull String fqName, char separator) {
-    int lastPointIdx = fqName.lastIndexOf(separator);
-    if (lastPointIdx >= 0) {
-      return fqName.substring(lastPointIdx + 1);
-    }
-    return fqName;
   }
 
   @NotNull
@@ -1917,24 +1871,6 @@ public class StringUtil extends StringUtilRt {
     }
     else {
       return -1;
-    }
-  }
-
-  public static int parseInt(final String string, final int defaultValue) {
-    try {
-      return Integer.parseInt(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
-  public static double parseDouble(final String string, final double defaultValue) {
-    try {
-      return Double.parseDouble(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
     }
   }
 

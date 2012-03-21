@@ -45,6 +45,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -335,6 +336,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     storeSettings();
 
     myThreadTracker = new ThreadTracker();
+    DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
   }
 
   public static void doSetup(final LightProjectDescriptor descriptor,

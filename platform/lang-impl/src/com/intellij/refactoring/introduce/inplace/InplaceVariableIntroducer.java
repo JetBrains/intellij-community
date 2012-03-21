@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -33,10 +34,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.refactoring.rename.inplace.MyLookupExpression;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.Nullable;
@@ -79,11 +83,6 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     initOccurrencesMarkers();
   }
 
-  @Deprecated
-  public boolean performInplaceRename() {
-    return performInplaceRefactoring(null);
-  }
-  
   @Override
   protected boolean shouldSelectAll() {
     return true;
@@ -235,31 +234,61 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   @Override
-  protected LookupElement[] createLookupItems(LookupElement[] lookupItems, String name) {
-    TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-    final PsiNamedElement psiVariable = getVariable();
-    if (psiVariable != null) {
-      final TextResult insertedValue =
-        templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
-      if (insertedValue != null) {
-        final String text = insertedValue.getText();
-        if (!text.isEmpty() && !Comparing.strEqual(text, name)) {
-          final LinkedHashSet<String> names = new LinkedHashSet<String>();
-          names.add(text);
-          for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
-            final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(psiVariable, psiVariable, names);
-            if (suggestedNameInfo != null && provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) break;
-          }
-          final LookupElement[] items = new LookupElement[names.size()];
-          final Iterator<String> iterator = names.iterator();
-          for (int i = 0; i < items.length; i++) {
-            items[i] = LookupElementBuilder.create(iterator.next());
-          }
-          return items;
-        }
-      }
-    }
-    return lookupItems;
+  protected MyLookupExpression createLookupExpression() {
+    return new MyIntroduceLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, shouldSelectAll(), myAdvertisementText);
   }
 
+  private static class MyIntroduceLookupExpression extends MyLookupExpression {
+    private final SmartPsiElementPointer<PsiNamedElement> myPointer;
+
+    public MyIntroduceLookupExpression(final String initialName,
+                                       final LinkedHashSet<String> names,
+                                       final PsiNamedElement elementToRename,
+                                       final boolean shouldSelectAll,
+                                       final String advertisementText) {
+      super(initialName, names, elementToRename, shouldSelectAll, advertisementText);
+      myPointer = SmartPointerManager.getInstance(elementToRename.getProject()).createSmartPsiElementPointer(elementToRename);
+    }
+
+    @Override
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      return createLookupItems(myName, context.getEditor(), getElement());
+    }
+
+    @Nullable
+    public PsiNamedElement getElement() {
+      return myPointer.getElement();
+    }
+
+    @Nullable
+    private LookupElement[] createLookupItems(String name, Editor editor, PsiNamedElement psiVariable) {
+      TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+      if (psiVariable != null) {
+        final TextResult insertedValue =
+          templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
+        if (insertedValue != null) {
+          final String text = insertedValue.getText();
+          if (!text.isEmpty() && !Comparing.strEqual(text, name)) {
+            final LinkedHashSet<String> names = new LinkedHashSet<String>();
+            names.add(text);
+            for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
+              final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(psiVariable, psiVariable, names);
+              if (suggestedNameInfo != null &&
+                  provider instanceof PreferrableNameSuggestionProvider &&
+                  !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) {
+                break;
+              }
+            }
+            final LookupElement[] items = new LookupElement[names.size()];
+            final Iterator<String> iterator = names.iterator();
+            for (int i = 0; i < items.length; i++) {
+              items[i] = LookupElementBuilder.create(iterator.next());
+            }
+            return items;
+          }
+        }
+      }
+      return myLookupItems;
+    }
+  }
 }

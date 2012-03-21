@@ -26,6 +26,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -78,7 +79,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   };
 
-  private final FactoryMap<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache = new FactoryMap<String, CachedValue<CanContainAttributeType>>() {
+  private final FactoryMap<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache = new ConcurrentFactoryMap<String, CachedValue<CanContainAttributeType>>() {
     @Override
     protected CachedValue<CanContainAttributeType> create(final String key) {
       return CachedValuesManager.getManager(myTag.getProject()).createCachedValue(new CachedValueProvider<CanContainAttributeType>() {

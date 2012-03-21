@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageNamesValidation;
@@ -292,10 +291,5 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(myLanguage);
     return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
-  }
-
-  @Override
-  protected LookupElement[] createLookupItems(final LookupElement[] lookupItems, final String name) {
-    return lookupItems;
   }
 }

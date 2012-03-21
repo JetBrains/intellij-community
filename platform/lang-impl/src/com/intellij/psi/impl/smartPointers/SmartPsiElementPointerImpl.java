@@ -106,6 +106,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElement = element == null ? null : new SoftReference<E>(element);
   }
 
+  @Override
   public E getCachedElement() {
     Reference<E> ref = myElement;
     return ref == null ? null : ref.get();

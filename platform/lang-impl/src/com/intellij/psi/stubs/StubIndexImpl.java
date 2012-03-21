@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -218,7 +217,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         return container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           @Override
           public boolean perform(final int id, @NotNull final TIntArrayList value) {
-            ProgressManager.checkCanceled();
             if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {

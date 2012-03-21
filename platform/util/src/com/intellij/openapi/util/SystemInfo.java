@@ -17,7 +17,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.util.rt.SystemInfoRt;
 
 import java.io.File;
 import java.util.List;

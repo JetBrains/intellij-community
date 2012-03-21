@@ -250,12 +250,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public boolean isStubBasedChildValid(@NotNull StubBasedPsiElementBase psi) {
-    StubElement fileStub = getStub();
+    StubTree fileStub = derefStub();
     if (fileStub != null) {
       synchronized (myStubLock) {
-        fileStub = getStub();
+        fileStub = derefStub();
         StubElement childStub = psi.getStub();
-        if (fileStub != null && childStub != null && fileStub != childStub.getParentStub()) {
+        if (fileStub != null && childStub != null && fileStub.getRoot() != childStub.getParentStub()) {
           return false;
         }
       }

@@ -60,6 +60,7 @@ public class CoreASTFactory extends ASTFactory implements DefaultASTFactory {
     return new LeafPsiElement(type, text);
   }
 
+  @Override
   public LeafElement createComment(IElementType type, CharSequence text) {
     return new PsiCoreCommentImpl(type, text);
   }

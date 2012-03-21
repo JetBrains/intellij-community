@@ -37,11 +37,13 @@ public class ProgressManagerQueue extends AbstractTaskQueue<Runnable> {
   protected void runMe() {
     final Application app = ApplicationManager.getApplication();
     if (app.isDispatchThread()) {
+      if (myTask.myProject != null && myTask.myProject.isDisposed()) return;
       myProgressManager.run(myTask);
     }
     else {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
+          if (myTask.myProject != null && myTask.myProject.isDisposed()) return;
           myProgressManager.run(myTask);
         }
       });

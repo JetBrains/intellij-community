@@ -31,6 +31,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -47,6 +48,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class SaveAsTemplateAction extends AnAction {
+
+  private static final Logger LOG = Logger.getInstance("#" + SaveAsTemplateAction.class.getName());
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
@@ -89,7 +92,9 @@ public class SaveAsTemplateAction extends AnAction {
                 if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference) reference).getQualifier() == null) {
                   String canonicalText = reference.getCanonicalText();
                   TextRange referenceRange = reference.getRangeInElement();
-                  TextRange range = element.getTextRange().cutOut(referenceRange).shiftRight(-offsetDelta);
+                  final TextRange elementTextRange = element.getTextRange();
+                  LOG.assertTrue(elementTextRange != null, elementTextRange);
+                  final TextRange range = elementTextRange.cutOut(referenceRange).shiftRight(-offsetDelta);
                   final String oldText = document.getText(range);
                   // workaround for Java references: canonicalText contains generics, and we need to cut them off because otherwise
                   // they will be duplicated
