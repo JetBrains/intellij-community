@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.util;
 
-import org.jetbrains.util.rt.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtilRt;
 
 import java.util.Arrays;
 import java.util.Collection;

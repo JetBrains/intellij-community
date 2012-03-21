@@ -58,7 +58,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.util.rt.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfoRt;
 
 import java.io.File;
 import java.nio.charset.Charset;

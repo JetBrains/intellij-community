@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.util.rt;
+package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.SystemInfoRt;
 
 import java.io.*;
 import java.util.UUID;

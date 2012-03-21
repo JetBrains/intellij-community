@@ -21,7 +21,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.util.rt.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.File;
 import java.io.FileWriter;

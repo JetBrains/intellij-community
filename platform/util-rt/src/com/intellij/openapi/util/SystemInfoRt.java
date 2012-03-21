@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.util.rt;
+package com.intellij.openapi.util;
 
 /**
  * Stripped-down version of {@code com.intellij.openapi.util.SystemInfo}.

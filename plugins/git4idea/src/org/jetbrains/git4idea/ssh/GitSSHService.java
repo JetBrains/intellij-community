@@ -22,7 +22,7 @@ import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.util.ScriptGenerator;
-import org.jetbrains.util.rt.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.File;
 import java.io.IOException;

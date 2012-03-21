@@ -20,7 +20,7 @@ import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.util.rt.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.*;
 import java.util.*;

@@ -27,7 +27,6 @@ import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.util.rt.StringUtilRt;
 
 import java.beans.Introspector;
 import java.io.ByteArrayInputStream;

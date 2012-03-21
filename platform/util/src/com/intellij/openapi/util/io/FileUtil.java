@@ -34,7 +34,6 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.util.rt.FileUtilRt;
 
 import java.io.*;
 import java.lang.reflect.Method;
