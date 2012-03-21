@@ -728,18 +728,11 @@ public class MavenProject {
     MavenPlugin plugin = findPlugin(groupId, artifactId);
     if (plugin == null) return null;
 
-    Element configElement = null;
     if (goalOrNull == null) {
-      configElement = plugin.getConfigurationElement();
+      return plugin.getConfigurationElement();
     }
-    else {
-      for (MavenPlugin.Execution each : plugin.getExecutions()) {
-        if (each.getGoals().contains(goalOrNull)) {
-          configElement = each.getConfigurationElement();
-        }
-      }
-    }
-    return configElement;
+
+    return plugin.getGoalConfiguration(goalOrNull);
   }
 
   @Nullable
