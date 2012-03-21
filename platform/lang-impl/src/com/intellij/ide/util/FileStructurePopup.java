@@ -135,7 +135,7 @@ public class FileStructurePopup implements Disposable {
     else {
       myTreeActionsOwner = null;
       myTreeModel = structureViewModel;
-    }    
+    }
 
     myTreeStructure = new SmartTreeStructure(project, myTreeModel){
       public void rebuildTree() {
@@ -233,7 +233,7 @@ public class FileStructurePopup implements Disposable {
         }
       })
       .createPopup();
-    
+
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -255,6 +255,7 @@ public class FileStructurePopup implements Disposable {
         }
       }
     });
+    myTree.getEmptyText().setText("Loading...");
     final Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), myProject);
     if (location != null) {
       myPopup.showInScreenCoordinates(myEditor.getContentComponent(), location);
@@ -267,29 +268,24 @@ public class FileStructurePopup implements Disposable {
       myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
     }
 
-    //final long cur = System.currentTimeMillis();
-    final Runnable expandIsDone = new Runnable() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+    myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
       @Override
       public void run() {
-        //System.out.println(System.currentTimeMillis() - cur);
-        IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
-        myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
-          @Override
+        myTreeHasBuilt.setDone();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            selectPsiElement(myInitialPsiElement);
-            myTreeHasBuilt.setDone();
-            //long t = System.currentTimeMillis() - time;
-            //System.out.println("Shown in " + t + "ms");
+            myFilteringStructure.rebuild();
+            myAbstractTreeBuilder.queueUpdate(true).doWhenDone(new Runnable() {
+              @Override
+              public void run() {
+                selectPsiElement(myInitialPsiElement);
+              }
+            });
           }
         });
       }
-    };
-
-    //if (myTree.isAlwaysExpanded() || true) {
-      expandIsDone.run();
-    //} else {
-    //  myAbstractTreeBuilder.expandAll(expandIsDone);
-    //}
+    });
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
@@ -457,11 +453,11 @@ public class FileStructurePopup implements Disposable {
         }
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), myTree);
-    
+
     myTree.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() > 1) {          
+        if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() > 1) {
           navigateSelectedElement();
         }
       }
@@ -497,7 +493,7 @@ public class FileStructurePopup implements Disposable {
         return null;
       }
     });
-    myFilteringStructure.rebuild();
+
     return panel;
   }
 
@@ -566,7 +562,7 @@ public class FileStructurePopup implements Disposable {
 
   private void addCheckbox(final JPanel panel, final TreeAction action) {
     String text = action instanceof FileStructureFilter ? ((FileStructureFilter)action).getCheckBoxText() :
-                  action instanceof FileStructureNodeProvider ? ((FileStructureNodeProvider)action).getCheckBoxText() : null;    
+                  action instanceof FileStructureNodeProvider ? ((FileStructureNodeProvider)action).getCheckBoxText() : null;
 
     if (text == null) return;
 
@@ -574,7 +570,7 @@ public class FileStructurePopup implements Disposable {
                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
 
 
-    
+
     final JCheckBox chkFilter = new JCheckBox();
     final boolean selected = getDefaultValue(action);
     chkFilter.setSelected(selected);
@@ -592,7 +588,7 @@ public class FileStructurePopup implements Disposable {
         }
         myTreeStructure.rebuildTree();
         myFilteringStructure.rebuild();
-        
+
         final Object sel = selection;
         final Runnable runnable = new Runnable() {
           public void run() {
@@ -745,8 +741,8 @@ public class FileStructurePopup implements Disposable {
         } else {
           return false;
         }
-        
-      } 
+
+      }
       return true;
     }
 
