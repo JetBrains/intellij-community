@@ -162,9 +162,9 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     });
     
     addMouseListener(new MouseAdapter() {
-      public void mousePressed(final MouseEvent e) {
+      public void mouseReleased(final MouseEvent e) {
         if (!e.isPopupTrigger()) {
-          if (UIUtil.isCloseClick(e)) {
+          if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             if (e.isAltDown()) {
               toolWindow.fireHidden();
             }
