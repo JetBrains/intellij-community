@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.Notificator;
@@ -95,7 +94,7 @@ public class GitIntegrationEnabler {
       @Override public void run() {
         myPlatformFacade.runReadAction(new Runnable() {
           @Override public void run() {
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getPath() + "/.git");
+            myPlatformFacade.getLocalFileSystem().refreshAndFindFileByPath(projectDir.getPath() + "/.git");
           }
         });
       }
