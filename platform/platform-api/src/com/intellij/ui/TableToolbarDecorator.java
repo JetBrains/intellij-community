@@ -71,7 +71,8 @@ class TableToolbarDecorator extends ToolbarDecorator {
         if (0 <= index && index < size) {
           final boolean downEnable = myTable.getSelectionModel().getMaxSelectionIndex() < size - 1;
           final boolean upEnable = myTable.getSelectionModel().getMinSelectionIndex() > 0;
-          p.setEnabled(CommonActionsPanel.Buttons.EDIT, true);
+          final boolean editEnabled = myTable.getSelectedRowCount() == 1;
+          p.setEnabled(CommonActionsPanel.Buttons.EDIT, editEnabled);
           p.setEnabled(CommonActionsPanel.Buttons.REMOVE, true);
           p.setEnabled(CommonActionsPanel.Buttons.UP, upEnable);
           p.setEnabled(CommonActionsPanel.Buttons.DOWN, downEnable);
