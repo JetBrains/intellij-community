@@ -17,25 +17,24 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
  */
-public class RemoveAttributeIntentionFix implements IntentionAction {
+public class RemoveAttributeIntentionFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myLocalName;
-  private final XmlAttribute myAttribute;
 
   public RemoveAttributeIntentionFix(final String localName, final @NotNull XmlAttribute attribute) {
+    super(attribute);
     myLocalName = localName;
-    myAttribute = attribute;
   }
 
   @NotNull
@@ -48,20 +47,22 @@ public class RemoveAttributeIntentionFix implements IntentionAction {
     return XmlErrorMessages.message("remove.attribute.quickfix.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myAttribute.isValid();
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    PsiElement next = findNextAttribute(myAttribute);
-    myAttribute.delete();
+    PsiElement next = findNextAttribute((XmlAttribute)startElement);
+    startElement.delete();
 
-    if (next != null) {
+    if (next != null && editor != null) {
       editor.getCaretModel().moveToOffset(next.getTextRange().getStartOffset());
     }
   }
 
+  @Nullable
   private static PsiElement findNextAttribute(final XmlAttribute attribute) {
     PsiElement nextSibling = attribute.getNextSibling();
     while (nextSibling != null) {

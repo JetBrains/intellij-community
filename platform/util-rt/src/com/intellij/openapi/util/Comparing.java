@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,7 +77,7 @@ public class Comparing {
       if (c1 == c2) {
         continue;
       }
-      if (!caseSensitive && StringUtil.charsEqualIgnoreCase(c1, c2)) continue;
+      if (!caseSensitive && StringUtilRt.charsEqualIgnoreCase(c1, c2)) continue;
       return false;
     }
 
@@ -138,6 +138,10 @@ public class Comparing {
 
   public static int compare(byte o1, byte o2) {
     return o1 < o2 ? -1 : o1 == o2 ? 0 : 1;
+  }
+
+  public static int compare(boolean o1, boolean o2) {
+    return o1 == o2 ? 0 : o1 ? 1 : -1;
   }
 
   public static int compare(int o1, int o2) {

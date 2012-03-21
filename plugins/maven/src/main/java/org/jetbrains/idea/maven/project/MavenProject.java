@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -617,9 +618,9 @@ public class MavenProject {
 
   @NotNull
   public Set<String> getSupportedPackagings() {
-    Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.TYPE_POM,
-                                                            MavenConstants.TYPE_JAR,
-                                                            "ejb", "ejb-client", "war", "ear", "bundle"));
+    Set<String> result = CollectionFactory.newSet(MavenConstants.TYPE_POM,
+                                                  MavenConstants.TYPE_JAR,
+                                                  "ejb", "ejb-client", "war", "ear", "bundle", "maven-plugin");
     for (MavenImporter each : getSuitableImporters()) {
       each.getSupportedPackagings(result);
     }
@@ -727,18 +728,11 @@ public class MavenProject {
     MavenPlugin plugin = findPlugin(groupId, artifactId);
     if (plugin == null) return null;
 
-    Element configElement = null;
     if (goalOrNull == null) {
-      configElement = plugin.getConfigurationElement();
+      return plugin.getConfigurationElement();
     }
-    else {
-      for (MavenPlugin.Execution each : plugin.getExecutions()) {
-        if (each.getGoals().contains(goalOrNull)) {
-          configElement = each.getConfigurationElement();
-        }
-      }
-    }
-    return configElement;
+
+    return plugin.getGoalConfiguration(goalOrNull);
   }
 
   @Nullable

@@ -23,6 +23,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNStatus;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,7 +34,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
     mySet = new HashSet<MyPointInfo>();
   }
 
-  public void process(final FilePath path, final SVNStatus status, final boolean isInnerCopyRoot) throws SVNException {
+  public void process(final FilePath path, final SVNStatus status) throws SVNException {
     if ((path.getVirtualFile() != null) && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
       final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external);
       mySet.add(info);
@@ -46,9 +47,6 @@ public class NestedCopiesBuilder implements StatusReceiver {
       return;
     } else if (status.isSwitched()) {
       type = NestedCopyType.switched;
-    } else if (isInnerCopyRoot) {
-      // will not be changed or modified; can't be switched or external
-      type = NestedCopyType.inner;
     } else {
       return;
     }
@@ -61,6 +59,12 @@ public class NestedCopiesBuilder implements StatusReceiver {
   }
 
   public void processUnversioned(final VirtualFile vFile) {
+  }
+
+  @Override
+  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format) {
+    final MyPointInfo info = new MyPointInfo(file, url, format, NestedCopyType.inner);
+    mySet.add(info);
   }
 
   static class MyPointInfo {

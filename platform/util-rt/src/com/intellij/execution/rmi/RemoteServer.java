@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package com.intellij.execution.rmi;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.naming.Context;
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
 import java.lang.reflect.InvocationHandler;
@@ -32,18 +33,17 @@ import java.util.Random;
 
 public class RemoteServer {
   private static Remote ourRemote;
-  private static Remote ourStub;
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   protected static void start(Remote remote) throws Exception {
     setupRMI();
     banJNDI();
 
     if (ourRemote != null) throw new AssertionError("Already started");
-
     ourRemote = remote;
 
     Registry registry;
-    int port = 0;
+    int port;
     for (Random random = new Random(); ;) {
       port = random.nextInt(0xffff);
       if (port < 4000) continue;
@@ -51,22 +51,23 @@ public class RemoteServer {
         registry = LocateRegistry.createRegistry(port);
         break;
       }
-      catch (ExportException ex) {
-      }
+      catch (ExportException ignored) { }
     }
-    try {
-      ourStub =  UnicastRemoteObject.exportObject(ourRemote, 0);
-      final String name = remote.getClass().getSimpleName() + Integer.toHexString(ourStub.hashCode());
-      registry.bind(name, ourStub);
 
-      System.out.println("Port/ID:" + port + "/" + name);
+    try {
+      Remote stub = UnicastRemoteObject.exportObject(ourRemote, 0);
+      final String name = remote.getClass().getSimpleName() + Integer.toHexString(stub.hashCode());
+      registry.bind(name, stub);
+
+      System.out.println("Port/ID: " + port + "/" + name);
+
       Object lock = new Object();
       synchronized (lock) {
         lock.wait();
       }
     }
     catch (Throwable e) {
-      e.printStackTrace();
+      e.printStackTrace(System.err);
       System.exit(1);
     }
   }
@@ -77,23 +78,24 @@ public class RemoteServer {
 
     // do not use domain or http address for server
     System.setProperty("java.rmi.server.hostname", "localhost");
-    // do not use http tunnelling
+    // do not use HTTP tunnelling
     System.setProperty("java.rmi.server.disableHttp", "true");
   }
 
   private static void banJNDI() {
-    if (System.getProperty(InitialContext.INITIAL_CONTEXT_FACTORY) == null) {
-      System.setProperty(InitialContext.INITIAL_CONTEXT_FACTORY, "com.intellij.execution.rmi.RemoteServer$Jndi");
+    if (System.getProperty(Context.INITIAL_CONTEXT_FACTORY) == null) {
+      System.setProperty(Context.INITIAL_CONTEXT_FACTORY, "com.intellij.execution.rmi.RemoteServer$Jndi");
     }
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public static class Jndi implements InitialContextFactory, InvocationHandler {
-
     @Override
     public Context getInitialContext(final Hashtable<?, ?> environment) throws NamingException {
-      return (Context) Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] { Context.class}, this );
+      return (Context)Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{Context.class}, this);
     }
 
+    @Nullable
     @Override
     public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
       return null;

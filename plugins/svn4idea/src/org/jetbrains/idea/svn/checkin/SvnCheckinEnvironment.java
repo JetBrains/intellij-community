@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -176,17 +177,21 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return Collections.singletonList(committables);
     }
 
-    final MultiMap<SVNURL, File> result = new MultiMap<SVNURL, File>();
+    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, File> result = new MultiMap<Pair<SVNURL, WorkingCopyFormat>, File>();
     for (File committable : committables) {
       final RootUrlInfo path = mySvnVcs.getSvnFileUrlMapping().getWcRootForFilePath(committable);
-      result.putValue(path == null ? null : path.getRepositoryUrlUrl(), committable);
+      if (path == null) {
+        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(null, null), committable);
+      } else {
+        result.putValue(new Pair<SVNURL, WorkingCopyFormat>(path.getRepositoryUrlUrl(), path.getFormat()), committable);
+      }
     }
 
     if (result.size() == 1) {
       return Collections.singletonList(committables);
     }
     final Collection<Collection<File>> result2 = new ArrayList<Collection<File>>();
-    for (Map.Entry<SVNURL, Collection<File>> entry : result.entrySet()) {
+    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<File>> entry : result.entrySet()) {
       result2.add(entry.getValue());
     }
     return result2;

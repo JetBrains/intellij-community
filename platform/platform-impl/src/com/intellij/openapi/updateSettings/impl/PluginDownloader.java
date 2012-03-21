@@ -329,6 +329,7 @@ public class PluginDownloader {
 
     if (fileName == null || !PathUtil.isValidFileName(fileName)) {
       FileUtil.delete(file);
+      LOG.warn("Invalid file name (header=" + contentDisposition + "; url=" + connection.getURL() + "; name=" + fileName + ")");
       throw new IOException("Invalid filename returned by the server");
     }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.BundleBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
@@ -100,7 +101,7 @@ public class UIUtil {
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}
 
-  public static final char MNEMONIC = 0x1B;
+  public static final char MNEMONIC = BundleBase.MNEMONIC;
   @NonNls public static final String HTML_MIME = "text/html";
   @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
   @NonNls public static final String ARIAL_FONT_NAME = "Arial";
@@ -384,43 +385,7 @@ public class UIUtil {
   }
 
   public static String replaceMnemonicAmpersand(final String value) {
-    if (value.indexOf('&') >= 0) {
-      boolean useMacMnemonic = value.contains("&&");
-      StringBuilder realValue = new StringBuilder();
-      int i = 0;
-      while (i < value.length()) {
-        char c = value.charAt(i);
-        if (c == '\\') {
-          if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
-            realValue.append('&');
-            i++;
-          }
-          else {
-            realValue.append(c);
-          }
-        }
-        else if (c == '&') {
-          if (i < value.length() - 1 && value.charAt(i + 1) == '&') {
-            if (SystemInfo.isMac) {
-              realValue.append(MNEMONIC);
-            }
-            i++;
-          }
-          else {
-            if (!SystemInfo.isMac || !useMacMnemonic) {
-              realValue.append(MNEMONIC);
-            }
-          }
-        }
-        else {
-          realValue.append(c);
-        }
-        i++;
-      }
-
-      return realValue.toString();
-    }
-    return value;
+    return BundleBase.replaceMnemonicAmpersand(value);
   }
 
   public static Color getTableHeaderBackground() {

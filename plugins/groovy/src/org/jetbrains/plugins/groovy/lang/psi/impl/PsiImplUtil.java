@@ -39,7 +39,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
@@ -317,15 +316,13 @@ public class PsiImplUtil {
   private static int getExprPriorityLevel(GrExpression expr) {
     int priority = 0;
     //if (expr instanceof GrNewExpression) priority = 1;
-    if (expr instanceof GrPostfixExpression) priority = 5;
-    else if (expr instanceof GrUnaryExpression ||
-        expr instanceof GrTypeCastExpression) priority = 6;
+    if (expr instanceof GrUnaryExpression) priority = ((GrUnaryExpression)expr).isPostfix() ? 5 : 6;
+    else if (expr instanceof GrTypeCastExpression) priority = 6;
 
     else if (expr instanceof GrRangeExpressionImpl) priority = 11;
 
     else if (expr instanceof GrBinaryExpression) {
       final IElementType opToken = ((GrBinaryExpression)expr).getOperationTokenType();
-      LOG.assertTrue(opToken != null, expr.getText());
 
       if (opToken == mSTAR_STAR) priority = 7;
       else if (opToken == mSTAR || opToken == mDIV) priority = 8;
@@ -507,7 +504,7 @@ public class PsiImplUtil {
     } else {
       if (oldQualifier == null) {
         if (refNameElement != null) {
-          node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());
+          node.addLeaf(mDOT, ".", refNameElement.getNode());
           ref.addBefore(newQualifier, refNameElement.getPrevSibling());
         }
       }

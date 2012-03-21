@@ -42,7 +42,7 @@ public class ManifestDomFileDescription extends DomFileDescription<Manifest> {
       return false;
     }
     final Module module = ModuleUtil.findModuleForPsiElement(file);
-    return module == null || AndroidFacet.getInstance(module) != null;
+    return module == null || !module.isDisposed() && AndroidFacet.getInstance(module) != null;
   }
 
   protected void initializeFileDescription() {

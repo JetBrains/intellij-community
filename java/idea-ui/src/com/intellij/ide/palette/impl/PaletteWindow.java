@@ -55,9 +55,11 @@ public class PaletteWindow extends JPanel implements DataProvider {
   private PaletteGroupHeader myLastFocusedGroup;
 
   @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";
+  private PaletteManager myPaletteManager;
 
   public PaletteWindow(Project project) {
     myProject = project;
+    myPaletteManager = PaletteManager.getInstance(myProject);
     myProviders = Extensions.getExtensions(PaletteItemProvider.EP_NAME, project);
     for(PaletteItemProvider provider: myProviders) {
       provider.addListener(myPropertyChangeListener);
@@ -180,7 +182,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
       group.getComponentList().clearSelection();
     }
     ListSelectionEvent event = new ListSelectionEvent(this, -1, -1, false);
-    PaletteManager.getInstance(myProject).notifySelectionChanged(event);
+    myPaletteManager.notifySelectionChanged(event);
   }
 
   @Nullable public PaletteItem getActiveItem() {
@@ -252,7 +254,7 @@ public class PaletteWindow extends JPanel implements DataProvider {
           break;
         }
       }
-      PaletteManager.getInstance(myProject).notifySelectionChanged(e);
+      myPaletteManager.notifySelectionChanged(e);
     }
   }
 

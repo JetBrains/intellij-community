@@ -18,6 +18,7 @@ package org.jetbrains.android.sdk;
 
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.DdmPreferences;
+import com.android.ddmlib.Log;
 import com.android.sdklib.*;
 import com.android.sdklib.internal.project.ProjectProperties;
 import com.intellij.CommonBundle;
@@ -33,6 +34,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
+import org.jetbrains.android.logcat.AdbErrors;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.BufferingFileWrapper;
@@ -182,11 +184,14 @@ public class AndroidSdkData {
     return getLocation().hashCode();
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private boolean initializeDdmlib(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     while (true) {
       final MyInitializeDdmlibTask task = new MyInitializeDdmlibTask(project);
+
+      AdbErrors.clear();
 
       Thread t = new Thread(new Runnable() {
         @Override
@@ -205,25 +210,33 @@ public class AndroidSdkData {
 
         boolean finished = task.isFinished();
 
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        myAdbCrashed = !finished;
-
         if (task.isCanceled()) {
+          myAdbCrashed = !finished;
           forceInterrupt(t);
           return false;
         }
 
-        if (!finished) {
-          int result = Messages
-            .showOkCancelDialog(project,
-                                "ADB not responding. Please, kill \"" + SdkConstants.FN_ADB + "\" process manually and click 'Retry'",
-                                CommonBundle.getErrorTitle(), "&Retry", "&Cancel", Messages.getErrorIcon());
+        myAdbCrashed = false;
 
-          if (result == 1) {
+        if (!finished) {
+          final String adbErrorString = combine(AdbErrors.getErrors());
+          final int result = Messages.showDialog(project, "ADB not responding. You can wait more, or kill \"" +
+                                                          SdkConstants.FN_ADB +
+                                                          "\" process manually and click 'Restart'" +
+                                                          (adbErrorString.length() > 0 ? "\nErrors from ADB:\n" + adbErrorString : ""),
+                                                 CommonBundle.getErrorTitle(), new String[]{"&Wait more", "&Restart", "&Cancel"}, 0,
+                                                 Messages.getErrorIcon());
+          if (result == 2) {
+            // cancel
+            myAdbCrashed = true;
             forceInterrupt(t);
             return false;
           }
-          retryWas = true;
+          else if (result == 1) {
+            // restart
+            myAdbCrashed = true;
+            retryWas = true;
+          }
         }
       }
 
@@ -234,6 +247,19 @@ public class AndroidSdkData {
     }
 
     return true;
+  }
+
+  @NotNull
+  private static String combine(@NotNull String[] strs) {
+    final StringBuilder builder = new StringBuilder();
+
+    for (String str : strs) {
+      if (builder.length() > 0) {
+        builder.append('\n');
+      }
+      builder.append(str);
+    }
+    return builder.toString();
   }
 
   @SuppressWarnings({"BusyWait"})
@@ -262,6 +288,7 @@ public class AndroidSdkData {
     synchronized (myDdmsLock) {
       if (!myDdmLibInitialized) {
         myDdmLibInitialized = true;
+        DdmPreferences.setLogLevel(Log.LogLevel.INFO.getStringValue());
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableAdbServiceAction.isAdbServiceEnabled());
         LOG.info("DDMLib initialized");

@@ -16,8 +16,10 @@
 
 package org.jetbrains.android.logcat;
 
+import com.android.ddmlib.Log;
 import com.intellij.ProjectTopics;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.facet.ProjectFacetManager;
@@ -34,6 +36,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -90,12 +93,34 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
     
     JPanel contentPanel = view.getContentPanel();
     final ContentManager contentManager = toolWindow.getContentManager();
-    final Content content = contentManager.getFactory().createContent(contentPanel, null, false);
-    content.setDisposer(view);
-    content.setCloseable(false);
-    content.setPreferredFocusableComponent(contentPanel);
-    contentManager.addContent(content);
-    contentManager.setSelectedContent(content, true);
+
+    final Content logcatContent =
+      contentManager.getFactory().createContent(contentPanel, AndroidBundle.message("android.logcat.tab.title"), false);
+    logcatContent.setDisposer(view);
+    logcatContent.setCloseable(false);
+    logcatContent.setPreferredFocusableComponent(contentPanel);
+    contentManager.addContent(logcatContent);
+    contentManager.setSelectedContent(logcatContent, true);
+
+    final ConsoleView console = new ConsoleViewImpl(project, false);
+    final Content adbLogsContent = new ContentImpl(console.getComponent(), AndroidBundle.message("android.adb.logs.tab.title"), false);
+    adbLogsContent.setCloseable(false);
+    contentManager.addContent(adbLogsContent);
+
+    //noinspection UnnecessaryFullyQualifiedName
+    com.android.ddmlib.Log.setLogOutput(new Log.ILogOutput() {
+      @Override
+      public void printLog(Log.LogLevel logLevel, String tag, String message) {
+        reportAdbLogMessage(logLevel, tag, message, console);
+      }
+
+      @Override
+      public void printAndPromptLog(Log.LogLevel logLevel, String tag, String message) {
+        // todo: should we show dialog?
+        reportAdbLogMessage(logLevel, tag, message, console);
+      }
+    });
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         view.activate();
@@ -105,6 +130,48 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory {
         }
       }
     });
+  }
+
+  private static void reportAdbLogMessage(Log.LogLevel logLevel, String tag, String message, @NotNull ConsoleView consoleView) {
+    if (message == null) {
+      return;
+    }
+    if (logLevel == null) {
+      logLevel = Log.LogLevel.INFO;
+    }
+
+    if (logLevel == Log.LogLevel.ERROR || logLevel == Log.LogLevel.ASSERT) {
+      AdbErrors.reportError(message, tag);
+    }
+
+    final ConsoleViewContentType contentType = toConsoleViewContentType(logLevel);
+    if (contentType == null) {
+      return;
+    }
+
+    final String fullMessage = tag != null ? tag + ": " + message : message;
+    consoleView.print(fullMessage + '\n', contentType);
+  }
+
+  @Nullable
+  private static ConsoleViewContentType toConsoleViewContentType(@NotNull Log.LogLevel logLevel) {
+    switch (logLevel) {
+      case VERBOSE:
+        return null;
+      case DEBUG:
+        return null;
+      case INFO:
+        return ConsoleViewContentType.getConsoleViewType(AndroidLogcatConstants.INFO);
+      case WARN:
+        return ConsoleViewContentType.getConsoleViewType(AndroidLogcatConstants.WARNING);
+      case ERROR:
+        return ConsoleViewContentType.getConsoleViewType(AndroidLogcatConstants.ERROR);
+      case ASSERT:
+        return ConsoleViewContentType.getConsoleViewType(AndroidLogcatConstants.ASSERT);
+      default:
+        assert false : "Unknown log level " + logLevel;
+    }
+    return null;
   }
 
   private static void checkFacetAndSdk(Project project, AndroidLogcatToolWindowView view) {

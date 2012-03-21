@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author ilyas
+ * @author peter
  */
-public interface GrPostfixExpression extends GrUnaryExpression {
+public interface NullableFunction<Dom, Img> extends Function<Dom,Img> {
+  @Nullable
+  Img fun(final Dom dom);
+
+  /**
+   * @see FunctionUtil#nullConstant()
+   */
+  NullableFunction NULL = new NullableFunction() {
+    public Object fun(final Object o) {
+      return null;
+    }
+  };
 }

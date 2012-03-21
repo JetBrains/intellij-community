@@ -30,7 +30,7 @@ public class UnaryExpression implements GroovyElementTypes {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
-    if (ParserUtils.getToken(builder, TokenSets.PREFIXES)) {
+    if (ParserUtils.getToken(builder, TokenSets.UNARY_OP_SET)) {
       ParserUtils.getToken(builder, mNLS);
       parse(builder, parser);
       marker.done(UNARY_EXPRESSION);

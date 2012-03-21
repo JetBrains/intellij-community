@@ -249,6 +249,20 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return findTreeForStub(ast, stubs, stub);
   }
 
+  public boolean isStubBasedChildValid(@NotNull StubBasedPsiElementBase psi) {
+    StubElement fileStub = getStub();
+    if (fileStub != null) {
+      synchronized (myStubLock) {
+        fileStub = getStub();
+        StubElement childStub = psi.getStub();
+        if (fileStub != null && childStub != null && fileStub != childStub.getParentStub()) {
+          return false;
+        }
+      }
+    }
+    return isValid();
+  }
+
   @Nullable
   private static ASTNode findTreeForStub(ASTNode tree, final Iterator<StubElement<?>> stubs, final StubElement stub) {
     final IElementType type = tree.getElementType();
