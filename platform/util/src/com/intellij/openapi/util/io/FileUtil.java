@@ -1181,23 +1181,23 @@ public class FileUtil extends FileUtilRt {
   public static final int BA_DIRECTORY = 0x04;
   public static final int BA_HIDDEN    = 0x08;
 
+  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
+  public @interface FileBooleanAttributes {}
+
   // todo[r.sh] use NIO2 API after migration to JDK 7
   // returns -1 if could not get attributes
-  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
+  @FileBooleanAttributes
   public static int getBooleanAttributes(@NotNull File f) {
     if (JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD != null) {
       try {
         Object flags = JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD.invoke(JAVA_IO_FILESYSTEM, f);
+        //noinspection MagicConstant
         return ((Integer)flags).intValue();
       }
       catch (Exception ignored) { }
     }
     return -1;
   }
-
-  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
-  public @interface FileBooleanAttributes {}
-
 
   static {
     Object fs;
