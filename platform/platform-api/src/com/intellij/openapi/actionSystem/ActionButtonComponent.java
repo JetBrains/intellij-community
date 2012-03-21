@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,18 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.intellij.lang.annotations.MagicConstant;
+
 public interface ActionButtonComponent {
   int NORMAL = 0;
   int POPPED = 1;
   int PUSHED = -1;
   int SELECTED = 2;
 
+  @MagicConstant(flags = {NORMAL, POPPED, PUSHED, SELECTED})
+  @interface ButtonState { }
+
+  @ButtonState
   int getPopState();
 
   int getWidth();
