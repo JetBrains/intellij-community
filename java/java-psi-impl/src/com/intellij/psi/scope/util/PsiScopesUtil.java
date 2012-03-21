@@ -144,7 +144,7 @@ public class PsiScopesUtil {
 
   public static boolean resolveAndWalk(PsiScopeProcessor processor,
                                        PsiJavaCodeReferenceElement ref,
-                                       PsiElement maxScope,
+                                       @Nullable PsiElement maxScope,
                                        boolean incompleteCode) {
     final PsiElement qualifier = ref.getQualifier();
     final PsiElement classNameElement = ref.getReferenceNameElement();

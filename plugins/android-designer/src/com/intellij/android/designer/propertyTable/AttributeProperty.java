@@ -15,8 +15,11 @@
  */
 package com.intellij.android.designer.propertyTable;
 
+import com.android.resources.ResourceType;
+import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.BooleanEditor;
+import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
 import com.intellij.android.designer.propertyTable.renderers.BooleanRenderer;
 import com.intellij.designer.model.RadComponent;
@@ -26,6 +29,7 @@ import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.editors.AbstractTextFieldEditor;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -141,12 +145,22 @@ public class AttributeProperty extends Property<RadViewComponent> {
 
   private static class TextDialogEditor extends PropertyEditor {
     private TextFieldWithBrowseButton myTextField;
+    private RadComponent myRootComponent;
 
     public TextDialogEditor() {
       myTextField = new TextFieldWithBrowseButton(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          // TODO: Auto-generated method stub
+          PropertyParser parser = myRootComponent.getClientProperty(PropertyParser.KEY);
+          ResourceDialog dialog = parser
+            .createResourceDialog(ResourceType.BOOL, ResourceType.COLOR, ResourceType.DIMEN, ResourceType.DRAWABLE, ResourceType.INTEGER,
+                                  ResourceType.STRING, ResourceType.ID);
+          dialog.show();
+
+          if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+            myTextField.setText(dialog.getResourceName());
+            fireValueCommitted(true, false);
+          }
         }
       });
       myTextField.getTextField().setBorder(null);
@@ -154,7 +168,8 @@ public class AttributeProperty extends Property<RadViewComponent> {
 
     @NotNull
     @Override
-    public JComponent getComponent(@Nullable RadComponent component, Object value) {
+    public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
+      myRootComponent = rootComponent;
       myTextField.setText(value == null ? "" : value.toString());
       myTextField.getTextField().setBorder(null);
       return myTextField;

@@ -154,11 +154,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public boolean isValid() {
     T stub = myStub;
     if (stub != null) {
-      if (stub instanceof PsiFileStub) {
-        return stub.getPsi().isValid();
+      PsiElement parentPsi = stub.getParentStub().getPsi();
+      if (parentPsi instanceof PsiFileImpl) {
+        return ((PsiFileImpl) parentPsi).isStubBasedChildValid(this);
       }
-
-      return stub.getParentStub().getPsi().isValid();
+      return parentPsi.isValid();
     }
 
     return super.isValid();

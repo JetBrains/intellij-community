@@ -20,12 +20,14 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
@@ -45,11 +47,22 @@ public class ShowSelectionHistoryAction extends ShowHistoryAction {
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    if (e.getData(PlatformDataKeys.EDITOR) == null) {
+      e.getPresentation().setVisible(false);
+    }
+    else {
+      super.update(e);
+    }
+  }
+
+  @Override
   protected boolean isEnabled(LocalHistoryFacade vcs, IdeaGateway gw, VirtualFile f, AnActionEvent e) {
     return super.isEnabled(vcs, gw, f, e) && !f.isDirectory() && getSelection(e) != null;
   }
 
-  private VcsSelection getSelection(AnActionEvent e) {
+  @Nullable
+  private static VcsSelection getSelection(AnActionEvent e) {
     VcsContext c = VcsContextWrapper.createCachedInstanceOn(e);
     return VcsSelectionUtil.getSelection(c);
   }

@@ -73,6 +73,16 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
   }
 
   @Override
+  public void replace(K key, Collection<V> value) {
+    if (value == null) {
+      myMap.remove(key);
+    }
+    else {
+      myMap.put(key, value);
+    }
+  }
+
+  @Override
   public void put(final K key, final V value) {
     final Collection<V> x = constr.create();
     x.add(value);
@@ -111,8 +121,7 @@ class TransientMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void replaceAll(MultiMaplet<K, V> m) {
     for (Map.Entry<K, Collection<V>> e : m.entrySet()) {
-      remove(e.getKey());
-      put(e.getKey(), e.getValue());
+      replace(e.getKey(), e.getValue());
     }
   }
 

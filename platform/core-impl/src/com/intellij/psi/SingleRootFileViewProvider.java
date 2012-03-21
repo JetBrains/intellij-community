@@ -144,7 +144,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  protected PsiFile getPsiInner(final Language target) {
+  protected PsiFile getPsiInner(@NotNull Language target) {
     if (target != getBaseLanguage()) {
       return null;
     }
@@ -510,6 +510,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
       if (myContent != null) return myContent;
       return myContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
+        @Override
         @NotNull
         public CharSequence compute() {
           return myFile.calcTreeElement().getText();

@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspXml.JspDirective;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlFile;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaCodeBlockModificationListener implements PsiTreeChangePreprocessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaCodeBlockModificationListener");
@@ -31,7 +32,7 @@ public class JavaCodeBlockModificationListener implements PsiTreeChangePreproces
   }
 
   @Override
-  public void treeChanged(final PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull final PsiTreeChangeEventImpl event) {
     switch (event.getCode()) {
       case BEFORE_CHILDREN_CHANGE:
       case BEFORE_PROPERTY_CHANGE:

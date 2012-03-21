@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import com.intellij.openapi.util.io.FileUtilLight;
 import com.trilead.ssh2.KnownHosts;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -23,6 +22,7 @@ import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.util.ScriptGenerator;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,8 +66,7 @@ public abstract class GitSSHService {
   public synchronized File getScriptPath() throws IOException {
     if (myScriptPath == null || !myScriptPath.exists()) {
       ScriptGenerator generator = new ScriptGenerator(GitSSHHandler.GIT_SSH_PREFIX, SSHMain.class, getTempDir());
-      generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
-      generator.addClasses(KnownHosts.class, FileUtilLight.class);
+      generator.addClasses(XmlRpcClientLite.class, DecoderException.class, KnownHosts.class, FileUtilRt.class);
       generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
       myScriptPath = generator.generate();
     }

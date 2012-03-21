@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import com.intellij.openapi.util.io.FileUtilLight;
 import com.intellij.util.ArrayUtil;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.*;
 import java.util.*;
@@ -302,7 +302,7 @@ public class SSHMain {
       if (file.exists()) {
         // if encrypted ask user for passphrase
         String passphrase = null;
-        char[] text = FileUtilLight.loadFileText(file);
+        char[] text = FileUtilRt.loadFileText(file);
         if (isEncryptedKey(text)) {
           // need to ask passphrase from user
           int i;
