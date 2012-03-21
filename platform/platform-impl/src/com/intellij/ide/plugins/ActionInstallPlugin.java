@@ -47,6 +47,8 @@ import java.util.*;
 public class ActionInstallPlugin extends AnAction implements DumbAware {
   final private static String updateMessage = IdeBundle.message("action.update.plugin");
 
+  private static final Set<IdeaPluginDescriptor> ourInstallingNodes = new HashSet<IdeaPluginDescriptor>();
+
   private final PluginManagerMain installed;
   private final PluginManagerMain host;
 
@@ -65,6 +67,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       for (IdeaPluginDescriptor descr : selection) {
         presentation.setText(IdeBundle.message("action.download.and.install.plugin"));
         presentation.setDescription(IdeBundle.message("action.download.and.install.plugin"));
+        enabled &= !ourInstallingNodes.contains(descr);
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
           if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
@@ -108,6 +111,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
 
         if (pluginNode != null) {
           list.add(pluginNode);
+          ourInstallingNodes.add(pluginNode);
         }
       }
       try {
@@ -143,7 +147,12 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
             }
           }
         };
-        PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view, onInstallRunnable);
+        PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view, onInstallRunnable, new Runnable(){
+          @Override
+          public void run() {
+            ourInstallingNodes.removeAll(list);
+          }
+        });
       }
       catch (IOException e1) {
         PluginManagerMain.LOG.error(e1);
