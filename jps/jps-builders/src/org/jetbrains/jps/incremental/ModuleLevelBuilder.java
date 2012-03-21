@@ -56,6 +56,9 @@ public abstract class ModuleLevelBuilder extends Builder {
    * @throws Exception
    */
   public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws IOException {
+    if (context.errorsDetected()) {
+      return false;
+    }
     try {
       boolean additionalPassRequired = false;
 
