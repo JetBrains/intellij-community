@@ -26,10 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLock;
-import org.tmatesoft.svn.core.SVNNodeKind;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc17.db.ISVNWCDb;
 import org.tmatesoft.svn.core.wc.*;
 
@@ -60,7 +57,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
   }
 
-  public void process(FilePath path, SVNStatus status, boolean isInnerCopyRoot) throws SVNException {
+  public void process(FilePath path, SVNStatus status) throws SVNException {
     processStatusFirstPass(path, status);
   }
 
@@ -70,6 +67,10 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   public void processUnversioned(VirtualFile vFile) {
     myChangelistBuilder.processUnversionedFile(vFile);
+  }
+
+  @Override
+  public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format) {
   }
 
   public ChangelistBuilder getBuilder() {

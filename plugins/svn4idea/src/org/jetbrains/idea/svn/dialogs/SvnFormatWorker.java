@@ -136,9 +136,9 @@ public class SvnFormatWorker extends Task.Backgroundable {
         if (! wcInfo.isIsWcRoot()) {
           path = SvnUtil.getWorkingCopyRoot(path);
         }
-        indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath()));
         try {
           if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(myNewFormat)) {
+            indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath()));
             wcClient.doCleanup(path);
           }
           indicator.setText(SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),

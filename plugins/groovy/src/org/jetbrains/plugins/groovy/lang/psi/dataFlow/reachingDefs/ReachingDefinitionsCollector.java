@@ -53,6 +53,7 @@ public class ReachingDefinitionsCollector {
   private ReachingDefinitionsCollector() {
   }
 
+  @NotNull
   public static FragmentVariableInfos obtainVariableFlowInformation(final GrStatement first, final GrStatement last) {
     GroovyPsiElement context = PsiTreeUtil.getParentOfType(first, GrMethod.class, GrClosableBlock.class, GroovyFileBase.class, GrClassInitializer.class);
     GrControlFlowOwner flowOwner;
@@ -66,7 +67,7 @@ public class ReachingDefinitionsCollector {
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-    final TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
+    final TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performForceDFA(), flow, dfaInstance);
 
     final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
     final int[] postorder = ControlFlowBuilderUtil.postorder(flow);
@@ -149,16 +150,15 @@ public class ReachingDefinitionsCollector {
             }
 
             String name = variable.getName();
-            if (name != null) {
-              if (!(variable instanceof GrField)) {
-                if (!isInFragment(first, last, resolved)) {
-                  if (isInFragment(first, last, closure)) {
-                    addVariable(name, imap, variable.getManager(), variable.getType());
-                  }
-                } else {
-                  if (!isInFragment(first, last, closure)) {
-                    addVariable(name, omap, variable.getManager(), variable.getType());
-                  }
+            if (!(variable instanceof GrField)) {
+              if (!isInFragment(first, last, resolved)) {
+                if (isInFragment(first, last, closure)) {
+                  addVariable(name, imap, variable.getManager(), variable.getType());
+                }
+              }
+              else {
+                if (!isInFragment(first, last, closure)) {
+                  addVariable(name, omap, variable.getManager(), variable.getType());
                 }
               }
             }
@@ -306,7 +306,7 @@ public class ReachingDefinitionsCollector {
     final StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < dfaResult.size(); i++) {
       TIntObjectHashMap<TIntHashSet> map = dfaResult.get(i);
-      buffer.append("At " + i + ":\n");
+      buffer.append("At ").append(i).append(":\n");
       map.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
         public boolean execute(int i, TIntHashSet defs) {
           buffer.append(i).append(" -> ");
@@ -366,7 +366,10 @@ public class ReachingDefinitionsCollector {
     }
   }
 
-  private static TIntObjectHashMap<TIntHashSet> postprocess(final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult, Instruction[] flow, ReachingDefinitionsDfaInstance dfaInstance) {
+  @NotNull
+  private static TIntObjectHashMap<TIntHashSet> postprocess(@NotNull final ArrayList<TIntObjectHashMap<TIntHashSet>> dfaResult,
+                                                            @NotNull Instruction[] flow,
+                                                            @NotNull ReachingDefinitionsDfaInstance dfaInstance) {
     TIntObjectHashMap<TIntHashSet> result = new TIntObjectHashMap<TIntHashSet>();
     for (int i = 0; i < flow.length; i++) {
       Instruction insn = flow[i];

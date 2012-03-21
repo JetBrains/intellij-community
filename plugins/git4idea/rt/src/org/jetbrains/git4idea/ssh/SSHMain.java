@@ -15,12 +15,12 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ArrayUtilRt;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.*;
 import java.util.*;
@@ -368,7 +368,7 @@ public class SSHMain {
       String line;
       while ((line = in.readLine()) != null) {
         //noinspection HardCodedStringLiteral
-        if (line.startsWith("Proc-Type: ") && line.indexOf("ENCRYPTED") != -1) {
+        if (line.startsWith("Proc-Type: ") && line.contains("ENCRYPTED")) {
           return true;
         }
         if (line.length() == 0) {
@@ -445,7 +445,7 @@ public class SSHMain {
       database.addHostkeys(knownHostFile);
     }
     final List<String> algorithms = myHost.getHostKeyAlgorithms();
-    c.setServerHostKeyAlgorithms(ArrayUtil.toStringArray(algorithms));
+    c.setServerHostKeyAlgorithms(ArrayUtilRt.toStringArray(algorithms));
   }
 
   /**
@@ -506,7 +506,7 @@ public class SSHMain {
                                      final String[] prompt,
                                      final boolean[] echo) throws Exception {
       if (numPrompts == 0) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
+        return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
       myPromptCount++;
       Vector<String> vPrompts = new Vector<String>(prompt.length);
@@ -524,7 +524,7 @@ public class SSHMain {
         return rc;
       }
       else {
-        return ArrayUtil.toStringArray(result);
+        return ArrayUtilRt.toStringArray(result);
       }
     }
   }
