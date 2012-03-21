@@ -253,7 +253,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     synchronized (myStubLock) {
       StubTree fileStub = derefStub();
       StubElement childStub = child.getStub();
-      if (fileStub == null || childStub != null && fileStub.getRoot() != childStub.getParentStub()) {
+      if (childStub != null && (fileStub == null || fileStub.getRoot() != childStub.getParentStub())) {
         return false;
       }
     }
