@@ -576,7 +576,7 @@ public class ExpectedTypesProvider {
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expr) {
       PsiExpression[] operands = expr.getOperands();
-      int index = Arrays.asList(operands).indexOf(myExpr);
+      final int index = Arrays.asList(operands).indexOf(myExpr);
       assert index >= 0;
 
       if (myForCompletion && index == 0) {
@@ -591,7 +591,7 @@ public class ExpectedTypesProvider {
         }
         return;
       }
-      PsiExpression anotherExpr = index > 0 ? operands[0] : index < operands.length ? operands[1] : null;
+      PsiExpression anotherExpr = index > 0 ? operands[0] : 1 < operands.length ? operands[1] : null;
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
       IElementType i = expr.getOperationTokenType();
       if (i == JavaTokenType.MINUS ||
