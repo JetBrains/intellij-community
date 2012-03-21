@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    * @return full method name
    */
   private static String methodName(@NonNls final String method) {
-    return HANDLER_NAME + "." + method;
+    return GitSSHHandler.HANDLER_NAME + "." + method;
   }
 
   /**

@@ -250,6 +250,9 @@ public def layoutCommunityPlugins(String home) {
     }
     
     layoutPlugin("git4idea") {
+      jar("git4idea-rt.jar") {
+        module("git4idea-rt")
+      }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
       }
