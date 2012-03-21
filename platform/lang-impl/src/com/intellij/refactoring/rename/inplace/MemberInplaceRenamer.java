@@ -238,6 +238,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     if (success) {
       ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).startDumb();
       revertState();
+    } else {
+      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
     }
   }
 
