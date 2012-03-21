@@ -150,6 +150,13 @@ public class PyResolveTest extends PyResolveTestCase {
     assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
+  public void testGlobalDefinedLocally() {
+    final PsiElement element = resolve();
+    assertInstanceOf(element, PyTargetExpression.class);
+    final PsiElement parent = element.getParent();
+    assertInstanceOf(parent, PyAssignmentStatement.class);
+  }
+
   public void testLambda() {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyNamedParameter);
