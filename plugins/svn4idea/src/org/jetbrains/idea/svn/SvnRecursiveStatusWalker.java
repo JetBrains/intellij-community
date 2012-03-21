@@ -63,6 +63,7 @@ public class SvnRecursiveStatusWalker {
         myHandler.setCurrentItem(item);
         try {
           item.getClient(ioFile).doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, false, myHandler, null);
+          myHandler.checkIfCopyRootWasReported();
         }
         catch (SVNException e) {
           if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
@@ -172,17 +173,29 @@ public class SvnRecursiveStatusWalker {
       myMetCurrentItem = false;
     }
 
-    public void handleStatus(final SVNStatus status) throws SVNException {
-      myPartner.checkCanceled();
-      final File ioFile = status.getFile();
+    public void checkIfCopyRootWasReported() {
       if (! myMetCurrentItem && myCurrentItem.isIsInnerCopyRoot()) {
         myMetCurrentItem = true;
         final SVNStatus statusInner = SvnUtil.getStatus(SvnVcs.getInstance(myProject), myCurrentItem.getPath().getIOFile());
+
+        final SVNStatusType status = statusInner.getNodeStatus();
+        if (SVNStatusType.OBSTRUCTED.equals(status) || SVNStatusType.STATUS_IGNORED.equals(status) ||
+          SVNStatusType.STATUS_NONE.equals(status) || SVNStatusType.STATUS_UNVERSIONED.equals(status) ||
+          SVNStatusType.UNKNOWN.equals(status)) {
+          return;
+        }
         if (myCurrentItem.getPath().getVirtualFile() != null || statusInner != null) {
           myReceiver.processCopyRoot(myCurrentItem.getPath().getVirtualFile(), statusInner.getURL(),
                                      WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
         }
       }
+    }
+
+    public void handleStatus(final SVNStatus status) throws SVNException {
+      myPartner.checkCanceled();
+      final File ioFile = status.getFile();
+      checkIfCopyRootWasReported();
+
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
       VirtualFile vFile = lfs.findFileByIoFile(ioFile);
       if (vFile == null) {
