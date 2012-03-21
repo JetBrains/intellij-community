@@ -15,6 +15,7 @@
  */
 package org.jetbrains.util.rt;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
