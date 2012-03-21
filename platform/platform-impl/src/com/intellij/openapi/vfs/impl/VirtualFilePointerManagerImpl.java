@@ -309,7 +309,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   /**
-   * Does nothing. To cleanup pointer correctly, just pass Disposable during its creation
+   * Does nothing. To cleanup the pointer correctly, pass Disposable to its constructor
    * @see #create(String, com.intellij.openapi.Disposable, com.intellij.openapi.vfs.pointers.VirtualFilePointerListener)
    */
   @Override
@@ -340,7 +340,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     synchronized (myContainers) {
       if (!myContainers.isEmpty()) {
         VirtualFilePointerContainerImpl container = myContainers.iterator().next();
-        myContainers.clear();
+        //myContainers.clear();
         throw new RuntimeException("Not disposed container " + container);
       }
     }
