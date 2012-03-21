@@ -703,9 +703,9 @@ public class EquivalenceChecker {
 
   private static boolean rangeExpressionsAreEquivalent(@NotNull GrRangeExpression rangeExp1,
                                                        @NotNull GrRangeExpression rangeExp2) {
-    return expressionsAreEquivalent(getLowerBoundForRange(rangeExp1), getLowerBoundForRange(rangeExp1)) &&
-        expressionsAreEquivalent(getUpperBoundForRange(rangeExp1), getUpperBoundForRange(rangeExp1)) &&
-        isInclusive(rangeExp1) == isInclusive(rangeExp2);
+    return expressionsAreEquivalent(rangeExp1.getLeftOperand(), rangeExp2.getLeftOperand()) &&
+           expressionsAreEquivalent(rangeExp1.getRightOperand(), rangeExp2.getRightOperand()) &&
+           isInclusive(rangeExp1) == isInclusive(rangeExp2);
   }
 
   private static boolean isInclusive(GrRangeExpression range) {
@@ -715,31 +715,6 @@ public class EquivalenceChecker {
       }
     }
     return false;
-  }
-
-  @Nullable
-  private static GrExpression getLowerBoundForRange(GrRangeExpression range) {
-    for (PsiElement child : range.getChildren()) {
-      if (child instanceof GrExpression) {
-        return (GrExpression) child;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static GrExpression getUpperBoundForRange(GrRangeExpression range) {
-    boolean firstChildSeen = false;
-    for (PsiElement child : range.getChildren()) {
-      if (child instanceof GrExpression) {
-        if (firstChildSeen) {
-          return (GrExpression) child;
-        } else {
-          firstChildSeen = true;
-        }
-      }
-    }
-    return null;
   }
 
   private static boolean assignmentExpressionsAreEquivalent(@NotNull GrAssignmentExpression assignExp1,
