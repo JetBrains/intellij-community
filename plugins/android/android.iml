@@ -62,6 +62,7 @@
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
     <orderEntry type="module" module-name="IntentionPowerPackPlugin" />
     <orderEntry type="module" module-name="testng" />
+    <orderEntry type="module" module-name="android-common" />
     <orderEntry type="module" module-name="android-rt" />
   </component>
 </module>

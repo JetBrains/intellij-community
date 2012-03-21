@@ -186,4 +186,8 @@ public class StringUtilRt {
     }
     return fqName;
   }
+
+  public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
+    return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
+  }
 }

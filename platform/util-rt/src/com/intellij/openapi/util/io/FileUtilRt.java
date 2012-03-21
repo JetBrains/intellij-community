@@ -45,6 +45,90 @@ public class FileUtilRt {
   private static String ourCanonicalTempPathCache = null;
 
   @NotNull
+  public static String getExtension(@NotNull String fileName) {
+    int index = fileName.lastIndexOf('.');
+    if (index < 0) return "";
+    return fileName.substring(index + 1).toLowerCase();
+  }
+
+  @NotNull
+  public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
+    return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
+  }
+
+  @NotNull
+  public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
+    return aFileName.replace('\\', '/');
+  }
+
+  @Nullable
+  public static String getRelativePath(File base, File file) {
+    if (base == null || file == null) return null;
+
+    if (!base.isDirectory()) {
+      base = base.getParentFile();
+      if (base == null) return null;
+    }
+
+    if (base.equals(file)) return ".";
+
+    final String filePath = file.getAbsolutePath();
+    String basePath = base.getAbsolutePath();
+    return getRelativePath(basePath, filePath, File.separatorChar);
+  }
+
+  @Nullable
+  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
+    return getRelativePath(basePath, filePath, separator, SystemInfoRt.isFileSystemCaseSensitive);
+  }
+
+  @Nullable
+  public static String getRelativePath(@NotNull String basePath,
+                                       @NotNull String filePath,
+                                       final char separator,
+                                       final boolean caseSensitive) {
+    basePath = ensureEnds(basePath, separator);
+
+    String basePathToCompare = caseSensitive ? basePath : basePath.toLowerCase();
+    String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
+    if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) return ".";
+    int len = 0;
+    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
+    while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
+      if (basePath.charAt(len) == separator) {
+        lastSeparatorIndex = len;
+      }
+      len++;
+    }
+
+    if (len == 0) return null;
+
+    StringBuilder relativePath = new StringBuilder();
+    for (int i = len; i < basePath.length(); i++) {
+      if (basePath.charAt(i) == separator) {
+        relativePath.append("..");
+        relativePath.append(separator);
+      }
+    }
+    relativePath.append(filePath.substring(lastSeparatorIndex + 1));
+
+    return relativePath.toString();
+  }
+
+  private static String ensureEnds(@NotNull String s, final char endsWith) {
+    return StringUtilRt.endsWithChar(s, endsWith) ? s : s + endsWith;
+  }
+
+  @NotNull
+  public static String getNameWithoutExtension(@NotNull String name) {
+    int i = name.lastIndexOf('.');
+    if (i != -1) {
+      name = name.substring(0, i);
+    }
+    return name;
+  }
+
+  @NotNull
   public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
