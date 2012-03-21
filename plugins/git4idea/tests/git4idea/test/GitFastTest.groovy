@@ -22,6 +22,8 @@ import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertNotNull
 import com.intellij.openapi.project.Project
 import git4idea.tests.TestDialogManager
+import org.junit.Before
+import com.intellij.openapi.util.io.FileUtil
 
 /**
  * 
@@ -34,6 +36,19 @@ class GitFastTest {
   MockGit myGit
   String myProjectDir
   TestDialogManager myDialogManager
+
+  @Before
+  void setUp() {
+    myProjectDir = FileUtil.createTempDirectory("git", null)
+
+    myProject = [
+            getBaseDir: { new GitMockVirtualFile(myProjectDir) }
+    ] as Project
+
+    myPlatformFacade = new GitTestPlatformFacade()
+    myGit = new MockGit()
+    myDialogManager = myPlatformFacade.getDialogManager()
+  }
 
   void assertNotificationShown(Notification expected) {
     if (expected) {

@@ -17,14 +17,9 @@ package git4idea.roots
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitFastTest
 import git4idea.test.GitMockVirtualFile
-import git4idea.test.GitTestPlatformFacade
-import git4idea.test.MockGit
-import org.junit.Before
 import org.junit.Test
 
 import static git4idea.test.GitGTestUtil.toAbsolute
@@ -36,19 +31,6 @@ import static junit.framework.Assert.assertTrue
  * @author Kirill Likhodedov
  */
 class GitIntegrationEnablerTest extends GitFastTest {
-
-  @Before
-  void setUp() {
-    myProjectDir = FileUtil.createTempDirectory("git", null)
-
-    myProject = [
-            getBaseDir: { new GitMockVirtualFile(myProjectDir) }
-    ] as Project
-
-    myPlatformFacade = new GitTestPlatformFacade()
-    myGit = new MockGit()
-    myDialogManager = myPlatformFacade.getDialogManager()
-  }
 
   @Test
   void "1 root for the whole project, then just add VCS root"() {
