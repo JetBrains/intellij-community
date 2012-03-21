@@ -53,11 +53,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   private boolean myOkToProcessDefaultMnemonics = true;
 
   private IdeGlassPane myGlassPane;
-  private final Disposable myDisposable = new Disposable() {
-    @Override
-    public void dispose() {
-    }
-  };
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public JBOptionButton(Action action, Action[] options) {
     super(action);

@@ -76,11 +76,7 @@ public class SwitchingSession implements KeyEventDispatcher, Disposable {
   };
 
   private boolean myFadingAway;
-  private Disposable myPainterDisposable = new Disposable() {
-    @Override
-    public void dispose() {
-    }
-  };
+  private Disposable myPainterDisposable = Disposer.newDisposable();
 
   public SwitchingSession(SwitchManager mgr, SwitchProvider provider, KeyEvent e, @Nullable SwitchTarget preselected, boolean showSpots) {
     myManager = mgr;
