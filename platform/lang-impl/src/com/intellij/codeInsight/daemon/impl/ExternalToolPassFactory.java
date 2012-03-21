@@ -78,12 +78,7 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
     return false;
   }
 
-  void scheduleExternalActivity(@NotNull PsiFile file, @NotNull final Runnable r) {
-    myExternalActivitiesQueue.queue(new Update(file) {
-      @Override
-      public void run() {
-        r.run();
-      }
-    });
-    }
+  void scheduleExternalActivity(@NotNull Update update) {
+    myExternalActivitiesQueue.queue(update);
+  }
 }

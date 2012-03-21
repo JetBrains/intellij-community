@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -163,7 +164,18 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
       r.run();
     }
     else {
-      myExternalToolPassFactory.scheduleExternalActivity(myFile, r);
+      myExternalToolPassFactory.scheduleExternalActivity(new Update(myFile) {
+        @Override
+        public void run() {
+          r.run();
+        }
+
+        @Override
+        public void setRejected() {
+          super.setRejected();
+          doFinish();
+        }
+      });
     }
   }
 
