@@ -130,12 +130,15 @@ public class Server {
       }
 
       private void doStop(long elapsedTime) {
-        try {
-          System.out.println("Stopping compile server; reason: no pings from client received in " + elapsedTime + " ms");
-          myMessageHandler.cancelAllBuildsAndClearState();
-        }
-        finally {
-          stop();
+        if (!myMessageHandler.hasRunningBuilds()) {
+          try {
+            System.out.println("Stopping compile server; reason: no pings from client received in " + elapsedTime + " ms");
+            myMessageHandler.cancelAllBuildsAndClearState();
+            stop();
+          }
+          finally {
+            System.exit(0);
+          }
         }
       }
     }, allowedIdlePeriod, allowedIdlePeriod, TimeUnit.MILLISECONDS);
