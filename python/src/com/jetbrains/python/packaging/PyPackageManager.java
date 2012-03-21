@@ -33,7 +33,7 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.util.rt.FileUtilRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
