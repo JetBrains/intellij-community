@@ -26,6 +26,32 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class StringUtilRt {
+  public static boolean charsEqualIgnoreCase(char a, char b) {
+    return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
+  }
+
+  public static char toUpperCase(char a) {
+    if (a < 'a') {
+      return a;
+    }
+    if (a >= 'a' && a <= 'z') {
+      return (char)(a + ('A' - 'a'));
+    }
+    return Character.toUpperCase(a);
+  }
+
+  public static char toLowerCase(final char a) {
+    if (a < 'A' || a >= 'a' && a <= 'z') {
+      return a;
+    }
+
+    if (a >= 'A' && a <= 'Z') {
+      return (char)(a + ('a' - 'A'));
+    }
+
+    return Character.toLowerCase(a);
+  }
+
   /**
    * Converts line separators to <code>"\n"</code>
    */
@@ -120,5 +146,42 @@ public class StringUtilRt {
         offsets[i] += shift;
       }
     }
+  }
+
+  public static int parseInt(final String string, final int defaultValue) {
+    try {
+      return Integer.parseInt(string);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
+  public static double parseDouble(final String string, final double defaultValue) {
+    try {
+      return Double.parseDouble(string);
+    }
+    catch (Exception e) {
+      return defaultValue;
+    }
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull Class aClass) {
+    return getShortName(aClass.getName());
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull String fqName) {
+    return getShortName(fqName, '.');
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull String fqName, char separator) {
+    int lastPointIdx = fqName.lastIndexOf(separator);
+    if (lastPointIdx >= 0) {
+      return fqName.substring(lastPointIdx + 1);
+    }
+    return fqName;
   }
 }

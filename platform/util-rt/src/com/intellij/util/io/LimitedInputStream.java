@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,10 @@ public class LimitedInputStream extends FilterInputStream {
     len = Math.min(len, myReadLimit - myBytesRead);
     if (len <= 0) return -1;
 
-    final int acutallyRead = super.read(b, off, len);
-    if (acutallyRead >= 0) myBytesRead += acutallyRead;
+    final int actuallyRead = super.read(b, off, len);
+    if (actuallyRead >= 0) myBytesRead += actuallyRead;
 
-    return acutallyRead;
+    return actuallyRead;
   }
 
   public long skip(long n) throws IOException {
@@ -72,7 +72,7 @@ public class LimitedInputStream extends FilterInputStream {
     return Math.min(super.available(), myReadLimit - myBytesRead);
   }
 
-  public synchronized void mark(final int readlimit) {
+  public synchronized void mark(final int readLimit) {
     throw new UnsupportedOperationException();
   }
 

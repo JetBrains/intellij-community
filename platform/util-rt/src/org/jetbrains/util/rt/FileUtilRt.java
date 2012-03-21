@@ -33,6 +33,12 @@ import java.util.UUID;
 public class FileUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
 
+  protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
+    protected byte[] initialValue() {
+      return new byte[1024 * 20];
+    }
+  };
+
   private static String ourCanonicalTempPathCache = null;
 
   @NotNull
@@ -233,4 +239,30 @@ public class FileUtilRt {
       return newChars;
     }
   }
+
+  @NotNull
+  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    final byte[] bytes = BUFFER.get();
+    while (true) {
+      int n = stream.read(bytes, 0, bytes.length);
+      if (n <= 0) break;
+      buffer.write(bytes, 0, n);
+    }
+    buffer.close();
+    return buffer.toByteArray();
+  }
+
+  @NotNull
+  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    byte[] bytes = new byte[length];
+    int count = 0;
+    while (count < length) {
+      int n = stream.read(bytes, count, length - count);
+      if (n <= 0) break;
+      count += n;
+    }
+    return bytes;
+  }
+
 }

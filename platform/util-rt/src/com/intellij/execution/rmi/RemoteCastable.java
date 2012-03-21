@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.execution.rmi;
 
-import org.jetbrains.annotations.NotNull;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 /**
- * 
- * @author peter
- * @author Konstantin Bulenkov
+ * @author Gregory.Shrago
  */
-public interface NotNullFunction<Param, Result> extends NullableFunction<Param, Result> {
-  @NotNull
-  Result fun(final Param dom);
+public interface RemoteCastable extends Remote {
+  String getCastToClassName() throws RemoteException;
 }
