@@ -668,7 +668,7 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
   }
 
   @Test
-  public void "filter incoming gradle local changes"() {
+  public void "filter new gradle local changes"() {
     Closure initial = {
       project {
         module('module1') {
@@ -699,14 +699,14 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
   }
 
   @Test
-  public void "filter incoming conflict changes"() {
+  public void "filter new conflict changes"() {
     Closure initial = {
       project {
         module('module1')
         module('module2') {
           dependencies {
             library('lib1', bin: ['1'])
-            module('module1', scope: 'Compile')
+            module('module1', scope: 'compile')
     } } } }
     init(gradle: initial, intellij: initial)
 
@@ -723,10 +723,79 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module('module2') {
           dependencies {
             library('lib1', bin: ['2'])
-            module('module1', scope: 'Test')
+            module('module1', scope: 'test')
     } } } })
 
     // Ensure that conflict changes have not been processed.
+    checkTree {
+      project {
+    } }
+  }
+  
+  @Test
+  public void "filter obsolete gradle local changes"() {
+    Closure completeProject = {
+      project {
+        module('module1')
+        module('module2') {
+          contentRoot('1')
+          dependencies {
+            module('module1')
+            library('lib1')
+    } } } }
+    init (
+      gradle: completeProject,
+      intellij: {
+        project {
+      } }
+    )
+    
+    applyTreeFilter(GradleTextAttributes.GRADLE_LOCAL_CHANGE)
+    checkTree {
+      project {
+        module1('gradle')
+        module2('gradle') {
+          "content-root"('gradle')
+          dependencies {
+            module1('gradle')
+            lib1('gradle')
+    } } } }
+    
+    setState(intellij: completeProject)
+    checkTree {
+      project {
+    } }
+  }
+
+  @Test
+  public void "filter obsolete conflict changes"() {
+    Closure gradleProject = {
+      project {
+        module('module1')
+        module('module2') {
+          dependencies {
+            library('lib1', bin: ['1'])
+            module('module1', scope: 'compile')
+    } } } }
+    init(gradle: gradleProject, intellij: {
+      project {
+        module('module1')
+        module('module2') {
+          dependencies {
+            library('lib1', bin: ['2'])
+            module('module1', scope: 'test')
+    } } } })
+    
+    applyTreeFilter(GradleTextAttributes.CHANGE_CONFLICT)
+    checkTree {
+      project {
+        module2 {
+          dependencies {
+            lib1('conflict')
+            module1('conflict')
+    } } } }
+    
+    setState(intellij: gradleProject)
     checkTree {
       project {
     } }

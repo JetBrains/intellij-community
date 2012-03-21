@@ -81,7 +81,7 @@ public abstract class AbstractProjectBuilder extends BuilderSupport {
         def ownerModule = current
         def scope
         try {
-          scope = DependencyScope.valueOf(attributes.scope)
+          scope = DependencyScope.valueOf(attributes.scope.toUpperCase())
         }
         catch (Exception e) {
           scope = DependencyScope.COMPILE
