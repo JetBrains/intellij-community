@@ -300,7 +300,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     UISettings uiSettings=getInstance();
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
-    GraphicsUtil.setupAntialiasing(g2d, uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR);
+    GraphicsUtil.setupAntialiasing(g2d, uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR, true);
   }
 
   /**
