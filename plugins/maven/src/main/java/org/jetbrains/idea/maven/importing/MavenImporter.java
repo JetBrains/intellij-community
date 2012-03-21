@@ -41,6 +41,12 @@ import java.util.*;
 public abstract class MavenImporter {
   public static ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
 
+  @Deprecated
+  protected String myPluginGroupID;
+
+  @Deprecated
+  protected String myPluginArtifactID;
+
   private final NullableFunction<MavenProject, MavenPlugin> myPluginFinder;
 
   public MavenImporter(final String pluginGroupID, final String pluginArtifactID) {
@@ -50,6 +56,9 @@ public abstract class MavenImporter {
         return mavenProject.findPlugin(pluginGroupID, pluginArtifactID);
       }
     });
+
+    myPluginGroupID = pluginGroupID;
+    myPluginArtifactID = pluginArtifactID;
   }
 
   protected MavenImporter(NullableFunction<MavenProject, MavenPlugin> pluginFinder) {

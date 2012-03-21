@@ -127,6 +127,7 @@ public class CodeBlockUtil {
     int offset = editor.getCaretModel().getOffset();
     final FileType fileType = file.getFileType();
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    if (iterator.atEnd()) return -1;
 
     int depth = 0;
     Language braceType;

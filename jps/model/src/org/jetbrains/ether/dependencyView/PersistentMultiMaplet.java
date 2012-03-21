@@ -15,9 +15,11 @@
  */
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.Collection;
@@ -33,16 +35,31 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
+  private static final Collection NULL_COLLECTION = Collections.emptySet();
+  private static final int CACHE_SIZE = 512;
   private final PersistentHashMap<K, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
+  private final SLRUCache<K, Collection> myCache;
 
   public PersistentMultiMaplet(final File file,
                                final KeyDescriptor<K> keyExternalizer,
                                final DataExternalizer<V> valueExternalizer,
                                final TransientMultiMaplet.CollectionConstructor<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer,
-                                                    new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
+    myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE) {
+      @NotNull
+      @Override
+      public Collection createValue(K key) {
+        try {
+          final Collection<V> collection = myMap.get(key);
+          return collection == null? NULL_COLLECTION : collection;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
   }
 
 
@@ -58,17 +75,14 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
 
   @Override
   public Collection<V> get(final K key) {
-    try {
-      return myMap.get(key);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    final Collection<V> collection = myCache.get(key);
+    return collection == NULL_COLLECTION? null : collection;
   }
 
   @Override
   public void replace(K key, Collection<V> value) {
     try {
+      myCache.remove(key);
       if (value == null) {
         myMap.remove(key);
       }
@@ -84,6 +98,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void put(final K key, final Collection<V> value) {
     try {
+      myCache.remove(key);
       myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
         public void append(DataOutput out) throws IOException {
           for (V v : value) {
@@ -105,15 +120,16 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void removeAll(K key, Collection<V> values) {
     try {
-      final Collection<V> collection = myMap.get(key);
+      final Collection collection = myCache.get(key);
 
-      if (collection != null) {
+      if (collection != NULL_COLLECTION) {
         if (collection.removeAll(values)) {
+          myCache.remove(key);
           if (collection.isEmpty()) {
             myMap.remove(key);
           }
           else {
-            myMap.put(key, collection);
+            myMap.put(key, (Collection<V>)collection);
           }
         }
       }
@@ -126,15 +142,16 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void removeFrom(final K key, final V value) {
     try {
-      final Collection<V> collection = myMap.get(key);
+      final Collection collection = myCache.get(key);
 
-      if (collection != null) {
+      if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
+          myCache.remove(key);
           if (collection.isEmpty()) {
             myMap.remove(key);
           }
           else {
-            myMap.put(key, collection);
+            myMap.put(key, (Collection<V>)collection);
           }
         }
       }
@@ -147,6 +164,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void remove(final K key) {
     try {
+      myCache.remove(key);
       myMap.remove(key);
     }
     catch (IOException e) {
@@ -180,6 +198,7 @@ class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   @Override
   public void close() {
     try {
+      myCache.clear();
       myMap.close();
     }
     catch (IOException e) {

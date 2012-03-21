@@ -499,6 +499,7 @@ def reorder(String home, String targetDirectory) {
 def layout_core(String home, String target) {
   layout(target) {
     jar("intellij-core.jar") {
+      module("util-rt")
       module("util")
       module("core-api")
       module("core-impl")
