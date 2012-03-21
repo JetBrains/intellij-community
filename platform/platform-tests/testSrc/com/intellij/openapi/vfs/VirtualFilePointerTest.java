@@ -424,6 +424,39 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     });
   }
 
+  public void testDoubleDispose() throws IOException {
+    final File tempDir = createTempDirectory();
+    final File file = new File(tempDir, "f1");
+    boolean created = file.createNewFile();
+    assertTrue(created);
+
+    final VirtualFile[] vFile = new VirtualFile[1];
+    final String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getCanonicalPath().replace(File.separatorChar, '/'));
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        vFile[0] = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+      }
+    });
+
+    Disposable disposable = Disposer.newDisposable();
+    final VirtualFilePointer pointer = myVirtualFilePointerManager.create(vFile[0], disposable, new VirtualFilePointerListener() {
+      @Override
+      public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+      }
+
+      @Override
+      public void validityChanged(VirtualFilePointer[] pointers) {
+      }
+    });
+
+
+    assertTrue(pointer.isValid());
+
+    Disposer.dispose(disposable);
+    assertFalse(pointer.isValid());
+  }
+
   public void testThreads() throws IOException, InterruptedException {
     final File ioTempDir = createTempDirectory();
     final File ioPtrBase = new File(ioTempDir, "parent");

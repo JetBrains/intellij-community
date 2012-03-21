@@ -1647,6 +1647,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           if (newFilePair == null) continue;
 
           VirtualFile newFile = newFilePair.first;
+          if (newFile == null) continue;
 
           // already open
           if (eachWindow.findFileIndex(newFile) != -1) continue;

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -40,6 +41,11 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
 
   public GrClassInitializerImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitClassInitializer(this);
   }
 
   public String toString() {

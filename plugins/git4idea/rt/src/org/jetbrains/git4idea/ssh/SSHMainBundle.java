@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import com.intellij.CommonBundle;
+import com.intellij.BundleBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -32,11 +32,10 @@ public class SSHMainBundle {
   @NonNls
   private static final String BUNDLE = "org.jetbrains.git4idea.ssh.SSHMainBundle";
 
-  private SSHMainBundle() {
-  }
+  private SSHMainBundle() { }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE) String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+    return BundleBase.message(getBundle(), key, params);
   }
 
   private static ResourceBundle getBundle() {
@@ -52,5 +51,4 @@ public class SSHMainBundle {
   public static String getString(@PropertyKey(resourceBundle = BUNDLE) final String key) {
     return getBundle().getString(key);
   }
-
 }

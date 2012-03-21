@@ -52,4 +52,12 @@ public class VcsRoot {
     }
     return hashcode;
   }
+
+  @Override
+  public String toString() {
+    return "VcsRoot{" +
+           "vcs=" + vcs +
+           ", path=" + path +
+           '}';
+  }
 }

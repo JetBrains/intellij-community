@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.execution.rmi;
 
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtilRt;
 
 import java.lang.ref.WeakReference;
 import java.rmi.Remote;
@@ -45,7 +45,7 @@ public class RemoteObject implements Remote, Unreferenced {
   @Nullable
   public synchronized <T extends Remote> T export(@Nullable T child) throws RemoteException {
     if (child == null) return null;
-    final T result = (T)UnicastRemoteObject.exportObject(child, 0);
+    @SuppressWarnings("unchecked") final T result = (T)UnicastRemoteObject.exportObject(child, 0);
     myChildren.put((RemoteObject)child, result);
     ((RemoteObject)child).myParent = this;
     return result;
@@ -68,7 +68,7 @@ public class RemoteObject implements Remote, Unreferenced {
     if (children.isEmpty()) return;
     final ArrayList<RemoteObject> list = new ArrayList<RemoteObject>(children.size());
     for (WeakReference<? extends RemoteObject> child : children) {
-      ContainerUtil.addIfNotNull(child.get(), list);
+      ContainerUtilRt.addIfNotNull(child.get(), list);
     }
     myChildren.keySet().removeAll(list);
     for (RemoteObject child : list) {
@@ -85,6 +85,7 @@ public class RemoteObject implements Remote, Unreferenced {
         UnicastRemoteObject.unexportObject(this, false);
       }
       catch (RemoteException e) {
+        //noinspection CallToPrintStackTrace
         e.printStackTrace();
       }
     }
@@ -113,5 +114,4 @@ public class RemoteObject implements Remote, Unreferenced {
   protected boolean isKnownException(Throwable ex) {
     return false;
   }
-
 }

@@ -821,7 +821,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       try {
-        JComponent component = myEditor.getComponent(getCurrentComponent(), getValue((Property)value));
+        JComponent component = myEditor.getComponent(myDesigner.getRootComponent(), getCurrentComponent(), getValue((Property)value));
 
         if (component instanceof JComboBox) {
           component.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);

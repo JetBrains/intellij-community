@@ -29,6 +29,8 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
@@ -291,6 +293,7 @@ public class CodeStyleImportsPanel extends JPanel {
     PackageEntry entry = new PackageEntry(false,"", true);
     myImportLayoutList.insertEntryAt(entry, selected);
     refreshTableModel(selected, myImportLayoutTable);
+    updateButtons();
   }
 
   private static void refreshTableModel(int selectedRow, JBTable table) {
@@ -323,6 +326,7 @@ public class CodeStyleImportsPanel extends JPanel {
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsInserted(selected, selected);
     myImportLayoutTable.setRowSelectionInterval(selected, selected);
+    updateButtons();
   }
 
   private void removeEntryFromImportLayouts() {
@@ -343,6 +347,7 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected >= 0) {
       myImportLayoutTable.setRowSelectionInterval(selected, selected);
     }
+    updateButtons();
   }
 
   private void removeEntryFromPackages() {
@@ -358,6 +363,7 @@ public class CodeStyleImportsPanel extends JPanel {
     if(selected >= 0) {
       myPackageTable.setRowSelectionInterval(selected, selected);
     }
+    updateButtons();
   }
 
   private void moveRowUp() {
@@ -374,6 +380,7 @@ public class CodeStyleImportsPanel extends JPanel {
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsUpdated(selected-1, selected);
     myImportLayoutTable.setRowSelectionInterval(selected-1, selected-1);
+    updateButtons();
   }
 
   private void moveRowDown() {
@@ -390,6 +397,7 @@ public class CodeStyleImportsPanel extends JPanel {
     AbstractTableModel model = (AbstractTableModel)myImportLayoutTable.getModel();
     model.fireTableRowsUpdated(selected, selected+1);
     myImportLayoutTable.setRowSelectionInterval(selected+1, selected+1);
+    updateButtons();
   }
 
   private JBTable createTableForPackageEntries(final PackageEntryTable packageTable) {
@@ -473,6 +481,12 @@ public class CodeStyleImportsPanel extends JPanel {
     final JBTable result = new JBTable(dataModel);
     result.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     resizeColumns(packageTable, result);
+    result.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        updateButtons();
+      }
+    });
 
     TableCellEditor editor = result.getDefaultEditor(String.class);
     if (editor instanceof DefaultCellEditor) {

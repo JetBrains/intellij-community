@@ -190,6 +190,15 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return new Dimension(Math.min(400, preferredSize.width), preferredSize.height);
   }
 
+  @Override
+  public Dimension getMinimumSize() {
+    if (isMinimumSizeSet()) {
+      return super.getMinimumSize();
+    }
+    Dimension minimumSize = super.getMinimumSize();
+    return new Dimension(Math.min(200, minimumSize.width), minimumSize.height);
+  }
+
   private void createPredefinedScopeDescriptors(DefaultComboBoxModel model) {
     for (SearchScope scope : getPredefinedScopes(myProject, DataManager.getInstance().getDataContext(), mySuggestSearchInLibs, myPrevSearchFiles, true, true)) {
       model.addElement(new ScopeDescriptor(scope));

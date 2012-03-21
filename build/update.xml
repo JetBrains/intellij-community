@@ -49,8 +49,10 @@
         <arg value="@{deploy}"/>
         <arg value="${project.home}/lib"/>
         <classpath>
+          <pathelement location="${modules.output}/production/util-rt"/>
           <pathelement location="${modules.output}/production/util"/>
           <pathelement location="${project.home}/lib/jna.jar"/>
+          <pathelement location="${project.home}/lib/trove4j.jar"/>
         </classpath>
       </java>
     </sequential>

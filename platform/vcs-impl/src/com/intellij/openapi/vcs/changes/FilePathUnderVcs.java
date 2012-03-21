@@ -65,4 +65,12 @@ public class FilePathUnderVcs {
     }
     return hashcode;
   }
+
+  @Override
+  public String toString() {
+    return "FilePathUnderVcs{" +
+           "myPath=" + myPath +
+           ", myVcs=" + myVcs +
+           '}';
+  }
 }

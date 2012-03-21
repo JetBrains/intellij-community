@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
@@ -79,7 +80,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private final List<Listener> myListeners = ContainerUtil.createEmptyCOWList();
   private final SmartPointerManagerImpl mySmartPointerManager;
 
-  public PsiDocumentManagerImpl(@NotNull Project project,
+  public PsiDocumentManagerImpl(@NotNull final Project project,
                                 @NotNull PsiManager psiManager,
                                 @NotNull SmartPointerManager smartPointerManager,
                                 @NotNull EditorFactory editorFactory,
@@ -103,6 +104,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
             }
           });
           fireDocumentCreated(document, psiFile);
+        }
+      });
+      bus.connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+        @Override
+        public void updateFinished(@NotNull Document doc) {
+          documentCommitThread.queueCommit(project, doc, "Bulk update finished");
         }
       });
       ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
@@ -668,12 +675,13 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
       commitNecessary = true;
     }
+    boolean fromRefresh = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
 
     if (commitNecessary) {
       myUncommittedDocuments.add(document);
-      myDocumentCommitThread.log("PDI: added to uncommitted", null, false, document, event, myUncommittedDocuments);
-
-      myDocumentCommitThread.queueCommit(myProject, document, event);
+      if (!fromRefresh && !((DocumentEx)document).isInBulkUpdate()) {
+        myDocumentCommitThread.queueCommit(myProject, document, event);
+      }
     }
 
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
@@ -683,7 +691,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
     }
 
-    if (commitNecessary && ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)){
+    if (commitNecessary && fromRefresh){
       commitDocument(document);
     }
     // avoid documents piling up during batch processing

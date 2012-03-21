@@ -272,7 +272,7 @@ public class PsiImplUtil {
     return new PsiImmediateClassType(classClass, substitutor);
   }
 
-  public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
+  @Nullable public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
     final String shortName = StringUtil.getShortName(qualifiedName);
     PsiAnnotation[] annotations = modifierList.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
@@ -368,7 +368,7 @@ public class PsiImplUtil {
     }
     else if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
       PsiClass topClass = PsiUtil.getTopLevelClass(member);
-      return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(file);
+      return topClass != null ? new LocalSearchScope(topClass) : file != null ? new LocalSearchScope(file) : maximalUseScope;
     }
     else {
       if (file instanceof PsiJavaFile) {
@@ -388,7 +388,7 @@ public class PsiImplUtil {
     return getServerPageFile(element) != null;
   }
 
-  public static ServerPageFile getServerPageFile(final PsiElement element) {
+  @Nullable public static ServerPageFile getServerPageFile(final PsiElement element) {
     final PsiFile psiFile = PsiUtilCore.getTemplateLanguageFile(element);
     return psiFile instanceof ServerPageFile ? (ServerPageFile)psiFile : null;
   }

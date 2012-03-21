@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.DomElement;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -28,6 +29,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 import java.io.File;
 
 public class MavenPluginDomUtil {
+  @Nullable
   public static MavenDomPluginModel getMavenPluginModel(DomElement element) {
     Project p = element.getXmlElement().getProject();
 
@@ -40,6 +42,7 @@ public class MavenPluginDomUtil {
     return MavenDomUtil.getMavenDomModel(p, pluginXmlFile, MavenDomPluginModel.class);
   }
 
+  @Nullable
   private static VirtualFile getPluginXmlFile(Project p, MavenDomPlugin pluginElement) {
     String groupId = pluginElement.getGroupId().getStringValue();
     String artifactId = pluginElement.getArtifactId().getStringValue();

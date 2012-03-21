@@ -32,7 +32,7 @@ public class StringsComboEditor extends ComboEditor {
 
   @NotNull
   @Override
-  public JComponent getComponent(@Nullable RadComponent component, Object value) {
+  public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
     myCombo.setSelectedItem(value);
     return myCombo;
   }

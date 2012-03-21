@@ -445,8 +445,8 @@ public class EquivalenceChecker {
         return prefixExpressionsAreEquivalent((GrUnaryExpression) expToCompare1,
             (GrUnaryExpression) expToCompare2);
       case POSTFIX_EXPRESSION:
-        return postfixExpressionsAreEquivalent((GrPostfixExpression) expToCompare1,
-            (GrPostfixExpression) expToCompare2);
+        return postfixExpressionsAreEquivalent((GrUnaryExpression) expToCompare1,
+            (GrUnaryExpression) expToCompare2);
       case BINARY_EXPRESSION:
         return binaryExpressionsAreEquivalent((GrBinaryExpression) expToCompare1,
             (GrBinaryExpression) expToCompare2);
@@ -674,8 +674,8 @@ public class EquivalenceChecker {
     return expressionsAreEquivalent(operand1, operand2);
   }
 
-  private static boolean postfixExpressionsAreEquivalent(@NotNull GrPostfixExpression postfixExp1,
-                                                         @NotNull GrPostfixExpression postfixExp2) {
+  private static boolean postfixExpressionsAreEquivalent(@NotNull GrUnaryExpression postfixExp1,
+                                                         @NotNull GrUnaryExpression postfixExp2) {
     final IElementType sign1 = postfixExp1.getOperationTokenType();
     final IElementType sign2 = postfixExp2.getOperationTokenType();
     if (!sign1.equals(sign2)) {
@@ -690,7 +690,7 @@ public class EquivalenceChecker {
                                                         @NotNull GrBinaryExpression binaryExp2) {
     final IElementType sign1 = binaryExp1.getOperationTokenType();
     final IElementType sign2 = binaryExp2.getOperationTokenType();
-    if (sign1 == null || sign2 == null || !sign1.equals(sign2)) {
+    if (!sign1.equals(sign2)) {
       return false;
     }
     final GrExpression lhs1 = binaryExp1.getLeftOperand();
@@ -834,11 +834,8 @@ public class EquivalenceChecker {
     if (exp instanceof GrMethodCall) {
       return CALL_EXPRESSION;
     }
-    if (exp instanceof GrPostfixExpression) {
-      return POSTFIX_EXPRESSION;
-    }
     if (exp instanceof GrUnaryExpression) {
-      return PREFIX_EXPRESSION;
+      return ((GrUnaryExpression)exp).isPostfix() ? POSTFIX_EXPRESSION : PREFIX_EXPRESSION;
     }
     if (exp instanceof GrAssignmentExpression) {
       return ASSIGNMENT_EXPRESSION;
