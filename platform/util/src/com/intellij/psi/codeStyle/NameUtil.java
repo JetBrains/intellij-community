@@ -264,51 +264,69 @@ public class NameUtil {
         continue;
       }
 
-      StringBuilder buffer = new StringBuilder();
-      buffer.append(prefix);
-
-      if (upperCaseStyle) {
-        startWord = startWord.toUpperCase();
-      }
-      else {
-        if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
-          startWord = startWord.toLowerCase();
-        }
-        else {
-          startWord = Character.toUpperCase(c) + startWord.substring(1);
-        }
-      }
-      buffer.append(startWord);
-
-      for (int i = words.length - wordCount + 1; i < words.length; i++) {
-        String word = words[i];
-        String prevWord = words[i - 1];
-        if (upperCaseStyle) {
-          word = word.toUpperCase();
-          if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
-            word = "_" + word;
-          }
-        }
-        else {
-          if (prevWord.charAt(prevWord.length() - 1) == '_') {
-            word = word.toLowerCase();
-          }
-        }
-        buffer.append(word);
-      }
-
-      String suggestion = buffer.toString();
-
-      if (isArray) {
-        suggestion = StringUtil.pluralize(suggestion);
-        if (upperCaseStyle) {
-          suggestion = suggestion.toUpperCase();
-        }
-      }
-
-      answer.add(suggestion + suffix);
+      answer.add(compoundSuggestion(prefix, upperCaseStyle, words, wordCount, startWord, c, isArray, true) + suffix);
+      answer.add(compoundSuggestion(prefix, upperCaseStyle, words, wordCount, startWord, c, isArray, false) + suffix);
     }
     return answer;
+  }
+
+  private static String compoundSuggestion(String prefix,
+                                           boolean upperCaseStyle,
+                                           String[] words,
+                                           int wordCount,
+                                           String startWord,
+                                           char c,
+                                           boolean isArray,
+                                           boolean skip_) {
+    StringBuilder buffer = new StringBuilder();
+
+    buffer.append(prefix);
+
+    if (upperCaseStyle) {
+      startWord = startWord.toUpperCase();
+    }
+    else {
+      if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
+        startWord = startWord.toLowerCase();
+      }
+      else {
+        startWord = Character.toUpperCase(c) + startWord.substring(1);
+      }
+    }
+    buffer.append(startWord);
+
+    for (int i = words.length - wordCount + 1; i < words.length; i++) {
+      String word = words[i];
+      String prevWord = words[i - 1];
+      if (upperCaseStyle) {
+        word = word.toUpperCase();
+        if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
+          word = "_" + word;
+        }
+      }
+      else {
+        if (prevWord.charAt(prevWord.length() - 1) == '_') {
+          word = word.toLowerCase();
+        }
+
+        if (skip_) {
+          if (word.equals("_")) continue;
+          if (prevWord.equals("_")) {
+            word = StringUtil.capitalize(word);
+          }
+        }
+      }
+      buffer.append(word);
+    }
+
+    String suggestion = buffer.toString();
+    if (isArray) {
+      suggestion = StringUtil.pluralize(suggestion);
+      if (upperCaseStyle) {
+        suggestion = suggestion.toUpperCase();
+      }
+    }
+    return suggestion;
   }
 
   private static boolean isWordStart(char p) {
