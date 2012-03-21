@@ -307,11 +307,17 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         myLastPoint[0] = e.getPoint();
         SwingUtilities.convertPointToScreen(myLastPoint[0], c);
         if (!e.isPopupTrigger()) {
-          if (UIUtil.isCloseClick(e)) {
-            ui.processHide(e);
-          }
-          else {
+          if (!UIUtil.isCloseClick(e)) {
             ui.myWindow.fireActivated();
+          }
+        }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        if (!e.isPopupTrigger()) {
+          if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
+            ui.processHide(e);
           }
         }
       }
