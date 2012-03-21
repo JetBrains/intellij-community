@@ -28,10 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -63,39 +60,52 @@ public class TestNGVersionChecker {
     final PsiClass psiProtocolClass = JavaPsiFacade.getInstance(project).findClass(protocolClassMessageClass, scope);
     if (psiProtocolClass != null) {
       final String instanceFieldName = "m_instanceName";
+      try {
+        final boolean userHasNewJar = psiProtocolClass.findFieldByName(instanceFieldName, false) != null;
+
+        boolean ideaHasNewJar = true;
+        final Class aClass = Class.forName(protocolClassMessageClass);
+        try {
+          aClass.getDeclaredField(instanceFieldName);
+        }
+        catch (NoSuchFieldException e) {
+          ideaHasNewJar = false;
+        }
+
+        if (userHasNewJar != ideaHasNewJar) {
+          return getIncompatibilityMessage(project, scope, pathToBundledJar);
+        }
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getIncompatibilityMessage(Project project, GlobalSearchScope scope, String pathToBundledJar) {
+    final String protocolClassMessageClass = TestResultMessage.class.getName();
+    final PsiClass psiProtocolClass = JavaPsiFacade.getInstance(project).findClass(protocolClassMessageClass, scope);
+    if (psiProtocolClass != null) {
       final ZipFile workingLibrary = getZipLibrary(project, scope);
       if (workingLibrary != null) {
         final VirtualFile bundledJar = LocalFileSystem.getInstance().findFileByPath(pathToBundledJar);
         if (bundledJar != null) {
           final String jarVersion = JarVersionDetectionUtil.detectJarVersion(workingLibrary);
-          final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-          final VirtualFile bundledJarJar = jarFileSystem.getJarRootForLocalFile(bundledJar);
+          final VirtualFile bundledJarJar = JarFileSystem.getInstance().getJarRootForLocalFile(bundledJar);
           if (bundledJarJar == null) return null;
           String bundledVersion;
           try {
-            bundledVersion = JarVersionDetectionUtil.detectJarVersion(jarFileSystem.getJarFile(bundledJarJar));
+            bundledVersion = JarVersionDetectionUtil.detectJarVersion(JarFileSystem.getInstance().getJarFile(bundledJarJar));
           }
           catch (IOException e) {
             return null;
           }
-          final String incompatibilityMessage = TEST_NG_VERSIONS_INCOMPATIBILITY +
-                                                "Right now " + ApplicationNamesInfo.getInstance().getFullProductName() + 
-                                                " does not support testng version (v." + jarVersion + ") used in your project due to the protocol changes on the TestNG side.<br>" +
-                                                "Bundled jar (v." + bundledVersion + ") was used instead to run your tests.<br>" + COPY_MESSAGE;
-          try {
-            final Class aClass = Class.forName(protocolClassMessageClass);
-            aClass.getDeclaredField(instanceFieldName);
-            if (psiProtocolClass.findFieldByName(instanceFieldName, false) == null) {
-              return incompatibilityMessage;
-            }
-          }
-          catch (NoSuchFieldException e) {
-            if (psiProtocolClass.findFieldByName(instanceFieldName, false) != null) {
-              return incompatibilityMessage;
-            }
-          }
-          catch (Exception ignore) {
-          }
+          return TEST_NG_VERSIONS_INCOMPATIBILITY +
+                 "Right now " + ApplicationNamesInfo.getInstance().getFullProductName() +
+                 " does not support testng version (v." + jarVersion + ") used in your project due to the protocol changes on the TestNG side.<br>" +
+                 "Bundled jar (v." + bundledVersion + ") was used instead to run your tests.<br>" +
+                 COPY_MESSAGE;
         }
       }
     }
@@ -162,7 +172,7 @@ public class TestNGVersionChecker {
         if (library != null) {
           try {
             final String jarName = new File(PathUtil.getJarPathForClass(AfterClass.class)).getName();
-            PluginDownloader.replaceLib(testNGPluginLibPath, jarName, library);
+            PluginDownloader.replaceLib(testNGPluginLibPath, jarName, VfsUtil.virtualToIoFile(library));
             final Application app = ApplicationManager.getApplication();
             final String updateSuccessfullyMessage = "Internal testng.jar was successfully updated. ";
             if (app.isRestartCapable()) {
