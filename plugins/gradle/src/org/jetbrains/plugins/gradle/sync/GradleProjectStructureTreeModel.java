@@ -592,6 +592,11 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       else {
         descriptor.setAttributes(GradleTextAttributes.NO_CHANGE);
         holder.correctChildPositionIfNecessary(node);
+        if (!passFilters(node)) {
+          node.removeFromParent();
+          removeModuleDependencyNodeIfEmpty(holder, id.getOwnerModuleId());
+          removeModuleNodeIfEmpty(myModules.get(id.getOwnerModuleName()));
+        }
       }
       return;
     }
@@ -625,6 +630,9 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
     }
     else {
       moduleNode.setAttributes(GradleTextAttributes.NO_CHANGE);
+      if (!passFilters(moduleNode)) {
+        removeModuleNodeIfEmpty(moduleNode);
+      }
     }
   }
 
@@ -652,6 +660,10 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
       }
       else {
         contentRootNode.setAttributes(GradleTextAttributes.NO_CHANGE);
+        if (!passFilters(contentRootNode)) {
+          contentRootNode.removeFromParent();
+          removeModuleNodeIfEmpty(moduleNode);
+        }
       }
       return;
     }
@@ -661,8 +673,8 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
                                                @NotNull Function<GradleEntityId, GradleEntityId> nodeIdMapper,
                                                boolean obsolete)
   {
-    for (GradleProjectStructureNode<GradleSyntheticId> holder : myModuleDependencies.values()) {
-      for (GradleProjectStructureNode<?> dependencyNode : holder) {
+    for (Map.Entry<String, GradleProjectStructureNode<GradleSyntheticId>> entry : myModuleDependencies.entrySet()) {
+      for (GradleProjectStructureNode<?> dependencyNode : entry.getValue()) {
         if (!change.getEntityId().equals(nodeIdMapper.fun(dependencyNode.getDescriptor().getElement()))) {
           continue;
         }
@@ -671,6 +683,13 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
         }
         else {
           dependencyNode.addConflictChange(change);
+        }
+        if (!passFilters(dependencyNode)) {
+          dependencyNode.removeFromParent();
+          final GradleProjectStructureNode<GradleModuleId> moduleNode = myModules.get(entry.getKey());
+          final GradleModuleId moduleId = moduleNode.getDescriptor().getElement();
+          removeModuleDependencyNodeIfEmpty(entry.getValue(), moduleId);
+          removeModuleNodeIfEmpty(moduleNode);
         }
         break;
       }
