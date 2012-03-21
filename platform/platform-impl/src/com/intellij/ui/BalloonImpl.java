@@ -696,6 +696,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     myVisible = false;
+    myTracker = null;
   }
 
   public void dispose() {
