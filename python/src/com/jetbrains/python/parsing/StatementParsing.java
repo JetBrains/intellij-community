@@ -204,8 +204,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           }
           if (builder.getTokenType() == PyTokenTypes.EQ) {
             maybeExprMarker.rollbackTo();
+            final int rollbackOffset = builder.getCurrentOffset();
             getExpressionParser().parseExpression(false, true);
-            LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ);
+            final int offsetAfterExpr = builder.getCurrentOffset();
+            if (builder.getTokenType() != PyTokenTypes.EQ) {
+              LOG.error("'=' after rollback expected", builder.getTokenType() + "; " +
+                                                       builder.getOriginalText().subSequence(rollbackOffset, offsetAfterExpr).toString());
+            }
             builder.advanceLexer();
           }
           else {

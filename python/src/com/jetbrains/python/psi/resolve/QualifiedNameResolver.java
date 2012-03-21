@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -49,9 +50,14 @@ public class QualifiedNameResolver implements RootVisitor {
   }
 
   public QualifiedNameResolver fromElement(@NotNull PsiElement foothold) {
-    myFootholdFile = foothold.getContainingFile().getOriginalFile();
+    if (foothold instanceof PsiDirectory) {
+      myFootholdFile = (PsiFile)PyUtil.turnDirIntoInit(foothold);
+    }
+    else {
+      myFootholdFile = foothold.getContainingFile().getOriginalFile();
+    }
     myPsiManager = foothold.getManager();
-    setModule(ModuleUtil.findModuleForPsiElement(myFootholdFile));
+    setModule(ModuleUtil.findModuleForPsiElement(foothold));
     if (PydevConsoleRunner.isInPydevConsole(foothold)) {
       withAllModules();
     }

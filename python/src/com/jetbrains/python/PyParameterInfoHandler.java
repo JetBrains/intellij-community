@@ -110,9 +110,8 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     // really we need to redo analysis every UI update; findElementForParameterInfo isn't called while typing
     CallArgumentsMapping result = arglist.analyzeCall(PyResolveContext.noImplicits());
     PyMarkedCallee marked = result.getMarkedCallee();
-    assert marked != null : "findElementForParameterInfo() did it wrong!";
+    if (marked == null) return; // resolution failed
     final Callable callable = marked.getCallable();
-    if (callable == null) return; // resolution failed
 
     final List<PyParameter> raw_params = Arrays.asList(callable.getParameterList().getParameters());
     final List<PyNamedParameter> n_param_list = new ArrayList<PyNamedParameter>(raw_params.size());

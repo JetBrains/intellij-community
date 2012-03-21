@@ -22,7 +22,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
@@ -31,6 +33,7 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
@@ -206,7 +209,7 @@ public class PyPackageManager {
     args.add("install");
     final File buildDir;
     try {
-      buildDir = FileUtil.createTempDirectory("packaging", null);
+      buildDir = FileUtilRt.createTempDirectory("packaging", null);
     }
     catch (IOException e) {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");
@@ -257,15 +260,11 @@ public class PyPackageManager {
   }
 
   @Nullable
-  public PyPackage findPackage(String name) {
-    try {
-      for (PyPackage pkg : getPackages()) {
-        if (name.equals(pkg.getName())) {
-          return pkg;
-        }
+  public PyPackage findPackage(String name) throws PyExternalProcessException {
+    for (PyPackage pkg : getPackages()) {
+      if (name.equals(pkg.getName())) {
+        return pkg;
       }
-    }
-    catch (PyExternalProcessException ignored) {
     }
     return null;
   }

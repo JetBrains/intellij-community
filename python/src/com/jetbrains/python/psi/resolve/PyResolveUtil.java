@@ -24,7 +24,6 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -146,12 +145,10 @@ public class PyResolveUtil {
    *
    * @param processor a visitor that says when the crawl is done and collects info.
    * @param elt       element from which we start (not checked by processor); if null, the search immediately returns null.
-   * @param roof      if not null, search continues only below the roof and including it.
-   * @param fromunder if true, begin search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
    * @return first element that the processor accepted.
    */
   @Nullable
-  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt, @Nullable PsiElement roof) {
+  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
     if (elt == null || !elt.isValid()) return null; // can't find anyway.
     PsiElement seeker = elt;
     PsiElement cap = PyUtil.getConcealingParent(elt);
@@ -159,13 +156,7 @@ public class PyResolveUtil {
     final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
-      if (fromunder) {
-        fromunder = false; // only honour fromunder once per call
-        seeker = getPrevNodeOf(PsiTreeUtil.getDeepestLast(seeker), processor);
-      }
-      else { // main case
-        seeker = getPrevNodeOf(seeker, processor);
-      }
+      seeker = getPrevNodeOf(seeker, processor);
       // aren't we in the same defining assignment, global, etc?
       if ((seeker instanceof NameDefiner) && ((NameDefiner)seeker).mustResolveOutside() && PsiTreeUtil.isAncestor(seeker, elt, true)) {
         seeker = getPrevNodeOf(seeker, processor);
@@ -191,8 +182,6 @@ public class PyResolveUtil {
           break;
         } // seeker is contextually under elt already
       }
-      // are we still under the roof?
-      if ((roof != null) && (seeker != null) && !PsiTreeUtil.isAncestor(roof, seeker, false)) return null;
       // maybe we're capped by a class? param lists are not capped though syntactically inside the function.
       if (is_outside_param_list && refersFromMethodToClass(capFunction, seeker)) continue;
       // names defined in a comprehension element are only visible inside it or the list comp expressions directly above it
@@ -234,29 +223,6 @@ public class PyResolveUtil {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Crawls up the PSI tree, checking nodes as if crawling backwards through source lexemes.
-   *
-   * @param processor a visitor that says when the crawl is done and collects info.
-   * @param fromunder if true, search not above elt, but from a [possibly imaginary] node right below elt; so elt gets analyzed, too.
-   * @param elt       element from which we start (not checked by processor); if null, the search immediately fails.
-   * @return first element that the processor accepted.
-   */
-  @Nullable
-  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, boolean fromunder, PsiElement elt) {
-    return treeCrawlUp(processor, fromunder, elt, null);
-  }
-
-  /**
-   * Returns treeCrawlUp(processor, elt, false). A convenience method.
-   *
-   * @see PyResolveUtil#treeCrawlUp(com.intellij.psi.scope.PsiScopeProcessor, boolean, com.intellij.psi.PsiElement)
-   */
-  @Nullable
-  public static PsiElement treeCrawlUp(PsiScopeProcessor processor, PsiElement elt) {
-    return treeCrawlUp(processor, false, elt);
   }
 
   /**
@@ -317,35 +283,4 @@ public class PyResolveUtil {
     }
 
   }
-
-  /**
-   * Accepts only names not contained in a given collection.
-   */
-  public static class FilterNameNotIn implements Condition<PsiElement> {
-    private final Collection<String> myNames;
-
-    public FilterNameNotIn(Collection<String> names) {
-      myNames = names;
-    }
-
-    public boolean value(PsiElement target) {
-      if (target instanceof PsiNamedElement) {
-        return !myNames.contains(((PsiNamedElement)target).getName());
-      }
-      else if (target instanceof PyReferenceExpression) {
-        return !myNames.contains(((PyReferenceExpression)target).getReferencedName());
-      }
-      else if (target instanceof NameDefiner) {
-        NameDefiner definer = (NameDefiner)target;
-        for (PyElement expr : definer.iterateNames()) {
-          if (expr != null) {
-            String referencedName = expr.getName();
-            if (myNames.contains(referencedName)) return false;
-          }
-        }
-      }
-      return true; // nothing failed us
-    }
-  }
-
 }
