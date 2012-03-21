@@ -2,7 +2,6 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -15,12 +14,6 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   List<PyFunction> getTopLevelFunctions();
 
   List<PyTargetExpression> getTopLevelAttributes();
-
-  /**
-  @return an URL of file, maybe bogus if virtual file is not present.
-  */
-  @NotNull
-  String getUrl();
 
   @Nullable
   PyFunction findTopLevelFunction(String name);

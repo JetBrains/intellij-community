@@ -36,8 +36,8 @@ public class PythonTokenSetContributor implements PythonDialectsTokenSetContribu
     return TokenSet.create(PyElementTypes.STAR_IMPORT_ELEMENT, PyElementTypes.IMPORT_ELEMENT, PyElementTypes.CLASS_DECLARATION,
                            PyElementTypes.GLOBAL_STATEMENT, PyElementTypes.GENERATOR_EXPRESSION, PyElementTypes.DICT_COMP_EXPRESSION,
                            PyElementTypes.LIST_COMP_EXPRESSION, PyElementTypes.SET_COMP_EXPRESSION, PyElementTypes.WITH_STATEMENT,
-                           PyElementTypes.FUNCTION_DECLARATION, PyElementTypes.ASSIGNMENT_STATEMENT, PyElementTypes.PARAMETER_LIST,
-                           PyElementTypes.EXCEPT_PART, PyElementTypes.FOR_STATEMENT,
+                           PyElementTypes.FUNCTION_DECLARATION, PyElementTypes.ASSIGNMENT_STATEMENT, PyElementTypes.EXCEPT_PART,
+                           PyElementTypes.FOR_STATEMENT,
                            PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 

@@ -173,7 +173,9 @@ public class PyStringLiteralLexer extends LexerBase {
   }
 
   public int getTokenEnd() {
-    assert myStart < myEnd || (myStart == myEnd && myEnd == myBufferEnd);
+    if (!(myStart < myEnd || (myStart == myEnd && myEnd == myBufferEnd))) {
+      LOG.error("myStart=" + myStart + " myEnd="+ myEnd + " myBufferEnd=" + myBufferEnd + " text=" + myBuffer.subSequence(myStart, myBufferEnd));
+    }
     return myEnd;
   }
 

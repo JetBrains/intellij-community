@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents function parameter list.
  * Date: 29.05.2005
  */
-public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub>, NameDefiner {
+public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub> {
 
   /**
    * Extracts the individual parameters.
@@ -17,6 +17,10 @@ public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParame
    * @return a possibly empty array of named paramaters.
    */
   PyParameter[] getParameters();
+
+  @Nullable
+  PyNamedParameter findParameterByName(@NotNull String name);
+
 
   /**
    * Adds a paramter to list, after all other parameters.

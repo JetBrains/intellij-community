@@ -95,7 +95,7 @@ public interface PyCallExpression extends PyExpression {
    * Couples function with a flag describing the way it is called.
    */
   class PyMarkedCallee {
-    Callable myCallable;
+    @NotNull final Callable myCallable;
     PyFunction.Modifier myModifier;
     int myImplicitOffset;
     boolean myImplicitlyResolved;
@@ -104,7 +104,7 @@ public interface PyCallExpression extends PyExpression {
      * Method-oriented constructor.
      *
      * @param function           the method (or any other callable, but why bother then).
-     * @param flags              result of decorators or wrapping.
+     * @param modifier           classmethod or staticmethod modifier
      * @param offset             implicit argument offset; parameters up to this are implicitly filled in the call.
      * @param implicitlyResolved value for {@link #isImplicitlyResolved()}
      */
@@ -115,13 +115,7 @@ public interface PyCallExpression extends PyExpression {
       myImplicitlyResolved = implicitlyResolved;
     }
 
-    public PyMarkedCallee(Callable callable, boolean implicitlyResolved) {
-      myCallable = callable;
-      myModifier = null;
-      myImplicitOffset = 0;
-      myImplicitlyResolved = implicitlyResolved;
-    }
-
+    @NotNull
     public Callable getCallable() {
       return myCallable;
     }

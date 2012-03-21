@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
@@ -8,8 +9,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
 
 /**
  * @author yole
@@ -152,17 +151,19 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     //return false;
   }
 
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
-    return new ArrayList<PyElement>(ParamHelper.collectNamedParameters(this));
-  }
-
-  public PyElement getElementNamed(final String the_name) {
-    return IterHelper.findName(iterateNames(), the_name);
-  }
-
-  public boolean mustResolveOutside() {
-    return true;
+  @Override
+  @Nullable
+  public PyNamedParameter findParameterByName(@NotNull final String name) {
+    final Ref<PyNamedParameter> result = new Ref<PyNamedParameter>();
+    ParamHelper.walkDownParamArray(getParameters(), new ParamHelper.ParamVisitor() {
+      @Override
+      public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+        if (name.equals(param.getName())) {
+          result.set(param);
+        }
+      }
+    });
+    return result.get();
   }
 
   public String getPresentableText(final boolean includeDefaultValue) {
