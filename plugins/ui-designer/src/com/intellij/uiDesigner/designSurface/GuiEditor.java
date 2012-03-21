@@ -1077,27 +1077,27 @@ public final class GuiEditor extends JPanel implements DataProvider {
       myAlarm.cancelAllRequests();
     }
 
-    public void childAdded(final PsiTreeChangeEvent event) {
+    public void childAdded(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childMoved(final PsiTreeChangeEvent event) {
+    public void childMoved(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childrenChanged(final PsiTreeChangeEvent event) {
+    public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childRemoved(PsiTreeChangeEvent event) {
+    public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void childReplaced(PsiTreeChangeEvent event) {
+    public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
-    public void propertyChanged(final PsiTreeChangeEvent event) {
+    public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
       if (PsiTreeChangeEvent.PROP_ROOTS.equals(event.getPropertyName())) {
         myAlarm.cancelRequest(myRefreshPropertiesRequest);
         myAlarm.addRequest(myRefreshPropertiesRequest, 500, ModalityState.stateForComponent(GuiEditor.this));
