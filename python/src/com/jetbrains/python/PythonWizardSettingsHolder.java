@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk;
  */
 public class PythonWizardSettingsHolder {
   private Sdk mySdk;
+  private boolean myInstallDjango;
 
   public Sdk getSdk() {
     return mySdk;
@@ -14,5 +15,13 @@ public class PythonWizardSettingsHolder {
 
   public void setSdk(Sdk sdk) {
     mySdk = sdk;
+  }
+
+  public void setInstallDjango(final boolean installDjango) {
+    myInstallDjango = installDjango;
+  }
+
+  public boolean installDjango() {
+    return myInstallDjango;
   }
 }
