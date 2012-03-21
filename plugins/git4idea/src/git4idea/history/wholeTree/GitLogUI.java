@@ -1438,7 +1438,7 @@ public class GitLogUI implements Disposable {
   // todo test action
   private class TestIndexAction extends DumbAwareAction {
     private TestIndexAction() {
-      super("Test Index", "Test Index", IconLoader.getIcon("/actions/checked.png"));
+      super("Test Index", "Test Index", PlatformIcons.CHECK_ICON);
     }
 
     @Override
@@ -1891,7 +1891,7 @@ public class GitLogUI implements Disposable {
 
     public MyTreeSettings() {
       myIcon = IconLoader.getIcon("/general/comboArrow.png");
-      myMarkIcon = IconLoader.findIcon("/actions/checked.png");
+      myMarkIcon = PlatformIcons.CHECK_ICON;
 
       myMultiColorAction = new DumbAwareAction("Multicolour") {
         @Override
