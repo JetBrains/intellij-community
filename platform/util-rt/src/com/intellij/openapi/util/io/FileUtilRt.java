@@ -67,6 +67,7 @@ public class FileUtilRt {
     return createTempFile(dir, prefix, suffix, create, true);
   }
 
+  @NotNull
   public static File createTempFile(@NonNls final File dir,
                                     @NotNull @NonNls String prefix,
                                     @Nullable @NonNls String suffix,
@@ -132,6 +133,7 @@ public class FileUtilRt {
     return SystemInfoRt.isWindows && canonical.getAbsolutePath().contains(" ") ? temp.getAbsoluteFile() : canonical;
   }
 
+  @NotNull
   public static String getTempDirectory() {
     if (ourCanonicalTempPathCache == null) {
       ourCanonicalTempPathCache = calcCanonicalTempPath();
@@ -267,5 +269,4 @@ public class FileUtilRt {
     }
     return bytes;
   }
-
 }

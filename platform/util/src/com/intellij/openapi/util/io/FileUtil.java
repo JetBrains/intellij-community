@@ -34,6 +34,7 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -41,23 +42,15 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
   public static final int MEGABYTE = 1024 * 1024;
 
   @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
-  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY;
-  static {
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-      final TObjectHashingStrategy<String> canonical = TObjectHashingStrategy.CANONICAL;
-      PATH_HASHING_STRATEGY = canonical;
-    }
-    else {
-      PATH_HASHING_STRATEGY = CaseInsensitiveStringHashingStrategy.INSTANCE;
-    }
-  }
+  @SuppressWarnings({"unchecked"})
+  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY =
+    SystemInfo.isFileSystemCaseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
 
@@ -1126,6 +1119,104 @@ public class FileUtil extends FileUtilRt {
       return false;
     }
     return firstLine.contains(marker);
+  }
+
+  @NotNull
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return FileUtilRt.createTempDirectory(prefix, suffix);
+  }
+
+  @NotNull
+  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return FileUtilRt.createTempDirectory(dir, prefix, suffix);
+  }
+
+  @NotNull
+  public static File createTempFile(@NonNls File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean create) throws IOException {
+    return FileUtilRt.createTempFile(dir, prefix, suffix, create);
+  }
+
+  @NotNull
+  public static File createTempFile(@NonNls File dir,
+                                    @NotNull @NonNls String prefix,
+                                    @Nullable @NonNls String suffix,
+                                    boolean create,
+                                    boolean deleteOnExit) throws IOException {
+    return FileUtilRt.createTempFile(dir, prefix, suffix, create, deleteOnExit);
+  }
+
+  @NotNull
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return FileUtilRt.createTempFile(prefix, suffix);
+  }
+
+  @NotNull
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
+    return FileUtilRt.createTempFile(prefix, suffix, deleteOnExit);
+  }
+
+  @NotNull
+  public static String getTempDirectory() {
+    return FileUtilRt.getTempDirectory();
+  }
+
+  @TestOnly
+  public static void resetCanonicalTempPathCache(final String tempPath) {
+    FileUtilRt.resetCanonicalTempPathCache(tempPath);
+  }
+
+  @NotNull
+  public static File generateRandomTemporaryPath() throws IOException {
+    return FileUtilRt.generateRandomTemporaryPath();
+  }
+
+  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
+    FileUtilRt.setExecutableAttribute(path, executableFlag);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file) throws IOException {
+    return FileUtilRt.loadFile(file);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, boolean convertLineSeparators) throws IOException {
+    return FileUtilRt.loadFile(file, convertLineSeparators);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return FileUtilRt.loadFile(file, encoding);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, @Nullable @NonNls String encoding, boolean convertLineSeparators) throws IOException {
+    return FileUtilRt.loadFile(file, encoding, convertLineSeparators);
+  }
+
+  @NotNull
+  public static char[] loadFileText(@NotNull File file) throws IOException {
+    return FileUtilRt.loadFileText(file);
+  }
+
+  @NotNull
+  public static char[] loadFileText(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return FileUtilRt.loadFileText(file, encoding);
+  }
+
+  @NotNull
+  public static char[] loadText(@NotNull Reader reader, int length) throws IOException {
+    return FileUtilRt.loadText(reader, length);
+  }
+
+  @NotNull
+  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
+    return FileUtilRt.loadBytes(stream);
+  }
+
+  @NotNull
+  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    return FileUtilRt.loadBytes(stream, length);
   }
 
   // copied from FileSystem: they are package local there

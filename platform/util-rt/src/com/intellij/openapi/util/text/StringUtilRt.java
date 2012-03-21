@@ -76,7 +76,9 @@ public class StringUtilRt {
   }
 
   @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep,
+  public static String convertLineSeparators(@NotNull String text,
+                                             @NotNull String newSeparator,
+                                             @Nullable int[] offsetsToKeep,
                                              boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
