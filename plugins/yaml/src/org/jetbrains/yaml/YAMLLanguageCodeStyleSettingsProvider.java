@@ -60,4 +60,9 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       // Do nothing
     }
   }
+
+  @Override
+  public boolean usesSharedPreview() {
+    return false;
+  }
 }
