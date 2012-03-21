@@ -15,13 +15,9 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
-import com.intellij.codeInsight.completion.InsertHandler;
-import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
@@ -43,7 +39,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -60,7 +55,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -68,8 +62,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.rename.NameSuggestionProvider;
-import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +85,7 @@ public abstract class InplaceRefactoring {
   protected final Editor myEditor;
   protected final Project myProject;
   protected RangeMarker myRenameOffset;
-  private String myAdvertisementText;
+  protected String myAdvertisementText;
   private ArrayList<RangeHighlighter> myHighlighters;
   protected String myInitialName;
   protected final String myOldName;
@@ -205,7 +197,9 @@ public abstract class InplaceRefactoring {
 
   protected abstract boolean shouldSelectAll();
 
-  protected abstract LookupElement[] createLookupItems(LookupElement[] lookupItems, String name);
+  protected MyLookupExpression createLookupExpression() {
+    return new MyLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, shouldSelectAll(), myAdvertisementText);
+  }
 
   protected Collection<PsiReference> collectRefs(SearchScope referencesSearchScope) {
     return ReferencesSearch.search(myElementToRename, referencesSearchScope, false).findAll();
@@ -536,8 +530,7 @@ public abstract class InplaceRefactoring {
                            int offset) {
     if (reference.getElement() == selectedElement &&
         contains(reference.getRangeInElement().shiftRight(selectedElement.getTextRange().getStartOffset()), offset)) {
-      Expression expression = new MyExpression(getInitialName(), myNameSuggestions);
-      builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, expression, true);
+      builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
     }
     else {
       builder.replaceElement(reference, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
@@ -555,8 +548,7 @@ public abstract class InplaceRefactoring {
                            final PsiElement selectedElement,
                            final TemplateBuilderImpl builder) {
     if (element == selectedElement) {
-      Expression expression = new MyExpression(getInitialName(), myNameSuggestions);
-      builder.replaceElement(element, PRIMARY_VARIABLE_NAME, expression, true);
+      builder.replaceElement(element, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
     }
     else if (textRange != null) {
       builder.replaceElement(element, textRange, OTHER_VARIABLE_NAME, PRIMARY_VARIABLE_NAME, false);
@@ -612,63 +604,6 @@ public abstract class InplaceRefactoring {
 
   private static boolean contains(final TextRange range, final int offset) {
     return range.getStartOffset() <= offset && offset <= range.getEndOffset();
-  }
-
-  protected class MyExpression extends Expression {
-    private final String myName;
-    private final LookupElement[] myLookupItems;
-
-    protected MyExpression(String name, LinkedHashSet<String> names) {
-      myName = name;
-      if (names == null) {
-        names = new LinkedHashSet<String>();
-        for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
-          final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(myElementToRename, myElementToRename, names);
-          if (suggestedNameInfo != null && provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) break;
-        }
-      }
-      myLookupItems = new LookupElement[names.size()];
-      final Iterator<String> iterator = names.iterator();
-      for (int i = 0; i < myLookupItems.length; i++) {
-        final String suggestion = iterator.next();
-        myLookupItems[i] = LookupElementBuilder.create(suggestion).setInsertHandler(new InsertHandler<LookupElement>() {
-          @Override
-          public void handleInsert(InsertionContext context, LookupElement item) {
-            if (shouldSelectAll()) return;
-            final Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-            final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
-            if (templateState != null) {
-              final TextRange range = templateState.getCurrentVariableRange();
-              if (range != null) {
-                topLevelEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), suggestion);
-              }
-            }
-          }
-        });
-      }
-    }
-
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      return createLookupItems(myLookupItems, myName);
-    }
-
-    public Result calculateQuickResult(ExpressionContext context) {
-      return calculateResult(context);
-    }
-
-    public Result calculateResult(ExpressionContext context) {
-      TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-      final TextResult insertedValue = templateState != null ? templateState.getVariableValue(PRIMARY_VARIABLE_NAME) : null;
-      if (insertedValue != null) {
-        if (!insertedValue.getText().isEmpty()) return insertedValue;
-      }
-      return new TextResult(myName);
-    }
-
-    @Override
-    public String getAdvertisingText() {
-      return myAdvertisementText;
-    }
   }
 
   private abstract class MyTemplateListener extends TemplateEditingAdapter {
