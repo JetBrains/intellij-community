@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -86,10 +87,14 @@ class AnonymousToInnerDialog extends DialogWrapper{
     if (typeParameters.length > 0) {
       names = new String[]{StringUtil.join(typeParameters, new Function<PsiType, String>() {
         public String fun(PsiType psiType) {
+          PsiType type = psiType;
           if (psiType instanceof PsiClassType) {
-            return ((PsiClassType)psiType).rawType().getPresentableText();
+            type = TypeConversionUtil.erasure(psiType);
           }
-          return psiType.getPresentableText();
+          if (type instanceof PsiArrayType) {
+            type = type.getDeepComponentType();
+          }
+          return type.getPresentableText();
         }
       }, "") + name, "My" + name};
     } else {
