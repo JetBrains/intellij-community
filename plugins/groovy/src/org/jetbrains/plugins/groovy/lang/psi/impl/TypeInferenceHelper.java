@@ -89,6 +89,10 @@ public class TypeInferenceHelper {
     return getInferredType(variableName, instruction, flow, scope);
   }
 
+  public static boolean isTooComplexTooAnalyze(GrControlFlowOwner scope) {
+    return getDefUseMaps(scope).second == null;
+  }
+
   @Nullable
   private static Instruction findInstructionAt(PsiElement place, Instruction[] flow) {
     List<Instruction> applicable = new ArrayList<Instruction>();
@@ -131,7 +135,10 @@ public class TypeInferenceHelper {
     final Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> pair = getDefUseMaps(scope);
 
     final int varIndex = pair.first.getVarIndex(varName);
-    final TIntObjectHashMap<TIntHashSet> allDefs = pair.second.get(instruction.num());
+    List<TIntObjectHashMap<TIntHashSet>> second = pair.second;
+    if (second == null) return null;
+
+    final TIntObjectHashMap<TIntHashSet> allDefs = second.get(instruction.num());
     final TIntHashSet varDefs = allDefs.get(varIndex);
     if (varDefs == null) return null;
 
@@ -174,7 +181,7 @@ public class TypeInferenceHelper {
         };
         final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
         final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-        final List<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFA();
+        final List<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFAWithTimeout();
         return Result.create(Pair.create(dfaInstance, dfaResult), PsiModificationTracker.MODIFICATION_COUNT);
       }
     });

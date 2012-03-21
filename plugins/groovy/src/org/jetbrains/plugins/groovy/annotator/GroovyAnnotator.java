@@ -99,6 +99,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -532,6 +533,12 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkMethodWithTypeParamsShouldHaveReturnType(myHolder, method);
     checkInnerMethod(myHolder, method);
     checkMethodParameters(myHolder, method);
+
+    GrOpenBlock block = method.getBlock();
+    if (block != null && TypeInferenceHelper.isTooComplexTooAnalyze(block)) {
+      myHolder.createWeakWarningAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("method.0.is.too.complex.too.analyze",
+                                                                                              method.getName()));
+    }
   }
 
   private static void checkMethodWithTypeParamsShouldHaveReturnType(AnnotationHolder holder, GrMethod method) {
@@ -935,6 +942,20 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     super.visitClosure(closure);
     if (!closure.hasParametersSection() && isClosureAmbiguous(closure)) {
       myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
+    }
+
+    if (TypeInferenceHelper.isTooComplexTooAnalyze(closure)) {
+      int startOffset = closure.getLBrace().getTextRange().getStartOffset();
+      int endOffset;
+      if (closure.getArrow()!=null) {
+        endOffset = closure.getArrow().getTextRange().getEndOffset();
+      }
+      else {
+        String text =
+          PsiDocumentManager.getInstance(closure.getProject()).getDocument(closure.getContainingFile()).getText();
+        endOffset = Math.min(closure.getTextRange().getEndOffset(), text.indexOf('\n', startOffset));
+      }
+      myHolder.createWeakWarningAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("closure.is.too.complex.to.analyze"));
     }
   }
 

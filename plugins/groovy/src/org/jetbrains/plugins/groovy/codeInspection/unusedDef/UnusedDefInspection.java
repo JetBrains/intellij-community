@@ -83,7 +83,11 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<TIntObjectHashMap<TIntHashSet>> engine = new DFAEngine<TIntObjectHashMap<TIntHashSet>>(flow, dfaInstance, lattice);
-    final List<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFA();
+    final List<TIntObjectHashMap<TIntHashSet>> dfaResult = engine.performDFAWithTimeout();
+    if (dfaResult == null) {
+      return;
+    }
+
     final TIntHashSet unusedDefs = new TIntHashSet();
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
