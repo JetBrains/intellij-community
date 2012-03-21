@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.folding;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -23,6 +24,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -87,7 +89,10 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     PsiElement parent = element;
     while (parent != null) {
       PsiElement prev = parent.getPrevSibling();
-      if (prev instanceof PsiWhiteSpace && prev.textContains('\n')) return parent;
+      while (prev != null && prev.getTextLength() <= 0) {
+        prev = prev.getPrevSibling();
+      }
+      if (isWhiteSpaceWithLineFeed(prev)) return parent;
       parent = parent.getParent();
     }
     return null;
@@ -98,12 +103,35 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     PsiElement parent = element;
     while (parent != null) {
       PsiElement next = parent.getNextSibling();
-      if (next instanceof PsiWhiteSpace && next.textContains('\n')) return parent;
+      if (isWhiteSpaceWithLineFeed(next)) return parent;
       parent = parent.getParent();
     }
     return null;
   }
 
+  private static boolean isWhiteSpaceWithLineFeed(@Nullable PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    if (element instanceof PsiWhiteSpace) {
+      return element.textContains('\n');
+    }
+    final ASTNode node = element.getNode();
+    if (node == null) {
+      return false;
+    }
+    final CharSequence text = node.getChars();
+    boolean lineFeedFound = false;
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (!StringUtil.isWhiteSpace(c)) {
+        return false;
+      }
+      lineFeedFound |= c == '\n';
+    }
+    return lineFeedFound;
+  }
+  
   @NotNull
   @Override
   public Surrounder[] getSurrounders() {
