@@ -69,7 +69,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
 
   private final Project project;
   private int count;
-  private int total;
+  private int total = 0;
   private final Set<TestProxy> failed = new HashSet<TestProxy>();
   private final Map<TestResultMessage, List<TestProxy>> started = new HashMap<TestResultMessage, List<TestProxy>>();
   private TestProxy failedToStart = null;
@@ -345,7 +345,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public void setTotal(int total) {
-    this.total = total;
+    this.total += total;
   }
 
   public void start() {
