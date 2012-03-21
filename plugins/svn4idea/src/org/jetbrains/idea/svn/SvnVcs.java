@@ -299,13 +299,14 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
             ChangeListManager.getInstance(myProject).setReadOnly(SvnChangeProvider.ourDefaultListName, true);
             supportOptions = myConfiguration.getSupportOptions(myProject);
 
-            if (! supportOptions.changeListsSynchronized()) {
+            if (!supportOptions.changeListsSynchronized()) {
               processChangeLists(lists);
             }
           }
           catch (ProcessCanceledException e) {
             //
-          } finally {
+          }
+          finally {
             if (supportOptions != null) {
               supportOptions.upgrade();
             }
@@ -562,7 +563,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
     }
-    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), null, 60*1000, keep);
+    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject), 60*1000, keep);
   }
 
   private ISVNRepositoryPool getPool() {
@@ -817,11 +818,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public SVNInfo getInfo(final VirtualFile file) {
+    final File ioFile = new File(file.getPath());
+    return getInfo(ioFile);
+  }
+
+  public SVNInfo getInfo(File ioFile) {
     try {
       SVNWCClient wcClient = createWCClient();
-      SVNInfo info = wcClient.doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
+      SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.UNDEFINED);
       if (info == null || info.getRepositoryRootURL() == null) {
-        info = wcClient.doInfo(new File(file.getPath()), SVNRevision.HEAD);
+        info = wcClient.doInfo(ioFile, SVNRevision.HEAD);
       }
       return info;
     }

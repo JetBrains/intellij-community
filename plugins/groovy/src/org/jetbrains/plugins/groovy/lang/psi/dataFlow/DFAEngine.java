@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow;
 
 import com.intellij.openapi.progress.ProgressManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
@@ -27,6 +29,8 @@ import java.util.*;
  * @author ven
  */
 public class DFAEngine<E> {
+  private static final long ourTimeLimit = 1000;
+
   private final Instruction[] myFlow;
 
   private final DfaInstance<E> myDfa;
@@ -57,7 +61,22 @@ public class DFAEngine<E> {
     }
   }
 
-  public ArrayList<E> performDFA() {
+  @NotNull
+  public ArrayList<E> performForceDFA() {
+    ArrayList<E> result = performDFA(false);
+    assert result != null;
+    return result;
+  }
+
+  @Nullable
+  public ArrayList<E> performDFAWithTimeout() {
+    return performDFA(true);
+  }
+
+  @Nullable
+  private ArrayList<E> performDFA(boolean timeout) {
+    long startTime = System.currentTimeMillis();
+
     ArrayList<E> info = new ArrayList<E>(myFlow.length);
     CallEnvironment env = new MyCallEnvironment(myFlow.length);
     for (int i = 0; i < myFlow.length; i++) {
@@ -78,6 +97,8 @@ public class DFAEngine<E> {
         visited[instr.num()] = true;
 
         while (!workList.isEmpty()) {
+          if (timeout && System.currentTimeMillis() - startTime > ourTimeLimit) return null;
+
           ProgressManager.checkCanceled();
           final Instruction curr = workList.remove();
           final int num = curr.num();

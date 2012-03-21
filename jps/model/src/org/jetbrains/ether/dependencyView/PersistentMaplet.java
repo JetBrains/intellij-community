@@ -15,9 +15,11 @@
  */
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,11 +35,27 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class PersistentMaplet<K, V> implements Maplet<K, V> {
+  private static final Object NULL_OBJ = new Object();
+  private static final int CACHE_SIZE = 512;
   private final PersistentHashMap<K, V> myMap;
+  private final SLRUCache<K, Object> myCache;
 
   public PersistentMaplet(final File file, final KeyDescriptor<K> k, final DataExternalizer<V> v) {
     try {
       myMap = new PersistentHashMap<K, V>(file, k, v);
+      myCache = new SLRUCache<K, Object>(CACHE_SIZE, CACHE_SIZE) {
+        @NotNull
+        @Override
+        public Object createValue(K key) {
+          try {
+            final V v1 = myMap.get(key);
+            return v1 == null? NULL_OBJ : v1;
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -56,17 +74,14 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
 
   @Override
   public V get(final Object key) {
-    try {
-      return myMap.get((K)key);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    final Object obj = myCache.get((K)key);
+    return obj == NULL_OBJ? null : (V)obj;
   }
 
   @Override
   public void put(final K key, final V value) {
     try {
+      myCache.remove(key);
       myMap.put(key, value);
     }
     catch (IOException e) {
@@ -76,20 +91,17 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
 
   @Override
   public void putAll(final Maplet<K, V> m) {
-    try {
-      for (Map.Entry<K, V> e : m.entrySet()) {
-        myMap.put(e.getKey(), e.getValue());
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    for (Map.Entry<K, V> e : m.entrySet()) {
+      put(e.getKey(), e.getValue());
     }
   }
 
   @Override
   public void remove(final Object key) {
     try {
-      myMap.remove((K)key);
+      final K _key = (K)key;
+      myCache.remove(_key);
+      myMap.remove(_key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -99,6 +111,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   @Override
   public void close() {
     try {
+      myCache.clear();
       myMap.close();
     }
     catch (IOException e) {
@@ -133,7 +146,7 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
 
     try {
       for (final K key : myMap.getAllKeysWithExistingMapping()) {
-        final V value = myMap.get(key);
+        final V value = get(key);
 
         final Map.Entry<K, V> entry = new Map.Entry<K, V>() {
           @Override

@@ -57,7 +57,7 @@ public class BooleanEditor extends PropertyEditor {
   }
 
   @NotNull
-  public JComponent getComponent(@Nullable RadComponent component, Object value) {
+  public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
     try {
       myInsideChange = true;
       myCheckBox.setBackground(UIUtil.getTableBackground());

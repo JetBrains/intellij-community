@@ -41,7 +41,7 @@ public abstract class AbstractTextFieldEditor extends PropertyEditor {
 
   @NotNull
   @Override
-  public JComponent getComponent(@Nullable RadComponent component, Object value) {
+  public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
     setEditorValue(component, value);
     myTextField.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     return myTextField;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import com.intellij.openapi.util.SystemInfoRt;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -172,6 +173,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         final ArrayList<String> classPath = new ArrayList<String>();
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(NotNull.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(StringUtil.class), classPath);
+        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(SystemInfoRt.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(THashSet.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Element.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Query.class), classPath);

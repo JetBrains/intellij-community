@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.jetbrains.git4idea.ssh;
 
-import com.intellij.openapi.util.io.FileUtilLight;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ArrayUtilRt;
 import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
@@ -302,7 +302,7 @@ public class SSHMain {
       if (file.exists()) {
         // if encrypted ask user for passphrase
         String passphrase = null;
-        char[] text = FileUtilLight.loadFileText(file);
+        char[] text = FileUtilRt.loadFileText(file);
         if (isEncryptedKey(text)) {
           // need to ask passphrase from user
           int i;
@@ -368,7 +368,7 @@ public class SSHMain {
       String line;
       while ((line = in.readLine()) != null) {
         //noinspection HardCodedStringLiteral
-        if (line.startsWith("Proc-Type: ") && line.indexOf("ENCRYPTED") != -1) {
+        if (line.startsWith("Proc-Type: ") && line.contains("ENCRYPTED")) {
           return true;
         }
         if (line.length() == 0) {
@@ -445,7 +445,7 @@ public class SSHMain {
       database.addHostkeys(knownHostFile);
     }
     final List<String> algorithms = myHost.getHostKeyAlgorithms();
-    c.setServerHostKeyAlgorithms(ArrayUtil.toStringArray(algorithms));
+    c.setServerHostKeyAlgorithms(ArrayUtilRt.toStringArray(algorithms));
   }
 
   /**
@@ -506,7 +506,7 @@ public class SSHMain {
                                      final String[] prompt,
                                      final boolean[] echo) throws Exception {
       if (numPrompts == 0) {
-        return ArrayUtil.EMPTY_STRING_ARRAY;
+        return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
       myPromptCount++;
       Vector<String> vPrompts = new Vector<String>(prompt.length);
@@ -524,7 +524,7 @@ public class SSHMain {
         return rc;
       }
       else {
-        return ArrayUtil.toStringArray(result);
+        return ArrayUtilRt.toStringArray(result);
       }
     }
   }

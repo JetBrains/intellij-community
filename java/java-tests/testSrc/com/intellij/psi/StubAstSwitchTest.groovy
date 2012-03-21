@@ -17,7 +17,9 @@ package com.intellij.psi
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.reference.SoftReference
 
 /**
  * @author peter
@@ -30,13 +32,29 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
     def cls = ((PsiJavaFile)file).classes[0]
     assert file.stub
 
+    def oldCount = psiManager.modificationTracker.javaStructureModificationCount
+
     ApplicationManager.application.runWriteAction { file.virtualFile.setBinaryContent(file.virtualFile.contentsToByteArray()) }
     assert file.stub
 
-    //todo
-    //either: assert !cls.valid
-    //or: assert cls == PsiTreeUtil.findElementOfClassAtOffset(file, 1, PsiClass, false)
-    //assert !file.stub
+    assert psiManager.modificationTracker.javaStructureModificationCount != oldCount
 
+    assert !cls.valid
+    assert cls != PsiTreeUtil.findElementOfClassAtOffset(file, 1, PsiClass, false)
+    assert !file.stub
+  }
+
+  public void "test reachable psi classes remain valid when nothing changes"() {
+    int count = 1000
+    List<SoftReference<PsiClass>> classList = (0..<count).collect { new SoftReference(myFixture.addClass("class Foo$it {}")) }
+    System.gc()
+    System.gc()
+    System.gc()
+    assert classList.every {
+      def cls = it.get()
+      if (!cls || cls.valid) return true
+      cls.text //load AST
+      return cls.valid
+    }
   }
 }

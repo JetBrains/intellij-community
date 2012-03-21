@@ -67,6 +67,7 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   public void testClosure1() {doTest();}
   public void testClosure2() {doTest();}
   public void testClosure3() {doTest();}
+  public void testAnonymousClass1() {doTest();}
 
   public void testRegexInCommandArg1() {doTest();}
   public void testRegexInCommandArg2() {doTest();}

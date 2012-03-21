@@ -18,6 +18,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -31,7 +32,7 @@ public abstract class PsiTreeChangePreprocessorBase implements PsiTreeChangePrep
   }
 
   @Override
-  public void treeChanged(PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {

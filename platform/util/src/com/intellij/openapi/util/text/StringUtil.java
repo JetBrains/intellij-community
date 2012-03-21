@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,12 @@ import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
-public class StringUtil {
+public class StringUtil extends StringUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
+
   @NonNls private static final String VOWELS = "aeiouy";
-  private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
+  @NonNls private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
+
   public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
     @NotNull
     public String fun(String s) {
@@ -152,16 +154,6 @@ public class StringUtil {
     return newText!= null ? newText.toString():"";
   }
 
-  @NotNull
-  public static String getShortName(@NotNull String fqName) {
-    return getShortName(fqName, '.');
-  }
-
-  @NotNull
-  public static String getShortName(@NotNull Class aClass) {
-    return getShortName(aClass.getName());
-  }
-
   /**
    * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case insensitive
    */
@@ -222,32 +214,6 @@ public class StringUtil {
     return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
   }
 
-  public static boolean charsEqualIgnoreCase(char a, char b) {
-    return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
-  }
-
-  public static char toUpperCase(char a) {
-    if (a < 'a') {
-      return a;
-    }
-    if (a >= 'a' && a <= 'z') {
-      return (char)(a + ('A' - 'a'));
-    }
-    return Character.toUpperCase(a);
-  }
-
-  public static char toLowerCase(final char a) {
-    if (a < 'A' || a >= 'a' && a <= 'z') {
-      return a;
-    }
-
-    if (a >= 'A' && a <= 'Z') {
-      return (char)(a + ('a' - 'A'));
-    }
-
-    return Character.toLowerCase(a);
-  }
-
   public static String stripHtml(String html, boolean convertBreaks) {
     if (convertBreaks) {
       html = html.replaceAll("<br/?>", "\n\n");
@@ -262,15 +228,6 @@ public class StringUtil {
   }
 
   @NotNull
-  public static String getShortName(@NotNull String fqName, char separator) {
-    int lastPointIdx = fqName.lastIndexOf(separator);
-    if (lastPointIdx >= 0) {
-      return fqName.substring(lastPointIdx + 1);
-    }
-    return fqName;
-  }
-
-  @NotNull
   public static String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
@@ -282,101 +239,6 @@ public class StringUtil {
       return fqName.substring(0, lastPointIdx);
     }
     return "";
-  }
-
-  /**
-   * Converts line separators to <code>"\n"</code>
-   */
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text) {
-    return convertLineSeparators(text, false);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
-    return convertLineSeparators(text, "\n", null, keepCarriageReturn);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
-    return convertLineSeparators(text, newSeparator, null);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
-    return convertLineSeparators(text, newSeparator, offsetsToKeep, false);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep,
-                                             boolean keepCarriageReturn) {
-    StringBuilder buffer = null;
-    int intactLength = 0;
-    final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      if (c == '\n') {
-        if (!newSeparatorIsSlashN) {
-          if (buffer == null) {
-            buffer = new StringBuilder(text.length());
-            buffer.append(text, 0, intactLength);
-          }
-          buffer.append(newSeparator);
-          shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
-        }
-        else if (buffer == null) {
-          intactLength++;
-        }
-        else {
-          buffer.append(c);
-        }
-      }
-      else if (c == '\r') {
-        boolean followedByLineFeed = i < text.length() - 1 && text.charAt(i + 1) == '\n';
-        if (!followedByLineFeed && keepCarriageReturn) {
-          if (buffer == null) {
-            intactLength++;
-          }
-          else {
-            buffer.append(c);
-          }
-          continue;
-        }
-        if (buffer == null) {
-          buffer = new StringBuilder(text.length());
-          buffer.append(text, 0, intactLength);
-        }
-        buffer.append(newSeparator);
-        if (followedByLineFeed) {
-          i++;
-          shiftOffsets(offsetsToKeep, buffer.length(), 2, newSeparator.length());
-        }
-        else {
-          shiftOffsets(offsetsToKeep, buffer.length(), 1, newSeparator.length());
-        }
-      }
-      else {
-        if (buffer == null) {
-          intactLength++;
-        }
-        else {
-          buffer.append(c);
-        }
-      }
-    }
-    return buffer == null ? text : buffer.toString();
-  }
-
-  private static void shiftOffsets(int[] offsets, int changeOffset, int oldLength, int newLength) {
-    if (offsets == null) return;
-    int shift = newLength - oldLength;
-    if (shift == 0) return;
-    for (int i = 0; i < offsets.length; i++) {
-      int offset = offsets[i];
-      if (offset >= changeOffset + oldLength) {
-        offsets[i] += shift;
-      }
-    }
   }
 
   public static int getLineBreakCount(@NotNull CharSequence text) {
@@ -2009,24 +1871,6 @@ public class StringUtil {
     }
     else {
       return -1;
-    }
-  }
-
-  public static int parseInt(final String string, final int defaultValue) {
-    try {
-      return Integer.parseInt(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
-  public static double parseDouble(final String string, final double defaultValue) {
-    try {
-      return Double.parseDouble(string);
-    }
-    catch (Exception e) {
-      return defaultValue;
     }
   }
 

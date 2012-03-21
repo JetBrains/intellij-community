@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
@@ -100,7 +115,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       dir("rt") {
         fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
       }
-      jar("util.jar") { module("util") }
+
+      jar("util.jar") {
+        module("util")
+        module("util-rt")
+      }
 
       jar("openapi.jar") {
         openapiModules.each { module it}
@@ -231,6 +250,9 @@ public def layoutCommunityPlugins(String home) {
     }
     
     layoutPlugin("git4idea") {
+      jar("git4idea-rt.jar") {
+        module("git4idea-rt")
+      }
       fileset(dir: "$home/plugins/git4idea/lib") {
         include(name: "trilead-ssh2.jar")
       }
@@ -468,6 +490,7 @@ def reorder(String home, String targetDirectory) {
       classpath {
         pathelement(location: util.output)
         pathelement(location: "$home/lib/jna.jar")
+        pathelement(location: "$home/lib/trove4j.jar")
       }
     }
   }
@@ -476,6 +499,7 @@ def reorder(String home, String targetDirectory) {
 def layout_core(String home, String target) {
   layout(target) {
     jar("intellij-core.jar") {
+      module("util-rt")
       module("util")
       module("core-api")
       module("core-impl")

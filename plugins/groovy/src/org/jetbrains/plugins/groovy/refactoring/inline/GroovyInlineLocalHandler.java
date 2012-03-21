@@ -35,8 +35,10 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -116,12 +118,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
 
           final ArrayList<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, variable);
           final PsiElement finalCur = cur;
-          final Instruction instruction = ContainerUtil.find(flow, new Condition<Instruction>() {
-            @Override
-            public boolean value(Instruction instruction) {
-              return instruction.getElement() == finalCur;
-            }
-          });
+          Instruction instruction = ControlFlowUtils.findInstruction(finalCur, flow);
 
           LOG.assertTrue(instruction != null);
           final BitSet prev = writes.get(instruction.num());
@@ -136,7 +133,13 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
             }
           }
 
-          cur = controlFlowOwner;
+          if (controlFlowOwner instanceof GrClosableBlock) {
+            cur = controlFlowOwner;
+          }
+          else {
+            PsiElement parent = controlFlowOwner.getParent();
+            if (parent instanceof GrMember) cur = ((GrMember)parent).getContainingClass();
+          }
         }
         while (initializer == null);
       }

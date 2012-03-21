@@ -153,17 +153,13 @@ public class ControlFlowUtils {
     if (openBlockMayCompleteNormally(tryBlock)) {
       return true;
     }
-    final GrCatchClause[] catchClauses = tryStatement.getCatchClauses();
 
-    if (catchClauses != null) {
-
-      for (GrCatchClause catchClause : catchClauses) {
-        if (openBlockMayCompleteNormally(catchClause.getBody())) {
-          return true;
-        }
+    for (GrCatchClause catchClause : tryStatement.getCatchClauses()) {
+      if (openBlockMayCompleteNormally(catchClause.getBody())) {
+        return true;
       }
-
     }
+
     return false;
   }
 
@@ -650,6 +646,7 @@ public class ControlFlowUtils {
       place = place.getContext();
     }
     while (true) {
+      assert place != null;
       place = place.getContext();
       if (place == null) return null;
       if (place instanceof GrClosableBlock) return (GrClosableBlock)place;
@@ -740,6 +737,7 @@ public class ControlFlowUtils {
     });
   }
 
+  @NotNull
   public static ArrayList<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
     final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
@@ -790,7 +788,7 @@ public class ControlFlowUtils {
       }
     };
 
-    return new DFAEngine<BitSet>(flow, dfa, sem).performDFA();
+    return new DFAEngine<BitSet>(flow, dfa, sem).performForceDFA();
   }
 
 }

@@ -359,6 +359,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return myDesignerCard.isVisible() ? myGlassLayer : myErrorLabel;
   }
 
+  public RadComponent getRootComponent() {
+    return myRootComponent;
+  }
+
   public Object[] getTreeRoots() {
     return myRootComponent == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[]{myRootComponent};
   }

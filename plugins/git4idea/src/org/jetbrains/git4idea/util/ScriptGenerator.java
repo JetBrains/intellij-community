@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package org.jetbrains.git4idea.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilLight;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -149,8 +149,8 @@ public class ScriptGenerator {
    */
   @SuppressWarnings({"HardCodedStringLiteral"})
   public File generate() throws IOException {
-    File scriptPath = myTempDir != null ? FileUtilLight.createTempFile(myTempDir, myPrefix, SCRIPT_EXT, true)
-                                        : FileUtilLight.createTempFile(myPrefix, SCRIPT_EXT);
+    File scriptPath = myTempDir != null ? FileUtilRt.createTempFile(myTempDir, myPrefix, SCRIPT_EXT, true)
+                                        : FileUtilRt.createTempFile(myPrefix, SCRIPT_EXT);
     scriptPath.deleteOnExit();
     PrintWriter out = new PrintWriter(new FileWriter(scriptPath));
     try {
@@ -172,7 +172,7 @@ public class ScriptGenerator {
     finally {
       out.close();
     }
-    FileUtilLight.setExecutableAttribute(scriptPath.getPath(), true);
+    FileUtilRt.setExecutableAttribute(scriptPath.getPath(), true);
     return scriptPath;
   }
 
