@@ -564,7 +564,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
     }
-    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), null, 60*1000, keep);
+    myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject), 60*1000, keep);
   }
 
   private ISVNRepositoryPool getPool() {
