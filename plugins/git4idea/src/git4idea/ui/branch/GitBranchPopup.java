@@ -32,6 +32,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.PlatformIcons;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
@@ -271,7 +272,7 @@ class GitBranchPopup  {
       super(GitUIUtil.getShortRepositoryName(repository), true);
       myRepository = repository;
       if (repository.equals(currentRepository)) {
-        getTemplatePresentation().setIcon(IconLoader.getIcon("/actions/checked.png"));
+        getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
       }
     }
 
