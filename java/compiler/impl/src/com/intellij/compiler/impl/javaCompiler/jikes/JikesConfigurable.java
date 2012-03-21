@@ -22,6 +22,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 
@@ -34,19 +35,18 @@ import java.io.File;
  * @author Eugene Zhuravlev
  *         Date: Mar 30, 2004
  */
-public class JikesConfigurable implements Configurable{
+public class JikesConfigurable implements Configurable {
   private JPanel myPanel;
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbDeprecation;
-  private JCheckBox myCbGenerateNoWarnings ;
+  private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
-  private JTextField myPathField;
-  private JButton myJikesPathFieldBrowseButton;
+  private TextFieldWithBrowseButton myPathField;
   private final JikesSettings myJikesSettings;
 
   public JikesConfigurable(JikesSettings jikesSettings) {
     myJikesSettings = jikesSettings;
-    myJikesPathFieldBrowseButton.addActionListener(new ActionListener() {
+    myPathField.getButton().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
         VirtualFile file = FileChooser.chooseFile(myPathField, descriptor, null);

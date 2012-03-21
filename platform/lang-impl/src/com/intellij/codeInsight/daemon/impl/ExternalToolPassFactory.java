@@ -28,6 +28,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +40,15 @@ import java.util.List;
  * @author cdr
 */
 public class ExternalToolPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+  private final MergingUpdateQueue myExternalActivitiesQueue;
+
   public ExternalToolPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     // start after PostHighlightingPass completion since it could report errors that can prevent us to run
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.POST_UPDATE_ALL}, null, true, Pass.EXTERNAL_TOOLS);
+
+    myExternalActivitiesQueue = new MergingUpdateQueue("ExternalActivitiesQueue", 300, true, MergingUpdateQueue.ANY_COMPONENT, project,
+                                                       null, false);
   }
 
   @Override
@@ -58,7 +65,7 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(file, editor, textRange.getStartOffset(), textRange.getEndOffset());
+    return new ExternalToolPass(this, file, editor, textRange.getStartOffset(), textRange.getEndOffset());
   }
 
   private static boolean externalAnnotatorsDefined(PsiFile file) {
@@ -69,5 +76,9 @@ public class ExternalToolPassFactory extends AbstractProjectComponent implements
       }
     }
     return false;
+  }
+
+  void scheduleExternalActivity(@NotNull Update update) {
+    myExternalActivitiesQueue.queue(update);
   }
 }

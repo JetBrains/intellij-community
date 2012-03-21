@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -231,6 +229,7 @@ public class MoveClassesOrPackagesUtil {
 
     newClass = aClass;
     if (!moveDestination.equals(file.getContainingDirectory())) {
+      LOG.assertTrue(file.getVirtualFile() != null, aClass);
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
       if (file instanceof PsiClassOwner && newPackage != null) {
         ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());

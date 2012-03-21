@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.internal.statistic;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistence;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,8 +30,17 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class AbstractApplicationUsagesCollector extends UsagesCollector {
+
+    private static final Logger LOG = Logger.getInstance("#com.intellij.internal.statistic.AbstractApplicationUsagesCollector");
+
     public void persistProjectUsages(@NotNull Project project) {
-        persistProjectUsages(project, getProjectUsages(project));
+      try {
+        final Set<UsageDescriptor> projectUsages = getProjectUsages(project);
+        persistProjectUsages(project, projectUsages);
+      }
+      catch (CollectUsagesException e) {
+        LOG.info(e);
+      }
     }
 
     public void persistProjectUsages(@NotNull Project project, @NotNull Set<UsageDescriptor> usages) {
@@ -69,14 +79,15 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
     }
 
     @NotNull
-    public Set<UsageDescriptor> getUsages(@Nullable Project project) {
+    public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
         if (project != null) {
-            persistProjectUsages(project, getProjectUsages(project));
+          final Set<UsageDescriptor> projectUsages = getProjectUsages(project);
+          persistProjectUsages(project, projectUsages);
         }
 
         return getApplicationUsages();
     }
 
     @NotNull
-    public abstract Set<UsageDescriptor> getProjectUsages(@NotNull Project project);
+    public abstract Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException;
 }

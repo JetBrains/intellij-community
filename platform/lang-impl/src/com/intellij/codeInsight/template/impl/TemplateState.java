@@ -831,8 +831,8 @@ public class TemplateState implements Disposable {
     if (selStart >= 0 && selEnd >= 0) {
       myEditor.getSelectionModel().setSelection(mySegments.getSegmentStart(selStart), mySegments.getSegmentStart(selEnd));
     }
-    fireBeforeTemplateFinished();
     final Editor editor = myEditor;
+    fireBeforeTemplateFinished();
     int oldVar = myCurrentVariableNumber;
     setCurrentVariableNumber(-1);
     currentVariableChanged(oldVar);

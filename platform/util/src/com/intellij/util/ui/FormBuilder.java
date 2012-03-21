@@ -52,15 +52,15 @@ public class FormBuilder {
     return new FormBuilder();
   }
 
-  public FormBuilder addLabeledComponent(@Nullable JLabel label, JComponent component) {
+  public FormBuilder addLabeledComponent(@Nullable JComponent label, JComponent component) {
     return addLabeledComponent(label, component, myVerticalGap, false);
   }
 
-  public FormBuilder addLabeledComponent(@Nullable JLabel label, JComponent component, final int topInset) {
+  public FormBuilder addLabeledComponent(@Nullable JComponent label, JComponent component, final int topInset) {
     return addLabeledComponent(label, component, topInset, false);
   }
 
-  public FormBuilder addLabeledComponent(@Nullable JLabel label, JComponent component, boolean labelOnTop) {
+  public FormBuilder addLabeledComponent(@Nullable JComponent label, JComponent component, boolean labelOnTop) {
     return addLabeledComponent(label, component, myVerticalGap, labelOnTop);
   }
 

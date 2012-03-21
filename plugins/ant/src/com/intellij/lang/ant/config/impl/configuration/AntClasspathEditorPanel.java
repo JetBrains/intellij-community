@@ -18,7 +18,6 @@ package com.intellij.lang.ant.config.impl.configuration;
 import com.intellij.lang.ant.config.impl.AllJarsUnderDirEntry;
 import com.intellij.lang.ant.config.impl.AntClasspathEntry;
 import com.intellij.lang.ant.config.impl.SinglePathEntry;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.ListUtil;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ListProperty;
@@ -75,12 +74,10 @@ public class AntClasspathEditorPanel extends JPanel {
     private JButton myMoveUpButton;
     private JButton myMoveDownButton;
     private JPanel myWholePanel;
-    private JLabel myClasspathLabel;
     private JList myClasspathList;
     private final ArrayList<ListUtil.Updatable> myUpdatables = new ArrayList<ListUtil.Updatable>();
 
     public Form() {
-      myClasspathLabel.setLabelFor(myClasspathList);
       myClasspathList.setCellRenderer(new AntUIUtil.ClasspathRenderer());
 
       myUpdatables.add(ListUtil.addRemoveListener(myRemoveButton, myClasspathList));
@@ -94,14 +91,6 @@ public class AntClasspathEditorPanel extends JPanel {
         updatable.enable(enable);
       }
     }
-  }
-
-  public void setClasspathLabel(String textWithMnemonic) {
-    LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(textWithMnemonic).setToLabel(myForm.myClasspathLabel);
-  }
-
-  public String getClasspathLabel() {
-    return LabeledComponent.TextWithMnemonic.fromLabel(myForm.myClasspathLabel).getTextWithMnemonic();
   }
 
   public JComponent getPreferedFocusComponent() {

@@ -90,23 +90,8 @@ public class MavenArtifactDownloader {
       return download(artifacts, downloadedFiles);
     }
     finally {
-      scheduleFilesRefresh(downloadedFiles);
-    }
-  }
-
-  private void scheduleFilesRefresh(final List<File> downloadedFiles) {
-    Runnable refreshTask = new Runnable() {
-      public void run() {
-        LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles);
-      }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode()
-        || ApplicationManager.getApplication().isDispatchThread()) {
-      refreshTask.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(refreshTask);
+      boolean isAsync = !ApplicationManager.getApplication().isUnitTestMode();
+      LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles, isAsync, false, null);
     }
   }
 

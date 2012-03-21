@@ -240,6 +240,7 @@ public class SearchingForTestsTask extends Task.Backgroundable {
         return;
       }
       final Parser parser = new Parser(myData.getSuiteName());
+      parser.setLoadClasses(false);
       final Collection<XmlSuite> suites = parser.parse();
       for (XmlSuite suite : suites) {
         Map<String, String> params = suite.getParameters();
