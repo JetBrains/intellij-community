@@ -28,10 +28,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
-import org.tmatesoft.svn.core.wc.ISVNStatusHandler;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
-import org.tmatesoft.svn.core.wc.SVNStatusClient;
+import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -92,7 +89,7 @@ public class SvnRecursiveStatusWalker {
         } else {
           // just file
           final SVNStatus status = item.getClient().doStatus(ioFile, false, false);
-          myReceiver.process(path, status, false);
+          myReceiver.process(path, status);
         }
       }
     }
@@ -168,14 +165,24 @@ public class SvnRecursiveStatusWalker {
 
   private class MyHandler implements ISVNStatusHandler {
     private MyItem myCurrentItem;
+    private boolean myMetCurrentItem;
 
     public void setCurrentItem(MyItem currentItem) {
       myCurrentItem = currentItem;
+      myMetCurrentItem = false;
     }
 
     public void handleStatus(final SVNStatus status) throws SVNException {
       myPartner.checkCanceled();
       final File ioFile = status.getFile();
+      if (! myMetCurrentItem && myCurrentItem.isIsInnerCopyRoot()) {
+        myMetCurrentItem = true;
+        final SVNStatus statusInner = SvnUtil.getStatus(SvnVcs.getInstance(myProject), myCurrentItem.getPath().getIOFile());
+        if (myCurrentItem.getPath().getVirtualFile() != null || statusInner != null) {
+          myReceiver.processCopyRoot(myCurrentItem.getPath().getVirtualFile(), statusInner.getURL(),
+                                     WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
+        }
+      }
       final LocalFileSystem lfs = LocalFileSystem.getInstance();
       VirtualFile vFile = lfs.findFileByIoFile(ioFile);
       if (vFile == null) {
@@ -190,7 +197,7 @@ public class SvnRecursiveStatusWalker {
         }
       } else {
         final FilePath path = VcsUtil.getFilePath(ioFile, status.getKind().equals(SVNNodeKind.DIR));
-        myReceiver.process(path, status, myCurrentItem.isIsInnerCopyRoot());
+        myReceiver.process(path, status);
       }
     }
   }
