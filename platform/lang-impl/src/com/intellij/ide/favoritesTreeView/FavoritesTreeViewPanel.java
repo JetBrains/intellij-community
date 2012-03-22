@@ -43,10 +43,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -186,18 +188,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         public ShortcutSet getShortcut() {
           return CustomShortcutSet.fromString("DELETE");
         }
-      })
-      .addExtraAction(AnActionButton.fromAction(new CollapseAllAction(myTree)));
-
-    if (!PlatformUtils.isCidr()) {
-      decorator.addExtraAction(new FavoritesShowMembersAction(myProject, myBuilder));
-    }
-
-    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
-      decorator.addExtraAction(new FavoritesFlattenPackagesAction(myProject, myBuilder));
-    }
-
-    decorator.addExtraAction(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));
+      });
 
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_NEW_ELEMENT);
     action.registerCustomShortcutSet(action.getShortcutSet(), myTree);
@@ -430,6 +421,25 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       result.add(treeNodeDescriptor);
     }
     return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
+  }
+
+  public void setupToolWindow(ToolWindowEx window) {
+    final CollapseAllAction collapseAction = new CollapseAllAction(myTree);
+    collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
+    collapseAction.getTemplatePresentation().setHoveredIcon(IconLoader.getIcon("/general/collapseAllHover.png"));
+    window.setTitleActions(collapseAction);
+
+    final DefaultActionGroup group = new DefaultActionGroup();
+    if (!PlatformUtils.isCidr()) {
+      group.add(new FavoritesShowMembersAction(myProject, myBuilder));
+    }
+
+    if (ProjectViewDirectoryHelper.getInstance(myProject).supportsFlattenPackages()) {
+      group.add(new FavoritesFlattenPackagesAction(myProject, myBuilder));
+    }
+
+    group.add(new FavoritesAutoScrollToSourceAction(myProject, myAutoScrollToSourceHandler, myBuilder));
+    window.setAdditionalGearActions(group);
   }
 
   public static String getQualifiedName(final VirtualFile file) {
