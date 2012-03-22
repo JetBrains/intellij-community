@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotifi
  */
 public class GradleGroovyConfigNotification extends DefaultGroovyFrameworkConfigNotification {
 
-  @NotNull private final PlatformFacade       myPlatformFacade;
+  @NotNull private final PlatformFacade myPlatformFacade;
   @NotNull private final GradleLibraryManager myLibraryManager;
 
   public GradleGroovyConfigNotification(@NotNull PlatformFacade facade, @NotNull GradleLibraryManager libraryManager) {
@@ -41,6 +41,6 @@ public class GradleGroovyConfigNotification extends DefaultGroovyFrameworkConfig
   public boolean hasFrameworkLibrary(@NotNull Module module) {
     // Expecting groovy library to always be available at the gradle distribution. I.e. consider that when correct gradle
     // distribution is defined for the project, groovy jar is there.
-    return myLibraryManager.getAllLibraries(module.getProject()) != null;
+    return super.hasFrameworkLibrary(module) || myLibraryManager.getAllLibraries(module.getProject()) != null;
   }
 }

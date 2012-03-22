@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
@@ -48,16 +47,6 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
 
-  /**
-   * There is a possible case that end-user defines gradle home while particular project is open. We want to use that gradle
-   * home for the default project as well until that is manually changed for the default project.
-   * <p/>
-   * Current constant holds key of the value that defines if gradle home for default project should be tracked from
-   * the non-default one.
-   * <p/>
-   * This property has a form of 'not-propagate' in order to default to 'propagate'.
-   */
-  @NonNls private static final String NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT = "gradle.not.propagate.home.to.default.project";
   private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
   
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
@@ -185,18 +174,22 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     // to the default project as well if it's still non-defined.
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     if (defaultProject == myProject) {
-      PropertiesComponent.getInstance().setValue(NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT, Boolean.TRUE.toString());
       return;
     }
-    
-    
-    if (!StringUtil.isEmpty(path)
-        && !Boolean.parseBoolean(PropertiesComponent.getInstance().getValue(NOT_PROPAGATE_GRADLE_HOME_TO_DEFAULT_PROJECT)))
-    {
+
+    if (isValidGradleHome(path) && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
       GradleSettings.applyGradleHome(path, defaultProject);
     } 
   }
 
+  private boolean isValidGradleHome(@Nullable String path) {
+    if (StringUtil.isEmpty(path)) {
+      return false;
+    }
+    assert path != null;
+    return myLibraryManager.isGradleSdkHome(new File(path));
+  }
+  
   @Override
   public void reset() {
     useNormalColorForPath();

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.remote.wrapper;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
@@ -37,12 +38,17 @@ public class GradleProjectResolverWrapper implements GradleProjectResolver {
   }
 
   @Override
-  @NotNull
+  @Nullable
   public GradleProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException
   {
     myNotificationManager.onQueued(id);
-    return myResolver.resolveProjectInfo(id, projectPath, downloadLibraries);
+    try {
+      return myResolver.resolveProjectInfo(id, projectPath, downloadLibraries);
+    }
+    finally {
+      myNotificationManager.onEnd(id);
+    }
   }
 
   @Override
