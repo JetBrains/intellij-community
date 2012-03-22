@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,12 +309,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    final Ref<Boolean> canClose = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> canClose = new Ref<Boolean>(true);
     for (final Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
       try {
         commandProcessor.executeCommand(project, new Runnable() {
           public void run() {
-            canClose.set(((ProjectManagerImpl)ProjectManagerEx.getInstanceEx()).closeProject(project, true, true, checkCanCloseProject));
+            final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
+            if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
+              canClose.set(false);
+            }
           }
         }, ApplicationBundle.message("command.exit"), null);
       }
@@ -763,8 +766,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
         myDisposeInProgress = true;
-
-        FileDocumentManager.getInstance().saveAllDocuments();
 
         saveSettings();
 

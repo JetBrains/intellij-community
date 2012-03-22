@@ -17,10 +17,7 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.codeStyle.DefaultCodeStyleFacade;
-import com.intellij.mock.MockCommandProcessor;
-import com.intellij.mock.MockEditorFactory;
-import com.intellij.mock.MockVirtualFile;
-import com.intellij.mock.MockVirtualFileManager;
+import com.intellij.mock.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
@@ -32,12 +29,15 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.fileTypes.impl.InternalFileTypeFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.DefaultProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.MockSchemesManagerFactory;
 import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.util.LocalTimeCounter;
+import org.easymock.classextension.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public class FileDocumentManagerImplTest extends PlatformLiteFixture {
-  private MyFileDocumentManagerImpl myDocumentManager;
+  private MyMockFileDocumentManager myDocumentManager;
 
   @Override
   protected void setUp() throws Exception {
@@ -86,7 +86,10 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     fileType[0] = StdFileTypes.JAVA;
 
     getApplication().getComponent(FileTypeManager.class);
-    myDocumentManager = new MyFileDocumentManagerImpl();
+
+    final VirtualFileManager virtualFileManager = EasyMock.createMock(VirtualFileManager.class);
+    final ProjectManager projectManager = EasyMock.createMock(ProjectManager.class);
+    myDocumentManager = new MyMockFileDocumentManager(virtualFileManager, projectManager);
     getApplication().registerService(FileDocumentManager.class, myDocumentManager);
   }
 
@@ -554,14 +557,14 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     assertEquals(2, document.getModificationStamp());
   }
 
-  private static class MyFileDocumentManagerImpl extends FileDocumentManagerImpl {
+  private static class MyMockFileDocumentManager extends FileDocumentManagerImpl {
     private static final FileDocumentManagerListener[] LISTENERS = new FileDocumentManagerListener[0];
 
     private Collection<IOException> myExceptionOnSave = null;
     private Boolean myReloadFromDisk = null;
 
-    public MyFileDocumentManagerImpl() {
-      super(new MockVirtualFileManager());
+    public MyMockFileDocumentManager(VirtualFileManager virtualFileManager, ProjectManager projectManager) {
+      super(virtualFileManager, projectManager);
     }
 
     @Override

@@ -42,14 +42,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -82,7 +79,8 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.List;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener, SafeWriteRequestor {
+public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener,
+                                                                            ProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
@@ -97,8 +95,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   private final FileDocumentManagerListener myMultiCaster;
   private final TrailingSpacesStripper myTrailingSpacesStripper = new TrailingSpacesStripper();
 
-  public FileDocumentManagerImpl(VirtualFileManager virtualFileManager) {
+  private boolean myOnClose = false;
+
+  public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
     virtualFileManager.addVirtualFileListener(this);
+    projectManager.addProjectManagerListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
     InvocationHandler handler = new InvocationHandler() {
@@ -662,6 +663,32 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public void beforeFileMovement(VirtualFileMoveEvent event) {
   }
 
+  @Override
+  public void projectOpened(Project project) {
+  }
+
+  @Override
+  public boolean canCloseProject(Project project) {
+    if (!myUnsavedDocuments.isEmpty()) {
+      myOnClose = true;
+      try {
+        saveAllDocuments();
+      }
+      finally {
+        myOnClose = false;
+      }
+    }
+    return myUnsavedDocuments.isEmpty();
+  }
+
+  @Override
+  public void projectClosed(Project project) {
+  }
+
+  @Override
+  public void projectClosing(Project project) {
+  }
+
   private void fireUnsavedDocumentsDropped() {
     myMultiCaster.unsavedDocumentsDropped();
   }
@@ -687,7 +714,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     return FileDocumentManagerListener.EP_NAME.getExtensions();
   }
 
-  // todo[r.sh] handle project close/app shutdown
   protected void handleErrorsOnSave(final Map<Document, IOException> failures) {
     final String text = StringUtil.join(failures.values(), new Function<IOException, String>() {
       @Override
@@ -705,9 +731,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
-        myOKAction.putValue(Action.NAME, UIBundle.message("cannot.save.files.dialog.revert.changes"));
+        myOKAction.putValue(Action.NAME, UIBundle.message(myOnClose ? "cannot.save.files.dialog.ignore.changes" : "cannot.save.files.dialog.revert.changes"));
         myOKAction.putValue(DEFAULT_ACTION, null);
-        myCancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+
+        if (!myOnClose) {
+          myCancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+        }
       }
 
       @Override
@@ -726,16 +755,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       }
     };
 
-    final AsyncResult<Boolean> result = dialog.showAndGetOk();
-    result.doWhenDone(new AsyncResult.Handler<Boolean>() {
-      @Override
-      public void run(Boolean isOk) {
-        if (isOk) {
-          for (Document document : failures.keySet()) {
-            reloadFromDisk(document);
-          }
-        }
+    dialog.show();
+
+    if (dialog.isOK()) {
+      for (Document document : failures.keySet()) {
+        reloadFromDisk(document);
       }
-    });
+    }
   }
 }
