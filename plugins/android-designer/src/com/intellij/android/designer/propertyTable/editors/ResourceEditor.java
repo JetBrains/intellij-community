@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -79,7 +76,7 @@ public class ResourceEditor extends PropertyEditor {
     if (formats.contains(AttributeFormat.Enum) || formats.contains(AttributeFormat.Boolean)) {
       ComboboxWithBrowseButton editor = new ComboboxWithBrowseButton();
 
-      JComboBox comboBox = editor.getComboBox();
+      final JComboBox comboBox = editor.getComboBox();
       DefaultComboBoxModel model;
       if (formats.contains(AttributeFormat.Boolean)) {
         model = new DefaultComboBoxModel(new String[]{StringsComboEditor.UNSET, "true", "false"});
@@ -90,18 +87,26 @@ public class ResourceEditor extends PropertyEditor {
       }
       comboBox.setModel(model);
       comboBox.setEditable(true);
+      ComboEditor.addEditorSupport(this, comboBox);
       comboBox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          fireValueCommitted(false, true);
+          if (comboBox.getSelectedItem() == StringsComboEditor.UNSET) {
+            comboBox.setSelectedItem(null);
+          }
+          fireValueCommitted(true, true);
         }
       });
-      ComboEditor.addEditorSupport(this, comboBox);
-
       myEditor = editor;
+      comboBox.setSelectedIndex(0);
     }
     else {
       myEditor = new TextFieldWithBrowseButton();
+      myEditor.registerKeyboardAction(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
     myEditor.addActionListener(new ActionListener() {
@@ -113,7 +118,7 @@ public class ResourceEditor extends PropertyEditor {
 
         if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
           getComboText().setText(dialog.getResourceName());
-          fireValueCommitted(false, true);
+          fireValueCommitted(true, true);
         }
       }
     });
@@ -137,7 +142,7 @@ public class ResourceEditor extends PropertyEditor {
   @Override
   public Object getValue() throws Exception {
     String value = getComboText().getText();
-    return StringsComboEditor.UNSET.equals(value) || StringUtil.isEmpty(value) ? null : value;
+    return value == StringsComboEditor.UNSET || StringUtil.isEmpty(value) ? null : value;
   }
 
   private JTextField getComboText() {

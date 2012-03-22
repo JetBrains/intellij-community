@@ -37,6 +37,7 @@ import java.util.Set;
  */
 public class ResourceRenderer implements PropertyRenderer {
   private static final String[] DIMENSIONS = {"dp", "sp", "pt", "px", "mm", "in"};
+  private static final String ANDROID_PREFIX = "@android:";
 
   private final ColorIcon myColorIcon = new ColorIcon(10, 9);
   private BooleanRenderer myBooleanRenderer;
@@ -66,7 +67,8 @@ public class ResourceRenderer implements PropertyRenderer {
 
     if (selected) {
       myColoredComponent.setForeground(UIUtil.getTableSelectionForeground());
-      myColoredComponent.setBackground(UIUtil.getTableSelectionBackground());
+      Color background = UIUtil.getTableSelectionBackground();
+      myColoredComponent.setBackground(background);
     }
     else {
       myColoredComponent.setForeground(UIUtil.getTableForeground());
@@ -74,9 +76,19 @@ public class ResourceRenderer implements PropertyRenderer {
     }
 
     if (!StringUtil.isEmpty(value)) {
-      if (value.charAt(0) == '@') {
-        myColoredComponent.append("@", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        myColoredComponent.append(value.substring(1));
+      int prefix = -1;
+      if (value.startsWith("#")) {
+        prefix = 1;
+      }
+      else if (value.startsWith(ANDROID_PREFIX)) {
+        prefix = ANDROID_PREFIX.length();
+      }
+      else if (value.startsWith("@")) {
+        prefix = 1;
+      }
+      if (prefix != -1) {
+        myColoredComponent.append(value.substring(0, prefix), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        myColoredComponent.append(value.substring(prefix));
       }
       else if (myFormats.contains(AttributeFormat.Dimension) && value.length() > 2) {
         int index = value.length() - 2;
@@ -92,7 +104,7 @@ public class ResourceRenderer implements PropertyRenderer {
       else {
         myColoredComponent.append(value);
       }
-      if (myFormats.contains(AttributeFormat.Color) && value.charAt(0) == '#') {
+      if (myFormats.contains(AttributeFormat.Color) && value.startsWith("#")) {
         try {
           myColorIcon.setColor(new Color(Integer.parseInt(value.substring(1), 16)));
           myColoredComponent.setIcon(myColorIcon);
@@ -127,15 +139,21 @@ public class ResourceRenderer implements PropertyRenderer {
     }
 
     @Override
-    public void paintIcon(Component component, Graphics g, final int i, final int j) {
+    public void paintIcon(Component component, Graphics g, final int left, final int top) {
       int iconWidth = getIconWidth();
       int iconHeight = getIconHeight();
+
+      SimpleColoredComponent coloredComponent = (SimpleColoredComponent)component;
+      g.setColor(component.getBackground());
+      g.fillRect(left - coloredComponent.getIpad().left, 0,
+                 iconWidth + coloredComponent.getIpad().left + coloredComponent.getIconTextGap(), component.getHeight());
+
+      int x = left + (iconWidth - myColorSize) / 2;
+      int y = top + (iconHeight - myColorSize) / 2;
+
       g.setColor(myColor);
-
-      int x = i + (iconWidth - myColorSize) / 2;
-      int y = j + (iconHeight - myColorSize) / 2;
-
       g.fillRect(x, y, myColorSize, myColorSize);
+
       g.setColor(Color.BLACK);
       g.drawRect(x, y, myColorSize, myColorSize);
     }
