@@ -414,9 +414,7 @@ class ClassfileAnalyzer {
         @Override
         public void visitLdcInsn(Object cst) {
           if (cst instanceof Type) {
-            final Type t = (Type) cst;
-
-            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(t.getClassName())));
+            usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, context.get(((Type)cst).getInternalName())));
           }
 
           super.visitLdcInsn(cst);
