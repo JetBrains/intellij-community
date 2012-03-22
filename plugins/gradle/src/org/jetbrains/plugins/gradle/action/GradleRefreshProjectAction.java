@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -42,6 +43,11 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
   protected void doActionPerformed(@NotNull final Project project, @NotNull final String linkedProjectPath) {
     // We save all documents because there is more than one target 'build.gradle' file in case of multi-module gradle project.
     FileDocumentManager.getInstance().saveAllDocuments();
+    
+    if (!GradleUtil.isGradleAvailable(project)) {
+      project.getComponent(GradleConfigNotificationManager.class).processUnknownGradleHome();
+    }    
+
     GradleUtil.refreshProject(project);
   }
 }

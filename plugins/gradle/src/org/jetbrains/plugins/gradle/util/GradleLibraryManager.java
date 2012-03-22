@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 
@@ -40,6 +41,15 @@ public class GradleLibraryManager {
     GRADLE_ENV_PROPERTY_NAME = System.getProperty("gradle.home.env.key", "GRADLE_HOME");
   }
 
+  @Nullable
+  public Collection<File> getAllLibraries() {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    if (projects.length == 1) {
+      return getAllLibraries(projects[0]);
+    }
+    return getAllLibraries(null);
+  }
+  
   /**
    * Allows to get file handles for the gradle binaries to use.
    *
@@ -99,7 +109,6 @@ public class GradleLibraryManager {
     File result = getManuallyDefinedGradleHome(project);
     if (result != null) {
       return result;
-      
     }
     result = getGradleHomeFromPath();
     return result == null ? getGradleHomeFromEnvProperty() : result;
@@ -154,18 +163,33 @@ public class GradleLibraryManager {
    */
   @Nullable
   public File getManuallyDefinedGradleHome(@Nullable Project project) {
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
+    
+    // Try to search settings of the given project.
+    if (project != null) {
+      File result = doGetManuallyDefinedGradleHome(project);
+      if (result != null) {
+        return result;
+      }
     }
+    
+    // Fallback to the default project settings.
+    return doGetManuallyDefinedGradleHome(ProjectManager.getInstance().getDefaultProject());
+  }
+
+  @Nullable
+  private File doGetManuallyDefinedGradleHome(@NotNull Project project) {
     GradleSettings settings = GradleSettings.getInstance(project);
     String path = settings.getGradleHome();
     if (path == null) {
       return null;
     }
     File candidate = new File(path);
+    if (isGradleSdkHome(candidate)) {
+      return candidate;
+    }
     return isGradleSdkHome(candidate) ? candidate : null;
   }
-
+  
   /**
    * Tries to discover gradle installation path from the configured system path
    * 
@@ -188,8 +212,8 @@ public class GradleLibraryManager {
           File candidate = dir.getParentFile();
           if (isGradleSdkHome(candidate)) {
             return candidate;
-          } 
-        } 
+          }
+        }
       }
     }
     return null;

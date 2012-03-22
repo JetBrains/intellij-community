@@ -36,6 +36,7 @@ import org.jetbrains.plugins.gradle.remote.wrapper.GradleApiFacadeWrapper;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 import org.jetbrains.plugins.gradle.util.GradleLog;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationHandler;
@@ -112,7 +113,7 @@ public class GradleApiFacadeManager {
   private RunProfileState createRunProfileState() {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
-        Collection<File> gradleLibraries = myGradleLibraryManager.getAllLibraries(null);
+        Collection<File> gradleLibraries = myGradleLibraryManager.getAllLibraries();
         GradleLog.LOG.assertTrue(gradleLibraries != null, GradleBundle.message("gradle.generic.text.error.sdk.undefined"));
         if (gradleLibraries == null) {
           throw new ExecutionException("Can't find gradle libraries");
@@ -214,6 +215,9 @@ public class GradleApiFacadeManager {
 
   @NotNull
   private GradleApiFacade doGetFacade() throws Exception {
+    if (!GradleUtil.isGradleAvailable()) {
+      return GradleApiFacade.NULL_OBJECT;
+    }
     Pair<GradleApiFacade, RemoteGradleProcessSettings> pair = myFacade.get();
     if (pair != null) {
       if (isValid(pair)) {
@@ -249,7 +253,7 @@ public class GradleApiFacadeManager {
       }
     }
     if (exported == null) {
-      GradleLog.LOG.warn("Can't export progress manager"); 
+      GradleLog.LOG.warn("Can't export progress manager");
     }
     else {
       result.applyProgressManager(exported);
