@@ -18,6 +18,7 @@ package com.intellij.android.designer.designSurface;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -84,32 +85,32 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  public void childAdded(PsiTreeChangeEvent event) {
+  public void childAdded(@NotNull PsiTreeChangeEvent event) {
     updatePsi(event);
   }
 
   @Override
-  public void childRemoved(PsiTreeChangeEvent event) {
+  public void childRemoved(@NotNull PsiTreeChangeEvent event) {
     updatePsi(event);
   }
 
   @Override
-  public void childReplaced(PsiTreeChangeEvent event) {
+  public void childReplaced(@NotNull PsiTreeChangeEvent event) {
     updatePsi(event);
   }
 
   @Override
-  public void childMoved(PsiTreeChangeEvent event) {
+  public void childMoved(@NotNull PsiTreeChangeEvent event) {
     updatePsi(event);
   }
 
   @Override
-  public void childrenChanged(PsiTreeChangeEvent event) {
+  public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
     updatePsi(event);
   }
 
   @Override
-  public void propertyChanged(PsiTreeChangeEvent event) {
+  public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     updatePsi(event);
   }
 }

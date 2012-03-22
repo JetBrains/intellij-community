@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -43,31 +44,31 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
 
   protected abstract DefaultMutableTreeNode getRootNode();
 
-  public final void childRemoved(PsiTreeChangeEvent event) {
+  public final void childRemoved(@NotNull PsiTreeChangeEvent event) {
     PsiElement child = event.getOldChild();
     if (child instanceof PsiWhiteSpace) return; //optimization
     childrenChanged(event.getParent(), true);
   }
 
-  public final void childAdded(PsiTreeChangeEvent event) {
+  public final void childAdded(@NotNull PsiTreeChangeEvent event) {
     PsiElement child = event.getNewChild();
     if (child instanceof PsiWhiteSpace) return; //optimization
     childrenChanged(event.getParent(), true);
   }
 
-  public final void childReplaced(PsiTreeChangeEvent event) {
+  public final void childReplaced(@NotNull PsiTreeChangeEvent event) {
     PsiElement oldChild = event.getOldChild();
     PsiElement newChild = event.getNewChild();
     if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
     childrenChanged(event.getParent(), true);
   }
 
-  public final void childMoved(PsiTreeChangeEvent event) {
+  public final void childMoved(@NotNull PsiTreeChangeEvent event) {
     childrenChanged(event.getOldParent(), false);
     childrenChanged(event.getNewParent(), true);
   }
 
-  public final void childrenChanged(PsiTreeChangeEvent event) {
+  public final void childrenChanged(@NotNull PsiTreeChangeEvent event) {
     childrenChanged(event.getParent(), true);
   }
 
@@ -104,7 +105,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     }
   }
 
-  public void propertyChanged(PsiTreeChangeEvent event) {
+  public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     PsiElement element = event.getElement();
     DefaultMutableTreeNode rootNode = getRootNode();

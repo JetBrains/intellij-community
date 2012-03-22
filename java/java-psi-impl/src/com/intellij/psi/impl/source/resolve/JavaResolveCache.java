@@ -26,22 +26,19 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
-import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -55,11 +52,7 @@ public class JavaResolveCache {
     return INSTANCE_KEY.getValue(project);
   }
 
-  private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
-  private final ConcurrentMap<PsiElement, PsiType> myCachedReferencesInPsiTypes = new ConcurrentWeakHashMap<PsiElement, PsiType>();
-  // e.g. given FileOutputStream os, os2;
-  // PsiJavaCodeReferenceElement("FileOutputStream") -> [ PsiReferenceExpression("os"), PsiReferenceExpression("os2") ]
-  private final Map<PsiElement, WeakList<PsiElement>> myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere  = new WeakHashMap<PsiElement, WeakList<PsiElement>>();
+  private final ConcurrentMap<PsiExpression, Reference<PsiType>> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, Reference<PsiType>>();
 
   private final Map<PsiVariable,Object> myVarToConstValueMapPhysical;
   private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical;
@@ -86,39 +79,31 @@ public class JavaResolveCache {
 
   private void clearCaches(boolean isPhysical) {
     myCalculatedTypes.clear();
-    myCachedReferencesInPsiTypes.clear();
-    myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.clear();
     if (isPhysical) {
       myVarToConstValueMapPhysical.clear();
     }
     myVarToConstValueMapNonPhysical.clear();
   }
 
-  public boolean isTypeCached(@NotNull PsiExpression expr) {
-    return myCalculatedTypes.get(expr) != null;
-  }
-
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
-    PsiType type = myCalculatedTypes.get(expr);
+    PsiType type = getCachedType(expr);
     if (type == null) {
       type = f.fun(expr);
       if (type == null) {
         type = TypeConversionUtil.NULL_TYPE;
       }
-      PsiType stored = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
+      SoftReference<PsiType> ref = new SoftReference<PsiType>(type);
+      Reference<PsiType> storedRef = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, ref);
 
-      if (stored == type && DebugUtil.DO_EXPENSIVE_CHECKS) {
-        registerDiagnosticsHooks(expr, type);
-      }
-
-      type = stored;
+      PsiType stored = storedRef.get();
+      type = stored == null ? type : stored;
     }
 
     if (!type.isValid()) {
       if (expr.isValid()) {
         PsiJavaCodeReferenceElement refInside = type instanceof PsiClassReferenceType ? ((PsiClassReferenceType)type).getReference() : null;
-        String typeinfo = type + " (" + type.getClass() + ")" + (refInside == null ? "" : "; ref inside: "+refInside + " ("+refInside.getClass()+") valid:"+refInside.isValid());
+        @NonNls String typeinfo = type + " (" + type.getClass() + ")" + (refInside == null ? "" : "; ref inside: "+refInside + " ("+refInside.getClass()+") valid:"+refInside.isValid());
         LOG.error("Type is invalid: " + typeinfo + "; expr: '" + expr + "' (" + expr.getClass() + ") is valid");
       }
       else {
@@ -129,83 +114,9 @@ public class JavaResolveCache {
     return type == TypeConversionUtil.NULL_TYPE ? null : type;
   }
 
-  private <T extends PsiExpression> void registerDiagnosticsHooks(T expr, PsiType type) {
-    if (type instanceof PsiClassReferenceType) {
-      PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-      ConcurrencyUtil.cacheOrGet(myCachedReferencesInPsiTypes, reference, type);
-      synchronized (myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere) {
-        WeakList<PsiElement> refsTo = myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.get(reference);
-        if (refsTo==null) {
-          refsTo = new WeakList<PsiElement>();
-          myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.put(reference, refsTo);
-        }
-        refsTo.add(expr);
-      }
-      final PsiFile dummyHolder = reference.getContainingFile();
-      if (dummyHolder != null && !dummyHolder.isPhysical()) {
-        PsiElement physicalContext = dummyHolder.getContext();
-        PsiFile physicalFile;
-        if (physicalContext != null &&
-            (physicalFile = physicalContext.getContainingFile()) != null &&
-            physicalFile.getVirtualFile() != null &&
-            !((PsiManagerEx)dummyHolder.getManager()).isAssertOnFileLoading(physicalFile.getVirtualFile())) {
-          DebugUtil.trackInvalidation(physicalContext, "dummy holder was invalidated", new Processor<PsiElement>() {
-            @Override
-            public boolean process(PsiElement element) {
-              DebugUtil.onInvalidated((TreeElement)dummyHolder.getNode());
-              return true;
-            }
-          });
-        }
-      }
-
-      DebugUtil.trackInvalidation(reference, "Reference inside PsiClassReferenceType was invalidated", new Processor<PsiElement>() {
-        @Override
-        public boolean process(PsiElement element) {
-          PsiType cached = myCalculatedTypes.get(element);
-          if (cached != null) {
-            LOG.error(element + " (inside ref) is invalid and yet it is still cached: " + cached);
-          }
-          PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
-          if (cachedRef != null) {
-            LOG.error(element + " (inside ref) is invalid and yet it is still cached in ref cache: " + cachedRef);
-          }
-
-
-          synchronized (myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere) {
-            WeakList<PsiElement> refsTo = myCachedReferenceIn_PsiClassReferenceType_To_ListOfReferencesOfThisType_CachedHere.get(element);
-            if (refsTo != null) {
-              for (PsiElement ref : refsTo) {
-                PsiType cachedT = myCalculatedTypes.get(ref);
-                if (cachedT != null && !cachedT.isValid()) {
-                  LOG.error("During invalidation of " + element + " ("+element.getClass()+")"+
-                            " cached type " + cachedT + " of the ref "+ref+" ("+ref.getClass()+")"+
-                            " became invalid and yet it is still cached"
-                  );
-                }
-              }
-            }
-          }
-
-          return true;
-        }
-      });
-    }
-    DebugUtil.trackInvalidation(expr, "Expression invalidated", new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement element) {
-        PsiType cached = myCalculatedTypes.get(element);
-        if (cached != null) {
-          LOG.error(element + " is invalid and yet it is still cached: " + cached);
-        }
-
-        PsiType cachedRef = myCachedReferencesInPsiTypes.get(element);
-        if (cachedRef != null) {
-          LOG.error(element + " is invalid and yet it is still cached (inside PsiType): " + cachedRef);
-        }
-        return true;
-      }
-    });
+  private <T extends PsiExpression> PsiType getCachedType(T expr) {
+    Reference<PsiType> reference = myCalculatedTypes.get(expr);
+    return reference == null ? null : reference.get();
   }
 
   @Nullable
