@@ -16,9 +16,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.CLASS;
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.INTERFACE;
-
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +33,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.CLASS;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind.INTERFACE;
 
 /**
  * @author ven
@@ -78,7 +78,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     PsiMember contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
 
     while (contextMember != null) {
-      if (contextMember instanceof PsiClass) {
+      if (contextMember instanceof PsiClass && !(contextMember instanceof PsiTypeParameter)) {
         result.add((PsiClass)contextMember);
       }
       run = contextMember;
