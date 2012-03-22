@@ -58,7 +58,7 @@ import java.util.List;
 import java.util.Set;
 
 public class MavenPropertyPsiReference extends MavenPsiReference {
-  private static final String TIMESTAMP_PROP = "maven.build.timestamp";
+  public static final String TIMESTAMP_PROP = "maven.build.timestamp";
 
   protected final MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;

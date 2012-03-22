@@ -43,6 +43,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -51,6 +52,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -144,6 +146,8 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     List<ProcessingItem> allItemsToProcess = new ArrayList<ProcessingItem>();
     List<String> filesToDelete = new ArrayList<String>();
 
+    Date timestamp = new Date();
+
     AccessToken accessToken = ReadAction.start();
     try {
       for (Module eachModule : context.getCompileScope().getAffectedModules()) {
@@ -151,6 +155,13 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (mavenProject == null) continue;
 
         Properties properties = loadPropertiesAndFilters(context, mavenProject);
+        String timestampFormat = properties.getProperty("maven.build.timestamp.format");
+        if (timestampFormat == null) {
+          timestampFormat = "yyyyMMdd-HHmm"; // See ModelInterpolator.DEFAULT_BUILD_TIMESTAMP_FORMAT
+        }
+
+        String timestampString = new SimpleDateFormat(timestampFormat).format(timestamp);
+        properties.setProperty(MavenPropertyPsiReference.TIMESTAMP_PROP, timestampString);
 
         Set<String> nonFilteredExtensions = collectNonFilteredExtensions(mavenProject);
         String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
