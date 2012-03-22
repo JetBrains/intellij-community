@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -44,6 +45,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.RollbackUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +53,7 @@ import java.util.*;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
-import static java.util.Arrays.*;
+import static java.util.Arrays.asList;
 
 public class RollbackAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
@@ -197,12 +199,12 @@ public class RollbackAction extends AnAction implements DumbAware {
   }
 
   private static void rollbackModifiedWithoutEditing(final Project project, final LinkedHashSet<VirtualFile> modifiedWithoutEditing) {
-    final String operationName = RollbackUtil.getRollbackOperationName(project);
+    final String operationName = StringUtil.decapitalize(UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project)));
     String message = (modifiedWithoutEditing.size() == 1)
                      ? VcsBundle.message("rollback.modified.without.editing.confirm.single",
-                                         modifiedWithoutEditing.iterator().next().getPresentableUrl(), operationName)
+                                         operationName, modifiedWithoutEditing.iterator().next().getPresentableUrl())
                      : VcsBundle.message("rollback.modified.without.editing.confirm.multiple",
-                                         modifiedWithoutEditing.size(), operationName);
+                                         operationName, modifiedWithoutEditing.size());
     int rc = showYesNoDialog(project, message, VcsBundle.message("changes.action.rollback.title", operationName), getQuestionIcon());
     if (rc != 0) {
       return;
@@ -237,7 +239,7 @@ public class RollbackAction extends AnAction implements DumbAware {
         }
         if (!exceptions.isEmpty()) {
           AbstractVcsHelper.getInstance(project).showErrors(exceptions, VcsBundle.message("rollback.modified.without.checkout.error.tab",
-                                                            operationName));
+                                                                                          operationName));
         }
         VirtualFileManager.getInstance().refresh(true, new Runnable() {
           public void run() {
