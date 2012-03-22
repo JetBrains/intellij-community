@@ -15,7 +15,14 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,18 +30,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitVcs;
+import git4idea.Notificator;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GitHubCreateGistDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author oleg
@@ -121,42 +130,80 @@ public class GithubCreateGistAction extends DumbAwareAction {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
+        // Using GitHub Gist API v3: http://developer.github.com/v3/gists/
         final HttpClient client = anonymous ? GithubUtil.getHttpClient(null, null) : GithubUtil.getHttpClient(settings.getLogin(), password);
-        final PostMethod method = new PostMethod("https://gist.github.com/gists");
-        method.addParameters(new NameValuePair[]{
-          new NameValuePair("description", description),
-          new NameValuePair("file_ext[gistfile1]", "." + file.getExtension()),
-          new NameValuePair("file_name[gistfile1]", file.getName()),
-          new NameValuePair("file_contents[gistfile1]", text)
-        });
-        if (isPrivate){
-          method.addParameter("action_button", "private");
-        }
+        final PostMethod method = new PostMethod("https://api.github.com/gists");
+
+        String request = prepareJsonRequest(description, isPrivate, text, file);
+
+        String response;
         try {
+          method.setRequestEntity(new StringRequestEntity(request, "application/json", "UTF-8"));
           client.executeMethod(method);
-          final String responce = method.getResponseBodyAsString();
-          // TODO[oleg] fix it when github API v3 becomes public
-          // http://developer.github.com/v3/gists/
-          final Matcher matcher = Pattern.compile("href=\"[^\"]*").matcher(responce);
-          matcher.find();
-          url.set(matcher.group().substring(6));
+          response = method.getResponseBodyAsString();
         }
         catch (IOException e1) {
-          LOG.error("Failed to create gist: " + e1);
+          showError(project, "Failed to create gist", null, null, e1);
           return;
         }
         finally {
           method.releaseConnection();
         }
+
+        JsonObject jsonResponse;
+        try {
+          jsonResponse = new JsonParser().parse(response).getAsJsonObject();
+        }
+        catch (JsonSyntaxException jse) {
+          showError(project, "Couldn't parse GitHub response", null, response, jse);
+          return;
+        }
+
+        JsonElement htmlUrl = jsonResponse.get("html_url");
+        if (htmlUrl == null) {
+          showError(project, "Invalid GitHub response", "No html_url property", response, null);
+          return;
+        }
+        url.set(htmlUrl.getAsString());
       }
     }, "Communicating With GitHub", false, project);
+
     if (url.isNull()){
       return;
     }
     if (openInBrowser) {
       BrowserUtil.launchBrowser(url.get());
     } else {
-      Messages.showInfoMessage(project, "Your gist url: " + url.get(), "Gist Created Successfully");
+      Notificator.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Gist Created Successfully",
+                                              "Your gist url: <a href='open'>" + url.get() + "</a>", NotificationType.INFORMATION,
+                                              new NotificationListener() {
+                                                @Override
+                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                            @NotNull HyperlinkEvent event) {
+                                                  if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                    BrowserUtil.launchBrowser(url.get());
+                                                  }
+                                                }
+                                              });
     }
   }
+
+  private static void showError(@NotNull Project project, @NotNull String title, @Nullable String content,
+                                @Nullable String details, @Nullable Exception e) {
+    Notificator.getInstance(project).notifyError(title, content);
+    LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
+  }
+
+  private static String prepareJsonRequest(String description, boolean isPrivate, String text, VirtualFile file) {
+    JsonObject json = new JsonObject();
+    json.addProperty("description", description);
+    json.addProperty("public", Boolean.toString(!isPrivate));
+    JsonObject file1 = new JsonObject();
+    file1.addProperty("content", text);
+    JsonObject files = new JsonObject();
+    files.add(file.getName(), file1);
+    json.add("files", files);
+    return json.toString();
+  }
+
 }
