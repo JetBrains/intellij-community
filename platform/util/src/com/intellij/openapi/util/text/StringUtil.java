@@ -36,7 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class StringUtil extends StringUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
 
@@ -803,7 +803,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
-    return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
+    return StringUtilRt.endsWithChar(s, suffix);
   }
 
   @NotNull
@@ -2010,11 +2010,13 @@ public class StringUtil extends StringUtilRt {
         while (j < string2Length && isDigit(string2.charAt(j))) j++;
         String digits1 = string1.substring(startNum1, i);
         String digits2 = string2.substring(startNum2, j);
-        if (digits1.length() != digits2.length())
-            return digits1.length() - digits2.length();
+        if (digits1.length() != digits2.length()) {
+          return digits1.length() - digits2.length();
+        }
         int numberDiff = digits1.compareTo(digits2);
-        if (numberDiff != 0)
+        if (numberDiff != 0) {
           return numberDiff;
+        }
         i--;
         j--;
         final int lengthDiff = (i - startNum1) - (j - startNum2);
@@ -2155,5 +2157,68 @@ public class StringUtil extends StringUtilRt {
       buffer.append(text);
     }
     return buffer.toString();
+  }
+
+  public static boolean charsEqualIgnoreCase(char a, char b) {
+    return StringUtilRt.charsEqualIgnoreCase(a, b);
+  }
+
+  public static char toUpperCase(char a) {
+    return StringUtilRt.toUpperCase(a);
+  }
+
+  public static char toLowerCase(final char a) {
+    return StringUtilRt.toLowerCase(a);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text) {
+    return StringUtilRt.convertLineSeparators(text);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, keepCarriageReturn);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text,
+                                             @NotNull String newSeparator,
+                                             @Nullable int[] offsetsToKeep,
+                                             boolean keepCarriageReturn) {
+    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn);
+  }
+
+  public static int parseInt(final String string, final int defaultValue) {
+    return StringUtilRt.parseInt(string, defaultValue);
+  }
+
+  public static double parseDouble(final String string, final double defaultValue) {
+    return StringUtilRt.parseDouble(string, defaultValue);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull Class aClass) {
+    return StringUtilRt.getShortName(aClass);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull String fqName) {
+    return StringUtilRt.getShortName(fqName);
+  }
+
+  @NotNull
+  public static String getShortName(@NotNull String fqName, char separator) {
+    return StringUtilRt.getShortName(fqName, separator);
   }
 }

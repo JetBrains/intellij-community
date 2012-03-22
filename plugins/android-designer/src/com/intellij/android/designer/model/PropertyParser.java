@@ -173,7 +173,7 @@ public class PropertyParser {
   }
 
   @NotNull
-  public ResourceDialog createResourceDialog(ResourceType... types) {
+  public ResourceDialog createResourceDialog(ResourceType[] types) {
     return new ResourceDialog(myModule, types);
   }
 }

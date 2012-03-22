@@ -13,14 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.propertyTable.renderers;
+package com.siyeh.ig.migration;
 
-/**
- * @author Alexander Lobas
- */
-public class BooleanRenderer extends com.intellij.designer.propertyTable.renderers.BooleanRenderer {
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.IGQuickFixesTestCase;
+
+public class StringBufferReplaceableByStringBuilderInspectionTest extends IGQuickFixesTestCase {
   @Override
-  protected boolean getValue(Object value) {
-    return Boolean.parseBoolean((String)value);
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new StringBufferReplaceableByStringBuilderInspection());
+    myRelativePath = "stringBuffer_stringBuilder";
+    myDefaultHint = InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
+  }
+
+  public void testCallChain() {
+    doTest();
   }
 }

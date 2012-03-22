@@ -30,6 +30,17 @@ public class ChangeClassSignatureTest extends LightRefactoringTestCase {
     });
   }
 
+  public void testInstanceOf() throws Exception {
+    doTest(new GenParams() {
+      @Override
+      public TypeParameterInfo[] gen(PsiClass aClass) throws IncorrectOperationException {
+        return new TypeParameterInfo[]{
+          new TypeParameterInfo(aClass, "T", "java.lang.String")
+        };
+      }
+    });
+  }
+
   public void testSubstituteParamInsideClass() throws Exception {
     doTest(new GenParams() {
       @Override

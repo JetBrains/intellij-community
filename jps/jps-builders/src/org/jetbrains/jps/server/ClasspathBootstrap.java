@@ -15,29 +15,24 @@
  */
 package org.jetbrains.jps.server;
 
-import com.google.common.cache.CacheBuilder;
+import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.jgoodies.forms.layout.CellConstraints;
-import com.sun.jna.Pointer;
-import gnu.trove.TIntHash;
 import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
+import org.jboss.netty.util.Version;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.commons.EmptyVisitor;
 
 import javax.tools.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -88,24 +83,18 @@ public class ClasspathBootstrap {
   public static List<File> getCompileServerApplicationClasspath() {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourcePath(Server.class));
-    cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
-    cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
-    cp.add(getResourcePath(TIntHash.class));  // trove
-    cp.add(getResourcePath(FileUtilRt.class));  // util-rt module
-    cp.add(getResourcePath(FileUtil.class));  // util module
-    cp.add(getResourcePath(Pointer.class));  // jna.jar
-    cp.add(getResourcePath(CacheBuilder.class));  // guava
+    for (String path : PathManager.getUtilClassPath()) { cp.add(new File(path)); } // util
+    cp.add(getResourcePath(Message.class)); // protobuf
+    cp.add(getResourcePath(Version.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
-    cp.add(getResourcePath(org.objectweb.asm.commons.EmptyVisitor.class));  // asm-commons
+    cp.add(getResourcePath(EmptyVisitor.class));  // asm-commons
     cp.add(getResourcePath(MacroExpander.class));  // jps-model
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
     cp.add(getResourcePath(GroovyException.class));  // groovy
-    cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
     cp.add(getResourcePath(GridConstraints.class));  // forms-rt
     cp.add(getResourcePath(CellConstraints.class));  // jgoodies-forms
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    cp.add(getResourcePath(org.apache.log4j.Logger.class)); // log4j
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
@@ -133,14 +122,9 @@ public class ClasspathBootstrap {
   public static List<File> getJavacServerClasspath() {
     final Set<File> cp = new LinkedHashSet<File>();
     cp.add(getResourcePath(JavacServer.class));
-    cp.add(getResourcePath(com.google.protobuf.Message.class)); // protobuf
-    cp.add(getResourcePath(org.jboss.netty.bootstrap.Bootstrap.class)); // netty
-    cp.add(getResourcePath(TIntHash.class));  // trove
-    cp.add(getResourcePath(FileUtilRt.class));  // util-rt module
-    cp.add(getResourcePath(FileUtil.class));  // util module
-    cp.add(getResourcePath(Pointer.class));  // jna.jar
-    cp.add(getResourcePath(CacheBuilder.class));  // guava
-    cp.add(getResourcePath(org.jdom.input.SAXBuilder.class));  // jdom
+    for (String path : PathManager.getUtilClassPath()) { cp.add(new File(path)); } // util
+    cp.add(getResourcePath(Message.class)); // protobuf
+    cp.add(getResourcePath(Version.class)); // netty
 
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
@@ -178,5 +162,4 @@ public class ClasspathBootstrap {
   public static File getResourcePath(Class aClass) {
     return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
   }
-
 }

@@ -26,19 +26,28 @@ import javax.swing.*;
  * @author Alexander Lobas
  */
 public class StringsComboEditor extends ComboEditor {
+  public static final String UNSET = "<unset>";
+
   public StringsComboEditor(String[] values) {
-    myCombo.setModel(new DefaultComboBoxModel(values));
+    DefaultComboBoxModel model = new DefaultComboBoxModel(values);
+    model.insertElementAt(UNSET, 0);
+    myCombo.setModel(model);
+  }
+
+  @Override
+  public Object getValue() throws Exception {
+    Object item = myCombo.getSelectedItem();
+    return item == UNSET ? null : item;
   }
 
   @NotNull
   @Override
   public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
-    myCombo.setSelectedItem(value);
+    setValue(value);
     return myCombo;
   }
 
-  @Override
-  public Object getValue() throws Exception {
-    return myCombo.getSelectedItem();
+  protected void setValue(Object value) {
+    myCombo.setSelectedItem(value);
   }
 }

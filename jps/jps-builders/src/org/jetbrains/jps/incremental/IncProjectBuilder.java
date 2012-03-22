@@ -87,7 +87,15 @@ public class IncProjectBuilder {
     CompileContext context = null;
     try {
       try {
-        context = createContext(scope, isMake, isProjectRebuild);
+        if (myProjectDescriptor.dataManager.versionDiffers()) {
+          myMessageDispatcher.processMessage(new CompilerMessage(
+            COMPILE_SERVER_NAME, BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"
+          ));
+          context = createContextForForcedRebuild(scope, isMake, isProjectRebuild);
+        }
+        else {
+          context = createContext(scope, isMake, isProjectRebuild);
+        }
         runBuild(context);
       }
       catch (ProjectBuildException e) {
@@ -100,20 +108,14 @@ public class IncProjectBuilder {
             e.getMessage())
           );
           flushContext(context);
-          if (isMake || isProjectRebuild) {
-            context = createContext(new AllProjectScope(scope.getProject(), scope.getArtifacts(), true), false, true);
-          }
-          else {
-            //in case of forced compilation keep the scope, but remove all caches
-            context = createContext(scope, false, false);
-            cleanOutputRoots(context);
-          }
+          context = createContextForForcedRebuild(scope, isMake, isProjectRebuild);
           runBuild(context);
         }
         else {
           throw e;
         }
       }
+      myProjectDescriptor.dataManager.saveVersion();
     }
     catch (ProjectBuildException e) {
       final Throwable cause = e.getCause();
@@ -131,6 +133,19 @@ public class IncProjectBuilder {
       memWatcher.stop();
       flushContext(context);
     }
+  }
+
+  private CompileContext createContextForForcedRebuild(CompileScope scope, boolean isMake, boolean isProjectRebuild) throws ProjectBuildException {
+    final CompileContext context;
+    if (isMake || isProjectRebuild) {
+      context = createContext(new AllProjectScope(scope.getProject(), scope.getArtifacts(), true), false, true);
+    }
+    else {
+      //in case of forced compilation keep the scope, but remove all caches
+      context = createContext(scope, false, false);
+      cleanOutputRoots(context);
+    }
+    return context;
   }
 
   private static void flushContext(CompileContext context) {

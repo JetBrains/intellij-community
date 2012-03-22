@@ -18,6 +18,7 @@ package com.intellij;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -27,6 +28,7 @@ import java.util.ResourceBundle;
 /**
  * @author yole
  */
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class CommonBundle extends BundleBase {
   public static boolean assertKeyIsFound = false;
 
@@ -48,6 +50,18 @@ public class CommonBundle extends BundleBase {
       ourBundle = new SoftReference<ResourceBundle>(bundle);
     }
     return bundle;
+  }
+
+  public static String messageOrDefault(@Nullable final ResourceBundle bundle,
+                                        final String key,
+                                        @Nullable final String defaultValue,
+                                        final Object... params) {
+    return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
+  }
+
+  @NotNull
+  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, @NotNull Object... params) {
+    return BundleBase.message(bundle, key, params);
   }
 
   @NotNull

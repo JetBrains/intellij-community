@@ -48,13 +48,13 @@ public abstract class PropertyEditor {
     myListenerList.remove(PropertyEditorListener.class, listener);
   }
 
-  protected final void fireEditingCancelled() {
+  public final void fireEditingCancelled() {
     for (PropertyEditorListener listener : myListenerList.getListeners(PropertyEditorListener.class)) {
       listener.editingCanceled(this);
     }
   }
 
-  protected final void fireValueCommitted(boolean continueEditing, boolean closeEditorOnError) {
+  public final void fireValueCommitted(boolean continueEditing, boolean closeEditorOnError) {
     for (PropertyEditorListener listener : myListenerList.getListeners(PropertyEditorListener.class)) {
       listener.valueCommitted(this, continueEditing, closeEditorOnError);
     }

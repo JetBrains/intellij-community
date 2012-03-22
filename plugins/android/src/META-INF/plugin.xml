@@ -217,7 +217,7 @@
     <renameHandler implementation="org.jetbrains.android.AndroidRenameHandler" order="first"/>
 
     <compileServer.plugin jar-path="jps/android-jps-plugin.jar"/>
-    <compileServer.plugin jar-path="android-rt.jar"/>
+    <compileServer.plugin jar-path="android-common.jar"/>
 
     <compileServer.plugin jar-path="sdklib.jar"/>
     <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/sdklib.jar"/>

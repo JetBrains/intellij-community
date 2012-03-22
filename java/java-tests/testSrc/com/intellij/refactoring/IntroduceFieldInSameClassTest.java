@@ -1,11 +1,14 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+
+import java.util.List;
 
 /**
  * @author ven
@@ -115,4 +118,16 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterLocalVarAnnotations.java");
   }
+  
+  public void testStaticFieldInInnerClass() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeStaticFieldInInnerClass.java");
+    new MockIntroduceFieldHandler(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD, false){
+      @Override
+      protected int getChosenClassIndex(List<PsiClass> classes) {
+        return 0;
+      }
+    }.invoke(getProject(), myEditor, myFile, null);
+    checkResultByFile("/refactoring/introduceField/afterStaticFieldInInnerClass.java");
+  }
+  
 }

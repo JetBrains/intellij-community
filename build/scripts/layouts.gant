@@ -383,7 +383,10 @@ public def layoutCommunityPlugins(String home) {
         exclude(name: "**/ddmlib_1.jar")
       }
 
-      jar("android_rt.jar") {module("android-rt")}
+      jar("android-common.jar") {
+        module("android-rt")
+        module("android-common")
+      }
 
       dir("jps") {
         jar("android-jps-plugin.jar") { module("android-jps-plugin") }

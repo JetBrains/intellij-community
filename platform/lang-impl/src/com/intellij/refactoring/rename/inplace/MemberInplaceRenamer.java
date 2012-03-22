@@ -233,12 +233,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  public void finish(boolean success) {
-    super.finish(success);
-    if (success) {
-      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).startDumb();
-      revertState();
-    }
+  protected void revertStateOnFinish() {
+    ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).startDumb();
+    revertState();
   }
 
   @Nullable

@@ -27,10 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
@@ -68,16 +65,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInNonJavaFiles;
   private final PackageWrapper myTargetPackage;
   private final MoveCallback myMoveCallback;
-  protected final MoveDestination myMoveDestination;
+  protected @NotNull final MoveDestination myMoveDestination;
   protected NonCodeUsageInfo[] myNonCodeUsages;
 
-  public MoveClassesOrPackagesProcessor(
-    Project project,
-    PsiElement[] elements,
-    final MoveDestination moveDestination,
-    boolean searchInComments,
-    boolean searchInNonJavaFiles,
-    MoveCallback moveCallback) {
+  public MoveClassesOrPackagesProcessor(Project project,
+                                        PsiElement[] elements,
+                                        @NotNull final MoveDestination moveDestination,
+                                        boolean searchInComments,
+                                        boolean searchInNonJavaFiles,
+                                        MoveCallback moveCallback) {
     super(project);
     final Set<PsiElement> toMove = new LinkedHashSet<PsiElement>();
     for (PsiElement element : elements) {
@@ -87,7 +83,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         toMove.add(element);
       }
     }
-    myElementsToMove = PsiUtilBase.toPsiElementArray(toMove);
+    myElementsToMove = PsiUtilCore.toPsiElementArray(toMove);
     Arrays.sort(myElementsToMove, new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
@@ -451,7 +447,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           if (allClasses.containsKey(psiClass)) {
             continue;
           }
-          final PsiClass[] classes = ((PsiClassOwner)element.getContainingFile()).getClasses();
+          final PsiClassOwner containingFile = (PsiClassOwner)element.getContainingFile();
+          final PsiClass[] classes = containingFile.getClasses();
           boolean all = true;
           for (PsiClass aClass : classes) {
             if (ArrayUtil.find(myElementsToMove, aClass) == -1) {
@@ -464,14 +461,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           }
         }
       }
-      Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
+      final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement element = myElementsToMove[idx];
         final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
         if (element instanceof PsiPackage) {
           final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
-          final PsiPackage newElement =
-          MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
+          final PsiPackage newElement = MoveClassesOrPackagesUtil.doMovePackage((PsiPackage)element, myMoveDestination);
+          LOG.assertTrue(newElement != null);
           oldToNewElementsMapping.put(element, newElement);
           int i = 0;
           final PsiDirectory[] newDirectories = newElement.getDirectories();

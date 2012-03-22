@@ -40,7 +40,8 @@ public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
     setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
   }
 
-  public JLabel getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus) {
+  @NotNull
+  public JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus) {
     // Reset text and icon
     setText(null);
     setIcon(null);

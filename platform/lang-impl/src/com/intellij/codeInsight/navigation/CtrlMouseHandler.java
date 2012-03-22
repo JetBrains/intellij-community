@@ -398,7 +398,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
         else if (targetElements.length == 1) {
           if (targetElements[0] != resolvedElement && elementAtPointer != null && targetElements[0].isPhysical()) {
-            return new InfoSingle(elementAtPointer, targetElements[0]);
+            return ref != null ? new InfoSingle(ref, targetElements[0]) : new InfoSingle(elementAtPointer, targetElements[0]);
           }
         }
         else {

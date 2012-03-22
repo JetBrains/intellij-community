@@ -268,6 +268,10 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     myDelegateMessageHandler.processMessage(msg);
   }
 
+  public boolean errorsDetected() {
+    return myErrorsFound;
+  }
+
   public void processFilesToRecompile(ModuleChunk chunk, FileProcessor processor) throws IOException {
     for (Module module : chunk.getModules()) {
       myFsState.processFilesToRecompile(this, module, processor);

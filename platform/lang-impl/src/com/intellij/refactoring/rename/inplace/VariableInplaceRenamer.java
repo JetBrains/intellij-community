@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageNamesValidation;
@@ -192,6 +191,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected void performRefactoringRename(final String newName,
                                           final StartMarkAction markAction) {
     try {
+      if (!isIdentifier(newName)) {
+        return;
+      }
       PsiNamedElement elementToRename = getVariable();
       if (elementToRename != null) {
         new WriteCommandAction(myProject, getCommandName()) {
@@ -288,14 +290,26 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return bind;
   }
 
+  @Override
+  public void finish(boolean success) {
+    super.finish(success);
+    if (success) {
+      revertStateOnFinish();
+    }
+    else {
+      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+    }
+  }
+
+  protected void revertStateOnFinish() {
+    if (!isIdentifier(myInsertedName)) {
+      revertState();
+    }
+  }
+
   private boolean isIdentifier(final String newName) {
 
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(myLanguage);
     return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
-  }
-
-  @Override
-  protected LookupElement[] createLookupItems(final LookupElement[] lookupItems, final String name) {
-    return lookupItems;
   }
 }

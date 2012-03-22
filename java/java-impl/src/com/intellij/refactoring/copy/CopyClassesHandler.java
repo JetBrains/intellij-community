@@ -298,7 +298,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   @Nullable
   public static PsiElement doCopyClasses(final Map<PsiFile, PsiClass[]> fileToClasses,
-                                         HashMap<PsiFile, String> map, final String copyClassName,
+                                         @Nullable HashMap<PsiFile, String> map, final String copyClassName,
                                          final PsiDirectory targetDirectory,
                                          final Project project) throws IncorrectOperationException {
     PsiElement newElement = null;
@@ -345,8 +345,12 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     
     for (PsiFile file : files) {
       try {
-        final PsiFile fileCopy =
-          CopyFilesOrDirectoriesHandler.copyToDirectory(file, getNewFileName(file, copyClassName), targetDirectory, choice);
+        PsiDirectory finalTarget = targetDirectory;
+        final String relativePath = map != null ? map.get(file) : null;
+        if (relativePath != null && !relativePath.isEmpty()) {
+          finalTarget = buildRelativeDir(targetDirectory, relativePath).findOrCreateTargetDirectory();
+        }
+        final PsiFile fileCopy = CopyFilesOrDirectoriesHandler.copyToDirectory(file, getNewFileName(file, copyClassName), finalTarget, choice);
         if (fileCopy != null) {
           createdFiles.add(fileCopy);
         }

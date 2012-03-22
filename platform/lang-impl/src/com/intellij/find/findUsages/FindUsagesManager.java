@@ -403,7 +403,7 @@ public class FindUsagesManager implements JDOMExternalizable {
               .processRequests(options.fastTrack, new ReadActionProcessor<PsiReference>() {
                 @Override
                 public boolean processInReadAction(final PsiReference ref) {
-                  return usageInfoProcessor.process(new UsageInfo(ref));
+                  return !ref.getElement().isValid() || usageInfoProcessor.process(new UsageInfo(ref));
                 }
               });
         }

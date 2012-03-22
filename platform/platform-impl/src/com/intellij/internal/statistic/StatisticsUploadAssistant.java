@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -38,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class StatisticsUploadAssistant {
+
+    private static final Logger LOG = Logger.getInstance("#com.intellij.internal.statistic.StatisticsUploadAssistant");
 
     public String getData() {
         return getData(Collections.<String>emptySet());
@@ -233,7 +236,13 @@ public class StatisticsUploadAssistant {
             final GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
 
             if (!disabledGroups.contains(groupDescriptor.getId())) {
-                usageDescriptors.put(groupDescriptor, usagesCollector.getUsages(project));
+              try {
+                final Set<UsageDescriptor> usages = usagesCollector.getUsages(project);
+                usageDescriptors.put(groupDescriptor, usages);
+              }
+              catch (CollectUsagesException e) {
+                LOG.info(e);
+              }
             }
         }
 
