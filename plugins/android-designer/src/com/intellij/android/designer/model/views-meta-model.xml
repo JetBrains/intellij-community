@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <meta-model>
+
+  <!-- ================= Roots ================= -->
+
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         layout="com.intellij.android.designer.model.RadViewLayout"
         tag="&lt;root&gt;">
@@ -31,32 +35,10 @@
   <meta class="class android.view.ViewGroup">
     <properties
         expert="animateLayoutChanges clipChildren clipToPadding layoutAnimation animationCache persistentDrawingCache alwaysDrawnWithCache addStatesFromChildren descendantFocusability splitMotionEvents"
-    />
+        />
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
-        class="android.widget.Button"
-        tag="Button">
-    <presentation title=" - &quot;%text%&quot;"/>
-
-    <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
-             tooltip="Represents a push-button widget."/>
-
-    <properties
-        important="onClick"
-        expert="editable password autoLink linksClickable numeric digits phoneNumber inputMethod autoText inputType textIsSelectable"
-    />
-
-    <creation>
-      <![CDATA[
-          <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="New Button"
-          />
-      ]]>
-    </creation>
-  </meta>
+  <!-- ================= Widgets ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.widget.TextView"
@@ -69,7 +51,7 @@
     <properties
         important="text hint textColor typeface textStyle gravity editable enabled"
         expert="bufferType textScaleX cursorVisible scrollHorizontally includeFontPadding shadowDx shadowDy shadowRadius freezesText drawableTop drawableLeft drawableStart drawablePadding lineSpacingExtra lineSpacingMultiplier imeOptions privateImeOptions imeActionLabel imeActionId editorExtras textSelectHandleLeft textSelectHandleRight textSelectHandle textEditPasteWindowLayout textEditNoPasteWindowLayout textEditSideNoPasteWindowLayout textEditSuggestionItemLayout textCursorDrawable textAllCaps maxEms ems minEms"
-    />
+        />
 
     <creation>
       <![CDATA[
@@ -83,6 +65,118 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.Button"
+        tag="Button">
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
+             tooltip="Represents a push-button widget."/>
+
+    <properties
+        important="onClick"
+        expert="editable password autoLink linksClickable numeric digits phoneNumber inputMethod autoText inputType textIsSelectable"
+        />
+
+    <creation>
+      <![CDATA[
+          <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Button"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta class="android.widget.CompoundButton">
+    <properties important="checked button"/>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.Switch"
+        tag="Switch">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="Switch" icon="/com/intellij/android/designer/icons/Switch.png"
+             tooltip="A Switch is a two-state toggle switch widget that can select between two options."/>
+
+    <creation>
+      <![CDATA[
+          <Switch
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Switch"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.RadioButton"
+        tag="RadioButton">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="RadioButton" icon="/com/intellij/android/designer/icons/RadioButton.png"
+             tooltip="A radio button is a two-states button that can be either checked or unchecked."/>
+
+    <creation>
+      <![CDATA[
+          <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New RadioButton"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.CheckBox"
+        tag="CheckBox">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="CheckBox" icon="/com/intellij/android/designer/icons/CheckBox.png"
+             tooltip="A checkbox is a specific type of two-states button that can be either checked or unchecked."/>
+
+    <creation>
+      <![CDATA[
+          <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New CheckBox"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.ToggleButton"
+        tag="ToggleButton">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="ToggleButton" icon="/com/intellij/android/designer/icons/ToggleButton.png"
+             tooltip="Displays checked/unchecked states as a button with a 'light' indicator and by default accompanied with the text 'ON' or 'OFF'. "/>
+
+    <properties important="textOn textOff disabledAlpha"/>
+
+    <creation>
+      <![CDATA[
+          <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New ToggleButton"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <!-- ================= Layouts ================= -->
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
         layout="com.intellij.android.designer.model.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
@@ -92,7 +186,7 @@
 
     <properties
         important="orientation gravity"
-    />
+        />
 
     <creation>
       <![CDATA[
@@ -105,9 +199,14 @@
     </creation>
   </meta>
 
+  <!-- ================= Palette ================= -->
+
   <palette>
     <group name="Widgets">
       <item tag="Button"/>
+      <item tag="RadioButton"/>
+      <item tag="CheckBox"/>
+      <item tag="ToggleButton"/>
       <item tag="TextView"/>
     </group>
     <group name="Containers">
