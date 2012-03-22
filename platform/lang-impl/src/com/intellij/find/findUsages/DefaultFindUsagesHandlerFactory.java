@@ -16,7 +16,6 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;

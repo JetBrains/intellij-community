@@ -41,7 +41,7 @@ public class BaseFilterLexerUtil {
     }
 
     final boolean needTodo = content.getFile().getFileSystem() instanceof LocalFileSystem;
-    final boolean needIdIndex = IdTableBuilding.getFileTypeIndexer(content.getFileType()) instanceof LexerBasedIdIndexer;
+    final boolean needIdIndex = IdTableBuilding.getInstance().getFileTypeIndexer(content.getFileType()) instanceof LexerBasedIdIndexer;
 
     final IdDataConsumer consumer = needIdIndex? new IdDataConsumer():null;
     final OccurrenceConsumer todoOccurrenceConsumer = new OccurrenceConsumer(consumer, needTodo);

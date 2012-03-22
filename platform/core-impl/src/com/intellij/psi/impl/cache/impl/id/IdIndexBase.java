@@ -37,6 +37,16 @@ import java.util.Map;
 public abstract class IdIndexBase extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
+  private IdTableBuilding myIdTableBuilding;
+
+  public IdIndexBase(IdTableBuilding idTableBuilding) {
+    myIdTableBuilding = idTableBuilding;
+  }
+
+  public IdTableBuilding getIdTableBuilding() {
+    return myIdTableBuilding;
+  }
+
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
@@ -73,7 +83,7 @@ public abstract class IdIndexBase extends FileBasedIndexExtension<IdIndexEntry, 
     @Override
     @NotNull
     public Map<IdIndexEntry, Integer> map(final FileContent inputData) {
-      final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(inputData.getFileType());
+      final FileTypeIdIndexer indexer = getIdTableBuilding().getFileTypeIndexer(inputData.getFileType());
       if (indexer != null) {
         return indexer.map(inputData);
       }

@@ -24,10 +24,14 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class IdIndex extends IdIndexBase {
+  public IdIndex(IdTableBuilding idTableBuilding) {
+    super(idTableBuilding);
+  }
+
   protected boolean isIndexable(VirtualFile file, FileType fileType) {
     return (fileType instanceof LanguageFileType ||
             fileType instanceof AbstractFileType ||
-            IdTableBuilding.isIdIndexerRegistered(fileType) ||
+            getIdTableBuilding().isIdIndexerRegistered(fileType) ||
             CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null) &&
            !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
   }
