@@ -22,14 +22,12 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
-import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
@@ -40,29 +38,12 @@ import java.util.*;
 
 public abstract class MavenImporter {
   public static ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
+  protected final String myPluginGroupID;
+  protected final String myPluginArtifactID;
 
-  @Deprecated
-  protected String myPluginGroupID;
-
-  @Deprecated
-  protected String myPluginArtifactID;
-
-  private final NullableFunction<MavenProject, MavenPlugin> myPluginFinder;
-
-  public MavenImporter(final String pluginGroupID, final String pluginArtifactID) {
-    this(new NullableFunction<MavenProject, MavenPlugin>() {
-      @Override
-      public MavenPlugin fun(MavenProject mavenProject) {
-        return mavenProject.findPlugin(pluginGroupID, pluginArtifactID);
-      }
-    });
-
+  public MavenImporter(String pluginGroupID, String pluginArtifactID) {
     myPluginGroupID = pluginGroupID;
     myPluginArtifactID = pluginArtifactID;
-  }
-
-  protected MavenImporter(NullableFunction<MavenProject, MavenPlugin> pluginFinder) {
-    myPluginFinder = pluginFinder;
   }
 
   public static List<MavenImporter> getSuitableImporters(MavenProject p) {
@@ -100,13 +81,8 @@ public abstract class MavenImporter {
     });
   }
 
-  @Nullable
-  protected MavenPlugin getPlugin(MavenProject mavenProject) {
-    return myPluginFinder.fun(mavenProject);
-  }
-
   public boolean isApplicable(MavenProject mavenProject) {
-    return getPlugin(mavenProject) != null;
+    return mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
   }
 
   @NotNull
@@ -160,8 +136,7 @@ public abstract class MavenImporter {
 
   @Nullable
   protected Element getConfig(MavenProject p) {
-    MavenPlugin plugin = getPlugin(p);
-    return plugin == null ? null : plugin.getConfigurationElement();
+    return p.getPluginConfiguration(myPluginGroupID, myPluginArtifactID);
   }
 
   @Nullable
@@ -180,9 +155,8 @@ public abstract class MavenImporter {
   }
 
   @Nullable
-  protected Element getGoalConfig(MavenProject p, @NotNull String goal) {
-    MavenPlugin plugin = getPlugin(p);
-    return plugin == null ? null : plugin.getGoalConfiguration(goal);
+  protected Element getGoalConfig(MavenProject p, String goal) {
+    return p.getPluginGoalConfiguration(myPluginGroupID, myPluginArtifactID, goal);
   }
 
   @Nullable
