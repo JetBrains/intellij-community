@@ -23,11 +23,8 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,8 +50,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -181,38 +175,46 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private void updateComboboxSelection(boolean force) {
     final String prevFilter = myFilterString;
     final JTextComponent field = (JTextComponent)myCombobox.getEditor().getEditorComponent();
-    final String prefix = field.getText();
     final int caret = field.getCaretPosition();
-    myFilterString = prefix.toUpperCase();
+    myFilterString = field.getText();
 
-    if (!force && myFilterString.equals(prevFilter)) return;
+    if (!force && Comparing.equal(myFilterString, prevFilter)) return;
+    int prevSize = myShownItems.size();
     myShownItems.clear();
-    final boolean itemSelected = Comparing.equal(myCombobox.getSelectedItem(), prefix);
+    final boolean itemSelected = myCoordinates.containsKey(myFilterString) &&
+                                 Comparing.strEqual((String)myCombobox.getSelectedItem(), myFilterString, false);
+    final boolean filtered;
     if (itemSelected) {
       myShownItems.addAll(myCoordinates.keySet());
+      filtered = false;
     }
     else {
       final String[] parts = myFilterString.split(" ");
       main:
       for (String coordinate : myCoordinates.keySet()) {
-        final String candidate = coordinate.toUpperCase();
         for (String part : parts) {
-          if (!candidate.contains(part)) continue main;
+          if (!StringUtil.containsIgnoreCase(coordinate, part)) continue main;
         }
         myShownItems.add(coordinate);
       }
-      if (myShownItems.isEmpty()) {
+      filtered = !myShownItems.isEmpty();
+      if (!filtered) {
         myShownItems.addAll(myCoordinates.keySet());
       }
       myCombobox.setSelectedItem(null);
     }
     Collections.sort(myShownItems);
     ((CollectionComboBoxModel)myCombobox.getModel()).update();
-    field.setText(prefix);
+    field.setText(myFilterString);
     field.setCaretPosition(caret);
     updateInfoLabel();
-    if (myCombobox.getEditor().getEditorComponent().hasFocus()) {
-      myCombobox.setPopupVisible(!myShownItems.isEmpty() && !itemSelected);
+    if (filtered) {
+      if (prevSize < 10 && myShownItems.size() > prevSize && myCombobox.isPopupVisible()) {
+        myCombobox.setPopupVisible(false);
+      }
+      if (!myCombobox.isPopupVisible()) {
+        myCombobox.setPopupVisible(filtered);
+      }
     }
   }
 
@@ -232,12 +234,16 @@ public class RepositoryAttachDialog extends DialogWrapper {
               myRepositories.put(each.second.getUrl(), each.second);
             }
           }
-          if (Boolean.TRUE.equals(tooMany)) {
-            final Point point = new Point(myCombobox.getWidth() / 2, 0);
-            JBPopupFactory.getInstance()
-              .createHtmlTextBalloonBuilder("Too many results found, please refine your query.", MessageType.WARNING, null).
-              setHideOnClickOutside(true).
-              createBalloon().show(new RelativePoint(myCombobox, point), Balloon.Position.above);
+          String title = getTitle();
+          String tooManyMessage = ": too many results found";
+          if (tooMany != null) {
+            boolean alreadyThere = title.endsWith(tooManyMessage);
+            if (tooMany.booleanValue() && !alreadyThere) {
+              setTitle(title + tooManyMessage);
+            }
+            else if (!tooMany.booleanValue() && alreadyThere) {
+              setTitle(title.substring(0, title.length() - tooManyMessage.length()));
+            }
           }
           updateComboboxSelection(prevSize != myCoordinates.size());
           return true;

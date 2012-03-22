@@ -33,6 +33,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -198,7 +199,6 @@ public class RepositoryAttachHandler {
         for (int i = 0, length = urls.length; i < length; i++) {
           if (!proceedFlag.get()) break;
           final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
-          final Ref<Boolean> tooManyRef = Ref.create(null);
           try {
             String serviceUrl = urls[i];
             final List<MavenArtifactInfo> artifacts;
@@ -219,19 +219,24 @@ public class RepositoryAttachHandler {
                 }
               }
             }
-            tooManyRef.set(i == length - 1 ? tooManyResults : null);
           }
           catch (Exception e) {
             MavenLog.LOG.error(e);
           }
           finally {
             if (!proceedFlag.get()) break;
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (!proceedFlag.get()) return;
-                proceedFlag.set(resultProcessor.process(resultList, tooManyRef.get()));
-              }
-            });
+            final Boolean aBoolean = i == length - 1 ? tooManyResults : null;
+            ApplicationManager.getApplication().invokeLater(
+              new Runnable() {
+                public void run() {
+                  proceedFlag.set(resultProcessor.process(resultList, aBoolean));
+                }
+              }, new Condition() {
+                @Override
+                public boolean value(Object o) {
+                  return !proceedFlag.get();
+                }
+              });
           }
         }
       }
