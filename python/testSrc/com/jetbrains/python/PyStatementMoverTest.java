@@ -41,11 +41,15 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testCommentOut() {  //PY-5527
+    doTest();
+  }
+
   public void testMoveDownOut() {
     doTest();
   }
 
-  public void testComment() {
+  public void testComment() {   //PY-5270
     doTest();
   }
 

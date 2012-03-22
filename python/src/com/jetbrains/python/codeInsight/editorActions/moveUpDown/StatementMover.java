@@ -129,7 +129,7 @@ public class StatementMover extends LineMover {
     PyElement statementPart = getStatementParts(info, editor, file, down).first;
     if (statementPart instanceof PyStatementPart) {
       PyStatementList statementList = ((PyStatementPart)statementPart).getStatementList();
-      if (statementList != null && statementList.getStatements().length == 1) {
+      if (statementList != null && statementList.getStatements().length == 1 && !(myStatementToMove instanceof PsiComment)) {
         if (theSameLevel) {
           myStatementListToAddPassAfter = statementList;
         }
