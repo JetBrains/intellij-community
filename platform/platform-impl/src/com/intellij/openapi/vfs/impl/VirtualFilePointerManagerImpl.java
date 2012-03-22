@@ -72,7 +72,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   synchronized void clearPointerCaches(String url, VirtualFilePointerListener listener) {
     TreeMap<String, VirtualFilePointerImpl> urlToPointer = myUrlToPointerMaps.get(listener);
-    assert urlToPointer != null;
+    assert urlToPointer != null : url;
     urlToPointer.remove(VfsUtil.urlToPath(url));
     if (urlToPointer.isEmpty()) {
       myUrlToPointerMaps.remove(listener);
