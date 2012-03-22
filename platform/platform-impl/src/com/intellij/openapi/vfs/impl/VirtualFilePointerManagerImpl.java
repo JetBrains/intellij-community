@@ -52,7 +52,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final Set<VirtualFilePointerContainerImpl> myContainers = new THashSet<VirtualFilePointerContainerImpl>(TObjectHashingStrategy.IDENTITY);
   private final VirtualFileManagerEx myVirtualFileManager;
   private final MessageBus myBus;
-  private static final Comparator<String> COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
+  private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? new Comparator<String>() {
     @Override
     public int compare(@NotNull String url1, @NotNull String url2) {
       return url1.compareTo(url2);
@@ -70,9 +70,18 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new VFSEventsProcessor());
   }
 
-  synchronized void clearPointerCaches(String url, VirtualFilePointerListener listener) {
+  synchronized void clearPointerCaches(VirtualFile file, String url, VirtualFilePointerListener listener) {
+    if (file != null) {
+      removeFromMap(file.getUrl(), listener);
+    }
+    if (url != null && (file == null || URL_COMPARATOR.compare(url, file.getUrl()) != 0)) {
+      removeFromMap(url, listener);
+    }
+  }
+
+  private void removeFromMap(String url, VirtualFilePointerListener listener) {
     TreeMap<String, VirtualFilePointerImpl> urlToPointer = myUrlToPointerMaps.get(listener);
-    assert urlToPointer != null;
+    assert urlToPointer != null : url;
     urlToPointer.remove(VfsUtil.urlToPath(url));
     if (urlToPointer.isEmpty()) {
       myUrlToPointerMaps.remove(listener);
@@ -272,7 +281,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private synchronized VirtualFilePointerImpl getOrCreate(VirtualFile file, @NotNull String url, Disposable parentDisposable, @Nullable VirtualFilePointerListener listener, String path) {
     TreeMap<String, VirtualFilePointerImpl> urlToPointer = myUrlToPointerMaps.get(listener);
     if (urlToPointer == null) {
-      urlToPointer = new TreeMap<String, VirtualFilePointerImpl>(COMPARATOR);
+      urlToPointer = new TreeMap<String, VirtualFilePointerImpl>(URL_COMPARATOR);
       myUrlToPointerMaps.put(listener, urlToPointer);
     }
     VirtualFilePointerImpl pointer = urlToPointer.get(path);
