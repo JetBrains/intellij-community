@@ -67,7 +67,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
             for (String root : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
               if (vFile.getUrl().contains(root)) {
                 if (containsNose) {
-                  updateTestFrameworks(sdk.getHomePath(), NOSETESTSEARCHER, "nosetest");
+                  updateTestFrameworks(sdk.getHomePath(), NOSETESTSEARCHER, "nose");
                   break SDKLOOP;
                 }
                 else if (containsPy) {
@@ -87,7 +87,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
 
   public void updateAllTestFrameworks(final String sdkHome) {
     updateTestFrameworks(sdkHome, PYTESTSEARCHER, "pytest");
-    updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nosetest");
+    updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nose");
     updateTestFrameworks(sdkHome, ATTESTSEARCHER, "attest");
     myQueue.flush();
   }
@@ -175,7 +175,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   public boolean isNoseTestInstalled(final String sdkHome) {
     Boolean isInstalled = SDK_TO_NOSETEST.get(sdkHome);
     if (isInstalled == null) {
-      updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nosetest");
+      updateTestFrameworks(sdkHome, NOSETESTSEARCHER, "nose");
       return true;
     }
     return isInstalled;
@@ -195,7 +195,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
   }
 
   public void testInstalled(boolean installed, String sdkHome, String name) {
-    if (name.equals("nosetest"))
+    if (name.equals("nose"))
       noseTestInstalled(installed, sdkHome);
     else if (name.equals("pytest"))
       pyTestInstalled(installed, sdkHome);
