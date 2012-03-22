@@ -28,6 +28,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -189,13 +190,15 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
                     if (getExprMarker() != null && occurrenceMarker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
                       continue;
                     }
-                    if (AbstractJavaInplaceIntroducer
-                          .restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText) ==
-                        null) {
-                      return;
-                    }
+                    AbstractJavaInplaceIntroducer
+                          .restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText);
                   }
-                  element.delete();
+                  final PsiExpression initializer = ((PsiVariable)vars[0]).getInitializer();
+                  if (initializer != null && Comparing.strEqual(initializer.getText(), myExpressionText)) {
+                    element.replace(JavaPsiFacade.getInstance(myProject).getElementFactory().createStatementFromText(myExpressionText, element));
+                  } else {
+                    element.delete();
+                  }
                 }
               }
             }
