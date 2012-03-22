@@ -2,6 +2,7 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.facet.impl.ui.FacetErrorPanel;
+import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -19,6 +20,9 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.packaging.PyExternalProcessException;
+import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -26,9 +30,11 @@ import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import com.jetbrains.rest.ReSTService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -55,11 +61,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     ReSTService service = ReSTService.getInstance(myProject);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
-    initErrorValidation();
   }
 
   private void initErrorValidation() {
-    FacetErrorPanel facetErrorPanel = new FacetErrorPanel();
+    final FacetErrorPanel facetErrorPanel = new FacetErrorPanel();
     myErrorPanel.add(facetErrorPanel.getComponent(), BorderLayout.CENTER);
 
     facetErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
@@ -69,17 +74,21 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
         if (modules.length == 0) return ValidationResult.OK;
         final Sdk sdk = PythonSdkType.findPythonSdk(modules[0]);
         if (sdk != null) {
-          if (myTestRunnerComboBox.getSelectedItem() == PythonTestConfigurationsModel.PY_TEST_NAME) {
+          final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
+          if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
             if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath()))
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"));
+              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"),
+                                          createQuickFix(sdk, facetErrorPanel, "pytest"));
           }
-          else if (myTestRunnerComboBox.getSelectedItem() == PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME) {
+          else if (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(selectedItem)) {
             if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath()))
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"));
+              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"),
+                                          createQuickFix(sdk, facetErrorPanel, "nose"));
           }
-          else if (myTestRunnerComboBox.getSelectedItem() == PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME) {
+          else if (PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME.equals(selectedItem)) {
             if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk.getHomePath()))
-              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "attest"));
+              return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "attest"),
+                                          createQuickFix(sdk, facetErrorPanel, "attest"));
           }
         }
         return ValidationResult.OK;
@@ -87,6 +96,26 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     }, myTestRunnerComboBox);
 
     facetErrorPanel.getValidatorsManager().validate();
+  }
+
+  private FacetConfigurationQuickFix createQuickFix(final Sdk sdk, final FacetErrorPanel facetErrorPanel, final String name) {
+    return new FacetConfigurationQuickFix() {
+      @Override
+      public void run(JComponent place) {
+        final PyPackageManager.UI ui = new PyPackageManager.UI(myProject, sdk, new PyPackageManager.UI.Listener() {
+          @Override
+          public void started() {}
+          @Override
+          public void finished(@Nullable PyExternalProcessException exception) {
+            if (exception == null) {
+              VFSTestFrameworkListener.getInstance().testInstalled(true, sdk.getHomePath(), name);
+              facetErrorPanel.getValidatorsManager().validate();
+            }
+          }
+        });
+        ui.install(Collections.singletonList(new PyRequirement(name)), Collections.<String>emptyList());
+      }
+    };
   }
 
 
@@ -113,6 +142,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
                                                 myProject);
 
     updateConfigurations();
+    initErrorValidation();
     return myMainPanel;
   }
 

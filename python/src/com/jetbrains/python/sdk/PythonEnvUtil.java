@@ -58,7 +58,7 @@ public class PythonEnvUtil {
    */
   @NotNull
   public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
-    if (StringUtil.isEmpty(source)) {
+    if (StringUtil.isNotEmpty(source)) {
       assert source != null;
       Set<String> vals = Sets.newHashSet(source.split(File.pathSeparator));
       if (!vals.contains(value)) {

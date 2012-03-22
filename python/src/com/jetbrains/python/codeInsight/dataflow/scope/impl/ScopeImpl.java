@@ -120,7 +120,19 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null) {
       collectDeclarations();
     }
-    return myNamedElements.get(name);
+    final PsiNamedElement element = myNamedElements.get(name);
+    if (element != null) {
+      return element;
+    }
+    if (isGlobal(name)) {
+      for (Scope scope : myNestedScopes) {
+        final PsiNamedElement global = scope.getNamedElement(name);
+        if (global != null) {
+          return global;
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -150,7 +162,9 @@ public class ScopeImpl implements Scope {
       @Override
       public void visitPyGlobalStatement(PyGlobalStatement node) {
         for (PyTargetExpression expression : node.getGlobals()) {
-          globals.add(expression.getReferencedName());
+          final String name = expression.getReferencedName();
+          globals.add(name);
+          namedElements.put(name, expression);
         }
         super.visitPyGlobalStatement(node);
       }
