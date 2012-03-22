@@ -191,6 +191,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected void performRefactoringRename(final String newName,
                                           final StartMarkAction markAction) {
     try {
+      if (!isIdentifier(newName)) {
+        return;
+      }
       PsiNamedElement elementToRename = getVariable();
       if (elementToRename != null) {
         new WriteCommandAction(myProject, getCommandName()) {
@@ -285,6 +288,23 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       performRefactoringRename(myInsertedName, myMarkAction);
     }
     return bind;
+  }
+
+  @Override
+  public void finish(boolean success) {
+    super.finish(success);
+    if (success) {
+      revertStateOnFinish();
+    }
+    else {
+      ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumb();
+    }
+  }
+
+  protected void revertStateOnFinish() {
+    if (!isIdentifier(myInsertedName)) {
+      revertState();
+    }
   }
 
   private boolean isIdentifier(final String newName) {
