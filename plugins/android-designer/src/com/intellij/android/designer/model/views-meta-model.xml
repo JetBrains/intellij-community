@@ -18,7 +18,7 @@
         layout="com.intellij.android.designer.model.RadViewLayout"
         tag="&lt;unknown&gt;">
 
-    <palette title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
+    <presentation title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
   </meta>
 
   <meta class="android.view.View">
@@ -37,7 +37,7 @@
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.widget.Button"
         tag="Button">
-    <presentation title="&quot;%text%&quot;"/>
+    <presentation title=" - &quot;%text%&quot;"/>
 
     <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
              tooltip="Represents a push-button widget."/>
@@ -61,7 +61,7 @@
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.widget.TextView"
         tag="TextView">
-    <presentation title="&quot;%text%&quot;"/>
+    <presentation title=" - &quot;%text%&quot;"/>
 
     <palette title="TextView" icon="/com/intellij/android/designer/icons/TextView.png"
              tooltip="Displays text to the user and optionally allows them to edit it."/>

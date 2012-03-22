@@ -19,6 +19,10 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.palette.Item;
+import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 
 /**
@@ -30,10 +34,41 @@ public final class AndroidTreeDecorator extends TreeComponentDecorator {
     MetaModel metaModel = component.getMetaModel();
 
     StringBuffer fullTitle = new StringBuffer();
-    String title1 = new String(metaModel.getPaletteItem().getTitle());
-    fullTitle.append(title1.replaceAll("%tag%", ((RadViewComponent)component).getTag().getName()));
-    renderer.append(fullTitle.toString());
+    Item item = metaModel.getPaletteItem();
+    if (item != null) {
+      fullTitle.append(item.getTitle());
+    }
 
+    String title = metaModel.getTitle();
+    if (title != null) {
+      int start = title.indexOf('%');
+      if (start != -1) {
+        int end = title.indexOf('%', start + 1);
+        if (end != -1) {
+          String variable = title.substring(start + 1, end);
+          String value = null;
+          if ("tag".equals(variable)) {
+            value = ((RadViewComponent)component).getTag().getName();
+          }
+          else {
+            Property property = PropertyTable.findProperty(component.getProperties(), variable);
+            if (property != null) {
+              try {
+                value = StringUtil.shortenTextWithEllipsis(String.valueOf(property.getValue(component)), 30, 5);
+              }
+              catch (Exception e) {
+              }
+            }
+          }
+
+          if (!StringUtil.isEmpty(value)) {
+            fullTitle.append(title.substring(0, start)).append(value).append(title.substring(end + 1));
+          }
+        }
+      }
+    }
+
+    renderer.append(fullTitle.toString());
     renderer.setIcon(metaModel.getIcon());
   }
 }
