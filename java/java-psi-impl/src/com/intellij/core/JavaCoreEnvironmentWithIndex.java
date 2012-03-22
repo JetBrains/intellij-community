@@ -15,10 +15,10 @@
  */
 package com.intellij.core;
 
-import com.intellij.indexing.AbstractVfsAdapterJavaComponent;
-import com.intellij.indexing.FileBasedIndexInitializerJavaComponent;
-import com.intellij.indexing.FileBasedIndexJavaComponent;
-import com.intellij.indexing.FileBasedIndexUnsavedDocumentsManagerJavaComponent;
+import com.intellij.core.indexing.AbstractVfsAdapterJavaComponent;
+import com.intellij.core.indexing.FileBasedIndexInitializerJavaComponent;
+import com.intellij.core.indexing.FileBasedIndexJavaComponent;
+import com.intellij.core.indexing.FileBasedIndexUnsavedDocumentsManagerJavaComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;

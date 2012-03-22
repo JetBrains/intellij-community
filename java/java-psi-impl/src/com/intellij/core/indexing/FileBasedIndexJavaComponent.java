@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.indexing;
+package com.intellij.core.indexing;
 
 import com.intellij.ide.caches.FileContent;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.util.Set;
 
 
-public class FileBasedIndexJavaComponent extends FileBasedIndex implements ApplicationComponent{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.indexing.FileBasedIndexJavaComponent");
+public class FileBasedIndexJavaComponent extends FileBasedIndex implements BaseComponent {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.core.indexing.FileBasedIndexJavaComponent");
 
   public FileBasedIndexJavaComponent(MessageBus bus,
                                      FileBasedIndexUnsavedDocumentsManager unsavedDocumentsManager,
@@ -174,6 +174,6 @@ public class FileBasedIndexJavaComponent extends FileBasedIndex implements Appli
   @NotNull
   @Override
   public String getComponentName() {
-    return "com.intellij.indexing.FileBasedIndexJavaComponent";
+    return "com.intellij.core.indexing.FileBasedIndexJavaComponent";
   }
 }

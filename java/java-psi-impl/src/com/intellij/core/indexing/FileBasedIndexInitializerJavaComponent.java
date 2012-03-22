@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.indexing;
+package com.intellij.core.indexing;
 
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
 
-public class FileBasedIndexInitializerJavaComponent extends FileBasedIndexInitializer implements ApplicationComponent
+public class FileBasedIndexInitializerJavaComponent extends FileBasedIndexInitializer implements BaseComponent
 {
   public FileBasedIndexInitializerJavaComponent(FileBasedIndex fileBasedIndex,
                                                FileBasedIndexIndicesManager indexIndicesManager,
@@ -36,7 +36,7 @@ public class FileBasedIndexInitializerJavaComponent extends FileBasedIndexInitia
   @NotNull
   @Override
   public String getComponentName() {
-    return "com.intellij.indexing.FileBasedIndexInitializerJavaComponent";
+    return "com.intellij.core.indexing.FileBasedIndexInitializerJavaComponent";
   }
 
   @Override
