@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.propertyTable.editors;
-
-import com.intellij.openapi.util.text.StringUtil;
+package org.jetbrains.android.util;
 
 /**
- * @author Alexander Lobas
+ * @author Eugene.Kudelevsky
  */
-public class BooleanEditor extends com.intellij.designer.propertyTable.editors.BooleanEditor {
-  @Override
-  public Object getValue() throws Exception {
-    return Boolean.toString(myCheckBox.isSelected());
-  }
-
-  @Override
-  protected boolean getValue(Object value) {
-    return Boolean.parseBoolean((String)value);
-  }
+public enum AndroidCompilerMessageKind {
+  ERROR, INFORMATION, WARNING
 }

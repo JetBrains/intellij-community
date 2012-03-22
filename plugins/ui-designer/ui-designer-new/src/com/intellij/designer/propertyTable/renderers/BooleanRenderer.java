@@ -28,10 +28,6 @@ import javax.swing.*;
  * @author Vladimir Kondratyev
  */
 public class BooleanRenderer extends JCheckBox implements PropertyRenderer {
-  protected boolean getValue(Object value) {
-    return value != null && (Boolean)value;
-  }
-
   @NotNull
   public JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus) {
     if (selected) {
@@ -43,7 +39,7 @@ public class BooleanRenderer extends JCheckBox implements PropertyRenderer {
       setBackground(UIUtil.getTableBackground());
     }
 
-    setSelected(getValue(value));
+    setSelected(value != null && (Boolean)value);
     return this;
   }
 }

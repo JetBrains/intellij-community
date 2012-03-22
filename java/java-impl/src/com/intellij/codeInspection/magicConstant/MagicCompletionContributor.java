@@ -174,7 +174,8 @@ public class MagicCompletionContributor extends CompletionContributor {
       @Override
       public void consume(CompletionResult completionResult) {
         LookupElement element = completionResult.getLookupElement();
-        if (allowed.contains(element.getObject())) {
+        Object object = element.getObject();
+        if (object instanceof PsiElement && allowed.contains(object)) {
           return;
         }
         result.passResult(completionResult);

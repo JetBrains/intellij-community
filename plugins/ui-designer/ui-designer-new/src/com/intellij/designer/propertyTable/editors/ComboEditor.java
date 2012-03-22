@@ -15,12 +15,8 @@
  */
 package com.intellij.designer.propertyTable.editors;
 
-import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.DialogWrapper;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -34,36 +30,17 @@ import java.awt.event.KeyEvent;
  */
 public abstract class ComboEditor extends PropertyEditor {
   protected final ComboBox myCombo;
-  private boolean myCancelled;
 
   public ComboEditor() {
     myCombo = new ComboBox(-1);
     myCombo.setBorder(null);
-    myCombo.addPopupMenuListener(new PopupMenuListener() {
+    addEditorSupport(this, myCombo);
+  }
 
-      @Override
-      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        myCancelled = false;
-      }
-
-      @Override
-      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        if (!myCancelled) {
-          fireValueCommitted(true, true);
-        }
-      }
-
-      @Override
-      public void popupMenuCanceled(PopupMenuEvent e) {
-        myCancelled = true;
-      }
-    });
-    myCombo.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myCancelled = true;
-        fireEditingCancelled();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+  public static void addEditorSupport(PropertyEditor editor, JComboBox myCombo) {
+    ComboListeners listeners = new ComboListeners(editor);
+    myCombo.addPopupMenuListener(listeners);
+    myCombo.registerKeyboardAction(listeners, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
   }
 
   @Override
@@ -72,6 +49,38 @@ public abstract class ComboEditor extends PropertyEditor {
     ListCellRenderer renderer = myCombo.getRenderer();
     if (renderer instanceof JComponent) {
       SwingUtilities.updateComponentTreeUI((JComponent)renderer);
+    }
+  }
+
+  private static class ComboListeners implements PopupMenuListener, ActionListener {
+    private final PropertyEditor myEditor;
+    private boolean myCancelled;
+
+    public ComboListeners(PropertyEditor editor) {
+      myEditor = editor;
+    }
+
+    @Override
+    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+      myCancelled = false;
+    }
+
+    @Override
+    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+      if (!myCancelled) {
+        myEditor.fireValueCommitted(true, true);
+      }
+    }
+
+    @Override
+    public void popupMenuCanceled(PopupMenuEvent e) {
+      myCancelled = true;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      myCancelled = true;
+      myEditor.fireEditingCancelled();
     }
   }
 }

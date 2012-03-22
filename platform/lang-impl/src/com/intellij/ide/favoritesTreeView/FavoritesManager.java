@@ -378,7 +378,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   private class MyRootsChangeAdapter extends PsiTreeChangeAdapter {
-    public void beforeChildMovement(final PsiTreeChangeEvent event) {
+    public void beforeChildMovement(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement oldParent = event.getOldParent();
       final PsiElement newParent = event.getNewParent();
       final PsiElement child = event.getChild();
@@ -417,7 +417,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
     }
 
-    public void beforePropertyChange(final PsiTreeChangeEvent event) {
+    public void beforePropertyChange(@NotNull final PsiTreeChangeEvent event) {
       if (event.getPropertyName().equals(PsiTreeChangeEvent.PROP_FILE_NAME) || event.getPropertyName().equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
         final PsiElement psiElement = event.getChild();
         if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {

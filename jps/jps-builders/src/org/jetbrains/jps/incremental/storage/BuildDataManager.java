@@ -8,8 +8,7 @@ import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -19,6 +18,7 @@ import java.util.Map;
  *         Date: 10/7/11
  */
 public class BuildDataManager {
+  private static final int VERSION = 1;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -32,12 +32,14 @@ public class BuildDataManager {
   private final ArtifactsBuildData myArtifactsBuildData;
   private final Mappings myMappings;
   private final File myDataStorageRoot;
+  private final File myVersionFile;
 
   public BuildDataManager(final File dataStorageRoot, final boolean useMemoryTempCaches) throws IOException {
     myDataStorageRoot = dataStorageRoot;
     mySrcToFormMap = new SourceToFormMapping(new File(getSourceToFormsRoot(), "data"));
     myMappings = new Mappings(getMappingsRoot(), useMemoryTempCaches);
     myArtifactsBuildData = new ArtifactsBuildData(new File(dataStorageRoot, "artifacts"));
+    myVersionFile = new File(myDataStorageRoot, "version.dat");
   }
 
   public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws IOException {
@@ -234,6 +236,52 @@ public class BuildDataManager {
     if (storage != null) {
       synchronized (storage) {
         storage.close();
+      }
+    }
+  }
+
+  private Boolean myVersionDiffers = null;
+
+  public boolean versionDiffers() {
+    final Boolean cached = myVersionDiffers;
+    if (cached != null) {
+      return cached;
+    }
+    try {
+      final DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile));
+      try {
+        final boolean diff = is.readInt() != VERSION;
+        myVersionDiffers = diff;
+        return diff;
+      }
+      finally {
+        is.close();
+      }
+    }
+    catch (FileNotFoundException ignored) {
+      return false; // treat it as a new dir
+    }
+    catch (IOException ex) {
+      LOG.info(ex);
+    }
+    return true;
+  }
+
+  public void saveVersion() {
+    final Boolean differs = myVersionDiffers;
+    if (differs == null || differs) {
+      try {
+        FileUtil.createIfDoesntExist(myVersionFile);
+        final DataOutputStream os = new DataOutputStream(new FileOutputStream(myVersionFile));
+        try {
+          os.writeInt(VERSION);
+          myVersionDiffers = Boolean.FALSE;
+        }
+        finally {
+          os.close();
+        }
+      }
+      catch (IOException ignored) {
       }
     }
   }

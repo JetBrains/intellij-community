@@ -33,11 +33,11 @@ public class ConfigFileImpl implements ConfigFile {
     final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
     myFilePointer = pointerManager.create(configuration.getUrl(), this, new VirtualFilePointerListener() {
       @Override
-      public void beforeValidityChanged(final VirtualFilePointer[] pointers) {
+      public void beforeValidityChanged(@NotNull final VirtualFilePointer[] pointers) {
       }
 
       @Override
-      public void validityChanged(final VirtualFilePointer[] pointers) {
+      public void validityChanged(@NotNull final VirtualFilePointer[] pointers) {
         myPsiFile = null;
         onChange();
       }

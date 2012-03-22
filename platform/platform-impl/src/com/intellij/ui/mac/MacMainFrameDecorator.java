@@ -58,7 +58,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     try {
       Class.forName("com.apple.eawt.FullScreenUtilities");
       HAS_FULLSCREEN_UTILITIES = true;
-    } catch (ClassNotFoundException e) {
+    } catch (Exception e) {
       HAS_FULLSCREEN_UTILITIES = false;
     }
   }

@@ -76,7 +76,9 @@ public class StringUtilRt {
   }
 
   @NotNull
-  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep,
+  public static String convertLineSeparators(@NotNull String text,
+                                             @NotNull String newSeparator,
+                                             @Nullable int[] offsetsToKeep,
                                              boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
@@ -183,5 +185,9 @@ public class StringUtilRt {
       return fqName.substring(lastPointIdx + 1);
     }
     return fqName;
+  }
+
+  public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
+    return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
   }
 }

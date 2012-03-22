@@ -49,6 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.ui.components.JBScrollPane;
@@ -99,7 +100,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     InspectionToolRegistrar.getInstance().buildInspectionSearchIndexIfNecessary();
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "");
+        final Set<String> existingProfileNames = myPanels.keySet();
+        final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "", existingProfileNames);
         if (model != null) {
           addProfile((InspectionProfileImpl)model);
           myDeletedProfiles.remove(model.getName());
@@ -113,7 +115,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         final InspectionProfileImpl selectedProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         ((DefaultComboBoxModel)myProfiles.getModel()).removeElement(selectedProfile);
         myDeletedProfiles.add(selectedProfile.getName());
-        myDeleteButton.setEnabled(myProfiles.getModel().getSize() > 1);
+        myDeleteButton.setEnabled(isDeleteEnabled(selectedProfile));
       }
     });
 
@@ -216,7 +218,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
     myCopyButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final InspectionProfileImpl model = (InspectionProfileImpl)SingleInspectionProfilePanel.createNewProfile(0, getSelectedObject(), myWholePanel, "");
+        final Set<String> existingProfileNames = myPanels.keySet();
+        final InspectionProfileImpl model = (InspectionProfileImpl)
+          SingleInspectionProfilePanel.createNewProfile(0, getSelectedObject(), myWholePanel, "", existingProfileNames);
         if (model != null) {
           final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)model.getModifiableModel();
           modifiableModel.setModified(true);
@@ -285,7 +289,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myProfiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
-        myDeleteButton.setEnabled(myProfiles.getModel().getSize() > 1);
+        myDeleteButton.setEnabled(isDeleteEnabled(profile));
         myLayout.show(myPanel, profile.getName());
         SingleInspectionProfilePanel panel = getSelectedPanel();
         if (panel != null) {
@@ -352,7 +356,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final InspectionProfileImpl inspectionProfile = getCurrentProfile();
     myProfiles.setSelectedItem(inspectionProfile);
     myLayout.show(myPanel, inspectionProfile.getName());
-    myDeleteButton.setEnabled(getProfiles().size() > 1 && inspectionProfile.getProfileManager() == myProfileManager);
+    myDeleteButton.setEnabled(isDeleteEnabled(inspectionProfile));
     final SingleInspectionProfilePanel panel = getSelectedPanel();
     if (panel != null) {
       panel.setVisible(true);//make sure that UI was initialized
@@ -373,6 +377,26 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  private boolean isDeleteEnabled(InspectionProfileImpl inspectionProfile) {
+    final ProfileManager profileManager = inspectionProfile.getProfileManager();
+
+    boolean projectProfileFound = false;
+    boolean ideProfileFound = false;
+
+    final ComboBoxModel model = myProfiles.getModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      Profile profile = (Profile)model.getElementAt(i);
+      if (inspectionProfile == profile) continue;
+      final boolean isProjectProfile = profile.getProfileManager() == myProjectProfileManager;
+      projectProfileFound |= isProjectProfile;
+      ideProfileFound |= !isProjectProfile;
+
+      if (ideProfileFound && projectProfileFound) break;
+    }
+
+    return profileManager == myProjectProfileManager ? projectProfileFound : ideProfileFound;
+  }
+  
   protected Collection<Profile> getProfiles() {
     final Collection<Profile> result = new ArrayList<Profile>();
     result.addAll(myProfileManager.getProfiles());

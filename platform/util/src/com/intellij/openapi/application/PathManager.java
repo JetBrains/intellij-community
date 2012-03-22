@@ -16,23 +16,30 @@
 
 package com.intellij.openapi.application;
 
+import com.google.common.collect.Lists;
+import com.intellij.CommonBundle;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
+import com.sun.jna.TypeMapper;
+import com.sun.jna.platform.FileUtils;
+import gnu.trove.THashSet;
+import org.apache.log4j.Appender;
+import org.apache.oro.text.regex.PatternMatcher;
+import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.picocontainer.PicoContainer;
 
 import java.io.*;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.Properties;
-import java.util.PropertyResourceBundle;
-import java.util.Set;
+import java.util.*;
 
 public class PathManager {
   @NonNls public static final String PROPERTIES_FILE = "idea.properties.file";
@@ -309,11 +316,12 @@ public class PathManager {
   /**
    * Attempts to extract classpath entry part from passed URL.
    */
+  @Nullable
   @NonNls
   private static String extractRoot(URL resourceURL, String resourcePath) {
     if (!(StringUtil.startsWithChar(resourcePath, '/') || StringUtil.startsWithChar(resourcePath, '\\'))) {
-      //noinspection HardCodedStringLiteral
-      System.err.println("precondition failed: "+resourcePath);
+      //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+      System.err.println("precondition failed: " + resourcePath);
       return null;
     }
     String protocol = resourceURL.getProtocol();
@@ -338,8 +346,8 @@ public class PathManager {
       }
     }
     if (resultPath == null) {
-      //noinspection HardCodedStringLiteral
-      System.err.println("cannot extract: "+resultPath + " from "+resourceURL);
+      //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
+      System.err.println("cannot extract: " + resultPath + " from " + resourceURL);
       return null;
     }
 
@@ -362,45 +370,48 @@ public class PathManager {
       getHomePath() + "/community/bin/idea.properties");
 
     if (propFile != null) {
-      InputStream fis = null;
       try {
-        fis = new BufferedInputStream(new FileInputStream(propFile));
-        final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
-        final Enumeration keys = bundle.getKeys();
-        String home = (String)bundle.handleGetObject("idea.home");
-        if (home != null && ourHomePath == null) {
-          ourHomePath = getAbsolutePath(substitueVars(home));
-        }
-        final Properties sysProperties = System.getProperties();
-        while (keys.hasMoreElements()) {
-          String key = (String)keys.nextElement();
-          if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
-            final String value = substitueVars(bundle.getString(key));
-            sysProperties.setProperty(key, value);
+        InputStream fis = new BufferedInputStream(new FileInputStream(propFile));
+        try {
+          final PropertyResourceBundle bundle = new PropertyResourceBundle(fis);
+          final Enumeration keys = bundle.getKeys();
+          String home = (String)bundle.handleGetObject("idea.home");
+          if (home != null && ourHomePath == null) {
+            ourHomePath = getAbsolutePath(substituteVars(home));
           }
+          final Properties sysProperties = System.getProperties();
+          while (keys.hasMoreElements()) {
+            String key = (String)keys.nextElement();
+            if (sysProperties.getProperty(key, null) == null) { // load the property from the property file only if it is not defined yet
+              final String value = substituteVars(bundle.getString(key));
+              sysProperties.setProperty(key, value);
+            }
+          }
+        }
+        finally{
+          fis.close();
         }
       }
       catch (IOException e) {
-        //noinspection HardCodedStringLiteral
+        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
         System.err.println("Problem reading from property file: " + propFile.getPath());
-      }
-      finally{
-        try {
-          if (fis != null) {
-            fis.close();
-          }
-        }
-        catch (IOException e) {
-        }
       }
     }
   }
 
+  /** @deprecated use {@linkplain #substituteVars(String)} (to remove in IDEA 13) */
+  @SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
   public static String substitueVars(String s) {
+    return substituteVars(s);
+  }
+
+  @Nullable
+  public static String substituteVars(String s) {
     final String ideaHomePath = getHomePath();
     return substituteVars(s, ideaHomePath);
   }
 
+  @Nullable
   public static String substituteVars(String s, final String ideaHomePath) {
     if (s == null) return null;
     if (s.startsWith("..")) {
@@ -434,5 +445,43 @@ public class PathManager {
   @TestOnly
   public static void cleanup() {
     ourPluginsPath = null;
+  }
+
+  @Nullable
+  public static String getJarPathForClass(@NotNull Class aClass) {
+    final String resourceRoot = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+    return resourceRoot != null ? new File(resourceRoot).getAbsolutePath() : null;
+  }
+
+  @NotNull
+  public static Collection<String> getUtilClassPath() {
+    final List<Class<?>> classes = Arrays.asList(
+      PathManager.class,            // module 'util'
+      NotNull.class,                // module 'annotations'
+      SystemInfoRt.class,           // module 'util-rt'
+      Document.class,               // jDOM
+      Appender.class,               // log4j
+      THashSet.class,               // trove4j
+      PicoContainer.class,          // PicoContainer
+      Lists.class,                  // guava
+      TypeMapper.class,             // JNA
+      FileUtils.class,              // JNA (jna-utils)
+      PatternMatcher.class          // OROMatcher
+    );
+
+    final Set<String> classPath = new HashSet<String>();
+    for (Class<?> aClass : classes) {
+      final String path = getJarPathForClass(aClass);
+      if (path != null) {
+        classPath.add(path);
+      }
+    }
+
+    final String resourceRoot = getResourceRoot(PathManager.class, "/messages/CommonBundle.properties");  // platform-resources-en
+    if (resourceRoot != null) {
+      classPath.add(new File(resourceRoot).getAbsolutePath());
+    }
+
+    return Collections.unmodifiableCollection(classPath);
   }
 }

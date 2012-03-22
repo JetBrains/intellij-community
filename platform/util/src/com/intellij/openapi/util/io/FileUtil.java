@@ -34,6 +34,7 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -41,23 +42,15 @@ import java.nio.channels.FileChannel;
 import java.util.*;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
   public static final int MEGABYTE = 1024 * 1024;
 
   @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
-  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY;
-  static {
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
-      final TObjectHashingStrategy<String> canonical = TObjectHashingStrategy.CANONICAL;
-      PATH_HASHING_STRATEGY = canonical;
-    }
-    else {
-      PATH_HASHING_STRATEGY = CaseInsensitiveStringHashingStrategy.INSTANCE;
-    }
-  }
+  @SuppressWarnings({"unchecked"})
+  public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY =
+    SystemInfo.isFileSystemCaseSensitive ? TObjectHashingStrategy.CANONICAL : CaseInsensitiveStringHashingStrategy.INSTANCE;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtil");
 
@@ -71,58 +64,20 @@ public class FileUtil extends FileUtilRt {
 
   @Nullable
   public static String getRelativePath(File base, File file) {
-    if (base == null || file == null) return null;
-
-    if (!base.isDirectory()) {
-      base = base.getParentFile();
-      if (base == null) return null;
-    }
-
-    if (base.equals(file)) return ".";
-
-    final String filePath = file.getAbsolutePath();
-    String basePath = base.getAbsolutePath();
-    return getRelativePath(basePath, filePath, File.separatorChar);
+    return FileUtilRt.getRelativePath(base, file);
   }
 
+  @Nullable
   public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
-    return getRelativePath(basePath, filePath, separator, SystemInfo.isFileSystemCaseSensitive);
+    return FileUtilRt.getRelativePath(basePath, filePath, separator);
   }
 
-  private static String ensureEnds(@NotNull String s, final char endsWith) {
-    return StringUtil.endsWithChar(s, endsWith) ? s : s + endsWith;
-  }
-
+  @Nullable
   public static String getRelativePath(@NotNull String basePath,
                                        @NotNull String filePath,
                                        final char separator,
                                        final boolean caseSensitive) {
-    basePath = ensureEnds(basePath, separator);
-
-    String basePathToCompare = caseSensitive ? basePath : basePath.toLowerCase();
-    String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
-    if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) return ".";
-    int len = 0;
-    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
-    while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
-      if (basePath.charAt(len) == separator) {
-        lastSeparatorIndex = len;
-      }
-      len++;
-    }
-
-    if (len == 0) return null;
-
-    StringBuilder relativePath = new StringBuilder();
-    for (int i = len; i < basePath.length(); i++) {
-      if (basePath.charAt(i) == separator) {
-        relativePath.append("..");
-        relativePath.append(separator);
-      }
-    }
-    relativePath.append(filePath.substring(lastSeparatorIndex + 1));
-
-    return relativePath.toString();
+    return FileUtilRt.getRelativePath(basePath, filePath, separator, caseSensitive);
   }
 
   public static boolean isAbsolute(@NotNull String path) {
@@ -604,11 +559,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String getNameWithoutExtension(@NotNull String name) {
-    int i = name.lastIndexOf('.');
-    if (i != -1) {
-      name = name.substring(0, i);
-    }
-    return name;
+    return FileUtilRt.getNameWithoutExtension(name);
   }
 
   public static String createSequentFileName(@NotNull File aParentFolder, @NotNull @NonNls String aFilePrefix, @NotNull String aExtension) {
@@ -631,12 +582,12 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String toSystemDependentName(@NonNls @NotNull String aFileName) {
-    return aFileName.replace('/', File.separatorChar).replace('\\', File.separatorChar);
+    return FileUtilRt.toSystemDependentName(aFileName);
   }
 
   @NotNull
   public static String toSystemIndependentName(@NonNls @NotNull String aFileName) {
-    return aFileName.replace('\\', '/');
+    return FileUtilRt.toSystemIndependentName(aFileName);
   }
 
   @NotNull
@@ -745,9 +696,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String getExtension(@NotNull String fileName) {
-    int index = fileName.lastIndexOf('.');
-    if (index < 0) return "";
-    return fileName.substring(index + 1).toLowerCase();
+    return FileUtilRt.getExtension(fileName);
   }
 
   @NotNull
@@ -1128,29 +1077,127 @@ public class FileUtil extends FileUtilRt {
     return firstLine.contains(marker);
   }
 
+  @NotNull
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return FileUtilRt.createTempDirectory(prefix, suffix);
+  }
+
+  @NotNull
+  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return FileUtilRt.createTempDirectory(dir, prefix, suffix);
+  }
+
+  @NotNull
+  public static File createTempFile(@NonNls File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean create) throws IOException {
+    return FileUtilRt.createTempFile(dir, prefix, suffix, create);
+  }
+
+  @NotNull
+  public static File createTempFile(@NonNls File dir,
+                                    @NotNull @NonNls String prefix,
+                                    @Nullable @NonNls String suffix,
+                                    boolean create,
+                                    boolean deleteOnExit) throws IOException {
+    return FileUtilRt.createTempFile(dir, prefix, suffix, create, deleteOnExit);
+  }
+
+  @NotNull
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return FileUtilRt.createTempFile(prefix, suffix);
+  }
+
+  @NotNull
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
+    return FileUtilRt.createTempFile(prefix, suffix, deleteOnExit);
+  }
+
+  @NotNull
+  public static String getTempDirectory() {
+    return FileUtilRt.getTempDirectory();
+  }
+
+  @TestOnly
+  public static void resetCanonicalTempPathCache(final String tempPath) {
+    FileUtilRt.resetCanonicalTempPathCache(tempPath);
+  }
+
+  @NotNull
+  public static File generateRandomTemporaryPath() throws IOException {
+    return FileUtilRt.generateRandomTemporaryPath();
+  }
+
+  public static void setExecutableAttribute(@NotNull String path, boolean executableFlag) throws IOException {
+    FileUtilRt.setExecutableAttribute(path, executableFlag);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file) throws IOException {
+    return FileUtilRt.loadFile(file);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, boolean convertLineSeparators) throws IOException {
+    return FileUtilRt.loadFile(file, convertLineSeparators);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return FileUtilRt.loadFile(file, encoding);
+  }
+
+  @NotNull
+  public static String loadFile(@NotNull File file, @Nullable @NonNls String encoding, boolean convertLineSeparators) throws IOException {
+    return FileUtilRt.loadFile(file, encoding, convertLineSeparators);
+  }
+
+  @NotNull
+  public static char[] loadFileText(@NotNull File file) throws IOException {
+    return FileUtilRt.loadFileText(file);
+  }
+
+  @NotNull
+  public static char[] loadFileText(@NotNull File file, @Nullable @NonNls String encoding) throws IOException {
+    return FileUtilRt.loadFileText(file, encoding);
+  }
+
+  @NotNull
+  public static char[] loadText(@NotNull Reader reader, int length) throws IOException {
+    return FileUtilRt.loadText(reader, length);
+  }
+
+  @NotNull
+  public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
+    return FileUtilRt.loadBytes(stream);
+  }
+
+  @NotNull
+  public static byte[] loadBytes(@NotNull InputStream stream, int length) throws IOException {
+    return FileUtilRt.loadBytes(stream, length);
+  }
+
   // copied from FileSystem: they are package local there
   public static final int BA_EXISTS    = 0x01;
   public static final int BA_REGULAR   = 0x02;
   public static final int BA_DIRECTORY = 0x04;
   public static final int BA_HIDDEN    = 0x08;
 
+  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
+  public @interface FileBooleanAttributes {}
+
   // todo[r.sh] use NIO2 API after migration to JDK 7
   // returns -1 if could not get attributes
-  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
+  @FileBooleanAttributes
   public static int getBooleanAttributes(@NotNull File f) {
     if (JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD != null) {
       try {
         Object flags = JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD.invoke(JAVA_IO_FILESYSTEM, f);
+        //noinspection MagicConstant
         return ((Integer)flags).intValue();
       }
       catch (Exception ignored) { }
     }
     return -1;
   }
-
-  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
-  public @interface FileBooleanAttributes {}
-
 
   static {
     Object fs;

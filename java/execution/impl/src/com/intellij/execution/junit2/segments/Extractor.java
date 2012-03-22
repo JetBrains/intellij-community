@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author dyoma
@@ -40,7 +41,7 @@ public class Extractor implements Disposable {
   private OutputPacketProcessor myEventsDispatcher;
   private static final Logger LOG = Logger.getInstance("#" + Extractor.class.getName());
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("Test Extractor", 20, true, MergingUpdateQueue.ANY_COMPONENT);
-  private int myOrder = -1;
+  private AtomicInteger myOrder = new AtomicInteger(-1);
 
   public Extractor(@NotNull InputStream stream, @NotNull Charset charset) {
     myStream = new SegmentedInputStream(stream, charset);
@@ -66,7 +67,7 @@ public class Extractor implements Disposable {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
       @Override
       public void addLast(final Runnable runnable) {
-        myQueue.queue(new MyUpdate(runnable, queue, myOrder++));
+        myQueue.queue(new MyUpdate(runnable, queue, myOrder.incrementAndGet()));
       }
 
       @Override

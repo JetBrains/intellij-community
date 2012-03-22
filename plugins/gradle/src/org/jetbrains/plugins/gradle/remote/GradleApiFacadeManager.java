@@ -28,7 +28,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
@@ -48,6 +47,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -122,10 +122,8 @@ public class GradleApiFacadeManager {
         params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
 
         params.setWorkingDirectory(PathManager.getBinPath());
-        final ArrayList<String> classPath = new ArrayList<String>();
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(NotNull.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(StringUtil.class), classPath);
-        ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(THashSet.class), classPath);
+        final List<String> classPath = new ArrayList<String>();
+        classPath.addAll(PathManager.getUtilClassPath());
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(LanguageLevel.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(PsiBundle.class), classPath);
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(Alarm.class), classPath);

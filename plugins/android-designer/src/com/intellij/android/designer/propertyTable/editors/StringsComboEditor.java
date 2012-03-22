@@ -16,18 +16,40 @@
 package com.intellij.android.designer.propertyTable.editors;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 /**
  * @author Alexander Lobas
  */
 public class StringsComboEditor extends ComboEditor {
+  public static final String UNSET = "<unset>";
+
   public StringsComboEditor(String[] values) {
-    myCombo.setModel(new DefaultComboBoxModel(values));
+    DefaultComboBoxModel model = new DefaultComboBoxModel(values);
+    model.insertElementAt(UNSET, 0);
+    myCombo.setModel(model);
+    myCombo.addActionListener(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myCombo.getSelectedItem() == UNSET) {
+          myCombo.setSelectedItem(null);
+        }
+      }
+    });
+
+    myCombo.setSelectedIndex(0);
+  }
+
+  @Override
+  public Object getValue() throws Exception {
+    Object item = myCombo.getSelectedItem();
+    return item == UNSET ? null : item;
   }
 
   @NotNull
@@ -35,10 +57,5 @@ public class StringsComboEditor extends ComboEditor {
   public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
     myCombo.setSelectedItem(value);
     return myCombo;
-  }
-
-  @Override
-  public Object getValue() throws Exception {
-    return myCombo.getSelectedItem();
   }
 }

@@ -28,10 +28,10 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
 
@@ -74,7 +74,9 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
-    return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true, projectBaseDir)).matches();
+    final String relativePath = getRelativePath(virtualFile, fileIndex, true, projectBaseDir);
+    LOG.assertTrue(relativePath != null, "vFile: " + virtualFile + "; projectBaseDir: " + projectBaseDir);
+    return myFilePattern.matcher(relativePath).matches();
   }
 
   public static boolean matchesModule(final Pattern moduleGroupPattern,
@@ -183,6 +185,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return Comparing.strEqual(myPathPattern, oldQName);
   }
 
+  @Nullable
   public static String getRelativePath(final VirtualFile virtualFile,
                                        final ProjectFileIndex index,
                                        final boolean useFQName,
@@ -194,7 +197,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {
       if (projectBaseDir != null) {
-        if (VfsUtil.isAncestor(projectBaseDir, virtualFile, false)){
+        if (VfsUtilCore.isAncestor(projectBaseDir, virtualFile, false)){
           final String projectRelativePath = VfsUtilCore.getRelativePath(virtualFile, projectBaseDir, '/');
           return useFQName ? projectRelativePath : projectRelativePath.substring(projectRelativePath.indexOf('/') + 1);
         }

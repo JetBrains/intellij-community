@@ -150,7 +150,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       final Collection<SmartPsiElementPointer<PsiField>> fieldsToFix = getFieldsToFix();
       try {
         final PsiMethod constructor = constrs.get(0);
-        final List<PsiField> fields = new ArrayList<PsiField>();
+        final LinkedHashSet<PsiField> fields = new LinkedHashSet<PsiField>();
+        getFieldsToFix().add(myField);
         for (SmartPsiElementPointer<PsiField> elementPointer : fieldsToFix) {
           final PsiField field = elementPointer.getElement();
           if (field != null && isAvailable(field) && filterConstructorsIfFieldAlreadyAssigned(new PsiMethod[]{constructor}, field).contains(constructor)) {

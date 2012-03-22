@@ -104,7 +104,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   @Override
-  public void childAdded(final PsiTreeChangeEvent event) {
+  public void childAdded(@NotNull final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
       @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
@@ -114,7 +114,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   @Override
-  public void childRemoved(final PsiTreeChangeEvent event) {
+  public void childRemoved(@NotNull final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
       @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
@@ -124,7 +124,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   @Override
-  public void childReplaced(final PsiTreeChangeEvent event) {
+  public void childReplaced(@NotNull final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
       @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
@@ -134,7 +134,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   @Override
-  public void childrenChanged(final PsiTreeChangeEvent event) {
+  public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
     doSync(event, false, new DocSyncAction() {
       @Override
       public void syncDocument(Document document, PsiTreeChangeEventImpl event) {
