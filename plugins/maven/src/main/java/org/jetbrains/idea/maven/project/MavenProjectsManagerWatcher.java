@@ -212,11 +212,11 @@ public class MavenProjectsManagerWatcher {
         mySettingsFilesPointers.add(
           VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
             @Override
-            public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+            public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
             }
 
             @Override
-            public void validityChanged(VirtualFilePointer[] pointers) {
+            public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
             }
           }));
       }

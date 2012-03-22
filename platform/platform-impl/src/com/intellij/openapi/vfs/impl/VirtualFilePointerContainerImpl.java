@@ -272,6 +272,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, myListener);
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "VFPContainer: "+myList/*+"; parent:"+myParent*/;

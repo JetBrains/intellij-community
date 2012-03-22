@@ -160,7 +160,7 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   @Override
-  public void beforeChildRemoval(PsiTreeChangeEvent event) {
+  public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
     final PsiElement child = event.getChild();
     if (child instanceof PsiFile) {
       final PsiFile psiFile = (PsiFile)child;
@@ -177,17 +177,17 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
   }
 
   @Override
-  public void childRemoved(PsiTreeChangeEvent event) {
+  public void childRemoved(@NotNull PsiTreeChangeEvent event) {
     change(event.getParent());
   }
 
   @Override
-  public void childReplaced(PsiTreeChangeEvent event) {
+  public void childReplaced(@NotNull PsiTreeChangeEvent event) {
     change(event.getChild());
   }
 
   @Override
-  public void childAdded(PsiTreeChangeEvent event) {
+  public void childAdded(@NotNull PsiTreeChangeEvent event) {
     change(event.getChild());
   }
 

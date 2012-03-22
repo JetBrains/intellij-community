@@ -43,11 +43,7 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
   public boolean editCellAt(final int row, final int column, EventObject e) {
     if (super.editCellAt(row, column, e)) {
       assert myEditorListenerDisposable == null;
-      myEditorListenerDisposable = new Disposable() {
-        @Override
-        public void dispose() {
-        }
-      };
+      myEditorListenerDisposable = Disposer.newDisposable();
       addChangeListener(getEditorComponent(), new ChangeListener() {
           @Override
           public void stateChanged(ChangeEvent e) {

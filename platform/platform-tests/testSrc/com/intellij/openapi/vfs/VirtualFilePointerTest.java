@@ -34,6 +34,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +57,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     private final ArrayList<String> myLog = new ArrayList<String>();
 
     @Override
-    public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
       verifyPointersInCorrectState(pointers);
       myLog.add(buildMessage("before", pointers));
     }
@@ -74,7 +75,7 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     }
 
     @Override
-    public void validityChanged(VirtualFilePointer[] pointers) {
+    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
       verifyPointersInCorrectState(pointers);
       myLog.add(buildMessage("after", pointers));
     }
@@ -240,12 +241,12 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     final VirtualFilePointer[] pointersToWatch = new VirtualFilePointer[2];
     final VirtualFilePointerListener listener = new VirtualFilePointerListener() {
       @Override
-      public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
 
       @Override
-      public void validityChanged(VirtualFilePointer[] pointers) {
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
     };
@@ -302,12 +303,12 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     final VirtualFilePointer[] pointersToWatch = new VirtualFilePointer[1];
     final VirtualFilePointerListener listener = new VirtualFilePointerListener() {
       @Override
-      public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
 
       @Override
-      public void validityChanged(VirtualFilePointer[] pointers) {
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
         verifyPointersInCorrectState(pointersToWatch);
       }
     };
@@ -442,11 +443,11 @@ public class VirtualFilePointerTest extends PlatformLangTestCase {
     Disposable disposable = Disposer.newDisposable();
     final VirtualFilePointer pointer = myVirtualFilePointerManager.create(vFile[0], disposable, new VirtualFilePointerListener() {
       @Override
-      public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
       }
 
       @Override
-      public void validityChanged(VirtualFilePointer[] pointers) {
+      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
       }
     });
 
