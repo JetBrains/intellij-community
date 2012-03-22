@@ -305,7 +305,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
         if (diagnosticSink.getErrorCount() > 0) {
           if (!compiledOk) {
-            diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Errors occurred while compiling module '" + chunkName + "'"));
+            diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Errors occurred while compiling module '" + chunkName + "'"));
           }
           throw new ProjectBuildException(
             "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
