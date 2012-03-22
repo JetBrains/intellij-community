@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.diff.project.GradleProjectRenameChange;
  * @author Denis Zhdanov
  * @since 3/2/12 4:21 PM
  */
-public class GradleProjectStructureChangeVisitorAdapter implements GradleProjectStructureChangeVisitor {
+public abstract class GradleProjectStructureChangeVisitorAdapter implements GradleProjectStructureChangeVisitor {
   @Override
   public void visit(@NotNull GradleProjectRenameChange change) {
   }
