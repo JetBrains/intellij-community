@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeStyle.CodeStyleFacade;
@@ -25,11 +40,12 @@ import com.intellij.testFramework.PlatformLiteFixture;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.CharArrayWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   private MyFileDocumentManagerImpl myDocumentManager;
@@ -115,7 +131,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     assertSame(document2, document);
   }
 
-  public void testGetDocument_CreatesNewAfterGced() throws Exception {
+  public void testGetDocument_CreatesNewAfterGCed() throws Exception {
     final VirtualFile file = newTextFile();
     Document document = myDocumentManager.getDocument(file);
     int idCode = System.identityHashCode(document);
@@ -145,6 +161,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   public void testGetUnsavedDocuments_ModifiedDocument() throws Exception {
     final VirtualFile file = newTextFile();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
 
     final Document[] unsavedDocuments = myDocumentManager.getUnsavedDocuments();
@@ -156,6 +173,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   public void testGetUnsavedDocuments_afterSaveAllDocuments() throws Exception {
     final VirtualFile file = newTextFile();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
 
     myDocumentManager.saveAllDocuments();
@@ -166,6 +184,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   public void testGetUnsavedDocuments_afterSaveDocuments() throws Exception {
     final VirtualFile file = newTextFile();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
 
     myDocumentManager.saveDocument(document);
@@ -187,6 +206,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     };
 
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
 
     myDocumentManager.saveDocument(document);
@@ -199,9 +219,10 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     assertTrue(Arrays.equals("test".getBytes(), file.contentsToByteArray()));
   }
 
-  public void testUnsavedDocument_DontGc() throws Exception {
+  public void testUnsavedDocument_DoNotGC() throws Exception {
     final VirtualFile file = newTextFile();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
     int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
@@ -217,6 +238,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   public void testUnsavedDocument_GcAfterSave() throws Exception {
     final VirtualFile file = newTextFile();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
     int idCode = System.identityHashCode(document);
     //noinspection UnusedAssignment
@@ -231,10 +253,11 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     assertTrue(idCode != System.identityHashCode(document));
   }
 
-  public void testSaveDocument_DocumentWasntChanged() throws Exception {
+  public void testSaveDocument_DocumentWasNotChanged() throws Exception {
     final VirtualFile file = newTextFile();
     final long stamp = file.getModificationStamp();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     myDocumentManager.saveDocument(document);
     assertEquals(stamp, file.getModificationStamp());
   }
@@ -243,6 +266,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     final VirtualFile file = newTextFile();
     final long stamp = file.getModificationStamp();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
 
     myDocumentManager.saveDocument(document);
@@ -255,6 +279,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     final VirtualFile file = newTextFile();
     final long stamp = file.getModificationStamp();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
 
     myDocumentManager.saveAllDocuments();
@@ -265,18 +290,21 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
   public void testGetFile() throws Exception {
     final VirtualFile file = newTextFile();
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     assertSame(file, myDocumentManager.getFile(document));
   }
 
   public void testConvertSeparators() throws Exception {
     final VirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     assertEquals("test\ntest", document.getText());
   }
 
   public void testRememberSeparators() throws Exception {
     final VirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
     myDocumentManager.saveAllDocuments();
     assertTrue(Arrays.equals("xxxtest\rtest".getBytes(), file.contentsToByteArray()));
@@ -294,6 +322,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     file.setListener(myDocumentManager);
     Document document = myDocumentManager.getDocument(file);
     file.setContent(null, "xxx", true);
+    assertNotNull(file.toString(), document);
     assertEquals("xxx", document.getText());
     assertEquals(file.getModificationStamp(), document.getModificationStamp());
   }
@@ -303,16 +332,19 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     file.setListener(myDocumentManager);
     Document document = myDocumentManager.getDocument(file);
     file.setContent(myDocumentManager, "xxx", true);
+    assertNotNull(file.toString(), document);
     assertEquals("test\ntest", document.getText());
   }
 
   public void testContentChanged_ignoreEventsFromSelfOnSave() throws Exception {
     final VirtualFile file = new MockVirtualFile("test.txt", "test\rtest") {
-      public Writer getWriter(final Object requestor, final long newModificationStamp) {
+      @NotNull
+      @Override
+      public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
         final VirtualFile self = this;
-        return new CharArrayWriter() {
+        return new ByteArrayOutputStream() {
           @Override
-          public void close() {
+          public void close() throws IOException {
             super.close();
             long oldStamp = getModificationStamp();
             setModificationStamp(newModificationStamp);
@@ -323,6 +355,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
       }
     };
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "xxx");
     final long stamp = document.getModificationStamp();
 
@@ -334,6 +367,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     final MockVirtualFile file = new MockVirtualFile("test.txt", "test\rtest");
     file.setListener(myDocumentManager);
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "zzz");
 
     myDocumentManager.myReloadFromDisk = Boolean.TRUE;
@@ -353,6 +387,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     final MockVirtualFile file = newTextFile();
     file.setListener(myDocumentManager);
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "zzz");
 
     myDocumentManager.myReloadFromDisk = Boolean.FALSE;
@@ -379,6 +414,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
       }
     };
     DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "zzz");
     document.setModificationStamp(file.getModificationStamp());
 
@@ -387,7 +423,8 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
 
   // this test requires changes in idea code to support MockFile as local file system file (FileDocumentManager.needsRefresh).
   // TODO: think how to test this functionality without hacking production code
-  public void atestContentChanged_reloadChangedDocumentOnSave() throws Exception {
+  @SuppressWarnings("UnusedDeclaration")
+  public void _testContentChanged_reloadChangedDocumentOnSave() throws Exception {
     final MockVirtualFile file = new MockVirtualFile("test.txt", "test\rtest") {
       @Override
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
@@ -397,6 +434,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
       }
     };
     Document document = myDocumentManager.getDocument(file);
+    assertNotNull(file.toString(), document);
     document.insertString(0, "zzz");
     file.setContent(null, "xxx", false);
 
@@ -416,7 +454,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     }
   }
 
-  public void testContentChanged_dontreloadChangedDocumentOnSave() throws Exception {
+  public void testContentChanged_doNotReloadChangedDocumentOnSave() throws Exception {
     final MockVirtualFile file = new MockVirtualFile("test.txt", "test") {
       @Override
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
@@ -429,6 +467,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     myDocumentManager.myReloadFromDisk = Boolean.FALSE;
     try {
       Document document = myDocumentManager.getDocument(file);
+      assertNotNull(file.toString(), document);
       document.insertString(0, "zzz");
       long documentStamp = document.getModificationStamp();
 
@@ -460,6 +499,7 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
     DocumentEx document = (DocumentEx)myDocumentManager.getDocument(file);
 
     String newText = "test text";
+    assertNotNull(file.toString(), document);
     document.replaceString(0, document.getTextLength(), newText);
     assertTrue(myDocumentManager.isDocumentUnsaved(document));
     myDocumentManager.saveDocument(document);
@@ -510,32 +550,32 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
 
     file.refresh(false, false);
 
+    assertNotNull(file.toString(), document);
     assertEquals(2, document.getModificationStamp());
   }
 
-  public static class MyFileDocumentManagerImpl extends FileDocumentManagerImpl {
-    
-    public static final FileDocumentManagerListener[] LISTENERS = new FileDocumentManagerListener[0];
-    
-    public IOException myExceptionOnSave;
-    public Boolean myReloadFromDisk = null;
+  private static class MyFileDocumentManagerImpl extends FileDocumentManagerImpl {
+    private static final FileDocumentManagerListener[] LISTENERS = new FileDocumentManagerListener[0];
+
+    private Collection<IOException> myExceptionOnSave = null;
+    private Boolean myReloadFromDisk = null;
 
     public MyFileDocumentManagerImpl() {
       super(new MockVirtualFileManager());
     }
 
     @Override
-    protected void reportErrorOnSave(IOException e) {
-      myExceptionOnSave = e;
+    protected void handleErrorsOnSave(Map<Document, IOException> failures) {
+      myExceptionOnSave = failures.values();
     }
 
     @Override
     protected boolean askReloadFromDisk(VirtualFile file, Document document) {
-      if (myReloadFromDisk == null){
+      if (myReloadFromDisk == null) {
         fail();
         return false;
       }
-      else{
+      else {
         return myReloadFromDisk.booleanValue();
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
+import com.intellij.CommonBundle;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -47,6 +49,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,14 +60,16 @@ import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.Writer;
@@ -74,10 +79,8 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
@@ -99,17 +102,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
     myBus = ApplicationManager.getApplication().getMessageBus();
     InvocationHandler handler = new InvocationHandler() {
+      @Nullable
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        multicast(method, args);
+        multiCast(method, args);
         return null;
       }
     };
-    myMultiCaster =
-      (FileDocumentManagerListener)Proxy.newProxyInstance(FileDocumentManagerListener.class.getClassLoader(), new Class[]{FileDocumentManagerListener.class}, handler);
+
+    final ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
+    myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
   }
 
-  private void multicast(Method method, Object[] args) {
+  private void multiCast(Method method, Object[] args) {
     try {
       method.invoke(myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
     }
@@ -285,21 +290,33 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myMultiCaster.beforeAllDocumentsSaving();
     if (myUnsavedDocuments.isEmpty()) return;
 
-    Set<Document> failedToSave = new THashSet<Document>();
+    final Map<Document, IOException> failedToSave = new HashMap<Document, IOException>();
     while (true) {
-      final Document[] unsavedDocuments = getUnsavedDocuments();
-
       int count = 0;
-      for (Document document : unsavedDocuments) {
-        if (failedToSave.contains(document)) continue;
-        saveDocument(document);
-        count++;
-        if (myUnsavedDocuments.contains(document)) {
-          failedToSave.add(document);
+
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      try {
+        for (Document document : myUnsavedDocuments) {
+          if (failedToSave.containsKey(document)) continue;
+          try {
+            doSaveDocument(document);
+          }
+          catch (IOException e) {
+            //noinspection ThrowableResultOfMethodCallIgnored
+            failedToSave.put(document, e);
+          }
+          count++;
         }
+      }
+      finally {
+        token.finish();
       }
 
       if (count == 0) break;
+    }
+
+    if (!failedToSave.isEmpty()) {
+      handleErrorsOnSave(failedToSave);
     }
   }
 
@@ -311,7 +328,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, null) {
       @Override
       public void run() {
-        _saveDocument(document);
+        try {
+          doSaveDocument(document);
+        }
+        catch (IOException e) {
+          handleErrorsOnSave(Collections.singletonMap(document, e));
+        }
       }
     });
   }
@@ -333,64 +355,50 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
   }
 
-  private void _saveDocument(@NotNull final Document document) {
-    boolean committed = false;
-    try {
-      VirtualFile file = getFile(document);
+  private void doSaveDocument(@NotNull final Document document) throws IOException {
+    VirtualFile file = getFile(document);
 
-      if (file == null || !file.isValid() || file instanceof LightVirtualFile || !isFileModified(file)) {
-        myUnsavedDocuments.remove(document);
-        fireUnsavedDocumentsDropped();
-        LOG.assertTrue(!myUnsavedDocuments.contains(document));
+    if (file == null || !file.isValid() || file instanceof LightVirtualFile || !isFileModified(file)) {
+      myUnsavedDocuments.remove(document);
+      fireUnsavedDocumentsDropped();
+      LOG.assertTrue(!myUnsavedDocuments.contains(document));
+      return;
+    }
+
+    if (needsRefresh(file)) {
+      file.refresh(false, false);
+      if (!myUnsavedDocuments.contains(document)) return;
+      if (!file.isValid()) return;
+    }
+
+    for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
+      if (!vetoer.maySaveDocument(document)) {
         return;
       }
-
-      if (needsRefresh(file)) {
-        file.refresh(false, false);
-        if (!myUnsavedDocuments.contains(document)) return;
-        if (!file.isValid()) return;
-      }
-
-      for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
-        if (!vetoer.maySaveDocument(document)) {
-          return;
-        }
-      }
-
-      myMultiCaster.beforeDocumentSaving(document);
-
-      LOG.assertTrue(file.isValid());
-
-      String text = document.getText();
-      String lineSeparator = getLineSeparator(document, file);
-      if (!lineSeparator.equals("\n")) {
-        text = StringUtil.convertLineSeparators(text, lineSeparator);
-      }
-      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-
-      Writer writer = null;
-      try {
-        writer = LoadTextUtil.getWriter(project, file, this, text, document.getModificationStamp());
-        writer.write(text);
-      }
-      finally {
-        if (writer != null) {
-          writer.close();
-        }
-      }
-      committed = true;
     }
-    catch (IOException e) {
-      reportErrorOnSave(e);
-      committed = false;
+
+    myMultiCaster.beforeDocumentSaving(document);
+
+    LOG.assertTrue(file.isValid());
+
+    String text = document.getText();
+    String lineSeparator = getLineSeparator(document, file);
+    if (!lineSeparator.equals("\n")) {
+      text = StringUtil.convertLineSeparators(text, lineSeparator);
+    }
+
+    Project project = ProjectLocator.getInstance().guessProjectForFile(file);
+    Writer writer = LoadTextUtil.getWriter(project, file, this, text, document.getModificationStamp());
+    try {
+      writer.write(text);
     }
     finally {
-      if (committed) {
-        myUnsavedDocuments.remove(document);
-        LOG.assertTrue(!myUnsavedDocuments.contains(document));
-        myTrailingSpacesStripper.clearLineModificationFlags(document);
-      }
+      writer.close();
     }
+
+    myUnsavedDocuments.remove(document);
+    LOG.assertTrue(!myUnsavedDocuments.contains(document));
+    myTrailingSpacesStripper.clearLineModificationFlags(document);
   }
 
   private static boolean needsRefresh(final VirtualFile file) {
@@ -402,6 +410,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     String lineSeparator = LoadTextUtil.getDetectedLineSeparator(file);
     if (lineSeparator == null) {
       lineSeparator = document.getUserData(LINE_SEPARATOR_KEY);
+      assert lineSeparator != null : document;
     }
     return lineSeparator;
   }
@@ -514,7 +523,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     long documentStamp = document.getModificationStamp();
     long oldFileStamp = event.getOldModificationStamp();
     if (documentStamp != oldFileStamp) {
-      LOG.info("reaload from disk?");
+      LOG.info("reload from disk?");
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
 
@@ -542,7 +551,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @Override
   public void reloadFromDisk(@NotNull final Document document) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+
     final VirtualFile file = getFile(document);
+    assert file != null;
+
     if (!fireBeforeFileContentReload(file, document)) {
       return;
     }
@@ -584,10 +596,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String windowtitle = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
+        String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
 
-        SimpleDiffRequest request = new SimpleDiffRequest(project, windowtitle);
+        SimpleDiffRequest request = new SimpleDiffRequest(project, title);
         FileType fileType = file.getFileType();
         String fsContent = LoadTextUtil.loadText(file).toString();
         request.setContents(new SimpleContent(fsContent, fileType),
@@ -601,7 +613,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
         diffPanel.setDiffRequest(request);
         diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
         diffBuilder.addCancelAction();
-        diffBuilder.setTitle(windowtitle);
+        diffBuilder.setTitle(title);
         if (diffBuilder.show() == DialogWrapper.OK_EXIT_CODE) {
           builder.getDialogWrapper().close(DialogWrapper.CANCEL_EXIT_CODE);
         }
@@ -611,20 +623,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     builder.setButtonsAlignment(SwingConstants.CENTER);
     builder.setHelpId("reference.dialogs.fileCacheConflict");
     return builder.show() == 0;
-  }
-
-  protected void reportErrorOnSave(final IOException e) {
-    // invokeLater here prevents attempt to show dialog in write action
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showMessageDialog(
-          UIBundle.message("cannot.save.file.with.error.error.message", e.getMessage()),
-          UIBundle.message("cannot.save.file.dialog.title"),
-          Messages.getErrorIcon()
-        );
-      }
-    });
   }
 
   @Override
@@ -687,5 +685,57 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @NotNull
   protected FileDocumentManagerListener[] getListeners() {
     return FileDocumentManagerListener.EP_NAME.getExtensions();
+  }
+
+  // todo[r.sh] handle project close/app shutdown
+  protected void handleErrorsOnSave(final Map<Document, IOException> failures) {
+    final String text = StringUtil.join(failures.values(), new Function<IOException, String>() {
+      @Override
+      public String fun(IOException e) {
+        return e.getMessage();
+      }
+    }, "\n");
+
+    final DialogWrapper dialog = new DialogWrapper(null) {
+      {
+        init();
+        setTitle(UIBundle.message("cannot.save.files.dialog.title"));
+      }
+
+      @Override
+      protected void createDefaultActions() {
+        super.createDefaultActions();
+        myOKAction.putValue(Action.NAME, UIBundle.message("cannot.save.files.dialog.revert.changes"));
+        myOKAction.putValue(DEFAULT_ACTION, null);
+        myCancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText());
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        final JPanel panel = new JPanel(new BorderLayout(0, 5));
+
+        panel.add(new JLabel(UIBundle.message("cannot.save.files.dialog.message")), BorderLayout.NORTH);
+
+        final JTextPane area = new JTextPane();
+        area.setText(text);
+        area.setEditable(false);
+        area.setMinimumSize(new Dimension(area.getMinimumSize().width, 50));
+        panel.add(new JBScrollPane(area, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+
+        return panel;
+      }
+    };
+
+    final AsyncResult<Boolean> result = dialog.showAndGetOk();
+    result.doWhenDone(new AsyncResult.Handler<Boolean>() {
+      @Override
+      public void run(Boolean isOk) {
+        if (isOk) {
+          for (Document document : failures.keySet()) {
+            reloadFromDisk(document);
+          }
+        }
+      }
+    });
   }
 }
