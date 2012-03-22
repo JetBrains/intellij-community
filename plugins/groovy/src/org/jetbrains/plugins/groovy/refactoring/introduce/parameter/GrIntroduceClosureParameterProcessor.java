@@ -397,7 +397,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     if (signature == null) signature = GrClosureSignatureUtil.createSignature(toReplaceIn);
 
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs =
-      GrClosureSignatureUtil.mapParametersToArguments(signature, argList, callExpression, callExpression.getClosureArguments(), true);
+      GrClosureSignatureUtil.mapParametersToArguments(signature, argList, callExpression, callExpression.getClosureArguments(), true, true);
 
     if (PsiTreeUtil.isAncestor(toReplaceIn, callExpression, false)) {
       argList.addAfter(factory.createExpressionFromText(settings.getName()), anchor);
