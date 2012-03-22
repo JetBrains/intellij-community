@@ -118,7 +118,7 @@ public class StatementMover extends LineMover {
     }
     if (isMoveToCompound(info, editor, file, down) && !moveToEmptyLine) {
       myStatementToIncreaseIndent = myStatementToMove;
-      if (!down)
+      if (!down && !theSameLevel)
         info.toMove2 = new LineRange(myStatementToMove);
     }
 
@@ -281,6 +281,17 @@ public class StatementMover extends LineMover {
         statementPart2 = PsiTreeUtil.getParentOfType(statementPart2, PyStatementPart.class);
       }
       else {
+        final PsiElement parent2 = statementPart2.getParent();
+        if (parent2 instanceof PyTryExceptStatement && statementPart1 != null && parent2 != statementPart1.getParent() && !down) {
+          if (parent2.getParent() instanceof PyStatementList) {
+            final PyStatementList stList = (PyStatementList)parent2.getParent();
+            final PyStatement[] statements = stList.getStatements();
+            if (statements[statements.length-1] == parent2) {
+              statementPart2 = PsiTreeUtil.getParentOfType(stList, PyStatementPart.class);
+            }
+          }
+        }
+        
         PyStatementList stList = ((PyStatementPart)statementPart2).getStatementList();
         if (stList != null && stList.getStatements().length > 0) {
           if (down && stList.getStatements()[stList.getStatements().length-1] == element2) {
@@ -297,23 +308,23 @@ public class StatementMover extends LineMover {
         }
       }
     }
-
     return new Pair<PyElement, PyElement>(statementPart1, statementPart2);
   }
 
   private boolean isMoveToCompound(MoveInfo info, Editor editor, PsiFile file, boolean down) {
-    Pair<PyElement, PyElement> statementParts = getStatementParts(info, editor, file, down);
-    PyElement statementPart1 = statementParts.first;
-    PyElement statementPart2 = statementParts.second;
+    final Pair<PyElement, PyElement> statementParts = getStatementParts(info, editor, file, down);
+    final PyElement statementPart1 = statementParts.first;
+    final PyElement statementPart2 = statementParts.second;
     if (statementPart2 != null) {
       if (statementPart2 instanceof PyStatementPart)
         prepareToStatement((PyStatementPart)statementPart2, editor.getDocument());
       if (statementPart1 == null) return true;
       if (statementPart1.getParent() != statementPart2.getParent()) {
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
+        final PsiElement commonParent = PsiTreeUtil.findCommonParent(statementPart1, statementPart2);
         if (PsiTreeUtil.isAncestor(statementPart2, statementPart1, false)) return false;
         if ((commonParent instanceof PyIfStatement) || (commonParent instanceof PyLoopStatement) ||
-            (commonParent instanceof PyStatementPart) || (commonParent instanceof PyWithStatement))
+            (commonParent instanceof PyStatementPart) || (commonParent instanceof PyWithStatement) ||
+            (commonParent instanceof PyTryExceptStatement))
           return true;
       }
     }
