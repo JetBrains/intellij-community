@@ -60,6 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Gregory.Shrago
@@ -69,7 +70,7 @@ public class RepositoryAttachHandler {
   @Nullable
   public static NewLibraryConfiguration chooseLibraryAndDownload(final @NotNull Project project, final @Nullable String initialFilter) {
     final RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, false, initialFilter);
-    dialog.setTitle("Download Library from Maven Repository");
+    dialog.setTitle("Download Library From Maven Repository");
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return null;
@@ -149,6 +150,8 @@ public class RepositoryAttachHandler {
             FileUtil.copy(repoFile, toFile);
           }
         }
+        // search for jar file first otherwise lib root won't be found!
+        manager.refreshAndFindFileByUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(toFile.getPath())));
         final String url = VfsUtil.getUrlForLibraryRoot(toFile);
         final VirtualFile file = manager.refreshAndFindFileByUrl(url);
         if (file != null) {
@@ -188,16 +191,20 @@ public class RepositoryAttachHandler {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Maven", false) {
 
       public void run(@NotNull ProgressIndicator indicator) {
-        final Ref<List<Pair<MavenArtifactInfo, MavenRepositoryInfo>>> result
-          = Ref.create(Collections.<Pair<MavenArtifactInfo, MavenRepositoryInfo>>emptyList());
-        final Ref<Boolean> tooManyRef = Ref.create(Boolean.FALSE);
-        try {
-          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList =
-            new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
-          for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls()) {
+        String[] urls = MavenRepositoryServicesManager.getServiceUrls();
+        boolean tooManyResults = false;
+        final AtomicBoolean proceedFlag = new AtomicBoolean(true);
+
+        for (int i = 0, length = urls.length; i < length; i++) {
+          if (!proceedFlag.get()) break;
+          final List<Pair<MavenArtifactInfo, MavenRepositoryInfo>> resultList = new ArrayList<Pair<MavenArtifactInfo, MavenRepositoryInfo>>();
+          final Ref<Boolean> tooManyRef = Ref.create(null);
+          try {
+            String serviceUrl = urls[i];
             final List<MavenArtifactInfo> artifacts;
             artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
             if (!artifacts.isEmpty()) {
+              if (!proceedFlag.get()) break;
               final List<MavenRepositoryInfo> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
               final HashMap<String, MavenRepositoryInfo> map = new HashMap<String, MavenRepositoryInfo>();
               for (MavenRepositoryInfo repository : repositories) {
@@ -205,25 +212,27 @@ public class RepositoryAttachHandler {
               }
               for (MavenArtifactInfo artifact : artifacts) {
                 if (artifact == null) {
-                  tooManyRef.set(Boolean.TRUE);
+                  tooManyResults = true;
                 }
                 else {
                   resultList.add(Pair.create(artifact, map.get(artifact.getRepositoryId())));
                 }
               }
             }
+            tooManyRef.set(i == length - 1 ? tooManyResults : null);
           }
-          result.set(resultList);
-        }
-        catch (Exception e) {
-          MavenLog.LOG.error(e);
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              resultProcessor.process(result.get(), tooManyRef.get());
-            }
-          });
+          catch (Exception e) {
+            MavenLog.LOG.error(e);
+          }
+          finally {
+            if (!proceedFlag.get()) break;
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                if (!proceedFlag.get()) return;
+                proceedFlag.set(resultProcessor.process(resultList, tooManyRef.get()));
+              }
+            });
+          }
         }
       }
     });

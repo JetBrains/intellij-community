@@ -25,13 +25,13 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
@@ -119,22 +119,17 @@ public class RepositoryAttachDialog extends DialogWrapper {
         });
       }
     });
-    textField.addKeyListener(new KeyAdapter() {
+    myCombobox.addActionListener(new ActionListener() {
       @Override
-      public void keyPressed(KeyEvent e) {
+      public void actionPerformed(ActionEvent e) {
         final boolean popupVisible = myCombobox.isPopupVisible();
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
-          //if (true) return;
-          if (popupVisible && !myCoordinates.isEmpty()) {
-            final String item = (String)myCombobox.getSelectedItem();
-            if (StringUtil.isNotEmpty(item)) {
-              ((JTextField)myCombobox.getEditor().getEditorComponent()).setText(item);
-            }
-          }
-          else if (!popupVisible || myCoordinates.isEmpty()) {
-            if (performSearch()) {
-              e.consume();
-            }
+        if (!popupVisible || myCoordinates.isEmpty()) {
+          performSearch();
+        }
+        else {
+          final String item = (String)myCombobox.getSelectedItem();
+          if (StringUtil.isNotEmpty(item)) {
+            ((JTextField)myCombobox.getEditor().getEditorComponent()).setText(item);
           }
         }
       }
@@ -226,11 +221,10 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (myCoordinates.contains(text)) return false;
     if (myProgressIcon.isRunning()) return false;
     myProgressIcon.resume();
-    RepositoryAttachHandler
-      .searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
+    RepositoryAttachHandler.searchArtifacts(myProject, text, new PairProcessor<Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>>, Boolean>() {
         public boolean process(Collection<Pair<MavenArtifactInfo, MavenRepositoryInfo>> artifacts, Boolean tooMany) {
-          if (myProgressIcon.isDisposed()) return true;
-          myProgressIcon.suspend();
+          if (myProgressIcon.isDisposed()) return false;
+          if (tooMany != null) myProgressIcon.suspend(); // finished
           final int prevSize = myCoordinates.size();
           for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
             myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
@@ -257,37 +251,17 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   @Override
-  public boolean isOKActionEnabled() {
-    return true;
-  }
-
-  @Override
-  protected void doOKAction() {
-    if (!isOKActionEnabled()) return;
-    String errorText = null;
-    JComponent errorComponent = null;
+  protected ValidationInfo doValidate() {
     if (!isValidCoordinateSelected()) {
-      errorComponent = myCombobox;
-      errorText = "Please enter valid coordinate, discover it or select one from the list";
+      return new ValidationInfo("Please enter valid coordinate, discover it or select one from the list", myCombobox);
     }
     else if (!myManaged) {
       final File dir = new File(myDirectoryField.getText());
       if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-        errorComponent = myDirectoryField.getTextField();
-        errorText = "Please enter valid library files path";
+        return new ValidationInfo("Please enter valid library files path", myDirectoryField.getTextField());
       }
     }
-    if (errorText != null && errorComponent != null) {
-      final Point point = new Point(errorComponent.getWidth() / 2, 0);
-      JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(errorText, MessageType.WARNING, null).
-        setHideOnClickOutside(false).setHideOnKeyOutside(true).
-        createBalloon().show(new RelativePoint(errorComponent, point), Balloon.Position.above);
-      IdeFocusManager.findInstance().requestFocus(errorComponent, true);
-    }
-    else {
-      super.doOKAction();
-    }
+    return super.doValidate();
   }
 
   @Override
