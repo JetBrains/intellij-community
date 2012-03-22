@@ -78,13 +78,18 @@ public class StatementMover extends LineMover {
     }
     if ( myStatementToMove instanceof PyBreakStatement
             || myStatementToMove instanceof PyContinueStatement) {
+      //info.toMove2 = info.toMove;
+      //return true;
       PyLoopStatement parent = PsiTreeUtil.getParentOfType(myStatementToMove, PyLoopStatement.class);
       if (parent != null) {
         PyStatementPart part = PsiTreeUtil.getChildOfType(parent, PyStatementPart.class);
         if (part != null && part.getStatementList() != null) {
           PyStatementList statementList = part.getStatementList();
+          if (myStatementToMove.getParent() instanceof PyStatementList) {
+            statementList = (PyStatementList)myStatementToMove.getParent();
+          }
           if (statementList != null && statementList.getStatements().length > 0) {
-            if ((statementList.getStatements()[0] == myStatementToMove && !down)
+            if ((statementList.getStatements()[0] == myStatementToMove /*&& !down*/)
                 || (statementList.getStatements()[statementList.getStatements().length-1] == myStatementToMove && down)) {
               info.toMove2 = info.toMove;
               return true;
@@ -415,7 +420,8 @@ public class StatementMover extends LineMover {
       CodeStyleSettings.IndentOptions indentOptions = CodeStyleSettingsManager.getInstance(editor.getProject()).
                                                                 getCurrentSettings().getIndentOptions(PythonFileType.INSTANCE);
 
-      PsiElement whiteSpace = myStatementToAddLinebreak.getContainingFile().findElementAt(editor.getDocument().getLineStartOffset(line));
+      PsiElement whiteSpace = myStatementToAddLinebreak.getContainingFile().findElementAt(
+          editor.getDocument().getLineStartOffset(line));
       String indent = StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
 
       PyStatementWithElse statementWithElse = PsiTreeUtil.getParentOfType(myStatementToAddLinebreak, PyStatementWithElse.class);
