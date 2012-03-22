@@ -123,7 +123,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrReferenceExpression createReferenceExpressionFromText(String idText) {
     PsiFile file = createGroovyFile(idText);
     final GrTopStatement[] statements = ((GroovyFileBase)file).getTopStatements();
-    LOG.assertTrue(statements.length == 1 && statements[0] instanceof GrReferenceExpression, idText);
+    if (!(statements.length == 1 && statements[0] instanceof GrReferenceExpression)) throw new IncorrectOperationException(idText);
     return (GrReferenceExpression) statements[0];
   }
 

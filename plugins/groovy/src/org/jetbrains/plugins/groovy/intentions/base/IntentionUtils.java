@@ -47,22 +47,16 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
  */
 public class IntentionUtils {
 
-  public static void replaceExpression(@NotNull String newExpression,
-                                       @NotNull GrExpression expression)
-      throws IncorrectOperationException {
+  public static void replaceExpression(@NotNull String newExpression, @NotNull GrExpression expression) throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    final GrExpression newCall =
-        factory.createExpressionFromText(newExpression);
-    final PsiElement insertedElement = expression.replaceWithExpression(newCall, true);
+    final GrExpression newCall = factory.createExpressionFromText(newExpression);
+    expression.replaceWithExpression(newCall, true);
   }
 
-  public static GrStatement replaceStatement(
-      @NonNls @NotNull String newStatement,
-      @NonNls @NotNull GrStatement statement)
-      throws IncorrectOperationException {
+  public static GrStatement replaceStatement(@NonNls @NotNull String newStatement, @NonNls @NotNull GrStatement statement)
+    throws IncorrectOperationException {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
-    final GrStatement newCall =
-        (GrStatement) factory.createTopElementFromText(newStatement);
+    final GrStatement newCall = (GrStatement)factory.createTopElementFromText(newStatement);
     return statement.replaceWithStatement(newCall);
   }
 
