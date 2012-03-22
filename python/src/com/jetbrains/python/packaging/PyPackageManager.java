@@ -33,7 +33,6 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.util.io.FileUtilRt;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
@@ -209,7 +208,7 @@ public class PyPackageManager {
     args.add("install");
     final File buildDir;
     try {
-      buildDir = FileUtilRt.createTempDirectory("packaging", null);
+      buildDir = FileUtil.createTempDirectory("packaging", null);
     }
     catch (IOException e) {
       throw new PyExternalProcessException(ERROR_ACCESS_DENIED, PACKAGING_TOOL, args, "Cannot create temporary build directory");

@@ -287,7 +287,7 @@ public class PyStubsTest extends PyTestCase {
     myFixture.copyDirectoryToProject("../resolve/multiFile/fromImportPackageIntoSelf", "");
     final PyFileImpl initPy = (PyFileImpl) myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("mygame/__init__.py"));
     final PsiElement element = initPy.findExportedName("display");
-    assertTrue(element instanceof PyFile);
+    assertInstanceOf(element, PyFile.class);
     assertNotParsed(initPy);
   }
 
