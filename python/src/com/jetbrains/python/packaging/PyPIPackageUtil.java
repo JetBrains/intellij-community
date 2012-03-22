@@ -225,19 +225,12 @@ public class PyPIPackageUtil {
     return PyPackageService.getInstance(project).PY_PACKAGES;
   }
 
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description,
-                               @NotNull String command, @NotNull String errorOutput) {
+  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description) {
     final DialogBuilder builder = new DialogBuilder(project);
     builder.setTitle(title);
     final JTextArea textArea = new JTextArea();
     textArea.setEditable(false);
-    textArea.setText(String.format("%s The following command was executed:\n" +
-                                   "\n" +
-                                   "%s\n" +
-                                   "\n" +
-                                   "The error output of the command:\n" +
-                                   "%s",
-                                   description, command, errorOutput));
+    textArea.setText(description);
     textArea.setWrapStyleWord(false);
     textArea.setLineWrap(true);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);

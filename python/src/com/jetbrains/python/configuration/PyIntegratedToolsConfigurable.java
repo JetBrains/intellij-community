@@ -105,6 +105,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
         final PyPackageManager.UI ui = new PyPackageManager.UI(myProject, sdk, new PyPackageManager.UI.Listener() {
           @Override
           public void started() {}
+
           @Override
           public void finished(@Nullable PyExternalProcessException exception) {
             if (exception == null) {
