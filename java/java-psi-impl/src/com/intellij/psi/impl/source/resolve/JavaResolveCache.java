@@ -96,7 +96,8 @@ public class JavaResolveCache {
       SoftReference<PsiType> ref = new SoftReference<PsiType>(type);
       Reference<PsiType> storedRef = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, ref);
 
-      type = storedRef.get();
+      PsiType stored = storedRef.get();
+      type = stored == null ? type : stored;
     }
 
     if (!type.isValid()) {
