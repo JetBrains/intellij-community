@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -220,14 +219,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       disposed = true;
 
       final Pair<VirtualFile, String> pair = myFileAndUrl;
-      VirtualFile file = pair.first;
-      if (file != null) {
-        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(file.getUrl(), myListener);
-      }
-      String url = pair.second;
-      if (url != null && (file == null || !FileUtil.pathsEqual(url, file.getUrl()))) {
-        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(url, myListener);
-      }
+      ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(pair.first, pair.second, myListener);
     }
   }
 
