@@ -742,6 +742,9 @@ public abstract class DialogWrapper {
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
       unregisterKeyboardActions(rootPane);
+      if (myActualSize != null) {
+        setSize(myActualSize.width, myActualSize.height);
+      }
       myPeer.dispose();
     }
   }
