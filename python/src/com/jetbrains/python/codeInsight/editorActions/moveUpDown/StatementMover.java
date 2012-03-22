@@ -78,11 +78,9 @@ public class StatementMover extends LineMover {
     }
     if ( myStatementToMove instanceof PyBreakStatement
             || myStatementToMove instanceof PyContinueStatement) {
-      //info.toMove2 = info.toMove;
-      //return true;
-      PyLoopStatement parent = PsiTreeUtil.getParentOfType(myStatementToMove, PyLoopStatement.class);
+      final PyLoopStatement parent = PsiTreeUtil.getParentOfType(myStatementToMove, PyLoopStatement.class);
       if (parent != null) {
-        PyStatementPart part = PsiTreeUtil.getChildOfType(parent, PyStatementPart.class);
+        final PyStatementPart part = PsiTreeUtil.getChildOfType(parent, PyStatementPart.class);
         if (part != null && part.getStatementList() != null) {
           PyStatementList statementList = part.getStatementList();
           if (myStatementToMove.getParent() instanceof PyStatementList) {
@@ -168,15 +166,15 @@ public class StatementMover extends LineMover {
 
   @Nullable
   private PsiElement findStatement(Editor editor, PsiFile file, MoveInfo info) {
-    Document doc = editor.getDocument();
-    int offset1 = getLineStartSafeOffset(doc, info.toMove.startLine);
+    final Document doc = editor.getDocument();
+    final int offset1 = getLineStartSafeOffset(doc, info.toMove.startLine);
     PsiElement element1 = file.findElementAt(offset1);
     if (element1 != null) {
       if (element1 instanceof PsiWhiteSpace) {
-        element1 = PyPsiUtils.getSignificantToTheRight(element1, true);
+        element1 = PyPsiUtils.getSignificantToTheRight(element1, false);
       }
-      PyStatement statement = PsiTreeUtil.getParentOfType(element1, PyStatement.class, false);
-      if (statement == null && element1 instanceof PsiComment) return element1;
+      final PyStatement statement = PsiTreeUtil.getParentOfType(element1, PyStatement.class, false);
+      if (element1 instanceof PsiComment) return element1;
       return statement;
     }
     return null;
@@ -201,7 +199,7 @@ public class StatementMover extends LineMover {
     PsiElement element2 = file.findElementAt(offset2);
     if (element2 != null) {
       if (element2 instanceof PsiWhiteSpace) {
-        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, true);
+        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
         if (tmp != null &&
                   editor.offsetToLogicalPosition(tmp.getTextRange().getStartOffset()).line
                           == info.toMove2.startLine) {
@@ -255,13 +253,13 @@ public class StatementMover extends LineMover {
     PsiElement element2 = file.findElementAt(offset2-1);
     if (element2 instanceof PsiWhiteSpace) {
       if (down) {
-        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, true);
+        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
         if (tmp != null &&
             editor.offsetToLogicalPosition(tmp.getTextRange().getStartOffset()).line == info.toMove2.startLine)
           element2 = tmp;
 
       } else {
-        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, true);
+        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
         if (tmp != null) {
           int start = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getStartOffset()).line;
           int end = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getEndOffset()).line;

@@ -45,6 +45,10 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testComment() {
+    doTest();
+  }
+
   public void testOneStatementInFunction() {
     doTest();
   }
