@@ -49,6 +49,10 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testIndentedOneLine() { //PY-5268
+    doTest();
+  }
+
   public void testComment() {   //PY-5270
     doTest();
   }

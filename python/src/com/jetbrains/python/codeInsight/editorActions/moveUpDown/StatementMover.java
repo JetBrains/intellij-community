@@ -35,6 +35,7 @@ public class StatementMover extends LineMover {
   @Nullable private PsiElement myStatementToMove;
   @Nullable private PyStatementPart myStatementPartToRemovePass;
   private boolean moveToEmptyLine = false;
+  private boolean theSameLevel;
 
   private void init(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
     LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
@@ -105,7 +106,7 @@ public class StatementMover extends LineMover {
     expandLineRangeToStatement(info, editor, down, file);
 
     //is move from one part of compound statement to another
-    boolean theSameLevel = isTheSameIndentLevel(info, editor, file, down);
+    theSameLevel = isTheSameIndentLevel(info, editor, file, down);
 
     //check we move statement into compound or out of compound
     if (isMoveOut(info, editor, file, down)) {
@@ -425,7 +426,8 @@ public class StatementMover extends LineMover {
       PyStatementWithElse statementWithElse = PsiTreeUtil.getParentOfType(myStatementToAddLinebreak, PyStatementWithElse.class);
       if (statementWithElse != null && statementWithElse.getParent() instanceof PyFile) indent = "\n";
       if (whiteSpace instanceof PsiWhiteSpace) indent += whiteSpace.getText();
-      if (down) indent += StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
+      if (down || theSameLevel) indent += StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
+      if (theSameLevel) info.toMove = info.toMove2;
       editor.getDocument().insertString(textRange.getStartOffset(), indent);
     }
     // add pass statement if needed
