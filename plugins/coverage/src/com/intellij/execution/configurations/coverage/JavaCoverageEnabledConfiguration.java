@@ -81,7 +81,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
         ((JavaCoverageRunner)runner).appendCoverageArgument(new File(path).getCanonicalPath(),
                                                             getPatterns(),
                                                             javaParameters,
-                                                            isTrackPerTestCoverage(),
+                                                            isTrackPerTestCoverage() && !isSampling(),
                                                             isSampling());
       }
     }
