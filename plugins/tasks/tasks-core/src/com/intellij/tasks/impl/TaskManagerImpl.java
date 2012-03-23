@@ -326,7 +326,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
       if (createChangelist) {
         if (changeLists.isEmpty()) {
-          String name = getChangelistName(task);
+          String name = getChangelistName(origin);
           String comment = TaskUtil.getChangeListComment(this, origin);
           createChangeList(task, name, comment);
         } else {
