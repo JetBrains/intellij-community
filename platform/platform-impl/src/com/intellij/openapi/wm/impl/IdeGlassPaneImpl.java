@@ -131,7 +131,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       }
       int button1 = MouseEvent.BUTTON1_MASK | MouseEvent.BUTTON1_DOWN_MASK;
       final boolean pureMouse1Event = (me.getModifiersEx() | button1) == button1;
-      if (pureMouse1Event && me.getClickCount() == 1 && !me.isPopupTrigger()) {
+      if (pureMouse1Event && me.getClickCount() <= 1 && !me.isPopupTrigger()) {
         final Point point = SwingUtilities.convertPoint(meComponent, me.getPoint(), myRootPane.getContentPane());
 
         if (myRootPane.getMenuBar() != null && myRootPane.getMenuBar().isVisible()) {
