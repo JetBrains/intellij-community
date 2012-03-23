@@ -9,6 +9,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
@@ -84,7 +85,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     myContent.add(ScrollPaneFactory.createScrollPane(payloadControl), CONTENT_CARD_NAME);
     RichTextControlBuilder builder = new RichTextControlBuilder();
     builder.setBackgroundColor(payloadControl.getBackground());
-    builder.setForegroundColor(payloadControl.getForeground());
+    builder.setForegroundColor(UIUtil.getInactiveTextColor());
     builder.setFont(payloadControl.getFont());
     builder.setText(GradleBundle.message("gradle.toolwindow.text.no.linked.project"));
     final JComponent noLinkedProjectControl = builder.build();
@@ -107,6 +108,10 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     final GradleSettings settings = GradleSettings.getInstance(myProject);
     String cardToShow = settings.getLinkedProjectPath() == null ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
     myLayout.show(myContent, cardToShow);
+    boolean showToolbar = cardToShow != NON_LINKED_CARD_NAME;
+    for (JComponent component : getToolbarControls()) {
+      component.setVisible(showToolbar);
+    }
     
     updateContent();
   }

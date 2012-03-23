@@ -5,9 +5,7 @@ import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.util.Arrays;
 
@@ -34,7 +32,12 @@ import java.util.Arrays;
  */
 public class MatrixControlBuilder {
   
-  private final DefaultTableModel myModel = new DefaultTableModel();
+  private final DefaultTableModel myModel = new DefaultTableModel() {
+    @Override
+    public boolean isCellEditable(int row, int column) {
+      return false;
+    }
+  };
 
   private final JBTable     myTable;
   private final JComponent  myResult;
@@ -52,11 +55,20 @@ public class MatrixControlBuilder {
         return getPreferredSize();
       }
     };
+    myTable.setFocusable(false);
     myTable.setStriped(true);
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     renderer.setHorizontalAlignment(SwingConstants.CENTER);
-    for (int i = 1/* don't align row name */, max = myTable.getColumnCount(); i < max; i++) {
-      myTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
+    for (int i = 0, max = myTable.getColumnCount(); i < max; i++) {
+      final TableColumn column = myTable.getColumnModel().getColumn(i);
+      if (i > 0) {
+        // Don't align row name.
+        column.setCellRenderer(renderer);
+      }
+      final TableCellRenderer headerRenderer = column.getHeaderRenderer();
+      if (headerRenderer instanceof JLabel) {
+        ((JLabel)headerRenderer).setHorizontalAlignment(SwingConstants.CENTER);
+      }
     }
     myResult = ScrollPaneFactory.createScrollPane(myTable);
     

@@ -2,9 +2,14 @@ package org.jetbrains.plugins.gradle.remote;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.task.GradleTaskAware;
+import org.jetbrains.plugins.gradle.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.task.GradleTaskType;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Serves as a facade for working with
@@ -18,6 +23,34 @@ import java.rmi.RemoteException;
  */
 public interface GradleApiFacade extends Remote, GradleTaskAware {
 
+  /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link GradleApiFacade}. */
+  GradleApiFacade NULL_OBJECT = new GradleApiFacade() {
+    @NotNull
+    @Override
+    public GradleProjectResolver getResolver() throws RemoteException, IllegalStateException {
+      return GradleProjectResolver.NULL_OBJECT;
+    }
+
+    @Override
+    public void applySettings(@NotNull RemoteGradleProcessSettings settings) throws RemoteException {
+    }
+
+    @Override
+    public void applyProgressManager(@NotNull RemoteGradleProgressNotificationManager progressManager) throws RemoteException {
+    }
+
+    @Override
+    public boolean isTaskInProgress(@NotNull GradleTaskId id) throws RemoteException {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public Map<GradleTaskType, Set<GradleTaskId>> getTasksInProgress() throws RemoteException {
+      return Collections.emptyMap();
+    }
+  };
+  
   /**
    * Exposes <code>'resolve gradle project'</code> service that works at another process.
    * 

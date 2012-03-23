@@ -58,12 +58,8 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings>,
 
   @Override
   public GradleSettings getState() {
-    if (StringUtil.isEmpty(getLinkedProjectPath())) {
-      // Don't save state for the gradle-unaware projects.
-      return null;
-    }
     myExpandStates.get().clear();
-    if (PRESERVE_EXPAND_STATE) {
+    if (PRESERVE_EXPAND_STATE && !StringUtil.isEmpty(getLinkedProjectPath())) {
       myExpandStates.get().putAll(myWorkingExpandStates.get());
     }
     return this;

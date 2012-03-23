@@ -108,7 +108,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   }
 
   @NotNull
-  public static List<MavenArtifactInfo> findArtifacts(MavenArtifactInfo template, String url) {
+  public static List<MavenArtifactInfo> findArtifacts(@NotNull MavenArtifactInfo template, @NotNull String url) {
     List<MavenArtifactInfo> result = new SmartList<MavenArtifactInfo>();
     for (MavenRepositoryService service : getServices()) {
       try {

@@ -32,6 +32,7 @@ public class IdeaTitledBorder extends TitledBorder {
     int labelY = y + outsideInsets.top;
 
     TitledSeparator titledSeparator = getTitledSeparator(c);
+    titledSeparator.setText(title);
     JLabel label = titledSeparator.getLabel();
     Dimension labelSize = label.getPreferredSize();
     label.setSize(labelSize);

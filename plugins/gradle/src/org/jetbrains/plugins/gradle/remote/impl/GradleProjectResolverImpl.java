@@ -110,7 +110,6 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       }
     });
     IdeaProject project = modelBuilder.get();
-    progressManager.onEnd(id);
     GradleProject result = populateProject(project, projectPath);
 
     // We need two different steps ('create' and 'populate') in order to handle module dependencies, i.e. when one module is

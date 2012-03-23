@@ -107,6 +107,12 @@ public class ResourceEditor extends PropertyEditor {
         public void actionPerformed(ActionEvent e) {
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      getComboText().addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          fireValueCommitted(true, true);
+        }
+      });
     }
 
     myEditor.addActionListener(new ActionListener() {

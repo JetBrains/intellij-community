@@ -48,6 +48,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -144,6 +146,16 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myTree.setScrollsOnExpand(true);
       myTree.setRootVisible(false);
       myTree.setShowsRootHandles(true);
+      myTree.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (e.getClickCount() == 2) {
+            if (!myTreeBuilder.getSelectedElements(ResourceItem.class).isEmpty()) {
+              close(OK_EXIT_CODE);
+            }
+          }
+        }
+      });
       ToolTipManager.sharedInstance().registerComponent(myTree);
       TreeUtil.installActions(myTree);
 

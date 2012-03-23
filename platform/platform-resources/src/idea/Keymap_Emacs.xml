@@ -20,12 +20,10 @@
       <keyboard-shortcut first-keystroke="shift DELETE"/>
       <keyboard-shortcut first-keystroke="alt X"/>
     </action>
-    <action id="ReformatCode"/>
     <action id="EditorCodeBlockEndWithSelection">
       <keyboard-shortcut first-keystroke="shift control CLOSE_BRACKET"/>
       <keyboard-shortcut first-keystroke="shift control alt F"/>
     </action>
-    <action id="OverrideMethods"/>
     <action id="EditorSplitLine">
       <keyboard-shortcut first-keystroke="control O"/>
     </action>
@@ -45,9 +43,12 @@
       <keyboard-shortcut first-keystroke="control alt W"/>
     </action>
     <action id="EditorToggleStickySelection">
+      <keyboard-shortcut first-keystroke="control SPACE"/>
       <keyboard-shortcut first-keystroke="control shift 2"/>
     </action>
-    <action id="ToggleBookmark2" />
+    <action id="EditorSwapSelectionBoundaries">
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="X"/>
+    </action>
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="control alt I"/>
       <keyboard-shortcut first-keystroke="control alt Q"/>
@@ -66,7 +67,6 @@
       <keyboard-shortcut first-keystroke="alt BACK_SPACE"/>
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="BACK_SPACE"/>
     </action>
-    <action id="$SelectAll"/>
     <action id="SaveAll">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="control S"/>
     </action>
@@ -74,7 +74,6 @@
       <keyboard-shortcut first-keystroke="DELETE"/>
       <keyboard-shortcut first-keystroke="control D"/>
     </action>
-    <action id="SafeDelete" />
     <action id="EditorKillToWordStart">
       <keyboard-shortcut first-keystroke="alt DELETE"/>
     </action>
@@ -131,7 +130,6 @@
       <keyboard-shortcut first-keystroke="shift control SPACE"/>
       <keyboard-shortcut first-keystroke="control alt SLASH"/>
     </action>
-    <action id="IntroduceField"/>
     <action id="GotoDeclaration">
       <keyboard-shortcut first-keystroke="control alt G"/>
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="PERIOD"/>
@@ -161,7 +159,6 @@
       <keyboard-shortcut first-keystroke="alt G"/>
     </action>
     <action id="CodeCompletion">
-      <keyboard-shortcut first-keystroke="control SPACE"/>
       <keyboard-shortcut first-keystroke="alt SLASH"/>
     </action>
     <action id="ReloadFromDisk">
@@ -207,7 +204,6 @@
     <action id="CloseAllEditors">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="control C"/>
     </action>
-    <action id="RecentFiles"/>
     <action id="Find">
       <keyboard-shortcut first-keystroke="control alt S"/>
       <keyboard-shortcut first-keystroke="alt F3"/>
@@ -223,7 +219,6 @@
       <keyboard-shortcut first-keystroke="control alt OPEN_BRACKET"/>
       <keyboard-shortcut first-keystroke="control alt F"/>
     </action>
-    <action id="EditorTab"/>
     <action id="EmacsStyleIndent">
       <keyboard-shortcut first-keystroke="TAB"/>
     </action>
@@ -236,10 +231,10 @@
       <keyboard-shortcut first-keystroke="control X" second-keystroke="K"/>
     </action>
     <action id="SplitVertically">
-      <keyboard-shortcut first-keystroke="control 2"/>
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="2"/>
     </action>
     <action id="SplitHorizontally">
-      <keyboard-shortcut first-keystroke="control 3"/>
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="3"/>
     </action>
     <action id="UnsplitAll">
       <keyboard-shortcut first-keystroke="control 1"/>
@@ -250,7 +245,6 @@
     <action id="ChangeSplitOrientation">
       <keyboard-shortcut first-keystroke="control 5"/>
     </action>
-
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="control X" second-keystrole="O"/>
     </action>
@@ -261,7 +255,6 @@
       <keyboard-shortcut first-keystroke="control END"/>
       <keyboard-shortcut first-keystroke="shift alt PERIOD"/>
     </action>
-    <action id="GotoImplementation"/>
     <action id="EditorPageDown">
       <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
       <keyboard-shortcut first-keystroke="control V"/>
@@ -275,10 +268,22 @@
     <action id="VcsShowPrevChangeMarker">
       <keyboard-shortcut first-keystroke="shift control alt UP"/>
     </action>
-    <action id="Vcs.ShowMessageHistory"/>
     <action id="NextProjectWindow">
       <keyboard-shortcut first-keystroke="control X" second-keystroke="control O"/>
     </action>
+    
+    <!--Disabled shortcuts-->
+    <action id="CollapseAllRegions"/>
+    <action id="ReformatCode"/>
+    <action id="OverrideMethods"/>
+    <action id="ToggleBookmark2" />
+    <action id="SafeDelete" />
+    <action id="$SelectAll"/>
+    <action id="IntroduceField"/>
+    <action id="RecentFiles"/>
+    <action id="EditorTab"/>
     <action id="PreviousProjectWindow"/>
+    <action id="Vcs.ShowMessageHistory"/>
+    <action id="GotoImplementation"/>
   </keymap>
 </component>

@@ -15,6 +15,8 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ide.ui.UISettings;
+
 import javax.swing.*;
 
 /**
@@ -51,8 +53,15 @@ public class DialogUtil{
       }
       if (mnemonic != '\0') {
         button.setText(realText.toString());
-        button.setMnemonic(mnemonic);
-        button.setDisplayedMnemonicIndex(index);
+        if (UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+          button.setMnemonic(0);
+          button.setDisplayedMnemonicIndex(-1);
+          button.setFocusable(true);
+        }
+        else {
+          button.setMnemonic(mnemonic);
+          button.setDisplayedMnemonicIndex(index);
+        }
       }
     }
   }
@@ -84,11 +93,18 @@ public class DialogUtil{
       }
       if (mnemonic != '\0') {
         label.setText(realText.toString());
-        label.setDisplayedMnemonic(mnemonic);
+        if (UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+          label.setDisplayedMnemonic(0);
+          label.setDisplayedMnemonicIndex(-1);
+        }
+        else {
+          label.setDisplayedMnemonic(mnemonic);
+          label.setDisplayedMnemonicIndex(index);
+        }
+
         if (target != null) {
           label.setLabelFor(target);
         }
-        label.setDisplayedMnemonicIndex(index);
       }
     }
   }
