@@ -122,7 +122,6 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           @Override
           public void run() {
             installedPluginsToModel(list);
-            installed.setRequireShutdown(true);
             if (!installed.isDisposed()) {
               getPluginTable().updateUI();
               final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
@@ -143,10 +142,23 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
                   }
                 }
               }
-              suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list);
+              if (suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list)) {
+                installed.setRequireShutdown(true);
+              }
             }
             else {
-              notifyPluginsWereInstalled();
+              boolean needToRestart = false;
+              for (PluginNode node : list) {
+                final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
+                if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
+                  needToRestart = true;
+                  break;
+                }
+              }
+
+              if (needToRestart) {
+                notifyPluginsWereInstalled();
+              }
             }
           }
         };
