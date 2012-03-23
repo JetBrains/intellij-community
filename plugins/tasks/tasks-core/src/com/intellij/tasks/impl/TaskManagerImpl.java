@@ -472,6 +472,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @SuppressWarnings({"unchecked"})
+  @NotNull
   public Config getState() {
     myConfig.tasks = ContainerUtil.map(myTasks.values(), new Function<Task, LocalTaskImpl>() {
       public LocalTaskImpl fun(Task task) {
