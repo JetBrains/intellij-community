@@ -19,7 +19,6 @@ import com.intellij.designer.model.MetaModel;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -50,7 +49,7 @@ public final class Item implements PaletteItem {
 
   public Icon getIcon() {
     if (myIcon == null) {
-      myIcon = IconLoader.getIcon(myIconPath);
+      myIcon = IconLoader.findIcon(myIconPath, myMetaModel.getModel());
     }
     return myIcon;
   }
