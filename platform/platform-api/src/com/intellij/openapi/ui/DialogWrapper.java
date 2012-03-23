@@ -167,7 +167,7 @@ public abstract class DialogWrapper {
    *                    by <code>WindowManager</code>.
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
-  protected DialogWrapper(Project project, boolean canBeParent) {
+  protected DialogWrapper(@Nullable Project project, boolean canBeParent) {
     myPeer = createPeer(project, canBeParent);
     final Window window = myPeer.getWindow();
     if (window != null) {
@@ -197,7 +197,7 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(com.intellij.openapi.project.Project, boolean)
    */
-  protected DialogWrapper(Project project) {
+  protected DialogWrapper(@Nullable Project project) {
     this(project, true);
   }
 
@@ -742,6 +742,9 @@ public abstract class DialogWrapper {
     // if rootPane = null, dialog has already been disposed
     if (rootPane != null) {
       unregisterKeyboardActions(rootPane);
+      if (myActualSize != null) {
+        setSize(myActualSize.width, myActualSize.height);
+      }
       myPeer.dispose();
     }
   }
@@ -840,7 +843,7 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @return whether the native window cross butoon closes the window or not.
+   * @return whether the native window cross button closes the window or not.
    *         <code>true</code> means that cross performs hide or dispose of the dialog.
    */
   public boolean shouldCloseOnCross() {
@@ -851,7 +854,7 @@ public abstract class DialogWrapper {
    * This is factory method which creates action of dialog. Each action is represented
    * by <code>JButton</code> which is created by <code>createJButtonForAction(Action)</code>
    * method. These buttons are places into panel which is created by <code>createButtonsPanel</code>
-   * method. Therefore you have anough ways to customise the dialog by ovverriding of
+   * method. Therefore you have enough ways to customise the dialog by overriding of
    * <code>createActions()</code>, <code>createButtonsPanel()</code> and
    * </code>createJButtonForAction(Action)</code> methods. By default the <code>createActions()</code>
    * method returns "OK" and "Cancel" action. The help action is automatically added is if

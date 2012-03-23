@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.services.MavenRepositoryService;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -74,30 +75,15 @@ public class NexusRepositoryService extends MavenRepositoryService {
     try {
       final String packaging = StringUtil.notNullize(template.getPackaging());
       final ArrayList<MavenArtifactInfo> result = new ArrayList<MavenArtifactInfo>();
-      final SearchResults results = new Endpoint.DataIndex(url)
-        .getArtifactlistAsSearchResults(null, template.getGroupId(), template.getArtifactId(), template.getVersion(),
-                                        template.getClassifier(), template.getClassNames());
-      final boolean canTrySwitchGAV = template.getArtifactId() == null && template.getGroupId() != null;
+      final String name = StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":");
+      final SearchResults results = new Endpoint.DataIndex(url).getArtifactlistAsSearchResults(
+        name, template.getGroupId(), template.getArtifactId(), template.getVersion(), null, template.getClassNames());
       boolean tooManyResults = results.isTooManyResults();
       final SearchResults.Data data = results.getData();
       if (data != null) {
         for (ArtifactType each : data.getArtifact()) {
           if (!Comparing.equal(each.packaging, packaging)) continue;
           result.add(convertArtifactInfo(each));
-        }
-      }
-
-      if (canTrySwitchGAV) {
-        final SearchResults results2 = new Endpoint.DataIndex(url)
-          .getArtifactlistAsSearchResults(null, null, template.getGroupId(), template.getVersion(),
-                                          template.getClassifier(), template.getClassNames());
-        tooManyResults = tooManyResults || results2.isTooManyResults();
-        final SearchResults.Data data2 = results2.getData();
-        if (data2 != null) {
-          for (ArtifactType each : data2.getArtifact()) {
-            if (!Comparing.equal(each.packaging, packaging)) continue;
-            result.add(convertArtifactInfo(each));
-          }
         }
       }
       if (tooManyResults) result.add(null);

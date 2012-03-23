@@ -968,24 +968,46 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private static final Key<SoftReference<ProjectIndexableFilesFilter>> ourProjectFilesSetKey = Key.create("projectFiles");
 
-  public static final class ProjectIndexableFilesFilter extends BloomFilterBase {
-    private static final int MAGIC = 0x278DDE6D;
+  public static final class ProjectIndexableFilesFilter {
+    private static final int SHIFT = 6;
+    private static final int MASK = (1 << SHIFT) - 1;
+    private final long[] myBitMask;
     private final int myModificationCount;
+    private final int myMinId;
+    private final int myMaxId;
 
     private ProjectIndexableFilesFilter(@NotNull TIntHashSet set, int modificationCount) {
-      super(set.size(), 0.005d);
       myModificationCount = modificationCount;
+      final int[] minMax = new int[2];
+      if (set.size() > 0) {
+        minMax[0] = minMax[1] = set.iterator().next();
+      }
       set.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int value) {
-          addIt(value, value * MAGIC);
+          minMax[0] = Math.min(minMax[0], value);
+          minMax[1] = Math.max(minMax[1], value);
+          return true;
+        }
+      });
+      myMaxId = minMax[1];
+      myMinId = minMax[0];
+      myBitMask = new long[((myMaxId  - myMinId) >> SHIFT) + 1];
+      set.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          value = value - myMinId;
+          myBitMask[value >> SHIFT] |= (1L << (value & MASK));
           return true;
         }
       });
     }
 
     public boolean contains(int id) {
-      return maybeContains(id, id * MAGIC);
+      if (id < myMinId) return false;
+      if (id > myMaxId) return false;
+      id -= myMinId;
+      return (myBitMask[id >> SHIFT] & (1L << (id & MASK))) != 0;
     }
   }
 

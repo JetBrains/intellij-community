@@ -25,6 +25,10 @@ import git4idea.tests.TestDialogManager
 import org.jetbrains.annotations.NotNull
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Computable
+import git4idea.config.GitVcsSettings
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.mock.MockLocalFileSystem
 
 /**
  * 
@@ -78,8 +82,23 @@ public class GitTestPlatformFacade implements PlatformFacade {
   }
 
   @Override
-  void runReadAction(Runnable runnable) {
+  void runReadAction(@NotNull Runnable runnable) {
     runnable.run()
+  }
+
+  @Override
+  GitVcsSettings getGitWorkspaceSettings(@NotNull Project project) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  ChangeListManager getChangeListManager(@NotNull Project project) {
+    throw new UnsupportedOperationException()
+  }
+
+  @Override
+  LocalFileSystem getLocalFileSystem() {
+    new MockLocalFileSystem()
   }
 
   @NotNull

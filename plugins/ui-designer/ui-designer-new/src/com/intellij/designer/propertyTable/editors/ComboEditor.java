@@ -68,7 +68,7 @@ public abstract class ComboEditor extends PropertyEditor {
     @Override
     public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
       if (!myCancelled) {
-        myEditor.fireValueCommitted(false, true);
+        myEditor.fireValueCommitted(true, true);
       }
     }
 

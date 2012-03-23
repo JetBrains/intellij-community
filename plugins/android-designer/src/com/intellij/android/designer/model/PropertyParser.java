@@ -20,6 +20,7 @@ import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.AttributeProperty;
 import com.intellij.android.designer.propertyTable.FlagProperty;
+import com.intellij.android.designer.propertyTable.PaddingProperty;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
@@ -102,12 +103,17 @@ public class PropertyParser {
 
       StyleableDefinition definitions = myDefinitions.getStyleableByName(component);
       if (definitions != null) {
+        Property padding = null;
+
         for (AttributeDefinition definition : definitions.getAttributes()) {
           String name = definition.getName();
           Set<AttributeFormat> formats = definition.getFormats();
           Property property;
 
-          if (formats.contains(AttributeFormat.Flag)) {
+          if ("padding".equals(name) && "View".equals(component)) {
+            property = padding = new PaddingProperty(name, definition);
+          }
+          else if (formats.contains(AttributeFormat.Flag)) {
             property = new FlagProperty(name, definition);
           }
           else {
@@ -121,6 +127,16 @@ public class PropertyParser {
           }
 
           properties.add(property);
+        }
+
+        if (padding != null) {
+          List children = padding.getChildren(null);
+          children.add(PropertyTable.extractProperty(properties, "paddingLeft"));
+          children.add(PropertyTable.extractProperty(properties, "paddingTop"));
+          children.add(PropertyTable.extractProperty(properties, "paddingRight"));
+          children.add(PropertyTable.extractProperty(properties, "paddingBottom"));
+          children.add(PropertyTable.extractProperty(properties, "paddingStart"));
+          children.add(PropertyTable.extractProperty(properties, "paddingEnd"));
         }
       }
 

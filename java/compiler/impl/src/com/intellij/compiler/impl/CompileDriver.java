@@ -43,7 +43,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -78,7 +77,6 @@ import com.intellij.packaging.impl.artifacts.ArtifactImpl;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.*;
@@ -464,22 +462,16 @@ public class CompileDriver {
         else {
           final CompilerMessageCategory category = kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
             : kind == JpsRemoteProto.Message.Response.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
-          Navigatable navigatable = null;
 
           String sourceFilePath = compilerMessage.hasSourceFilePath() ? compilerMessage.getSourceFilePath() : null;
           if (sourceFilePath != null) {
             sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
           }
-          final long offset = compilerMessage.hasProblemLocationOffset() ? compilerMessage.getProblemLocationOffset() : -1L;
-          if (sourceFilePath != null && offset >= 0L) {
-            final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(sourceFilePath);
-            if (file != null) {
-              navigatable = new OpenFileDescriptor(myProject, file, (int)offset);
-            }
-          }
+          final long line = compilerMessage.hasLine() ? compilerMessage.getLine() : -1;
+          final long column = compilerMessage.hasColumn() ? compilerMessage.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(
-            category, compilerMessage.getText(), srcUrl, (int)compilerMessage.getLine(), (int)compilerMessage.getColumn(), navigatable
+            category, compilerMessage.getText(), srcUrl, (int)line, (int)column
           );
         }
       }

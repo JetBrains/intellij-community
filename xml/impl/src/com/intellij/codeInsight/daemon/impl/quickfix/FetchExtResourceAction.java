@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -28,6 +29,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -88,12 +91,12 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           if (attrValue != null) {
             final StringTokenizer tokenizer = new StringTokenizer(attrValue);
 
-            while(tokenizer.hasMoreElements()) {
+            while (tokenizer.hasMoreElements()) {
               if (uri.equals(tokenizer.nextToken())) {
                 if (!tokenizer.hasMoreElements()) return uri;
                 final String url = tokenizer.nextToken();
 
-                return url.startsWith(HTTP_PROTOCOL) ? url:uri;
+                return url.startsWith(HTTP_PROTOCOL) ? url : uri;
               }
 
               if (!tokenizer.hasMoreElements()) return uri;
@@ -120,7 +123,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
   }
 
-  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor)
+    throws IncorrectOperationException {
     final String url = findUrl(file, offset, uri);
     final Project project = file.getProject();
 
@@ -135,12 +139,18 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           try {
             HttpConfigurable.getInstance().prepareURL(url);
             fetchDtd(project, uri, url, indicator);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                DaemonCodeAnalyzer.getInstance(project).restart(file);
+              }
+            });
             return;
           }
           catch (IOException ex) {
             LOG.info(ex);
             @SuppressWarnings("InstanceofCatchParameter")
-            String problemUrl = ex instanceof FetchingResourceIOException ? ((FetchingResourceIOException)ex).url : url; 
+            String problemUrl = ex instanceof FetchingResourceIOException ? ((FetchingResourceIOException)ex).url : url;
             String message = XmlBundle.message("error.fetching.title");
 
             if (!url.equals(problemUrl)) {
@@ -156,7 +166,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     });
   }
 
-  private void fetchDtd(final Project project, final String dtdUrl, final String url, final ProgressIndicator indicator) throws IOException {
+  private void fetchDtd(final Project project, final String dtdUrl, final String url, final ProgressIndicator indicator)
+    throws IOException {
 
     final String extResourcesPath = getExternalResourcesPath();
     final File extResources = new File(extResourcesPath);
@@ -188,78 +199,83 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       resourceUrls.add(dtdUrl);
       downloadedResources.add(resPath);
 
-      ApplicationManager.getApplication().invokeAndWait(
-        new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
-                VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/'));
+      VirtualFile virtualFile = findFileByPath(resPath, dtdUrl, indicator);
 
-                Set<String> linksToProcess = new HashSet<String>();
-                Set<String> processedLinks = new HashSet<String>();
-                Map<String, String> baseUrls = new HashMap<String, String>();
-                VirtualFile contextFile = virtualFile;
-                linksToProcess.addAll(extractEmbeddedFileReferences(virtualFile, null, psiManager));
+      Set<String> linksToProcess = new HashSet<String>();
+      Set<String> processedLinks = new HashSet<String>();
+      Map<String, String> baseUrls = new HashMap<String, String>();
+      VirtualFile contextFile = virtualFile;
+      linksToProcess.addAll(extractEmbeddedFileReferences(virtualFile, null, psiManager));
 
-                while (!linksToProcess.isEmpty()) {
-                  String s = linksToProcess.iterator().next();
-                  linksToProcess.remove(s);
-                  processedLinks.add(s);
+      while (!linksToProcess.isEmpty()) {
+        String s = linksToProcess.iterator().next();
+        linksToProcess.remove(s);
+        processedLinks.add(s);
 
-                  final boolean absoluteUrl = s.startsWith(HTTP_PROTOCOL);
-                  String resourceUrl;
-                  if (absoluteUrl) {
-                    resourceUrl = s;
-                  }
-                  else {
-                    String baseUrl = baseUrls.get(s);
-                    if (baseUrl == null) baseUrl = url;
+        final boolean absoluteUrl = s.startsWith(HTTP_PROTOCOL);
+        String resourceUrl;
+        if (absoluteUrl) {
+          resourceUrl = s;
+        }
+        else {
+          String baseUrl = baseUrls.get(s);
+          if (baseUrl == null) baseUrl = url;
 
-                    resourceUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1) + s;
-                  }
+          resourceUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1) + s;
+        }
 
-                  String resourcePath;
+        String resourcePath;
 
-                  String refname = s.substring(s.lastIndexOf('/') + 1);
-                  if (absoluteUrl) refname = Integer.toHexString(s.hashCode()) + "_" + refname;
-                  try {
-                    resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, refname);
-                  }
-                  catch (IOException e) {
-                    nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
-                    break;
-                  }
+        String refname = s.substring(s.lastIndexOf('/') + 1);
+        if (absoluteUrl) refname = Integer.toHexString(s.hashCode()) + "_" + refname;
+        try {
+          resourcePath = fetchOneFile(indicator, resourceUrl, project, extResourcesPath, refname);
+        }
+        catch (IOException e) {
+          nestedException[0] = new FetchingResourceIOException(e, resourceUrl);
+          break;
+        }
 
-                  if (resourcePath == null) break;
+        if (resourcePath == null) break;
 
-                  virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(resourcePath.replace(File.separatorChar, '/'));
-                  downloadedResources.add(resourcePath);
+        virtualFile = findFileByPath(resourcePath, absoluteUrl ? s : null, indicator);
+        downloadedResources.add(resourcePath);
 
-                  if (absoluteUrl) {
-                    ExternalResourceManager.getInstance().addResource(s, resourcePath);
-                    resourceUrls.add(s);
-                  }
+        if (absoluteUrl) {
+          resourceUrls.add(s);
+        }
 
-                  final List<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
-                  for (String u : newLinks) {
-                    baseUrls.put(u, resourceUrl);
-                    if (!processedLinks.contains(u)) linksToProcess.add(u);
-                  }
-                }
-              }
-            });
-          }
-        },
-        indicator.getModalityState()
-      );
-    } catch(IOException ex) {
+        final List<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
+        for (String u : newLinks) {
+          baseUrls.put(u, resourceUrl);
+          if (!processedLinks.contains(u)) linksToProcess.add(u);
+        }
+      }
+    }
+    catch (IOException ex) {
       nestedException[0] = ex;
     }
-    if (nestedException[0]!=null) {
-      cleanup(resourceUrls,downloadedResources);
+    if (nestedException[0] != null) {
+      cleanup(resourceUrls, downloadedResources);
       throw nestedException[0];
     }
+  }
+
+  private static VirtualFile findFileByPath(final String resPath, final @Nullable String dtdUrl, ProgressIndicator indicator) {
+    final Ref<VirtualFile> ref = new Ref<VirtualFile>();
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
+            if (dtdUrl != null) {
+              ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
+            }
+          }
+        });
+      }
+    }, indicator.getModalityState());
+    return ref.get();
   }
 
   public static String getExternalResourcesPath() {
@@ -294,10 +310,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
   @Nullable
   private static String fetchOneFile(final ProgressIndicator indicator,
-                              final String resourceUrl,
-                              final Project project,
-                              String extResourcesPath,
-                              @Nullable String refname) throws IOException {
+                                     final String resourceUrl,
+                                     final Project project,
+                                     String extResourcesPath,
+                                     @Nullable String refname) throws IOException {
     SwingUtilities.invokeLater(
       new Runnable() {
         public void run() {
@@ -310,19 +326,19 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     if (result == null) return null;
 
     if (!ApplicationManager.getApplication().isUnitTestMode() &&
-          result.contentType != null &&
-          result.contentType.contains(HTML_MIME) &&
-          new String(result.bytes).contains("<html")) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            Messages.showMessageDialog(project,
-                                       XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
-                                       XmlBundle.message("invalid.url.title"),
-                                       Messages.getErrorIcon());
-          }
-        }, indicator.getModalityState());
-        return null;
-      }
+        result.contentType != null &&
+        result.contentType.contains(HTML_MIME) &&
+        new String(result.bytes).contains("<html")) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        public void run() {
+          Messages.showMessageDialog(project,
+                                     XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
+                                     XmlBundle.message("invalid.url.title"),
+                                     Messages.getErrorIcon());
+        }
+      }, indicator.getModalityState());
+      return null;
+    }
 
     int slashIndex = resourceUrl.lastIndexOf('/');
     String resPath = extResourcesPath + File.separatorChar;
@@ -331,16 +347,17 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       resPath += refname;
       int refnameSlashIndex = resPath.lastIndexOf('/');
       if (refnameSlashIndex != -1) {
-        new File(resPath.substring(0,refnameSlashIndex)).mkdirs();
+        new File(resPath.substring(0, refnameSlashIndex)).mkdirs();
       }
-    } else {
+    }
+    else {
       resPath += Integer.toHexString(resourceUrl.hashCode()) + "_" + resourceUrl.substring(slashIndex + 1);
     }
 
     final int lastDoPosInResourceUrl = resourceUrl.lastIndexOf('.', slashIndex);
     if (lastDoPosInResourceUrl == -1 ||
         FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == StdFileTypes.UNKNOWN
-       ) {
+      ) {
       // remote url does not contain file with extension
       resPath += "." + StdFileTypes.XML.getDefaultExtension();
     }
@@ -371,21 +388,23 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
             String candidateName = null;
 
             for (PsiElement e = element.getLastChild(); e != null; e = e.getPrevSibling()) {
-              if (e instanceof XmlAttributeValue && candidateName==null) {
-                candidateName = e.getText().substring(1,e.getTextLength()-1);
-              } else if (e instanceof XmlToken &&
-                         candidateName != null &&
-                         ( ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC ||
-                           ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM
-                         )
-                         ) {
+              if (e instanceof XmlAttributeValue && candidateName == null) {
+                candidateName = e.getText().substring(1, e.getTextLength() - 1);
+              }
+              else if (e instanceof XmlToken &&
+                       candidateName != null &&
+                       (((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC ||
+                        ((XmlToken)e).getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM
+                       )
+                ) {
                 if (!result.contains(candidateName)) {
                   result.add(candidateName);
                 }
                 break;
               }
             }
-          } else if (element instanceof XmlTag) {
+          }
+          else if (element instanceof XmlTag) {
             final XmlTag tag = (XmlTag)element;
             String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
 
@@ -396,7 +415,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
                 if (namespace != null && schemaLocation.indexOf('/') == -1) {
                   result.add(namespace.substring(0, namespace.lastIndexOf('/') + 1) + schemaLocation);
-                } else {
+                }
+                else {
                   result.add(schemaLocation);
                 }
               }
@@ -404,12 +424,12 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
             final String prefix = tag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI);
             if (prefix != null) {
-              schemaLocation = tag.getAttributeValue("schemaLocation",XmlUtil.XML_SCHEMA_INSTANCE_URI);
+              schemaLocation = tag.getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
 
               if (schemaLocation != null) {
                 final StringTokenizer tokenizer = new StringTokenizer(schemaLocation);
 
-                while(tokenizer.hasMoreTokens()) {
+                while (tokenizer.hasMoreTokens()) {
                   tokenizer.nextToken();
                   if (!tokenizer.hasMoreTokens()) break;
                   String location = tokenizer.nextToken();
@@ -424,7 +444,6 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
           return true;
         }
-
       },
       true,
       true
@@ -432,15 +451,20 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return result;
   }
 
-  public static List<String> extractEmbeddedFileReferences(VirtualFile vFile, @Nullable VirtualFile contextVFile, PsiManager psiManager) {
-    PsiFile file = psiManager.findFile(vFile);
+  public static List<String> extractEmbeddedFileReferences(final VirtualFile vFile, @Nullable final VirtualFile contextVFile, final PsiManager psiManager) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<String>>() {
+      @Override
+      public List<String> compute() {
+        PsiFile file = psiManager.findFile(vFile);
 
-    if (file instanceof XmlFile) {
-      PsiFile contextFile = contextVFile != null? psiManager.findFile(contextVFile):null;
-      return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile:null);
-    }
+        if (file instanceof XmlFile) {
+          PsiFile contextFile = contextVFile != null ? psiManager.findFile(contextVFile) : null;
+          return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null);
+        }
 
-    return Collections.emptyList();
+        return Collections.emptyList();
+      }
+    });
   }
 
   static class FetchResult {
@@ -454,7 +478,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     try {
       URL url = new URL(dtdUrl);
       HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
-      urlConnection.addRequestProperty("accept","text/xml,application/xml,text/html,*/*");
+      urlConnection.addRequestProperty("accept", "text/xml,application/xml,text/html,*/*");
       int contentLength = urlConnection.getContentLength();
 
       ByteArrayOutputStream out = new ByteArrayOutputStream();

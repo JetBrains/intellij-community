@@ -527,6 +527,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       repositoryUrl = info.getRepositoryRootURL();
     }
     catch (SVNException e) {
+      LOG.info(e);
       throw new VcsException(e);
     }
 
@@ -635,6 +636,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       return renameContext.getFilePath(myVcs);
     }
     catch (SVNException e) {
+      LOG.info(e);
       throw new VcsException(e);
     }
   }
@@ -659,6 +661,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                    });
     }
     catch (SVNException e) {
+      LOG.info(e);
       if (SVNErrorCode.FS_CATEGORY == e.getErrorMessage().getErrorCode().getCategory()) {
         // pass to step by step looking for revision
         return;

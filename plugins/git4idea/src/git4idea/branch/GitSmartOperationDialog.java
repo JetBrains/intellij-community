@@ -15,6 +15,7 @@
  */
 package git4idea.branch;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -92,7 +93,8 @@ class GitSmartOperationDialog extends DialogWrapper {
   @Override
   protected JComponent createNorthPanel() {
     JBLabel description = new JBLabel("<html>Your local changes to the following files would be overwritten by " + myOperationTitle +
-                                      ".<br/>IDEA can stash the changes, " + myOperationTitle + " and unstash them after that.</html>");
+                                      ".<br/>" + ApplicationNamesInfo.getInstance().getFullProductName() + " can stash the changes, "
+                                      + myOperationTitle + " and unstash them after that.</html>");
     description.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 10, 0));
     return description;
   }

@@ -17,45 +17,20 @@ package git4idea.roots
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import git4idea.test.GitFastTest
 import git4idea.test.GitMockVirtualFile
-import git4idea.test.GitTestPlatformFacade
-import git4idea.test.MockGit
-import git4idea.test.TestNotificator
-import git4idea.tests.TestDialogManager
-import org.junit.Before
 import org.junit.Test
 
-import static git4idea.test.GitGTestUtil.stripLineBreaksAndHtml
 import static git4idea.test.GitGTestUtil.toAbsolute
-import static junit.framework.Assert.*
+import static junit.framework.Assert.assertEquals
+import static junit.framework.Assert.assertTrue
 
 /**
  * 
  * @author Kirill Likhodedov
  */
-class GitIntegrationEnablerTest {
-
-  Project myProject
-  GitTestPlatformFacade myPlatformFacade
-  MockGit myGit
-  String myProjectDir
-  TestDialogManager myDialogManager
-
-  @Before
-  void setUp() {
-    myProjectDir = FileUtil.createTempDirectory("git", null)
-
-    myProject = [
-            getBaseDir: { new GitMockVirtualFile(myProjectDir) }
-    ] as Project
-
-    myPlatformFacade = new GitTestPlatformFacade()
-    myGit = new MockGit()
-    myDialogManager = myPlatformFacade.getDialogManager()
-  }
+class GitIntegrationEnablerTest extends GitFastTest {
 
   @Test
   void "1 root for the whole project, then just add VCS root"() {
@@ -119,14 +94,6 @@ class GitIntegrationEnablerTest {
   void assertGitInit(Collection<String> roots) {
     roots.each {
       assertTrue ".git" in new File(myProjectDir + "/" + it).list()
-    }
-  }
-
-  void assertNotificationShown(Notification expected) {
-    if (expected) {
-      Notification actualNotification = (myPlatformFacade.getNotificator(myProject) as TestNotificator).lastNotification
-      assertNotNull "No notification was shown", actualNotification
-      assertEquals(stripLineBreaksAndHtml(expected.content), stripLineBreaksAndHtml(actualNotification.content))
     }
   }
 

@@ -337,6 +337,16 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
   }
 
+  @Nullable
+  public static Property findProperty(List<Property> properties, String name) {
+    for (Property property : properties) {
+      if (name.equals(property.getName())) {
+        return property;
+      }
+    }
+    return null;
+  }
+
   public static int findProperty(List<Property> properties, Property property) {
     String name = property.getName();
     int size = properties.size();
@@ -348,6 +358,17 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
 
     return -1;
+  }
+
+  @Nullable
+  public static Property extractProperty(List<Property> properties, String name) {
+    int size = properties.size();
+    for (int i = 0; i < size; i++) {
+      if (name.equals(properties.get(i).getName())) {
+        return properties.remove(i);
+      }
+    }
+    return null;
   }
 
   @Nullable

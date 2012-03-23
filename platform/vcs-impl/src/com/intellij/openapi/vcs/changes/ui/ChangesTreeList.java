@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
@@ -290,6 +291,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
   
   public void setChangesToDisplay(final List<T> changes, @Nullable final VirtualFile toSelect) {
+    final boolean wasEmpty = myList.isEmpty();
     final List<T> sortedChanges = new ArrayList<T>(changes);
     Collections.sort(sortedChanges, new Comparator<T>() {
       public int compare(final T o1, final T o2) {
@@ -310,7 +312,15 @@ public abstract class ChangesTreeList<T> extends JPanel {
     });
 
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
+    TreeState state = null;
+    if (! wasEmpty) {
+      state = TreeState.createOn(myTree);
+    }
     myTree.setModel(model);
+    if (! wasEmpty) {
+      state.applyTo(myTree);
+      return;
+    }
 
     final Runnable runnable = new Runnable() {
       public void run() {
@@ -394,7 +404,45 @@ public abstract class ChangesTreeList<T> extends JPanel {
       SwingUtilities.invokeLater(runnable);
     }
   }
-  
+
+  public void applyTransferrable(final Runnable runnable) {
+    runnable.run();
+  }
+
+  public Runnable getSelectionTransferrable() {
+    TreeState state = null;
+    Object[] values = null;
+    if (isShowFlatten()) {
+      values = myList.getSelectedValues();
+    } else {
+      state = TreeState.createOn(myTree, (DefaultMutableTreeNode) myTree.getModel().getRoot());
+    }
+    return new MySelectionTransferrable(state, values, isShowFlatten());
+  }
+
+  private class MySelectionTransferrable implements Runnable {
+    private final TreeState myState;
+    private final Object[] mySelectedListValues;
+    private final boolean myIsFlatten;
+
+    private MySelectionTransferrable(TreeState state, Object[] selectedListValues, boolean isFlatten) {
+      myState = state;
+      mySelectedListValues = selectedListValues;
+      myIsFlatten = isFlatten;
+    }
+
+    @Override
+    public void run() {
+      if (myIsFlatten) {
+        for (Object value : mySelectedListValues) {
+          myList.setSelectedValue(value, false);
+        }
+      } else {
+        myState.applyTo(myTree, (DefaultMutableTreeNode) myTree.getModel().getRoot());
+      }
+    }
+  }
+
   private static boolean seemsToBeMoved(Change change, VirtualFile toSelect) {
     ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision == null) return false;
