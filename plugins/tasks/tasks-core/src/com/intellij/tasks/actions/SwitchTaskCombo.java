@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.config.TaskSettings;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public class SwitchTaskCombo extends ComboBoxAction implements DumbAware {
       presentation.setVisible(true);
       presentation.setEnabled(true);
 
-      if (isImplicit(activeTask)) {
+      if (isImplicit(activeTask) && !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
         presentation.setText("");
         presentation.setIcon(null);
         presentation.setDescription("Switch Tasks");
