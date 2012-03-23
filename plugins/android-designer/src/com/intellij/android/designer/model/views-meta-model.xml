@@ -174,6 +174,394 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.CheckedTextView"
+        tag="CheckedTextView">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="CheckedTextView" icon="/com/intellij/android/designer/icons/CheckedTextView.png"
+             tooltip="An extension to TextView that supports the Checkable interface."/>
+
+    <properties important="checked checkMark"/>
+
+    <creation>
+      <![CDATA[
+          <CheckedTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New CheckedTextView"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.EditText"
+        tag="EditText">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="EditText" icon="/com/intellij/android/designer/icons/EditText.png"
+             tooltip="EditText is a thin veneer over TextView that configures itself to be editable."/>
+
+    <creation>
+      <![CDATA[
+          <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New EditText"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.AutoCompleteTextView"
+        tag="AutoCompleteTextView">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="AutoCompleteTextView" icon="/com/intellij/android/designer/icons/AutoCompleteTextView.png"
+             tooltip="An editable text view that shows completion suggestions automatically while the user is typing."/>
+
+    <creation>
+      <![CDATA[
+          <AutoCompleteTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New AutoCompleteTextView"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.MultiAutoCompleteTextView"
+        tag="MultiAutoCompleteTextView">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="MultiAutoCompleteTextView" icon="/com/intellij/android/designer/icons/MultiAutoCompleteTextView.png"
+             tooltip="An editable text view, extending AutoCompleteTextView, that can show completion suggestions for the substring of the text where the user is typing instead of necessarily for the entire thing."/>
+
+    <creation>
+      <![CDATA[
+          <MultiAutoCompleteTextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New MultiAutoCompleteTextView"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.inputmethodservice.ExtractEditText"
+        tag="ExtractEditText">
+
+    <presentation title=" - &quot;%text%&quot;"/>
+
+    <palette title="ExtractEditText" icon="/com/intellij/android/designer/icons/TextView.png"
+             tooltip="Specialization of EditText for showing and interacting with the extracted text in a full-screen input method."/>
+
+    <creation>
+      <![CDATA[
+          <ExtractEditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New ExtractEditText"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.AnalogClock"
+        tag="AnalogClock">
+
+    <palette title="AnalogClock" icon="/com/intellij/android/designer/icons/AnalogClock.png"
+             tooltip="This widget display an analogic clock with two hands for hours and minutes."/>
+
+    <properties important=""/>
+
+    <creation>
+      <![CDATA[
+          <AnalogClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.DigitalClock"
+        tag="DigitalClock">
+
+    <palette title="DigitalClock" icon="/com/intellij/android/designer/icons/DigitalClock.png"
+             tooltip="Like AnalogClock, but digital. Shows seconds."/>
+
+    <creation>
+      <![CDATA[
+          <DigitalClock
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.Chronometer"
+        tag="Chronometer">
+
+    <palette title="Chronometer" icon="/com/intellij/android/designer/icons/Chronometer.png"
+             tooltip="Class that implements a simple timer."/>
+
+    <properties important="format"/>
+
+    <creation>
+      <![CDATA[
+          <Chronometer
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.view.SurfaceView"
+        tag="SurfaceView">
+
+    <palette title="SurfaceView" icon="/com/intellij/android/designer/icons/SurfaceView.png"
+             tooltip="Provides a dedicated drawing surface embedded inside of a view hierarchy. You can control the format of this surface and, if you like, its size; the SurfaceView takes care of placing the surface at the correct location on the screen."/>
+
+    <creation>
+      <![CDATA[
+          <SurfaceView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.view.TextureView"
+        tag="TextureView">
+
+    <palette title="TextureView" icon="/com/intellij/android/designer/icons/TextureView.png"
+             tooltip="A TextureView can be used to display a content stream. Such a content stream can for instance be a video or an OpenGL scene."/>
+
+    <creation>
+      <![CDATA[
+          <TextureView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.VideoView"
+        tag="VideoView">
+
+    <palette title="VideoView" icon="/com/intellij/android/designer/icons/VideoView.png"
+             tooltip="Displays a video file. The VideoView class can load images from various sources (such as resources or content providers), takes care of computing its measurement from the video so that it can be used in any layout manager, and provides various display options such as scaling and tinting."/>
+
+    <creation>
+      <![CDATA[
+          <VideoView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.ProgressBar"
+        tag="ProgressBar">
+
+    <palette title="ProgressBar" icon="/com/intellij/android/designer/icons/ProgressBar.png"
+             tooltip="Visual indicator of progress in some operation."/>
+
+    <properties important="max progress indeterminate"/>
+
+    <creation>
+      <![CDATA[
+          <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.SeekBar"
+        tag="SeekBar">
+
+    <palette title="SeekBar" icon="/com/intellij/android/designer/icons/SeekBar.png"
+             tooltip="A SeekBar is an extension of ProgressBar that adds a draggable thumb."/>
+
+    <creation>
+      <![CDATA[
+          <SeekBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.RatingBar"
+        tag="RatingBar">
+
+    <palette title="RatingBar" icon="/com/intellij/android/designer/icons/RatingBar.png"
+             tooltip="A RatingBar is an extension of SeekBar and ProgressBar that shows a rating in stars."/>
+
+    <properties important="numStars rating stepSize" expert="max progress indeterminate isIndicator"/>
+
+    <creation>
+      <![CDATA[
+          <RatingBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.ImageView"
+        tag="ImageView">
+
+    <palette title="ImageView" icon="/com/intellij/android/designer/icons/ImageView.png"
+             tooltip="Displays an arbitrary image, such as an icon."/>
+
+    <properties important="src"/>
+
+    <creation>
+      <![CDATA[
+          <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.ImageButton"
+        tag="ImageButton">
+
+    <palette title="ImageButton" icon="/com/intellij/android/designer/icons/ImageButton.png"
+             tooltip="Displays a button with an image (instead of text) that can be pressed or clicked by the user."/>
+
+    <creation>
+      <![CDATA[
+          <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.ZoomButton"
+        tag="ZoomButton">
+
+    <palette title="ZoomButton" icon="/com/intellij/android/designer/icons/ZoomButton.png"
+             tooltip="ZoomButton"/>
+
+    <creation>
+      <![CDATA[
+          <ZoomButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.QuickContactBadge"
+        tag="QuickContactBadge">
+
+    <palette title="QuickContactBadge" icon="/com/intellij/android/designer/icons/QuickContactBadge.png"
+             tooltip="Widget used to show an image with the standard QuickContact badge and on-click behavior."/>
+
+    <creation>
+      <![CDATA[
+          <QuickContactBadge
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.Space"
+        tag="Space">
+
+    <palette title="Space" icon="/com/intellij/android/designer/icons/Space.png"
+             tooltip="Space is a lightweight View subclass that may be used to create gaps between components in general purpose layouts."/>
+
+    <creation>
+      <![CDATA[
+          <Space
+            android:layout_width="20px"
+            android:layout_height="20px"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.inputmethodservice.KeyboardView"
+        tag="KeyboardView">
+
+    <palette title="KeyboardView" icon="/com/intellij/android/designer/icons/TextView.png"
+             tooltip="A view that renders a virtual Keyboard. It handles rendering of keys and detecting key presses and touch movements."/>
+
+    <properties important="keyTextColor"/>
+
+    <creation>
+      <![CDATA[
+          <KeyboardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.view.ViewStub"
+        tag="ViewStub">
+
+    <palette title="ViewStub" icon="/com/intellij/android/designer/icons/ViewStub.png"
+             tooltip="A ViewStub is an invisible, zero-sized View that can be used to lazily inflate layout resources at runtime."/>
+
+    <properties important="layout inflatedId"/>
+
+    <creation>
+      <![CDATA[
+          <ViewStub
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Layouts ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
@@ -206,8 +594,30 @@
       <item tag="Button"/>
       <item tag="RadioButton"/>
       <item tag="CheckBox"/>
+      <item tag="Switch"/>
       <item tag="ToggleButton"/>
+      <item tag="ImageButton"/>
+      <item tag="ZoomButton"/>
+      <item tag="ImageView"/>
       <item tag="TextView"/>
+      <item tag="EditText"/>
+      <item tag="CheckedTextView"/>
+      <item tag="ExtractEditText"/>
+      <item tag="AutoCompleteTextView"/>
+      <item tag="MultiAutoCompleteTextView"/>
+      <item tag="Chronometer"/>
+      <item tag="AnalogClock"/>
+      <item tag="DigitalClock"/>
+      <item tag="QuickContactBadge"/>
+      <item tag="ProgressBar"/>
+      <item tag="SeekBar"/>
+      <item tag="RatingBar"/>
+      <item tag="Space"/>
+      <item tag="ViewStub"/>
+      <item tag="VideoView"/>
+      <item tag="KeyboardView"/>
+      <item tag="SurfaceView"/>
+      <item tag="TextureView"/>
     </group>
     <group name="Containers">
       <item tag="LinearLayout"/>
