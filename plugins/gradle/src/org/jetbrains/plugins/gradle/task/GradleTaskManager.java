@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.task;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -73,7 +74,15 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
       }
     }, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
   }
-  
+
+  @Override
+  public void disposeComponent() {
+    final GradleProgressNotificationManager notificationManager = ServiceManager.getService(GradleProgressNotificationManager.class);
+    if (notificationManager != null) {
+      notificationManager.removeNotificationListener(this);
+    }
+  }
+
   /**
    * Allows to check if any task of the given type is being executed at the moment.  
    *
