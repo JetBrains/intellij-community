@@ -351,6 +351,14 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     return myViewer.getSelectedChanges();
   }
 
+  public Runnable getSelectionTransferrable() {
+    return myViewer.getSelectionTransferrable();
+  }
+
+  public void applySelectionTransferrable(final Runnable runnable) {
+    myViewer.applyTransferrable(runnable);
+  }
+
   private VirtualFile[] getSelectedFiles() {
     final List<Change> changes = myViewer.getSelectedChanges();
     return ChangesUtil.getFilesFromChanges(changes);
