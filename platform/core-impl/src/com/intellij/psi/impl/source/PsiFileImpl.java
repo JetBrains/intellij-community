@@ -129,7 +129,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public FileElement getTreeElementNoLock() {
     ASTNode node = _getTreeElement();
     if (node == null && !getViewProvider().isPhysical()) {
-      setTreeElement(node = loadTreeElement());
+      node = loadTreeElement();
     }
     return (FileElement)node;
   }
@@ -400,7 +400,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private void doClearCaches() {
     final FileElement tree = getTreeElement();
     if (tree != null) {
-      myTreeElementPointer = tree;
       tree.clearCaches();
     }
 

@@ -34,13 +34,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.LightColors;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Bookmark {
-  private static final Icon TICK = IconLoader.getIcon("/gutter/check.png");
+  private static final Icon TICK = PlatformIcons.CHECK_ICON;
 
   private final VirtualFile myFile;
   private final OpenFileDescriptor myTarget;

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -139,8 +140,14 @@ public final class Presentation implements Cloneable {
             if (i >= text.length()) break;
             ch = text.charAt(i);
             if (ch != '_' && ch != '&') {
-              myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-              myDisplayedMnemonicIndex = i - 1;
+              if (UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+                myMnemonic = 0;
+                myDisplayedMnemonicIndex = -1;
+              }
+              else {
+                myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
+                myDisplayedMnemonicIndex = i - 1;
+              }
             }
           }
           plainText.append(ch);

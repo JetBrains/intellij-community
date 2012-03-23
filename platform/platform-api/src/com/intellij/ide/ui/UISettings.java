@@ -88,6 +88,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean OVERRIDE_NONIDEA_LAF_FONTS = false;
   public boolean SHOW_ICONS_IN_MENUS = true;
   public boolean DISABLE_MNEMONICS = SystemInfo.isMac; // IDEADEV-33409, should be disabled by default on MacOS
+  public boolean DISABLE_MNEMONICS_IN_CONTROLS = false;
   public boolean SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
   public int MAX_LOOKUP_WIDTH = 500;
   public int MAX_LOOKUP_LIST_HEIGHT = 11;

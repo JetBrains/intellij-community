@@ -33,7 +33,7 @@ import com.intellij.debugger.ui.DebuggerStatementEditor;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Key;
@@ -189,7 +189,8 @@ public abstract class BreakpointPropertiesPanel {
     myConditionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint condition");
     myLogExpressionCombo = new DebuggerExpressionComboBox(project, "LineBreakpoint logMessage");
     
-    final JComboBox baseBreakpointCombo = new ComboBoxWithWidePopup();
+    final ComboBox baseBreakpointCombo = new ComboBox(100);
+
     myBreakpointComboboxHandler = new BreakpointComboboxHandler(myProject, baseBreakpointCombo);
     baseBreakpointCombo.setRenderer(new BreakpointComboRenderer(baseBreakpointCombo.getRenderer()));
     baseBreakpointCombo.addItemListener(new ItemListener() {

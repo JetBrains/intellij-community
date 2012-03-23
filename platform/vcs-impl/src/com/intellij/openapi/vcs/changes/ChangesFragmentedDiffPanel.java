@@ -55,6 +55,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -578,7 +579,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     }
   }
 
-  private final static Icon ourIcon = IconLoader.findIcon("/actions/checked.png");
+  private final static Icon ourIcon = PlatformIcons.CHECK_ICON;
   
   private class PopupAction extends DumbAwareAction {
     private Component myParent;

@@ -32,6 +32,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
+  private static final Icon PIN_ICON = IconLoader.getIcon("/nodes/pinToolWindow.png");
   private String myDisplayName;
   private String myDescription;
   private JComponent myComponent;
@@ -94,21 +95,17 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
-    myLayeredIcon = LayeredIcon.create(myIcon, getPinIcon());
+    myLayeredIcon = LayeredIcon.create(myIcon, PIN_ICON);
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 
   public Icon getIcon() {
     if (myIsLocked) {
-      return myIcon == null ? getPinIcon() : myLayeredIcon;
+      return myIcon == null ? PIN_ICON : myLayeredIcon;
     }
     else {
       return myIcon;
     }
-  }
-
-  private static Icon getPinIcon() {
-    return IconLoader.getIcon("/nodes/pinToolWindow.png");
   }
 
   public void setDisplayName(String displayName) {
