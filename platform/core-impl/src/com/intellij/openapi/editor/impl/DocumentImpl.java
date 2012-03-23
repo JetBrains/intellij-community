@@ -72,7 +72,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private int myCheckGuardedBlocks = 0;
   private boolean myGuardsSuppressed = false;
   private boolean myEventsHandling = false;
-  private final boolean myAssertWriteAccess;
+  private final boolean myAssertThreading;
   private volatile boolean myDoingBulkUpdate = false;
   private volatile boolean myAcceptSlashR = false;
   private boolean myChangeInProgress;
@@ -90,7 +90,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myLineSet.documentCreated(this);
     setCyclicBufferSize(0);
     setModificationStamp(LocalTimeCounter.currentTime());
-    myAssertWriteAccess = !forUseInNonAWTThread;
+    myAssertThreading = !forUseInNonAWTThread;
   }
 
   public boolean setAcceptSlashR(boolean accept) {
@@ -424,7 +424,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   private void assertWriteAccess() {
-    if (myAssertWriteAccess) {
+    if (myAssertThreading) {
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
         application.assertWriteAccessAllowed();
@@ -826,14 +826,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     @Override
     protected void assertReadAccess() {
-      DocumentImpl.assertReadAccess();
-    }
-  }
-
-  private static void assertReadAccess() {
-    final Application application = ApplicationManager.getApplication();
-    if (application != null) {
-      application.assertReadAccessAllowed();
+      if (myAssertThreading) {
+        final Application application = ApplicationManager.getApplication();
+        if (application != null) {
+          application.assertReadAccessAllowed();
+        }
+      }
     }
   }
 }
