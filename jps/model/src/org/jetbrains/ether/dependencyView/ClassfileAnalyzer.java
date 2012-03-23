@@ -365,7 +365,9 @@ class ClassfileAnalyzer {
     public FieldVisitor visitField(int access, String n, String desc, String signature, Object value) {
       processSignature(signature);
 
-      fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(signature), value));
+      if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
+        fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(signature), value));
+      }
 
       return new EmptyVisitor() {
         @Override
@@ -388,7 +390,9 @@ class ClassfileAnalyzer {
       return new EmptyVisitor() {
         @Override
         public void visitEnd() {
-          methods.add(new MethodRepr(context, access, context.get(n), context.get(signature), desc, exceptions, defaultValue.get()));
+          if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
+            methods.add(new MethodRepr(context, access, context.get(n), context.get(signature), desc, exceptions, defaultValue.get()));
+          }
         }
 
         @Override
