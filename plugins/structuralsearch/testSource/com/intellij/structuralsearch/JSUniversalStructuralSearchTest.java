@@ -181,7 +181,7 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
 
 
   public void testLoop() {
-    JSRootConfiguration.storeLanguageLevel(JSLanguageLevel.JS_1_7.getId(), getProject());
+    JSRootConfiguration.storeLanguageLevel(JSLanguageLevel.JS_1_7, getProject());
     try {
       final JSLanguageDialect dialect = JSLanguageLevel.JS_1_7.getDialect();
       String s = "for (var i = 0; i < n ; i++) {\n" +
