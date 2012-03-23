@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -181,7 +182,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       String errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.without.reason", myProjectFile.getPath());
       String reason = errorReason.get();
       if (reason != null) {
-        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.with.reason", myProjectFile.getPath(), reason);
+        GradleLog.LOG.warn(GradleBundle.message("gradle.import.text.error.resolve.generic.with.reason", myProjectFile.getPath(), reason));
       } 
       throw new ConfigurationException(errorMessage, GradleBundle.message("gradle.import.title.error.resolve.generic"));
     } 
