@@ -24,12 +24,12 @@ import java.util.*;
 public class ScopeImpl implements Scope {
   private volatile Instruction[] myFlow;
   private volatile List<DFAMap<ScopeVariable>> myCachedScopeVariables;
-  private Set<String> myGlobals;
-  private Set<String> myNonlocals;
-  private List<Scope> myNestedScopes;
+  private volatile Set<String> myGlobals;
+  private volatile Set<String> myNonlocals;
+  private volatile List<Scope> myNestedScopes;
   private final ScopeOwner myFlowOwner;
-  private Map<String, PsiNamedElement> myNamedElements;
-  private List<NameDefiner> myNameDefiners;  // declarations which declare unknown set of names, such as 'from ... import *'
+  private volatile Map<String, PsiNamedElement> myNamedElements;
+  private volatile List<NameDefiner> myNameDefiners;  // declarations which declare unknown set of names, such as 'from ... import *'
 
   public ScopeImpl(final ScopeOwner flowOwner) {
     myFlowOwner = flowOwner;
