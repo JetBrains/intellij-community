@@ -125,7 +125,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             for (PyClass ancestor : cls.iterateAncestorClasses()) {
               init = ancestor.findMethodByName(PyNames.INIT, false);
               if (init != null) {
-                // add to resuls as low priority
+                // add to results as low priority
                 it.add(new RatedResolveResult(RatedResolveResult.RATE_LOW, init));
                 break;
               }
@@ -353,6 +353,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return myElement;
   }
 
+  @Nullable
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
