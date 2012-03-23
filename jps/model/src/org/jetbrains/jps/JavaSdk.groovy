@@ -1,5 +1,7 @@
 package org.jetbrains.jps
 
+import org.jetbrains.annotations.Nullable
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -12,7 +14,17 @@ public abstract class JavaSdk extends Sdk {
     super(project, name, initializer)
   }
 
-  abstract String getJavacExecutable();
+  @Nullable
+  public String getHomePath() {
+    return null;
+  }
 
-  abstract String getJavaExecutable();
+  @Nullable
+  public String getVersion() {
+    return null;
+  }
+
+  public abstract String getJavacExecutable();
+
+  public abstract String getJavaExecutable();
 }
