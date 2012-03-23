@@ -103,6 +103,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     }
   }
 
+  public String getPluginHostUrl(String idString) {
+    return myPlugin2host.get(idString);
+  }
+
   public static int getCheckboxColumn() {
     return 0;
   }
