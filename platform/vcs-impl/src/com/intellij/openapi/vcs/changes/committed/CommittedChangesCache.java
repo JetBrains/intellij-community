@@ -758,7 +758,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         }
       };
       if (application.isDispatchThread()) {
-        application.executeOnPooledThread(runnable);
+        myTaskQueue.run(runnable);
       } else {
         runnable.run();
       }
