@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * User: dcheryasov
  * Date: 2/23/11 5:32 PM
  */
-class SkeletonVersionChecker {
+public class SkeletonVersionChecker {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker");
 
   final static Pattern ONE_LINE = Pattern.compile("^(?:(\\w+(?:\\.\\w+)*|\\(built-in\\)|\\(default\\))\\s+(\\d+\\.\\d+))?\\s*(?:#.*)?$");

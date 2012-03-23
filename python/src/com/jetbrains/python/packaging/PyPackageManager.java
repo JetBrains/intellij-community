@@ -384,7 +384,7 @@ public class PyPackageManager {
       }
       else {
         throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args,
-                                             "Remote interpreter can't be executed. Please enable WebDeployment plugin.");
+                                             PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
       }
     }
     else {

@@ -3,10 +3,12 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,5 +181,9 @@ public class PySdkUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isRemote(@Nullable Sdk sdk) {
+    return sdk != null && sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData;
   }
 }
