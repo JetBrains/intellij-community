@@ -72,7 +72,7 @@ public class PyPackageManager {
 
     public interface Listener {
       void started();
-      void finished(@Nullable PyExternalProcessException exception);
+      void finished(List<PyExternalProcessException> exceptions);
     }
 
     public UI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
@@ -155,21 +155,16 @@ public class PyPackageManager {
               }
             });
           }
-          final Ref<PyExternalProcessException> exceptionRef = Ref.create(null);
+
           final List<PyExternalProcessException> exceptions = runnable.run(indicator);
           if (exceptions.isEmpty()) {
             notificationRef.set(new Notification(PACKAGING_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION));
           }
           else {
-            final StringBuilder b = new StringBuilder();
             final String progressLower = progressTitle.toLowerCase();
             final String firstLine = String.format("Error%s occurred when %s.", exceptions.size() > 1 ? "s" : "", progressLower);
-            b.append(firstLine);
-            b.append("\n\n");
-            for (PyExternalProcessException exception : exceptions) {
-              b.append(exception.toString());
-              b.append("\n");
-            }
+
+            final String description = createDescription(exceptions, firstLine);
             notificationRef.set(new Notification(PACKAGING_GROUP_ID, failureTitle,
                                                  firstLine + " <a href=\"xxx\">Details...</a>",
                                                  NotificationType.ERROR,
@@ -177,7 +172,8 @@ public class PyPackageManager {
                                                    @Override
                                                    public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                @NotNull HyperlinkEvent event) {
-                                                     PyPIPackageUtil.showError(myProject, failureTitle, b.toString());
+                                                     PyPIPackageUtil.showError(myProject, failureTitle,
+                                                                               description);
                                                    }
                                                  }));
           }
@@ -185,7 +181,7 @@ public class PyPackageManager {
             @Override
             public void run() {
               if (myListener != null) {
-                myListener.finished(exceptionRef.get());
+                myListener.finished(exceptions);
               }
               VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
               PythonSdkType.getInstance().setupSdkPaths(mySdk);
@@ -197,6 +193,17 @@ public class PyPackageManager {
           });
         }
       });
+    }
+
+    public static String createDescription(List<PyExternalProcessException> exceptions, String firstLine) {
+      final StringBuilder b = new StringBuilder();
+      b.append(firstLine);
+      b.append("\n\n");
+      for (PyExternalProcessException exception : exceptions) {
+        b.append(exception.toString());
+        b.append("\n");
+      }
+      return b.toString();
     }
   }
 

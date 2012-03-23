@@ -30,7 +30,6 @@ import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import com.jetbrains.rest.ReSTService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,8 +106,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
           public void started() {}
 
           @Override
-          public void finished(@Nullable PyExternalProcessException exception) {
-            if (exception == null) {
+          public void finished(List<PyExternalProcessException> exceptions) {
+            if (exceptions.isEmpty()) {
               VFSTestFrameworkListener.getInstance().testInstalled(true, sdk.getHomePath(), name);
               facetErrorPanel.getValidatorsManager().validate();
             }
