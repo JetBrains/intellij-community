@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
+import com.jetbrains.python.sdk.PySkeletonGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +23,7 @@ public abstract class PythonRemoteInterpreterManager {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
   public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =
-    "Can't run remote python interpreter. WebDeployment plugin is disabled.";
+    "Remote interpreter can't be executed. Please enable WebDeployment plugin.";
 
   public abstract ProcessHandler startRemoteProcess(Project project,
                                                     PythonRemoteSdkAdditionalData data,
@@ -39,12 +41,14 @@ public abstract class PythonRemoteInterpreterManager {
   @NotNull
   public abstract PyRemoteSshProcess createRemoteProcess(Project project,
                                               PythonRemoteSdkAdditionalData data,
-                                              GeneralCommandLine commandLine) throws PyRemoteInterpreterException;
+                                              GeneralCommandLine commandLine, boolean printPidInFirstLine) throws PyRemoteInterpreterException;
 
   public abstract boolean testConnection(final Project project, final PythonRemoteSdkAdditionalData data,
                                          final String title) throws PyRemoteInterpreterException;
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator);
+
+  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(String path, Sdk sdk);
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
@@ -68,6 +72,10 @@ public abstract class PythonRemoteInterpreterManager {
   public static String toSystemDependent(String path, boolean isWin) {
     char separator = isWin ? '\\' : '/';
     return FileUtil.toSystemIndependentName(path).replace('/', separator);
+  }
+
+  public static void addHelpersMapping(@NotNull PythonRemoteSdkAdditionalData data, @NotNull PyPathMappingSettings newMappingSettings) {
+    newMappingSettings.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getPyCharmHelpersPath());
   }
 
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {

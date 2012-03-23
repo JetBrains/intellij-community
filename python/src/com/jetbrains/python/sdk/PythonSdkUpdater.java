@@ -30,6 +30,7 @@ import java.util.*;
  * A component that initiates a refresh of all project's Python SDKs.
  * Delegates most of the work to PythonSdkType.
  * <br/>
+ *
  * @author yole
  */
 public class PythonSdkUpdater implements StartupActivity {
@@ -41,7 +42,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
     for (StartupActivity extension : extensions) {
       if (extension instanceof PythonSdkUpdater) {
-        return (PythonSdkUpdater) extension;
+        return (PythonSdkUpdater)extension;
       }
     }
     throw new UnsupportedOperationException("could not find self");
@@ -93,7 +94,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 public void run(@NotNull ProgressIndicator indicator) {
                   for (final Sdk sdk : sdksToUpdate) {
                     try {
-                      updateSdk(sdk);
+                      updateSdk(project, sdk);
                     }
                     catch (InvalidSdkException e) {
                       if (!PythonSdkType.isInvalid(sdk)) {
@@ -113,12 +114,14 @@ public class PythonSdkUpdater implements StartupActivity {
     }
   }
 
-  private static void updateSdk(final Sdk sdk) throws InvalidSdkException {
-    if (sdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
-      return; //TODO: implement updating for remote interpreter
+  private static void updateSdk(Project project, final Sdk sdk) throws InvalidSdkException {
+    PythonSdkType.refreshSkeletonsOfSDK(project, sdk); // NOTE: whole thing would need a rename
+    if (!PySdkUtil.isRemote(sdk)) {
+      updateSysPath(sdk);
     }
-    PythonSdkType.refreshSkeletonsOfSDK(sdk); // NOTE: whole thing would need a rename
+  }
 
+  private static void updateSysPath(final Sdk sdk) throws InvalidSdkException {
     long start_time = System.currentTimeMillis();
     final List<String> sysPath = PythonSdkType.getSysPath(sdk.getHomePath());
     ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -134,10 +137,10 @@ public class PythonSdkUpdater implements StartupActivity {
     final List<VirtualFile> oldRoots = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
     final VirtualFile[] sourceRoots = sdk.getRootProvider().getFiles(OrderRootType.SOURCES);
     PythonSdkAdditionalData additionalData = sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData
-      ? (PythonSdkAdditionalData) sdk.getSdkAdditionalData()
-      : null;
+                                             ? (PythonSdkAdditionalData)sdk.getSdkAdditionalData()
+                                             : null;
     List<String> newRoots = new ArrayList<String>();
-    for(String root: sysPath) {
+    for (String root : sysPath) {
       if (new File(root).exists() &&
           !"egg-info".equals(FileUtil.getExtension(root)) &&
           (additionalData == null || !wasOldRoot(root, additionalData.getExcludedPaths())) &&
