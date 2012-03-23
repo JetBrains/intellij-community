@@ -80,6 +80,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     super(parent, true);
     mySeverityRegistrar = severityRegistrar;
     myOptionsList.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof SeverityBasedTextAttributes) {
@@ -89,6 +90,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       }
     });
     myOptionsList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (myCurrentSelection != null) {
           apply(myCurrentSelection);
@@ -110,6 +112,7 @@ public class SeverityEditorDialog extends DialogWrapper {
                                                        InspectionsBundle.message("highlight.severity.create.dialog.title"),
                                                        Messages.getQuestionIcon(),
                                                        "", new InputValidator() {
+            @Override
             public boolean checkInput(final String inputString) {
               final ListModel listModel = myOptionsList.getModel();
               for (int i = 0; i < listModel.getSize(); i++) {
@@ -119,6 +122,7 @@ public class SeverityEditorDialog extends DialogWrapper {
               return true;
             }
 
+            @Override
             public boolean canClose(final String inputString) {
               return checkInput(inputString);
             }
@@ -201,6 +205,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     final JPanel disabled = new JPanel(new GridBagLayout());
     final JButton button = new JButton(InspectionsBundle.message("severities.default.settings.message"));
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         editColorsAndFonts();
       }
@@ -230,6 +235,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);
       optionsEditor.select(javaPage).doWhenDone(new Runnable() {
+        @Override
         public void run() {
           final Runnable runnable = javaPage.enableSearch(toConfigure);
           if (runnable != null) {
@@ -261,6 +267,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     final List<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityRegistrar.SeverityBasedTextAttributes>();
     infoTypes.addAll(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
     Collections.sort(infoTypes, new Comparator<SeverityRegistrar.SeverityBasedTextAttributes>() {
+      @Override
       public int compare(SeverityBasedTextAttributes attributes1,
                          SeverityBasedTextAttributes attributes2) {
         return -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity());
@@ -306,16 +313,17 @@ public class SeverityEditorDialog extends DialogWrapper {
     myOptionsPanel.reset(description);
   }
 
+  @Override
   protected void doOKAction() {
     apply((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
     final Collection<SeverityRegistrar.SeverityBasedTextAttributes> infoTypes =
       new HashSet<SeverityRegistrar.SeverityBasedTextAttributes>(mySeverityRegistrar.getRegisteredHighlightingInfoTypes());
     final ListModel listModel = myOptionsList.getModel();
-    final List<String> order = new ArrayList<String>();
+    final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
       final SeverityBasedTextAttributes info =
         (SeverityBasedTextAttributes)listModel.getElementAt(i);
-      order.add(info.getSeverity().myName);
+      order.add(info.getSeverity());
       if (!mySeverityRegistrar.isDefaultSeverity(info.getSeverity())) {
         infoTypes.remove(info);
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
@@ -329,6 +337,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     return myPanel;
@@ -349,15 +358,18 @@ public class SeverityEditorDialog extends DialogWrapper {
       super(name, group, attributes, type, null, null, null);
     }
 
+    @Override
     public void apply(EditorColorsScheme scheme) {
 
     }
 
+    @Override
     public boolean isErrorStripeEnabled() {
       return true;
     }
 
 
+    @Override
     public TextAttributes getTextAttributes() {
       return super.getTextAttributes();
     }
