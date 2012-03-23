@@ -41,7 +41,19 @@ public class PyStatementMoverTest extends PyTestCase {
     doTest();
   }
 
+  public void testCommentOut() {  //PY-5527
+    doTest();
+  }
+
   public void testMoveDownOut() {
+    doTest();
+  }
+
+  public void testIndentedOneLine() { //PY-5268
+    doTest();
+  }
+
+  public void testComment() {   //PY-5270
     doTest();
   }
 
@@ -118,6 +130,10 @@ public class PyStatementMoverTest extends PyTestCase {
   }
 
   public void testNestedTry() { // PY-5192
+    doTest();
+  }
+
+  public void testUpInNested() { // PY-5192
     doTest();
   }
 
