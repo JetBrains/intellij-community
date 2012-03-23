@@ -174,6 +174,7 @@ public class CopiesPanel {
       editorPane.setEditable(false);
       editorPane.setFocusable(true);
       editorPane.setBackground(UIUtil.getPanelBackground());
+      editorPane.setOpaque(false);
       editorPane.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
