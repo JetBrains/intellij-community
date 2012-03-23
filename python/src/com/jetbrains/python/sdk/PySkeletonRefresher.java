@@ -245,32 +245,32 @@ public class PySkeletonRefresher {
       mySkeletonsGenerator.generateBuiltinSkeletons(mySdk);
     }
 
-    if (!oldOrNonExisting) {
-      indicate(PyBundle.message("sdk.gen.cleaning.$0", readable_path));
-      cleanUpSkeletons(skeletonsDir);
-    }
+    if (!binaries.modules.isEmpty()) {
 
-    if (binaries.modules.isEmpty()) {
-      return errorList;
-    }
-    indicate(PyBundle.message("sdk.gen.updating.$0", readable_path));
-    List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules);
+      indicate(PyBundle.message("sdk.gen.updating.$0", readable_path));
+      List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules);
 
-    if (updateErrors.size() > 0) {
-      indicateMinor(BLACKLIST_FILE_NAME);
-      for (UpdateResult error : updateErrors) {
-        if (error.isFresh()) errorList.add(error.getName());
-        myBlacklist.put(error.getPath(), new Pair<Integer, Long>(myGeneratorVersion, error.getTimestamp()));
+      if (updateErrors.size() > 0) {
+        indicateMinor(BLACKLIST_FILE_NAME);
+        for (UpdateResult error : updateErrors) {
+          if (error.isFresh()) errorList.add(error.getName());
+          myBlacklist.put(error.getPath(), new Pair<Integer, Long>(myGeneratorVersion, error.getTimestamp()));
+        }
+        storeBlacklist(skeletonsDir, myBlacklist);
       }
-      storeBlacklist(skeletonsDir, myBlacklist);
-    }
-    else {
-      removeBlacklist(skeletonsDir);
+      else {
+        removeBlacklist(skeletonsDir);
+      }
     }
 
     indicate(PyBundle.message("sdk.gen.reloading"));
 
     mySkeletonsGenerator.refreshGeneratedSkeletons(project);
+
+    if (!oldOrNonExisting) {
+      indicate(PyBundle.message("sdk.gen.cleaning.$0", readable_path));
+      cleanUpSkeletons(skeletonsDir);
+    }
 
     return errorList;
   }
@@ -396,11 +396,14 @@ public class PySkeletonRefresher {
         cleanUpSkeletons(item);
         // was the dir emptied?
         File[] remaining = item.listFiles();
-        if (remaining != null && remaining.length == 1) {
+        if (remaining != null && remaining.length == 0) {
+          mySkeletonsGenerator.deleteOrLog(item);
+        }
+        else if (remaining != null && remaining.length == 1) { //clean also if contains only __init__.py
           File last_file = remaining[0];
           if (PyNames.INIT_DOT_PY.equals(last_file.getName()) && last_file.length() == 0) {
-            boolean deleted = deleteOrLog(last_file);
-            if (deleted) deleteOrLog(item);
+            boolean deleted = mySkeletonsGenerator.deleteOrLog(last_file);
+            if (deleted) mySkeletonsGenerator.deleteOrLog(item);
           }
         }
       }
@@ -415,15 +418,11 @@ public class PySkeletonRefresher {
           String source_name = header_matcher.group(1);
           can_live = source_name != null && (SkeletonVersionChecker.BUILTIN_NAME.equals(source_name) || new File(source_name).exists());
         }
-        if (!can_live) deleteOrLog(item);
+        if (!can_live) {
+          mySkeletonsGenerator.deleteOrLog(item);
+        }
       }
     }
-  }
-
-  private static boolean deleteOrLog(File item) {
-    boolean deleted = item.delete();
-    if (!deleted) LOG.warn("Failed to delete skeleton file " + item.getAbsolutePath());
-    return deleted;
   }
 
   private static class UpdateResult {

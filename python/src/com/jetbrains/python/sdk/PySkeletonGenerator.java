@@ -178,6 +178,12 @@ public class PySkeletonGenerator {
     return new ListBinariesResult(generatorVersion, binaries);
   }
 
+  public boolean deleteOrLog(File item) {
+    boolean deleted = item.delete();
+    if (!deleted) LOG.warn("Failed to delete skeleton file " + item.getAbsolutePath());
+    return deleted;
+  }
+
   public void refreshGeneratedSkeletons(Project project) {
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(getSkeletonsPath());
     assert skeletonsVFile != null;
