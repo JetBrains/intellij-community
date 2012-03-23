@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,12 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.Navigatable;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -42,8 +42,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jgoodies.forms.layout.FormLayout;
-import gnu.trove.THashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,15 +84,13 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       paths.add(PathUtil.getJarPathForClass(ProjectComponent.class));    // openapi
       paths.add(PathUtil.getJarPathForClass(LwComponent.class));         // UIDesignerCore
       paths.add(PathUtil.getJarPathForClass(GridConstraints.class));     // forms_rt
-      paths.add(PathUtil.getJarPathForClass(JDOMExternalizable.class));  // util
-      paths.add(PathUtil.getJarPathForClass(Document.class));            // JDOM
       paths.add(PathUtil.getJarPathForClass(LafManagerListener.class));  // ui-impl
       paths.add(PathUtil.getJarPathForClass(DataProvider.class));        // action-system-openapi
       paths.add(PathUtil.getJarPathForClass(XmlStringUtil.class));       // idea
       paths.add(PathUtil.getJarPathForClass(Navigatable.class));         // pom
       paths.add(PathUtil.getJarPathForClass(AreaInstance.class));        // extensions
-      paths.add(PathUtil.getJarPathForClass(THashMap.class));            // trove4j
       paths.add(PathUtil.getJarPathForClass(FormLayout.class));          // jgoodies
+      paths.addAll(PathManager.getUtilClassPath());
       for(String path: paths) {
         params.getClassPath().addFirst(path);
       }

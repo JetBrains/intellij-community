@@ -16,11 +16,13 @@
 package com.intellij.android.designer.propertyTable.editors;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 
 /**
  * @author Alexander Lobas
@@ -32,6 +34,16 @@ public class StringsComboEditor extends ComboEditor {
     DefaultComboBoxModel model = new DefaultComboBoxModel(values);
     model.insertElementAt(UNSET, 0);
     myCombo.setModel(model);
+    myCombo.addActionListener(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myCombo.getSelectedItem() == UNSET) {
+          myCombo.setSelectedItem(null);
+        }
+      }
+    });
+
+    myCombo.setSelectedIndex(0);
   }
 
   @Override
@@ -43,11 +55,7 @@ public class StringsComboEditor extends ComboEditor {
   @NotNull
   @Override
   public JComponent getComponent(@NotNull RadComponent rootComponent, @Nullable RadComponent component, Object value) {
-    setValue(value);
-    return myCombo;
-  }
-
-  protected void setValue(Object value) {
     myCombo.setSelectedItem(value);
+    return myCombo;
   }
 }

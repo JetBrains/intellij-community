@@ -8,6 +8,7 @@ import org.junit.Test
 import static org.junit.Assert.assertEquals
 import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
+import org.jetbrains.plugins.gradle.config.GradleTextAttributes
 
 /**
  * @author Denis Zhdanov
@@ -664,5 +665,139 @@ public class GradleProjectStructureChangesModelTest extends AbstractGradleTest {
         module() {
           "content-root"()
     } } }
+  }
+
+  @Test
+  public void "filter new gradle local changes"() {
+    Closure initial = {
+      project {
+        module('module1') {
+    } } }
+    init(gradle: initial, intellij: initial)
+
+    // Apply filter.
+    applyTreeFilter(GradleTextAttributes.CHANGE_CONFLICT)
+    checkTree {
+      project {
+    } }
+
+    // Introduce gradle-local entities.
+    setState(gradle: {
+      project {
+        module('module1')
+        module('module2') {
+          contentRoot('1')
+          dependencies {
+            library('lib1')
+            module('module1')
+    } } } })
+
+    // Ensure that gradle-local entities have not been picked up.
+    checkTree {
+      project {
+    } }
+  }
+
+  @Test
+  public void "filter new conflict changes"() {
+    Closure initial = {
+      project {
+        module('module1')
+        module('module2') {
+          dependencies {
+            library('lib1', bin: ['1'])
+            module('module1', scope: 'compile')
+    } } } }
+    init(gradle: initial, intellij: initial)
+
+    // Apply filter.
+    applyTreeFilter(GradleTextAttributes.GRADLE_LOCAL_CHANGE)
+    checkTree {
+      project {
+    } }
+    
+    // Introduce conflict changes.
+    setState(gradle: {
+      project {
+        module('module1')
+        module('module2') {
+          dependencies {
+            library('lib1', bin: ['2'])
+            module('module1', scope: 'test')
+    } } } })
+
+    // Ensure that conflict changes have not been processed.
+    checkTree {
+      project {
+    } }
+  }
+  
+  @Test
+  public void "filter obsolete gradle local changes"() {
+    Closure completeProject = {
+      project {
+        module('module1')
+        module('module2') {
+          contentRoot('1')
+          dependencies {
+            module('module1')
+            library('lib1')
+    } } } }
+    init (
+      gradle: completeProject,
+      intellij: {
+        project {
+      } }
+    )
+    
+    applyTreeFilter(GradleTextAttributes.GRADLE_LOCAL_CHANGE)
+    checkTree {
+      project {
+        module1('gradle')
+        module2('gradle') {
+          "content-root"('gradle')
+          dependencies {
+            module1('gradle')
+            lib1('gradle')
+    } } } }
+    
+    setState(intellij: completeProject)
+    checkTree {
+      project {
+    } }
+  }
+
+  @Test
+  public void "filter obsolete conflict changes"() {
+    Closure gradleProject = {
+      project {
+        module('module1')
+        module('module2') {
+          dependencies {
+            library('lib1', bin: ['1'])
+            module('module1', scope: 'compile')
+    } } } }
+    init(gradle: gradleProject, intellij: {
+      project {
+        module('module1')
+        module('module2') {
+          dependencies {
+            library('lib1', bin: ['2'])
+            module('module1', scope: 'test')
+    } } } })
+    
+    applyTreeFilter(GradleTextAttributes.CHANGE_CONFLICT)
+    checkTree {
+      project {
+        module2 {
+          dependencies {
+            lib1('conflict')
+            module1('conflict')
+    } } } }
+    
+    setState(intellij: gradleProject)
+    checkTree {
+      project {
+    } }
   }
 }

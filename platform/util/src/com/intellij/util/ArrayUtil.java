@@ -30,6 +30,7 @@ import java.util.List;
 /**
  * Author: msk
  */
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class ArrayUtil extends ArrayUtilRt {
   public static final short[] EMPTY_SHORT_ARRAY = ArrayUtilRt.EMPTY_SHORT_ARRAY;
   public static final char[] EMPTY_CHAR_ARRAY = ArrayUtilRt.EMPTY_CHAR_ARRAY;
@@ -679,5 +680,10 @@ public class ArrayUtil extends ArrayUtilRt {
   /** @deprecated use {@linkplain #mergeArrays(Object[], Object[])} (to remove in IDEA 12) */
   public static <T> T[] join(T[] array1, T[] array2) {
     return mergeArrays(array1, array2);
+  }
+
+  @NotNull
+  public static String[] toStringArray(@NotNull Collection<String> collection) {
+    return ArrayUtilRt.toStringArray(collection);
   }
 }

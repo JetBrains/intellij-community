@@ -19,25 +19,30 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author peter
  */
 public class GradleClassFinder extends NonClasspathClassFinder {
-  private final GradleSettings mySettings;
+  
+  @NotNull private final GradleLibraryManager myLibraryManager;
 
-  public GradleClassFinder(GradleSettings settings, Project project) {
+  public GradleClassFinder(Project project, @NotNull GradleLibraryManager manager) {
     super(project);
-    mySettings = settings;
+    myLibraryManager = manager;
   }
 
   @Override
   protected List<VirtualFile> calcClassRoots() {
-    // TODO den implement
-    return new ArrayList<VirtualFile>();
-    //return mySettings.getClassRoots();
+    final List<VirtualFile> roots = myLibraryManager.getClassRoots(myProject);
+    if (roots != null) {
+      return roots;
+    }
+    return Collections.emptyList();
   }
 }

@@ -730,7 +730,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
-    public void beforeValidityChanged(VirtualFilePointer[] pointers) {
+    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
       if (!myProject.isDisposed()) {
         if (myInsideRefresh == 0) {
           if (affectsRoots(pointers)) {
@@ -747,7 +747,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       }
     }
 
-    public void validityChanged(VirtualFilePointer[] pointers) {
+    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
       if (!myProject.isDisposed()) {
         if (myInsideRefresh > 0) {
           clearScopesCaches();

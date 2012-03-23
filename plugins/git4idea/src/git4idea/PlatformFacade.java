@@ -21,6 +21,9 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -61,4 +64,13 @@ public interface PlatformFacade {
   <T> T runReadAction(@NotNull Computable<T> computable);
 
   void runReadAction(@NotNull Runnable runnable);
+
+  /**
+   * @return the instance of {@link git4idea.config.GitVcsSettings}
+   */
+  GitVcsSettings getGitWorkspaceSettings(@NotNull Project project);
+
+  ChangeListManager getChangeListManager(@NotNull Project project);
+
+  LocalFileSystem getLocalFileSystem();
 }

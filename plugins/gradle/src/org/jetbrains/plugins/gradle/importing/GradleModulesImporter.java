@@ -23,8 +23,6 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleGroovyEnabler;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
@@ -319,12 +317,6 @@ public class GradleModulesImporter {
         finally {
           writeLock.finish();
         }
-        final GradleSettings settings = GradleSettings.getInstance(intellijProject);
-        final String gradleHome = settings.getGradleHome();
-        if (gradleHome != null) {
-          final GradleGroovyEnabler groovyEnabler = intellijProject.getComponent(GradleGroovyEnabler.class);
-          libraryToPreserve.set(groovyEnabler.setupGroovySdkIfNecessary(gradleHome));
-        }
 
         // Force refresh the infrastructure in order to apply newly introduce intellij project structure changes
         final GradleProjectStructureChangesModel changesModel = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
@@ -360,8 +352,10 @@ public class GradleModulesImporter {
   private static void doSetupLibraries(@NotNull Map<GradleModule, Module> moduleMappings,
                                        @NotNull GradleProject gradleProject,
                                        @NotNull Project intellijProject,
-                                       @Nullable Library libraryToPreserve)
-  {
+                                       @Nullable Library libraryToPreserve) {
+    if (intellijProject.isDisposed()) {
+      return;
+    }
     Application application = ApplicationManager.getApplication();
     application.assertWriteAccessAllowed();
 

@@ -44,7 +44,7 @@ class ProjectStructureChecker {
       check it as Node, actual.getChildAt(childIndex++) as DefaultMutableTreeNode
     }
     if (childIndex < actual.childCount) {
-      fail("Unexpected nodes detected: ${(childIndex..<actual.childCount).collect { actual.getChildAt(it) }.join('-')}")
+      fail("Unexpected nodes detected: ${(childIndex..<actual.childCount).collect { actual.getChildAt(it) }.join(', ')}")
     }
   }
 

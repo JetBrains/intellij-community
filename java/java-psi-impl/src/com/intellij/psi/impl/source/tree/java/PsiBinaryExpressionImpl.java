@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -33,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements PsiBinaryExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBinaryExpressionImpl");
 
+  /** used via reflection in {@link com.intellij.psi.impl.source.tree.JavaElementType.JavaCompositeElementType#JavaCompositeElementType(java.lang.String, java.lang.Class)} */
+  @SuppressWarnings("UnusedDeclaration")
   public PsiBinaryExpressionImpl() {
     this(JavaElementType.BINARY_EXPRESSION);
   }
@@ -79,24 +80,6 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     PsiType type = TypeConversionUtil.calcTypeForBinaryExpression(null, rType, sign, false);
     if (type != TypeConversionUtil.NULL_TYPE) return type;
 
-    if (lOperand instanceof PsiBinaryExpressionImpl && !JavaResolveCache.getInstance(param.getProject()).isTypeCached(lOperand)) {
-      // cache all intermediate expression types from bottom up
-      PsiBinaryExpressionImpl topLevel = param;
-      PsiElement element = param;
-      while (element instanceof PsiBinaryExpressionImpl) {
-        topLevel = (PsiBinaryExpressionImpl)element;
-        element = element.getParent();
-      }
-      topLevel.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        protected void elementFinished(PsiElement element) {
-          if (element instanceof PsiExpression) {
-            ProgressIndicatorProvider.checkCanceled();
-            ((PsiExpression)element).getType();
-          }
-        }
-      });
-    }
     PsiType lType = lOperand.getType();
     return TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, sign, true);
   }

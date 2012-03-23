@@ -158,7 +158,6 @@ public class GradleScriptType extends GroovyScriptType {
       public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
         final GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
         if (libraryManager.getGradleHome(module, project) == null) {
-          // TODO den internationalise
           int result = Messages.showOkCancelDialog(
             GradleBundle.message("gradle.run.no.sdk.text"),
             GradleBundle.message("gradle.run.no.sdk.title"),
@@ -282,5 +281,4 @@ public class GradleScriptType extends GroovyScriptType {
     }
     return result;
   }
-
 }

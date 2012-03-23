@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Processor
+import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection
 
 /**
  * @author peter
@@ -72,6 +73,16 @@ class AstLeaksTest extends LightCodeInsightFixtureTestCase {
 
     LeakHunter.checkLeak(foo, MethodElement)
     LeakHunter.checkLeak(sup, MethodElement)
+  }
+
+  public void "test no hard refs to Default File Template inspection internal AST"() {
+    myFixture.addFileToProject('sup.java', 'class Super { void bar() {} }')
+    PsiJavaFile foo = myFixture.addFileToProject('a.java', 'class Foo { void bar() { bar(); } }')
+    myFixture.configureFromExistingVirtualFile(foo.virtualFile)
+    myFixture.enableInspections(new DefaultFileTemplateUsageInspection())
+    myFixture.doHighlighting()
+
+    LeakHunter.checkLeak(foo.classes[0], MethodElement, { MethodElement node -> !node.psi.physical } as Processor<MethodElement>)
   }
 
 }

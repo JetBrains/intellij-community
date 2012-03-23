@@ -29,8 +29,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked", "MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -1272,6 +1273,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
+  @Nullable
   public static <T> List<T> trimToSize(List<T> list) {
     if (list == null) return null;
     if (list.isEmpty()) return Collections.emptyList();
@@ -1281,5 +1283,53 @@ public class ContainerUtil extends ContainerUtilRt {
     }
 
     return list;
+  }
+
+  @NotNull
+  public static <T> List<T> emptyList() {
+    return ContainerUtilRt.emptyList();
+  }
+
+  @NotNull
+  public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
+    return ContainerUtilRt.createEmptyCOWList();
+  }
+
+  public static <T> void addIfNotNull(final T element, @NotNull Collection<T> result) {
+    ContainerUtilRt.addIfNotNull(element, result);
+  }
+
+  public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable final T element) {
+    ContainerUtilRt.addIfNotNull(result, element);
+  }
+
+  @NotNull
+  public static <T, V> List<V> map2List(@NotNull T[] array, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2List(array, mapper);
+  }
+
+  @NotNull
+  public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2List(collection, mapper);
+  }
+
+  @NotNull
+  public static <T, V> Set<V> map2Set(@NotNull T[] collection, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2Set(collection, mapper);
+  }
+
+  @NotNull
+  public static <T, V> Set<V> map2Set(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapper) {
+    return ContainerUtilRt.map2Set(collection, mapper);
+  }
+
+  @NotNull
+  public static <T> T[] toArray(@NotNull List<T> collection, @NotNull T[] array) {
+    return ContainerUtilRt.toArray(collection, array);
+  }
+
+  @NotNull
+  public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
+    return ContainerUtilRt.toArray(c, sample);
   }
 }

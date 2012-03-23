@@ -124,17 +124,17 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   @Override
-  public void childAdded(PsiTreeChangeEvent event) {
+  public void childAdded(@NotNull PsiTreeChangeEvent event) {
     queueElement(event.getParent(), true, event);
   }
 
   @Override
-  public void childRemoved(PsiTreeChangeEvent event) {
+  public void childRemoved(@NotNull PsiTreeChangeEvent event) {
     queueElement(event.getParent(), true, event);
   }
 
   @Override
-  public void childReplaced(PsiTreeChangeEvent event) {
+  public void childReplaced(@NotNull PsiTreeChangeEvent event) {
     queueElement(event.getNewChild(), typesEqual(event.getNewChild(), event.getOldChild()), event);
   }
 
@@ -143,7 +143,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   @Override
-  public void childrenChanged(PsiTreeChangeEvent event) {
+  public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
     if (((PsiTreeChangeEventImpl)event).isGenericChildrenChange()) {
       return;
     }
@@ -151,13 +151,13 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   @Override
-  public void beforeChildMovement(PsiTreeChangeEvent event) {
+  public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
     queueElement(event.getOldParent(), true, event);
     queueElement(event.getNewParent(), true, event);
   }
 
   @Override
-  public void beforeChildrenChange(PsiTreeChangeEvent event) {
+  public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
     // this event sent always before every PSI change, even not significant one (like after quick typing/backspacing char)
     // mark file dirty just in case
     PsiFile psiFile = event.getFile();
@@ -167,7 +167,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable
   }
 
   @Override
-  public void propertyChanged(PsiTreeChangeEvent event) {
+  public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       myFileStatusMap.markAllFilesDirty();

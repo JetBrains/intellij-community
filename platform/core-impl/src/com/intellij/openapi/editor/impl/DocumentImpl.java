@@ -37,6 +37,7 @@ import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -631,7 +632,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     myCachedDocumentListeners = null;
     boolean success = myDocumentListeners.remove(listener);
     if (!success) {
-      LOG.error(String.format("Can't remove given document listener (%s). Registered listeners: %s", listener, myDocumentListeners));
+      LOG.error("Can't remove document listener (" + listener + "). Registered listeners: "+myDocumentListeners);
     }
   }
 
@@ -751,6 +752,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @Override
   public final void setInBulkUpdate(boolean value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myDoingBulkUpdate == value) {
+      // do not fire listeners or otherwise updateStarted() will be called more times than updateFinished()
+      return;
+    }
     myDoingBulkUpdate = value;
     myText.setDeferredChangeMode(value);
     if (value) {
@@ -782,7 +787,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   public String dumpState() {
-    StringBuilder result = new StringBuilder();
+    @NonNls StringBuilder result = new StringBuilder();
     result.append("deferred mode: ").append(myText.isDeferredChangeMode() ? "on" : "off");
     result.append(", intervals:\n");
     for (int line = 0; line < getLineCount(); line++) {

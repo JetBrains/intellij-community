@@ -33,7 +33,7 @@
     <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.importing.GradleProjectOpenProcessor"/>
     <colorAndFontPanelFactory implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontPanelFactory"/>
     <colorAndFontDescriptorProvider implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleInitialProjectRefresher"/>
+    <postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleStartupActivity"/>
 
     <!--Structure diff calculators-->
     <applicationService serviceInterface="org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator"
@@ -76,6 +76,7 @@
     <positionManagerDelegate implementation="org.jetbrains.plugins.gradle.config.GradlePositionManager"/>
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
+    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.gradle.config.GradleGroovyConfigNotification"/>
   </extensions>
 
   <project-components>
@@ -98,20 +99,24 @@
       <implementation-class>org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.gradle.config.GradleGroovyEnabler</implementation-class>
+      <implementation-class>org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager</implementation-class>
     </component>
   </project-components>
   
   <actions>
-    <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction" icon="/general/add.png"/>
+    
+    <!-- Tool window toolbar actions -->
+    <action id="Gradle.LinkToProject" class="org.jetbrains.plugins.gradle.action.GradleLinkToProjectAction"/>
     <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="/actions/sync.png"/>
     <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="/icons/gradleNavigate.png"/>
+    <action id="Gradle.Help.ToolWindow" class="org.jetbrains.plugins.gradle.action.GradleToolWindowHelpAction" icon="/actions/help.png"/>
     <group id="Gradle.ChangeActionsToolbar">
       <reference id="Gradle.RefreshProject"/>
       <reference id="Gradle.OpenScript"/>
-      <reference id="ContextHelp"/>
+      <reference id="Gradle.Help.ToolWindow"/>
     </group>
 
+    <!-- 'Sync project structure' tree nodes actions -->
     <action id="Gradle.ImportEntity" class="org.jetbrains.plugins.gradle.action.GradleImportEntityAction" icon="/icons/gradleImport.png"/>
     <action id="Gradle.ShowConflict" class="org.jetbrains.plugins.gradle.action.GradleShowConflictDetailsAction" icon="/actions/diff.png"/>
     <group id="Gradle.SyncTreeGroup">
@@ -119,6 +124,7 @@
       <reference id="Gradle.ShowConflict"/>
     </group>
 
+    <!-- 'Sync project structure' tree filters -->
     <action id="Gradle.SyncTreeFilter.GradleLocal" class="org.jetbrains.plugins.gradle.action.GradleLocalSyncTreeFilterAction"/>
     <action id="Gradle.SyncTreeFilter.IntellijLocal" class="org.jetbrains.plugins.gradle.action.IntellijLocalSyncTreeFilterAction"/>
     <action id="Gradle.SyncTreeFilter.Conflict" class="org.jetbrains.plugins.gradle.action.GradleConflictSyncTreeFilterAction"/>
@@ -127,7 +133,7 @@
       <reference id="Gradle.SyncTreeFilter.GradleLocal"/>
       <reference id="Gradle.SyncTreeFilter.IntellijLocal"/>
       <reference id="Gradle.SyncTreeFilter.Conflict"/>
-      <reference id="Gradle.SyncTreeFilter.Confirmed"/>
+      <!--<reference id="Gradle.SyncTreeFilter.Confirmed"/>-->
     </group>
     
     <action id="Gradle.RebuildChangesTree" class="org.jetbrains.plugins.gradle.action.GradleRebuildStructureChangesTreeAction"/>

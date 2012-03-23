@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
 public class PathUtil {
   private PathUtil() {
   }
@@ -63,8 +61,9 @@ public class PathUtil {
 
   @NotNull
   public static String getJarPathForClass(@NotNull Class aClass) {
-    String resourceRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-    return new File(resourceRoot).getAbsoluteFile().getAbsolutePath();
+    final String pathForClass = PathManager.getJarPathForClass(aClass);
+    assert pathForClass != null : aClass;
+    return pathForClass;
   }
 
   @NotNull

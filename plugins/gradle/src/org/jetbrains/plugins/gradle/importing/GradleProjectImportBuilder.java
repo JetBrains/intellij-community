@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -95,6 +96,13 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       @Override
       public void run() {
         GradleSettings.applyLinkedProjectPath(myProjectFile.getAbsolutePath(), project);
+        if (!StringUtil.isEmpty(GradleSettings.getInstance(project).getGradleHome())) {
+          return;
+        }
+        final String gradleHome = GradleSettings.getInstance(ProjectManager.getInstance().getDefaultProject()).getGradleHome();
+        if (!StringUtil.isEmpty(gradleHome)) {
+          GradleSettings.applyGradleHome(gradleHome, project);
+        }
       }
     };
     if (project.isInitialized()) {

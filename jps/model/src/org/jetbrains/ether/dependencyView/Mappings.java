@@ -1070,10 +1070,12 @@ public class Mappings {
 
                 }
                 else {
+                  final Option<Boolean> inheritorOf = self.isInheritorOf(cc.name, it.name);
+
                   debug("Method: ", mm.name);
                   debug("Class : ", cc.name);
 
-                  if (overrides.satisfy(mm)) {
+                  if (overrides.satisfy(mm) && inheritorOf.isValue() && inheritorOf.value()) {
                     debug("Current method overrides that found");
 
                     final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
@@ -1098,8 +1100,6 @@ public class Mappings {
                     debug("Current method does not override that found");
 
                     final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, it.name);
-
-                    final Option<Boolean> inheritorOf = self.isInheritorOf(cc.name, it.name);
 
                     if (inheritorOf.isValue() && inheritorOf.value()) {
                       final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);

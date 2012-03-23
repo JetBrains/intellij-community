@@ -28,7 +28,6 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -58,7 +57,7 @@ public class FavoritesPanel {
     setupDnD();
   }
 
-  public JComponent getPanel() {
+  public FavoritesTreeViewPanel getPanel() {
     return myViewPanel;
   }
 

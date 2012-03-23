@@ -15,11 +15,13 @@
  */
 package com.intellij.execution.console;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.lang.Language;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -46,7 +48,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -124,7 +126,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myTitle = title;
     installEditorFactoryListener();
     final EditorFactory editorFactory = EditorFactory.getInstance();
-    myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", StdFileTypes.PLAIN_TEXT, "");
+    myHistoryFile = new LightVirtualFile(getTitle() + ".history.txt", FileTypes.PLAIN_TEXT, "");
     myEditorDocument = editorFactory.createDocument("");
     setLanguage(language);
     myConsoleEditor = (EditorEx)editorFactory.createEditor(myEditorDocument, myProject);
@@ -474,6 +476,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private static void duplicateHighlighters(MarkupModel to, MarkupModel from, int offset, TextRange textRange) {
     for (RangeHighlighter rangeHighlighter : from.getAllHighlighters()) {
       if (!rangeHighlighter.isValid()) continue;
+      Object tooltip = rangeHighlighter.getErrorStripeTooltip();
+      HighlightSeverity severity = tooltip instanceof HighlightInfo? ((HighlightInfo)tooltip).getSeverity() : null;
+      if (severity != HighlightSeverity.INFORMATION) continue;
       final int localOffset = textRange.getStartOffset();
       final int start = Math.max(rangeHighlighter.getStartOffset(), localOffset) - localOffset;
       final int end = Math.min(rangeHighlighter.getEndOffset(), textRange.getEndOffset()) - localOffset;
