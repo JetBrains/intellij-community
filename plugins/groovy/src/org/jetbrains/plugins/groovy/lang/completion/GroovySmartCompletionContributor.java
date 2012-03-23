@@ -280,7 +280,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     final PsiClass psiClass = com.intellij.psi.util.PsiUtil.resolveClassInType(type);
     if (psiClass == null) return null;
 
-    if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return null;
+    //if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return null;
     if (!checkForInnerClass(psiClass, place)) return null;
 
     final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), place);
