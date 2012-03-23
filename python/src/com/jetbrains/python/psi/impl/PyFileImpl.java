@@ -47,6 +47,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Map<String, SoftReference<PsiElement>> myExportedNames = new ConcurrentHashMap<String, SoftReference<PsiElement>>();
   private volatile Map<String, PsiElement> myLocalDeclarations;
   private volatile List<PsiElement> myNameDefiners;
+  private final List<String> myNameDefinerNegativeCache = new ArrayList<String>();
+  private long myNameDefinerOOCBModCount = -1;
+  private final PsiModificationTracker myModificationTracker;
 
   public PyFileImpl(FileViewProvider viewProvider) {
     this(viewProvider, PythonLanguage.getInstance());
@@ -61,6 +64,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }, false);
     myFutureFeatures = new HashMap<FutureFeature, Boolean>();
+    myModificationTracker = PsiModificationTracker.SERVICE.getInstance(getProject());
   }
 
   @NotNull
@@ -264,14 +268,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           }
           return result;
         }
-        for (PsiElement definer : myNameDefiners) {
-          final PsiElement result;
-          if (definer instanceof PyFromImportStatement) {
-            result = findNameInStarImport(name, (PyFromImportStatement)definer);
-          }
-          else {
-            result = ((NameDefiner) definer).getElementNamed(name);
-          }
+        if (!myNameDefiners.isEmpty()) {
+          final PsiElement result = findNameInNameDefiners(name);
           if (result != null) {
             return result;
           }
@@ -292,6 +290,34 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     finally {
       stack.remove(name);
     }
+  }
+
+  @Nullable
+  private PsiElement findNameInNameDefiners(String name) {
+    long oocbModCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+    if (oocbModCount != myNameDefinerOOCBModCount) {
+      myNameDefinerNegativeCache.clear();
+      myNameDefinerOOCBModCount = oocbModCount;
+    }
+    else {
+      if (myNameDefinerNegativeCache.contains(name)) {
+        return null;
+      }
+    }
+    for (PsiElement definer : myNameDefiners) {
+      final PsiElement result;
+      if (definer instanceof PyFromImportStatement) {
+        result = findNameInStarImport(name, (PyFromImportStatement)definer);
+      }
+      else {
+        result = ((NameDefiner) definer).getElementNamed(name);
+      }
+      if (result != null) {
+        return result;
+      }
+    }
+    myNameDefinerNegativeCache.add(name);
+    return null;
   }
 
   private void collectLocalDeclarations() {
