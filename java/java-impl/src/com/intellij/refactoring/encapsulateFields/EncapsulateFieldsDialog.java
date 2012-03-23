@@ -73,9 +73,9 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private JTable myTable;
   private MyTableModel myTableModel;
 
-  private final JCheckBox myCbEncapsulateGet = new JCheckBox();
-  private final JCheckBox myCbEncapsulateSet = new JCheckBox();
-  private final JCheckBox myCbUseAccessorsWhenAccessible = new JCheckBox();
+  private final JCheckBox myCbEncapsulateGet = new NonFocusableCheckBox();
+  private final JCheckBox myCbEncapsulateSet = new NonFocusableCheckBox();
+  private final JCheckBox myCbUseAccessorsWhenAccessible = new NonFocusableCheckBox();
   private final JRadioButton myRbFieldPrivate = new JRadioButton();
   private final JRadioButton myRbFieldProtected = new JRadioButton();
   private final JRadioButton myRbFieldPackageLocal = new JRadioButton();
@@ -88,10 +88,6 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private DocCommentPanel myJavadocPolicy;
 
   {
-    myCbEncapsulateGet.setFocusable(false);
-    myCbEncapsulateSet.setFocusable(false);
-    myCbUseAccessorsWhenAccessible.setFocusable(false);
-
     myRbAccessorPackageLocal.setFocusable(false);
     myRbAccessorPrivate.setFocusable(false);
     myRbAccessorProtected.setFocusable(false);
