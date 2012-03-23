@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -70,28 +71,14 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
       final Gson gson = new Gson();
       final String className = template.getClassNames();
       if (className == null || className.length() == 0) {
-        final boolean canTrySwitchGAV = template.getArtifactId() == null && template.getGroupId() != null;
-        final InputStream stream = new Endpoint.Search.Gavc(url).
-          getGavcSearchResultJson(template.getGroupId(), template.getArtifactId(), template.getVersion(), template.getClassifier(), null)
-          .getInputStream();
+        final String name = StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":");
+        final InputStream stream = new Endpoint.Search.Artifact(url).getArtifactSearchResultJson(name, null).getInputStream();
 
         final ArtifactoryModel.GavcResults results = gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.GavcResults.class);
         if (results != null && results.results != null) {
           for (ArtifactoryModel.GavcResult result : results.results) {
             if (!result.uri.endsWith(packaging)) continue;
             artifacts.add(convertArtifactInfo(result.uri, url, null));
-          }
-        }
-        if (canTrySwitchGAV) {
-          final InputStream stream2 = new Endpoint.Search.Gavc(url).
-            getGavcSearchResultJson(null, template.getGroupId(), template.getVersion(), template.getClassifier(), null)
-            .getInputStream();
-          final ArtifactoryModel.GavcResults results2 = gson.fromJson(new InputStreamReader(stream2), ArtifactoryModel.GavcResults.class);
-          if (results2 != null && results2.results != null) {
-            for (ArtifactoryModel.GavcResult result : results2.results) {
-              if (!result.uri.endsWith(packaging)) continue;
-              artifacts.add(convertArtifactInfo(result.uri, url, null));
-            }
           }
         }
       }

@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class RegistryUi implements Disposable {
 
   private final JPanel myContent = new JPanel();
 
-  private static final Icon RESTART_ICON = IconLoader.getIcon("/gutter/check.png");
+  private static final Icon RESTART_ICON = PlatformIcons.CHECK_ICON;
   private final RestoreDefaultsAction myRestoreDefaultsAction;
   private final MyTableModel myModel;
 

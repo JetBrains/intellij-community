@@ -37,6 +37,9 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
     GradleProjectResolver resolver = manager.getFacade().getResolver();
     setState(GradleTaskState.IN_PROGRESS);
     final GradleProject project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
+    if (project == null) {
+      return;
+    }
     myGradleProject.set(project);
     setState(GradleTaskState.FINISHED);
     if (myIntellijProject == null || myIntellijProject.isDisposed()) {

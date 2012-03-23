@@ -253,8 +253,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myViewContentPanel = new JPanel();
     myPanel = new SimpleToolWindowPanel(true).setProvideQuickActions(false);
     myPanel.setContent(myViewContentPanel);
-
-    myPanel.setBorder(new ToolWindow.Border(true, false, false, false));
   }
 
   public String getName() {
@@ -512,6 +510,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (action instanceof CollapseAllToolbarAction) {
         collapseAction = (CollapseAllToolbarAction)action;
         collapseAction.getTemplatePresentation().setIcon(IconLoader.getIcon("/general/collapseAll.png"));
+        collapseAction.getTemplatePresentation().setHoveredIcon(IconLoader.getIcon("/general/collapseAllHover.png"));
         myActionGroup.remove(collapseAction);
       }
     }
@@ -1710,6 +1709,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
       super("Scroll from Source", "Select the file open in the active editor", IconLoader.getIcon("/general/locate.png"));
+      getTemplatePresentation().setHoveredIcon(IconLoader.getIcon("/general/locateHover.png"));
     }
 
     @Override

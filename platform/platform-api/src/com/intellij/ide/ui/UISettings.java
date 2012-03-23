@@ -28,7 +28,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -89,6 +88,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean OVERRIDE_NONIDEA_LAF_FONTS = false;
   public boolean SHOW_ICONS_IN_MENUS = true;
   public boolean DISABLE_MNEMONICS = SystemInfo.isMac; // IDEADEV-33409, should be disabled by default on MacOS
+  public boolean DISABLE_MNEMONICS_IN_CONTROLS = false;
   public boolean SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false;
   public int MAX_LOOKUP_WIDTH = 500;
   public int MAX_LOOKUP_LIST_HEIGHT = 11;
@@ -300,7 +300,25 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     UISettings uiSettings=getInstance();
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_OFF);
-    GraphicsUtil.setupAntialiasing(g2d, uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR, true);
+    if (uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR) {
+      Toolkit tk = Toolkit.getDefaultToolkit();
+      //noinspection HardCodedStringLiteral
+      Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
+      if (map != null) {
+        if (isRemoteDesktopConnected()) {
+          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
+        }
+        else {
+          g2d.addRenderingHints(map);
+        }
+      }
+      else {
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      }
+    }
+    else {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+    }
   }
 
   /**

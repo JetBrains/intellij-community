@@ -114,8 +114,11 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void setVcsMappings(VcsDirectoryMapping... mappings) {
+    setVcsMappings(Arrays.asList(mappings));
+  }
+    protected void setVcsMappings(List<VcsDirectoryMapping> mappings) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    vcsManager.setDirectoryMappings(Arrays.asList(mappings));
+    vcsManager.setDirectoryMappings(mappings);
     vcsManager.updateActiveVcss();
   }
 

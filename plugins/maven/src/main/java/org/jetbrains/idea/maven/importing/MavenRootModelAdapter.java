@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
@@ -215,7 +217,13 @@ public class MavenRootModelAdapter {
       e = myRootModel.addModuleOrderEntry(m);
     }
     else {
-      e = myRootModel.addInvalidModuleEntry(moduleName);
+      AccessToken accessToken = ReadAction.start();
+      try {
+        e = myRootModel.addInvalidModuleEntry(moduleName);
+      }
+      finally {
+        accessToken.finish();
+      }
     }
 
     e.setScope(scope);

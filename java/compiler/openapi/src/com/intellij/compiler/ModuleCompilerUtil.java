@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.ContainerUtil;
@@ -106,15 +107,16 @@ public final class ModuleCompilerUtil {
     }
   }
 
-  public static GraphGenerator<ModifiableRootModel> createGraphGenerator(final Map<Module, ModifiableRootModel> models) {
-    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<ModifiableRootModel>() {
-      public Collection<ModifiableRootModel> getNodes() {
+
+  public static <T extends ModuleRootModel> GraphGenerator<T> createGraphGenerator(final Map<Module, T> models) {
+    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<T>() {
+      public Collection<T> getNodes() {
         return models.values();
       }
 
-      public Iterator<ModifiableRootModel> getIn(final ModifiableRootModel model) {
+      public Iterator<T> getIn(final ModuleRootModel model) {
         final Module[] modules = model.getModuleDependencies();
-        final List<ModifiableRootModel> dependencies = new ArrayList<ModifiableRootModel>();
+        final List<T> dependencies = new ArrayList<T>();
         for (Module module : modules) {
           dependencies.add(models.get(module));
         }
@@ -162,7 +164,7 @@ public final class ModuleCompilerUtil {
     return null;
   }
 
-  public static Collection<Chunk<ModifiableRootModel>> buildChunks(final Map<Module, ModifiableRootModel> models) {
+  public static <T extends ModuleRootModel> Collection<Chunk<T>> buildChunks(final Map<Module, T> models) {
     return toChunkGraph(createGraphGenerator(models)).getNodes();
   }
 }

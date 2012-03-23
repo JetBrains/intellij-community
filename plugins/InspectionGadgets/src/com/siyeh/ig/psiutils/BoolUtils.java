@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BoolUtils {
 
-  private BoolUtils() {
-  }
+  private BoolUtils() {}
 
   public static boolean isNegation(@NotNull PsiExpression expression) {
     if (!(expression instanceof PsiPrefixExpression)) {
@@ -41,8 +40,7 @@ public class BoolUtils {
     return ParenthesesUtils.stripParentheses(operand);
   }
 
-  public static String getNegatedExpressionText(
-    @Nullable PsiExpression condition) {
+  public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
     if (condition == null) {
       return "";
     }
@@ -61,19 +59,29 @@ public class BoolUtils {
       return negated.getText();
     }
     else if (ComparisonUtils.isComparison(condition)) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)condition;
-      final String negatedComparison =
-        ComparisonUtils.getNegatedComparison(binaryExpression.getOperationTokenType());
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
-        return lhs.getText() + negatedComparison;
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+      final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
+      final StringBuilder result = new StringBuilder();
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      final boolean isEven = (operands.length & 1) != 1;
+      for (int i = 0, length = operands.length; i < length; i++) {
+        final PsiExpression operand = operands[i];
+        if (i > 0) {
+          if (isEven && (i & 1) != 1) {
+            final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
+            if (token != null) {
+              result.append(token.getText());
+            }
+          }
+          else {
+            result.append(negatedComparison);
+          }
+        }
+        result.append(operand.getText());
       }
-      return lhs.getText() + negatedComparison + rhs.getText();
+      return result.toString();
     }
-    else if (ParenthesesUtils.getPrecedence(condition) >
-             ParenthesesUtils.PREFIX_PRECEDENCE) {
+    else if (ParenthesesUtils.getPrecedence(condition) > ParenthesesUtils.PREFIX_PRECEDENCE) {
       return "!(" + condition.getText() + ')';
     }
     else {

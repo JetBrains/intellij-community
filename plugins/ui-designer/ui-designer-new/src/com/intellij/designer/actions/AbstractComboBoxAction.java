@@ -15,11 +15,14 @@
  */
 package com.intellij.designer.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +35,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
-  private static final Icon CHECKED = IconLoader.getIcon("/actions/check.png");
+  private static final Icon CHECKED = PlatformIcons.CHECK_ICON;
 
   private List<T> myItems = Collections.emptyList();
   private T mySelection;

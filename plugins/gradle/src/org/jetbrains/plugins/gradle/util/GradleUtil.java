@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -15,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
@@ -24,6 +26,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -71,8 +74,15 @@ public class GradleUtil {
 
   public static final String PATH_SEPARATOR = "/";
 
-  private static final Map<Project, List<Balloon>> PROJECT_BALLOONS     = new WeakHashMap<Project, List<Balloon>>();
-  private static final List<Balloon>               APPLICATION_BALLOONS = new CopyOnWriteArrayList<Balloon>();
+  private static final Map<Project, List<Balloon>>            PROJECT_BALLOONS     = new WeakHashMap<Project, List<Balloon>>();
+  private static final List<Balloon>                          APPLICATION_BALLOONS = new CopyOnWriteArrayList<Balloon>();
+  private static final NotNullLazyValue<GradleLibraryManager> LIBRARY_MANAGER      = new NotNullLazyValue<GradleLibraryManager>() {
+    @NotNull
+    @Override
+    protected GradleLibraryManager compute() {
+      return ServiceManager.getService(GradleLibraryManager.class);
+    }
+  };
 
   private GradleUtil() {
   }
@@ -427,6 +437,22 @@ public class GradleUtil {
     return new GradleBalloonBuilder(JBPopupFactory.getInstance().createBalloonBuilder(content), balloons);
   }
 
+  public static boolean isGradleAvailable() {
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    final Project project;
+    if (projects.length == 1) {
+      project = projects[0];
+    }
+    else {
+      project = null;
+    }
+    return isGradleAvailable(project);
+  }
+  
+  public static boolean isGradleAvailable(@Nullable Project project) {
+    return LIBRARY_MANAGER.getValue().getGradleHome(project) != null;
+  }
+  
   private interface TaskUnderProgress {
     void execute(@NotNull ProgressIndicator indicator);
   }

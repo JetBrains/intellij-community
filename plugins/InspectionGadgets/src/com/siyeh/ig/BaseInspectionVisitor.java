@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,7 +173,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
 
   protected final void registerError(@NotNull PsiElement location,
                                      Object... infos) {
-    if (location.getTextLength() == 0) {
+    if (location.getTextLength() == 0 && !(location instanceof PsiFile)) {
       return;
     }
     final InspectionGadgetsFix[] fixes = createFixes(infos);

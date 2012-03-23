@@ -168,9 +168,6 @@ public class GradleProjectStructureTreeModel extends DefaultTreeModel {
 
       @Override
       public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
-        if (libraryOrderEntry.getLibraryName() == null) {
-          return value;
-        }
         GradleLibraryDependencyId id = GradleEntityIdMapper.mapEntityToId(libraryOrderEntry);
         dependencies.add(buildNode(id, id.getDependencyName()));
         return value;

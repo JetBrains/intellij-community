@@ -213,10 +213,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myAllModulesChangeListeners.add(listener);
   }
 
-  public GraphGenerator<ModifiableRootModel> createGraphGenerator() {
-    final Map<Module, ModifiableRootModel> models = new HashMap<Module, ModifiableRootModel>();
+  public GraphGenerator<ModuleRootModel> createGraphGenerator() {
+    final Map<Module, ModuleRootModel> models = new HashMap<Module, ModuleRootModel>();
     for (ModuleEditor moduleEditor : myModuleEditors) {
-      models.put(moduleEditor.getModule(), moduleEditor.getModifiableRootModel());
+      models.put(moduleEditor.getModule(), moduleEditor.getRootModel());
     }
     return ModuleCompilerUtil.createGraphGenerator(models);
   }

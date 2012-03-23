@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -64,6 +65,16 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
   private static final Icon ourSettingsIcon = IconLoader.getIcon("/general/gear.png");
   private static final Icon ourSeparatorIcon = IconLoader.getIcon("/general/divider.png");
+
+  private static final Icon ourHideLeftSideHoveredIcon = IconLoader.getIcon("/general/hideLeftHover.png");
+  private static final Icon ourHideRightSideHoveredIcon = IconLoader.getIcon("/general/hideRightHover.png");
+  private static final Icon ourHideDownSideHoveredIcon = IconLoader.getIcon("/general/hideDownHover.png");
+
+  private static final Icon ourHideLeftHoveredIcon = IconLoader.getIcon("/general/hideLeftPartHover.png");
+  private static final Icon ourHideRightHoveredIcon = IconLoader.getIcon("/general/hideRightPartHover.png");
+  private static final Icon ourHideDownHoveredIcon = IconLoader.getIcon("/general/hideDownPartHover.png");
+
+  private static final Icon ourSettingsHoveredIcon = IconLoader.getIcon("/general/gearHover.png");
 
   private ToolWindow myToolWindow;
   private WindowInfoImpl myInfo;
@@ -126,7 +137,12 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
         popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
       }
-    }, ourSettingsIcon);
+    }, ourSettingsIcon) {
+      @Override
+      protected Icon getActiveHoveredIcon() {
+        return ourSettingsHoveredIcon;
+      }
+    };
 
     myHideButton = new ActionButton(new HideAction() {
       @Override
@@ -149,6 +165,16 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       @Override
       protected Icon getAlternativeIcon() {
         return getHideIcon(myToolWindow);
+      }
+
+      @Override
+      protected Icon getActiveHoveredIcon() {
+        return getHideToolWindowHoveredIcon(myToolWindow);
+      }
+
+      @Override
+      protected Icon getAlternativeHoveredIcon() {
+        return getHideHoveredIcon(myToolWindow);
       }
     };
 
@@ -206,9 +232,15 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   public void setAdditionalTitleActions(AnAction[] actions) {
     myButtonPanel.removeAll();
     boolean actionAdded = false;
-    for (AnAction action : actions) {
+    for (final AnAction action : actions) {
       if (action == null) continue;
-      myButtonPanel.add(new ActionButton(action, action.getTemplatePresentation().getIcon()));
+      myButtonPanel.add(new ActionButton(action, action.getTemplatePresentation().getIcon()) {
+        @Override
+        protected Icon getActiveHoveredIcon() {
+          final Icon icon = action.getTemplatePresentation().getHoveredIcon();
+          return icon != null ? icon : super.getActiveHoveredIcon();
+        }
+      });
       myButtonPanel.add(Box.createHorizontalStrut(7));
       actionAdded = true;
     }
@@ -241,6 +273,30 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     }
 
     return ourHideLeftSideIcon;
+  }
+
+  private static Icon getHideToolWindowHoveredIcon(ToolWindow toolWindow) {
+    ToolWindowAnchor anchor = toolWindow.getAnchor();
+    if (anchor == ToolWindowAnchor.BOTTOM) {
+      return ourHideDownHoveredIcon;
+    }
+    else if (anchor == ToolWindowAnchor.RIGHT) {
+      return ourHideRightHoveredIcon;
+    }
+
+    return ourHideLeftHoveredIcon;
+  }
+
+  private static Icon getHideHoveredIcon(ToolWindow toolWindow) {
+    ToolWindowAnchor anchor = toolWindow.getAnchor();
+    if (anchor == ToolWindowAnchor.BOTTOM) {
+      return ourHideDownSideHoveredIcon;
+    }
+    else if (anchor == ToolWindowAnchor.RIGHT) {
+      return ourHideRightSideHoveredIcon;
+    }
+
+    return ourHideLeftSideHoveredIcon;
   }
 
   @Override
@@ -375,11 +431,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
         }
       };
 
-      myButton.setHoveringEnabled(false);
+      myButton.setHoveringEnabled(!SystemInfo.isMac);
       setContent(myButton);
       setOpaque(false);
 
-      setIcon(getActiveIcon(), getInactiveIcon() == null ? getActiveIcon() : getInactiveIcon());
+      setIcon(getActiveIcon(), getInactiveIcon() == null ? getActiveIcon() : getInactiveIcon(), getActiveHoveredIcon());
 
       PropertyChangeListener listener = new PropertyChangeListener() {
         @Override
@@ -408,6 +464,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       return myActiveIcon;
     }
 
+    protected Icon getActiveHoveredIcon() {
+      return myActiveIcon;
+    }
+
     protected Icon getInactiveIcon() {
       return myInactiveIcon;
     }
@@ -416,12 +476,17 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       return myAlternativeIcon;
     }
 
+    protected Icon getAlternativeHoveredIcon() {
+      return myAlternativeIcon;
+    }
+
     private void switchAlternativeAction(boolean b) {
       if (b && myCurrentAction == myAlternativeAction) return;
       if (!b && myCurrentAction != myAlternativeAction) return;
 
       setIcon(b ? getAlternativeIcon() : getActiveIcon(),
-              b ? getAlternativeIcon() : getInactiveIcon() == null ? getActiveIcon() : getInactiveIcon());
+              b ? getAlternativeIcon() : getInactiveIcon() == null ? getActiveIcon() : getInactiveIcon(),
+              b ? getAlternativeHoveredIcon() : getActiveHoveredIcon());
       myCurrentAction = b ? myAlternativeAction : myAction;
 
       setToolTipText(getToolTipTextByAction(myCurrentAction));
@@ -460,8 +525,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       return ToolWindowHeader.this.isActive();
     }
 
-    public void setIcon(final Icon active, Icon inactive) {
-      myButton.setIcons(active, inactive, active);
+    public void setIcon(final Icon active, Icon inactive, Icon hovered) {
+      myButton.setIcons(active, inactive, hovered);
     }
 
     public void setToolTipText(final String text) {

@@ -234,6 +234,22 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   };
 
+  public ValueContainerImpl<Value> copy() {
+    final ValueContainerImpl<Value> container = new ValueContainerImpl<Value>();
+    myInputIdMapping.forEachEntry(new TObjectObjectProcedure<Value, Object>() {
+      @Override
+      public boolean execute(Value key, Object val) {
+        if (val instanceof TIntHashSet) {
+          container.myInputIdMapping.put(key, ((TIntHashSet)val).clone());
+        } else {
+          container.myInputIdMapping.put(key, val);
+        }
+        return true;
+      }
+    });
+    return container;
+  }
+
   private static class SingleValueIterator implements IntIterator {
     private final int myValue;
     private boolean myValueRead = false;

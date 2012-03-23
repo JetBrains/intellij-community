@@ -204,13 +204,13 @@ public class IfMayBeConditionalInspection extends BaseInspection {
         }
         final PsiExpressionStatement thenExpressionStatement = (PsiExpressionStatement)thenStatement;
         final PsiExpression thenExpression = thenExpressionStatement.getExpression();
+        final PsiExpressionStatement elseExpressionStatement = (PsiExpressionStatement)elseStatement;
+        final PsiExpression elseExpression = elseExpressionStatement.getExpression();
         if (thenExpression instanceof PsiAssignmentExpression) {
-          final PsiAssignmentExpression thenAssignmentExpression = (PsiAssignmentExpression)thenExpression;
-          final PsiExpressionStatement elseExpressionStatement = (PsiExpressionStatement)elseStatement;
-          final PsiExpression elseExpression = elseExpressionStatement.getExpression();
           if (!(elseExpression instanceof PsiAssignmentExpression)) {
             return;
           }
+          final PsiAssignmentExpression thenAssignmentExpression = (PsiAssignmentExpression)thenExpression;
           final PsiAssignmentExpression elseAssignmentExpression = (PsiAssignmentExpression)elseExpression;
           if (!thenAssignmentExpression.getOperationTokenType().equals(elseAssignmentExpression.getOperationTokenType())) {
             return;
@@ -223,12 +223,10 @@ public class IfMayBeConditionalInspection extends BaseInspection {
           registerStatementError(statement);
         }
         else if (reportMethodCalls && thenExpression instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression thenMethodCallExpression = (PsiMethodCallExpression)thenExpression;
-          final PsiExpressionStatement elseExpressionStatement = (PsiExpressionStatement)elseStatement;
-          final PsiExpression elseExpression = elseExpressionStatement.getExpression();
           if (!(elseExpression instanceof PsiMethodCallExpression)) {
             return;
           }
+          final PsiMethodCallExpression thenMethodCallExpression = (PsiMethodCallExpression)thenExpression;
           final PsiMethodCallExpression elseMethodCallExpression = (PsiMethodCallExpression)elseExpression;
           final PsiReferenceExpression thenMethodExpression = thenMethodCallExpression.getMethodExpression();
           final PsiReferenceExpression elseMethodExpression = elseMethodCallExpression.getMethodExpression();

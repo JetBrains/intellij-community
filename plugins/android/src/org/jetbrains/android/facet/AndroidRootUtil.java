@@ -225,13 +225,15 @@ public class AndroidRootUtil {
                 if (file.getFileType() instanceof ArchiveFileType) {
                   if (file.getFileSystem() instanceof JarFileSystem) {
                     VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
-                    if (localFile != null) libraries.add(localFile);
+                    if (localFile != null) {
+                      libraries.add(localFile);
+                    }
                   }
                   else {
                     libraries.add(file);
                   }
                 }
-                else if (file.isDirectory()) {
+                else if (file.isDirectory() && !(file.getFileSystem() instanceof JarFileSystem)) {
                   collectClassFilesAndJars(file, libraries, new HashSet<VirtualFile>());
                 }
               }

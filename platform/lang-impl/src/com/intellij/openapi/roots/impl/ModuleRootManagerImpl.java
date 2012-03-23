@@ -267,6 +267,18 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getModuleDependencies(includeTests);
   }
 
+  @NotNull
+  @Override
+  public Module[] getModuleDependencies() {
+    return myRootModel.getModuleDependencies();
+  }
+
+  @NotNull
+  @Override
+  public Module[] getModuleDependencies(boolean includeTests) {
+    return myRootModel.getModuleDependencies(includeTests);
+  }
+
   public boolean isDependsOn(Module module) {
     return myRootModel.isDependsOn(module);
   }
