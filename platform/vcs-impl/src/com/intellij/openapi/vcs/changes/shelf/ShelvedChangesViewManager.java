@@ -304,7 +304,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       else if (key == SHELVED_BINARY_FILE_KEY) {
         sink.put(SHELVED_BINARY_FILE_KEY, TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class));
       }
-      else if (key == VcsDataKeys.CHANGES) {
+      else if (key == VcsDataKeys.HAVE_SELECTED_CHANGES) {
+        sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, getSelectionCount() > 0);
+        /*List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
+        final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);*/
+      } else if (key == VcsDataKeys.CHANGES) {
         List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
         if (shelvedChanges.size() > 0) {
           Change[] changes = new Change[shelvedChanges.size()];
