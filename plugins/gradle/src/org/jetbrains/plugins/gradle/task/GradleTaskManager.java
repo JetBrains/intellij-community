@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.gradle.task;
 
+import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +25,7 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Zhdanov
  * @since 2/8/12 1:52 PM
  */
-public class GradleTaskManager implements GradleTaskNotificationListener {
+public class GradleTaskManager extends AbstractProjectComponent implements GradleTaskNotificationListener {
 
   /**
    * We receive information about the tasks being enqueued to the slave gradle projects here. However, there is a possible
@@ -46,7 +48,11 @@ public class GradleTaskManager implements GradleTaskNotificationListener {
 
   @NotNull private final GradleApiFacadeManager            myFacadeManager;
 
-  public GradleTaskManager(@NotNull GradleApiFacadeManager facadeManager, @NotNull GradleProgressNotificationManager notificationManager) {
+  public GradleTaskManager(@NotNull Project project,
+                           @NotNull GradleApiFacadeManager facadeManager,
+                           @NotNull GradleProgressNotificationManager notificationManager)
+  {
+    super(project);
     myFacadeManager = facadeManager;
     notificationManager.addNotificationListener(this);
     myAlarm.addRequest(new Runnable() {
@@ -106,7 +112,7 @@ public class GradleTaskManager implements GradleTaskNotificationListener {
 
   public void update() {
     try {
-      final Map<GradleTaskType, Set<GradleTaskId>> currentState = myFacadeManager.getFacade().getTasksInProgress();
+      final Map<GradleTaskType, Set<GradleTaskId>> currentState = myFacadeManager.getFacade(myProject).getTasksInProgress();
       myTasksInProgress.clear();
       for (Set<GradleTaskId> ids : currentState.values()) {
         for (GradleTaskId id : ids) {
