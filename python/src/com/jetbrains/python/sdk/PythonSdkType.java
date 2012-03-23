@@ -422,9 +422,12 @@ public class PythonSdkType extends SdkType {
     return "Python SDK";
   }
 
-  public void setupSdkPaths(final Sdk sdk) {
+  public void setupSdkPaths(@NotNull final Sdk sdk) {
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     final SdkModificator sdkModificator = sdk.getSdkModificator();
+    if (project == null) {
+      return;
+    }
     final boolean success = setupSdkPaths(project, sdk, sdkModificator);
     if (success) {
       sdkModificator.commitChanges();
@@ -438,7 +441,8 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-  public static boolean setupSdkPaths(final Project project, final Sdk sdk, final SdkModificator sdkModificator) {
+  public static boolean setupSdkPaths(@NotNull final Project project, @NotNull final Sdk sdk,
+                                      @NotNull final SdkModificator sdkModificator) {
     final ProgressManager progman = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
     success.set(true);
@@ -456,8 +460,8 @@ public class PythonSdkType extends SdkType {
         catch (InvalidSdkException e) {
           if (!isInvalid(sdk)) {
             LOG.warn(e);
-            final Notification notification = PythonSdkType.createInvalidSdkNotification(myProject);
-            notification.notify(myProject);
+            final Notification notification = PythonSdkType.createInvalidSdkNotification(project);
+            notification.notify(project);
           }
         }
       }
