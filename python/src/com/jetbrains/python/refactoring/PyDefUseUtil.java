@@ -6,6 +6,7 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -41,33 +42,32 @@ public class PyDefUseUtil {
         instr = pred.iterator().next().num();
       }
     }
-    final boolean[] visited = new boolean[instructions.length];
-    final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
-    getLatestDefs(varName, instructions, instr, acceptTypeAssertions, visited, result);
+    final Collection<ReadWriteInstruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions);
     return new ArrayList<ReadWriteInstruction>(result);
   }
 
-  private static void getLatestDefs(String varName,
-                                    final Instruction[] instructions,
-                                    final int instr,
-                                    final boolean acceptTypeAssertions,
-                                    final boolean[] visited,
-                                    final Collection<ReadWriteInstruction> result) {
-    if (visited[instr]) return;
-    visited[instr] = true;
-    if (instructions[instr] instanceof ReadWriteInstruction) {
-      final ReadWriteInstruction instruction = (ReadWriteInstruction)instructions[instr];
-      final PsiElement element = instruction.getElement();
-      final String name = elementName(element);
-      final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-      if ((access.isWriteAccess() || (acceptTypeAssertions && access.isAssertTypeAccess())) && Comparing.strEqual(name, varName)) {
-        result.add(instruction);
-        return;
-      }
-    }
-    for (Instruction instruction : instructions[instr].allPred()) {
-      getLatestDefs(varName, instructions, instruction.num(), acceptTypeAssertions, visited, result);
-    }
+  private static Collection<ReadWriteInstruction> getLatestDefs(final String varName, final Instruction[] instructions, final int instr,
+                                                                final boolean acceptTypeAssertions) {
+    final Collection<ReadWriteInstruction> result = new LinkedHashSet<ReadWriteInstruction>();
+    ControlFlowUtil.iteratePrev(instr, instructions,
+                                new Function<Instruction, ControlFlowUtil.Operation>() {
+                                  @Override
+                                  public ControlFlowUtil.Operation fun(Instruction instruction) {
+                                    if (instruction instanceof ReadWriteInstruction) {
+                                      final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+                                      final PsiElement element = instruction.getElement();
+                                      final String name = elementName(element);
+                                      final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
+                                      if ((access.isWriteAccess() || (acceptTypeAssertions && access.isAssertTypeAccess())) &&
+                                          Comparing.strEqual(name, varName)) {
+                                        result.add(rwInstruction);
+                                        return ControlFlowUtil.Operation.CONTINUE;
+                                      }
+                                    }
+                                    return ControlFlowUtil.Operation.NEXT;
+                                  }
+                                });
+    return result;
   }
 
   @Nullable
@@ -99,6 +99,7 @@ public class PyDefUseUtil {
                                   int instr,
                                   boolean[] visited,
                                   Collection<PyElement> result) {
+    // TODO: Use ControlFlowUtil.process() for forwards CFG traversal
     if (visited[instr]) return;
     visited[instr] = true;
     if (instructions[instr] instanceof ReadWriteInstruction) {
