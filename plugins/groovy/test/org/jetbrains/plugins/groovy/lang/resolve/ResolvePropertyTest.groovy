@@ -722,7 +722,7 @@ print map.cla<caret>ss''')
   public void testResolveInsideWith0() {
     def resolved = resolve('a.groovy')
 
-    assertInstanceOf( resolved , GrAccessorMethod)
+    assertInstanceOf(resolved, GrAccessorMethod)
     assertEquals(resolved.containingClass.name, 'A')
   }
 
@@ -733,4 +733,19 @@ print map.cla<caret>ss''')
       assertEquals(resolved.containingClass.name, 'B')
     }
 
+
+  void testLocalVarVsFieldInWithClosure() {
+    def ref = configureByText('''\
+class Test {
+  def var
+}
+
+int var = 4
+new Test().with() {
+  print v<caret>ar
+}
+''')
+    assertFalse ref.resolve() instanceof GrField
+    assertTrue ref.resolve() instanceof GrVariable
+  }
 }
