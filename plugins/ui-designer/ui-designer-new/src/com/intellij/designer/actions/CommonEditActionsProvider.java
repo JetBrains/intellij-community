@@ -16,7 +16,7 @@
 package com.intellij.designer.actions;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.clipboard.SerializedComponentData;
+import com.intellij.uiDesigner.SerializedComponentData;
 import com.intellij.designer.clipboard.SimpleTransferable;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
