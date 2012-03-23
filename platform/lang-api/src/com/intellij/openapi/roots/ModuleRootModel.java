@@ -193,4 +193,10 @@ public interface ModuleRootModel {
   @NotNull String[] getRootUrls(OrderRootType rootType);
 
   <T> T getModuleExtension(Class<T> klass);
+
+  @NotNull
+  Module[] getModuleDependencies();
+
+  @NotNull
+  Module[] getModuleDependencies(boolean includeTests);
 }
