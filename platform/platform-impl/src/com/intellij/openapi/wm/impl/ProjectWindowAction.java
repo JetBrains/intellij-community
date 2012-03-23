@@ -122,6 +122,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     }
     // bring the frame forward
     projectFrame.toFront();
+    projectFrame.requestFocusInWindow();
   }
 
   @Override
