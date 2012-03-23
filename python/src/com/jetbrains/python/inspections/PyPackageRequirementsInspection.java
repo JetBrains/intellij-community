@@ -21,6 +21,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
+import com.jetbrains.cython.psi.CythonCImportStatement;
+import com.jetbrains.cython.psi.CythonFromCImportStatement;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibUtil;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.psi.*;
@@ -112,6 +114,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void visitPyFromImportStatement(PyFromImportStatement node) {
+      if (node instanceof CythonFromCImportStatement) {
+        return;
+      }
       final PyReferenceExpression expr = node.getImportSource();
       if (expr != null) {
         checkPackageNameInRequirements(expr);
@@ -120,6 +125,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void visitPyImportStatement(PyImportStatement node) {
+      if (node instanceof CythonCImportStatement) {
+        return;
+      }
       for (PyImportElement element : node.getImportElements()) {
         final PyReferenceExpression expr = element.getImportReferenceExpression();
         if (expr != null) {
