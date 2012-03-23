@@ -26,6 +26,18 @@ public class PyExternalProcessException extends Exception {
     myMessage = stripLinesWithoutLineFeeds(message);
   }
 
+  @Override
+  public String toString() {
+    final StringBuilder b = new StringBuilder();
+    b.append("The following command was executed:\n\n");
+    final String command = getName() + " " + StringUtil.join(getArgs(), " ");
+    b.append(command);
+    b.append("\n\n");
+    b.append("The error output of the command:\n\n");
+    b.append(getMessage());
+    return b.toString();
+  }
+
   public int getRetcode() {
     return myRetcode;
   }

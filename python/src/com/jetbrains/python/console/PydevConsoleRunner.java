@@ -51,6 +51,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
@@ -216,7 +217,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   @Override
   protected Process createProcess() throws ExecutionException {
-    if (mySdk.getSdkAdditionalData() instanceof PythonRemoteSdkAdditionalData) {
+    if (PySdkUtil.isRemote(mySdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         try {
@@ -260,7 +261,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
 
     PyRemoteSshProcess remoteProcess =
-      manager.createRemoteProcess(getProject(), data, commandLine);
+      manager.createRemoteProcess(getProject(), data, commandLine, false);
 
 
     Scanner s = new Scanner(remoteProcess.getInputStream());

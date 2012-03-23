@@ -134,6 +134,9 @@ public class AddImportHelper {
     else {
       as_clause = " as " + asName;
     }
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
     List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
     for (PyImportElement element : existingImports) {
       final PyQualifiedName qName = element.getImportedQName();

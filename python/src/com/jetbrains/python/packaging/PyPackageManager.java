@@ -72,7 +72,7 @@ public class PyPackageManager {
 
     public interface Listener {
       void started();
-      void finished(@Nullable PyExternalProcessException exception);
+      void finished(List<PyExternalProcessException> exceptions);
     }
 
     public UI(@NotNull Project project, @NotNull Sdk sdk, @Nullable Listener listener) {
@@ -84,19 +84,28 @@ public class PyPackageManager {
     public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
       final String progressTitle;
       final String successTitle;
-      if (requirements.size() == 1) {
-        final PyRequirement req = requirements.get(0);
-        progressTitle = String.format("Installing package '%s'", req);
-        successTitle = String.format("Package '%s' installed successfully", req);
-      }
-      else {
-        progressTitle = "Installing packages";
-        successTitle = "Packages installed successfully";
-      }
-      run(new ExternalRunnable() {
+      progressTitle = "Installing packages";
+      successTitle = "Packages installed successfully";
+      run(new MultiExternalRunnable() {
         @Override
-        public void run() throws PyExternalProcessException {
-          PyPackageManager.getInstance(mySdk).install(requirements, extraArgs);
+        public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
+          final int size = requirements.size();
+          final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
+          final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
+          for (int i = 0; i < size; i++) {
+            final PyRequirement requirement = requirements.get(i);
+            if (myListener != null) {
+              indicator.setText(String.format("Installing package '%s'...", requirement));
+              indicator.setFraction((double)i / size);
+            }
+            try {
+              manager.install(list(requirement), extraArgs);
+            }
+            catch (PyExternalProcessException e) {
+              exceptions.add(e);
+            }
+          }
+          return exceptions;
         }
       }, progressTitle, successTitle, "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
          "Install packages failed");
@@ -110,20 +119,26 @@ public class PyPackageManager {
         }
       }, ", ");
 
-      run(new ExternalRunnable() {
+      run(new MultiExternalRunnable() {
         @Override
-        public void run() throws PyExternalProcessException {
-          PyPackageManager.getInstance(mySdk).uninstall(packages);
+        public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
+          try {
+            PyPackageManager.getInstance(mySdk).uninstall(packages);
+            return list();
+          }
+          catch (PyExternalProcessException e) {
+            return list(e);
+          }
         }
       }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
          "Uninstall packages failed");
     }
 
-    private interface ExternalRunnable {
-      void run() throws PyExternalProcessException;
+    private interface MultiExternalRunnable {
+      List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator);
     }
 
-    private void run(@NotNull final ExternalRunnable runnable, @NotNull final String progressTitle,
+    private void run(@NotNull final MultiExternalRunnable runnable, @NotNull final String progressTitle,
                      @NotNull final String successTitle, @NotNull final String successDescription, @NotNull final String failureTitle) {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, progressTitle, false) {
         @Override
@@ -140,47 +155,55 @@ public class PyPackageManager {
               }
             });
           }
-          final Ref<PyExternalProcessException> exceptionRef = Ref.create(null);
-          try {
-            runnable.run();
+
+          final List<PyExternalProcessException> exceptions = runnable.run(indicator);
+          if (exceptions.isEmpty()) {
             notificationRef.set(new Notification(PACKAGING_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION));
           }
-          catch (final PyExternalProcessException e) {
-            exceptionRef.set(e);
+          else {
             final String progressLower = progressTitle.toLowerCase();
-            final String description = "Error occurred when " + progressLower + ".";
-            final String command = e.getName() + " " + StringUtil.join(e.getArgs(), " ");
+            final String firstLine = String.format("Error%s occurred when %s.", exceptions.size() > 1 ? "s" : "", progressLower);
+
+            final String description = createDescription(exceptions, firstLine);
             notificationRef.set(new Notification(PACKAGING_GROUP_ID, failureTitle,
-                                                 String.format("Error occurred when %s. <a href=\"xxx\">Details...</a>",
-                                                               progressLower),
+                                                 firstLine + " <a href=\"xxx\">Details...</a>",
                                                  NotificationType.ERROR,
                                                  new NotificationListener() {
                                                    @Override
                                                    public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                @NotNull HyperlinkEvent event) {
-                                                     PyPIPackageUtil.showError(myProject, failureTitle, description, command, e.getMessage());
-                                                     notification.expire();
+                                                     PyPIPackageUtil.showError(myProject, failureTitle,
+                                                                               description);
                                                    }
                                                  }));
           }
-          finally {
-            application.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (myListener != null) {
-                  myListener.finished(exceptionRef.get());
-                }
-                VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-                PythonSdkType.getInstance().setupSdkPaths(mySdk);
-                final Notification notification = notificationRef.get();
-                if (notification != null) {
-                  notification.notify(myProject);
-                }
+          application.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (myListener != null) {
+                myListener.finished(exceptions);
               }
-            });
-          }
+              VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
+              PythonSdkType.getInstance().setupSdkPaths(mySdk);
+              final Notification notification = notificationRef.get();
+              if (notification != null) {
+                notification.notify(myProject);
+              }
+            }
+          });
         }
       });
+    }
+
+    public static String createDescription(List<PyExternalProcessException> exceptions, String firstLine) {
+      final StringBuilder b = new StringBuilder();
+      b.append(firstLine);
+      b.append("\n\n");
+      for (PyExternalProcessException exception : exceptions) {
+        b.append(exception.toString());
+        b.append("\n");
+      }
+      return b.toString();
     }
   }
 
@@ -361,7 +384,7 @@ public class PyPackageManager {
       }
       else {
         throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args,
-                                             "Remote interpreter can't be executed. Please enable WebDeployment plugin.");
+                                             PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
       }
     }
     else {

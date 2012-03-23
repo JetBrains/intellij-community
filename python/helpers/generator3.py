@@ -36,6 +36,8 @@ import types
 import atexit
 import keyword
 
+from os.path import join, getsize
+
 try:
     import inspect
 except ImportError:
@@ -2228,7 +2230,7 @@ def is_module(d, root):
             os.path.exists(os.path.join(root, d, "__init__.pyo")))
 
 
-def find_binaries(paths):
+def list_binaries(paths):
     """
     Finds binaries in the given list of paths.
     Understands nested paths, as sys.paths have it (both "a/b" and "a/b/c").
@@ -2272,8 +2274,25 @@ def find_binaries(paths):
                             res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
                         note("done with %s", name)
                     the_name = prefix + name
-                    res[the_name.upper()] = (the_name, root + SEP + f)
+                    file_path = join(root, f)
+
+                    res[the_name.upper()] = (the_name, file_path, getsize(file_path), int(os.stat(file_path).st_mtime))
     return list(res.values())
+
+def find_sources(paths):
+    for path in paths:
+        if path == os.path.dirname(sys.argv[0]): continue
+        for root, dirs, files in os.walk(path):
+            if root.endswith('__pycache__'): continue
+            dirs_copy = list(dirs)
+            for d in dirs_copy:
+                if d.endswith("__pycache__") or not is_module(d, root):
+                    dirs.remove(d)
+            for name in files:
+                if name.endswith('.py'):
+                    filePath = join(root, name)
+                    say("%s %s %d", filePath, path, getsize(filePath))
+
 
 if sys.platform == 'cli':
     from System import DateTime
@@ -2415,16 +2434,17 @@ if __name__ == "__main__":
         ' -L -- print version and then a list of binary module files found ' '\n'
         '    on sys.path and in directories in directory_list;' '\n'
         '    lines are "qualified.module.name /full/path/to/module_file.{pyd,dll,so}"' '\n'
+        ' -S -- lists all python sources found in sys.path and in directories in directory_list'
     )
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:L")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LS")
     opts = dict(opts)
 
     if not opts or '-h' in opts:
         say(helptext)
         sys.exit(0)
 
-    if '-L' not in opts and '-b' not in opts and not args:
-        report("Neither -L nor -b nor any module name given")
+    if '-L' not in opts and '-b' not in opts and '-S' not in opts and not args:
+        report("Neither -L nor -b nor -S nor any module name given")
         sys.exit(1)
 
     quiet = '-q' in opts
@@ -2451,10 +2471,18 @@ if __name__ == "__main__":
             report("Expected no args with -L, got %d args", len(args))
             sys.exit(1)
         say(VERSION)
-        results = list(find_binaries(sys.path))
+        results = list(list_binaries(sys.path))
         results.sort()
-        for name, path in results:
-            say("%s %s", name, path)
+        for name, path, size, last_modified in results:
+            say("%s %s %d %d", name, path, size, last_modified)
+        sys.exit(0)
+
+    if "-S" in opts:
+        if len(args) > 0:
+            report("Expected no args with -S, got %d args", len(args))
+            sys.exit(1)
+        say(VERSION)
+        find_sources(sys.path)
         sys.exit(0)
 
     # build skeleton(s)

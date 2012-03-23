@@ -457,4 +457,9 @@ public class PyResolveTest extends PyResolveTestCase {
     final PyFunction function = assertResolvesTo(PyFunction.class, "getStore");
     assertEquals("PluginMetaclass", function.getContainingClass().getName());
   }
+
+  // PY-6083
+  public void testLambdaParameterInDecorator() {
+    assertResolvesTo(PyNamedParameter.class, "xx");
+  }
 }
