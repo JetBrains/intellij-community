@@ -254,6 +254,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      final List<PyRequirement> chosen;
+      if (myUnsatisfied.size() > 1) {
+        final PyChooseRequirementsDialog dialog = new PyChooseRequirementsDialog(project, myUnsatisfied);
+        chosen = dialog.showAndGetResult();
+      }
+      else {
+        chosen = myUnsatisfied;
+      }
+      if (chosen.isEmpty()) {
+        return;
+      }
       final PyPackageManager.UI ui = new PyPackageManager.UI(project, mySdk, new PyPackageManager.UI.Listener() {
         @Override
         public void started() {
@@ -265,7 +276,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
           setRunningPackagingTasks(myModule, false);
         }
       });
-      ui.install(myUnsatisfied, Collections.<String>emptyList());
+      ui.install(chosen, Collections.<String>emptyList());
     }
   }
 
