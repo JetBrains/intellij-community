@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,13 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.util.Collection;
+import java.util.regex.Pattern;
 
 /**
  * @author ilyas
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
-  @NonNls public static final String GROOVY_ALL_JAR_PATTERN = "groovy-all-(.*)\\.jar";
+  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all-(.*)\\.jar");
 
   private static GroovyConfigUtils myGroovyConfigUtils;
   @NonNls public static final String GROOVY_JAR_PATTERN_NOVERSION = "groovy\\.jar";

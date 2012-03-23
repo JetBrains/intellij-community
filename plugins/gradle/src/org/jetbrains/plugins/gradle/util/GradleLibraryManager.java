@@ -4,12 +4,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,7 +33,7 @@ public class GradleLibraryManager {
 
   public static final Pattern  GRADLE_JAR_FILE_PATTERN;
   public static final Pattern  ANY_GRADLE_JAR_FILE_PATTERN;
-  
+
   private static final String[] GRADLE_START_FILE_NAMES;
   @NonNls private static final String GRADLE_ENV_PROPERTY_NAME;
   static {
@@ -301,22 +304,30 @@ public class GradleLibraryManager {
   }
 
   /**
-   * Allows to ask for the gradle class roots.
+   * Allows to ask for the classpath roots of the classes that are additionally provided by the gradle integration (e.g. gradle class
+   * files, bundled groovy-all jar etc).
    * 
    * @param project  target project to use for gradle home retrieval
-   * @return         collection of the gradle class roots (if any); <code>null</code> otherwise
+   * @return         classpath roots of the classes that are additionally provided by the gradle integration (if any);
+   *                 <code>null</code> otherwise
    */
   @Nullable
-  public Collection<VirtualFile> getClassRoots(@Nullable Project project) {
+  public List<VirtualFile> getClassRoots(@Nullable Project project) {
     final Collection<File> libraries = getAllLibraries(project);
     if (libraries == null) {
       return null;
     }
-    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+    final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (File file : libraries) {
-      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()) {
-        result.add(fileSystem.findFileByIoFile(file));
+      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()
+          || GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(file.getName()).matches())
+      {
+        final VirtualFile virtualFile = localFileSystem.findFileByIoFile(file);
+        if (virtualFile != null) {
+          ContainerUtil.addIfNotNull(result, jarFileSystem.getJarRootForLocalFile(virtualFile));
+        }
       }
     }
     return result;
