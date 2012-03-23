@@ -45,11 +45,13 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     return null;
   }
 
+  @NotNull
   @Override
   public Collection<VirtualFile> getCachedChildren() {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public Iterable<VirtualFile> iterInDbChildren() {
     return ContainerUtil.emptyIterable();
@@ -65,13 +67,13 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   @Nullable
-  public NewVirtualFile refreshAndFindChild(final String name) {
+  public NewVirtualFile refreshAndFindChild(@NotNull final String name) {
     return null;
   }
 
   @Override
   @Nullable
-  public NewVirtualFile findChildIfCached(final String name) {
+  public NewVirtualFile findChildIfCached(@NotNull final String name) {
     return null;
   }
 
