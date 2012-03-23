@@ -182,46 +182,50 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
 
   public void testLoop() {
     JSRootConfiguration.storeLanguageLevel(JSLanguageLevel.JS_1_7.getId(), getProject());
-    final JSLanguageDialect dialect = JSLanguageLevel.JS_1_7.getDialect();
-    String s = "for (var i = 0; i < n ; i++) {\n" +
-               "  doc.print(i);\n" +
-               "}\n" +
-               "for each (var i in list) {\n" +
-               "  doc.print(i);\n" +
-               "}\n" +
-               "var i = 0;\n" +
-               "while (i < n) {\n" +
-               "  doc.print(i);\n" +
-               "  i++;\n" +
-               "}";
-    doTest(s, "var $i$ = $value$", 2, 2, dialect);
-    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
-              "  $exp$;", 1, 0, dialect);
-    doTest(s, "for each(var $var$ in $list$){\n" +
-              "  $exp$;\n" +
-              "}", 1, 1, dialect);
-    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
-              "  $exp$;\n" +
-              "}", 1, 1, dialect);
-    doTest(s, "for(var $var$ = $start$; $endexp$; $incexp$) {\n" +
-              "  $exp$;\n" +
-              "}", 1, 1, dialect);
-    doTest(s, "while( $var$ < $end$) {\n" +
-              "  $exp$;\n" +
-              "}", 0, 0, dialect);
-    doTest(s, "while($condition$)", 1, 1, dialect);
+    try {
+      final JSLanguageDialect dialect = JSLanguageLevel.JS_1_7.getDialect();
+      String s = "for (var i = 0; i < n ; i++) {\n" +
+                 "  doc.print(i);\n" +
+                 "}\n" +
+                 "for each (var i in list) {\n" +
+                 "  doc.print(i);\n" +
+                 "}\n" +
+                 "var i = 0;\n" +
+                 "while (i < n) {\n" +
+                 "  doc.print(i);\n" +
+                 "  i++;\n" +
+                 "}";
+      doTest(s, "var $i$ = $value$", 2, 2, dialect);
+      doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
+                "  $exp$;", 1, 0, dialect);
+      doTest(s, "for each(var $var$ in $list$){\n" +
+                "  $exp$;\n" +
+                "}", 1, 1, dialect);
+      doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
+                "  $exp$;\n" +
+                "}", 1, 1, dialect);
+      doTest(s, "for(var $var$ = $start$; $endexp$; $incexp$) {\n" +
+                "  $exp$;\n" +
+                "}", 1, 1, dialect);
+      doTest(s, "while( $var$ < $end$) {\n" +
+                "  $exp$;\n" +
+                "}", 0, 0, dialect);
+      doTest(s, "while($condition$)", 1, 1, dialect);
 
-    // universal matcher can match pattern variable to BLOCK
-    doTest(s, "while( $var$ < $end$) $exp$", 1, 1, dialect);
+      // universal matcher can match pattern variable to BLOCK
+      doTest(s, "while( $var$ < $end$) $exp$", 1, 1, dialect);
 
-    doTest(s, "while( $var$ < $end$) $exp$;", 0, 0, dialect);
+      doTest(s, "while( $var$ < $end$) $exp$;", 0, 0, dialect);
 
-    doTest(s, "for each(var $var$ in $list$)\n" +
-              "  $exp$;", 1, 0, dialect);
-    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1, 1, dialect);
-    doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
-              "}", 0, 0, dialect);
-    JSRootConfiguration.unsetLanguageLevel(getProject());
+      doTest(s, "for each(var $var$ in $list$)\n" +
+                "  $exp$;", 1, 0, dialect);
+      doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1, 1, dialect);
+      doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++) {\n" +
+                "}", 0, 0, dialect);
+    }
+    finally {
+      JSRootConfiguration.unsetLanguageLevel(getProject());
+    }
   }
 
   public void testFunc1() {
