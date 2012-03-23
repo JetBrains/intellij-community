@@ -96,10 +96,20 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     if (psiClass != null && type != null) {
       if (type == Type.DECLARED_FIELD) {
         return psiClass.getFields();
-      } else if (type == Type.DECLARED_METHOD) {
+      } else if (type == Type.FIELD) {
+        final List<PsiField> fields = new ArrayList<PsiField>();
+        for (PsiField field : psiClass.getFields()) {
+          if (isPublic(field)) {
+            fields.add(field);
+          }
+        }
+        return fields.toArray();
+      } else if (type == Type.DECLARED_METHOD || type == Type.METHOD) {
         final List<LookupElementBuilder> elements = new ArrayList<LookupElementBuilder>();
         for (PsiMethod method : psiClass.getMethods()) {
-          elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).setInsertHandler(this));
+          if (type == Type.DECLARED_METHOD || isPublic(method)) {
+            elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).setInsertHandler(this));
+          }
         }
         return elements.toArray();
       }
@@ -124,6 +134,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
         JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(methodCall);
       }
     }
+  }
+
+  private static boolean isPublic(final PsiMember psiField) {
+    return psiField.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
   private static String getMethodTypes(PsiMethod method) {
