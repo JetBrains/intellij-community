@@ -19,7 +19,6 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.storage.TimestampStorage;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
@@ -217,13 +216,9 @@ public class IncProjectBuilder {
   }
 
   private CompileContext createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild) throws ProjectBuildException {
-    final TimestampStorage tsStorage = myProjectDescriptor.timestamps.getStorage();
-    final FSState fsState = myProjectDescriptor.fsState;
-    final ModuleRootsIndex rootsIndex = myProjectDescriptor.rootsIndex;
-    final BuildDataManager dataManager = myProjectDescriptor.dataManager;
     return new CompileContext(
-      scope, isMake, isProjectRebuild, myProductionChunks, myTestChunks, fsState, dataManager, tsStorage, myMessageDispatcher, rootsIndex,
-      myProjectDescriptor.getLoggingManager(), myBuilderParams, myCancelStatus
+      scope, myProjectDescriptor, isMake, isProjectRebuild, myProductionChunks, myTestChunks, myMessageDispatcher,
+      myBuilderParams, myCancelStatus
     );
   }
 
