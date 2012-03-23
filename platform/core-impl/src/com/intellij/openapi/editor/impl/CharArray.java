@@ -180,8 +180,6 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   private void assertConsistency() {
-    if (!myDebug) return;
-
     if (isDeferredChangeMode()) {
       assert myOriginalSequence == null;
     }
@@ -194,6 +192,8 @@ abstract class CharArray implements CharSequenceBackedByArray {
     int count = myCount + myDeferredShift;
     assert count == origLen || origLen==-1;
     assert count == stringLen || stringLen==-1;
+
+    if (!myDebug) return;
     final String stringFromCharArray;
 
     if (myArray != null) {
