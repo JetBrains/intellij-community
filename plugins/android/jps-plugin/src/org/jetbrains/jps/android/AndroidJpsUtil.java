@@ -232,6 +232,7 @@ class AndroidJpsUtil {
         if (file.isFile()) {
           final String ext = FileUtil.getExtension(file.getName());
 
+          // NOTE: we should ignore apklib dependencies (IDEA-82976)
           if ("jar".equals(ext) || "class".equals(ext)) {
             if (!processor.process(file)) {
               return false;

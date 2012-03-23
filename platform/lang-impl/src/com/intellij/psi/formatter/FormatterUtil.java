@@ -203,11 +203,11 @@ public class FormatterUtil {
 
     if (isWhitespaceOrEmpty(node)) return true;
     for (WhiteSpaceFormattingStrategy strategy : WhiteSpaceFormattingStrategyFactory.getAllStrategies()) {
-      if (strategy.containsWhitespacesOnly(node)) {
-        return true;
+      if (!strategy.containsWhitespacesOnly(node)) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   public static void replaceWhiteSpace(final String whiteSpace,

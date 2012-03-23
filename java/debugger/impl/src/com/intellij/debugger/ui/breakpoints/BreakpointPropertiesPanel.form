@@ -34,7 +34,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.actions"/>
             <children>
@@ -162,7 +162,7 @@
             </constraints>
             <properties/>
             <clientProperties>
-              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+              <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
             </clientProperties>
             <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.suspend.policy"/>
             <children>
@@ -214,7 +214,7 @@
         </constraints>
         <properties/>
         <clientProperties>
-          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
+          <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
         <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.conditions"/>
         <children>

@@ -22,8 +22,11 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -41,9 +44,21 @@ public class TaskVcsTest extends TaskManagerTestCase {
   public void testCreateChangelist() throws Exception {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    ChangeListInfo info = createChangelist((LocalTaskImpl)task);
+    ChangeListInfo info = createChangelist(task);
     assertEquals("TEST-001 Summary", info.name);
     assertEquals("", info.comment);
+  }
+
+  public void testActivateTask() throws Exception {
+    Task task = myRepository.findTask("TEST-001");
+    assertNotNull(task);
+    List<ChangeListInfo> changelists = myManager.getOpenChangelists(task);
+    assertEquals(0, changelists.size());
+    myManager.activateTask(task, false, true);
+    LocalTask localTask = myManager.getActiveTask();
+    changelists = myManager.getOpenChangelists(localTask);
+    assertTrue(changelists.size() > 0);
+    assertEquals("TEST-001 Summary", changelists.get(0).name);
   }
 
   public void testCreateComment() throws Exception {
@@ -51,14 +66,15 @@ public class TaskVcsTest extends TaskManagerTestCase {
     myRepository.setCommitMessageFormat("{id} {summary} {number} {project}");
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    ChangeListInfo info = createChangelist((LocalTaskImpl)task);
+    ChangeListInfo info = createChangelist(task);
     assertEquals("TEST-001 Summary 001 TEST", info.comment);
   }
 
-  private ChangeListInfo createChangelist(LocalTaskImpl task) {
+  private ChangeListInfo createChangelist(Task task) {
     clearChangeLists();
-    myManager.createChangeList(task, myManager.getChangelistName(task));
-    List<ChangeListInfo> list = myManager.getOpenChangelists(task);
+    LocalTaskImpl localTask = new LocalTaskImpl(task);
+    myManager.createChangeList(localTask, myManager.getChangelistName(task));
+    List<ChangeListInfo> list = myManager.getOpenChangelists(localTask);
     assertEquals(1, list.size());
     ChangeListInfo info = list.get(0);
     list.clear();
@@ -76,9 +92,73 @@ public class TaskVcsTest extends TaskManagerTestCase {
     ChangeListManager.getInstance(getProject()).addChangeList("Default", "");
 
     ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMapping("", myVcs.getName());
-    boolean b = ProjectLevelVcsManager.getInstance(getProject()).hasActiveVcss();
+    ProjectLevelVcsManager.getInstance(getProject()).hasActiveVcss();
     myRepository = new TestRepository();
-    myRepository.setTasks(new LocalTaskImpl("TEST-001", "Summary") {
+    myRepository.setTasks(new Task() {
+      @NotNull
+      @Override
+      public String getId() {
+        return "TEST-001";
+      }
+
+      @NotNull
+      @Override
+      public String getSummary() {
+        return "Summary";
+      }
+
+      @Override
+      public String getDescription() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public Comment[] getComments() {
+        return new Comment[0];
+      }
+
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public TaskType getType() {
+        return TaskType.BUG;
+      }
+
+      @Override
+      public Date getUpdated() {
+        return null;
+      }
+
+      @Override
+      public Date getCreated() {
+        return null;
+      }
+
+      @Override
+      public boolean isClosed() {
+        return false;
+      }
+
+      @Override
+      public String getCustomIcon() {
+        return null;
+      }
+
+      @Override
+      public boolean isIssue() {
+        return false;
+      }
+
+      @Override
+      public String getIssueUrl() {
+        return null;
+      }
+
       @Override
       public TaskRepository getRepository() {
         return myRepository;

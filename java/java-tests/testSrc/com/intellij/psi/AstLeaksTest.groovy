@@ -29,7 +29,7 @@ import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateU
  */
 class AstLeaksTest extends LightCodeInsightFixtureTestCase {
 
-  public void "_test AST should be on a soft reference, for changed files as well"() {
+  public void "test AST should be on a soft reference, for changed files as well"() {
     def file = myFixture.addClass('class Foo {}').containingFile
     assert file.findElementAt(0) instanceof PsiKeyword
     LeakHunter.checkLeak(file, JavaFileElement)
