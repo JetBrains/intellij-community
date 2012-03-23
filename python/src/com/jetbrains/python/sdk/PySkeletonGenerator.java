@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,8 +19,8 @@ import java.util.*;
 import static com.jetbrains.python.sdk.SkeletonVersionChecker.fromVersionString;
 
 /**
-* @author traff
-*/
+ * @author traff
+ */
 public class PySkeletonGenerator {
   protected static final Logger LOG = Logger.getInstance("#" + PySkeletonGenerator.class.getName());
 
@@ -31,9 +32,9 @@ public class PySkeletonGenerator {
 
   static class ListBinariesResult {
     public final int generatorVersion;
-    public final Map<String, File> modules;
+    public final Map<String, PySkeletonRefresher.PyBinaryItem> modules;
 
-    public ListBinariesResult(int generatorVersion, Map<String, File> modules) {
+    public ListBinariesResult(int generatorVersion, Map<String, PySkeletonRefresher.PyBinaryItem> modules) {
       this.generatorVersion = generatorVersion;
       this.modules = modules;
     }
@@ -162,14 +163,18 @@ public class PySkeletonGenerator {
     }
     final Iterator<String> iter = lines.iterator();
     final int generatorVersion = fromVersionString(iter.next().trim());
-    final Map<String, File> binaries = new HashMap<String, File>();
+    final Map<String, PySkeletonRefresher.PyBinaryItem> binaries = Maps.newHashMap();
     while (iter.hasNext()) {
       final String line = iter.next();
       int cutpos = line.indexOf(' ');
       if (cutpos >= 0) {
-        String moduleName = line.substring(0, cutpos);
-        String path = line.substring(cutpos + 1);
-        binaries.put(moduleName, new File(path));
+        String[] strs = line.split(" ");
+        String moduleName = strs[0];
+        String path = strs[1];
+        int length = Integer.parseInt(strs[2]);
+        int lastModified = Integer.parseInt(strs[3]);
+
+        binaries.put(moduleName, new PySkeletonRefresher.PyBinaryItem(moduleName, path, length, lastModified));
       }
       else {
         LOG.error("Bad binaries line: '" + line + "', SDK " + homePath); // but don't die yet

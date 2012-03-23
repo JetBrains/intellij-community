@@ -2230,7 +2230,7 @@ def is_module(d, root):
             os.path.exists(os.path.join(root, d, "__init__.pyo")))
 
 
-def find_binaries(paths):
+def list_binaries(paths):
     """
     Finds binaries in the given list of paths.
     Understands nested paths, as sys.paths have it (both "a/b" and "a/b/c").
@@ -2274,7 +2274,9 @@ def find_binaries(paths):
                             res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
                         note("done with %s", name)
                     the_name = prefix + name
-                    res[the_name.upper()] = (the_name, root + SEP + f)
+                    file_path = join(root, f)
+
+                    res[the_name.upper()] = (the_name, file_path, getsize(file_path), int(os.stat(file_path).st_mtime))
     return list(res.values())
 
 def find_sources(paths):
@@ -2469,10 +2471,10 @@ if __name__ == "__main__":
             report("Expected no args with -L, got %d args", len(args))
             sys.exit(1)
         say(VERSION)
-        results = list(find_binaries(sys.path))
+        results = list(list_binaries(sys.path))
         results.sort()
-        for name, path in results:
-            say("%s %s", name, path)
+        for name, path, size, last_modified in results:
+            say("%s %s %d %d", name, path, size, last_modified)
         sys.exit(0)
 
     if "-S" in opts:
