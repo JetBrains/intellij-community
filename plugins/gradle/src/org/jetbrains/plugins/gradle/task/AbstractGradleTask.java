@@ -3,9 +3,7 @@ package org.jetbrains.plugins.gradle.task;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
@@ -30,11 +28,9 @@ public abstract class AbstractGradleTask implements GradleTask {
   private final AtomicReference<GradleTaskState> myState = new AtomicReference<GradleTaskState>(GradleTaskState.NOT_STARTED);
   private final AtomicReference<Throwable>       myError = new AtomicReference<Throwable>();
 
-  @Nullable transient private final Project      myIntellijProject;
-  @NotNull  private final            GradleTaskId myId;
+  private final GradleTaskId myId;
 
-  protected AbstractGradleTask(Project project, @NotNull GradleTaskType type) {
-    myIntellijProject = project;
+  protected AbstractGradleTask(@NotNull GradleTaskType type) {
     myId = GradleTaskId.create(type);
   }
 
@@ -57,18 +53,13 @@ public abstract class AbstractGradleTask implements GradleTask {
     return myError.get();
   }
 
-  @Nullable
-  public Project getIntellijProject() {
-    return myIntellijProject;
-  }
-
   public void refreshState() {
     if (getState() != GradleTaskState.IN_PROGRESS) {
       return;
     }
     final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
     try {
-      final GradleApiFacade facade = manager.getFacade(myIntellijProject);
+      final GradleApiFacade facade = manager.getFacade();
       setState(facade.isTaskInProgress(getId()) ? GradleTaskState.IN_PROGRESS : GradleTaskState.FAILED);
     }
     catch (Throwable e) {

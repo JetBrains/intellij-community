@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,7 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
   @Override
   protected void doUpdate(@NotNull Presentation presentation, @NotNull Project project, @NotNull String linkedProjectPath) {
     boolean enabled = false;
-    final GradleTaskManager taskManager = project.getComponent(GradleTaskManager.class);
+    final GradleTaskManager taskManager = ServiceManager.getService(GradleTaskManager.class);
     if (taskManager != null) {
       enabled = !taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT);
     }
