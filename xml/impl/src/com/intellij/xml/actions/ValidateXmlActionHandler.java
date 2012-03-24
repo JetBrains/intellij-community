@@ -32,6 +32,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.content.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xml.XmlBundle;
@@ -56,10 +59,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.FileNotFoundException;
 import java.io.StringReader;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 
 /**
@@ -70,9 +70,11 @@ public class ValidateXmlActionHandler {
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
   @NonNls private static final String SCHEMA_FULL_CHECKING_FEATURE_ID = "http://apache.org/xml/features/validation/schema-full-checking";
   private static final String GRAMMAR_FEATURE_ID = Constants.XERCES_PROPERTY_PREFIX + Constants.XMLGRAMMAR_POOL_PROPERTY;
+
   private static final Key<XMLGrammarPool> GRAMMAR_POOL_KEY = Key.create("GrammarPoolKey");
   private static final Key<Long> GRAMMAR_POOL_TIME_STAMP_KEY = Key.create("GrammarPoolTimeStampKey");
   private static final Key<VirtualFile[]> DEPENDENT_FILES_KEY = Key.create("GrammarPoolFilesKey");
+  private static final Key<String[]> KNOWN_NAMESPACES_KEY = Key.create("KnownNamespacesKey");
 
   private Project myProject;
   private XmlFile myFile;
@@ -418,6 +420,7 @@ public class ValidateXmlActionHandler {
         myFile.putUserData(DEPENDENT_FILES_KEY, files);
         myFile.putUserData(GRAMMAR_POOL_TIME_STAMP_KEY, new Long(calculateTimeStamp(files, myProject)));
       }
+       myFile.putUserData(KNOWN_NAMESPACES_KEY, getNamespaces(myFile));
     }
     catch (SAXException e) {
       LOG.debug(e);
@@ -490,9 +493,7 @@ public class ValidateXmlActionHandler {
     XMLGrammarPool grammarPool = null;
 
     // check if the pool is valid
-    if (!forceChecking &&
-        !isValidationDependentFilesOutOfDate(file)
-       ) {
+    if (!forceChecking && !isValidationDependentFilesOutOfDate(file)) {
       grammarPool = previousGrammarPool;
     }
 
@@ -511,10 +512,13 @@ public class ValidateXmlActionHandler {
   public static boolean isValidationDependentFilesOutOfDate(XmlFile myFile) {
     final VirtualFile[] files = myFile.getUserData(DEPENDENT_FILES_KEY);
     final Long grammarPoolTimeStamp = myFile.getUserData(GRAMMAR_POOL_TIME_STAMP_KEY);
+    String[] ns = myFile.getUserData(KNOWN_NAMESPACES_KEY);
 
-    if (grammarPoolTimeStamp != null &&
-        files != null
-       ) {
+    if (!Arrays.equals(ns, getNamespaces(myFile))) {
+      return true;
+    }
+
+    if (grammarPoolTimeStamp != null && files != null) {
       long dependentFilesTimestamp = calculateTimeStamp(files,myFile.getProject());
 
       if (dependentFilesTimestamp == grammarPoolTimeStamp.longValue()) {
@@ -523,6 +527,17 @@ public class ValidateXmlActionHandler {
     }
 
     return true;
+  }
+
+  private static String[] getNamespaces(XmlFile file) {
+    XmlTag rootTag = file.getRootTag();
+    if (rootTag == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return ContainerUtil.mapNotNull(rootTag.getAttributes(), new Function<XmlAttribute, String>() {
+      @Override
+      public String fun(XmlAttribute attribute) {
+        return attribute.getValue();
+      }
+    }, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   private static long calculateTimeStamp(final VirtualFile[] files, Project myProject) {
