@@ -423,15 +423,15 @@ public class NameUtil {
       if (patternIndex == myPattern.length) {
         return FList.emptyList();
       }
+      if ('*' == myPattern[patternIndex]) {
+        return skipChars(name, patternIndex, nameIndex, true);
+      }
       if (nameIndex == name.length()) {
         return null;
       }
 
       if ('.' == myPattern[patternIndex] && name.charAt(nameIndex) != '.') {
         return skipChars(name, patternIndex, nameIndex, false);
-      }
-      if ('*' == myPattern[patternIndex]) {
-        return skipChars(name, patternIndex, nameIndex, true);
       }
 
       if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[0]) {
@@ -455,26 +455,22 @@ public class NameUtil {
 
       int nextStart = NameUtil.nextWord(name, nameIndex);
 
-      boolean uppers = isWordStart(myPattern[patternIndex]);
+      int lastUpper = isWordStart(myPattern[patternIndex]) ? 0 : -1;
 
       int i = 1;
       while (true) {
-        if (patternIndex + i == myPattern.length) {
-          //end of pattern reached, the last word matches
-          return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
-        }
-        if (i + nameIndex == nextStart) {
-          //whole word match
+        if (patternIndex + i == myPattern.length || i + nameIndex == nextStart) {
           break;
         }
         char p = myPattern[patternIndex + i];
-        if (uppers && isWordStart(p) && myOptions != MatchingCaseSensitivity.ALL) {
+        char w = name.charAt(i + nameIndex);
+        if (lastUpper == i - 1 && isWordStart(p) && myOptions != MatchingCaseSensitivity.ALL) {
+          if (p == w) {
+            lastUpper = i;
+          }
           p = StringUtil.toLowerCase(p);
-        } else {
-          uppers = false;
         }
 
-        char w = name.charAt(i + nameIndex);
         if (myOptions != MatchingCaseSensitivity.ALL) {
           w = StringUtil.toLowerCase(w);
         }
@@ -484,29 +480,38 @@ public class NameUtil {
         i++;
       }
 
-      if (myPattern[patternIndex + i] == '*') {
-        nextStart = nameIndex + i;
+      if (isFinalSpaceMatch(name, patternIndex, nameIndex, nextStart, i)) {
+        return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
       }
 
-      // there's more in the pattern, but no more words
-      if (nextStart == name.length()) {
-        if (patternIndex + i == myPattern.length - 1) {
-          char last = myPattern[patternIndex + i];
-          if (' ' == last && (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length()) ||
-              '*' == last) {
-            return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+      return matchAfterFragment(name, patternIndex, nameIndex, nextStart, lastUpper, i);
+    }
+
+    private boolean isFinalSpaceMatch(String name, int patternIndex, int nameIndex, int nextStart, int i) {
+      return nextStart == name.length() &&
+          patternIndex + i == myPattern.length - 1 &&
+          ' ' == myPattern[patternIndex + i] &&
+          (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length());
+    }
+
+    @Nullable
+    private FList<TextRange> matchAfterFragment(String name, int patternIndex, int nameIndex, int nextStart, int lastUpper, int matchLen) {
+      int star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*' ? matchLen : -1;
+      if (lastUpper >= 0) {
+        FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, lastUpper == star ? nameIndex + lastUpper : nextStart);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, lastUpper + 1);
+        }
+      }
+
+      while (matchLen > 0) {
+        if (matchLen != lastUpper) {
+          FList<TextRange> ranges = matchName(name, patternIndex + matchLen, matchLen == star ? matchLen + lastUpper : nextStart);
+          if (ranges != null) {
+            return prependRange(ranges, nameIndex, matchLen);
           }
         }
-
-        return null;
-      }
-
-      while (i > 0) {
-        FList<TextRange> ranges = matchName(name, patternIndex + i, nextStart);
-        if (ranges != null) {
-          return prependRange(ranges, nameIndex, i);
-        }
-        i--;
+        matchLen--;
       }
       return null;
     }
