@@ -104,6 +104,11 @@ public class MasterPasswordDialog extends DialogWrapper {
    * @throws PasswordSafeException if the master password is not provided.
    */
   public static void askPassword(Project project, MasterKeyPasswordSafe safe) throws PasswordSafeException {
+    // trying empty password: people who have set up empty password, don't want to get disturbed by the prompt.
+    if (safe.setMasterPassword("")) {
+      return;
+    }
+
     String error = null;
     retries:
     for (int count = 0; count < NUMBER_OF_RETRIES; count++) {
