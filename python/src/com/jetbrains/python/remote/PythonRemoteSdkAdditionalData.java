@@ -164,7 +164,7 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   }
 
   public void setStorePassword(boolean storePassword) {
-    myStorePassword = true;
+    myStorePassword = storePassword;
   }
 
   public void setStorePassphrase(boolean storePassphrase) {
