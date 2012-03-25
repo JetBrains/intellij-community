@@ -6,7 +6,6 @@ import com.intellij.application.options.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.application.options.colors.PreviewPanel;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -68,26 +67,26 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
       GradleTextAttributes.CHANGE_CONFLICT
     );
 
-    String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.confirmed.name");
-    DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.CONFIRMED_CONFLICT);
+    String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
+    DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.NO_CHANGE);
 
     String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.gradle.name");
     DefaultMutableTreeNode gradleLibrary = createNode(
       gradleLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_LOCAL_CHANGE
     );
 
-    String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name",
-                                                      ApplicationNamesInfo.getInstance().getProductName());
+    String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name");
+                                                      //ApplicationNamesInfo.getInstance().getProductName());
     DefaultMutableTreeNode intellijLibrary = createNode(
       intellijLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     );
     
-    String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
-    DefaultMutableTreeNode syncLibrary = createNode(syncLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.NO_CHANGE);
+    //String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
+    //DefaultMutableTreeNode syncLibrary = createNode(syncLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.NO_CHANGE);
     
     module.add(gradleLibrary);
     module.add(intellijLibrary);
-    module.add(syncLibrary);
+    //module.add(syncLibrary);
     root.add(module);
     
     mySelectedNode = root;
@@ -185,6 +184,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
           GridBagConstraints constraints = new GridBagConstraints();
           myNodeRenderPanel.add(component, constraints);
           constraints.weightx = 1;
+          constraints.anchor = GridBagConstraints.CENTER;
           myNodeRenderPanel.add(mySelectedElementSignPanel, constraints);
         }
         
@@ -279,7 +279,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     ArrowPanel() {
       super(new BorderLayout());
       // Reserve enough horizontal space.
-      add(new JLabel("intellij"));
+      add(new JLabel("intelli"));
     }
 
     public void setPaint(boolean paint) {
@@ -298,10 +298,24 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
       g2.setRenderingHints(renderHints);
 
       FontMetrics fontMetrics = getFontMetrics(getFont());
-      int unit = fontMetrics.charWidth('a');
+      int unit = fontMetrics.charWidth('a') * 2 / 3;
+      int yShift = 0;
+      final Dimension size = getSize();
+      if (size != null) {
+        yShift = size.height / 2 - unit;
+        if (size.height % 2 != 0) {
+          // Prefer 'draw below the center' to 'draw above the center'.
+          yShift++;
+        }
+      }
       int q = unit / 4;
-      int[] x = {0, unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0};
-      int[] y = {unit, 0, unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
+      int[] x = {0,    unit * 3, unit * 2, unit * 4, unit * 4, unit * 2, unit * 3, 0   };
+      int[] y = {unit, 0,        unit - q, unit - q, unit + q, unit + q, unit * 2, unit};
+      if (yShift != 0) {
+        for (int i = 0; i < y.length; i++) {
+          y[i] += yShift;
+        }
+      }
       g2.fillPolygon(x, y, x.length);
     }
   }

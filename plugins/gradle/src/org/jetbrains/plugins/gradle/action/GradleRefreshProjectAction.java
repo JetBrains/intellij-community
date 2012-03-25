@@ -3,10 +3,12 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -14,7 +16,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
  * Forces the 'gradle' plugin to retrieve the most up-to-date info about the
- * {@link GradleSettings#LINKED_PROJECT_FILE_PATH linked gradle project} and update all affected control if necessary
+ * {@link GradleSettings#getLinkedProjectPath() linked gradle project} and update all affected control if necessary
  * (like project structure UI, tasks list etc).
  * 
  * @author Denis Zhdanov
@@ -39,6 +41,13 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
 
   @Override
   protected void doActionPerformed(@NotNull final Project project, @NotNull final String linkedProjectPath) {
+    // We save all documents because there is more than one target 'build.gradle' file in case of multi-module gradle project.
+    FileDocumentManager.getInstance().saveAllDocuments();
+    
+    if (!GradleUtil.isGradleAvailable(project)) {
+      project.getComponent(GradleConfigNotificationManager.class).processUnknownGradleHome();
+    }    
+
     GradleUtil.refreshProject(project);
   }
 }

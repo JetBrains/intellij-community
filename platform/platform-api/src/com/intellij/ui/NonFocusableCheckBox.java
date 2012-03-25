@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.ide.ui.UISettings;
+
 import javax.swing.*;
 
 /**
@@ -24,10 +26,16 @@ import javax.swing.*;
 public class NonFocusableCheckBox extends JCheckBox {
   public NonFocusableCheckBox(String text) {
     super(text);
-    setFocusable(false);
+    initFocusability();
   }
 
   public NonFocusableCheckBox() {
-    setFocusable(false);
+    initFocusability();
+  }
+
+  private void initFocusability() {
+    if (!UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) { // Or that won't be keyboard accessible at all
+      setFocusable(false);
+    }
   }
 }

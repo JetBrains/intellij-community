@@ -288,7 +288,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void setTitleActions(AnAction[] actions) {
+  public void setTitleActions(AnAction... actions) {
     getDecorator().setTitleActions(actions);
   }
 

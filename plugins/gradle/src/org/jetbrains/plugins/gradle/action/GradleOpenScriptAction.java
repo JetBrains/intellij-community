@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
- * Forces the IntelliJ IDEA to open {@link GradleSettings#LINKED_PROJECT_FILE_PATH linked gradle project} at the editor
+ * Forces the IntelliJ IDEA to open {@link GradleSettings#getLinkedProjectPath() linked gradle project} at the editor
  * <p/>
  * Not thread-safe.
  * 

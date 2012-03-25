@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 /**
  * Handles the following responsibilities:
@@ -131,6 +132,13 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
     }
     if (myConfigurable != null && myConfigurable.isModified()) {
       myConfigurable.apply();
+    }
+    if (builder != null) {
+      final String path = builder.getProjectPath(getWizardContext());
+      final File parent = new File(path).getParentFile();
+      if (parent != null) {
+        getWizardContext().setProjectName(parent.getName());
+      }
     }
   }
 

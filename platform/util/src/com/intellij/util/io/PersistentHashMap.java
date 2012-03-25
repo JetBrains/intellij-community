@@ -227,7 +227,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       return deadKeys > liveKeys ||
              avgValueSize *deadKeys > benefitSize ||
-             myReadCompactionGarbageSize > benefitSize;
+             myReadCompactionGarbageSize > (fileSize / 2);
     }
     return false;
   }

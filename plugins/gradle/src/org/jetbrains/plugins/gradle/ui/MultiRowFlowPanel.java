@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.gradle.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * Flow layout calculates necessary size assuming that all components are layed out within a single row.
+ * Flow layout calculates necessary size assuming that all components are laid out within a single row.
  * That may cause troubles during initial space calculation, i.e. panel with flow layout is represented as a
  * single wide row inside a scroll pane. This panel fixes that by calculating necessary size on its own.
  * It fixes the width to use as a minimum between a width offered by default flow layout and customizable value
@@ -21,7 +22,13 @@ public class MultiRowFlowPanel extends JPanel {
   private final int maximumWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
 
   public MultiRowFlowPanel(@JdkConstants.FlowLayoutAlignment int align, int hGap, int vGap) {
-    super(new FlowLayout(align, hGap, vGap));
+    super(new FlowLayout(align, getGapToUse(hGap), getGapToUse(vGap)));
+  }
+
+  private static int getGapToUse(int gap) {
+    // There is a problem with flow layout controls paint under Alloy LAF - it looks like it doesn't take given gaps into consideration.
+    // Alloy LAF sources are closed, so we use this dirty hack here.
+    return UIUtil.isUnderAlloyLookAndFeel() ? gap - 4 : gap;
   }
   
   /**

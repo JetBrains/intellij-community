@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.LightColors;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -156,6 +157,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           label.setIcon(EMPTY_ICON);
           panel.add(label, BorderLayout.WEST);
           panel.add(new JBLabel("Settings"), BorderLayout.EAST);
+          if (!isSelected) {
+            panel.setBackground(LightColors.SLIGHTLY_GRAY);
+          }
         } else if (value instanceof String) {
           final JBLabel label = new JBLabel((String)value);
           label.setIcon(EMPTY_ICON);

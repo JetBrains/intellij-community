@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -29,6 +30,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -558,7 +560,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     final int newParametersNumber = parameterInfos.size();
 
     for (int i = 0; i < newParametersNumber; i++) {
-      ParameterTableModelItemBase<ParameterInfoImpl> item = parameterInfos.get(i);
+      final ParameterTableModelItemBase<ParameterInfoImpl> item = parameterInfos.get(i);
 
       if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(item.parameter.getName())) {
         return RefactoringMessageUtil.getIncorrectIdentifierMessage(item.parameter.getName());
@@ -582,7 +584,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
 
       if (item.parameter.oldParameterIndex < 0) {
-        item.parameter.defaultValue = item.defaultValueCodeFragment.getText();
+        item.parameter.defaultValue = ApplicationManager.getApplication().runWriteAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            return JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText();
+          }
+        });
         String def = item.parameter.defaultValue;
         def = def.trim();
         if (!(type instanceof PsiEllipsisType)) {

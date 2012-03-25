@@ -1,10 +1,14 @@
-import static org.jetbrains.jps.idea.IdeaProjectLoader.*
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/common_tests.gant")
 
 setProperty("testcases", ["com.intellij.AllTests"])
 
-setProperty("jvm_args", [
-            "-Xmx350m",
-            "-XX:MaxPermSize=320m",
-            ])
+def isMac = System.getProperty("os.name").toLowerCase().startsWith("mac")
+def args = [
+        "-Xmx350m",
+        "-XX:MaxPermSize=320m",
+]
+if (isMac) args << "-d32";
+
+setProperty("jvm_args", args)

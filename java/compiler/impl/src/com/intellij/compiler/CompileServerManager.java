@@ -70,7 +70,8 @@ import org.jetbrains.jps.client.CompileServerClient;
 import org.jetbrains.jps.server.ClasspathBootstrap;
 import org.jetbrains.jps.server.Server;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -611,7 +612,6 @@ public class CompileServerManager implements ApplicationComponent{
       cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION + "=true");
     }
     cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + NetUtils.getLocalHostString());
-    cmdLine.addParameter("-D"+ GlobalOptions.VM_EXE_PATH_OPTION + "=" + FileUtil.toSystemIndependentName(vmExecutablePath));
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");

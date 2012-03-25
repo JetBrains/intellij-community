@@ -289,6 +289,13 @@ public class NameUtilTest extends UsefulTestCase {
                         TextRange.from(0, 2));
   }
 
+  public void testPreferCapsMatching() {
+    String sample = "getCurrentUser";
+    //               0   4     10
+    assertOrderedEquals(new NameUtil.MinusculeMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+                        TextRange.from(0, 4), TextRange.from(10, 1));
+  }
+
   public void testMatchingDegree() {
     assertPreference("OCO", "OneCoolObject", "OCObject");
     assertPreference("MUp", "MavenUmlProvider", "MarkUp");
@@ -296,6 +303,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("CertificateExce", "CertificateEncodingException", "CertificateException");
     assertPreference("boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("getCU", "getCurrentSomething", "getCurrentUser");
   }
 
   private static void assertPreference(@NonNls String pattern,

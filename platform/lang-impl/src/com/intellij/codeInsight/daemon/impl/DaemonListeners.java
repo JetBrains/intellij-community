@@ -154,6 +154,7 @@ class DaemonListeners implements Disposable {
             // editor appear in modal context, reenable the daemon
             myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
           }
+          myDaemonCodeAnalyzer.hideLastIntentionHint(); // mem leak after closing last editor otherwise
         }
       }
     };

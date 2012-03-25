@@ -38,11 +38,13 @@ public class XmlTextLiteralEscaper extends LiteralTextEscaper<XmlTextImpl> {
   }
 
   public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-    int displayStart = myHost.physicalToDisplay(rangeInsideHost.getStartOffset());
+    final int rangeInsideHostStartOffset = rangeInsideHost.getStartOffset();
+    int displayStart = myHost.physicalToDisplay(rangeInsideHostStartOffset);
 
     int i = myHost.displayToPhysical(offsetInDecoded + displayStart);
-    if (i < rangeInsideHost.getStartOffset()) i = rangeInsideHost.getStartOffset();
-    if (i > rangeInsideHost.getEndOffset()) i = rangeInsideHost.getEndOffset();
+    if (i < rangeInsideHostStartOffset) i = rangeInsideHostStartOffset;
+    final int rangeInsideHostEndOffset = rangeInsideHost.getEndOffset();
+    if (i > rangeInsideHostEndOffset) i = rangeInsideHostEndOffset;
     return i;
   }
 

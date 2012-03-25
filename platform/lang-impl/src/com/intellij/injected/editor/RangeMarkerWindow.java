@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,36 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
 public class RangeMarkerWindow implements RangeMarkerEx {
-  private final DocumentWindow myDocumentWindow;
-  private final RangeMarkerEx myHostMarker;
 
-  public RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker) {
+  private final DocumentWindow myDocumentWindow;
+  private final RangeMarkerEx  myHostMarker;
+  private final int            myStartShift;
+  private final int            myEndShift;
+
+  /**
+   * Creates new <code>RangeMarkerWindow</code> object with the given data.
+   * 
+   * @param documentWindow  target document window
+   * @param hostMarker      backing host range marker
+   * @param startShift      there is a possible situation that injected fragment uses non-empty
+   *                        {@link PsiLanguageInjectionHost.Shred#getPrefix() prefix} and
+   *                        {@link PsiLanguageInjectionHost.Shred#getSuffix() suffix}. It's also possible that target
+   *                        injected offsets are located at prefix/suffix space. We need to hold additional information
+   *                        in order to perform {@code 'host -> injected'} mapping then. This argument specifies difference
+   *                        between the start offset of the given host range marker at the injected text and target injected text
+   *                        start offset
+   * @param endShift        similar to the 'startShift' argument but specifies difference between the target injected host end offset
+   *                        and end offset of the given host range marker at the injected text
+   */
+  public RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker, int startShift, int endShift) {
     myDocumentWindow = documentWindow;
     myHostMarker = hostMarker;
+    myStartShift = startShift;
+    myEndShift = endShift;
   }
 
   @Override
@@ -46,13 +67,13 @@ public class RangeMarkerWindow implements RangeMarkerEx {
   @Override
   public int getStartOffset() {
     int hostOffset = myHostMarker.getStartOffset();
-    return myDocumentWindow.hostToInjected(hostOffset);
+    return myDocumentWindow.hostToInjected(hostOffset) - myStartShift;
   }
 
   @Override
   public int getEndOffset() {
     int hostOffset = myHostMarker.getEndOffset();
-    return myDocumentWindow.hostToInjected(hostOffset);
+    return myDocumentWindow.hostToInjected(hostOffset) + myStartShift + myEndShift;
   }
 
   @Override

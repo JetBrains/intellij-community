@@ -259,13 +259,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         }) {
         @Override
         protected void afterDiffRefresh() {
-          final Runnable transferrable = myBrowser.getSelectionTransferrable();
           myBrowser.rebuildList();
           myBrowser.setDataIsDirty(false);
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              myBrowser.applySelectionTransferrable(transferrable);
               IdeFocusManager.findInstance().requestFocus(myBrowser.getViewer().getPreferredFocusedComponent(), true);
             }
           });

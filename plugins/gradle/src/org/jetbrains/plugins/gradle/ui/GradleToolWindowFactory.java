@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -11,7 +12,7 @@ import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesPanel;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
-public class GradleToolWindowFactory implements ToolWindowFactory {
+public class GradleToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
     final GradleProjectStructureContext context = project.getComponent(GradleProjectStructureContext.class);

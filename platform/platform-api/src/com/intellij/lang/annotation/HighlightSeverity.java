@@ -92,14 +92,17 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
     return myName;
   }
 
+  @Override
   public int compareTo(final HighlightSeverity highlightSeverity) {
     return myVal - highlightSeverity.myVal;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
@@ -111,9 +114,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
 
     final HighlightSeverity that = (HighlightSeverity)o;
 
-    if (!myName.equals(that.myName)) return false;
-
-    return true;
+    return myName.equals(that.myName);
   }
 
   public int hashCode() {

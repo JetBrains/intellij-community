@@ -1333,7 +1333,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
       @Override
       public void run() {
-        ((BalloonImpl)balloon).setHideOnClickOutside(true);
+        final Alarm alarm = new Alarm();
+        alarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            ((BalloonImpl)balloon).setHideOnClickOutside(true);
+            Disposer.dispose(alarm);
+          }
+        }, 100);
       }
     });
     listenerWrapper.myBalloon = balloon;

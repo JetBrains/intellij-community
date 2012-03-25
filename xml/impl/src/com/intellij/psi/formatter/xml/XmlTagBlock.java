@@ -18,8 +18,6 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
@@ -64,7 +62,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
     boolean insideTag = true;
 
     while (child != null) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
 
         Wrap wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap);
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
@@ -176,7 +174,7 @@ public class XmlTagBlock extends AbstractXmlBlock{
                                       final Alignment alignment
   ) {
     while (child != null) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
+      if (!XmlBlock.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         final Indent indent = getChildrenIndent();
         child = processChild(list,child,  wrap, alignment, indent);
         if (child == null) return child;

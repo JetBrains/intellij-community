@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -425,7 +425,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
     ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
-    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
+    int startShift = Math.max(0, hostToInjected(hostRange.getStartOffset()) - startOffset);
+    int endShift = Math.max(0, endOffset - hostToInjected(hostRange.getEndOffset()) - startShift);
+    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker, startShift, endShift);
   }
 
   @Override
@@ -437,7 +439,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     //todo persistent?
     RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
-    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
+    int startShift = Math.max(0, hostToInjected(hostRange.getStartOffset()) - startOffset);
+    int endShift = Math.max(0, endOffset - hostToInjected(hostRange.getEndOffset()) - startShift);
+    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker, startShift, endShift);
   }
 
   @Override
@@ -533,9 +537,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Override
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    ProperTextRange hostRange = injectedToHost(new ProperTextRange(textRange));
-    RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
-    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
+    final ProperTextRange properTextRange = new ProperTextRange(textRange);
+    return createRangeMarker(properTextRange.getStartOffset(), properTextRange.getEndOffset());
   }
 
   @Override

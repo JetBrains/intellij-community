@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,15 +27,15 @@ import java.awt.*;
  * @since 3/7/12 3:48 PM
  */
 public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
-  
-  @NotNull private final MyFilter myFilter;
-  @NotNull private final TextAttributesKey myAttributesKey;
+
+  @NotNull private final GradleProjectStructureNodeFilter myFilter;
+  @NotNull private final TextAttributesKey                myAttributesKey;
 
   private Color   myColor;
   private boolean myIconChanged;
 
   protected AbstractGradleSyncTreeFilterAction(@NotNull AttributesDescriptor descriptor) {
-    myFilter = new MyFilter(descriptor.getKey());
+    myFilter = createFilter(descriptor.getKey());
     myAttributesKey = descriptor.getKey();
     getTemplatePresentation().setText(descriptor.getDisplayName());
     updateIcon(EditorColorsManager.getInstance().getGlobalScheme());
@@ -49,7 +49,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    final GradleProjectStructureTreeModel model = GradleDataKeys.SYNC_TREE_MODEL.getData(e.getDataContext());
+    final GradleProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (model == null) {
       return false;
     }
@@ -59,7 +59,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final GradleProjectStructureTreeModel treeModel = GradleDataKeys.SYNC_TREE_MODEL.getData(e.getDataContext());
+    final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (treeModel == null) {
       return;
     }
@@ -90,6 +90,10 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
     }
   }
 
+  public static GradleProjectStructureNodeFilter createFilter(@NotNull TextAttributesKey key) {
+    return new MyFilter(key);
+  }
+  
   private void updateIcon(@Nullable EditorColorsScheme scheme) {
     if (scheme == null) {
       return;

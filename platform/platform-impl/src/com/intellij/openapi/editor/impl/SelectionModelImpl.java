@@ -629,7 +629,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
       int[] starts = getBlockSelectionStarts();
       int[] ends = getBlockSelectionEnds();
       int width = Math.abs(myBlockEnd.column - myBlockStart.column);
-      final StringBuffer buf = new StringBuffer();
+      final StringBuilder buf = new StringBuilder();
       for (int i = 0; i < starts.length; i++) {
         if (i > 0) buf.append('\n');
         final int len = ends[i] - starts[i];
@@ -644,7 +644,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return text.subSequence(selectionStart, selectionEnd).toString();
   }
   
-  private static void appendCharSequence(@NotNull StringBuffer buf, @NotNull CharSequence s, int srcOffset, int len) {
+  private static void appendCharSequence(@NotNull StringBuilder buf, @NotNull CharSequence s, int srcOffset, int len) {
     if (srcOffset < 0 || len < 0 || srcOffset > s.length() - len) {
       throw new IndexOutOfBoundsException("srcOffset " + srcOffset + ", len " + len + ", s.length() " + s.length());
     }

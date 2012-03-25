@@ -103,10 +103,13 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           pluginNode = (PluginNode)descr;
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {
-          pluginNode = new PluginNode(descr.getPluginId());
+          final PluginId pluginId = descr.getPluginId();
+          pluginNode = new PluginNode(pluginId);
           pluginNode.setName(descr.getName());
           pluginNode.setDepends(Arrays.asList(descr.getDependentPluginIds()), descr.getOptionalDependentPluginIds());
           pluginNode.setSize("-1");
+          pluginNode.setRepositoryName(((InstalledPluginsTableModel)host.getPluginsModel())
+                                         .getPluginHostUrl(pluginId.getIdString()));
         }
 
         if (pluginNode != null) {
@@ -119,7 +122,6 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           @Override
           public void run() {
             installedPluginsToModel(list);
-            installed.setRequireShutdown(true);
             if (!installed.isDisposed()) {
               getPluginTable().updateUI();
               final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)installed.getPluginsModel();
@@ -140,10 +142,23 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
                   }
                 }
               }
-              suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list);
+              if (suggestToEnableInstalledPlugins(pluginsModel, disabled, disabledDependants, list)) {
+                installed.setRequireShutdown(true);
+              }
             }
             else {
-              notifyPluginsWereInstalled();
+              boolean needToRestart = false;
+              for (PluginNode node : list) {
+                final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
+                if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
+                  needToRestart = true;
+                  break;
+                }
+              }
+
+              if (needToRestart) {
+                notifyPluginsWereInstalled();
+              }
             }
           }
         };
@@ -162,7 +177,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     }
   }
 
-  private static void suggestToEnableInstalledPlugins(final InstalledPluginsTableModel pluginsModel,
+  private static boolean suggestToEnableInstalledPlugins(final InstalledPluginsTableModel pluginsModel,
                                                       final Set<IdeaPluginDescriptor> disabled,
                                                       final Set<IdeaPluginDescriptor> disabledDependants, 
                                                       final ArrayList<PluginNode> list) {
@@ -201,6 +216,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           Messages.showYesNoCancelDialog(message + "</body></html>", CommonBundle.getWarningTitle(), "Enable all",
                                          "Enable updated plugin" + (disabled.size() > 1 ? "s" : ""), CommonBundle.getCancelButtonText(),
                                          Messages.getQuestionIcon());
+        if (result == DialogWrapper.NEXT_USER_EXIT_CODE) return false;
       } else {
         message += "<br>Would you like to enable ";
         if (!disabled.isEmpty()) {
@@ -211,6 +227,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         }
         message += "?</body></html>";
         result = Messages.showOkCancelDialog(message, CommonBundle.getWarningTitle(), Messages.getQuestionIcon());
+        if (result == DialogWrapper.CANCEL_EXIT_CODE) return false;
       }
 
       if (result == DialogWrapper.OK_EXIT_CODE) {
@@ -220,6 +237,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
       }
     }
+    return true;
   }
 
   private void installedPluginsToModel(ArrayList<PluginNode> list) {

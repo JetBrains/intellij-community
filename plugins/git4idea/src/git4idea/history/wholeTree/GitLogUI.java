@@ -48,10 +48,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -1438,7 +1435,7 @@ public class GitLogUI implements Disposable {
   // todo test action
   private class TestIndexAction extends DumbAwareAction {
     private TestIndexAction() {
-      super("Test Index", "Test Index", IconLoader.getIcon("/actions/checked.png"));
+      super("Test Index", "Test Index", PlatformIcons.CHECK_ICON);
     }
 
     @Override
@@ -1891,7 +1888,7 @@ public class GitLogUI implements Disposable {
 
     public MyTreeSettings() {
       myIcon = IconLoader.getIcon("/general/comboArrow.png");
-      myMarkIcon = IconLoader.findIcon("/actions/checked.png");
+      myMarkIcon = PlatformIcons.CHECK_ICON;
 
       myMultiColorAction = new DumbAwareAction("Multicolour") {
         @Override

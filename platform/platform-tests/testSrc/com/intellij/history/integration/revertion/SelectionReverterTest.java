@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
     myGateway = new IdeaGateway() {
       @Override
-      public boolean ensureFilesAreWritable(Project p, List<VirtualFile> ff) {
+      public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<VirtualFile> ff) {
         files.addAll(ff);
         return true;
       }

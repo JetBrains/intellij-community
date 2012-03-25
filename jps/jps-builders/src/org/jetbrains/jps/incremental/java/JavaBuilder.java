@@ -11,6 +11,7 @@ import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
@@ -30,7 +31,8 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -46,6 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class JavaBuilder extends ModuleLevelBuilder {
   public static final String BUILDER_NAME = "java";
+  private static final String FORMS_BUILDER_NAME = "forms";
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
@@ -421,21 +424,31 @@ public class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-
-
   private static JavacServerClient ensureJavacServerLaunched(CompileContext context) throws Exception {
     final ExternalJavacDescriptor descriptor = ExternalJavacDescriptor.KEY.get(context);
     if (descriptor != null) {
       return descriptor.client;
     }
     // start server here
-    final String vmExecPath = System.getProperty(GlobalOptions.VM_EXE_PATH_OPTION, System.getProperty("java.home") + "/bin/java");
     final String hostString = System.getProperty(GlobalOptions.HOSTNAME_OPTION, "localhost");
     final int port = findFreePort();
     final int heapSize = getJavacServerHeapSize(context);
 
+    // defaulting to the same jdk that used to run the server
+    String javaHome = SystemProperties.getJavaHome();
+    int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
+
+    for (JavaSdk sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
+      final String version = sdk.getVersion();
+      final int ver = convertToNumber(version);
+      if (ver > javaVersion) {
+        javaVersion = ver;
+        javaHome = sdk.getHomePath();
+      }
+    }
+
     final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
-      vmExecPath, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context)
+      javaHome, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context)
     );
     final JavacServerClient client = new JavacServerClient();
     try {
@@ -447,6 +460,26 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     ExternalJavacDescriptor.KEY.set(context, new ExternalJavacDescriptor(processHandler, client));
     return client;
+  }
+
+  private static int convertToNumber(final String ver) {
+    final String prefix = "1.";
+    if (ver.startsWith(prefix)) {
+      final String versionNumberString;
+      final int dotIndex = ver.indexOf(".", prefix.length());
+      if (dotIndex > 0) {
+        versionNumberString = ver.substring(prefix.length(), dotIndex);
+      }
+      else {
+        versionNumberString = ver.substring(prefix.length());
+      }
+      try {
+        return Integer.parseInt(versionNumberString);
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return 0;
   }
 
   private static int findFreePort() {
@@ -711,7 +744,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       if (alreadyProcessedForm != null) {
         context.processMessage(
           new CompilerMessage(
-            BUILDER_NAME, BuildMessage.Kind.WARNING, 
+            FORMS_BUILDER_NAME, BuildMessage.Kind.WARNING,
             formFile.getAbsolutePath() + ": The form is bound to the class " + classToBind + ".\nAnother form " + alreadyProcessedForm.getAbsolutePath() + " is also bound to this class",
             formFile.getAbsolutePath())
         );
@@ -737,7 +770,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
         for (final FormErrorInfo warning : warnings) {
           context.processMessage(
-            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
+            new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.WARNING, warning.getErrorMessage(), formFile.getAbsolutePath()));
         }
 
         final FormErrorInfo[] errors = codeGenerator.getErrors();
@@ -750,7 +783,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
             message.append(formFile.getAbsolutePath()).append(": ").append(error.getErrorMessage());
           }
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message.toString()));
+          context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, message.toString()));
         }
         else {
           final File sourceFile = outputClassFile.getSourceFile();
@@ -761,7 +794,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
       catch (Exception e) {
         success = false;
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(),
+        context.processMessage(new CompilerMessage(FORMS_BUILDER_NAME, BuildMessage.Kind.ERROR, "Forms instrumentation failed" + e.getMessage(),
                                                    formFile.getAbsolutePath()));
       }
       finally {

@@ -127,7 +127,7 @@ public class RootsToWorkingCopies implements VcsListener {
     catch (SVNException e) {
       //
     }
-    if (workingCopyRoot == null) {
+    if (workingCopy == null) {
       workingCopyRoot = SvnUtil.getWcCopyRootIf17(ioFile, null);
       if (workingCopyRoot != null) {
         final SVNInfo svnInfo;

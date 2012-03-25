@@ -16,14 +16,14 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.favoritesTreeView.FavoritesPanel;
+import com.intellij.ide.favoritesTreeView.FavoritesTreeViewPanel;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-
-import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,7 +32,8 @@ public class FavoritesViewToolWindowFactory implements ToolWindowFactory, DumbAw
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     if (toolWindow != null) {
       final ContentManager contentManager = toolWindow.getContentManager();
-      final JComponent panel = new FavoritesPanel(project).getPanel();
+      final FavoritesTreeViewPanel panel = new FavoritesPanel(project).getPanel();
+      panel.setupToolWindow((ToolWindowEx)toolWindow);
       final Content content = contentManager.getFactory().createContent(panel, null, false);
       contentManager.addContent(content);
     }

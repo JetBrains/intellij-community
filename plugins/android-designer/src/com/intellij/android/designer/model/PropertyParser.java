@@ -78,24 +78,29 @@ public class PropertyParser {
   }
 
   public void load(RadViewComponent component) throws Exception {
-    ViewInfo info = component.getViewInfo();
     MetaModel model = component.getMetaModel();
-    if (info == null) {
-      String target = model.getTarget();
-      if (target == null) {
+    String target = model.getTarget();
+    if (target == null) {
+      ViewInfo info = component.getViewInfo();
+      if (info == null) {
         component.setProperties(Collections.<Property>emptyList());
       }
       else {
-        component.setProperties(load(myClassLoader.loadClass(target), model));
+        Class<?> componentClass = myClassLoader.loadClass(info.getClassName());
+        if (componentClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
+          componentClass = myClassLoader.loadClass("android.view.View");
+        }
+        component.setProperties(load(componentClass, model));
       }
     }
     else {
-      component.setProperties(load(myClassLoader.loadClass(info.getClassName()), model));
+      component.setProperties(load(myClassLoader.loadClass(target), model));
     }
   }
 
-  private List<Property> load(Class<?> componentClass, MetaModel model) {
+  private List<Property> load(Class<?> componentClass, MetaModel model) throws Exception {
     String component = componentClass.getSimpleName();
+
     List<Property> properties = myCachedProperties.get(component);
 
     if (properties == null) {
@@ -142,6 +147,10 @@ public class PropertyParser {
 
       Class<?> superComponentClass = componentClass.getSuperclass();
       if (superComponentClass != null) {
+        if (superComponentClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
+          superComponentClass = myClassLoader.loadClass("android.view.View");
+        }
+
         List<Property> superProperties = load(superComponentClass, myMetaManager.getModelByTarget(superComponentClass.getName()));
         for (Property superProperty : superProperties) {
           if (PropertyTable.findProperty(properties, superProperty) == -1) {

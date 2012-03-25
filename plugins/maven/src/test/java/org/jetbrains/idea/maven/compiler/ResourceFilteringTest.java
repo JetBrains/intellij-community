@@ -42,11 +42,17 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
 
   public void testBasic() throws Exception {
     createProjectSubFile("resources/file.properties", "value=${project.version}\n" +
-                                                      "value2=@project.version@");
+                                                      "value2=@project.version@\n" +
+                                                      "time=${time}");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<properties>" +
+                  "  <time>${maven.build.timestamp}</time>" +
+                  "  <maven.build.timestamp.format>---</maven.build.timestamp.format>\n" +
+                  "</properties>\n" +
+                  "" +
 
                   "<build>" +
                   "  <resources>" +
@@ -60,7 +66,8 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
     compileModules("project");
 
     assertResult("target/classes/file.properties", "value=1\n" +
-                                                   "value2=1");
+                                                   "value2=1\n" +
+                                                   "time=---");
   }
 
   public void testCustomDelimiter() throws Exception {

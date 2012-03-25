@@ -56,8 +56,17 @@ public class MavenProjectReader {
     File basedir = getBaseDir(file);
     MavenModel model = MavenServerManager.getInstance().interpolateAndAlignModel(readResult.first.model, basedir);
 
+    Map<String, String> modelMap = new HashMap<String, String>();
+    modelMap.put("groupId", model.getMavenId().getGroupId());
+    modelMap.put("artifactId", model.getMavenId().getArtifactId());
+    modelMap.put("version", model.getMavenId().getVersion());
+    modelMap.put("build.outputDirectory", model.getBuild().getOutputDirectory());
+    modelMap.put("build.testOutputDirectory", model.getBuild().getTestOutputDirectory());
+    modelMap.put("build.finalName", model.getBuild().getFinalName());
+    modelMap.put("build.directory", model.getBuild().getDirectory());
+
     return new MavenProjectReaderResult(model,
-                                        Collections.<String, String>emptyMap(),
+                                        modelMap,
                                         readResult.second,
                                         null,
                                         readResult.first.problems,
@@ -147,6 +156,7 @@ public class MavenProjectReader {
     mavenBuildBase.setDirectory(MavenJDOMUtil.findChildValueByPath(xmlBuild, "directory"));
     mavenBuildBase.setResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "resources", "resource")));
     mavenBuildBase.setTestResources(collectResources(MavenJDOMUtil.findChildrenByPath(xmlBuild, "testResources", "testResource")));
+    mavenBuildBase.setFilters(MavenJDOMUtil.findChildrenValuesByPath(xmlBuild, "filters", "filter"));
 
     if (mavenBuildBase instanceof MavenBuild) {
       MavenBuild mavenBuild = (MavenBuild)mavenBuildBase;
@@ -161,7 +171,7 @@ public class MavenProjectReader {
     }
   }
 
-  private List<MavenResource> collectResources(List<Element> xmlResources) {
+  private static List<MavenResource> collectResources(List<Element> xmlResources) {
     List<MavenResource> result = new ArrayList<MavenResource>();
     for (Element each : xmlResources) {
       result.add(new MavenResource(MavenJDOMUtil.findChildValueByPath(each, "directory"),

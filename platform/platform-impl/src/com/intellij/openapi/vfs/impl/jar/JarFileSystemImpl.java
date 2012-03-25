@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,10 @@ import java.util.*;
 import java.util.zip.ZipFile;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
-  private final Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
+  private final Set<String> myNoCopyJarPaths = SystemInfo.isFileSystemCaseSensitive ?
+                                               new ConcurrentHashSet<String>() :
+                                               new ConcurrentHashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+
   @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
   private File myNoCopyJarDir;
 
@@ -149,9 +153,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     if (index < 0) return;
     String path = pathInJar.substring(0, index);
     path = path.replace('/', File.separatorChar);
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      path = path.toLowerCase();
-    }
     myNoCopyJarPaths.add(path);
   }
 
@@ -268,12 +269,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     String property = System.getProperty(IDEA_JARS_NOCOPY);
     if (Boolean.TRUE.toString().equalsIgnoreCase(property)) return false;
 
-    String path = originalJar.getPath();
-    if (!SystemInfo.isFileSystemCaseSensitive) {
-      path = path.toLowerCase();
-    }
-
-    if (myNoCopyJarPaths.contains(path)) return false;
+    if (myNoCopyJarPaths.contains(originalJar.getPath())) return false;
     if (myNoCopyJarDir!=null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
 
     return true;

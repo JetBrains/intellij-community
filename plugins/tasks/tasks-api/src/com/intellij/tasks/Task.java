@@ -64,7 +64,9 @@ public abstract class Task {
   public abstract boolean isClosed();
 
   @Nullable
-  public abstract String getCustomIcon();
+  public String getCustomIcon() {
+    return null;
+  }
 
   /**
    * @return true if bugtracking issue is associated

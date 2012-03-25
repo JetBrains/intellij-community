@@ -16,7 +16,7 @@
 package com.intellij.designer.actions;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.clipboard.SerializedComponentData;
+import com.intellij.uiDesigner.SerializedComponentData;
 import com.intellij.designer.clipboard.SimpleTransferable;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
@@ -142,21 +142,24 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   }
 
   private boolean doCopy() {
-    return myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-      @Override
-      public void run() throws Exception {
-        Element root = new Element("designer");
-        root.setAttribute("target", myDesigner.getPlatformTarget());
+    try {
+      Element root = new Element("designer");
+      root.setAttribute("target", myDesigner.getPlatformTarget());
 
-        List<RadComponent> components = RadComponent.getPureSelection(myDesigner.getActionsArea().getSelection());
-        for (RadComponent component : components) {
-          component.copyTo(root);
-        }
-
-        SerializedComponentData data = new SerializedComponentData(new XMLOutputter().outputString(root));
-        CopyPasteManager.getInstance().setContents(new SimpleTransferable(data, DATA_FLAVOR));
+      List<RadComponent> components = RadComponent.getPureSelection(myDesigner.getActionsArea().getSelection());
+      for (RadComponent component : components) {
+        component.copyTo(root);
       }
-    });
+
+      SerializedComponentData data = new SerializedComponentData(new XMLOutputter().outputString(root));
+      CopyPasteManager.getInstance().setContents(new SimpleTransferable(data, DATA_FLAVOR));
+
+      return true;
+    }
+    catch (Throwable e) {
+      myDesigner.showError("Copy error:", e);
+      return false;
+    }
   }
   //////////////////////////////////////////////////////////////////////////////////////////
   //
