@@ -17,9 +17,11 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import sun.reflect.Reflection;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class JDOMExternalizableStringList extends ArrayList<String> implements JDOMExternalizable {
@@ -31,6 +33,17 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   private static final String ATTR_INDEX = "index";
   private static final String ATTR_CLASS = "class";
   private static final String ATTR_VALUE = "itemvalue";
+
+  public JDOMExternalizableStringList(int initialCapacity) {
+    super(initialCapacity);
+  }
+
+  public JDOMExternalizableStringList() {
+  }
+
+  public JDOMExternalizableStringList(@NotNull Collection<? extends String> c) {
+    super(c);
+  }
 
   public void readExternal(Element element) throws InvalidDataException {
     clear();

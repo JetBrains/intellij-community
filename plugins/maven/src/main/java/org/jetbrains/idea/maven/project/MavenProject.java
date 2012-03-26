@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -737,7 +736,13 @@ public class MavenProject {
 
   @Nullable
   public MavenPlugin findPlugin(@Nullable String groupId, @Nullable String artifactId) {
-    for (MavenPlugin each : getPlugins()) {
+    return findPlugin(groupId, artifactId, false);
+  }
+
+  @Nullable
+  public MavenPlugin findPlugin(@Nullable String groupId, @Nullable String artifactId, final boolean explicitlyDeclaredOnly) {
+    final List<MavenPlugin> plugins = explicitlyDeclaredOnly ? getDeclaredPlugins() : getPlugins();
+    for (MavenPlugin each : plugins) {
       if (each.getMavenId().equals(groupId, artifactId)) return each;
     }
     return null;

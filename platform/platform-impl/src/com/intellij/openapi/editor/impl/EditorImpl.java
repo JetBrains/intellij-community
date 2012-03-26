@@ -41,6 +41,7 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -5078,6 +5079,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
     }
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
+
+      final int clickOffset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
+      putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, clickOffset);
+
       mySelectionTweaked = false;
       myMousePressedEvent = e;
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));

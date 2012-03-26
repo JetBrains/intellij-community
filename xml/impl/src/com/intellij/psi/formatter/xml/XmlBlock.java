@@ -23,7 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -112,7 +111,7 @@ public class XmlBlock extends AbstractXmlBlock {
       final ArrayList<Block> result = new ArrayList<Block>(5);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
-        if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
+        if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
           child = processChild(result, child, getDefaultWrap(child), null, getChildDefaultIndent());
         }
         if (child != null) {
@@ -126,6 +125,7 @@ public class XmlBlock extends AbstractXmlBlock {
       return EMPTY;
     }
   }
+
 
   private List<Block> splitAttribute(ASTNode node, XmlFormattingPolicy formattingPolicy) {
     final ArrayList<Block> result = new ArrayList<Block>(3);

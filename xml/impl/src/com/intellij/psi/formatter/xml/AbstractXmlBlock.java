@@ -22,7 +22,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
+import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -273,7 +274,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     ASTNode resultNode = child;
     ASTNode currentChild = child.getTreeNext();
     while (currentChild != null && currentChild.getElementType() != XmlElementType.XML_END_TAG_START) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(currentChild)) {
+      if (!containsWhiteSpacesOnly(currentChild)) {
         currentChild = processChild(result, currentChild, wrap, alignment, indent);
         resultNode = currentChild;
       }
@@ -464,6 +465,13 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
 
   public boolean isCDATAEnd() {
     return myNode.getElementType() == XmlElementType.XML_CDATA_END;
+  }
+
+  public static boolean containsWhiteSpacesOnly(ASTNode node) {
+    WhiteSpaceFormattingStrategy strategy =  WhiteSpaceFormattingStrategyFactory.getStrategy(node.getPsi().getLanguage());
+    String nodeText = node.getText();
+    int length = nodeText.length();
+    return strategy.check(nodeText, 0, length) >= length;
   }
 
 }

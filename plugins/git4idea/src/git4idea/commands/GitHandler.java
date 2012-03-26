@@ -621,10 +621,8 @@ public abstract class GitHandler {
     boolean suspendable = false;
     switch (myCommand.lockingPolicy()) {
       case META:
-        // do nothing no locks are taken for metadata
-        break;
       case READ:
-        vcs.getCommandLock().readLock().lock();
+        // need to lock only write operations: reads can be performed even when a write operation is going on
         break;
       case WRITE_SUSPENDABLE:
         suspendable = true;
@@ -716,10 +714,7 @@ public abstract class GitHandler {
     finally {
       switch (myCommand.lockingPolicy()) {
         case META:
-          // do nothing no locks are taken for metadata
-          break;
         case READ:
-          vcs.getCommandLock().readLock().unlock();
           break;
         case WRITE_SUSPENDABLE:
         case WRITE:

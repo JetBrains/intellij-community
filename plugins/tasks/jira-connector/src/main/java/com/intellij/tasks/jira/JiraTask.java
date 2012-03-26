@@ -144,9 +144,4 @@ class JiraTask extends Task {
   public String getIssueUrl() {
     return myJiraIssue.getIssueUrl();
   }
-
-  @Override
-  public String getCustomIcon() {
-    return null;
-  }
 }

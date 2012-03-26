@@ -15,11 +15,21 @@ class JavaSdkImpl extends JavaSdk {
     this.jdkPath = jdkPath
   }
 
-  String getJavacExecutable() {
+  @Override
+  public String getHomePath() {
+    return jdkPath;
+  }
+
+  @Override
+  public String getVersion() {
+    return version;
+  }
+
+  public String getJavacExecutable() {
     return jdkPath + File.separator + "bin" + File.separator + "javac";
   }
 
-  String getJavaExecutable() {
+  public String getJavaExecutable() {
     return jdkPath + File.separator + "bin" + File.separator + "java";
   }
 }

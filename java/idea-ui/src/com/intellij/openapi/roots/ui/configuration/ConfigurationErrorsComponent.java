@@ -18,16 +18,15 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.TimedDeadzone;
@@ -45,6 +44,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +52,7 @@ import java.util.List;
  * User: spLeaner
  */
 public class ConfigurationErrorsComponent extends JPanel implements Disposable, ListDataListener {
+  private static final int MAX_ERRORS_TO_SHOW = SystemInfo.getIntProperty("idea.project.structure.max.errors.to.show", 100);
   private static final boolean ONE_LINE = true;
   private static final boolean MULTI_LINE = false;
 
@@ -95,7 +96,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
   private void ensureCurrentViewIs(final boolean oneLine, @Nullable final Object data) {
     if (oneLine) {
       if (myCurrentView instanceof OneLineErrorComponent) return;
-      myConfigurationErrorsListModel.setFilter(null);
+      myConfigurationErrorsListModel.setFilter(true, true);
       OneLineErrorComponent c = new OneLineErrorComponent(myConfigurationErrorsListModel) {
         @Override
         public void onViewChange(Object data) {
@@ -109,14 +110,9 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       }
 
       myCurrentView = c;
-    } else {
-      Condition<ConfigurationError> filter = data == null ? null : new Condition<ConfigurationError>() {
-        @Override
-        public boolean value(ConfigurationError error) {
-          return data == null ? true : "Ignored".equals(data) ? error.isIgnored() : !error.isIgnored();
-        }
-      };
-      myConfigurationErrorsListModel.setFilter(filter);
+    }
+    else {
+      myConfigurationErrorsListModel.setFilter(data == null || !"Ignored".equals(data), data == null || "Ignored".equals(data));
       if (myCurrentView instanceof MultiLineErrorComponent) return;
         MultiLineErrorComponent c = new MultiLineErrorComponent(myConfigurationErrorsListModel) {
           @Override
@@ -568,13 +564,13 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         if (errors.size() == 1) {
           mySingleErrorLabel.setText(myModel.getErrors().get(0).getPlainTextTitle());
         } else {
-          myErrorsLabel.setText(String.format("%s errors found", errors.size()));
+          myErrorsLabel.setText(String.format("%s errors found", getErrorsCount(errors.size())));
         }
       }
 
       final List<ConfigurationError> ignoredErrors = myModel.getIgnoredErrors();
       if (ignoredErrors.size() > 0) {
-        myIgnoredErrorsLabel.setText(String.format("%s ignored error%s", ignoredErrors.size(), ignoredErrors.size() == 1 ? "" : "s"));
+        myIgnoredErrorsLabel.setText(String.format("%s ignored error%s", getErrorsCount(ignoredErrors.size()), ignoredErrors.size() == 1 ? "" : "s"));
       }
 
       removeAll();
@@ -593,6 +589,10 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
       revalidate();
       repaint();
+    }
+
+    private static String getErrorsCount(final int size) {
+      return size < MAX_ERRORS_TO_SHOW ? String.valueOf(size) : MAX_ERRORS_TO_SHOW + "+";
     }
 
     private JComponent wrapLabel(@NotNull final JLabel label, @NotNull final ConfigurationError configurationError) {
@@ -653,7 +653,9 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         public void onClick(MouseEvent e) {
           final Object o = myModel.getElementAt(0);
           if (o instanceof ConfigurationError) {
-            ((ConfigurationError)o).ignore(!((ConfigurationError)o).isIgnored());
+            final ConfigurationError error = (ConfigurationError)o;
+            error.ignore(!error.isIgnored());
+            myModel.update(error);
             updateView();
           }
         }
@@ -678,72 +680,92 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
     }
   }
 
+  //todo[nik] move to ContainerUtil after 11.1
+  @NotNull
+  private static <T> List<T> concat(@NotNull final List<? extends T> list1, @NotNull final List<? extends T> list2) {
+    return new AbstractList<T>() {
+      public T get(int index) {
+        if (index < list1.size()) {
+          return list1.get(index);
+        }
+
+        return list2.get(index - list1.size());
+      }
+
+      public int size() {
+        return list1.size() + list2.size();
+      }
+    };
+  }
+
   private static class ConfigurationErrorsListModel extends AbstractListModel implements ConfigurationErrors, Disposable {
     private MessageBusConnection myConnection;
-    private List<ConfigurationError> myErrorsList = new ArrayList<ConfigurationError>();
-    private Condition<ConfigurationError> myFilter;
+    private List<ConfigurationError> myNotIgnoredErrors = new ArrayList<ConfigurationError>();
+    private List<ConfigurationError> myAllErrors;
+    private List<ConfigurationError> myIgnoredErrors = new ArrayList<ConfigurationError>();
 
     private ConfigurationErrorsListModel(@NotNull final Project project) {
+      setFilter(true, true);
       myConnection = project.getMessageBus().connect();
       myConnection.subscribe(TOPIC, this);
     }
     
-    public void setFilter(Condition<ConfigurationError> filter) {
-      myFilter = filter;
+    public void setFilter(boolean showNotIgnored, boolean showIgnored) {
+      if (showIgnored && showNotIgnored) {
+        myAllErrors = concat(myNotIgnoredErrors, myIgnoredErrors);
+      }
+      else if (showIgnored) {
+        myAllErrors = myIgnoredErrors;
+      }
+      else {
+        myAllErrors = myNotIgnoredErrors;
+      }
     }
 
     @Override
     public int getSize() {
-      return myFilter == null ? myErrorsList.size() : ContainerUtil.filter(myErrorsList, myFilter).size();
+      return Math.min(myAllErrors.size(), MAX_ERRORS_TO_SHOW);
     }
 
     @Override
     public Object getElementAt(int index) {
-      return myFilter == null ? myErrorsList.get(index) : ContainerUtil.filter(myErrorsList, myFilter).get(index);
+      return myAllErrors.get(index);
     }
     
-    private boolean accept(ConfigurationError error) {
-      return myFilter == null || myFilter.value(error);
-    }
-
     @Override
     public void addError(@NotNull ConfigurationError error) {
-      if (!myErrorsList.contains(error) && accept(error)) {
-        int ndx = 0;
-        if (error.isIgnored()) {
-          ndx = myErrorsList.size();
+      if (!myAllErrors.contains(error)) {
+        List<ConfigurationError> targetList = error.isIgnored() ? myIgnoredErrors : myNotIgnoredErrors;
+        if (targetList.size() < MAX_ERRORS_TO_SHOW) {
+          targetList.add(0, error);
+        }
+        else {
+          targetList.add(error);
         }
 
-        myErrorsList.add(ndx, error);
-        fireIntervalAdded(this, ndx, ndx);
+        int i = myAllErrors.indexOf(error);
+        if (i != -1 && i < MAX_ERRORS_TO_SHOW) {
+          fireIntervalAdded(this, i, i);
+        }
       }
     }
 
     @Override
     public void removeError(@NotNull ConfigurationError error) {
-      if (myErrorsList.contains(error)) {
-        final int ndx = myErrorsList.indexOf(error);
-        myErrorsList.remove(ndx);
-        fireIntervalRemoved(this, ndx, ndx);
+      final int i = myAllErrors.indexOf(error);
+      myIgnoredErrors.remove(error);
+      myNotIgnoredErrors.remove(error);
+      if (i != -1 && i < MAX_ERRORS_TO_SHOW) {
+        fireIntervalRemoved(this, i, i);
       }
     }
 
     public List<ConfigurationError> getErrors() {
-      return ContainerUtil.filter(myErrorsList, new Condition<ConfigurationError>() {
-        @Override
-        public boolean value(final ConfigurationError error) {
-          return !error.isIgnored();
-        }
-      });
+      return myNotIgnoredErrors;
     }
 
     public List<ConfigurationError> getIgnoredErrors() {
-      return ContainerUtil.filter(myErrorsList, new Condition<ConfigurationError>() {
-        @Override
-        public boolean value(final ConfigurationError error) {
-          return error.isIgnored();
-        }
-      });
+      return myIgnoredErrors;
     }
 
     @Override
@@ -755,9 +777,30 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
     }
 
     public void update(final ConfigurationError error) {
-      final int ndx = myErrorsList.indexOf(error);
-      if (ndx >= 0) {
-        fireContentsChanged(this, ndx, ndx);
+      final int i0 = myAllErrors.indexOf(error);
+      if (error.isIgnored()) {
+        if (myNotIgnoredErrors.remove(error)) {
+          myIgnoredErrors.add(0, error);
+        }
+      }
+      else {
+        if (myIgnoredErrors.remove(error)) {
+          myNotIgnoredErrors.add(0, error);
+        }
+      }
+      final int i1 = myAllErrors.indexOf(error);
+      if (i0 == i1 && i0 != -1) {
+        if (i0 < MAX_ERRORS_TO_SHOW) {
+          fireContentsChanged(this, i0, i0);
+        }
+      }
+      else {
+        if (i0 != -1 && i0 < MAX_ERRORS_TO_SHOW) {
+          fireIntervalRemoved(this, i0, i0);
+        }
+        if (i1 != -1 && i1 < MAX_ERRORS_TO_SHOW) {
+          fireIntervalAdded(this, i1, i1);
+        }
       }
     }
   }

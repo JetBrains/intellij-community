@@ -216,10 +216,17 @@ public class MavenPropertyResolver {
       MavenId parentId = selectedProject.getParentId();
       if (parentId == null) return null;
 
+      unprefixed = unprefixed.substring("parent.".length());
+
+      if (unprefixed.equals("groupId")) {
+        return parentId.getGroupId();
+      }
+      if (unprefixed.equals("artifactId")) {
+        return parentId.getArtifactId();
+      }
+
       selectedProject = projectsManager.findProject(parentId);
       if (selectedProject == null) return null;
-
-      unprefixed = unprefixed.substring("parent.".length());
     }
 
     if (unprefixed.equals("basedir") || (hasPrefix && mavenProject == selectedProject && unprefixed.equals("baseUri"))) {
@@ -242,28 +249,6 @@ public class MavenPropertyResolver {
 
     result = mavenProject.getProperties().getProperty(propName);
     if (result != null) return result;
-
-    if (unprefixed.equals("groupId")) {
-      return selectedProject.getMavenId().getGroupId();
-    }
-    if (unprefixed.equals("artifactId")) {
-      return selectedProject.getMavenId().getArtifactId();
-    }
-    if (unprefixed.equals("version")) {
-      return selectedProject.getMavenId().getVersion();
-    }
-    if (unprefixed.equals("buildDirectory")) {
-      return selectedProject.getBuildDirectory();
-    }
-    if (unprefixed.equals("finalName")) {
-      return selectedProject.getFinalName();
-    }
-    if (unprefixed.equals("outputDirectory")) {
-      return selectedProject.getOutputDirectory();
-    }
-    if (unprefixed.equals("testOutputDirectory")) {
-      return selectedProject.getTestOutputDirectory();
-    }
 
     return null;
   }

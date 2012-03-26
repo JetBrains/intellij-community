@@ -210,6 +210,10 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         });
       }
     };
+    doWhenDone(runnable);
+  }
+
+  private void doWhenDone(Runnable runnable) {
     if (myActionCallback == null || ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     }
@@ -646,7 +650,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
           }, false);
         }
         else if (propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)) {
-          queueRefreshScope(scope);
+          queueRefreshScope(scope, (PsiDirectory)element);
         }
       }
     }
@@ -665,7 +669,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
       }
       else if (element instanceof PsiDirectory && element.isValid()) {
-        queueRefreshScope(scope);
+        queueRefreshScope(scope, (PsiDirectory)element);
       }
     }
 
@@ -673,11 +677,22 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       return InjectedLanguageManager.getInstance(myProject).isInjectedFragment(psiFile);
     }
 
-    private void queueRefreshScope(final NamedScope scope) {
+    private void queueRefreshScope(final NamedScope scope, final PsiDirectory dir) {
       myUpdateQueue.cancelAllUpdates();
       queueUpdate(new Runnable() {
         public void run() {
+          myTreeExpansionMonitor.freeze();
           refreshScope(scope);
+          doWhenDone(new Runnable() {
+            @Override
+            public void run() {
+              myTreeExpansionMonitor.restore();
+              final PackageDependenciesNode dirNode = myBuilder.findNode(dir, dir);
+              if (dirNode != null) {
+                TreeUtil.selectPath(myTree, new TreePath(dirNode.getPath()));
+              }
+            }
+          });
         }
       }, false);
     }

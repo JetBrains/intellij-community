@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.clipboard;
-
-/**
- * This class must be in main classloader because of JVM's restrictions (it's used as DataFlavor class)
- *
- * @author yole
- */
-public final class SerializedComponentData {
-  private final String mySerializedComponents;
-
-  public SerializedComponentData(String components) {
-    mySerializedComponents = components;
+class Field {
+  void foo() {
+    Test.class.getField("<caret>");
   }
+}
 
-  public String getSerializedComponents() {
-    return mySerializedComponents;
-  }
+class Test {
+  public int num;
+  public int num2;
+  int num3;
 }

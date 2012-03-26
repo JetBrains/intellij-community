@@ -145,11 +145,6 @@ public class TaskVcsTest extends TaskManagerTestCase {
       }
 
       @Override
-      public String getCustomIcon() {
-        return null;
-      }
-
-      @Override
       public boolean isIssue() {
         return false;
       }

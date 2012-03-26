@@ -172,10 +172,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   void setExcludeExplodedDirectory(boolean excludeExplodedDir);
 
-  @NotNull Module[] getModuleDependencies();
-
-  @NotNull Module[] getModuleDependencies(boolean includeTests);
-
   boolean isWritable();
 
   void setRootUrls(OrderRootType orderRootType, String[] urls);

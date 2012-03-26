@@ -42,4 +42,6 @@ public interface ProjectFromSourcesBuilder {
 
   @NotNull
   WizardContext getContext();
+
+  boolean hasRootsFromOtherDetectors(ProjectStructureDetector thisDetector);
 }

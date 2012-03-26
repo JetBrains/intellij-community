@@ -47,7 +47,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   private static volatile int ourLockedCheckCounter = 0;
   @NonNls private static final String NAME = "Progress Cancel Checker";
-  private static final boolean DISABLED = Comparing.equal(System.getProperty(PROCESS_CANCELED_EXCEPTION), "disabled");
+  private static final boolean DISABLED = "disabled".equals(System.getProperty(PROCESS_CANCELED_EXCEPTION));
 
   private volatile boolean enabled = true;
 

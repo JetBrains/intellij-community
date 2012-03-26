@@ -135,6 +135,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private GitBranchWidget myBranchWidget;
 
   private GitVersion myVersion = GitVersion.NULL; // version of Git which this plugin uses.
+  private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
   @Nullable
   public static GitVcs getInstance(Project project) {
@@ -409,6 +410,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    * @param style   a style to use
    */
   private void showMessage(@NotNull String message, final TextAttributes style) {
+    if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
+      message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
+    }
     myVcsManager.addMessageToConsoleWindow(message, style);
   }
 

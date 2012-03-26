@@ -84,7 +84,7 @@ public class MetaModel {
       if (myIconPath == null) {
         return myPaletteItem.getIcon();
       }
-      myIcon = IconLoader.getIcon(myIconPath);
+      myIcon = IconLoader.findIcon(myIconPath, myModel);
     }
     return myIcon;
   }

@@ -72,6 +72,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected Map<String, Long> myProviderVersions = null;
 
   protected ComponentVersionListener myListener = new ComponentVersionListener(){
+    @Override
     public void componentStateChanged(String componentName) {
       myLocalVersionProvider.changeVersion(componentName,  System.currentTimeMillis());
     }
@@ -97,6 +98,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myLocalVersionProvider = localComponentVersionsProvider;
 
     myRemoteVersionProvider = new ComponentVersionProvider(){
+      @Override
       public long getVersion(String name) {
         if (myProviderVersions == null) {
           loadProviderVersions();
@@ -106,6 +108,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       }
 
+      @Override
       public void changeVersion(String name, long version) {
         if (myProviderVersions == null) {
           loadProviderVersions();
@@ -138,11 +141,13 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return state;
   }
 
+  @Override
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     final StorageData storageData = getStorageData(reloadData);
     return storageData.hasState(componentName);
   }
 
+  @Override
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto) throws StateStorageException {
     final Element element = getState(componentName);
@@ -229,6 +234,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
+  @Override
   @NotNull
   public ExternalizationSession startExternalization() {
     try {
@@ -242,6 +248,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
+  @Override
   @NotNull
   public SaveSession startSave(final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
@@ -253,18 +260,22 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   private SaveSession createNullSession() {
     return new SaveSession(){
+      @Override
       public void save() throws StateStorageException {
 
       }
 
+      @Override
       public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
         return Collections.emptySet();
       }
 
+      @Override
       public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
         return Collections.emptySet();
       }
 
+      @Override
       public List<IFile> getAllStorageFiles() {
         return Collections.emptyList();
       }
@@ -273,6 +284,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   protected abstract MySaveSession createSaveSession(final MyExternalizationSession externalizationSession);
 
+  @Override
   public void finishSave(final SaveSession saveSession) {
     try {
       LOG.assertTrue(mySession == saveSession, "mySession=" + mySession + " saveSession=" + saveSession);
@@ -294,6 +306,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myListener = listener;
     }
 
+    @Override
     public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
       assert mySession == this;
 
@@ -401,6 +414,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return null;
     }
 
+    @Override
     public final void save() throws StateStorageException {
       assert mySession == this;
 
@@ -483,6 +497,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return myStorageData;
     }
 
+    @Override
     @Nullable
     public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       try {
@@ -532,6 +547,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     return result;
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
   }
@@ -647,6 +663,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       clearHash();
     }
 
+    @Override
     public StorageData clone() {
       return new StorageData(this);
     }
@@ -724,6 +741,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myLoadedData = null;
   }
 
+  @Override
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
     final StorageData storageData = loadData(false, myListener);
 
