@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim Mossienko
+ * @see com.intellij.xml.impl.ExternalDocumentValidator
  */
 public class CheckXmlFileWithXercesValidatorInspection extends XmlSuppressableInspectionTool implements UnfairLocalInspectionTool {
   public static final @NonNls String SHORT_NAME = "CheckXmlFileWithXercesValidator";
