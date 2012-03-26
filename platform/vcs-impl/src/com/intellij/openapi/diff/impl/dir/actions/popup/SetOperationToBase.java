@@ -33,11 +33,16 @@ public abstract class SetOperationToBase extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DirDiffOperation operation = getOperation();
+    boolean setToDefault = operation == DirDiffOperation.NONE;
     final DirDiffTableModel model = getModel(e);
     final JTable table = getTable(e);
     assert model != null && table != null;
     for (DirDiffElement element : model.getSelectedElements()) {
-      element.setOperation(operation);
+      if (isEnabledFor(element)) {
+        element.setOperation(setToDefault ? element.getDefaultOperation() : operation);
+      } else {
+        element.setOperation(DirDiffOperation.NONE);
+      }
     }
     table.repaint();
   }
