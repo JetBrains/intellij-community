@@ -151,8 +151,8 @@ public class GitRepositoryReaderTest extends LightIdeaTestCase {
     private final String myHash;
 
     private GitTestBranch(String name, String hash) {
-      myName = name;
-      myHash = hash;
+      myName = name.trim();
+      myHash = hash.trim();
     }
 
     String getName() {

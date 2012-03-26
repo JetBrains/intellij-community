@@ -23,6 +23,7 @@ import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,11 +55,9 @@ class GitRepositoryReader {
   // this format shouldn't appear, but we don't want to fail because of a space
   private static Pattern BRANCH_WEAK_PATTERN     = Pattern.compile(" *(ref:)? */?refs/heads/(\\S+)");
   private static Pattern COMMIT_PATTERN          = Pattern.compile("[0-9a-fA-F]+"); // commit hash
-  private static Pattern PACKED_REFS_BRANCH_LINE = Pattern.compile("([0-9a-fA-F]+) (\\S+)"); // branch reference in .git/packed-refs
-  private static Pattern PACKED_REFS_TAGREF_LINE = Pattern.compile("\\^[0-9a-fA-F]+"); // tag reference in .git/packed-refs
 
-  private static final String REFS_HEADS_PREFIX = "refs/heads/";
-  private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
+  @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
+  @NonNls private static final String REFS_REMOTES_PREFIX = "refs/remotes/";
   private static final int    IO_RETRIES        = 3; // number of retries before fail if an IOException happens during file read.
 
   private final File          myGitDir;         // .git/
@@ -146,7 +145,7 @@ class GitRepositoryReader {
    * and returns the {@link GitBranch} for the branch name written there, or null if these files don't exist.
    */
   @Nullable
-  private GitBranch readRebaseBranch(String rebaseDirName) {
+  private GitBranch readRebaseBranch(@NonNls String rebaseDirName) {
     File rebaseDir = new File(myGitDir, rebaseDirName);
     if (!rebaseDir.exists()) {
       return null;
@@ -197,7 +196,8 @@ class GitRepositoryReader {
           while ((line = reader.readLine()) != null) {
             final AtomicReference<String> hashRef = new AtomicReference<String>();
             parsePackedRefsLine(line, new PackedRefsLineResultHandler() {
-              @Override public void handleResult(String hash, String branchName) {
+              @Override
+              public void handleResult(String hash, String branchName) {
                 if (hash == null || branchName == null) {
                   return;
                 }
@@ -436,26 +436,47 @@ class GitRepositoryReader {
    * Using a special handler may seem to be an overhead, but it is to avoid code duplication in two methods that parse packed-refs.
    */
   private static void parsePackedRefsLine(String line, PackedRefsLineResultHandler resultHandler) {
-    line = line.trim();
-    if (line.startsWith("#")) { // ignoring comments
-      resultHandler.handleResult(null, null);
-      return;
+    try {
+      line = line.trim();
+      char firstChar = line.isEmpty() ? 0 : line.charAt(0);
+      if (firstChar == '#') { // ignoring comments
+        return;
+      }
+      if (firstChar == '^') {
+        // ignoring the hash which an annotated tag above points to
+        return;
+      }
+      String hash = null;
+      int i;
+      for (i = 0; i < line.length(); i++) {
+        char c = line.charAt(i);
+        if (!Character.isLetterOrDigit(c)) {
+          hash = line.substring(0, i);
+          break;
+        }
+      }
+      String branch = null;
+      int start = i;
+      if (hash != null && start < line.length() && line.charAt(start++) == ' ') {
+        for (i = start; i < line.length(); i++) {
+          char c = line.charAt(i);
+          if (Character.isWhitespace(c)) {
+            break;
+          }
+        }
+        branch = line.substring(start, i);
+      }
+
+      if (hash != null && branch != null) {
+        resultHandler.handleResult(hash, branch);
+      }
+      else {
+        LOG.info("Ignoring invalid packed-refs line: [" + line + "]");
+      }
     }
-    if (PACKED_REFS_TAGREF_LINE.matcher(line).matches()) { // ignoring the hash which an annotated tag above points to
+    finally {
       resultHandler.handleResult(null, null);
-      return;
     }
-    Matcher matcher = PACKED_REFS_BRANCH_LINE.matcher(line);
-    if (matcher.matches()) {
-      String hash = matcher.group(1);
-      String branch = matcher.group(2);
-      resultHandler.handleResult(hash, branch);
-    } else {
-      LOG.info("Ignoring invalid packed-refs line: [" + line + "]");
-      resultHandler.handleResult(null, null);
-      return;
-    }
-    resultHandler.handleResult(null, null);
   }
 
   private interface PackedRefsLineResultHandler {
