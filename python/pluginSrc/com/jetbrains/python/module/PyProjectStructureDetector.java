@@ -8,7 +8,6 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +52,7 @@ public class PyProjectStructureDetector extends ProjectStructureDetector {
   public void setupProjectStructure(@NotNull Collection<DetectedProjectRoot> roots,
                                     @NotNull ProjectDescriptor projectDescriptor,
                                     @NotNull ProjectFromSourcesBuilder builder) {
-    if (!roots.isEmpty() && !hasRootsFromOtherDetectors(builder)) {
+    if (!roots.isEmpty() && !builder.hasRootsFromOtherDetectors(this)) {
       List<ModuleDescriptor> modules = projectDescriptor.getModules();
       if (modules.isEmpty()) {
         modules = new ArrayList<ModuleDescriptor>();
@@ -68,17 +67,5 @@ public class PyProjectStructureDetector extends ProjectStructureDetector {
   @Override
   public List<ModuleWizardStep> createWizardSteps(ProjectFromSourcesBuilder builder, ProjectDescriptor projectDescriptor, Icon stepIcon) {
     return Collections.singletonList(ProjectWizardStepFactory.getInstance().createProjectJdkStep(builder.getContext()));
-  }
-
-  private static boolean hasRootsFromOtherDetectors(ProjectFromSourcesBuilder builder) {
-    for (ProjectStructureDetector projectStructureDetector : Extensions.getExtensions(EP_NAME)) {
-      if (!(projectStructureDetector instanceof PyProjectStructureDetector)) {
-        final Collection<DetectedProjectRoot> roots = builder.getProjectRoots(projectStructureDetector);
-        if (!roots.isEmpty()) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }
