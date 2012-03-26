@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,17 +61,26 @@ abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBas
   @Override
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
     final ClassMember[] allMembers = getAllOriginalMembers(aClass);
-    if (allMembers.length == 0) {
+    if (allMembers == null) {
       HintManager.getInstance().showErrorHint(editor, getNothingFoundMessage());
+      return null;
+    }
+    if (allMembers.length == 0) {
+      HintManager.getInstance().showErrorHint(editor, getNothingAcceptedMessage());
       return null;
     }
     return chooseMembers(allMembers, false, false, project);
   }
 
   protected abstract String getNothingFoundMessage();
+  protected abstract String getNothingAcceptedMessage();
 
+  @Nullable
   protected ClassMember[] getAllOriginalMembers(final PsiClass aClass) {
     final List<EncapsulatableClassMember> list = GenerateAccessorProviderRegistrar.getEncapsulatableClassMembers(aClass);
+    if (list.isEmpty()) {
+      return null;
+    }
     final List<EncapsulatableClassMember> members = ContainerUtil.findAll(list, new Condition<EncapsulatableClassMember>() {
       public boolean value(EncapsulatableClassMember member) {
         try {
