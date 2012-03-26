@@ -74,7 +74,9 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
         }
         finally {
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(this, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
+          if (!myProject.isDisposed()) {
+            myAlarm.addRequest(this, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
+          }
         }
       }
     }, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
@@ -82,10 +84,15 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
 
   @Override
   public void disposeComponent() {
+<<<<<<< HEAD
     final GradleProgressNotificationManager notificationManager = ServiceManager.getService(GradleProgressNotificationManager.class);
     if (notificationManager != null) {
       notificationManager.removeNotificationListener(this);
     }
+=======
+    myProgressNotificationManager.removeNotificationListener(this);
+    myAlarm.cancelAllRequests();
+>>>>>>> 698d5dd... IDEA-83394 Gradle: project refresh does nothing after removing Gradle home from Template Project Settings
   }
 
   /**
