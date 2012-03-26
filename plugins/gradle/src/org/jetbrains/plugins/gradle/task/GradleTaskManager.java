@@ -2,7 +2,6 @@ package org.jetbrains.plugins.gradle.task;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -49,6 +48,7 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
   @NotNull private final Alarm                             myAlarm           = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   @NotNull private final GradleApiFacadeManager            myFacadeManager;
+  @NotNull private final GradleProgressNotificationManager myNotificationManager;
 
   public GradleTaskManager(@NotNull Project project,
                            @NotNull GradleApiFacadeManager facadeManager,
@@ -56,6 +56,7 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
   {
     super(project);
     myFacadeManager = facadeManager;
+    myNotificationManager = notificationManager;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -84,15 +85,8 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
 
   @Override
   public void disposeComponent() {
-<<<<<<< HEAD
-    final GradleProgressNotificationManager notificationManager = ServiceManager.getService(GradleProgressNotificationManager.class);
-    if (notificationManager != null) {
-      notificationManager.removeNotificationListener(this);
-    }
-=======
-    myProgressNotificationManager.removeNotificationListener(this);
+    myNotificationManager.removeNotificationListener(this);
     myAlarm.cancelAllRequests();
->>>>>>> 698d5dd... IDEA-83394 Gradle: project refresh does nothing after removing Gradle home from Template Project Settings
   }
 
   /**
