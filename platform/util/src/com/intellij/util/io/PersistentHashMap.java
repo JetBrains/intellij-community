@@ -222,6 +222,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if (fileSize > 5 * megabyte) { // file is longer than 5MB and (more than 50% of keys is garbage or approximate benefit larger than 100M)
       int liveKeys = (int)(myLiveAndGarbageKeysCounter / LIVE_KEY_MASK);
       int deadKeys = (int)(myLiveAndGarbageKeysCounter & 0xFFFFFFFF);
+
+      if (deadKeys < 50) return false;
+
       final int benefitSize = 100 * megabyte;
       final long avgValueSize = fileSize / (liveKeys + deadKeys);
 
