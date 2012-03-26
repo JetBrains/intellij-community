@@ -37,6 +37,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
@@ -117,6 +119,22 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         }
       }
     };
+    myComponent.addPropertyChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (!"ancestor".equals(evt.getPropertyName())) {
+          return;
+        }
+        
+        // Configure the balloon to show on initial configurable drawing.
+        myShowBalloonIfNecessary = evt.getNewValue() != null && evt.getOldValue() == null;
+
+        if (evt.getNewValue() == null && evt.getOldValue() != null) {
+          // Cancel delayed balloons when the configurable is hidden.
+          myAlarm.cancelAllRequests();
+        }
+      }
+    });
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridwidth = GridBagConstraints.REMAINDER;
     constraints.weightx = 1;
@@ -151,7 +169,6 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   @Override
   public boolean isModified() {
-    myShowBalloonIfNecessary = true;
     if (!myPathManuallyModified) {
       return false;
     }
@@ -169,17 +186,25 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     useNormalColorForPath();
     String path = myGradleHomeComponent.getPath();
     GradleSettings.applyGradleHome(path, myProject);
-    
-    // There is a possible case that user defines gradle home for particular open project. We want to apply that value
-    // to the default project as well if it's still non-defined.
-    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    if (defaultProject == myProject) {
+
+    if (isValidGradleHome(path)) {
+      myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_CORRECT;
+      // There is a possible case that user defines gradle home for particular open project. We want to apply that value
+      // to the default project as well if it's still non-defined.
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      if (defaultProject != myProject && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
+        GradleSettings.applyGradleHome(path, defaultProject);
+      }
       return;
     }
 
-    if (isValidGradleHome(path) && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
-      GradleSettings.applyGradleHome(path, defaultProject);
-    } 
+    if (StringUtil.isEmpty(path)) {
+      myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
+    }
+    else {
+      myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_INCORRECT;
+      new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
+    }
   }
 
   private boolean isValidGradleHome(@Nullable String path) {
@@ -203,7 +228,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
                                 GradleHomeSettingType.EXPLICIT_CORRECT :
                                 GradleHomeSettingType.EXPLICIT_INCORRECT;
       if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
-        new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType).run();
+        new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
       }
       else {
         myAlarm.cancelAllRequests();
@@ -283,9 +308,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     private final long        myTriggerTime;
 
     DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType) {
+      this(messageType, settingType, BALLOON_DELAY_MILLIS);
+    }
+    
+    DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull GradleHomeSettingType settingType, long delayMillis) {
       myMessageType = messageType;
       myText = settingType.getDescription();
-      myTriggerTime = System.currentTimeMillis() + BALLOON_DELAY_MILLIS;
+      myTriggerTime = System.currentTimeMillis() + delayMillis;
     }
 
     @Override
@@ -296,9 +325,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         myAlarm.addRequest(this, diff);
         return;
       }
-      if (myGradleHomeComponent == null || !myGradleHomeComponent.getPathComponent().isShowing()) {
+      if (myGradleHomeComponent == null) {
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(this, 200);
+        return;
+      }
+      if (!myGradleHomeComponent.getPathComponent().isShowing()) {
+        // Don't schedule the balloon if the configurable is hidden.
         return;
       }
       GradleUtil.showBalloon(myGradleHomeComponent.getPathComponent(), myMessageType, myText);

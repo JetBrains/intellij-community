@@ -44,15 +44,6 @@ public class GradleLibraryManager {
     GRADLE_ENV_PROPERTY_NAME = System.getProperty("gradle.home.env.key", "GRADLE_HOME");
   }
 
-  @Nullable
-  public Collection<File> getAllLibraries() {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    if (projects.length == 1) {
-      return getAllLibraries(projects[0]);
-    }
-    return getAllLibraries(null);
-  }
-  
   /**
    * Allows to get file handles for the gradle binaries to use.
    *
