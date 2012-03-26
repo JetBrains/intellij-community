@@ -36,6 +36,7 @@ public class MetaModel {
   private String myIconPath;
   private Icon myIcon;
   private String myCreation;
+  private boolean myDelete = true;
   private List<String> myNormalProperties = Collections.emptyList();
   private List<String> myImportantProperties = Collections.emptyList();
   private List<String> myExpertProperties = Collections.emptyList();
@@ -73,6 +74,14 @@ public class MetaModel {
 
   public void setCreation(String creation) {
     myCreation = creation;
+  }
+
+  public boolean canDelete() {
+    return myDelete;
+  }
+
+  public void setDelete(boolean delete) {
+    myDelete = delete;
   }
 
   public String getTitle() {

@@ -5,15 +5,17 @@
   <!-- ================= Roots ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
-        tag="&lt;root&gt;">
+        layout="com.intellij.android.designer.model.RadRootViewLayout"
+        tag="&lt;root&gt;"
+        delete="false">
 
     <palette title="Device Screen" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         layout="com.intellij.android.designer.model.RadViewLayout"
-        tag="merge">
+        tag="merge"
+        delete="false">
 
     <palette title="Device Screen (#merge)" icon="/com/intellij/android/designer/icons/DeviceScreen.png"/>
   </meta>
