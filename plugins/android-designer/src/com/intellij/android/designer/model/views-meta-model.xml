@@ -564,6 +564,175 @@
     </creation>
   </meta>
 
+  <!-- ================= Containers ================= -->
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.DatePicker"
+        tag="DatePicker">
+
+    <palette title="DatePicker" icon="/com/intellij/android/designer/icons/DatePicker.png"
+             tooltip="This class is a widget for selecting a date."/>
+
+    <properties important="startYear endYear spinnersShown calendarViewShown minDate maxDate layout"/>
+
+    <creation>
+      <![CDATA[
+          <DatePicker
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.CalendarView"
+        tag="CalendarView">
+
+    <palette title="CalendarView" icon="/com/intellij/android/designer/icons/CalendarView.png"
+             tooltip="This class is a calendar widget for displaying and selecting dates."/>
+
+    <properties
+        important="firstDayOfWeek showWeekNumber minDate maxDate shownWeekCount weekDayTextAppearance dateTextAppearance"/>
+
+    <creation>
+      <![CDATA[
+          <CalendarView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.TimePicker"
+        tag="TimePicker">
+
+    <palette title="TimePicker" icon="/com/intellij/android/designer/icons/TimePicker.png"
+             tooltip="A view for selecting the time of day, in either 24 hour or AM/PM mode."/>
+
+    <properties
+        important="layout"/>
+
+    <creation>
+      <![CDATA[
+          <TimePicker
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.NumberPicker"
+        tag="NumberPicker">
+
+    <palette title="NumberPicker" icon="/com/intellij/android/designer/icons/NumberPicker.png"
+             tooltip="A widget that enables the user to select a number form a predefined range. The widget presents an input field and up and down buttons for selecting the current value. Pressing/long-pressing the up and down buttons increments and decrements the current value respectively."/>
+
+    <creation>
+      <![CDATA[
+          <NumberPicker
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.ZoomControls"
+        tag="ZoomControls">
+
+    <palette title="ZoomControls" icon="/com/intellij/android/designer/icons/ZoomControls.png"
+             tooltip="The ZoomControls class displays a simple set of controls used for zooming and provides callbacks to register for events."/>
+
+    <creation>
+      <![CDATA[
+          <ZoomControls
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.SearchView"
+        tag="SearchView">
+
+    <palette title="SearchView" icon="/com/intellij/android/designer/icons/SearchView.png"
+             tooltip="A widget that provides a user interface for the user to enter a search query and submit a request to a search provider. Shows a list of query suggestions or results, if available, and allows the user to pick a suggestion or result to launch into."/>
+
+    <properties important="iconifiedByDefault queryHint imeOptions inputType"/>
+
+    <creation>
+      <![CDATA[
+          <SearchView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.ListView"
+        tag="ListView">
+
+    <palette title="ListView" icon="/com/intellij/android/designer/icons/ListView.png"
+             tooltip="A view that shows items in a vertically scrolling list. The items come from the ListAdapter associated with this view."/>
+
+    <properties important="entries divider dividerHeight headerDividersEnabled footerDividersEnabled overScrollHeader overScrollFooter"/>
+
+    <creation>
+      <![CDATA[
+          <ListView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.widget.GridView"
+        tag="GridView">
+
+    <palette title="GridView" icon="/com/intellij/android/designer/icons/GridView.png"
+             tooltip="A view that shows items in two-dimensional scrolling grid. The items in the grid come from the ListAdapter associated with this view."/>
+
+    <properties important="horizontalSpacing verticalSpacing stretchMode columnWidth numColumns gravity"/>
+
+    <creation>
+      <![CDATA[
+          <GridView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.webkit.WebView"
+        tag="WebView">
+
+    <palette title="WebView" icon="/com/intellij/android/designer/icons/WebView.png"
+             tooltip="A View that displays web pages. This class is the basis upon which you can roll your own web browser or simply display some online content within your Activity."/>
+
+    <creation>
+      <![CDATA[
+          <WebView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Layouts ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
@@ -622,6 +791,17 @@
       <item tag="TextureView"/>
     </group>
     <group name="Containers">
+      <item tag="DatePicker"/>
+      <item tag="CalendarView"/>
+      <item tag="TimePicker"/>
+      <item tag="NumberPicker"/>
+      <item tag="ZoomControls"/>
+      <item tag="SearchView"/>
+      <item tag="ListView"/>
+      <item tag="GridView"/>
+      <item tag="WebView"/>
+    </group>
+    <group name="Layouts">
       <item tag="LinearLayout"/>
     </group>
   </palette>
