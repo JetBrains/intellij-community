@@ -41,6 +41,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.plaf.TreeUI;
 import javax.swing.tree.*;
 import java.awt.datatransfer.StringSelection;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   private TestFrameworkRunningModel myModel;
@@ -88,13 +90,14 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths != null && paths.length > 1) {
-        final PsiElement[] els = new PsiElement[paths.length];
-        int i = 0;
+        final List<PsiElement> els = new ArrayList<PsiElement>(paths.length);
         for (TreePath path : paths) {
           AbstractTestProxy test = getSelectedTest(path);
-          els[i++] = test != null ? (PsiElement)TestsUIUtil.getData(test, LangDataKeys.PSI_ELEMENT.getName(), myModel) : null;
+          if (test != null) {
+            els.add((PsiElement)TestsUIUtil.getData(test, LangDataKeys.PSI_ELEMENT.getName(), myModel));
+          }
         }
-        return els;
+        return els.isEmpty() ? null : els.toArray(new PsiElement[els.size()]);
       }
     }
     

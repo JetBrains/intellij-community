@@ -10,6 +10,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" filepath="$PROJECT_DIR$/plugins/IntentionPowerPak/IntentionPowerPackPlugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" filepath="$PROJECT_DIR$/RegExpSupport/RegExpSupport.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/android/android.iml" filepath="$PROJECT_DIR$/plugins/android/android.iml" group="plugins/Android" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/android-designer/android-designer.iml" filepath="$PROJECT_DIR$/plugins/android-designer/android-designer.iml" group="plugins/Android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/android/common/android-common.iml" filepath="$PROJECT_DIR$/plugins/android/common/android-common.iml" group="plugins/Android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/android/jps-plugin/android-jps-plugin.iml" group="plugins/Android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/android/rt/android-rt.iml" filepath="$PROJECT_DIR$/plugins/android/rt/android-rt.iml" group="plugins/Android" />
@@ -107,6 +108,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" filepath="$PROJECT_DIR$/plugins/testng_rt/testng_rt.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/tests_bootstrap.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer/ui-designer-new/ui-designer-new.iml" filepath="$PROJECT_DIR$/plugins/ui-designer/ui-designer-new/ui-designer-new.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/usageView/usageView.iml" filepath="$PROJECT_DIR$/platform/usageView/usageView.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/util.iml" filepath="$PROJECT_DIR$/platform/util/util.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/util-rt/util-rt.iml" filepath="$PROJECT_DIR$/platform/util-rt/util-rt.iml" group="platform" />

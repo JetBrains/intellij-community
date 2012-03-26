@@ -36,7 +36,7 @@ import java.util.Map;
  */
 class PersistentMultiMaplet<K, V> implements MultiMaplet<K, V> {
   private static final Collection NULL_COLLECTION = Collections.emptySet();
-  private static final int CACHE_SIZE = 512;
+  private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<K, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
   private final SLRUCache<K, Collection> myCache;

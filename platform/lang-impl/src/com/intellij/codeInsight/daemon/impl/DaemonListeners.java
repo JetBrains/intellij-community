@@ -63,6 +63,7 @@ import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -229,8 +230,9 @@ class DaemonListeners implements Disposable {
     CommandProcessor.getInstance().addCommandListener(new MyCommandListener(), this);
     ApplicationListener applicationListener = new MyApplicationListener();
     ApplicationManager.getApplication().addApplicationListener(applicationListener, this);
-    EditorColorsManager.getInstance().addEditorColorsListener(new MyEditorColorsListener(),this);
+    EditorColorsManager.getInstance().addEditorColorsListener(new MyEditorColorsListener(), this);
     InspectionProfileManager.getInstance().addProfileChangeListener(new MyProfileChangeListener(), this);
+    InspectionProjectProfileManager.getInstance(project).addProfilesListener(new MyProfileChangeListener(), this);
     TodoConfiguration.getInstance().addPropertyChangeListener(new MyTodoListener(), this);
     ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), this);
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {

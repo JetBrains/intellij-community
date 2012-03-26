@@ -626,6 +626,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         catch (VcsException e) {
           LOG.info(e);
           if (myUpdateException == null) {
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              e.printStackTrace();
+            }
             myUpdateException = e;
           }
         }

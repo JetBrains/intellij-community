@@ -75,7 +75,9 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
         }
         finally {
           myAlarm.cancelAllRequests();
-          myAlarm.addRequest(this, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
+          if (!myProject.isDisposed()) {
+            myAlarm.addRequest(this, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
+          }
         }
       }
     }, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
@@ -84,6 +86,7 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
   @Override
   public void disposeComponent() {
     myProgressNotificationManager.removeNotificationListener(this);
+    myAlarm.cancelAllRequests();
   }
 
   /**
