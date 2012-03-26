@@ -770,10 +770,16 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             return null;
           }
         };
+
+        Collection<AnAction> actionsFromExtensions = new ArrayList<AnAction>();
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-          result.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myProject, myRoot));
+          actionsFromExtensions.addAll(extension.createAddActions(selectedNodeRetriever, TREE_UPDATER, myProject, myRoot));
         }
 
+        if (!actionsFromExtensions.isEmpty() && !result.isEmpty()) {
+          result.add(new Separator());
+        }
+        result.addAll(actionsFromExtensions);
         return result.toArray(new AnAction[result.size()]);
       }
     };
