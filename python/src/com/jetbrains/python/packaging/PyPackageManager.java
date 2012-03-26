@@ -321,10 +321,13 @@ public class PyPackageManager {
     try {
       final List<String> args = new ArrayList<String>();
       args.add("uninstall");
+      boolean canModify = true;
       for (PyPackage pkg : packages) {
+        if (canModify)
+          canModify = FileUtil.ensureCanCreateFile(new File(pkg.getLocation()));
         args.add(pkg.getName());
       }
-      runPythonHelper(PACKAGING_TOOL, args, true);
+      runPythonHelper(PACKAGING_TOOL, args, !canModify);
     }
     finally {
       clearCaches();
