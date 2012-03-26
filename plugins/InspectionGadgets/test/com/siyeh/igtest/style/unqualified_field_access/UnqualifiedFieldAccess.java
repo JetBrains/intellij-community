@@ -9,4 +9,17 @@ public class UnqualifiedFieldAccess {
                 final String s = String.valueOf(field.hashCode());
                 System.out.println(s);
         }
+
+  void foo() {
+    new Object() {
+      int i;
+      void foo() {
+        new Object() {
+          void foo() {
+            i  = 0;
+          }
+        };
+      }
+    };
+  }
 }

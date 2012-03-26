@@ -86,18 +86,22 @@ public class CopiesPanel {
     myCurrentInfoList = null;
 
     final Runnable focus = new Runnable() {
+      @Override
       public void run() {
         IdeFocusManager.getInstance(myProject).requestFocus(myRefreshLabel, true);
       }
     };
     final Runnable refreshView = new Runnable() {
+      @Override
       public void run() {
         final List<WCInfo> infoList = myVcs.getAllWcInfos();
         Runnable runnable = new Runnable() {
+          @Override
           public void run() {
             if (myCurrentInfoList != null) {
               final List<OverrideEqualsWrapper<WCInfo>> newList =
                 ObjectsConvertor.convert(infoList, new Convertor<WCInfo, OverrideEqualsWrapper<WCInfo>>() {
+                  @Override
                   public OverrideEqualsWrapper<WCInfo> convert(WCInfo o) {
                     return new OverrideEqualsWrapper<WCInfo>(InfoEqualityPolicy.getInstance(), o);
                   }
@@ -119,8 +123,14 @@ public class CopiesPanel {
       }
     };
     final Runnable refreshOnPooled = new Runnable() {
+      @Override
       public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(refreshView);
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          refreshView.run();
+        }
+        else {
+          ApplicationManager.getApplication().executeOnPooledThread(refreshView);
+        }
       }
     };
     myConnection.subscribe(SvnVcs.ROOTS_RELOADED, refreshOnPooled);
@@ -133,6 +143,7 @@ public class CopiesPanel {
     panel.add(myPanel, BorderLayout.NORTH);
     holderPanel.add(panel, BorderLayout.WEST);
     myRefreshLabel = new MyLinkLabel(myTextHeight, "Refresh", new LinkListener() {
+      @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
         if (myRefreshLabel.isEnabled()) {
           myVcs.invokeRefreshSvnRoots(true);
@@ -280,6 +291,7 @@ public class CopiesPanel {
 
   private void mergeFrom(final WCInfo wcInfo, final VirtualFile root, final Component mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
+      @Override
       public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
         new QuickMerge(project, url, wcInfo, SVNPathUtil.tail(url), root).execute();
       }
@@ -393,6 +405,7 @@ public class CopiesPanel {
       }
     }
 
+    @Override
     public int getHashCode(WCInfo value) {
       final HashCodeBuilder builder = new HashCodeBuilder();
       builder.append(value.getPath());
@@ -404,6 +417,7 @@ public class CopiesPanel {
       return builder.getCode();
     }
 
+    @Override
     public boolean isEqual(WCInfo val1, WCInfo val2) {
       if (val1 == val2) return true;
       if (val1 == null || val2 == null || val1.getClass() != val2.getClass()) return false;
@@ -425,6 +439,7 @@ public class CopiesPanel {
       return ourComparator;
     }
 
+    @Override
     public int compare(WCInfo o1, WCInfo o2) {
       return o1.getPath().compareTo(o2.getPath());
     }

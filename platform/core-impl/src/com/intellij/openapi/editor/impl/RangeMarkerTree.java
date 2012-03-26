@@ -88,10 +88,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
   @Override
-  public RangeMarkerTree<T>.RMNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  public RMNode<T> addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     RangeMarkerImpl marker = (RangeMarkerImpl)interval;
     marker.setValid(true);
-    RangeMarkerTree<T>.RMNode node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
+    RMNode<T> node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
 
     if (DEBUG && node.intervals.size() > DUPLICATE_LIMIT) {
       l.readLock().lock();
@@ -113,7 +113,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
     return node;
   }
-  private String errMsg(RMNode node) {
+  private String errMsg(RMNode<T> node) {
     @NonNls final StringBuilder msg = new StringBuilder();
     final AtomicInteger alive = new AtomicInteger();
     node.processAliveKeys(new Processor<Object>() {
@@ -135,8 +135,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   @NotNull
   @Override
-  protected RMNode createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    return new RMNode(key, start, end, greedyToLeft, greedyToRight);
+  protected RMNode<T> createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+    return new RMNode<T>(this, key, start, end, greedyToLeft, greedyToRight);
   }
 
   @Override
@@ -146,21 +146,26 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  protected RangeMarkerTree<T>.RMNode lookupNode(@NotNull T key) {
-    return (RMNode)((RangeMarkerImpl)key).myNode;
+  protected RMNode<T> lookupNode(@NotNull T key) {
+    return (RMNode<T>)((RangeMarkerImpl)key).myNode;
   }
 
   @Override
   protected void setNode(@NotNull T key, IntervalNode<T> intervalNode) {
-    ((RangeMarkerImpl)key).myNode = (RangeMarkerTree.RMNode)intervalNode;
+    ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
   }
 
-  public class RMNode extends IntervalTreeImpl.IntervalNode<T> {
+  static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
     private final boolean isExpandToLeft;
     private final boolean isExpandToRight;
 
-    public RMNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight) {
-      super(RangeMarkerTree.this, key, start, end);
+    public RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
+                  @NotNull T key,
+                  int start,
+                  int end,
+                  boolean greedyToLeft,
+                  boolean greedyToRight) {
+      super(rangeMarkerTree, key, start, end);
       isExpandToLeft = greedyToLeft;
       isExpandToRight = greedyToRight;
     }
@@ -227,7 +232,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
           if (marker == null) continue; // node remains removed from the tree
           marker.documentChanged(e);
           if (marker.isValid()) {
-            RMNode insertedNode = (RMNode)findOrInsert(node);
+            RMNode<T> insertedNode = (RMNode)findOrInsert(node);
             // can change if two range become the one
             if (insertedNode != node) {
               // merge happened
