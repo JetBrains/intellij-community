@@ -123,7 +123,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         if (!ResolveUtil.processElement(processor, synth[0], state)) return false;
       }
     }
-    return false;
+    return true;
   }
 
   private boolean processOwner(PsiScopeProcessor processor, ResolveState state) {
