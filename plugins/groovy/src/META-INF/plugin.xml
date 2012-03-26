@@ -599,6 +599,9 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="ClashingGetters" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="clashing.getters" groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GrDeprecatedAPIUsage" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="gr.deprecated.api.usage" groupName="Potentially confusing code constructs" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNestedConditional" displayName="Nested conditional expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNestedConditionalInspection"/>
