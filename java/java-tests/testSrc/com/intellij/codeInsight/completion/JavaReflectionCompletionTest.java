@@ -52,6 +52,21 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(1, "method", "method2");
   }
 
+  public void testForNameDeclaredMethod() throws Exception {
+    doTest(1, "method", "method2", "method3");
+  }
+
+  public void testForNameMethod() throws Exception {
+    doTest(1, "method", "method2");
+  }
+
+  public void testForNameField() throws Exception {
+    doTest(1, "num", "num2");
+  }
+
+  public void testForNameDeclaredField() throws Exception {
+    doTest(2, "num", "num2", "num3");
+  }
 
   private void doTest(int index, String... expected) {
     configureByFile(getTestName(false) + ".java");
