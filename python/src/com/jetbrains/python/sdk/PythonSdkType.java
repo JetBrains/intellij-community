@@ -424,10 +424,14 @@ public class PythonSdkType extends SdkType {
 
   public void setupSdkPaths(@NotNull final Sdk sdk) {
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    final SdkModificator sdkModificator = sdk.getSdkModificator();
     if (project == null) {
       return;
     }
+    setupSdkPaths(sdk, project);
+  }
+
+  public static void setupSdkPaths(Sdk sdk, Project project) {
+    final SdkModificator sdkModificator = sdk.getSdkModificator();
     final boolean success = setupSdkPaths(project, sdk, sdkModificator);
     if (success) {
       sdkModificator.commitChanges();
