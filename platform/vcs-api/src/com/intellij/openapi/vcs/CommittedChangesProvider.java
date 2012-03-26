@@ -64,4 +64,6 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
    */
   @Nullable
   Pair<T, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException;
+
+  RepositoryLocation getForNonLocal(final VirtualFile file);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -82,7 +83,14 @@ public class TargetElementUtilBase {
 
   @Nullable
   public static PsiReference findReference(Editor editor) {
-    return findReference(editor, editor.getCaretModel().getOffset());
+    PsiReference result = findReference(editor, editor.getCaretModel().getOffset());
+    if (result == null) {
+      final Integer offset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
+      if (offset != null) {
+        result = findReference(editor, offset);
+      }
+    }
+    return result;
   }
 
   @Nullable
@@ -124,7 +132,15 @@ public class TargetElementUtilBase {
   public static PsiElement findTargetElement(Editor editor, int flags) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    return getInstance().findTargetElement(editor, flags, editor.getCaretModel().getOffset());
+    final PsiElement result = getInstance().findTargetElement(editor, flags, editor.getCaretModel().getOffset());
+    if (result != null) {
+      return result;
+    }
+    final Integer offset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
+    if (offset != null) {
+      return getInstance().findTargetElement(editor, flags, offset);
+    }
+    return result;
   }
 
   public static boolean inVirtualSpace(Editor editor, int offset) {

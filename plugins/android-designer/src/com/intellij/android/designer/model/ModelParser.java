@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.intellij.android.designer.designSurface.RootView;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
@@ -26,10 +27,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -38,6 +43,13 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ModelParser extends XmlRecursiveElementVisitor {
+  public static final String NO_ROOT_CONTENT =
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?><LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"fill_parent\" android:layout_height=\"fill_parent\" android:orientation=\"vertical\"></LinearLayout>";
+
+  public static final String XML_FILE_KEY = "XML_FILE";
+
+  private static final int EMPTY_COMPONENT_SIZE = 5;
+
   private final MetaManager myMetaManager;
   private final XmlFile myXmlFile;
   private RadViewComponent myRootComponent;
@@ -61,11 +73,11 @@ public class ModelParser extends XmlRecursiveElementVisitor {
       @Override
       public String compute() {
         XmlTag root = myXmlFile.getRootTag();
-        if (root != null) {
+        if (checkTag(root)) {
           root.accept(ModelParser.this);
+          return myXmlFile.getText();
         }
-
-        return myXmlFile.getText();
+        return NO_ROOT_CONTENT;
       }
     });
   }
@@ -111,24 +123,72 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     return component;
   }
 
+  public static void addComponent(RadViewComponent container, RadViewComponent newComponent, @Nullable RadViewComponent insertBefore)
+    throws Exception {
+    newComponent.setParent(container);
+
+    List<RadComponent> children = container.getChildren();
+    if (insertBefore == null) {
+      children.add(newComponent);
+    }
+    else {
+      children.add(children.indexOf(insertBefore), newComponent);
+    }
+
+    setComponentTag(container.getTag(), newComponent, insertBefore == null ? null : insertBefore.getTag());
+
+    PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
+    propertyParser.load(newComponent);
+  }
+
   public static void setComponentTag(final XmlTag parentTag, final RadViewComponent component, final XmlTag nextTag) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        Language language = StdFileTypes.XML.getLanguage();
-        XmlTag xmlTag =
-          XmlElementFactory.getInstance(parentTag.getProject()).createTagFromText(component.getMetaModel().getCreation(), language);
+        Project project;
+        RadViewComponent root = null;
+        XmlFile xmlFile = null;
 
-        if (nextTag == null) {
-          xmlTag = parentTag.addSubTag(xmlTag, false);
+        if (!checkTag(parentTag) && component.getParent() == component.getRoot()) {
+          root = (RadViewComponent)component.getParent();
+          xmlFile = root.getClientProperty(XML_FILE_KEY);
+          project = xmlFile.getProject();
         }
         else {
-          xmlTag = (XmlTag)parentTag.addBefore(xmlTag, nextTag);
+          project = parentTag.getProject();
+        }
+
+        Language language = StdFileTypes.XML.getLanguage();
+        XmlTag xmlTag =
+          XmlElementFactory.getInstance(project).createTagFromText("\n" + component.getMetaModel().getCreation(), language);
+
+        if (checkTag(parentTag)) {
+          if (nextTag == null) {
+            xmlTag = parentTag.addSubTag(xmlTag, false);
+          }
+          else {
+            xmlTag = (XmlTag)parentTag.addBefore(xmlTag, nextTag);
+          }
+        }
+        else {
+          xmlTag.setAttribute("xmlns:android", "http://schemas.android.com/apk/res/android");
+          xmlTag = (XmlTag)xmlFile.getDocument().add(xmlTag);
+          root.setTag(xmlFile.getDocument().getRootTag());
+          XmlUtil.expandTag(xmlTag);
         }
 
         component.setTag(xmlTag);
       }
     });
+  }
+
+  public static boolean checkTag(XmlTag tag) {
+    try {
+      return tag != null && tag.getFirstChild() != null && !(tag.getFirstChild() instanceof PsiErrorElement) && tag.getProject() != null;
+    }
+    catch (Throwable e) {
+      return false;
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -145,27 +205,26 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     return myLayoutXmlText;
   }
 
-  public void updateRootComponent(RenderSession session, JComponent nativeComponent) throws Exception {
-    RadViewComponent rootComponent = myRootComponent;
-
-    if (session.getRootViews().size() == 1) {
-      RadViewComponent newRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
-
-      rootComponent.setParent(newRootComponent);
-      newRootComponent.getChildren().add(rootComponent);
-
-      myRootComponent = rootComponent = newRootComponent;
+  public void updateRootComponent(RenderSession session, RootView nativeComponent) throws Exception {
+    if (myRootComponent == null) {
+      myRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
+    }
+    else if (session.getRootViews().size() == 1) {
+      RadViewComponent rootComponent = myRootComponent;
+      myRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
+      myRootComponent.getChildren().add(rootComponent);
+      rootComponent.setParent(myRootComponent);
     }
 
-    updateRootComponent(rootComponent, session, nativeComponent);
+    updateRootComponent(myRootComponent, session, nativeComponent);
   }
 
   public static void updateRootComponent(RadViewComponent rootComponent,
                                          RenderSession session,
-                                         JComponent nativeComponent) {
+                                         RootView nativeComponent) {
     List<ViewInfo> views = session.getRootViews();
-    int size = views.size();
     List<RadComponent> children = rootComponent.getChildren();
+    int size = children.size();
     for (int i = 0; i < size; i++) {
       updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, 0, 0);
     }
@@ -176,7 +235,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
   private static void updateComponent(RadViewComponent component,
                                       ViewInfo view,
-                                      JComponent nativeComponent,
+                                      RootView nativeComponent,
                                       int parentX,
                                       int parentY) {
     component.setViewInfo(view);
@@ -184,11 +243,18 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
     int left = parentX + view.getLeft();
     int top = parentY + view.getTop();
-    component.setBounds(left, top, view.getRight() - view.getLeft(), view.getBottom() - view.getTop());
+    int width = view.getRight() - view.getLeft();
+    int height = view.getBottom() - view.getTop();
+
+    if (width < EMPTY_COMPONENT_SIZE && height < EMPTY_COMPONENT_SIZE) {
+      nativeComponent.addEmptyRegion(left, top, EMPTY_COMPONENT_SIZE, EMPTY_COMPONENT_SIZE);
+    }
+
+    component.setBounds(left, top, Math.max(width, EMPTY_COMPONENT_SIZE), Math.max(height, EMPTY_COMPONENT_SIZE));
 
     List<ViewInfo> views = view.getChildren();
     List<RadComponent> children = component.getChildren();
-    int size = views.size();
+    int size = children.size();
 
     for (int i = 0; i < size; i++) {
       updateComponent((RadViewComponent)children.get(i), views.get(i), nativeComponent, left, top);

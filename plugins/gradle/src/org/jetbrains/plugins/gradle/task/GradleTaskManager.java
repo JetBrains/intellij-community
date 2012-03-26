@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.task;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
@@ -47,6 +48,7 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
   @NotNull private final Alarm                             myAlarm           = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   @NotNull private final GradleApiFacadeManager            myFacadeManager;
+  @NotNull private final GradleProgressNotificationManager myProgressNotificationManager;
 
   public GradleTaskManager(@NotNull Project project,
                            @NotNull GradleApiFacadeManager facadeManager,
@@ -54,6 +56,11 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
   {
     super(project);
     myFacadeManager = facadeManager;
+    myProgressNotificationManager = notificationManager;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+    
     notificationManager.addNotificationListener(this);
     myAlarm.addRequest(new Runnable() {
       @Override
@@ -73,7 +80,12 @@ public class GradleTaskManager extends AbstractProjectComponent implements Gradl
       }
     }, DETECT_HANGED_TASKS_FREQUENCY_MILLIS);
   }
-  
+
+  @Override
+  public void disposeComponent() {
+    myProgressNotificationManager.removeNotificationListener(this);
+  }
+
   /**
    * Allows to check if any task of the given type is being executed at the moment.  
    *
