@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import org.jetbrains.annotations.NotNull;
@@ -36,10 +37,10 @@ public class PropertyResolverProcessor extends ResolverProcessor {
 
   @Override
   public boolean execute(PsiElement element, ResolveState state) {
-    if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier()!=null) {
+    if (element instanceof GrReferenceExpression && ((GrReferenceExpression)element).getQualifier() != null) {
       return true;
     }
-    return super.execute(element, state);
+    return super.execute(element, state) || state.get(RESOLVE_CONTEXT) != null;
   }
 
   @NotNull
@@ -50,10 +51,21 @@ public class PropertyResolverProcessor extends ResolverProcessor {
     final int size = candidates.size();
     if (size == 0) return GroovyResolveResult.EMPTY_ARRAY;
     final GroovyResolveResult last = candidates.get(size - 1);
-    if (last.isAccessible() && last.isStaticsOK()) return candidates.toArray(new GroovyResolveResult[candidates.size()]);
+    if (isCorrectLocalVarOrParam(last)) {
+      return new GroovyResolveResult[]{last};
+    }
     for (GroovyResolveResult candidate : candidates) {
-      if (candidate.isStaticsOK()) return new GroovyResolveResult[]{candidate};
+      if (candidate.isStaticsOK()) {
+        return new GroovyResolveResult[]{candidate};
+      }
     }
     return candidates.toArray(new GroovyResolveResult[candidates.size()]);
+  }
+
+  private static boolean isCorrectLocalVarOrParam(GroovyResolveResult last) {
+    return !(last.getElement() instanceof PsiField) &&
+           last.isAccessible() &&
+           last.isStaticsOK() &&
+           last.getCurrentFileResolveContext() == null;
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -70,6 +71,10 @@ public class BeforeCheckinHandlerUtil {
 
   private static boolean isFileUnderSourceRoot(@NotNull Project project, @NotNull VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    return index.isInSource(file) && !index.isInLibrarySource(file);
+    if (StdFileTypes.JAVA == file.getFileType()) {
+      return index.isInSource(file) && !index.isInLibrarySource(file);
+    } else {
+      return index.isInContent(file) && !index.isInLibrarySource(file) ;
+    }
   }
 }

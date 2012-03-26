@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,10 @@ public class UnqualifiedMethodAccessInspection extends BaseInspection {
       }
       final PsiMethod method = (PsiMethod)element;
       if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass instanceof PsiAnonymousClass) {
         return;
       }
       registerError(expression);

@@ -33,13 +33,19 @@ public class JavaReflectionReferenceProvider extends PsiReferenceProvider {
       final PsiElement expressionList;
       if (value != null && (expressionList = element.getParent()) instanceof PsiExpressionList) {
         final PsiElement methodCall = expressionList.getParent();
-        final PsiClassObjectAccessExpression classAccess;
-        if (methodCall != null && (classAccess = PsiTreeUtil.findChildOfType(methodCall, PsiClassObjectAccessExpression.class)) != null) {
+        final PsiExpression classAccess;
+        if (methodCall != null && (classAccess = getContext(methodCall)) != null) {
           return new PsiReference[]{new JavaLangClassMemberReference((PsiLiteralExpression)element, classAccess)};
         }
       }
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  private static PsiExpression getContext(PsiElement methodCall) {
+    final PsiClassObjectAccessExpression expression = PsiTreeUtil.findChildOfType(methodCall, PsiClassObjectAccessExpression.class);
+    return expression == null ? PsiTreeUtil.findChildOfType(methodCall, PsiMethodCallExpression.class) : expression;
   }
 
   @Nullable
