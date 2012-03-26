@@ -36,10 +36,6 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspec
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOctalIntegerInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyResultOfIncrementOrDecrementUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
@@ -50,6 +46,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.Groov
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
+import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 
 /**
  * @author peter
@@ -709,5 +706,23 @@ public class CorrectImplementor implements ActionListener {
 
   public void testReassignedHighlighting() {
     myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy");
+  }
+
+  public void testDeprecated() {
+    myFixture.configureByText('_a.groovy', '''\
+/**
+ @deprecated
+*/
+class X {
+  @Deprecated
+  def foo(){}
+
+  public static void main() {
+    new <warning descr="'X' is deprecated">X</warning>().<warning descr="'foo' is deprecated">foo</warning>()
+  }
+}''')
+
+    myFixture.enableInspections(GrDeprecatedAPIUsageInspection)
+    myFixture.testHighlighting(true, false, false)
   }
 }

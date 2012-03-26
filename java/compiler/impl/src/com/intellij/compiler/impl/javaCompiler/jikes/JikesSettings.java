@@ -19,7 +19,8 @@ import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
+import com.intellij.util.Chunk;
 
 import java.util.Collection;
 
@@ -34,8 +35,8 @@ public class JikesSettings extends JavacSettings {
   public String JIKES_PATH = "";
   public boolean IS_EMACS_ERRORS_MODE = true;
 
-  public Collection<String> getOptions(Project project) {
-    final Collection<String> options = super.getOptions(project);
+  public Collection<String> getOptions(Chunk<Module> chunk) {
+    final Collection<String> options = super.getOptions(chunk);
     if(IS_EMACS_ERRORS_MODE) {
       options.add("+E");
     }

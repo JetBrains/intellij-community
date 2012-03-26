@@ -26,8 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor;
-import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -327,12 +325,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public PsiFile getDecompiledPsiFile() {
-    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
-      if (processor instanceof ContentBasedClassFileProcessor && processor.isApplicable(getProject(), getVirtualFile())) {
-        PsiFile decompiledPsiFile = ((ContentBasedClassFileProcessor)processor).getDecompiledPsiFile(this);
-        if (decompiledPsiFile != null) {
-          return decompiledPsiFile;
-        }
+    for (ClsFileDecompiledPsiFileProvider provider : Extensions.getExtensions(ClsFileDecompiledPsiFileProvider.EP_NAME)) {
+      PsiFile decompiledPsiFile = provider.getDecompiledPsiFile(this);
+      if (decompiledPsiFile != null) {
+        return decompiledPsiFile;
       }
     }
     return (PsiFile) getMirror();

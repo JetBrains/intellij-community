@@ -87,7 +87,11 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     assertPhysical(startElement);
     if (startElement != endElement) assertPhysical(endElement);
 
-    if (startElement.getTextRange().getStartOffset() >= endElement.getTextRange().getEndOffset()) {
+    final TextRange startElementRange = startElement.getTextRange();
+    LOG.assertTrue(startElementRange != null, startElement);
+    final TextRange endElementRange = endElement.getTextRange();
+    LOG.assertTrue(endElementRange != null, endElement);
+    if (startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
         LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement);
       }

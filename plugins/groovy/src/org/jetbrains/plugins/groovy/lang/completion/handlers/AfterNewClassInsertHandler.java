@@ -17,15 +17,19 @@
 package org.jetbrains.plugins.groovy.lang.completion.handlers;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.completion.ConstructorInsertHandler;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaCompletionFeatures;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -33,6 +37,8 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @author Maxim.Medvedev
  */
 public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiClassType>> {
+  private static final Logger LOG = Logger.getInstance(AfterNewClassInsertHandler.class);
+
   private final PsiClassType myClassType;
   private final boolean myTriggerFeature;
 
@@ -41,14 +47,15 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
     myTriggerFeature = triggerFeature;
   }
 
-  public void handleInsert(InsertionContext context, LookupItem<PsiClassType> item) {
+  public void handleInsert(final InsertionContext context, LookupItem<PsiClassType> item) {
     final PsiClassType.ClassResolveResult resolveResult = myClassType.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null || !psiClass.isValid()) {
       return;
     }
 
-    GroovyPsiElement place = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GroovyPsiElement.class, false);
+    GroovyPsiElement place =
+      PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), GroovyPsiElement.class, false);
     boolean hasParams = place != null && GroovyCompletionUtil.hasConstructorParameters(psiClass, place);
     if (myTriggerFeature) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
@@ -60,9 +67,36 @@ public class AfterNewClassInsertHandler implements InsertHandler<LookupItem<PsiC
     else {
       ParenthesesInsertHandler.NO_PARAMETERS.handleInsert(context, item);
     }
+
     GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
     if (hasParams) {
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
+
+    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      final Editor editor = context.getEditor();
+      final int offset = context.getTailOffset();
+      editor.getDocument().insertString(offset, " {}");
+      editor.getCaretModel().moveToOffset(offset + 2);
+
+      context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
+
+    }
   }
+
+  @Nullable
+  private static Runnable generateAnonymousBody(final Editor editor, final PsiFile file) {
+    final Project project = file.getProject();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    if (element == null) return null;
+
+    PsiElement parent = element.getParent().getParent();
+    if (!(parent instanceof PsiAnonymousClass)) return null;
+
+    return ConstructorInsertHandler.genAnonymousBodyFor((PsiAnonymousClass)parent, editor, file, project);
+  }
+
 }

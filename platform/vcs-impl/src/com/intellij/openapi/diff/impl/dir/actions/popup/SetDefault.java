@@ -22,15 +22,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class SetCopyToRight extends SetOperationToBase {
+public class SetDefault extends SetOperationToBase {
   @NotNull
   @Override
   protected DirDiffOperation getOperation() {
-    return DirDiffOperation.COPY_TO;
+    return DirDiffOperation.NONE;
   }
 
   @Override
   protected boolean isEnabledFor(DirDiffElement element) {
-    return element.getSource() != null;
+    return true;
   }
 }

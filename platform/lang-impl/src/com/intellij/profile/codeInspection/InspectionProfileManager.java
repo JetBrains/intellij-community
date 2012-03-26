@@ -356,7 +356,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return mySchemesManager;
   }
 
-  public void onProfilesChanged() {
+  public static void onProfilesChanged() {
     //cleanup caches blindly for all projects in case ide profile was modified
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       HighlightingSettingsPerFile.getInstance(project).cleanProfileSettings();

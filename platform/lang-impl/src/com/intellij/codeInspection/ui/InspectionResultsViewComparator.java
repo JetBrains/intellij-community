@@ -141,7 +141,11 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntity(final RefEntity entity, final PsiElement element) {
     if (entity instanceof RefElement) {
-      return PsiUtilCore.compareElementsByPosition(((RefElement)entity).getElement(), element);
+      final PsiElement psiElement = ((RefElement)entity).getElement();
+      if (psiElement != null && element != null) {
+        return PsiUtilCore.compareElementsByPosition(psiElement, element);
+      }
+      if (element == null) return psiElement == null ? 0 : 1;
     }
     if (element instanceof PsiQualifiedNamedElement) {
       return StringUtil.compare(entity.getQualifiedName(), ((PsiQualifiedNamedElement)element).getQualifiedName(), true);

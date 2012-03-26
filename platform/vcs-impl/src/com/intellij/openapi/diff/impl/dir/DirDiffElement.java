@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,15 @@ public class DirDiffElement {
   @Nullable
   public String getSourceSize() {
     return mySourceLength < 0 ? null : String.valueOf(mySourceLength);
+  }
+
+  public DirDiffOperation getDefaultOperation() {
+    return myDefaultOperation;
+    //if (myType == DType.SOURCE) return COPY_TO;
+    //if (myType == DType.TARGET) return COPY_FROM;
+    //if (myType == DType.CHANGED) return MERGE;
+    //if (myType == DType.EQUAL) return EQUAL;
+    //return NONE;
   }
 
   @Nullable

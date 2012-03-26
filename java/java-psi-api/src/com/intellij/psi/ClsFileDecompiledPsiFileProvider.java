@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.dir.actions.popup;
+package com.intellij.psi;
 
-import com.intellij.openapi.diff.impl.dir.DirDiffElement;
-import com.intellij.openapi.diff.impl.dir.DirDiffOperation;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Konstantin Bulenkov
+ * @author Evgeny Gerashchenko
+ * @since 3/20/12
  */
-public class SetCopyToRight extends SetOperationToBase {
-  @NotNull
-  @Override
-  protected DirDiffOperation getOperation() {
-    return DirDiffOperation.COPY_TO;
-  }
+public interface ClsFileDecompiledPsiFileProvider {
+  ExtensionPointName<ClsFileDecompiledPsiFileProvider> EP_NAME = ExtensionPointName.create("com.intellij.psi.clsDecompiledFileProvider");
 
-  @Override
-  protected boolean isEnabledFor(DirDiffElement element) {
-    return element.getSource() != null;
-  }
+  /**
+   * Returns decompiled PSI associated with this classfile
+   *
+   * @param clsFile instance of ClsFile
+   * @return decompiled PSI file
+   */
+  @Nullable
+  PsiFile getDecompiledPsiFile(@NotNull PsiJavaFile clsFile);
 }

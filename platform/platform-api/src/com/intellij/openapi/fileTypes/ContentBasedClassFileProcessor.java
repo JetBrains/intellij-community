@@ -34,13 +34,4 @@ public interface ContentBasedClassFileProcessor extends ContentBasedFileSubstitu
    */
   @NotNull
   SyntaxHighlighter createHighlighter(Project project, VirtualFile vFile);
-
-  /**
-   * Returns decompiled PSI associated with this classfile
-   *
-   * @param clsFile instance of ClsFile
-   * @return decompiled PSI file
-   */
-  @Nullable
-  PsiFile getDecompiledPsiFile(PsiFile clsFile);
 }

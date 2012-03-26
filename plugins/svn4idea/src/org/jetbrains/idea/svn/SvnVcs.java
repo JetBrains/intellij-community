@@ -556,17 +556,22 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private void createPool() {
+    if (myPool != null) return;
     final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
     final boolean keep;
     if (StringUtil.isEmptyOrSpaces(property)) {
-      keep = ! ApplicationManager.getApplication().isUnitTestMode();  // default
+      keep = !ApplicationManager.getApplication().isUnitTestMode();  // default
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
     }
     myPool = new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject), 60*1000, keep);
   }
 
+  @NotNull
   private ISVNRepositoryPool getPool() {
+    if (myPool == null) {
+      createPool();
+    }
     return myPool;
   }
 

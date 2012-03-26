@@ -15,11 +15,12 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
+import com.intellij.compiler.CompilerEncodingService;
+import com.intellij.compiler.impl.javaCompiler.ModuleChunk;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.TestOnly;
 
 import java.nio.charset.Charset;
@@ -37,7 +38,7 @@ public class JavacSettings {
 
   private boolean myTestsUseExternalCompiler = false;
 
-  public Collection<String> getOptions(Project project) {
+  public Collection<String> getOptions(Chunk<Module> chunk) {
     List<String> options = new ArrayList<String>();
     if (DEBUGGING_INFO) {
       options.add("-g");
@@ -61,10 +62,10 @@ public class JavacSettings {
       }
     }
     if (!isEncodingSet && acceptEncoding()) {
-      final Charset ideCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-      if (ideCharset != null && !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
+      final Charset charset = CompilerEncodingService.getPreferredModuleEncoding(chunk);
+      if (charset != null) {
         options.add("-encoding");
-        options.add(ideCharset.name());
+        options.add(charset.name());
       }
     }
     return options;
@@ -78,9 +79,9 @@ public class JavacSettings {
     return true;
   }
 
-  public String getOptionsString(final Project project) {
+  public String getOptionsString(final ModuleChunk chunk) {
     final StringBuilder options = new StringBuilder();
-    for (String option : getOptions(project)) {
+    for (String option : getOptions(chunk)) {
       if (options.length() > 0) {
         options.append(" ");
       }
