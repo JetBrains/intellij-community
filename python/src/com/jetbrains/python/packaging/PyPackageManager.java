@@ -1,6 +1,8 @@
 package com.jetbrains.python.packaging;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -16,6 +18,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -34,6 +37,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.script.ScriptException;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
@@ -51,6 +55,8 @@ public class PyPackageManager {
   public static final int ERROR_TIMEOUT = -3;
   public static final int ERROR_INVALID_OUTPUT = -4;
   public static final int ERROR_ACCESS_DENIED = -5;
+  public static final int ERROR_EXECUTION = -6;
+  public static final int ERROR_INTERRUPTED = -7;
 
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
@@ -99,7 +105,8 @@ public class PyPackageManager {
               indicator.setFraction((double)i / size);
             }
             try {
-              manager.install(list(requirement), extraArgs);
+              final boolean useUserSite = PyPackageService.getInstance(myProject).useUserSite(mySdk.getHomePath());
+              manager.install(list(requirement), extraArgs, useUserSite);
             }
             catch (PyExternalProcessException e) {
               exceptions.add(e);
@@ -226,7 +233,8 @@ public class PyPackageManager {
     return mySdk;
   }
 
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws PyExternalProcessException {
+  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs, final boolean useUserSite)
+      throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
     args.add("install");
     final File buildDir;
@@ -244,7 +252,7 @@ public class PyPackageManager {
       args.addAll(req.toOptions());
     }
     try {
-      runPythonHelper(PACKAGING_TOOL, args);
+      runPythonHelper(PACKAGING_TOOL, args, !useUserSite);
     }
     finally {
       clearCaches();
@@ -259,7 +267,7 @@ public class PyPackageManager {
       for (PyPackage pkg : packages) {
         args.add(pkg.getName());
       }
-      runPythonHelper(PACKAGING_TOOL, args);
+      runPythonHelper(PACKAGING_TOOL, args, true);
     }
     finally {
       clearCaches();
@@ -347,8 +355,8 @@ public class PyPackageManager {
 
   @NotNull
   private String runPythonHelper(@NotNull final String helper,
-                                 @NotNull final List<String> args) throws PyExternalProcessException {
-    ProcessOutput output = getProcessOutput(helper, args);
+                                 @NotNull final List<String> args, final boolean askForSudo) throws PyExternalProcessException {
+    ProcessOutput output = getProcessOutput(helper, args, askForSudo);
     final int retcode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExternalProcessException(ERROR_TIMEOUT, helper, args, "Timed out");
@@ -364,7 +372,14 @@ public class PyPackageManager {
     return output.getStdout();
   }
 
-  private ProcessOutput getProcessOutput(@NotNull String helper, @NotNull List<String> args) throws PyExternalProcessException {
+  @NotNull
+  private String runPythonHelper(@NotNull final String helper,
+                                 @NotNull final List<String> args) throws PyExternalProcessException {
+    return runPythonHelper(helper, args, false);
+  }
+
+  private ProcessOutput getProcessOutput(@NotNull String helper, @NotNull List<String> args, final boolean askForSudo)
+      throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PythonRemoteSdkAdditionalData) {
       final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
@@ -401,7 +416,37 @@ public class PyPackageManager {
       cmdline.add(homePath);
       cmdline.add(helperPath);
       cmdline.addAll(args);
-      return PySdkUtil.getProcessOutput(parentDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
+
+      final boolean canCreate = FileUtil.ensureCanCreateFile(new File(mySdk.getHomePath()));
+      if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
+        try{
+          final ProcessOutput result = ExecUtil.sudoAndGetOutput(StringUtil.join(cmdline, " "),
+                                                                 "Please enter your password to uninstall system packages: ");
+          if (result.getExitCode() != 0) {
+            final String stdout = result.getStdout();
+            String message = result.getStderr();
+            if (message.trim().isEmpty()) {
+              message = stdout;
+            }
+            throw new PyExternalProcessException(result.getExitCode(), helper, args, message);
+          }
+          return result;
+        }
+        catch (InterruptedException e) {
+          throw new PyExternalProcessException(ERROR_INTERRUPTED, helper, args, e.getMessage());
+        }
+        catch (ExecutionException e) {
+          throw new PyExternalProcessException(ERROR_EXECUTION, helper, args, e.getMessage());
+        }
+        catch (ScriptException e) {
+          throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, e.getMessage());
+        }
+        catch (IOException e) {
+          throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helper, args, e.getMessage());
+        }
+      }
+      else                 //vEnv interpreter
+        return PySdkUtil.getProcessOutput(parentDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
     }
   }
 
