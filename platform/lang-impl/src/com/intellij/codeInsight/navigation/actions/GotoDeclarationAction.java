@@ -55,6 +55,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -148,7 +149,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (elements.length > 1) {
       final TextRange range = reference.getRangeInElement();
       final String elementText = reference.getElement().getText();
-      LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), reference);
+      LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements));
       final String refText = range.substring(elementText);
       String title = MessageFormat.format(titlePattern, refText);
       NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
