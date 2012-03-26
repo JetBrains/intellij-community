@@ -110,7 +110,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     DocumentBulkUpdateListener bulkUpdateListener = new DocumentBulkUpdateListener() {
       @Override
       public void updateStarted(@NotNull Document doc) {
-        if (doc != myEditor.getDocument() && myOffset >= doc.getTextLength()) return;
+        if (doc != myEditor.getDocument() && myOffset >= doc.getTextLength() || savedBeforeBulkCaretMarker != null) return;
         savedBeforeBulkCaretMarker = doc.createRangeMarker(myOffset, myOffset);
       }
       @Override
@@ -237,7 +237,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   public void setIgnoreWrongMoves(boolean ignoreWrongMoves) {
-    this.myIgnoreWrongMoves = ignoreWrongMoves;
+    myIgnoreWrongMoves = ignoreWrongMoves;
   }
 
   @Override
@@ -695,9 +695,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         moveToOffset(newLength, performSoftWrapAdjustment);
       }
       else {
-        final int line;
         try {
-          line = event.translateLineViaDiff(myLogicalCaret.line);
+          final int line = event.translateLineViaDiff(myLogicalCaret.line);
           moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment, null, false);
         }
         catch (FilesTooBigForDiffException e1) {
