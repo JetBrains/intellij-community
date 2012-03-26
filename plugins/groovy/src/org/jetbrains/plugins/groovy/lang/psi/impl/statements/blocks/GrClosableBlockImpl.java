@@ -118,7 +118,10 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
       }
     }
     else if (!isItAlreadyDeclared(place)) {
-      if (!ResolveUtil.processElement(processor, getSyntheticItParameter()[0], state)) return false;
+      GrParameter[] synth = getSyntheticItParameter();
+      if (synth.length > 0) {
+        if (!ResolveUtil.processElement(processor, synth[0], state)) return false;
+      }
     }
     return false;
   }
