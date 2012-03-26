@@ -53,7 +53,7 @@ public class DialogUtil{
       }
       if (mnemonic != '\0') {
         button.setText(realText.toString());
-        if (UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+        if (UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
           button.setMnemonic(0);
           button.setDisplayedMnemonicIndex(-1);
           button.setFocusable(true);
@@ -93,7 +93,7 @@ public class DialogUtil{
       }
       if (mnemonic != '\0') {
         label.setText(realText.toString());
-        if (UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
+        if (UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS) {
           label.setDisplayedMnemonic(0);
           label.setDisplayedMnemonicIndex(-1);
         }
