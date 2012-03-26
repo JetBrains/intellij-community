@@ -57,7 +57,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
     for (WizardMode mode : Extensions.getExtensions(WizardMode.MODES)) {
       if (mode.isAvailable(wizardContext)) {
         myModes.add(mode);
-        if (defaultPath != null) {
+        if (defaultPath != null && wizardContext.isCreatingNewProject()) {
           if (mode instanceof CreateFromSourcesMode) {
             myMode = mode;
           }
@@ -114,6 +114,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
         myWholePanel.add(settings, gc);
       }
     }
+    myMode.onChosen(true);
     gc.weighty = 1;
     gc.fill = GridBagConstraints.BOTH;
     myWholePanel.add(Box.createVerticalBox(), gc);
