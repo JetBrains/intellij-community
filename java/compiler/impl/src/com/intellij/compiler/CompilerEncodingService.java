@@ -18,6 +18,7 @@ package com.intellij.compiler;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,21 @@ import java.util.Collection;
 public abstract class CompilerEncodingService {
   public static CompilerEncodingService getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, CompilerEncodingService.class);
+  }
+
+  @Nullable
+  public static Charset getPreferredModuleEncoding(Chunk<Module> chunk) {
+    CompilerEncodingService service = null;
+    for (Module module : chunk.getNodes()) {
+      if (service == null) {
+        service = getInstance(module.getProject());
+      }
+      final Charset charset = service.getPreferredModuleEncoding(module);
+      if (charset != null) {
+        return charset;
+      }
+    }
+    return null;
   }
 
   @Nullable

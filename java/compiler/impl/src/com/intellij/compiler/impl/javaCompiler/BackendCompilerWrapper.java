@@ -48,10 +48,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -72,6 +69,7 @@ import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -186,9 +184,16 @@ public class BackendCompilerWrapper {
   }
 
   private void compileChunk(ModuleChunk chunk) throws IOException {
+    final String chunkPresentableName = getPresentableNameFor(chunk);
+    myModuleName = chunkPresentableName;
+
+    // validate encodings
+    if (chunk.getModuleCount() > 1) {
+      validateEncoding(chunk, chunkPresentableName);
+    }
+
     runTransformingCompilers(chunk);
 
-    setPresentableNameFor(chunk);
 
     final List<OutputDir> outs = new ArrayList<OutputDir>();
     File fileToDelete = getOutputDirsToCompileTo(chunk, outs);
@@ -206,10 +211,39 @@ public class BackendCompilerWrapper {
     }
   }
 
+  private void validateEncoding(ModuleChunk chunk, String chunkPresentableName) {
+    final CompilerEncodingService es = CompilerEncodingService.getInstance(myProject);
+    Charset charset = null;
+    for (Module module : chunk.getModules()) {
+      final Charset moduleCharset = es.getPreferredModuleEncoding(module);
+      if (charset == null) {
+        charset = moduleCharset;
+      }
+      else {
+        if (!Comparing.equal(charset, moduleCharset)) {
+          // warn user
+          final Charset chunkEncoding = CompilerEncodingService.getPreferredModuleEncoding(chunk);
+          final StringBuilder message = new StringBuilder();
+          message.append("Modules in chunk [");
+          message.append(chunkPresentableName);
+          message.append("] configured to use different encodings.\n");
+          if (chunkEncoding != null) {
+            message.append("\"").append(chunkEncoding.name()).append("\" encoding will be used to compile the chunk");
+          }
+          else {
+            message.append("Default compiler encoding will be used to compile the chunk");
+          }
+          myCompileContext.addMessage(CompilerMessageCategory.INFORMATION, message.toString(), null, -1, -1);
+          break;
+        }
+      }
+    }
+  }
 
-  private void setPresentableNameFor(final ModuleChunk chunk) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
+
+  private static String getPresentableNameFor(final ModuleChunk chunk) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      public String compute() {
         final Module[] modules = chunk.getModules();
         StringBuilder moduleName = new StringBuilder(Math.min(128, modules.length * 8));
         for (int idx = 0; idx < modules.length; idx++) {
@@ -223,7 +257,7 @@ public class BackendCompilerWrapper {
             break;
           }
         }
-        myModuleName = moduleName.toString();
+        return moduleName.toString();
       }
     });
   }
@@ -845,7 +879,9 @@ public class BackendCompilerWrapper {
         while (true) {
           FileObject path = myPaths.take();
 
-          if (path == myStopThreadToken) break;
+          if (path == myStopThreadToken) {
+            break;
+          }
           processPath(path, myProject);
         }
       }

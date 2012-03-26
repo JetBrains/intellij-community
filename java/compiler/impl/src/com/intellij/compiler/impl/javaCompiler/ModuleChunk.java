@@ -305,7 +305,11 @@ public class ModuleChunk extends Chunk<Module> {
 
   //the check for equal language levels is done elsewhere
   public LanguageLevel getLanguageLevel() {
-    return LanguageLevelUtil.getEffectiveLanguageLevel(getModules()[0]);
+    return LanguageLevelUtil.getEffectiveLanguageLevel(getNodes().iterator().next());
+  }
+
+  public Project getProject() {
+    return myContext.getProject();
   }
 
   private static class BeforeJdkOrderEntryCondition implements Condition<OrderEntry> {

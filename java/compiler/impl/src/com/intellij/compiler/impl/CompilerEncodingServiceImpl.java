@@ -65,7 +65,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
     for (Map.Entry<VirtualFile, Charset> entry : mappings.entrySet()) {
       final VirtualFile file = entry.getKey();
       final Charset charset = entry.getValue();
-      if (file == null || charset == null || !compilerManager.isCompilableFileType(file.getFileType())
+      if (file == null || charset == null || (!file.isDirectory() && !compilerManager.isCompilableFileType(file.getFileType()))
           || !index.isInSourceContent(file)) continue;
 
       final Module module = index.getModuleForFile(file);
