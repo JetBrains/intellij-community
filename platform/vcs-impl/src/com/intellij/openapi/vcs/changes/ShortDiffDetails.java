@@ -198,7 +198,9 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
     if (myDetailsLoader != null) {
       Disposer.dispose(myDetailsLoader);
     }
-    myDetailsPanel.clear();
+    if (myDetailsPanel != null) {
+      myDetailsPanel.clear();
+    }
     myDetailsCache.clear();
   }
 
