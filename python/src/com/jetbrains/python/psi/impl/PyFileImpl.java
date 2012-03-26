@@ -16,6 +16,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -45,11 +46,181 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
   private final Map<String, SoftReference<PsiElement>> myExportedNames = new ConcurrentHashMap<String, SoftReference<PsiElement>>();
-  private volatile Map<String, PsiElement> myLocalDeclarations;
-  private volatile List<PsiElement> myNameDefiners;
-  private final List<String> myNameDefinerNegativeCache = new ArrayList<String>();
-  private long myNameDefinerOOCBModCount = -1;
+  private volatile ExportedNameCache myExportedNameCache;
   private final PsiModificationTracker myModificationTracker;
+
+  private class ExportedNameCache {
+    private final Map<String, PsiElement> myLocalDeclarations = new HashMap<String, PsiElement>();
+    private final MultiMap<String, PsiElement> myLocalAmbiguousDeclarations = new MultiMap<String, PsiElement>();
+    private final Map<String, PsiElement> myExceptPartDeclarations = new HashMap<String, PsiElement>();
+    private final MultiMap<String, PsiElement> myExceptPartAmbiguousDeclarations = new MultiMap<String, PsiElement>();
+    private final List<PsiElement> myNameDefiners = new ArrayList<PsiElement>();
+    private final List<String> myNameDefinerNegativeCache = new ArrayList<String>();
+    private long myNameDefinerOOCBModCount = -1;
+
+    private ExportedNameCache() {
+      final List<PsiElement> children = PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub());
+      final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
+      for (PsiElement child : children) {
+        if (child instanceof PyExceptPart) {
+          exceptParts.add((PyExceptPart) child);
+        }
+        else {
+          addDeclaration(child, myLocalDeclarations, myLocalAmbiguousDeclarations, myNameDefiners);
+        }
+      }
+      if (!exceptParts.isEmpty()) {
+        for (PyExceptPart part : exceptParts) {
+          final List<PsiElement> exceptChildren = PyPsiUtils.collectAllStubChildren(part, part.getStub());
+          for (PsiElement child : exceptChildren) {
+            addDeclaration(child, myExceptPartDeclarations, myExceptPartAmbiguousDeclarations, myNameDefiners);
+          }
+        }
+      }
+    }
+
+    private void addDeclaration(PsiElement child, 
+                                Map<String, PsiElement> localDeclarations,
+                                MultiMap<String, PsiElement> ambiguousDeclarations,
+                                List<PsiElement> nameDefiners) {
+      if (child instanceof PsiNamedElement) {
+        final String name = ((PsiNamedElement)child).getName();
+        localDeclarations.put(name, child);
+      }
+      else if (child instanceof PyFromImportStatement) {
+        final PyFromImportStatement fromImportStatement = (PyFromImportStatement)child;
+        if (fromImportStatement.isStarImport()) {
+          nameDefiners.add(fromImportStatement);
+        }
+        else {
+          for (PyImportElement importElement : fromImportStatement.getImportElements()) {
+            addImportElementDeclaration(importElement, localDeclarations, ambiguousDeclarations);
+          }
+        }
+        if (PyNames.INIT_DOT_PY.equals(getName())) {
+          final PyQualifiedName qName = fromImportStatement.getImportSourceQName();
+          if (qName != null) {
+            localDeclarations.put(qName.getLastComponent(), fromImportStatement);
+          }
+        }
+      }
+      else if (child instanceof PyImportStatement) {
+        final PyImportStatement importStatement = (PyImportStatement)child;
+        for (PyImportElement importElement : importStatement.getImportElements()) {
+          addImportElementDeclaration(importElement, localDeclarations, ambiguousDeclarations);
+          if (PyNames.INIT_DOT_PY.equals(getName())) {
+            final PyQualifiedName qName = importElement.getImportedQName();
+            String parentPackage = getContainingDirectory().getName();
+            if (qName != null && qName.getComponentCount() > 1) {
+              final List<String> components = qName.getComponents();
+              if (components.get(components.size() - 2).equals(parentPackage)) {
+                localDeclarations.put(components.get(components.size()-1), importElement);
+              }
+            }
+          }
+        }
+      }
+      else if (child instanceof NameDefiner) {
+        nameDefiners.add(child);
+      }
+    }
+
+    private void addImportElementDeclaration(PyImportElement importElement,
+                                             Map<String, PsiElement> localDeclarations,
+                                             MultiMap<String, PsiElement> ambiguousDeclarations) {
+      final String visibleName = importElement.getVisibleName();
+      if (visibleName != null) {
+        if (ambiguousDeclarations.containsKey(visibleName)) {
+          ambiguousDeclarations.putValue(visibleName, importElement);
+        }
+        else if (localDeclarations.containsKey(visibleName)) {
+          final PsiElement oldElement = localDeclarations.get(visibleName);
+          ambiguousDeclarations.putValue(visibleName, oldElement);
+          ambiguousDeclarations.putValue(visibleName, importElement);
+        }
+        else {
+          localDeclarations.put(visibleName, importElement);
+        }
+      }
+    }
+
+    @Nullable
+    private PsiElement resolve(String name) {
+      final PsiElement named = resolveNamed(name, myLocalDeclarations, myLocalAmbiguousDeclarations);
+      if (named != null) {
+        return named;
+      }
+      if (!myNameDefiners.isEmpty()) {
+        final PsiElement result = findNameInNameDefiners(name);
+        if (result != null) {
+          return result;
+        }
+      }
+      return resolveNamed(name, myExceptPartDeclarations, myExceptPartAmbiguousDeclarations);
+    }
+
+    @Nullable
+    private PsiElement resolveNamed(String name,
+                                    final Map<String, PsiElement> declarations,
+                                    final MultiMap<String, PsiElement> ambiguousDeclarations) {
+      if (ambiguousDeclarations.containsKey(name)) {
+        final List<PsiElement> localAmbiguous = new ArrayList<PsiElement>(myLocalAmbiguousDeclarations.get(name));
+        for (int i = localAmbiguous.size()-1; i >= 0; i--) {
+          PsiElement ambiguous = localAmbiguous.get(i);
+          final PsiElement result = resolveDeclaration(name, ambiguous);
+          if (result != null) {
+            return result;
+          }
+        }
+      }
+      else {
+        final PsiElement result = declarations.get(name);
+        if (result != null) {
+          return resolveDeclaration(name, result);
+        }
+      }
+      return null;
+    }
+
+    private PsiElement resolveDeclaration(String name, PsiElement result) {
+      if (result instanceof PyImportElement) {
+        return findNameInImportElement(name, (PyImportElement)result);
+      }
+      else if (result instanceof PyFromImportStatement) {
+        return ((PyFromImportStatement) result).resolveImportSource();
+      }
+      return result;
+    }
+
+    @Nullable
+    private PsiElement findNameInNameDefiners(String name) {
+      long oocbModCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+      if (oocbModCount != myNameDefinerOOCBModCount) {
+        myNameDefinerNegativeCache.clear();
+        myNameDefinerOOCBModCount = oocbModCount;
+      }
+      else {
+        if (myNameDefinerNegativeCache.contains(name)) {
+          return null;
+        }
+      }
+      for (PsiElement definer : myNameDefiners) {
+        final PsiElement result;
+        if (definer instanceof PyFromImportStatement) {
+          result = findNameInStarImport(name, (PyFromImportStatement)definer);
+        }
+        else {
+          result = ((NameDefiner) definer).getElementNamed(name);
+        }
+        if (result != null) {
+          return result;
+        }
+      }
+      myNameDefinerNegativeCache.add(name);
+      return null;
+    }
+
+  }
 
   public PyFileImpl(FileViewProvider viewProvider) {
     this(viewProvider, PythonLanguage.getInstance());
@@ -254,25 +425,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     stack.add(name);
     try {
       if (Registry.is("python.exported.names.local.cache")) {
-        if (myLocalDeclarations == null) {
-          collectLocalDeclarations();
+        if (myExportedNameCache == null) {
+          myExportedNameCache = new ExportedNameCache();
         }
-        assert myLocalDeclarations != null;
-        if (myLocalDeclarations.containsKey(name)) {
-          final PsiElement result = myLocalDeclarations.get(name);
-          if (result instanceof PyImportElement) {
-            return findNameInImportElement(name, (PyImportElement)result);
-          }
-          else if (result instanceof PyFromImportStatement) {
-            return ((PyFromImportStatement) result).resolveImportSource();
-          }
+        PsiElement result = myExportedNameCache.resolve(name);
+        if (result != null) {
           return result;
-        }
-        if (!myNameDefiners.isEmpty()) {
-          final PsiElement result = findNameInNameDefiners(name);
-          if (result != null) {
-            return result;
-          }
         }
       }
       else {
@@ -289,115 +447,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     finally {
       stack.remove(name);
-    }
-  }
-
-  @Nullable
-  private PsiElement findNameInNameDefiners(String name) {
-    long oocbModCount = myModificationTracker.getOutOfCodeBlockModificationCount();
-    if (oocbModCount != myNameDefinerOOCBModCount) {
-      myNameDefinerNegativeCache.clear();
-      myNameDefinerOOCBModCount = oocbModCount;
-    }
-    else {
-      if (myNameDefinerNegativeCache.contains(name)) {
-        return null;
-      }
-    }
-    for (PsiElement definer : myNameDefiners) {
-      final PsiElement result;
-      if (definer instanceof PyFromImportStatement) {
-        result = findNameInStarImport(name, (PyFromImportStatement)definer);
-      }
-      else {
-        result = ((NameDefiner) definer).getElementNamed(name);
-      }
-      if (result != null) {
-        return result;
-      }
-    }
-    myNameDefinerNegativeCache.add(name);
-    return null;
-  }
-
-  private void collectLocalDeclarations() {
-    Map<String, PsiElement> localDeclarations = new HashMap<String, PsiElement>();
-    List<PsiElement> nameDefiners = new ArrayList<PsiElement>();
-    final List<PsiElement> children = PyPsiUtils.collectAllStubChildren(this, getStub());
-    final List<PyExceptPart> exceptParts = new ArrayList<PyExceptPart>();
-    for (PsiElement child : children) {
-      if (child instanceof PyExceptPart) {
-        exceptParts.add((PyExceptPart) child);
-      }
-      else {
-        addDeclaration(child, localDeclarations, nameDefiners);
-      }
-    }
-    if (!exceptParts.isEmpty()) {
-      final Map<String, PsiElement> exceptPartDeclarations = new HashMap<String, PsiElement>();
-      for (PyExceptPart part : exceptParts) {
-        final List<PsiElement> exceptChildren = PyPsiUtils.collectAllStubChildren(part, part.getStub());
-        for (PsiElement child : exceptChildren) {
-          addDeclaration(child, exceptPartDeclarations, nameDefiners);
-        }
-      }
-      for (Map.Entry<String, PsiElement> entry : exceptPartDeclarations.entrySet()) {
-        if (!localDeclarations.containsKey(entry.getKey())) {
-          localDeclarations.put(entry.getKey(), entry.getValue());
-        }
-      }
-    }
-
-    myLocalDeclarations = localDeclarations;
-    myNameDefiners = nameDefiners;
-  }
-
-  private void addDeclaration(PsiElement child, Map<String, PsiElement> localDeclarations, List<PsiElement> nameDefiners) {
-    if (child instanceof PsiNamedElement) {
-      final String name = ((PsiNamedElement)child).getName();
-      localDeclarations.put(name, child);
-    }
-    else if (child instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)child;
-      if (fromImportStatement.isStarImport()) {
-        nameDefiners.add(fromImportStatement);
-      }
-      else {
-        for (PyImportElement importElement : fromImportStatement.getImportElements()) {
-          final String visibleName = importElement.getVisibleName();
-          if (visibleName != null) {
-            localDeclarations.put(visibleName, importElement);
-          }
-        }
-      }
-      if (PyNames.INIT_DOT_PY.equals(getName())) {
-        final PyQualifiedName qName = fromImportStatement.getImportSourceQName();
-        if (qName != null) {
-          localDeclarations.put(qName.getLastComponent(), fromImportStatement);
-        }
-      }
-    }
-    else if (child instanceof PyImportStatement) {
-      final PyImportStatement importStatement = (PyImportStatement)child;
-      for (PyImportElement importElement : importStatement.getImportElements()) {
-        final String visibleName = importElement.getVisibleName();
-        if (visibleName != null) {
-          localDeclarations.put(visibleName, importElement);
-        }
-        if (PyNames.INIT_DOT_PY.equals(getName())) {
-          final PyQualifiedName qName = importElement.getImportedQName();
-          String parentPackage = getContainingDirectory().getName();
-          if (qName != null && qName.getComponentCount() > 1) {
-            final List<String> components = qName.getComponents();
-            if (components.get(components.size() - 2).equals(parentPackage)) {
-              localDeclarations.put(components.get(components.size()-1), importElement);
-            }
-          }
-        }
-      }
-    }
-    else if (child instanceof NameDefiner) {
-      nameDefiners.add(child);
     }
   }
 
@@ -763,8 +812,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
     myExportedNames.clear();
-    myLocalDeclarations = null;
-    myNameDefiners = null;
+    myExportedNameCache = null;
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
