@@ -68,6 +68,7 @@ public class LogModel implements Disposable {
   void setStatusMessage(@Nullable Notification statusMessage, long stamp) {
     synchronized (myNotifications) {
       if (myStatusMessage != null && myStatusMessage.first == statusMessage) return;
+      if (myStatusMessage == null && statusMessage == null) return;
 
       myStatusMessage = statusMessage == null ? null : Trinity.create(statusMessage, EventLog.formatForLog(statusMessage, "").status, stamp);
     }

@@ -165,11 +165,6 @@ public class RedmineRepository extends BaseRepositoryImpl {
       public String getPresentableName() {
         return getId() + ": " + getSummary();
       }
-
-      @Override
-      public String getCustomIcon() {
-        return null;
-      }
     };
   }
 

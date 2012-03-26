@@ -277,7 +277,7 @@ class GitPushResult {
     sb.append(successReport);
     
     if (!updatedFiles.isEmpty()) {
-      sb.append("<a href='UpdatedFiles'>View files updated during the push<a/>");
+      sb.append("<a href='UpdatedFiles'>View files updated during the push</a>");
     }
 
     NotificationListener viewUpdateFilesListener = new ViewUpdatedFilesNotificationListener(updatedFiles);

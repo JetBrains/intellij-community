@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.ui;
-
-import com.intellij.ide.ui.UISettings;
-
-import javax.swing.*;
-
-/**
- *  @author dsl
- */
-public class NonFocusableCheckBox extends JCheckBox {
-  public NonFocusableCheckBox(String text) {
-    super(text);
-    initFocusability();
+class DeclaredField {
+  void foo() {
+    Test.class.getDeclaredField("<caret>");
   }
+}
 
-  public NonFocusableCheckBox() {
-    initFocusability();
-  }
-
-  private void initFocusability() {
-    if (!UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS) { // Or that won't be keyboard accessible at all
-      setFocusable(false);
-    }
-  }
+class Test {
+  public int num;
+  public int num2;
+  int num3;
 }

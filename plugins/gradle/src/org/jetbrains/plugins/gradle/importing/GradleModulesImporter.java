@@ -338,7 +338,7 @@ public class GradleModulesImporter {
             public void run(@NotNull final ProgressIndicator indicator) {
               GradleResolveProjectTask task = new GradleResolveProjectTask(intellijProject, gradleProjectPath, true);
               task.execute(indicator);
-              GradleProject projectWithResolvedLibraries = task.getProject();
+              GradleProject projectWithResolvedLibraries = task.getGradleProject();
               gradleProjectRef.set(projectWithResolvedLibraries);
               ApplicationManager.getApplication().invokeLater(setupExternalDependenciesTask, ModalityState.NON_MODAL);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.ui;
-
-import com.intellij.ide.ui.UISettings;
-
-import javax.swing.*;
-
-/**
- *  @author dsl
- */
-public class NonFocusableCheckBox extends JCheckBox {
-  public NonFocusableCheckBox(String text) {
-    super(text);
-    initFocusability();
-  }
-
-  public NonFocusableCheckBox() {
-    initFocusability();
-  }
-
-  private void initFocusability() {
-    if (!UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS) { // Or that won't be keyboard accessible at all
-      setFocusable(false);
-    }
+class DecalredMethod2 {
+  void foo() {
+    Test.class.getDeclaredMethod("method3");
   }
 }
+
+class Test {
+  void method(){}
+  void method2(A a, B b){}
+  void method3(){}
+}
+
+class A {}
+class B {}
+class C {}
