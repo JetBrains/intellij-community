@@ -15,8 +15,11 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,5 +39,25 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
       if (name.equals(scope.getName())) return scope;
     }
     return null;
+  }
+
+  public boolean isVetoed(NamedScope scope, ScopePlace place) {
+    return false;
+  }
+
+  public static void filterNoSettingsScopes(Project project, List<NamedScope> scopes) {
+    for (Iterator<NamedScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
+      final NamedScope scope = iterator.next();
+      for (CustomScopesProvider provider : Extensions.getExtensions(CUSTOM_SCOPES_PROVIDER, project)) {
+        if (provider instanceof CustomScopesProviderEx && ((CustomScopesProviderEx)provider).isVetoed(scope, ScopePlace.SETTING)) {
+          iterator.remove();
+          break;
+        }
+      }
+    }
+  }
+
+  public static enum ScopePlace {
+    SETTING, ACTION
   }
 }
