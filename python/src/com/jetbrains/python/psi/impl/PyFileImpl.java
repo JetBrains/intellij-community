@@ -333,13 +333,20 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         addDeclaration(child, localDeclarations, nameDefiners);
       }
     }
-    for (PyExceptPart part : exceptParts) {
-      final List<PsiElement> exceptChildren = PyPsiUtils.collectAllStubChildren(part, part.getStub());
-      for (PsiElement child : exceptChildren) {
-        addDeclaration(child, localDeclarations, nameDefiners);
+    if (!exceptParts.isEmpty()) {
+      final Map<String, PsiElement> exceptPartDeclarations = new HashMap<String, PsiElement>();
+      for (PyExceptPart part : exceptParts) {
+        final List<PsiElement> exceptChildren = PyPsiUtils.collectAllStubChildren(part, part.getStub());
+        for (PsiElement child : exceptChildren) {
+          addDeclaration(child, exceptPartDeclarations, nameDefiners);
+        }
+      }
+      for (Map.Entry<String, PsiElement> entry : exceptPartDeclarations.entrySet()) {
+        if (!localDeclarations.containsKey(entry.getKey())) {
+          localDeclarations.put(entry.getKey(), entry.getValue());
+        }
       }
     }
-
 
     myLocalDeclarations = localDeclarations;
     myNameDefiners = nameDefiners;
