@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.Details;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -27,7 +26,6 @@ import com.intellij.openapi.vcs.GenericDetailsLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcsUtil.UIVcsUtil;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +196,7 @@ public class ShortDiffDetails implements RefreshablePanel, Disposable {
   @Override
   public void dispose() {
     if (myDetailsLoader != null) {
-      myDetailsLoader.dispose();
+      Disposer.dispose(myDetailsLoader);
     }
     myDetailsPanel.clear();
     myDetailsCache.clear();
