@@ -15,6 +15,7 @@
  */
 package com.intellij.profile;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.StateSplitter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -204,8 +205,14 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
     return profile;
   }
 
-  public void addProfilesListener(ProfileChangeAdapter profilesListener) {
+  public void addProfilesListener(final ProfileChangeAdapter profilesListener, Disposable parent) {
     myProfilesListener.add(profilesListener);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        myProfilesListener.remove(profilesListener);
+      }
+    });
   }
 
   public void removeProfilesListener(ProfileChangeAdapter profilesListener) {
