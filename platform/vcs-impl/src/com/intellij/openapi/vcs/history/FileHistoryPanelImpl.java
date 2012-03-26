@@ -642,6 +642,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           VcsHistoryUtil.showDiff(project, myFilePath, left, right, leftTitle, rightTitle);
         }
         catch (final VcsException e) {
+          LOG.info(e);
           WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
@@ -650,7 +651,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           }, null, project);
         }
         catch (IOException e) {
-          LOG.error(e);
+          LOG.info(e);
         }
         catch (ProcessCanceledException ex) {
           LOG.info(ex);
