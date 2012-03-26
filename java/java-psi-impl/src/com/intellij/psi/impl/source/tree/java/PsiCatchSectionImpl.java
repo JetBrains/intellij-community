@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import java.util.List;
 public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatchSection, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCatchSectionImpl");
 
+  private final Object myTypesCacheLock = new Object();
   private CachedValue<List<PsiType>> myTypesCache = null;
 
   public PsiCatchSectionImpl() {
@@ -75,17 +76,27 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     return getTypesCache().getValue();
   }
 
-  private synchronized CachedValue<List<PsiType>> getTypesCache() {
-    if (myTypesCache == null) {
-      final CachedValuesManager cacheManager = CachedValuesManager.getManager(getProject());
-      myTypesCache = cacheManager.createCachedValue(new CachedValueProvider<List<PsiType>>() {
-          @Override public Result<List<PsiType>> compute() {
-            final List<PsiType> types = computePreciseCatchTypes(getParameter());
-            return Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
-          }
-        }, false);
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
+    synchronized (myTypesCacheLock) {
+      myTypesCache = null;
     }
-    return myTypesCache;
+  }
+
+  private CachedValue<List<PsiType>> getTypesCache() {
+    synchronized (myTypesCacheLock) {
+      if (myTypesCache == null) {
+        final CachedValuesManager cacheManager = CachedValuesManager.getManager(getProject());
+        myTypesCache = cacheManager.createCachedValue(new CachedValueProvider<List<PsiType>>() {
+            @Override public Result<List<PsiType>> compute() {
+              final List<PsiType> types = computePreciseCatchTypes(getParameter());
+              return Result.create(types, PsiModificationTracker.MODIFICATION_COUNT);
+            }
+          }, false);
+      }
+      return myTypesCache;
+    }
   }
 
   private List<PsiType> computePreciseCatchTypes(final PsiParameter parameter) {

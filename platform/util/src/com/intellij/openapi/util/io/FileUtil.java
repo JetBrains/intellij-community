@@ -462,8 +462,11 @@ public class FileUtil extends FileUtilRt {
 
     if (syncTimestamp) {
       final long timeStamp = fromFile.lastModified();
-      if (!toFile.setLastModified(timeStamp)) {
-        LOG.warn("Unable to set timestamp " + timeStamp + " to " + toFile);
+      if (timeStamp < 0) {
+        LOG.warn("Invalid timestamp " + timeStamp + " of '" + fromFile + "'");
+      }
+      else if (!toFile.setLastModified(timeStamp)) {
+        LOG.warn("Unable to set timestamp " + timeStamp + " to '" + toFile + "'");
       }
     }
 
