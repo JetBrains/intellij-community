@@ -216,10 +216,17 @@ public class MavenPropertyResolver {
       MavenId parentId = selectedProject.getParentId();
       if (parentId == null) return null;
 
+      unprefixed = unprefixed.substring("parent.".length());
+
+      if (unprefixed.equals("groupId")) {
+        return parentId.getGroupId();
+      }
+      if (unprefixed.equals("artifactId")) {
+        return parentId.getArtifactId();
+      }
+
       selectedProject = projectsManager.findProject(parentId);
       if (selectedProject == null) return null;
-
-      unprefixed = unprefixed.substring("parent.".length());
     }
 
     if (unprefixed.equals("basedir") || (hasPrefix && mavenProject == selectedProject && unprefixed.equals("baseUri"))) {
