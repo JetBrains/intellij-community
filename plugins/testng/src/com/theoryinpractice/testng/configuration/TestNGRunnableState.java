@@ -246,9 +246,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
     LOG.info("Language level is " + effectiveLanguageLevel.toString());
     LOG.info("is15 is " + is15);
     final String pathToBundledJar = PathUtil.getJarPathForClass(AfterClass.class);
-    final String incompatibilityMessage = TestNGVersionChecker
-      .getVersionIncompatibilityMessage(project, config.getPersistantData().getScope().getSourceScope(config).getLibrariesScope(),
-                                        pathToBundledJar);
+    final SourceScope sourceScope = config.getPersistantData().getScope().getSourceScope(config);
+    final String incompatibilityMessage = sourceScope != null ? 
+                                          TestNGVersionChecker.getVersionIncompatibilityMessage(project, sourceScope.getLibrariesScope(), pathToBundledJar) :
+                                          null;
     if (incompatibilityMessage != null) {
       javaParameters.getClassPath().add(pathToBundledJar);
     }
