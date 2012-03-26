@@ -17,6 +17,8 @@ package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,29 +81,37 @@ public class ExecUtil {
     }
     return tempFile;
   }
-  
+
   public static String getOsascriptPath() {
     return "/usr/bin/osascript";
   }
-  
+
   public static String getOpenCommandPath() {
     return "/usr/bin/open";
   }
 
-  public static int sudoAndGetResult(@NotNull final String scriptPath,
-                                     @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
+  public static ProcessOutput execAndGetOutput(String... command) throws ExecutionException, InterruptedException {
+    assert command != null && command.length > 0;
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    final Process process = commandLine.createProcess();
+    CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+    return processHandler.runProcess();
+  }
+
+  public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
+                                               @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
     if (SystemInfo.isMac) {
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
       Runtime runtime = Runtime.getRuntime();
       String[] args = {getOsascriptPath(), "-e", script};
       runtime.exec(args);
-      return 0;
+      return new ProcessOutput(0);
     }
     else if (SystemInfo.isKDE) {
-      return execAndGetResult("kdesudo", "--comment", prompt, scriptPath);
+      return execAndGetOutput("kdesudo", "--comment", prompt, scriptPath);
     }
     else if (SystemInfo.isGnome) {
-      return execAndGetResult("gksudo", "--message", prompt, scriptPath);
+      return execAndGetOutput("gksudo", "--message", prompt, scriptPath);
     }
     else if (SystemInfo.isUnix) {
       final File sudo = createTempExecutableScript("sudo", ".sh",
@@ -113,10 +123,15 @@ public class ExecUtil {
                                                    "echo\n" +
                                                    "read -p \"Press Enter to close this window...\" TEMP\n" +
                                                    "exit $STATUS\n");
-      return execAndGetResult("xterm", "-T", "Install", "-e", sudo.getAbsolutePath());
+      return execAndGetOutput("xterm", "-T", "Install", "-e", sudo.getAbsolutePath());
     }
     else {
       throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
     }
+  }
+
+  public static int sudoAndGetResult(@NotNull final String scriptPath,
+                                     @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
+    return sudoAndGetOutput(scriptPath, prompt).getExitCode();
   }
 }

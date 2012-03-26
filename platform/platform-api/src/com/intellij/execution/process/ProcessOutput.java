@@ -33,6 +33,10 @@ public class ProcessOutput {
     myExitCode = -1; // until set explicitly, exit code denotes an error.
   }
 
+  public ProcessOutput(final int exitCode) {
+    myExitCode = exitCode;
+  }
+
   void appendStdout(String text) {
     myStdoutBuilder.append(text);
   }
