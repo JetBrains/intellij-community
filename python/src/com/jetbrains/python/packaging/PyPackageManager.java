@@ -1,5 +1,6 @@
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
@@ -85,6 +86,29 @@ public class PyPackageManager {
       myProject = project;
       mySdk = sdk;
       myListener = listener;
+    }
+
+    public void installManagement(@NotNull final String name) {
+      final String progressTitle;
+      final String successTitle;
+      progressTitle = "Installing package " + name;
+      successTitle = "Packages installed successfully";
+      run(new MultiExternalRunnable() {
+        @Override
+        public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
+          final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
+          indicator.setText(String.format("Installing package '%s'...", name));
+          final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
+          try {
+            manager.installManagement(name);
+          }
+          catch (PyExternalProcessException e) {
+            exceptions.add(e);
+          }
+          return exceptions;
+        }
+      }, progressTitle, successTitle, "Installed package " + name,
+          "Install package failed");
     }
 
     public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
@@ -211,6 +235,39 @@ public class PyPackageManager {
         b.append("\n");
       }
       return b.toString();
+    }
+  }
+
+  private void installManagement(String name) throws PyExternalProcessException {
+    final File helperFile = PythonHelpersLocator.getHelperFile(name + ".tar.gz");
+    ProcessOutput output = PySdkUtil.getProcessOutput(helperFile.getParent(),
+                                                      new String[]{mySdk.getHomePath(),
+                                                          PACKAGING_TOOL, "untar", name});
+
+    if (output.getExitCode() != 0) {
+      throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
+                                           Lists.newArrayList("untar"), output.getStderr());
+    }
+    final String dirName = output.getStdout().trim();
+    final String fileName = dirName + File.separatorChar + name + File.separatorChar + "setup.py";
+    final File setupFile = new File(fileName);
+    try {
+      output = getProcessOutput(setupFile.getAbsolutePath(), Collections.<String>singletonList("install"), true, setupFile.getParent());
+      final int retcode = output.getExitCode();
+      if (output.isTimeout()) {
+        throw new PyExternalProcessException(ERROR_TIMEOUT, name, Lists.newArrayList("untar"), "Timed out");
+      }
+      else if (retcode != 0) {
+        final String stdout = output.getStdout();
+        String message = output.getStderr();
+        if (message.trim().isEmpty()) {
+          message = stdout;
+        }
+        throw new PyExternalProcessException(retcode, name, Lists.newArrayList("untar"), message);
+      }
+    }
+    finally{
+      FileUtil.delete(new File(dirName));
     }
   }
 
@@ -356,7 +413,11 @@ public class PyPackageManager {
   @NotNull
   private String runPythonHelper(@NotNull final String helper,
                                  @NotNull final List<String> args, final boolean askForSudo) throws PyExternalProcessException {
-    ProcessOutput output = getProcessOutput(helper, args, askForSudo);
+    final String helperPath = PythonHelpersLocator.getHelperPath(helper);
+    if (helperPath == null) {
+      throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
+    }
+    ProcessOutput output = getProcessOutput(helperPath, args, askForSudo, null);
     final int retcode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExternalProcessException(ERROR_TIMEOUT, helper, args, "Timed out");
@@ -378,7 +439,7 @@ public class PyPackageManager {
     return runPythonHelper(helper, args, false);
   }
 
-  private ProcessOutput getProcessOutput(@NotNull String helper, @NotNull List<String> args, final boolean askForSudo)
+  private ProcessOutput getProcessOutput(@NotNull String helper, @NotNull List<String> args, final boolean askForSudo, @Nullable String parentDir)
       throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PythonRemoteSdkAdditionalData) {
@@ -407,21 +468,18 @@ public class PyPackageManager {
       if (homePath == null) {
         throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args, "Cannot find interpreter for SDK");
       }
-      final String helperPath = PythonHelpersLocator.getHelperPath(helper);
-      if (helperPath == null) {
-        throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
-      }
-      final String parentDir = new File(homePath).getParent();
+      if (parentDir == null)
+        parentDir = new File(homePath).getParent();
       final List<String> cmdline = new ArrayList<String>();
       cmdline.add(homePath);
-      cmdline.add(helperPath);
+      cmdline.add(helper);
       cmdline.addAll(args);
 
       final boolean canCreate = FileUtil.ensureCanCreateFile(new File(mySdk.getHomePath()));
       if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
         try{
           final ProcessOutput result = ExecUtil.sudoAndGetOutput(StringUtil.join(cmdline, " "),
-                                                                 "Please enter your password to uninstall system packages: ");
+                                                                 "Please enter your password to make changes in system packages: ", parentDir);
           if (result.getExitCode() != 0) {
             final String stdout = result.getStdout();
             String message = result.getStderr();
