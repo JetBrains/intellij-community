@@ -34,7 +34,7 @@ public class NonFocusableCheckBox extends JCheckBox {
   }
 
   private void initFocusability() {
-    if (!UISettings.getInstance().DISABLE_MNEMONICS_IN_CONTROLS) { // Or that won't be keyboard accessible at all
+    if (!UISettings.getShadowInstance().DISABLE_MNEMONICS_IN_CONTROLS) { // Or that won't be keyboard accessible at all
       setFocusable(false);
     }
   }
