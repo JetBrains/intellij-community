@@ -92,7 +92,6 @@ public class XFramesView extends XDebugViewBase {
     CustomLineBorder border = new CustomLineBorder(CaptionPanel.CNT_ACTIVE_COLOR, 0, 0, 1, 0);
     myThreadsPanel.setBorder(border);
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
-    myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
 
     rebuildView(SessionEvent.RESUMED);
@@ -155,12 +154,10 @@ public class XFramesView extends XDebugViewBase {
     }
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     myThreadComboBox.setSelectedItem(activeExecutionStack);
-    final boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
     myThreadsPanel.removeAll();
-    if (invisible) {
-      myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.WEST);
-    } else {
-      myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
+    myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
+    final boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
+    if (!invisible) {
       myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
     }
     myToolbar.setAddSeparatorFirst(!invisible);

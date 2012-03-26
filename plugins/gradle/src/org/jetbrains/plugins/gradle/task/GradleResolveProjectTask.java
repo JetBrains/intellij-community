@@ -21,20 +21,19 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   
   private final AtomicReference<GradleProject> myGradleProject = new AtomicReference<GradleProject>();
   
-  private final Project myIntellijProject;
+  
   private final String  myProjectPath;
   private final boolean myResolveLibraries;
   
   public GradleResolveProjectTask(@Nullable Project project, @NotNull String projectPath, boolean resolveLibraries) {
-    super(GradleTaskType.RESOLVE_PROJECT);
-    myIntellijProject = project;
+    super(project, GradleTaskType.RESOLVE_PROJECT);
     myProjectPath = projectPath;
     myResolveLibraries = resolveLibraries;
   }
 
   protected void doExecute() throws Exception {
     final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
-    GradleProjectResolver resolver = manager.getFacade().getResolver();
+    GradleProjectResolver resolver = manager.getFacade(getIntellijProject()).getResolver();
     setState(GradleTaskState.IN_PROGRESS);
     final GradleProject project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
     if (project == null) {
@@ -42,10 +41,11 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
     }
     myGradleProject.set(project);
     setState(GradleTaskState.FINISHED);
-    if (myIntellijProject == null || myIntellijProject.isDisposed()) {
+    final Project intellijProject = getIntellijProject();
+    if (intellijProject == null || intellijProject.isDisposed()) {
       return;
     }
-    final GradleProjectStructureChangesModel model = myIntellijProject.getComponent(GradleProjectStructureChangesModel.class);
+    final GradleProjectStructureChangesModel model = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
     if (model != null) {
       // This task may be called during the 'import from gradle' processing, hence, no project-level IoC is up.
       // Model update is necessary for the correct tool window project structure diff showing but we don't have
@@ -55,7 +55,7 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   }
 
   @Nullable
-  public GradleProject getProject() {
+  public GradleProject getGradleProject() {
     return myGradleProject.get();
   }
 }

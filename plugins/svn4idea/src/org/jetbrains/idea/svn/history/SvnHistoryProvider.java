@@ -619,10 +619,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       super(vcs, url, pegRevision, lastPath, result, repoRootURL, null);
     }
 
-    @Override
+    /*@Override
     protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath) {
       return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, copyPath, null);
-    }
+    }*/
   }
 
   private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, VcsFileRevision> {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -109,7 +110,7 @@ public class CopyReferenceAction extends AnAction {
   private static PsiElement getElementToCopy(final Editor editor, final DataContext dataContext) {
     PsiElement element = null;
     if (editor != null) {
-      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtilBase.findReference(editor);
       if (reference != null) {
         element = reference.getElement();
       }

@@ -36,6 +36,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -65,6 +66,13 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   private boolean myUseUTFGuessing = true;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
+  private long myModificationCount;
+  private final ModificationTracker myModificationTracker = new ModificationTracker() {
+    @Override
+    public long getModificationCount() {
+      return myModificationCount;
+    }
+  };
 
   public EncodingProjectManagerImpl(Project project, GeneralSettings generalSettings, EditorSettingsExternalizable editorSettings, PsiDocumentManager documentManager) {
     myProject = project;
@@ -138,6 +146,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
         myEditorSettings.migrateCharsetSettingsTo(defaultManager);
       }
     }
+    myModificationCount++;
   }
 
   @Override
@@ -180,6 +189,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     return null;
   }
 
+  public ModificationTracker getModificationTracker() {
+    return myModificationTracker;
+  }
+
   @Override
   public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
     if (charset == null) {
@@ -188,6 +201,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     else {
       myMapping.put(virtualFileOrDir, charset);
     }
+    myModificationCount++;
     setAndSaveOrReload(virtualFileOrDir, charset);
   }
 
@@ -252,6 +266,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
         }
       }
     }
+    myModificationCount++;
   }
 
   //retrieves encoding for the Project node

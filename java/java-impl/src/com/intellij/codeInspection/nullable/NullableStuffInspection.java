@@ -26,6 +26,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,6 +61,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
+  
+  private static final Logger LOG = Logger.getInstance("#" + NullableStuffInspection.class.getName()); 
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -144,10 +147,10 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             final PsiParameter[] parameters = setter.getParameterList().getParameters();
             assert parameters.length == 1 : setter.getText();
             final PsiParameter parameter = parameters[0];
-            assert parameter != null : setter.getText();
+            LOG.assertTrue(parameter != null, setter.getText());
             if (REPORT_NOT_ANNOTATED_GETTER && !AnnotationUtil.isAnnotated(parameter, manager.getAllAnnotations()) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
               final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-              assert nameIdentifier1 != null : parameter;
+              assertValidElement(setter, parameter, nameIdentifier1);
               holder.registerProblem(nameIdentifier1,
                                      InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated",
                                                                StringUtil.getShortName(anno)),
@@ -157,7 +160,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             if (PropertyUtils.isSimpleSetter(setter)) {
               if (annotated.isDeclaredNotNull && manager.isNullable(parameter, false)) {
                 final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-                assert nameIdentifier1 != null : parameter;
+                assertValidElement(setter, parameter, nameIdentifier1);
                 holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
                                        "inspection.nullable.problems.annotated.field.setter.parameter.conflict",
                                        StringUtil.getShortName(anno), nullableSimpleName),
@@ -166,7 +169,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
               }
               else if (annotated.isDeclaredNullable && manager.isNotNull(parameter, false)) {
                 final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-                assert nameIdentifier1 != null : parameter;
+                assertValidElement(setter, parameter, nameIdentifier1);
                 holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
                   "inspection.nullable.problems.annotated.field.setter.parameter.conflict", StringUtil.getShortName(anno), notNullSimpleName),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -239,6 +242,11 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             });
           }
         }
+      }
+
+      private void assertValidElement(PsiMethod setter, PsiParameter parameter, PsiIdentifier nameIdentifier1) {
+        LOG.assertTrue(nameIdentifier1 != null, setter.getText());
+        LOG.assertTrue(parameter.isPhysical(), setter.getText());
       }
 
       public PsiAssignmentExpression getAssignmentExpressionIfOnAssignmentLefthand(PsiExpression expression) {

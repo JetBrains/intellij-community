@@ -40,6 +40,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -56,7 +57,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.util.List;
 
 /**
@@ -137,6 +137,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         parser.updateRootComponent(mySession, rootView);
         RadViewComponent newRootComponent = parser.getRootComponent();
 
+        newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
+
         PropertyParser propertyParser = new PropertyParser(myModule, myProfileAction.getProfileManager().getSelectedTarget());
         newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);
         propertyParser.loadRecursive(newRootComponent);
@@ -158,7 +160,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
-        return myXmlFile.getText();
+        if (ModelParser.checkTag(myXmlFile.getRootTag())) {
+          return myXmlFile.getText();
+        }
+        return ModelParser.NO_ROOT_CONTENT;
       }
     });
     createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
@@ -385,29 +390,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     }
     finally {
       myPSIChangeListener.start();
-    }
-  }
-
-  private static class RootView extends JComponent {
-    private int myX;
-    private int myY;
-    private BufferedImage myImage;
-
-    public RootView(BufferedImage image, int x, int y) {
-      myX = x;
-      myY = y;
-      setImage(image);
-    }
-
-    public void setImage(BufferedImage image) {
-      myImage = image;
-      setBounds(myX, myY, image.getWidth(), image.getHeight());
-    }
-
-    @Override
-    public void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      g.drawImage(myImage, 0, 0, null);
     }
   }
 }

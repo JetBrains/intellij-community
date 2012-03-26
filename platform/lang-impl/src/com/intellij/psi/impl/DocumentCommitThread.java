@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.PomManager;
@@ -406,6 +407,12 @@ public class DocumentCommitThread implements Runnable, Disposable {
       }
       catch (Exception e) {
         s += e;
+      }
+      try {
+        Disposer.dispose(project);
+      }
+      catch (Throwable ignored) {
+        // do not fill log with endless exceptions
       }
       throw new RuntimeException(s);
     }

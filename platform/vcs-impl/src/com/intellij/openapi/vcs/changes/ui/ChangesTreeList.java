@@ -299,6 +299,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
       }
     });
 
+    final Set<Object> wasSelected = new HashSet<Object>(Arrays.asList(myList.getSelectedValues()));
     myList.setModel(new AbstractListModel() {
       @Override
       public int getSize() {
@@ -310,6 +311,12 @@ public abstract class ChangesTreeList<T> extends JPanel {
         return sortedChanges.get(index);
       }
     });
+    for (int i = 0; i < sortedChanges.size(); i++) {
+      T t = sortedChanges.get(i);
+      if (wasSelected.contains(t)) {
+        myList.setSelectedIndex(i);
+      }
+    }
 
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     TreeState state = null;

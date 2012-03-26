@@ -74,6 +74,10 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     if (!(file instanceof PsiClassOwner)) {
       return false;
     }
+    
+    if (!JspPsiUtil.isInJspFile(file)) {
+      return false;
+    }
 
     for (PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
       final PsiClass newClass = MoveClassesOrPackagesUtil.doMoveClass(psiClass, moveDestination);

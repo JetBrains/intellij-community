@@ -175,7 +175,7 @@ public abstract class RadComponent {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public boolean canDelete() {
-    return true;
+    return myMetaModel == null || myMetaModel.canDelete();
   }
 
   public void delete() throws Exception {
