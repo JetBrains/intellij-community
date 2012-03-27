@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,25 +89,15 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        if (!(value instanceof CheckedTreeNode)) return;
-        CheckedTreeNode node = (CheckedTreeNode)value;
-        final Object userObject = node.getUserObject();
-        VirtualFile file;
-        if (userObject instanceof SuggestedChildRootInfo) {
-          file = ((SuggestedChildRootInfo)userObject).getSuggestedRoot();
-        }
-        else if (userObject instanceof VirtualFile) {
-          file = (VirtualFile)userObject;
-        }
-        else {
-          return;
-        }
+        if (!(value instanceof VirtualFileCheckedTreeNode)) return;
+        VirtualFileCheckedTreeNode node = (VirtualFileCheckedTreeNode)value;
+        VirtualFile file = node.getFile();
         String text;
         SimpleTextAttributes attributes;
         Icon icon;
         boolean isValid = true;
         if (leaf) {
-          VirtualFile ancestor = (VirtualFile)((CheckedTreeNode)node.getParent()).getUserObject();
+          VirtualFile ancestor = ((VirtualFileCheckedTreeNode)node.getParent()).getFile();
           if (ancestor != null) {
             text = VfsUtilCore.getRelativePath(file, ancestor, File.separatorChar);
           }
@@ -136,6 +127,10 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
         if (text != null) {
           textRenderer.append(text, attributes);
         }
+        final String rootType = node.getRootType();
+        if (rootType != null) {
+          textRenderer.append(" [" + rootType + "]", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        }
       }
     }, myRootNode);
     tree.setRootVisible(false);
@@ -144,17 +139,27 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
   }
 
   private static CheckedTreeNode createTree(List<SuggestedChildRootInfo> suggestedRoots) {
+    TObjectIntHashMap<VirtualFile> rootTypesCount = new TObjectIntHashMap<VirtualFile>();
+    for (SuggestedChildRootInfo suggestedRoot : suggestedRoots) {
+      final VirtualFile root = suggestedRoot.getSuggestedRoot();
+      if (!rootTypesCount.containsKey(root)) {
+        rootTypesCount.put(root, 0);
+      }
+      rootTypesCount.increment(root);
+    }
+
     CheckedTreeNode root = new CheckedTreeNode(null);
     Map<VirtualFile, CheckedTreeNode> rootCandidateNodes = new HashMap<VirtualFile, CheckedTreeNode>();
     for (SuggestedChildRootInfo rootInfo : suggestedRoots) {
       final VirtualFile rootCandidate = rootInfo.getRootCandidate();
       CheckedTreeNode parent = rootCandidateNodes.get(rootCandidate);
       if (parent == null) {
-        parent = new CheckedTreeNode(rootCandidate);
+        parent = new VirtualFileCheckedTreeNode(rootCandidate);
         rootCandidateNodes.put(rootCandidate, parent);
         root.add(parent);
       }
-      parent.add(new CheckedTreeNode(rootInfo));
+      final String rootType = rootTypesCount.get(rootInfo.getSuggestedRoot()) > 1 ? rootInfo.getDetector().getPresentableRootTypeName() : null;
+      parent.add(new VirtualFileCheckedTreeNode(rootInfo, rootType));
     }
     return root;
   }
@@ -178,5 +183,31 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return "DetectedRootsChooserDialog";
+  }
+
+  private static class VirtualFileCheckedTreeNode extends CheckedTreeNode {
+    private final VirtualFile myFile;
+    @Nullable private final String myRootType;
+
+    private VirtualFileCheckedTreeNode(VirtualFile file) {
+      super(file);
+      myFile = file;
+      myRootType = null;
+    }
+
+    public VirtualFileCheckedTreeNode(SuggestedChildRootInfo rootInfo, String rootType) {
+      super(rootInfo);
+      myFile = rootInfo.getSuggestedRoot();
+      myRootType = rootType;
+    }
+
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    @Nullable
+    public String getRootType() {
+      return myRootType;
+    }
   }
 }
