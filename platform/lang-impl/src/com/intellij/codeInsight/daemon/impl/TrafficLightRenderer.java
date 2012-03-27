@@ -231,24 +231,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     int x = r.x + (r.width - width) / 2;
     int y = r.y + (r.height - height) / 2;
     icon.paintIcon(c, g, x, y);
-
-    /*
-    if (status != null && status.enabled && !status.errorAnalyzingFinished) {
-    Color oldColor = g.getColor();
-    g.setColor(Color.gray);
-    //UIUtil.drawDottedRectangle(g, x, y, x + width, y + height);
-
-
-    Graphics2D g2 = (Graphics2D)g;
-    final Stroke saved = g2.getStroke();
-    g2.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{3,1,1,1}, System.currentTimeMillis() % 400 / 100));
-    g2.drawRect(x-1, y-1, width, height);
-    //g2.drawRect(r.x, r.y, r.width, r.height);
-    g2.setStroke(saved);
-
-    g.setColor(oldColor);
-    }
-    */
   }
 
   private Icon getIcon(DaemonCodeAnalyzerStatus status) {
@@ -282,7 +264,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     return new LayeredIcon(NO_ANALYSIS_ICON, trunc, STARING_EYE_ICON);
   }
 
-  static double getOverallProgress(DaemonCodeAnalyzerStatus status) {
+  private static double getOverallProgress(DaemonCodeAnalyzerStatus status) {
     long advancement = 0;
     long limit = 0;
     for (ProgressableTextEditorHighlightingPass ps : status.passStati) {
