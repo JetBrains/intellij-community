@@ -83,12 +83,12 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     return canceled;
   }
 
-  public void updateComponent(PsiElement element, @Nullable final Comparator comparator) {
-    if (myCanceled) return;
-    if (myPopup.isDisposed()) return;
+  public boolean updateComponent(PsiElement element, @Nullable final Comparator comparator) {
+    if (myCanceled) return false;
+    if (myPopup.isDisposed()) return false;
 
     synchronized (lock) {
-      if (myData.contains(element)) return;
+      if (myData.contains(element)) return true;
       myData.add(element);
     }
 
@@ -110,6 +110,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
         myPopup.pack(true, true);
       }
     }, 200, ModalityState.stateForComponent(myPopup.getContent()));
+    return true;
   }
 
   public int getCurrentSize() {
