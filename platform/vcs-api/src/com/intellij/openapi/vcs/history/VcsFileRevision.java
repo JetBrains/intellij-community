@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 
@@ -43,6 +44,11 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
       return null;
     }
 
+    @Override
+    public RepositoryLocation getChangedRepositoryPath() {
+      return null;
+    }
+
     public byte[] loadContent() throws IOException, VcsException {
       return getContent();
     }
@@ -57,4 +63,6 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
   };
 
   String getBranchName();
+
+  RepositoryLocation getChangedRepositoryPath();
 }

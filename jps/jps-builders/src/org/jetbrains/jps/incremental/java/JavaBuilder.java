@@ -529,7 +529,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
                                                                              Collection<File> classpath,
-                                                                             OutputFilesSink outputSink) throws MalformedURLException {
+                                                                             final OutputFilesSink outputSink) throws MalformedURLException {
     final URL[] platformUrls = new URL[platformCp.size()];
     int index = 0;
     for (File file : platformCp) {
@@ -544,7 +544,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     urls[index++] = getResourcePath(GridConstraints.class).toURI().toURL(); // forms_rt.jar
     //urls.add(getResourcePath(CellConstraints.class).toURI().toURL());  // jgoodies-forms
     
-    return new InstrumentationClassFinder(platformUrls, urls, outputSink);
+    return new InstrumentationClassFinder(platformUrls, urls) {
+      protected InputStream lookupClassBeforeClasspath(String internalClassName) {
+        final OutputFileObject.Content content = outputSink.lookupClassBytes(internalClassName.replace("/", "."));
+        if (content != null) {
+          return new ByteArrayInputStream(content.getBuffer(), content.getOffset(), content.getLength());
+        }
+        return null;
+      }
+    };
   }
 
   private static ClassLoader createInstrumentationClassLoader(Collection<File> platformCp, Collection<File> classpath,

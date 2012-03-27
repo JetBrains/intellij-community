@@ -380,7 +380,11 @@ public class StubGenerator implements ClassItemGenerator {
         return eval.toString() + "f";
       }
       else if (eval instanceof Character) {
-        return "'" + ((Character)eval).charValue() + "'";
+        StringBuilder buffer = new StringBuilder();
+        buffer.append('\'');
+        StringUtil.escapeStringCharacters(1, Character.toString(((Character)eval).charValue()), buffer);
+        buffer.append('\'');
+        return buffer.toString();
       }
       if (eval instanceof Number || eval instanceof Boolean) {
         return eval.toString();

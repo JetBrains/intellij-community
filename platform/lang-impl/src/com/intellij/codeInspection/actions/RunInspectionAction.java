@@ -19,6 +19,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.BaseAnalysisActionDialog;
+import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -41,6 +42,7 @@ import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -62,8 +64,7 @@ public class RunInspectionAction extends GotoActionBase {
 
     final PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
-    final VirtualFile virtualFile = LangDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (virtualFile == null) return;
+    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 
@@ -84,23 +85,26 @@ public class RunInspectionAction extends GotoActionBase {
 
   private static void runInspection(@NotNull Project project,
                                     @NotNull InspectionProfileEntry profileEntry,
-                                    @NotNull VirtualFile virtualFile,
+                                    @Nullable VirtualFile virtualFile,
                                     PsiElement psiElement, PsiFile psiFile) {
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManagerEx.getInstance(project);
-    final Module module = ModuleUtil.findModuleForFile(virtualFile, project);
+    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
+    final Module module = virtualFile != null ? ModuleUtil.findModuleForFile(virtualFile, project) : null;
 
     AnalysisScope analysisScope = null;
     if (psiFile != null) {
       analysisScope = new AnalysisScope(psiFile);
     } else {
-      if (virtualFile.isDirectory()) {
+      if (virtualFile != null && virtualFile.isDirectory()) {
         final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(virtualFile);
         if (psiDirectory != null) {
           analysisScope = new AnalysisScope(psiDirectory);
         }
       }
-      if (analysisScope == null) {
+      if (analysisScope == null && virtualFile != null) {
         analysisScope = new AnalysisScope(project, Arrays.asList(virtualFile));
+      }
+      if (analysisScope == null) {
+        analysisScope = new AnalysisScope(project);
       }
     }
 

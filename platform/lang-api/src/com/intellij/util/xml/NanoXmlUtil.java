@@ -98,6 +98,7 @@ public class NanoXmlUtil {
       }
       catch (XMLException e) {
         if (e.getException() instanceof ParserStoppedException) return;
+        if (e.getException() instanceof ParserStoppedXmlException) return;
         LOG.debug(e);
       }
     }
@@ -203,8 +204,8 @@ public class NanoXmlUtil {
       return null;
     }
 
-    protected static void stop() {
-      throw new ParserStoppedException();
+    protected static void stop() throws ParserStoppedXmlException {
+      throw ParserStoppedXmlException.INSTANCE;
     }
   }
 
@@ -318,6 +319,22 @@ public class NanoXmlUtil {
     }
   }
 
+  public static class ParserStoppedXmlException extends XMLException {
+    public static final ParserStoppedException INSTANCE = new ParserStoppedException();
+
+    private ParserStoppedXmlException() {
+      super("Parsing stopped");
+    }
+
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
+    }
+  }
+
+  /**
+   * @deprecated throw {@link ParserStoppedXmlException#INSTANCE} instead
+   */
   public static class ParserStoppedException extends RuntimeException {
     @Override
     public Throwable fillInStackTrace() {
@@ -338,7 +355,7 @@ public class NanoXmlUtil {
     public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
       myRootTagName = name;
       myNamespace = nsURI;
-      throw new NanoXmlUtil.ParserStoppedException();
+      throw ParserStoppedXmlException.INSTANCE;
     }
 
     public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {

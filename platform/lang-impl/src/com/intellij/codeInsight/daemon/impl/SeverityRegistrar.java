@@ -345,7 +345,9 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int getSeverityIdx(@NotNull HighlightSeverity severity) {
-    return getOrder().get(severity);
+    final OrderMap order = getOrder();
+    if (!order.contains(severity)) return -1;
+    return order.get(severity);
   }
 
   public boolean isDefaultSeverity(@NotNull HighlightSeverity severity) {

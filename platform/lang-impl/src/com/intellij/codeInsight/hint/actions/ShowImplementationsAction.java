@@ -335,13 +335,16 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     @Override
-    public void run(@NotNull ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       super.run(indicator);
       myElements =
         getSelfAndImplementations(myEditor, myElement, new ImplementationSearcher.BackgroundableImplementationSearcher() {
           @Override
           protected void processElement(PsiElement element) {
-            updateComponent(element, null);
+            if (!updateComponent(element, null)) {
+              indicator.cancel();
+            }
+            indicator.checkCanceled();
           }
 
           @Override
