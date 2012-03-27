@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
                                                   }
                                                   else {
                                                     File file = new File(logFile);
-                                                    ShowFilePathAction.open(file, new File(logFile));
+                                                    ShowFilePathAction.openFile(file);
                                                   }
                                                 }
                                               }), null);
