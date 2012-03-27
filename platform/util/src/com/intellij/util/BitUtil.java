@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij;
+package com.intellij.util;
 
-/** @deprecated use {@linkplain com.intellij.util.BitUtil} (to remove in IDEA 13) */
-@SuppressWarnings({"UnusedDeclaration", "ClassNameSameAsAncestorName"})
-public class BitUtil extends com.intellij.util.BitUtil {
+/**
+ * @since 27.03.2012
+ */
+public class BitUtil {
+  public static boolean isSet(final int mask, final int flag) {
+    return (mask & flag) == flag;
+  }
 }
