@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +112,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     if (!(fileFromDoc instanceof PsiCompiledElement)) {
       assert fileFromDoc == psiFile : "Files are different: " + psiFile + ";" + fileFromDoc;
       Document documentFromFile = documentManager.getDocument(psiFile);
-      assert documentFromFile == document : "Documents are different: " + document + ";" + documentFromFile;
+      assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
+                                            PsiUtilCore.getVirtualFile(psiFile);
     }
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<TextEditorHighlightingPass>();
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
