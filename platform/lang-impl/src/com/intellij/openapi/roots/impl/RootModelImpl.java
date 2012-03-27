@@ -82,7 +82,15 @@ public class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String ROOT_ELEMENT = "root";
   private final ProjectRootManagerImpl myProjectRootManager;
   // have to register all child disposables using this fake object since all clients call just ModifiableModel.dispose()
-  private final Disposable myDisposable = Disposer.newDisposable();
+  private final List<Disposable> myModelComponents = Collections.synchronizedList(new ArrayList<Disposable>());
+  private final Disposable myDisposable = new Disposable() {
+    @Override
+    public void dispose() {
+      for (Disposable component : myModelComponents) {
+        Disposer.dispose(component);
+      }
+    }
+  };
 
   RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager, ProjectRootManagerImpl projectRootManager, VirtualFilePointerManager filePointerManager) {
     myModuleRootManager = moduleRootManager;
@@ -96,7 +104,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
     for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
       ModuleExtension model = extension.getModifiableModel(false);
-      Disposer.register(myDisposable, model);
+      registerOnDispose(model);
       myExtensions.add(model);
     }
     myConfigurationAccessor = new RootConfigurationAccessor();
@@ -162,7 +170,7 @@ public class RootModelImpl implements ModifiableRootModel {
     for (ModuleExtension extension : originalRootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(false);
       model.readExternal(element);
-      Disposer.register(myDisposable, model);
+      registerOnDispose(model);
       myExtensions.add(model);
     }
     myConfigurationAccessor = new RootConfigurationAccessor();
@@ -207,7 +215,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
     for (ModuleExtension extension : rootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(writable);
-      Disposer.register(myDisposable, model);
+      registerOnDispose(model);
       myExtensions.add(model);
     }
   }
@@ -912,6 +920,7 @@ public class RootModelImpl implements ModifiableRootModel {
     myExtensions.clear();
     myWritable = false;
     myDisposed = true;
+    myModelComponents.clear();
   }
 
   @Override
@@ -1139,6 +1148,6 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   void registerOnDispose(@NotNull Disposable disposable) {
-    Disposer.register(myDisposable, disposable);
+    myModelComponents.add(disposable);
   }
 }

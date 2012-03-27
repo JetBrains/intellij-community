@@ -241,6 +241,23 @@ new Runnable() {
     }
   }
 
+  void testEvalInStaticMethod() {
+    myFixture.addFileToProject('Foo.groovy', '''\
+static def foo() {
+  int x = 5
+  print x
+}
+
+foo()
+
+''')
+    addBreakpoint 'Foo.groovy', 2
+    runDebugger 'Foo', {
+      waitForBreakpoint()
+      eval 'x', '5'
+    }
+  }
+
   private def addBreakpoint(String fileName, int line) {
     VirtualFile file = null
     edt {

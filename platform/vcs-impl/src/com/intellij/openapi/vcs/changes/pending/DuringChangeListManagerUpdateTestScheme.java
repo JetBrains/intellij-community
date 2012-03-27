@@ -129,6 +129,10 @@ public class DuringChangeListManagerUpdateTestScheme {
   }
 
   public static void checkFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
+    checkFilesAreInList(listName, manager, files);
+  }
+
+  public static void checkFilesAreInList(final String listName, final ChangeListManager manager, final VirtualFile... files) {
     System.out.println("Checking files for list: " + listName);
     assert manager.findChangeList(listName) != null;
     final LocalChangeList list = manager.findChangeList(listName);

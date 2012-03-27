@@ -44,6 +44,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showAllStandardOptions();
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces", CodeStyleSettingsCustomizable.WRAPPING_BRACES);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP", "Align when multiple", "List and map literals");
       return;
     }
     if (settingsType == SettingsType.SPACING_SETTINGS) {

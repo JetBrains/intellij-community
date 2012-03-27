@@ -59,13 +59,11 @@ public abstract class AddScopeAction extends AnAction {
     if (getSelectedProfile() == null) return;
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
-    final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
+    final InspectionConfigTreeNode[] selectedNodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
+    if (selectedNodes == null) return;
     final List<Descriptor> descriptors = new ArrayList<Descriptor>();
-    for (InspectionConfigTreeNode node : nodes) {
-      final Descriptor descriptor = node.getDesriptor();
-      if (descriptor != null && node.getScopeName() == null) {
-        descriptors.add(descriptor);
-      }
+    for (InspectionConfigTreeNode node : selectedNodes) {
+      collect(descriptors, new ArrayList<InspectionConfigTreeNode>(), node);
     }
 
     presentation.setEnabled(!getAvailableScopes(project, descriptors).isEmpty());
@@ -73,13 +71,13 @@ public abstract class AddScopeAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
-    List<Descriptor> descriptors = new ArrayList<Descriptor>();
-    for (InspectionConfigTreeNode node : nodes) {
-      final Descriptor descriptor = node.getDesriptor();
-      if (node.getScopeName() == null && descriptor != null) {
-        descriptors.add(descriptor);
-      }
+    final List<Descriptor> descriptors = new ArrayList<Descriptor>();
+    final InspectionConfigTreeNode[] selectedNodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
+    LOG.assertTrue(selectedNodes != null);
+
+    final List<InspectionConfigTreeNode> nodes = new ArrayList<InspectionConfigTreeNode>(Arrays.asList(selectedNodes));
+    for (InspectionConfigTreeNode node : selectedNodes) {
+      collect(descriptors, nodes, node);
     }
 
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
@@ -97,7 +95,7 @@ public abstract class AddScopeAction extends AnAction {
                                                                           getSelectedProfile().isToolEnabled(descriptor.getKey()));
       final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());
       if (node.getChildCount() == 0) {
-        node.add(new InspectionConfigTreeNode(descriptor, scopeToolState, true, true, false));
+        node.add(new InspectionConfigTreeNode(descriptor, getSelectedProfile().getToolDefaultState(descriptor.getKey().getID()), true, true, false));
       }
       node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState, false, true, false), 0);
       node.setInspectionNode(false);
@@ -106,6 +104,23 @@ public abstract class AddScopeAction extends AnAction {
       myTree.expandPath(new TreePath(node.getPath()));
     }
     myTree.revalidate();
+  }
+
+  private static void collect(List<Descriptor> descriptors,
+                              List<InspectionConfigTreeNode> nodes,
+                              InspectionConfigTreeNode node) {
+    final Descriptor descriptor = node.getDesriptor();
+    if (descriptor != null) {
+      if (node.getScopeName() == null) {
+        descriptors.add(descriptor);
+      }
+    } else if (node.getUserObject() instanceof String) {
+      for(int i = 0; i < node.getChildCount(); i++) {
+        final InspectionConfigTreeNode childNode = (InspectionConfigTreeNode)node.getChildAt(i);
+        nodes.add(childNode);
+        collect(descriptors, nodes, childNode);
+      }
+    }
   }
 
   private List<String> getAvailableScopes(Project project, List<Descriptor> descriptors) {
