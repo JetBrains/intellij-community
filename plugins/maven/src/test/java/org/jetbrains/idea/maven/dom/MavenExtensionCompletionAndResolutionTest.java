@@ -19,6 +19,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
+import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+
+import java.util.List;
 
 public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
@@ -65,7 +68,15 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                      "  </extensions>" +
                      "</build>");
 
-    assertCompletionVariants(myProjectPom, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
+    List<String> actual = getCompletionVariants(myProjectPom);
+
+    if (actual.isEmpty()) {
+      MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
+      System.out.println("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins"));
+      System.out.println("Indexes: " + instance.getIndices());
+    }
+
+    assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
