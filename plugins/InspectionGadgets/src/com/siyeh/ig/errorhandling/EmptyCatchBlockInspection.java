@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -153,11 +154,8 @@ public class EmptyCatchBlockInspection extends BaseInspection {
       if (identifier == null) {
         return;
       }
-      @NonNls final String parameterName =
-        parameter.getName();
-      if (m_ignoreIgnoreParameter &&
-          ("ignore".equals(parameterName) ||
-           "ignored".equals(parameterName))) {
+      @NonNls final String parameterName = parameter.getName();
+      if (m_ignoreIgnoreParameter && PsiUtil.isIgnoredName(parameterName)) {
         return;
       }
       final PsiElement catchToken = section.getFirstChild();
