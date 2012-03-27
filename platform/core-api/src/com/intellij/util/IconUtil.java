@@ -207,4 +207,15 @@ public class IconUtil {
     return SystemInfo.isMac ? PlatformIcons.TABLE_EDIT_ROW : PlatformIcons.EDIT;
   }
 
+  public static Icon getAddClassIcon() {
+    return getToolbarDecoratorIcon("addClass.png");
+  }
+
+  public static Icon getToolbarDecoratorIcon(String name) {
+    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + name);
+  }
+
+  private static String getToolbarDecoratorIconsFolder() {
+    return "/toolbarDecorator/" + (SystemInfo.isMac ? "" : "mac/");
+  }
 }
