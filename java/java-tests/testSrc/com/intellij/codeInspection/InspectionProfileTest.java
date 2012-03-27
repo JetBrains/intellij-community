@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -27,6 +28,7 @@ import org.jdom.JDOMException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertElementsEqual;
 
@@ -209,6 +211,18 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     assertTrue(profile.isProfileLocked());
     assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("bar")));
+  }
+
+  public void testGlobalInspectionContext() throws Exception {
+    InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
+    profile.disableAllTools();
+    profile.enableTool(new UnusedDeclarationInspection().getShortName());
+
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
+    context.setExternalProfile(profile);
+    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    Map<String,Tools> tools = context.getTools();
+    assertEquals(1, tools.size());
   }
 
   private static LocalInspectionToolWrapper createTool(String s) {
