@@ -36,11 +36,7 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
     assertOrderedEquals(myFixture.lookupElementStrings, "Bar", "Foo");
   }
 
-  public void testSmartCompletionAfterNewInDeclarationWithInterface() throws Throwable { doSmartTest(); }
-
   public void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
-
-  public void testSmartCompletionAfterNewInDeclarationWithAbstractClass() throws Throwable { doSmartTest(); }
 
   public void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable { doSmartTest(); }
 
@@ -127,5 +123,20 @@ throw new RuntimeException()
   
   void testInnerClassReferenceWithoutQualifier() {
     doSmartTest()
+  }
+
+  void testAnonymousClassCompletion() {
+    myFixture.configureByText('_a.groovy', '''\
+Runnable r = new Run<caret>
+''')
+    myFixture.complete(CompletionType.SMART)
+    myFixture.checkResult('''\
+Runnable r = new Runnable() {
+    @Override
+    void run() {
+        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+    }
+}
+''')
   }
 }

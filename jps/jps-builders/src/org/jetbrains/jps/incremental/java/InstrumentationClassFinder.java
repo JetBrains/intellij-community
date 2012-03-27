@@ -1,6 +1,5 @@
 package org.jetbrains.jps.incremental.java;
 
-import com.intellij.util.lang.ClassPath;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
@@ -23,14 +22,20 @@ class InstrumentationClassFinder {
   private static final PseudoClass[] EMPTY_PSEUDOCLASS_ARRAY = new PseudoClass[0];
   private static final String CLASS_RESOURCE_EXTENSION = ".class";
   private final Map<String, PseudoClass> myLoaded = new HashMap<String, PseudoClass>(); // className -> class object
-  private final ClassPath myPlatformClasspath;
-  private final ClassPath myClasspath;
+  private final ClassFinderClasspath myPlatformClasspath;
+  private final ClassFinderClasspath myClasspath;
   private final OutputFilesSink myCompiled;
 
   public InstrumentationClassFinder(final URL[] platformClasspath, final URL[] classpath, OutputFilesSink compiled) {
     myCompiled = compiled;
-    myPlatformClasspath = new ClassPath(platformClasspath, true, false);
-    myClasspath = new ClassPath(classpath, true, false);
+    myPlatformClasspath = new ClassFinderClasspath(platformClasspath);
+    myClasspath = new ClassFinderClasspath(classpath);
+  }
+
+  public void releaseResources() {
+    myPlatformClasspath.releaseResources();
+    myClasspath.releaseResources();
+    myLoaded.clear();
   }
 
   public PseudoClass loadClass(final String internalName) throws IOException, ClassNotFoundException{

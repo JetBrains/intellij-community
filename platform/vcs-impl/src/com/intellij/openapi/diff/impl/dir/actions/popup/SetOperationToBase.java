@@ -33,11 +33,16 @@ public abstract class SetOperationToBase extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DirDiffOperation operation = getOperation();
+    boolean setToDefault = operation == DirDiffOperation.NONE;
     final DirDiffTableModel model = getModel(e);
     final JTable table = getTable(e);
     assert model != null && table != null;
     for (DirDiffElement element : model.getSelectedElements()) {
-      element.setOperation(operation);
+      if (isEnabledFor(element)) {
+        element.setOperation(setToDefault ? element.getDefaultOperation() : operation);
+      } else {
+        element.setOperation(DirDiffOperation.NONE);
+      }
     }
     table.repaint();
   }
@@ -46,13 +51,21 @@ public abstract class SetOperationToBase extends AnAction {
   protected abstract DirDiffOperation getOperation();
 
   @Override
-  public void update(AnActionEvent e) {
+  public final void update(AnActionEvent e) {
     final DirDiffTableModel model = getModel(e);
     final JTable table = getTable(e);
-    e.getPresentation().setEnabled(table != null
-                                   && model != null
-                                   && !model.getSelectedElements().isEmpty());
+    if (table != null && model != null) {
+      for (DirDiffElement element : model.getSelectedElements()) {
+        if (isEnabledFor(element)) {
+          e.getPresentation().setEnabled(true);
+          return;
+        }
+      }
+    }
+    e.getPresentation().setEnabled(false);
   }
+
+  protected abstract boolean isEnabledFor(DirDiffElement element);
 
   @Nullable
   private static JTable getTable(AnActionEvent e) {

@@ -140,6 +140,29 @@ public class GrClosureSignatureUtil {
     };
   }
 
+  public static GrClosureSignature createSignatureWithErasedParameterTypes(final GrClosableBlock closure) {
+    final PsiParameter[] params = closure.getParameterList().getParameters();
+    final GrClosureParameter[] closureParams = new GrClosureParameter[params.length];
+    for (int i = 0; i < params.length; i++) {
+      PsiParameter param = params[i];
+      PsiType type = TypeConversionUtil.erasure(param.getType());
+      closureParams[i] = new GrClosureParameterImpl(type, GrClosureParameterImpl.isParameterOptional(param),
+                                                    GrClosureParameterImpl.getDefaultInitializer(param));
+    }
+    return new GrClosureSignatureImpl(closureParams, null, GrClosureParameterImpl.isVararg(closureParams)) {
+      @Override
+      public PsiType getReturnType() {
+        return closure.getReturnType();
+      }
+
+      @Override
+      public boolean isValid() {
+        return closure.isValid();
+      }
+    };
+  }
+
+
   public static GrClosureSignature createSignature(PsiParameter[] parameters, @Nullable PsiType returnType) {
     return new GrClosureSignatureImpl(parameters, returnType);
   }
@@ -449,6 +472,7 @@ public class GrClosureSignatureUtil {
   public static Map<GrExpression, Pair<PsiParameter, PsiType>> mapArgumentsToParameters(@NotNull GroovyResolveResult resolveResult,
                                                                                         @NotNull GroovyPsiElement context,
                                                                                         final boolean partial,
+                                                                                        final boolean eraseArgs,
                                                                                         @NotNull final GrNamedArgument[] namedArgs,
                                                                                         @NotNull final GrExpression[] expressionArgs,
                                                                                         @NotNull GrClosableBlock[] closureArguments) {
@@ -457,18 +481,20 @@ public class GrClosureSignatureUtil {
     final PsiElement element = resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     if (element instanceof PsiMethod) {
-      signature = createSignature((PsiMethod)element, substitutor);
+      signature =
+        eraseArgs ? createSignatureWithErasedParameterTypes((PsiMethod)element) : createSignature((PsiMethod)element, substitutor);
       parameters = ((PsiMethod)element).getParameterList().getParameters();
     }
     else if (element instanceof GrClosableBlock) {
-      signature = createSignature((GrClosableBlock)element);
+      signature =
+        eraseArgs ? createSignatureWithErasedParameterTypes((GrClosableBlock)element) : createSignature(((GrClosableBlock)element));
       parameters = ((GrClosableBlock)element).getAllParameters();
     }
     else {
       return null;
     }
 
-    final ArgInfo<PsiElement>[] argInfos = mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial);
+    final ArgInfo<PsiElement>[] argInfos = mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial, eraseArgs);
     if (argInfos == null) {
       return null;
     }
@@ -498,17 +524,17 @@ public class GrClosureSignatureUtil {
                                                                @Nullable GrArgumentList list,
                                                                @NotNull GroovyPsiElement context,
                                                                @NotNull GrClosableBlock[] closureArguments) {
-    return mapParametersToArguments(signature, list, context, closureArguments, false);
+    return mapParametersToArguments(signature, list, context, closureArguments, false, false);
   }
 
   @Nullable
   public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
                                                                @Nullable GrArgumentList list,
                                                                @NotNull GroovyPsiElement context,
-                                                               @NotNull GrClosableBlock[] closureArguments, final boolean partial) {
+                                                               @NotNull GrClosableBlock[] closureArguments, final boolean partial, final boolean eraseArgs) {
     final GrNamedArgument[] namedArgs = list == null ? GrNamedArgument.EMPTY_ARRAY : list.getNamedArguments();
     final GrExpression[] expressionArgs = list == null ? GrExpression.EMPTY_ARRAY : list.getExpressionArguments();
-    return mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial);
+    return mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial, eraseArgs);
   }
 
   @Nullable
@@ -517,7 +543,7 @@ public class GrClosureSignatureUtil {
                                                                @NotNull GrExpression[] expressionArgs,
                                                                @NotNull GroovyPsiElement context,
                                                                @NotNull GrClosableBlock[] closureArguments,
-                                                               final boolean partial) {
+                                                               final boolean partial, boolean eraseArgs) {
     List<InnerArg> innerArgs = new ArrayList<InnerArg>();
 
     boolean hasNamedArgs = namedArgs.length > 0;
@@ -539,7 +565,9 @@ public class GrClosureSignatureUtil {
       if (expression instanceof GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
         type = null;
       }
-      type = TypeConversionUtil.erasure(type);
+      if (eraseArgs) {
+        type = TypeConversionUtil.erasure(type);
+      }
       innerArgs.add(new InnerArg(type, expression));
     }
 

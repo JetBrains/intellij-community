@@ -294,8 +294,10 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     PsiElement parent = context;
     while (parent != null) {
       if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) return true;
-      if (parent instanceof GrTypeDefinition || parent instanceof GroovyFile) return false;
-      parent = parent.getParent();
+      if (parent instanceof GroovyFile && parent.isPhysical()) return false;
+      if (parent instanceof GrTypeDefinition) return false;
+
+      parent = parent.getContext();
     }
 
     return false;

@@ -17,8 +17,10 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -33,7 +35,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class IdReferenceProvider extends PsiReferenceProviderBase {
+public class IdReferenceProvider extends PsiReferenceProvider {
   @NonNls public static final String FOR_ATTR_NAME = "for";
   @NonNls public static final String ID_ATTR_NAME = "id";
   @NonNls public static final String STYLE_ID_ATTR_NAME = "styleId";
@@ -112,6 +114,8 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
           if (jsfNs) {
             attributeValueSelfReference = new AttributeValueSelfReference(element);
           } else {
+            if (hasOuterLanguageElement(element)) return PsiReference.EMPTY_ARRAY;
+
             attributeValueSelfReference =  new GlobalAttributeValueSelfReference(element, true);
           }
           return new PsiReference[]{attributeValueSelfReference};
@@ -119,6 +123,16 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
       }
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  private static boolean hasOuterLanguageElement(@NotNull PsiElement element) {
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof OuterLanguageElement) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public static class GlobalAttributeValueSelfReference extends AttributeValueSelfReference {

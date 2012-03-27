@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.util.TestUtils;
+
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
  * @author peter
@@ -24,12 +25,12 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "editing/";
+    return TestUtils.testDataPath + "editing/";
   }
 
-  private void doTest(final char c) throws Throwable {
+  private void doTest(final String c) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
-    myFixture.type(c);
+    myFixture.type(c as char);
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
@@ -43,4 +44,20 @@ public class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
   public void testPairAngleBracketAfterClassNameOvertype() throws Throwable {doTest('>');}
   public void testPairAngleBracketAfterClassNameBackspace() throws Throwable {doTest('\b');}
   public void testNoPairLess() throws Throwable {doTest('<');}
+
+  public void testTripleString() {
+    myFixture.configureByText('_.groovy', '')
+    myFixture.type('\'')
+    myFixture.type('\'')
+    myFixture.type('\'')
+    myFixture.checkResult("'''<caret>'''")
+  }
+
+  public void testTripleGString() {
+    myFixture.configureByText('_.groovy', '')
+    myFixture.type('"')
+    myFixture.type('"')
+    myFixture.type('"')
+    myFixture.checkResult('"""<caret>"""')
+  }
 }

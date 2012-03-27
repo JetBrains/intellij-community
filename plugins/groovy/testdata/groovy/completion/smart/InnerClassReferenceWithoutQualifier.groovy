@@ -1,6 +1,6 @@
 class Foo {
   static class Bar {}
   {
-    List<Bar> l = new AL<caret>
+    List<Bar> l = new ArrL<caret>
   }
 }

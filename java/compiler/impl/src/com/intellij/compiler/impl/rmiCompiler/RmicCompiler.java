@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Chunk;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -276,7 +277,6 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     return successfullyCompiledItems.toArray(new RmicProcessingItem[successfullyCompiledItems.size()]);
   }
 
-  // todo: Module -> ModuleChunk
   private static String[] createStartupCommand(final Module module, final String outputPath, final RmicProcessingItem[] items) {
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
 
@@ -296,7 +296,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
     commandLine.add("-verbose");
 
     final Project project = module.getProject();
-    ContainerUtil.addAll(commandLine, RmicConfiguration.getSettings(project).getOptions(project));
+    ContainerUtil.addAll(commandLine, RmicConfiguration.getSettings(project).getOptions(new Chunk<Module>(module)));
 
     commandLine.add("-classpath");
 

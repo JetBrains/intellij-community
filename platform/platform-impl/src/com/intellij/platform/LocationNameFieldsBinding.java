@@ -46,7 +46,7 @@ public class LocationNameFieldsBinding {
   private String myBaseDir;
 
   public LocationNameFieldsBinding(Project project, final TextFieldWithBrowseButton locationTextField,
-                                   final JTextField nameTextField, String baseDir) {
+                                   final JTextField nameTextField, String baseDir, final String browseFolderTitle) {
 
     myBaseDir = baseDir;
     File suggestedProjectDirectory = FileUtil.findSequentNonexistentFile(new File(baseDir), "untitled", "");
@@ -57,7 +57,7 @@ public class LocationNameFieldsBinding {
 
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-        new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Location for Project Directory", "", locationTextField,
+        new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(browseFolderTitle, "", locationTextField,
                                                                              project,
                                                                              descriptor,
                                                                              TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {

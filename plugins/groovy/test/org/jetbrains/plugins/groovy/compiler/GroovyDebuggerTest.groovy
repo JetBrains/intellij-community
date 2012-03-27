@@ -33,6 +33,8 @@ import com.intellij.debugger.ui.DebuggerPanelsManager
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.OSProcessManager
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
@@ -47,8 +49,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.execution.process.OSProcessManager
-import com.intellij.execution.process.OSProcessHandler
 
 /**
  * @author peter

@@ -17,12 +17,13 @@
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -46,6 +47,18 @@ public class GroovyNamesUtil {
     if (lexer.getTokenType() != GroovyTokenTypes.mIDENT) return false;
     lexer.advance();
     return lexer.getTokenType() == null;
+  }
+
+  public static boolean isValidReference(@Nullable String text, boolean afterDot, Project project) {
+    if (text == null) return false;
+
+    try {
+      GroovyPsiElementFactory.getInstance(project).createReferenceExpressionFromText(afterDot ? "foo." + text : text);
+      return true;
+    }
+    catch (Exception e) {
+      return false;
+    }
   }
 
   public static ArrayList<String> camelizeString(String str) {

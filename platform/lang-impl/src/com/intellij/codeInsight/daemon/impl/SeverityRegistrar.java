@@ -54,7 +54,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   private final Map<String, Color> ourRendererColors = new THashMap<String, Color>();
   @NonNls private static final String COLOR = "color";
 
-  private final TObjectIntHashMap<HighlightSeverity> myOrder = new TObjectIntHashMap<HighlightSeverity>();
+  private final OrderMap myOrder = new OrderMap();
   private JDOMExternalizableStringList myReadOrder;
 
   private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new THashMap<String, HighlightInfoType>();
@@ -301,13 +301,15 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
 
   @Override
   public int compare(final HighlightSeverity s1, final HighlightSeverity s2) {
-    TObjectIntHashMap<HighlightSeverity> order = getOrder();
-    return order.get(s1) - order.get(s2);
+    OrderMap order = getOrder();
+    int o1 = order.getOrder(s1, -1);
+    int o2 = order.getOrder(s2, -1);
+    return o1 - o2;
   }
 
 
   @NotNull
-  private TObjectIntHashMap<HighlightSeverity> getOrder() {
+  private OrderMap getOrder() {
     if (myOrder.isEmpty()) {
       List<HighlightSeverity> order = getDefaultOrder();
       setFromList(order);
@@ -343,7 +345,9 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int getSeverityIdx(@NotNull HighlightSeverity severity) {
-    return getOrder().get(severity);
+    final OrderMap order = getOrder();
+    if (!order.contains(severity)) return -1;
+    return order.get(severity);
   }
 
   public boolean isDefaultSeverity(@NotNull HighlightSeverity severity) {
@@ -412,6 +416,13 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
       int result = myAttributes != null ? myAttributes.hashCode() : 0;
       result = 31 * result + (myType != null ? myType.hashCode() : 0);
       return result;
+    }
+  }
+
+  private static class OrderMap extends TObjectIntHashMap<HighlightSeverity> {
+    private int getOrder(@NotNull HighlightSeverity severity, int defaultOrder) {
+      int index = index(severity);
+      return index < 0 ? defaultOrder : _values[index];
     }
   }
 }

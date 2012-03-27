@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,7 +236,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    buffer.append(PsiBundle.message("psi.decompiled.text.header"));
+    buffer.append("\n  // IntelliJ API Decompiler stub source generated from a class file\n  // Implementation of methods is not available");
     goNextLine(indentLevel, buffer);
     goNextLine(indentLevel, buffer);
     final PsiPackageStatement packageStatement = getPackageStatement();

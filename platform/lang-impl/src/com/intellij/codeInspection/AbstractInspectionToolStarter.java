@@ -66,7 +66,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
       if (!myOptions.suppressHelp()) {
         printHelpAndExit(args, myOptions);
       }
-      return;
+      System.exit(1);
     }
 
     myApplication = new InspectionApplication();

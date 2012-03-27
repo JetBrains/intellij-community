@@ -496,7 +496,7 @@ public class IdeEventQueue extends EventQueue {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
       }
-      
+
       return;
     }
 
@@ -530,6 +530,11 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     else if (e instanceof MouseEvent) {
+      if (((MouseEvent)e).getButton() != 0) {
+        setLastClickEvent((MouseEvent)e);
+      } else if (lastClickEvent != null && Math.abs(System.currentTimeMillis() - lastClickTime) > 200){
+        setLastClickEvent(null);//Obsolete event
+      }
       if (!myMouseEventDispatcher.dispatchMouseEvent((MouseEvent)e)) {
         defaultDispatchEvent(e);
       }
@@ -537,6 +542,20 @@ public class IdeEventQueue extends EventQueue {
     else {
       defaultDispatchEvent(e);
     }
+  }
+
+  private MouseEvent lastClickEvent = null;
+  private long lastClickTime = 0L;
+
+  private void setLastClickEvent(@Nullable MouseEvent event) {
+    lastClickEvent = event;
+    lastClickTime = System.currentTimeMillis();
+  }
+
+  public boolean wasRootRecentlyClicked(Component component) {
+    if (component == null || lastClickEvent == null || lastClickEvent.getComponent() == null)
+      return false;
+    return SwingUtilities.getRoot(lastClickEvent.getComponent()) == SwingUtilities.getRoot(component);
   }
 
   private static void fixStickyWindow(KeyboardFocusManager mgr, Window wnd, String resetMethod) {

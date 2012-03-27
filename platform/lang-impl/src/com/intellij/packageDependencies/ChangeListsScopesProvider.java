@@ -86,6 +86,15 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
     return null;
   }
 
+  @Override
+  public boolean isVetoed(NamedScope scope, ScopePlace place) {
+    if (place == ScopePlace.SETTING) {
+      final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+      return changeListManager.findChangeList(scope.getName()) != null;
+    }
+    return false;
+  }
+
   private static NamedScope createScope(final List<VirtualFile> files, String changeListName) {
     return new NamedScope(changeListName, new PackageSetBase() {
       @Override

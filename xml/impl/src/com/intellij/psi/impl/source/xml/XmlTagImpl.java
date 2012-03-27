@@ -955,35 +955,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   public XmlTagValue getValue() {
     XmlTagValue tagValue = myValue;
     if (tagValue == null) {
-      final PsiElement[] elements = getElements();
-      final List<XmlTagChild> bodyElements = new ArrayList<XmlTagChild>(elements.length);
-
-      boolean insideBody = false;
-      for (final PsiElement element : elements) {
-        final ASTNode treeElement = element.getNode();
-        if (insideBody) {
-          if (treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) break;
-          if (!(element instanceof XmlTagChild)) continue;
-          bodyElements.add((XmlTagChild)element);
-        }
-        else if (treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
-      }
-
-      XmlTagChild[] tagChildren = ContainerUtil.toArray(bodyElements, new XmlTagChild[bodyElements.size()]);
-      myValue = tagValue = new XmlTagValueImpl(tagChildren, this);
+      myValue = tagValue = XmlTagValueImpl.createXmlTagValue(this);
     }
     return tagValue;
-  }
-
-  private PsiElement[] getElements() {
-    final List<PsiElement> elements = new ArrayList<PsiElement>();
-    processElements(new PsiElementProcessor() {
-      public boolean execute(@NotNull PsiElement psiElement) {
-        elements.add(psiElement);
-        return true;
-      }
-    }, this);
-    return ContainerUtil.toArray(elements, new PsiElement[elements.size()]);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
