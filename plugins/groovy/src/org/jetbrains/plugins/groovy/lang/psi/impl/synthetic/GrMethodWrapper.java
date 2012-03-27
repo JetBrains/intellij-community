@@ -53,12 +53,17 @@ public class GrMethodWrapper extends GrLightMethodBuilder {
     setReturnType(TYPE_MARKER);
   }
 
+  @Override
+  public void setNavigationElement(@NotNull PsiElement navigationElement) {
+    myNavigationElementInit = true;
+    super.setNavigationElement(navigationElement);
+  }
+
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
     if (!myNavigationElementInit) {
       setNavigationElement(myWrappedMethod.getNavigationElement()); // getNavigationElement() can get long time if wrapped method is a ClsMethod.
-      myNavigationElementInit = true;
     }
     return super.getNavigationElement();
   }
