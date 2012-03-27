@@ -2297,23 +2297,31 @@ def list_sources(paths):
 def zip_sources(zip_filename):
     zip = zipfile.ZipFile(zip_filename, 'w')
 
-    try:
-        while True:
-            line = sys.stdin.readline()
-            line = line.strip()
+    f = open(zip_filename + '.log.txt', 'w')
 
-            if not line:
-                break
-            (path, arcpath) = line.split()
-            zip.write(path, arcpath)
+    try:
+        try:
+            while True:
+                line = sys.stdin.readline()
+                line = line.strip()
+
+                if line == '-':
+                    break
+
+                if line:
+                    (path, arcpath) = line.split()
+                    zip.write(path, arcpath)
+                    f.write(arcpath + 'added.\n')
+            say('OK: ' + zip_filename)
+        except :
+            import traceback
+            traceback.print_exc()
+            say('Error creating archive.')
+
+            sys.exit(1)
+    finally:
         zip.close()
-        say('OK: ', zip_filename)
-        sys.exit(0)
-    except e:
-        import traceback
-        traceback.print_exc()
-        say('Error creating archive.')
-        sys.exit(1)
+        f.close()
 
 if sys.platform == 'cli':
     from System import DateTime
@@ -2522,6 +2530,7 @@ if __name__ == "__main__":
             report("Expected 1 arg with -S, got %d args", len(args))
             sys.exit(1)
         zip_sources(args[0])
+        sys.exit(0)
 
 
     # build skeleton(s)

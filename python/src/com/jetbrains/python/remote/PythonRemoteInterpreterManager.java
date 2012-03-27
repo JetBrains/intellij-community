@@ -32,6 +32,13 @@ public abstract class PythonRemoteInterpreterManager {
                                                     PyPathMappingSettings mappingSettings)
     throws PyRemoteInterpreterException;
 
+  public abstract ProcessHandler startRemoteProcessWithPid(Project project,
+                                                    PythonRemoteSdkAdditionalData data,
+                                                    GeneralCommandLine commandLine,
+                                                    @Nullable
+                                                    PyPathMappingSettings mappingSettings)
+    throws PyRemoteInterpreterException;
+
   @Nullable
   public abstract Sdk addRemoteSdk(Project project);
 
