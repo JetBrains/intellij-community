@@ -30,6 +30,7 @@ import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -187,6 +188,11 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     }
 
     public String getCommitMessage() {
+      return null;
+    }
+
+    @Override
+    public RepositoryLocation getChangedRepositoryPath() {
       return null;
     }
 

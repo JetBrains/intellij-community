@@ -1337,6 +1337,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       }
     }
 
+    @Override
+    public RepositoryLocation getChangedRepositoryPath() {
+      return myRevision.getChangedRepositoryPath();
+    }
+
     public VcsFileRevision getRevision() {
       return myRevision;
     }

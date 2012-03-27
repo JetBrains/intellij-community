@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionDvcsSpecific;
@@ -77,6 +78,11 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
    */
   public FilePath getPath() {
     return path;
+  }
+
+  @Override
+  public RepositoryLocation getChangedRepositoryPath() {
+    return null;
   }
 
   public VcsRevisionNumber getRevisionNumber() {

@@ -20,6 +20,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.SimpleRevision;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -122,6 +123,11 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
 
   public String getState() {
     return myCvsRevision.getState();
+  }
+
+  @Override
+  public RepositoryLocation getChangedRepositoryPath() {
+    return null;
   }
 
   public Collection<String> getTags() {
