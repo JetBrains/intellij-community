@@ -46,6 +46,12 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
   private JPanel myProjectTypePanel;
   private JLabel myLocationLabel;
 
+  protected JPanel getPlaceHolder() {
+    return myPlaceHolder;
+  }
+
+  private JPanel myPlaceHolder;
+
   private static final Object EMPTY_PROJECT_GENERATOR = new Object();
 
   protected NewDirectoryProjectDialog(Project project) {
