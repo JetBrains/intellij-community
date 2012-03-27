@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,29 +154,29 @@ public class JavaSdkImpl extends JavaSdk {
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
       if (new File("/usr/libexec/java_home").exists()) {
-        BufferedReader input = null;
         try {
           final Process exec = Runtime.getRuntime().exec("/usr/libexec/java_home");
-          input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
-          final String path = input.readLine();
-          if (new File(path).exists()) return path;
-        }
-        catch (IOException e) {
-          // nothing
-        } finally {
+          final BufferedReader input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
           try {
-            if (input != null) input.close();
+            final String path = input.readLine();
+            if (new File(path).exists()) return path;
           }
-          catch (IOException e) {
-            // ignore
+          finally {
+            input.close();
           }
         }
+        catch (IOException ignore) { }
       }
 
       return "/System/Library/Frameworks/JavaVM.framework/Versions/";
     }
     if (SystemInfo.isLinux) {
-      return "/usr/lib/jvm/";
+      final String[] homes = {"/usr/java", "/opt/java", "/usr/lib/jvm/"};
+      for (String home : homes) {
+        if (new File(home).isDirectory()) {
+          return home;
+        }
+      }
     }
     if (SystemInfo.isSolaris) {
       return "/usr/jdk/";
