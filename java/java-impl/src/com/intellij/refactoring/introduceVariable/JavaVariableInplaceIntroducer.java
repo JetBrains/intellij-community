@@ -194,7 +194,7 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
                           .restoreExpression(containingFile, (PsiVariable)vars[0], elementFactory, occurrenceMarker, myExpressionText);
                   }
                   final PsiExpression initializer = ((PsiVariable)vars[0]).getInitializer();
-                  if (initializer != null && Comparing.strEqual(initializer.getText(), myExpressionText)) {
+                  if (initializer != null && Comparing.strEqual(initializer.getText(), myExpressionText) && myExpr == null) {
                     element.replace(JavaPsiFacade.getInstance(myProject).getElementFactory().createStatementFromText(myExpressionText, element));
                   } else {
                     element.delete();
