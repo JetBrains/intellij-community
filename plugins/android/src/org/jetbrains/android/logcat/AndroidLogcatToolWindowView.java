@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -477,7 +477,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
   private class MyAddFilterAction extends AnAction {
     private MyAddFilterAction() {
-      super(CommonBundle.message("button.add"), AndroidBundle.message("android.logcat.add.logcat.filter.button"), IconUtil.getAddRowIcon());
+      super(CommonBundle.message("button.add"), AndroidBundle.message("android.logcat.add.logcat.filter.button"), IconUtil.getAddIcon());
     }
 
     @Override
@@ -503,7 +503,7 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
   private class MyRemoveFilterAction extends AnAction {
     private MyRemoveFilterAction() {
       super(CommonBundle.message("button.delete"), AndroidBundle.message("android.logcat.remove.logcat.filter.button"),
-            IconUtil.getRemoveRowIcon());
+            IconUtil.getRemoveIcon());
     }
 
     @Override

@@ -187,24 +187,24 @@ public class IconUtil {
     }
   }
 
-  public static Icon getAddRowIcon() {
-    return SystemInfo.isMac ? PlatformIcons.TABLE_ADD_ROW : PlatformIcons.ADD_ICON;
+  public static Icon getAddIcon() {
+    return getToolbarDecoratorIcon("add.png");
   }
 
-  public static Icon getRemoveRowIcon() {
-    return SystemInfo.isMac ? PlatformIcons.TABLE_REMOVE_ROW : PlatformIcons.DELETE_ICON;
+  public static Icon getRemoveIcon() {
+    return getToolbarDecoratorIcon("remove.png");
   }
 
-  public static Icon getMoveRowUpIcon() {
-    return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_UP : PlatformIcons.MOVE_UP_ICON;
+  public static Icon getMoveUpIcon() {
+    return getToolbarDecoratorIcon("moveUp.png");
   }
 
-  public static Icon getMoveRowDownIcon() {
-    return SystemInfo.isMac ? PlatformIcons.TABLE_MOVE_ROW_DOWN : PlatformIcons.MOVE_DOWN_ICON;
+  public static Icon getMoveDownIcon() {
+    return getToolbarDecoratorIcon("moveDown.png");
   }
 
   public static Icon getEditIcon() {
-    return SystemInfo.isMac ? PlatformIcons.TABLE_EDIT_ROW : PlatformIcons.EDIT;
+    return getToolbarDecoratorIcon("edit.png");
   }
 
   public static Icon getAddClassIcon() {
@@ -216,6 +216,6 @@ public class IconUtil {
   }
 
   private static String getToolbarDecoratorIconsFolder() {
-    return "/toolbarDecorator/" + (SystemInfo.isMac ? "" : "mac/");
+    return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
   }
 }
