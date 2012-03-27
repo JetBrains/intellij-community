@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrMethodWrapper;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -169,7 +170,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
     private void registerExplicitMethod(String name, String realMethodName) {
       for (PsiMethod method : mySwingBuilderClass.findMethodsByName(realMethodName, false)) {
-        add(GrLightMethodBuilder.wrap(method));
+        add(GrMethodWrapper.wrap(method));
       }
     }
 
