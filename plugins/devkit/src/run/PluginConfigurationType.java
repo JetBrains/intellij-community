@@ -26,6 +26,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import javax.swing.*;
 import java.io.File;
@@ -50,7 +51,7 @@ public class PluginConfigurationType implements ConfigurationType {
       public RunConfiguration createConfiguration(String name, RunConfiguration template) {
         final PluginRunConfiguration pluginRunConfiguration = (PluginRunConfiguration)template;
         if (pluginRunConfiguration.getModule() == null) {
-          final Module[] modules = pluginRunConfiguration.getModules();
+          final Module[] modules = PluginModuleType.getAllPluginModules(pluginRunConfiguration.getProject());
           if (modules.length > 0){
             pluginRunConfiguration.setModule(modules[0]);
           }
