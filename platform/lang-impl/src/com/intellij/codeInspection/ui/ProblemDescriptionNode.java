@@ -118,7 +118,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return renderDescriptionMessage(descriptor, element, true).replaceAll("<[^>]*>", "");
+    return renderDescriptionMessage(descriptor, element, true)/*.replaceAll("<[^>]*>", "")*/;
   }
 
   @NotNull
