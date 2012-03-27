@@ -98,6 +98,9 @@ public class PythonFileType extends LanguageFileType {
 
   @Nullable
   public static String getCharsetFromEncodingDeclaration(String content) {
+    if (!content.contains("coding")) {
+      return null;
+    }
     final List<String> lines = StringUtil.split(content, "\n");
     int count = 0;
     for (String line : lines) {
