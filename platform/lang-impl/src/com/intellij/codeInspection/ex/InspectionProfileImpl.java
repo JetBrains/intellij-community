@@ -426,11 +426,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public void disableToolByDefault(String toolId) {
-    getTools(toolId).getDefaultState().setEnabled(false);
+    getToolDefaultState(toolId).setEnabled(false);
+  }
+
+  public ScopeToolState getToolDefaultState(String toolId) {
+    return getTools(toolId).getDefaultState();
   }
 
   public void enableToolByDefault(String toolId) {
-    getTools(toolId).getDefaultState().setEnabled(true);
+    getToolDefaultState(toolId).setEnabled(true);
   }
 
   public boolean wasInitialized() {
