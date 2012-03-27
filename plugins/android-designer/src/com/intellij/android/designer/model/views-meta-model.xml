@@ -5,7 +5,7 @@
   <!-- ================= Roots ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadRootViewLayout"
+        layout="com.intellij.android.designer.model.RadSingleChildrenViewLayout"
         tag="&lt;root&gt;"
         delete="false">
 
@@ -733,6 +733,46 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadScrollViewComponent"
+        layout="com.intellij.android.designer.model.RadSingleChildrenViewLayout"
+        class="android.widget.ScrollView"
+        tag="ScrollView">
+
+    <palette title="ScrollView" icon="/com/intellij/android/designer/icons/ScrollView.png"
+             tooltip="Layout container for a view hierarchy that can be scrolled by the user, allowing it to be larger than the physical display. ScrollView only supports vertical scrolling."/>
+
+    <properties important="fillViewport"/>
+
+    <creation>
+      <![CDATA[
+          <ScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadScrollViewComponent"
+        layout="com.intellij.android.designer.model.RadSingleChildrenViewLayout"
+        class="android.widget.HorizontalScrollView"
+        tag="HorizontalScrollView">
+
+    <palette title="HorizontalScrollView" icon="/com/intellij/android/designer/icons/HorizontalScrollView.png"
+             tooltip="Layout container for a view hierarchy that can be scrolled by the user, allowing it to be larger than the physical display."/>
+
+    <properties important="fillViewport"/>
+
+    <creation>
+      <![CDATA[
+          <HorizontalScrollView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+          />
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Layouts ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
@@ -799,6 +839,8 @@
       <item tag="SearchView"/>
       <item tag="ListView"/>
       <item tag="GridView"/>
+      <item tag="HorizontalScrollView"/>
+      <item tag="ScrollView"/>
       <item tag="WebView"/>
     </group>
     <group name="Layouts">

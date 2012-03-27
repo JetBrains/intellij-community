@@ -23,7 +23,7 @@ import com.intellij.designer.designSurface.OperationContext;
 /**
  * @author Alexander Lobas
  */
-public class RadRootViewLayout extends RadViewLayout {
+public class RadSingleChildrenViewLayout extends RadViewLayout {
   @Override
   public EditOperation processChildOperation(OperationContext context) {
     if (myContainer.getChildren().isEmpty() && (context.isCreate() || context.isPaste()) && context.getComponents().size() == 1) {
