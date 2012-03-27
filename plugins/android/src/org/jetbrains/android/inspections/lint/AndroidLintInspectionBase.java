@@ -295,8 +295,7 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool {
       return true;
     }
     final Scope scope = scopeSet.iterator().next();
-    return scope != Scope.JAVA_FILE &&
-           scope != Scope.MANIFEST &&
+    return scope != Scope.MANIFEST &&
            scope != Scope.RESOURCE_FILE &&
            scope != Scope.PROGUARD_FILE;
   }
