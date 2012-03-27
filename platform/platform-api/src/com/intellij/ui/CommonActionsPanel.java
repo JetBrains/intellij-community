@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@ public class CommonActionsPanel extends JPanel {
 
     Icon getIcon() {
       switch (this) {
-        case ADD:    return IconUtil.getAddRowIcon();
+        case ADD:    return IconUtil.getAddIcon();
         case EDIT:    return IconUtil.getEditIcon();
-        case REMOVE: return IconUtil.getRemoveRowIcon();
-        case UP:     return IconUtil.getMoveRowUpIcon();
-        case DOWN:   return IconUtil.getMoveRowDownIcon();
+        case REMOVE: return IconUtil.getRemoveIcon();
+        case UP:     return IconUtil.getMoveUpIcon();
+        case DOWN:   return IconUtil.getMoveDownIcon();
       }
       return null;
     }
