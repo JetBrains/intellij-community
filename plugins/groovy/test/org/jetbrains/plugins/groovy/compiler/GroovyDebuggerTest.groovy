@@ -33,6 +33,8 @@ import com.intellij.debugger.ui.DebuggerPanelsManager
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.executors.DefaultDebugExecutor
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.OSProcessManager
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.Disposable
@@ -47,8 +49,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.execution.process.OSProcessManager
-import com.intellij.execution.process.OSProcessHandler
 
 /**
  * @author peter
@@ -115,7 +115,8 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   public void testVariableInScript() {
-    myFixture.addFileToProject("Foo.groovy", """def a = 2
+    myFixture.addFileToProject("Foo.groovy", """\
+def a = 2
 a""");
     addBreakpoint 'Foo.groovy', 1
     runDebugger 'Foo', {
@@ -241,6 +242,7 @@ new Runnable() {
     }
   }
 
+
   private def addBreakpoint(String fileName, int line) {
     VirtualFile file = null
     edt {
@@ -291,7 +293,7 @@ new Runnable() {
         semaphore.up()
       }
     })
-    def finished = semaphore.waitFor(20000)
+    def finished = semaphore.waitFor(200000)
     assert finished : 'Too long debugger action'
     return result
   }
@@ -309,7 +311,7 @@ new Runnable() {
       item.setContext(ctx)
       item.updateRepresentation(ctx, { semaphore.up() } as DescriptorLabelListener)
     }
-    assert semaphore.waitFor(10000):  "too long evaluation: $item.label $item.evaluateException"
+    assert semaphore.waitFor(200000):  "too long evaluation: $item.label $item.evaluateException"
 
     String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
     assert result == expected

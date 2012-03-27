@@ -43,7 +43,7 @@ import org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMetho
 import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
-import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedAssignmentInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeInspection.bugs.*
 import org.jetbrains.plugins.groovy.codeInspection.confusing.*
@@ -186,10 +186,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testUnassigned3() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
   public void testUnassignedTryFinally() throws Exception { doTest(new UnassignedVariableAccessInspection()); }
 
-  public void testUnusedVariable() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
-  public void testDefinitionUsedInSwitchCase() throws Exception { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testUnusedVariable() throws Exception { doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInClosure() throws Exception { doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInClosure2() throws Exception { doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection()); }
+  public void testDefinitionUsedInSwitchCase() throws Exception { doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection()); }
   public void testDuplicateInnerClass() throws Throwable{doTest();}
 
   public void testThisInStaticContext() throws Throwable {doTest();}
@@ -246,8 +246,8 @@ class A {
   public void testByteArrayArgument() throws Exception {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testForLoopWithNestedEndlessLoop() throws Exception {doTest(new UnassignedVariableAccessInspection());}
-  public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());}
-  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testPrefixIncrementCfa() throws Exception {doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection());}
+  public void testIfIncrementElseReturn() throws Exception {doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection()); }
 
   public void testArrayLikeAccess() throws Exception {doTest();}
 
@@ -313,7 +313,7 @@ class A {
 
   public void testBuiltInTypeInstantiation() {doTest();}
 
-  public void testSwitchControlFlow() {doTest(new UnusedDefInspection(), new GroovyResultOfAssignmentUsedInspection(), new GrUnusedIncDecInspection());}
+  public void testSwitchControlFlow() {doTest(new UnusedAssignmentInspection(), new GroovyResultOfAssignmentUsedInspection(), new GrUnusedIncDecInspection());}
 
   public void testRawTypeInAssignment() {doTest(new GroovyAssignabilityCheckInspection());}
 
@@ -323,7 +323,7 @@ class A {
     IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
       @Override
       public void run() {
-        doTest(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection());
+        doTest(new GroovyAssignabilityCheckInspection(), new UnusedAssignmentInspection(), new GrUnusedIncDecInspection());
       }
     });
   }
@@ -395,7 +395,7 @@ class A {
     doTest(new GroovyUnresolvedAccessInspection(), new GroovyUntypedAccessInspection());
   }
 
-  public void testUsageInInjection() { doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection()); }
+  public void testUsageInInjection() { doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection()); }
 
   public void testDuplicatedNamedArgs() {doTest();}
 
@@ -417,19 +417,19 @@ class A {
   }
 
   public void testUnusedDefsForArgs() {
-    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());
+    doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection());
   }
 
   public void testUsedDefBeforeTry1() {
-    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());
+    doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection());
   }
 
   public void testUsedDefBeforeTry2() {
-    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection());
+    doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection());
   }
 
   public void testUnusedInc() {
-    doTest(new UnusedDefInspection(), new GrUnusedIncDecInspection())
+    doTest(new UnusedAssignmentInspection(), new GrUnusedIncDecInspection())
   }
 
   public void testStringAssignableToChar() {

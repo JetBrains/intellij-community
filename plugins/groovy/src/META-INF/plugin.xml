@@ -407,6 +407,9 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedAssignment" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unused.assignment" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedAssignmentInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedSymbol" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="unused.symbol" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedIncOrDec" bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unused.inc.dec" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
