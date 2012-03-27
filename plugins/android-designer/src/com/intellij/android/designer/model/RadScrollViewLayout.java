@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.model;
+package com.intellij.android.designer.model;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -28,23 +25,14 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class RadLayout {
-  protected RadComponent myContainer;
-
-  public void setContainer(RadComponent container) {
-    myContainer = container;
-  }
-
-  public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection);
-
-  @Nullable
-  public EditOperation processChildOperation(OperationContext context) {
-    return null;
-  }
-
+public class RadScrollViewLayout extends RadSingleChildrenViewLayout {
+  @Override
   public void addSelectionActions(DesignerEditorPanel designer,
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
+    if (selection.size() == 1) {
+      RadScrollViewComponent.addScrollAction(designer, actionGroup, shortcuts, (RadViewComponent)myContainer);
+    }
   }
 }

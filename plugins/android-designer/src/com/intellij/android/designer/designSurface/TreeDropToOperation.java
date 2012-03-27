@@ -31,6 +31,18 @@ public class TreeDropToOperation extends TreeEditOperation {
 
   @Override
   protected void execute(RadComponent insertBefore) throws Exception {
-    ModelParser.addComponent((RadViewComponent)myHost, (RadViewComponent)myComponents.get(0), (RadViewComponent)insertBefore);
+    RadViewComponent host = (RadViewComponent)myHost;
+    RadViewComponent before = (RadViewComponent)insertBefore;
+
+    if (myContext.isAdd()) {
+      for (RadComponent component : myComponents) {
+        ModelParser.moveComponent(host, (RadViewComponent)component, before);
+      }
+    }
+    else {
+      for (RadComponent component : myComponents) {
+        ModelParser.addComponent(host, (RadViewComponent)component, before);
+      }
+    }
   }
 }

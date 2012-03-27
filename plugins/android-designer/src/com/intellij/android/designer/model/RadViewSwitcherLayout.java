@@ -15,26 +15,14 @@
  */
 package com.intellij.android.designer.model;
 
-import com.intellij.android.designer.designSurface.DropToOperation;
-import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 
 /**
  * @author Alexander Lobas
  */
-public class RadSingleChildrenViewLayout extends RadViewLayout {
+public class RadViewSwitcherLayout extends RadViewAnimatorLayout {
   @Override
-  public EditOperation processChildOperation(OperationContext context) {
-    if (myContainer.getChildren().isEmpty() &&
-        (context.isCreate() || context.isPaste() || context.isAdd()) &&
-        context.getComponents().size() == 1) {
-      if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
-      }
-      return new DropToOperation((RadViewComponent)myContainer, context);
-    }
-
-    return null;
+  protected boolean checkChildOperation(OperationContext context) {
+    return myContainer.getChildren().size() < 2;
   }
 }
