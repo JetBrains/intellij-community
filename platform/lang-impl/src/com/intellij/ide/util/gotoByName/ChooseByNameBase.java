@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
@@ -483,23 +484,39 @@ public abstract class ChooseByNameBase {
                 if (oppositeComponent != null && !(oppositeComponent instanceof JFrame) &&
                     myList.isShowing() &&
                     (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
+                  myTextField.requestFocus();// Otherwise me may skip some KeyEvents
                   return;
                 }
+
+                EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+                if (queue instanceof IdeEventQueue) {
+                  if (!((IdeEventQueue)queue).wasRootRecentlyClicked(oppositeComponent)) {
+                    Component root = SwingUtilities.getRoot(myTextField);
+                    if (root != null) {
+                      root.requestFocus();
+                      myTextField.requestFocus();
+                      return;
+                    }
+                  }
+                }
+
                 hideHint();
               }
             }
-                                 }, 200);
+                                 }, 5);
         }
       });
     }
 
-    myCheckBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        rebuildList(false);
-      }
-    });
-    myCheckBox.setFocusable(false);
+    if (myCheckBox != null) {
+      myCheckBox.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          rebuildList(false);
+        }
+      });
+      myCheckBox.setFocusable(false);
+    }
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
