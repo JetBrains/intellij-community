@@ -266,11 +266,6 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     return new Pair<CommittedChangeList, FilePath>(commit, ((GitFileRevision) history.get(history.size() - 1)).getPath());
   }
 
-  @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
-    return null;
-  }
-
   public int getFormatVersion() {
     return 0;
   }

@@ -286,9 +286,4 @@ public class HgCachingCommitedChangesProvider
     }
     return null;
   }
-
-  @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
-    return null;
-  }
 }

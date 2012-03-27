@@ -161,11 +161,6 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public RepositoryLocation getForNonLocal(VirtualFile file) {
-    throw new UnsupportedOperationException();
-  }
-
   public static class CompositeChangeBrowserSettings extends ChangeBrowserSettings {
     private final Map<AbstractVcs, ChangeBrowserSettings> myMap;
     private final Set<AbstractVcs> myEnabledVcs = new HashSet<AbstractVcs>();
