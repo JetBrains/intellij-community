@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileTypes;
+package com.intellij.psi;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Perfroms additional analyses on file with {@link com.intellij.openapi.fileTypes.StdFileTypes#CLASS} filetype (e. g. classfile,
- * compiled from other than Java source language).
- *
- * @author ilyas
+ * @author Evgeny Gerashchenko
+ * @since 3/20/12
  */
-public interface ContentBasedClassFileProcessor extends ContentBasedFileSubstitutor {
+public interface ClsFileDecompiledPsiFileProvider {
+  ExtensionPointName<ClsFileDecompiledPsiFileProvider> EP_NAME = ExtensionPointName.create("com.intellij.psi.clsDecompiledFileProvider");
 
   /**
-   * @return syntax highlighter for recognized classfile
+   * Returns decompiled PSI associated with this classfile
+   *
+   * @param clsFile instance of ClsFile
+   * @return decompiled PSI file
    */
-  @NotNull
-  SyntaxHighlighter createHighlighter(Project project, VirtualFile vFile);
+  @Nullable
+  PsiFile getDecompiledPsiFile(@NotNull PsiJavaFile clsFile);
 }

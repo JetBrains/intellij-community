@@ -75,7 +75,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
         return null;
       }
     }
-    else if (fileType != StdFileTypes.JAVA) {
+    else {
       return null;
     }
 

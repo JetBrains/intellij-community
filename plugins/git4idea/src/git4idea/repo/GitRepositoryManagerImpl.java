@@ -144,22 +144,21 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
 
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
   private void updateRepositoriesCollection() {
-    try {
-      REPO_LOCK.writeLock().lock();
+      Map<VirtualFile, GitRepository> repositories = new HashMap<VirtualFile, GitRepository>(myRepositories);
       final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(myVcs);
       // remove repositories that are not in the roots anymore
-      for (Iterator<Map.Entry<VirtualFile, GitRepository>> iterator = myRepositories.entrySet().iterator(); iterator.hasNext(); ) {
+      for (Iterator<Map.Entry<VirtualFile, GitRepository>> iterator = repositories.entrySet().iterator(); iterator.hasNext(); ) {
         if (!ArrayUtil.contains(iterator.next().getValue().getRoot(), roots)) {
           iterator.remove();
         }
       }
       // add GitRepositories for all roots that don't have correspondent GitRepositories yet.
       for (VirtualFile root : roots) {
-        if (!myRepositories.containsKey(root)) {
+        if (!repositories.containsKey(root)) {
           if (gitRootOK(root)) {
             try {
               GitRepository repository = createGitRepository(root);
-              myRepositories.put(root, repository);
+              repositories.put(root, repository);
             }
             catch (GitRepoStateException e) {
               LOG.error("Couldn't initialize GitRepository in " + root.getPresentableUrl(), e);
@@ -170,6 +169,11 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
           }
         }
       }
+
+    REPO_LOCK.writeLock().lock();
+    try {
+      myRepositories.clear();
+      myRepositories.putAll(repositories);
     }
     finally {
         REPO_LOCK.writeLock().unlock();
