@@ -243,6 +243,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       return super.getWeight();
     }
 
+    @NotNull
     public Object[] getEqualityObjects() {
       return new Object[]{myDelegate};
     }

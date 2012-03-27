@@ -269,6 +269,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       return 0;
     }
 
+    @NotNull
     @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myElement};

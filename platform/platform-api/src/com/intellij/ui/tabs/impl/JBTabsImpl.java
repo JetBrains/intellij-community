@@ -3221,6 +3221,7 @@ public class JBTabsImpl extends JComponent
       return myInfo.getText();
     }
 
+    @NotNull
     @Override
     public Object[] getEqualityObjects() {
       return new Object[] {myInfo};
