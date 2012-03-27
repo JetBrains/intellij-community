@@ -75,6 +75,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   private final Collection<T> myIncludedChanges;
   private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
+  private boolean myAlwaysExpandList;
 
   @NonNls private static final String TREE_CARD = "Tree";
   @NonNls private static final String LIST_CARD = "List";
@@ -95,6 +96,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     myInclusionListener = inclusionListener;
     myChangeDecorator = decorator;
     myIncludedChanges = new HashSet<T>(initiallyIncluded);
+    myAlwaysExpandList = true;
 
     myCards = new CardLayout();
 
@@ -312,23 +314,24 @@ public abstract class ChangesTreeList<T> extends JPanel {
         return sortedChanges.get(index);
       }
     });
-    final TIntArrayList indices = new TIntArrayList();
-    for (int i = 0; i < sortedChanges.size(); i++) {
-      T t = sortedChanges.get(i);
-      if (wasSelected.contains(t)) {
-        indices.add(i);
-      }
-    }
-    myList.setSelectedIndices(indices.toNativeArray());
 
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     TreeState state = null;
-    if (! wasEmpty) {
+    if (! myAlwaysExpandList && ! wasEmpty) {
       state = TreeState.createOn(myTree, (DefaultMutableTreeNode) myTree.getModel().getRoot());
     }
     myTree.setModel(model);
-    if (! wasEmpty) {
+    if (! myAlwaysExpandList && ! wasEmpty) {
       state.applyTo(myTree, (DefaultMutableTreeNode) myTree.getModel().getRoot());
+
+      final TIntArrayList indices = new TIntArrayList();
+      for (int i = 0; i < sortedChanges.size(); i++) {
+        T t = sortedChanges.get(i);
+        if (wasSelected.contains(t)) {
+          indices.add(i);
+        }
+      }
+      myList.setSelectedIndices(indices.toNativeArray());
       return;
     }
 
@@ -859,5 +862,9 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
   public void enableSelection(final boolean value) {
     myTree.setEnabled(value);
+  }
+
+  public void setAlwaysExpandList(boolean alwaysExpandList) {
+    myAlwaysExpandList = alwaysExpandList;
   }
 }

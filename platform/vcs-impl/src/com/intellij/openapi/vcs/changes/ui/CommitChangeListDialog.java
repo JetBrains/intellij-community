@@ -270,6 +270,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         }
       };
       myBrowser = browser;
+      myBrowser.setAlwayExpandList(false);
       myBrowserExtender = browser.getExtender();
     }
     myDiffDetails.setParent(myBrowser);
