@@ -84,7 +84,7 @@ public class FindInProjectUtil {
 
   private FindInProjectUtil() {}
 
-  public static void setDirectoryName(FindModel model, DataContext dataContext) {
+  public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
     PsiElement psiElement;
     try {
       psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -126,7 +126,7 @@ public class FindInProjectUtil {
   }
 
   @Nullable
-  public static PsiDirectory getPsiDirectory(final FindModel findModel, Project project) {
+  public static PsiDirectory getPsiDirectory(@NotNull final FindModel findModel, @NotNull Project project) {
     String directoryName = findModel.getDirectoryName();
     if (findModel.isProjectScope() || directoryName == null) {
       return null;
@@ -144,7 +144,7 @@ public class FindInProjectUtil {
     return virtualFile == null ? null : psiManager.findDirectory(virtualFile);
   }
 
-  private static void addFilesUnderDirectory(PsiDirectory directory, Collection<PsiFile> fileList, boolean isRecursive, Pattern fileMaskRegExp) {
+  private static void addFilesUnderDirectory(@NotNull PsiDirectory directory, @NotNull Collection<PsiFile> fileList, boolean isRecursive, @Nullable Pattern fileMaskRegExp) {
     final PsiElement[] children = directory.getChildren();
 
     for (PsiElement child : children) {
@@ -165,7 +165,7 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  public static List<UsageInfo> findUsages(final FindModel findModel, final PsiDirectory psiDirectory, final Project project) {
+  public static List<UsageInfo> findUsages(@NotNull final FindModel findModel, final PsiDirectory psiDirectory, @NotNull final Project project) {
 
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>();
     findUsages(findModel, psiDirectory, project, collector);
@@ -174,12 +174,13 @@ public class FindInProjectUtil {
   }
 
   @Nullable
-  private static Pattern createFileMaskRegExp(FindModel findModel) {
+  private static Pattern createFileMaskRegExp(@NotNull FindModel findModel) {
     final String filter = findModel.getFileFilter();
     return createFileMaskRegExp(filter);
   }
 
-  public static Pattern createFileMaskRegExp(String filter) {
+  @Nullable
+  public static Pattern createFileMaskRegExp(@Nullable String filter) {
     if (filter == null) {
       return null;
     }
@@ -190,8 +191,9 @@ public class FindInProjectUtil {
     }
     else {
       pattern = StringUtil.join(strings, new Function<String, String>() {
+        @NotNull
         @Override
-        public String fun(String s) {
+        public String fun(@NotNull String s) {
           return "(" + PatternUtil.convertToRegex(s.trim()) + ")";
         }
       }, "|");
@@ -199,10 +201,10 @@ public class FindInProjectUtil {
     return Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
   }
 
-  public static void findUsages(final FindModel findModel,
+  public static void findUsages(@NotNull final FindModel findModel,
                                 final PsiDirectory psiDirectory,
-                                final Project project,
-                                final Processor<UsageInfo> consumer) {
+                                @NotNull final Project project,
+                                @NotNull final Processor<UsageInfo> consumer) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
@@ -293,16 +295,17 @@ public class FindInProjectUtil {
     }
   }
 
-  private static String presentableFileInfo(VirtualFile vFile) {
+  @NotNull
+  private static String presentableFileInfo(@NotNull VirtualFile vFile) {
     return getPresentablePath(vFile)
            + "&nbsp;("
            + presentableSize(getFileLength(vFile))
            + ")";
   }
 
-  private static int processUsagesInFile(final PsiFile psiFile,
-                                         final FindModel findModel,
-                                         final Processor<UsageInfo> consumer) {
+  private static int processUsagesInFile(@NotNull final PsiFile psiFile,
+                                         @NotNull final FindModel findModel,
+                                         @NotNull final Processor<UsageInfo> consumer) {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return 0;
     if (virtualFile.getFileType().isBinary()) return 0; // do not decompile .class files
@@ -326,7 +329,8 @@ public class FindInProjectUtil {
     return count;
   }
 
-  private static String getPresentablePath(final VirtualFile virtualFile) {
+  @NotNull
+  private static String getPresentablePath(@NotNull final VirtualFile virtualFile) {
     return "'" + ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
@@ -340,7 +344,7 @@ public class FindInProjectUtil {
     return FindBundle.message("find.file.size.megabytes", Long.toString(megabytes));
   }
 
-  private static long getFileLength(final VirtualFile virtualFile) {
+  private static long getFileLength(@NotNull final VirtualFile virtualFile) {
     final long[] length = {-1L};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
@@ -353,7 +357,8 @@ public class FindInProjectUtil {
     return length[0];
   }
 
-  private static Collection<PsiFile> getFilesToSearchIn(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
+  @NotNull
+  private static Collection<PsiFile> getFilesToSearchIn(@NotNull final FindModel findModel, @NotNull final Project project, final PsiDirectory psiDirectory) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiFile>>() {
       @Override
       public Collection<PsiFile> compute() {
@@ -361,7 +366,9 @@ public class FindInProjectUtil {
       }
     });
   }
-  private static Collection<PsiFile> getFilesToSearchInReadAction(final FindModel findModel, final Project project, final PsiDirectory psiDirectory) {
+
+  @NotNull
+  private static Collection<PsiFile> getFilesToSearchInReadAction(@NotNull final FindModel findModel, @NotNull final Project project, @Nullable final PsiDirectory psiDirectory) {
     String moduleName = findModel.getModuleName();
     Module module = moduleName == null ? null : ModuleManager.getInstance(project).findModuleByName(moduleName);
     final FileIndex fileIndex = module == null ?
@@ -383,7 +390,7 @@ public class FindInProjectUtil {
         final PsiManager psiManager = PsiManager.getInstance(project);
 
         @Override
-        public boolean processFile(VirtualFile virtualFile) {
+        public boolean processFile(@NotNull VirtualFile virtualFile) {
           if (!virtualFile.isDirectory() &&
               (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
               customScope.contains(virtualFile)) {
@@ -395,6 +402,7 @@ public class FindInProjectUtil {
           return true;
         }
 
+        @NotNull
         private Collection<PsiFile> getFiles() {
           return myFiles;
         }
@@ -414,7 +422,7 @@ public class FindInProjectUtil {
       }
       return iterator.getFiles();
     }
-    else {
+    else if (psiDirectory.isValid()) {
       Collection<PsiFile> fileList = new THashSet<PsiFile>();
 
       addFilesUnderDirectory(psiDirectory,
@@ -423,13 +431,16 @@ public class FindInProjectUtil {
                              createFileMaskRegExp(findModel));
       return fileList;
     }
+    else {
+      return Collections.emptyList();
+    }
   }
 
-  private static boolean iterateAll(VirtualFile[] files, final GlobalSearchScope searchScope, final ContentIterator iterator) {
+  private static boolean iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFileFilter contentFilter = new VirtualFileFilter() {
       @Override
-      public boolean accept(final VirtualFile file) {
+      public boolean accept(@NotNull final VirtualFile file) {
         return file.isDirectory() ||
                !fileTypeManager.isFileIgnored(file) && !file.getFileType().isBinary() && searchScope.contains(file);
       }
@@ -441,7 +452,7 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  private static GlobalSearchScope toGlobal(Project project, @Nullable SearchScope scope) {
+  private static GlobalSearchScope toGlobal(@NotNull Project project, @Nullable SearchScope scope) {
     if (scope instanceof GlobalSearchScope) {
       return (GlobalSearchScope)scope;
     }
@@ -459,9 +470,9 @@ public class FindInProjectUtil {
   }
 
   @NotNull
-  private static Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch(final FindModel findModel, final Project project,
-                                                               final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
-                                                               final Module module) {
+  private static Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch(@NotNull final FindModel findModel, @NotNull final Project project,
+                                                               @Nullable final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
+                                                               @Nullable final Module module) {
     if (DumbService.getInstance(project).isDumb()) {
       return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
     }
@@ -543,7 +554,8 @@ public class FindInProjectUtil {
     return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
   }
 
-  private static GlobalSearchScope moduleContentScope(final Module module) {
+  @Nullable
+  private static GlobalSearchScope moduleContentScope(@NotNull final Module module) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     GlobalSearchScope result = null;
     PsiManager psiManager = PsiManager.getInstance(module.getProject());
@@ -560,7 +572,7 @@ public class FindInProjectUtil {
     return result;
   }
 
-  private static void filterMaskedFiles(final Set<PsiFile> resultFiles, final Pattern fileMaskRegExp) {
+  private static void filterMaskedFiles(@NotNull final Set<PsiFile> resultFiles, @Nullable final Pattern fileMaskRegExp) {
     if (fileMaskRegExp != null) {
       for (Iterator<PsiFile> iterator = resultFiles.iterator(); iterator.hasNext();) {
         PsiFile file = iterator.next();
@@ -571,7 +583,7 @@ public class FindInProjectUtil {
     }
   }
 
-  private static boolean canOptimizeForFastWordSearch(final FindModel findModel) {
+  private static boolean canOptimizeForFastWordSearch(@NotNull final FindModel findModel) {
     return !findModel.isRegularExpressions()
            && (findModel.getCustomScope() == null || findModel.getCustomScope() instanceof GlobalSearchScope);
   }
@@ -616,7 +628,7 @@ public class FindInProjectUtil {
     return count;
   }
 
-  private static String getTitleForScope(final FindModel findModel) {
+  private static String getTitleForScope(@NotNull final FindModel findModel) {
     String result;
 
     if (findModel.isProjectScope()) {
@@ -639,7 +651,8 @@ public class FindInProjectUtil {
     return result;
   }
 
-  public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, final FindModel findModelCopy) {
+  @NotNull
+  public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull final FindModel findModelCopy) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
 
     final String scope = getTitleForScope(findModelCopy);
@@ -654,14 +667,16 @@ public class FindInProjectUtil {
     return presentation;
   }
 
+  @NotNull
   public static FindUsagesProcessPresentation setupProcessPresentation(final Project project,
                                                                        final boolean showPanelIfOnlyOneUsage,
-                                                                       final UsageViewPresentation presentation) {
+                                                                       @NotNull final UsageViewPresentation presentation) {
     FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
     processPresentation.setProgressIndicatorFactory(
       new Factory<ProgressIndicator>() {
+        @NotNull
         @Override
         public ProgressIndicator create() {
           return new FindProgressIndicator(project, presentation.getScopeText());

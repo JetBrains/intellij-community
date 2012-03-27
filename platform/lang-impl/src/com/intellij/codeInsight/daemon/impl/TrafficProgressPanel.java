@@ -34,6 +34,8 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.AwtVisitor;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +46,6 @@ import java.util.Map;
  * User: cdr
  */
 public class TrafficProgressPanel extends JPanel {
-
   private static final int MAX = 100;
   private static final String MAX_TEXT = "100%";
   private static final String MIN_TEXT = "0%";
@@ -55,18 +56,17 @@ public class TrafficProgressPanel extends JPanel {
 
   private final JLabel statusLabel = new JLabel();
   private final JLabel dumbLabel = new JLabel("Complete results will be available after indexing");
-  private final TrafficLightRenderer myTrafficLightRenderer;
+  @NotNull private final TrafficLightRenderer myTrafficLightRenderer;
 
   private final JPanel myPassStatuses = new JPanel();
   private final JPanel myEmptyPassStatuses = new NonOpaquePanel();
   private final Wrapper myPassStatusesContainer = new Wrapper();
 
-  private final HintHint myHintHint;
+  @NotNull private final HintHint myHintHint;
 
-  public TrafficProgressPanel(TrafficLightRenderer trafficLightRenderer, Editor editor, HintHint hintHint) {
+  public TrafficProgressPanel(@NotNull TrafficLightRenderer trafficLightRenderer, @NotNull Editor editor, @NotNull HintHint hintHint) {
     myHintHint = hintHint;
     myTrafficLightRenderer = trafficLightRenderer;
-
 
     setLayout(new BorderLayout());
 
@@ -79,20 +79,21 @@ public class TrafficProgressPanel extends JPanel {
     center.add(Box.createVerticalStrut(6));
 
     TrafficLightRenderer.DaemonCodeAnalyzerStatus fakeStatusLargeEnough = new TrafficLightRenderer.DaemonCodeAnalyzerStatus();
-    fakeStatusLargeEnough.errorCount = new int[]{1,1,1,1};
+    fakeStatusLargeEnough.errorCount = new int[]{1, 1, 1, 1};
     Project project = trafficLightRenderer.getProject();
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     fakeStatusLargeEnough.passStati = new ArrayList<ProgressableTextEditorHighlightingPass>();
-    for (int i=0; i<3;i++) {
-      fakeStatusLargeEnough.passStati.add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, false) {
-        @Override
-        protected void collectInformationWithProgress(ProgressIndicator progress) {
-        }
+    for (int i = 0; i < 3; i++) {
+      fakeStatusLargeEnough.passStati
+        .add(new ProgressableTextEditorHighlightingPass(project, null, DaemonBundle.message("pass.wolf"), psiFile, false) {
+          @Override
+          protected void collectInformationWithProgress(ProgressIndicator progress) {
+          }
 
-        @Override
-        protected void applyInformationWithProgress() {
-        }
-      });
+          @Override
+          protected void applyInformationWithProgress() {
+          }
+        });
     }
     rebuildPassesPanel(fakeStatusLargeEnough);
     for (Pair<JProgressBar, JLabel> pair : passes.values()) {
@@ -111,7 +112,7 @@ public class TrafficProgressPanel extends JPanel {
 
   private class Separator extends NonOpaquePanel {
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent(@NotNull Graphics g) {
       Insets insets = getInsets();
       if (insets == null) {
         insets = new Insets(0, 0, 0, 0);
@@ -120,18 +121,20 @@ public class TrafficProgressPanel extends JPanel {
       g.drawLine(insets.left, insets.top, getWidth() - insets.left - insets.right, insets.top);
     }
 
+    @NotNull
     @Override
     public Dimension getPreferredSize() {
       return new Dimension(1, 1);
     }
 
+    @NotNull
     @Override
     public Dimension getMinimumSize() {
       return new Dimension(1, 1);
     }
   }
 
-  private void rebuildPassesPanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {
+  private void rebuildPassesPanel(@NotNull TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {
     myPassStatuses.removeAll();
     myPassStatuses.setLayout(new GridBagLayout());
     passes.clear();
@@ -162,7 +165,7 @@ public class TrafficProgressPanel extends JPanel {
     statusLabel.setFont(statusLabel.getFont().deriveFont(Font.BOLD));
   }
 
-  public void updatePanel(TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
+  public void updatePanel(@Nullable TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
     if (status == null) return;
     boolean isDumb = DumbService.isDumb(myTrafficLightRenderer.getProject());
     dumbLabel.setVisible(isDumb);
@@ -171,25 +174,30 @@ public class TrafficProgressPanel extends JPanel {
         statusLabel.setText("Code analysis is disabled in power save mode");
         myPassStatuses.setVisible(false);
         statistics.setText("");
-      } else if (status.errorAnalyzingFinished) {
+      }
+      else if (status.errorAnalyzingFinished) {
         if (isDumb) {
           statusLabel.setText("Shallow analysis completed");
-        } else {
+        }
+        else {
           statusLabel.setText(DaemonBundle.message("analysis.completed"));
         }
         myPassStatuses.setVisible(true);
         setPassesEnabled(false, Boolean.TRUE);
-      } else if (!status.enabled) {
+      }
+      else if (!status.enabled) {
         statusLabel.setText("Code analysis has been suspended");
         myPassStatuses.setVisible(true);
         setPassesEnabled(false, Boolean.FALSE);
         statistics.setText("");
-      } else if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
+      }
+      else if (status.noHighlightingRoots != null && status.noHighlightingRoots.length == status.rootsNumber) {
         statusLabel.setText(DaemonBundle.message("analysis.hasnot.been.run"));
         myPassStatuses.setVisible(true);
         setPassesEnabled(false, Boolean.FALSE);
         statistics.setText("");
-      } else {
+      }
+      else {
         statusLabel.setText(DaemonBundle.message("performing.code.analysis"));
         myPassStatuses.setVisible(true);
         setPassesEnabled(true, null);
@@ -217,8 +225,9 @@ public class TrafficProgressPanel extends JPanel {
       for (int i = status.errorCount.length - 1; i >= 0; i--) {
         if (status.errorCount[i] > 0) {
           final HighlightSeverity severity = SeverityRegistrar.getInstance(myTrafficLightRenderer.getProject()).getSeverityByIndex(i);
-          String name = status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
-          text +=  status.errorAnalyzingFinished
+          String name =
+            status.errorCount[i] > 1 ? StringUtil.pluralize(severity.toString().toLowerCase()) : severity.toString().toLowerCase();
+          text += status.errorAnalyzingFinished
                   ? DaemonBundle.message("errors.found", status.errorCount[i], name)
                   : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
           text += "<br>";
@@ -236,13 +245,14 @@ public class TrafficProgressPanel extends JPanel {
       if (isFake) {
         myEmptyPassStatuses.setPreferredSize(myPassStatuses.getPreferredSize());
         myPassStatusesContainer.setContent(myEmptyPassStatuses);
-      } else {
+      }
+      else {
         myPassStatusesContainer.setContent(myPassStatuses);
       }
     }
   }
 
-  private void setPassesEnabled(final boolean enabled, final Boolean completed) {
+  private void setPassesEnabled(final boolean enabled, @Nullable final Boolean completed) {
     new AwtVisitor(myPassStatuses) {
       @Override
       public boolean visit(Component component) {
@@ -253,7 +263,8 @@ public class TrafficProgressPanel extends JPanel {
             if (completed) {
               progress.setValue(MAX);
               myProgressToText.get(progress).setText(MAX_TEXT);
-            } else {
+            }
+            else {
               progress.setValue(0);
               myProgressToText.get(progress).setText(MIN_TEXT);
             }
