@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -50,6 +51,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ShowFilePathAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
@@ -164,7 +166,7 @@ public class ShowFilePathAction extends AnAction {
   public static boolean isSupported() {
     return SystemInfo.isWindows ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN) ||
-           SystemInfo.hasXdgOpen || SystemInfo.isGnome || SystemInfo.isKDE;
+           SystemInfo.hasXdgOpen || SystemInfo.hasNautilus;
   }
 
   /** @deprecated use {@linkplain #openFile(java.io.File)} (to remove in IDEA 13) */
@@ -229,19 +231,22 @@ public class ShowFilePathAction extends AnAction {
       return;
     }
 
-    String path = dir.getCanonicalPath();
-    if (!dir.isDirectory()) {
-      path = dir.getParentFile().getCanonicalPath();
+    if (Registry.is("ide.use.nautilus3") && SystemInfo.hasNautilus && hasNautilusV3()) {
+      if (toSelect != null) {
+        new GeneralCommandLine("nautilus", toSelect.getCanonicalPath()).createProcess();
+      }
+      else {
+        new GeneralCommandLine("nautilus", dir.getCanonicalPath()).createProcess();
+      }
+      return;
     }
 
+    final String path = dir.getCanonicalPath();
     if (SystemInfo.hasXdgOpen) {
       new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
     }
-    else if (SystemInfo.isGnome) {
-      new GeneralCommandLine("gnome-open", path).createProcess();
-    }
-    else if (SystemInfo.isKDE) {
-      new GeneralCommandLine("kfmclient", "exec", path).createProcess();
+    else if (SystemInfo.hasNautilus) {
+      new GeneralCommandLine("nautilus", path).createProcess();
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       Desktop.getDesktop().open(new File(path));
@@ -249,6 +254,16 @@ public class ShowFilePathAction extends AnAction {
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
     }
+  }
+
+  private static Boolean hasNautilusV3 = null;
+
+  private static boolean hasNautilusV3() {
+    if (hasNautilusV3 == null) {
+      final String version = ExecUtil.execAndReadLine(Arrays.asList("nautilus", "--version"));
+      hasNautilusV3 = version != null && version.startsWith("GNOME nautilus 3");
+    }
+    return hasNautilusV3;
   }
 
   @Nullable

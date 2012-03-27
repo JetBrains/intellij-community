@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,11 +101,25 @@ public class ExecUtil {
     CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
     return processHandler.runProcess();
   }
-    
+
+  @Nullable
+  public static String execAndReadLine(@NotNull final List<String> command) {
+    try {
+      final ProcessOutput output = execAndGetOutput(command, null);
+      final List<String> lines = output.getStdoutLines();
+      if (lines.size() > 0) {
+        return lines.get(0);
+      }
+    }
+    catch (Exception ignored) { }
+    return null;
+  }
+
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
                                                @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
     return sudoAndGetOutput(scriptPath, prompt, null);
   }
+
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
                                                @NotNull final String prompt, @Nullable String workDir) throws IOException, ExecutionException, ScriptException, InterruptedException {
     if (SystemInfo.isMac) {

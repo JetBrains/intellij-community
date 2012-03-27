@@ -51,6 +51,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isKDE = _SUN_DESKTOP.contains("kde");
   public static final boolean isGnome = _SUN_DESKTOP.contains("gnome");
 
+  public static final boolean hasNautilus = isUnix && new File("/usr/bin/nautilus").canExecute();
   public static final boolean hasXdgOpen = isUnix && new File("/usr/bin/xdg-open").canExecute();
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
@@ -65,9 +66,8 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
   public static final String nativeFileManagerName = isMac ? "Finder" :
-                                                     isGnome ? "Nautilus" :
-                                                     isKDE ? "Konqueror" :
                                                      isWindows ? "Explorer" :
+                                                     hasNautilus ? "Nautilus" :
                                                      "File Manager";
 
   /**
