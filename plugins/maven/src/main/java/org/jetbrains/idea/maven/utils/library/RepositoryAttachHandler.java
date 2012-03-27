@@ -340,11 +340,11 @@ public class RepositoryAttachHandler {
     finally {
       manager.release(embedder);
       if (!cancelled) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {
             resultProcessor.process(new ArrayList<MavenArtifact>(result));
           }
-        });
+        }, indicator.getModalityState());
       }
     }
   }
