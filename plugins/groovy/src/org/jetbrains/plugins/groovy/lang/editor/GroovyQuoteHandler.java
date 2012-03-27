@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.editor;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.TextRange;
@@ -64,7 +65,9 @@ public class GroovyQuoteHandler implements MultiCharQuoteHandler {
   @Override
   public CharSequence getClosingQuote(HighlighterIterator iterator, int offset) {
     if (offset >= 3) {
-      String quote = iterator.getDocument().getText(new TextRange(offset - 3, offset));
+      Document document = iterator.getDocument();
+      if (document == null) return null;
+      String quote = document.getText(new TextRange(offset - 3, offset));
       if ("'''".equals(quote)) return quote;
       if ("\"\"\"".equals(quote)) return quote;
     }
