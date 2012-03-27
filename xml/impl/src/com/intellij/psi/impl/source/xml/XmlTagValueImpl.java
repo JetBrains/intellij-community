@@ -147,11 +147,11 @@ public class XmlTagValueImpl implements XmlTagValue{
       public boolean execute(@NotNull PsiElement element) {
         final ASTNode treeElement = element.getNode();
         if (insideBody) {
-          if (treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) return false;
+          if (treeElement != null && treeElement.getElementType() == XmlTokenType.XML_END_TAG_START) return false;
           if (!(element instanceof XmlTagChild)) return true;
           bodyElements.add((XmlTagChild)element);
         }
-        else if (treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
+        else if (treeElement != null && treeElement.getElementType() == XmlTokenType.XML_TAG_END) insideBody = true;
         return true;
       }
     }, tag);
