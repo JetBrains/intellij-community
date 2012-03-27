@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.google.common.primitives.Ints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -265,7 +266,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
   public int getSeverityMaxIndex() {
-    return getOrder().size();
+    return Ints.max(getOrder().getValues());
   }
 
   public HighlightSeverity getSeverity(@NotNull String name) {
