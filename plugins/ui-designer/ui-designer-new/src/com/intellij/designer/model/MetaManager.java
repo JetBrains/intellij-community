@@ -92,6 +92,11 @@ public abstract class MetaManager {
       meta.setLayout((Class<RadLayout>)classLoader.loadClass(layout));
     }
 
+    String delete = element.getAttributeValue("delete");
+    if (delete != null) {
+      meta.setDelete(Boolean.parseBoolean(delete));
+    }
+
     Element presentation = element.getChild("presentation");
     if (presentation != null) {
       meta.setPresentation(presentation.getAttributeValue("title"), presentation.getAttributeValue("icon"));

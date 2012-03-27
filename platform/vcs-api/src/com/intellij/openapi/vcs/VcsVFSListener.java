@@ -429,6 +429,32 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
+    // If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
+    // It happens during Overwrite command or undo of overwrite.
+    private void dontDeleteAddedCopiedOrMovedFiles() {
+      Collection<String> copiedAddedMoved = new ArrayList<String>();
+      for (VirtualFile file : myCopyFromMap.keySet()) {
+        copiedAddedMoved.add(file.getPath());
+      }
+      for (VirtualFile file : myAddedFiles) {
+        copiedAddedMoved.add(file.getPath());
+      }
+      for (MovedFileInfo movedFileInfo : myMovedFiles) {
+        copiedAddedMoved.add(movedFileInfo.myNewPath);
+      }
+
+      for (Iterator<FilePath> iter = myDeletedFiles.iterator(); iter.hasNext(); ) {
+        if (copiedAddedMoved.contains(iter.next().getPath())) {
+          iter.remove();
+        }
+      }
+      for (Iterator<FilePath> iter = myDeletedWithoutConfirmFiles.iterator(); iter.hasNext(); ) {
+        if (copiedAddedMoved.contains(iter.next().getPath())) {
+          iter.remove();
+        }
+      }
+    }
+
     public void commandFinished(final CommandEvent event) {
       if (myProject != event.getProject()) return;
       myCommandLevel--;
@@ -444,6 +470,7 @@ public abstract class VcsVFSListener implements Disposable {
           finally {
             myCommandLevel--;
           }
+          dontDeleteAddedCopiedOrMovedFiles();
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
             executeAdd();
@@ -479,5 +506,6 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }
     }
+
   }
 }

@@ -55,7 +55,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
 
     myLocationLabel.setLabelFor(myLocationField.getChildComponent());
 
-    new LocationNameFieldsBinding(project, myLocationField, myProjectNameTextField, getBaseDir());
+    new LocationNameFieldsBinding(project, myLocationField, myProjectNameTextField, getBaseDir(), "Select Location for Project Directory");
 
     final DirectoryProjectGenerator[] generators = getGenerators();
     if (generators.length == 0) {

@@ -904,8 +904,8 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
         }
       };
 
-      myExpandIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/expandNode.png");
-      myCollapseIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/collapseNode.png");
+      myExpandIcon = IconLoader.getIcon("/com/intellij/designer/icons/expandNode.png");
+      myCollapseIcon = IconLoader.getIcon("/com/intellij/designer/icons/collapseNode.png");
       for (int i = 0; i < myIndentIcons.length; i++) {
         myIndentIcons[i] = new EmptyIcon(9 + 11 * i, 9);
       }

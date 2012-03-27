@@ -184,7 +184,7 @@ public class EclipseCompiler extends ExternalCompiler {
     commandLine.add(outputPath.replace('/', File.separatorChar));
 
     commandLine.add("-verbose");
-    StringTokenizer tokenizer = new StringTokenizer(compilerSettings.getOptionsString(myProject), " ");
+    StringTokenizer tokenizer = new StringTokenizer(compilerSettings.getOptionsString(chunk), " ");
     while (tokenizer.hasMoreTokens()) {
       commandLine.add(tokenizer.nextToken());
     }

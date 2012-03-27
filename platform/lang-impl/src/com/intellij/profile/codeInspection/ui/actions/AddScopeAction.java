@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.profile.codeInspection.ui.InspectionConfigTreeNode;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.treeStructure.Tree;
@@ -113,6 +114,9 @@ public abstract class AddScopeAction extends AnAction {
       Collections.addAll(scopes, holder.getScopes());
     }
     scopes.remove(DefaultScopesProvider.getAllScope());
+
+    CustomScopesProviderEx.filterNoSettingsScopes(project, scopes);
+
     final Set<NamedScope> used = new HashSet<NamedScope>();
     for (Descriptor descriptor : descriptors) {
       final List<ScopeToolState> nonDefaultTools = getSelectedProfile().getNonDefaultTools(descriptor.getKey().toString());

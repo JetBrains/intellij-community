@@ -83,6 +83,9 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     myContentPanel.addTab("Project", myProjectPanel.myComponent);
     myContentPanel.addTab("System", mySystemPanel.myComponent);
 
+    myProjectPanel.myTreeBuilder.expandAll(null);
+    mySystemPanel.myTreeBuilder.expandAll(null);
+
     myContentPanel.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {

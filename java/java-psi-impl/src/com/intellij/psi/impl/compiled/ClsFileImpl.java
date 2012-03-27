@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.ContentBasedClassFileProcessor;
-import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -238,7 +236,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-    buffer.append(PsiBundle.message("psi.decompiled.text.header"));
+    buffer.append("\n  // IntelliJ API Decompiler stub source generated from a class file\n  // Implementation of methods is not available");
     goNextLine(indentLevel, buffer);
     goNextLine(indentLevel, buffer);
     final PsiPackageStatement packageStatement = getPackageStatement();
@@ -327,12 +325,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   public PsiFile getDecompiledPsiFile() {
-    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
-      if (processor instanceof ContentBasedClassFileProcessor && processor.isApplicable(getProject(), getVirtualFile())) {
-        PsiFile decompiledPsiFile = ((ContentBasedClassFileProcessor)processor).getDecompiledPsiFile(this);
-        if (decompiledPsiFile != null) {
-          return decompiledPsiFile;
-        }
+    for (ClsFileDecompiledPsiFileProvider provider : Extensions.getExtensions(ClsFileDecompiledPsiFileProvider.EP_NAME)) {
+      PsiFile decompiledPsiFile = provider.getDecompiledPsiFile(this);
+      if (decompiledPsiFile != null) {
+        return decompiledPsiFile;
       }
     }
     return (PsiFile) getMirror();

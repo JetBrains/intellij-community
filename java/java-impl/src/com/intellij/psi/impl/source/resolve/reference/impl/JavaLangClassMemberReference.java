@@ -20,11 +20,11 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +35,9 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
-  private final PsiClassObjectAccessExpression myContext;
+  private final PsiExpression myContext;
 
-  public JavaLangClassMemberReference(PsiLiteralExpression literal, PsiClassObjectAccessExpression context) {
+  public JavaLangClassMemberReference(PsiLiteralExpression literal, PsiExpression context) {
     super(literal);
     myContext = context;
   }
@@ -67,7 +67,26 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
   @Nullable
   private PsiClass getPsiClass() {
-    return PsiTypesUtil.getPsiClass(myContext.getOperand().getType());
+    if (myContext instanceof PsiClassObjectAccessExpression) {
+      return PsiTypesUtil.getPsiClass(((PsiClassObjectAccessExpression)myContext).getOperand().getType());
+    } else if (myContext instanceof PsiMethodCallExpression) {
+      final PsiMethod method = ((PsiMethodCallExpression)myContext).resolveMethod();
+      if (method != null && "forName".equals(method.getName()) && isClass(method.getContainingClass())) {
+        final PsiExpression[] expressions = ((PsiMethodCallExpression)myContext).getArgumentList().getExpressions();
+        if (expressions.length == 1 && expressions[0] instanceof PsiLiteralExpression) {
+          final Object value = ((PsiLiteralExpression)expressions[0]).getValue();
+          if (value instanceof String) {
+            final Project project = myContext.getProject();
+            return JavaPsiFacade.getInstance(project).findClass(String.valueOf(value), GlobalSearchScope.allScope(project));
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isClass(PsiClass aClass) {
+    return aClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(aClass.getQualifiedName());
   }
 
   @Nullable

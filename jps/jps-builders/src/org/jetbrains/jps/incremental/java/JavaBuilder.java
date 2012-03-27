@@ -273,31 +273,36 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         context.checkCanceled();
 
-        final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, outputSink);
+        if (!forms.isEmpty() || addNotNullAssertions) {
+          final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, outputSink);
 
-        context.checkCanceled();
-
-        if (!forms.isEmpty()) {
           try {
-            context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
-            final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
-            final ClassLoader loader = createInstrumentationClassLoader(platformCp, classpath, chunkSourcePath, outputSink);
-            instrumentForms(context, chunk, chunkSourcePath, loader, finder, forms, outputSink);
+            if (!forms.isEmpty()) {
+              try {
+                context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
+                final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
+                final ClassLoader loader = createInstrumentationClassLoader(platformCp, classpath, chunkSourcePath, outputSink);
+                instrumentForms(context, chunk, chunkSourcePath, loader, finder, forms, outputSink);
+              }
+              finally {
+                context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
+              }
+            }
+
+            context.checkCanceled();
+
+            if (addNotNullAssertions) {
+              try {
+                context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
+                instrumentNotNull(context, outputSink, finder);
+              }
+              finally {
+                context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
+              }
+            }
           }
           finally {
-            context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
-          }
-        }
-
-        context.checkCanceled();
-
-        if (addNotNullAssertions) {
-          try {
-            context.processMessage(new ProgressMessage("Adding NotNull assertions [" + chunkName + "]"));
-            instrumentNotNull(context, outputSink, finder);
-          }
-          finally {
-            context.processMessage(new ProgressMessage("Finished adding NotNull assertions [" + chunkName + "]"));
+            finder.releaseResources();
           }
         }
 

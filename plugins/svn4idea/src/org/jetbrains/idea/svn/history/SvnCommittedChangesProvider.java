@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
@@ -561,6 +563,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
       return new Pair<SvnChangeList, FilePath>(result[0], path);
     }
     return new Pair<SvnChangeList, FilePath>(result[0], new FilePathImpl(file));
+  }
+
+  @Override
+  public RepositoryLocation getForNonLocal(VirtualFile file) {
+    final String url = file.getPresentableUrl();
+    return new SvnRepositoryLocation(FileUtil.toSystemIndependentName(url));
   }
 
   private static class RenameContext {

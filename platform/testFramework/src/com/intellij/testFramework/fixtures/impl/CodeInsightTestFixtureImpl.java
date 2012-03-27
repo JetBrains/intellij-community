@@ -1216,16 +1216,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           root.refresh(false, false);
           vFile = root.findOrCreateChildData(this, fileName);
         }
-        else {
+        else if (myTempDirFixture instanceof TempDirTestFixtureImpl) {
           String prefix = StringUtil.getPackageName(fileName);
           if (prefix.length() < 3) {
             prefix += "___";
           }
-          final File tempFile = FileUtil.createTempFile(new File(getTempDirPath()), prefix, "." + StringUtil.getShortName(fileName), true);
+          String suffix = "." + StringUtil.getShortName(fileName);
+          final File tempFile = ((TempDirTestFixtureImpl)myTempDirFixture).createTempFile(prefix, suffix);
           vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
         }
+        else {
+          vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(getTempDirPath(), fileName));
+        }
+
         final Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);
         if (document != null) {
+          PsiDocumentManager.getInstance(getProject()).doPostponedOperationsAndUnblockDocument(document);
           FileDocumentManager.getInstance().saveDocument(document);
         }
 

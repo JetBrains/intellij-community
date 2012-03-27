@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -39,10 +40,10 @@ import java.util.List;
  */
 public class VirtualFilePointerContainerImpl implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
-  @NotNull private final List<VirtualFilePointer> myList = new ArrayList<VirtualFilePointer>();
+  @NotNull private final List<VirtualFilePointer> myList = ContainerUtilRt.createEmptyCOWList();
   private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
-  private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
-  private final Disposable myParent;
+  @NotNull private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
+  @NotNull private final Disposable myParent;
   private final VirtualFilePointerListener myListener;
   private VirtualFile[] myCachedDirectories;
   @NonNls private static final String URL_ATTR = "url";
@@ -91,7 +92,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     ContainerUtil.swapElements(myList, index, index + 1);
   }
 
-  private int indexOf(final String url) {
+  private int indexOf(@NotNull final String url) {
     for (int i = 0; i < myList.size(); i++) {
       final VirtualFilePointer pointer = myList.get(i);
       if (url.equals(pointer.getUrl())) {
@@ -134,7 +135,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
   @Override
   @NotNull
   public List<VirtualFilePointer> getList() {
-      assert !myDisposed;
+    assert !myDisposed;
     return myReadOnlyList;
   }
 
@@ -166,6 +167,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return myCachedUrls;
   }
 
+  @NotNull
   private String[] calcUrls() {
     if (myList.isEmpty()) return ArrayUtil.EMPTY_STRING_ARRAY;
     final ArrayList<String> result = new ArrayList<String>(myList.size());
@@ -186,6 +188,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return myCachedFiles;
   }
 
+  @NotNull
   private VirtualFile[] calcFiles() {
     if (myList.isEmpty()) return VirtualFile.EMPTY_ARRAY;
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(myList.size());
@@ -272,6 +275,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
     return myVirtualFilePointerManager.duplicate(virtualFilePointer, myParent, myListener);
   }
 
+  @NotNull
   @NonNls
   @Override
   public String toString() {

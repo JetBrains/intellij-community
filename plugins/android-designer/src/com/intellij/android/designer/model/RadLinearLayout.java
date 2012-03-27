@@ -40,22 +40,7 @@ public class RadLinearLayout extends RadViewLayout {
   }
 
   private void addNewComponent(RadViewComponent newComponent, @Nullable RadViewComponent insertBefore) throws Exception {
-    RadViewComponent container = (RadViewComponent)myContainer;
-    newComponent.setParent(container);
-
-    List<RadComponent> children = container.getChildren();
-    if (insertBefore == null) {
-      children.add(newComponent);
-    }
-    else {
-      children.add(children.indexOf(insertBefore), newComponent);
-    }
-
-    ModelParser
-      .setComponentTag(container.getTag(), newComponent, insertBefore == null ? null : insertBefore.getTag());
-
-    PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
-    propertyParser.load(newComponent);
+    ModelParser.addComponent((RadViewComponent)myContainer, newComponent, insertBefore);
   }
 
   private class TreeCreateOperation extends TreeEditOperation {

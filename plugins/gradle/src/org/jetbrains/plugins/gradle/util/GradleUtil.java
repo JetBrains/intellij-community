@@ -208,7 +208,7 @@ public class GradleUtil {
       public void execute(@NotNull ProgressIndicator indicator) {
         GradleResolveProjectTask task = new GradleResolveProjectTask(project, gradleProjectPath, resolveLibraries);
         task.execute(indicator);
-        gradleProject.set(task.getProject());
+        gradleProject.set(task.getGradleProject());
         final Throwable error = task.getError();
         if (error == null) {
           return;

@@ -65,7 +65,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     private final IntervalTreeImpl<E> myIntervalTree;
 
-    public IntervalNode(IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
+    public IntervalNode(@NotNull IntervalTreeImpl<E> intervalTree, @NotNull E key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
       myIntervalTree = intervalTree;
       myStart = start;
