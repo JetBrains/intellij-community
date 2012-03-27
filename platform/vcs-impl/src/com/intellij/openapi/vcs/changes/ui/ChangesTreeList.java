@@ -43,6 +43,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -311,12 +312,14 @@ public abstract class ChangesTreeList<T> extends JPanel {
         return sortedChanges.get(index);
       }
     });
+    final TIntArrayList indices = new TIntArrayList();
     for (int i = 0; i < sortedChanges.size(); i++) {
       T t = sortedChanges.get(i);
       if (wasSelected.contains(t)) {
-        myList.setSelectedIndex(i);
+        indices.add(i);
       }
     }
+    myList.setSelectedIndices(indices.toNativeArray());
 
     final DefaultTreeModel model = buildTreeModel(changes, myChangeDecorator);
     TreeState state = null;
