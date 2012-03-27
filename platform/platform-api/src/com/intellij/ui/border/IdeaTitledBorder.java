@@ -1,6 +1,7 @@
 package com.intellij.ui.border;
 
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -20,10 +21,17 @@ public class IdeaTitledBorder extends TitledBorder {
     super(title);
     titledSeparator = new TitledSeparator(title);
     titledSeparator.setText(title);
+    DialogUtil.registerMnemonic(titledSeparator.getLabel(), null);
 
     this.outsideInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
 
     this.insideInsets = new Insets(TitledSeparator.BOTTOM_INSET, indent, 0, 0);
+  }
+
+  @Override
+  public void setTitle(String title) {
+    super.setTitle(title);
+    titledSeparator.setText(title);
   }
 
   @Override
@@ -32,7 +40,6 @@ public class IdeaTitledBorder extends TitledBorder {
     int labelY = y + outsideInsets.top;
 
     TitledSeparator titledSeparator = getTitledSeparator(c);
-    titledSeparator.setText(title);
     JLabel label = titledSeparator.getLabel();
     Dimension labelSize = label.getPreferredSize();
     label.setSize(labelSize);

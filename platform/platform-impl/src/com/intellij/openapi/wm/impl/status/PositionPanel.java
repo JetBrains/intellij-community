@@ -128,8 +128,11 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   public void caretPositionChanged(final CaretEvent e) {
     final Editor editor = e.getEditor();
     Project project = editor.getProject();
-    if (project != null && !project.isDisposed() && FileEditorManager.getInstance(project).getSelectedTextEditor() == e.getEditor()) {
-       updatePosition(editor);
+    if (project != null && !project.isDisposed()) {
+      final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);  // returns null for default project
+      if (fileEditorManager != null && fileEditorManager.getSelectedTextEditor() == e.getEditor()) {
+         updatePosition(editor);
+      }
     }
   }
 

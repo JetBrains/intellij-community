@@ -462,7 +462,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                         boolean hasFocus) {
         if (value instanceof MyNode) {
           final MyNode node = ((MyNode)value);
-          setIcon(node.getConfigurable().getIcon(expanded));
+          setIcon(node.getIcon(expanded));
           final Font font = UIUtil.getTreeFont();
           if (node.isDisplayInBold()) {
             setFont(font.deriveFont(Font.BOLD));
@@ -699,8 +699,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           throw new ConfigurationException("Name should contain non-space characters");
         }
         if (names.contains(name)) {
-          final NamedConfigurable selectedConfugurable = getSelectedConfugurable();
-          if (selectedConfugurable == null || !Comparing.strEqual(selectedConfugurable.getDisplayName(), name)) {
+          final NamedConfigurable selectedConfigurable = getSelectedConfugurable();
+          if (selectedConfigurable == null || !Comparing.strEqual(selectedConfigurable.getDisplayName(), name)) {
             selectNodeInTree(node);
           }
           throw new ConfigurationException(CommonBundle.message("smth.already.exist.error.message", prefix, name), title);
@@ -835,6 +835,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     public void setDisplayInBold(boolean displayInBold) {
       myDisplayInBold = displayInBold;
+    }
+
+    @Nullable
+    public Icon getIcon(boolean expanded) {
+      // thanks to invokeLater() in TreeUtil.showAndSelect(), we can get calls to getIcon() after the tree has been disposed
+      final NamedConfigurable configurable = getConfigurable();
+      if (configurable != null) {
+        return configurable.getIcon(expanded);
+      }
+      return null;
     }
   }
 

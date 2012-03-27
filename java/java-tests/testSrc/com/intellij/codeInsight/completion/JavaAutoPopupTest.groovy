@@ -1240,4 +1240,16 @@ class Foo {{
     assert myFixture.lookupElementStrings.containsAll(['too', 'command.toString'])
   }
 
+  public void testUnfinishedString() {
+    myFixture.configureByText 'a.java', '''
+// Date
+class Foo {
+  String s = "<caret>
+  String s2 = s;
+}
+'''
+    type 'D'
+    assert !lookup
+  }
+
 }
