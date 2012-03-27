@@ -15,10 +15,14 @@
  */
 package com.intellij.execution.util;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,29 +83,46 @@ public class ExecUtil {
     }
     return tempFile;
   }
-  
+
   public static String getOsascriptPath() {
     return "/usr/bin/osascript";
   }
-  
+
   public static String getOpenCommandPath() {
     return "/usr/bin/open";
   }
 
-  public static int sudoAndGetResult(@NotNull final String scriptPath,
-                                     @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
+  public static ProcessOutput execAndGetOutput(@NotNull final List<String> command, @Nullable final String workDir) throws ExecutionException, InterruptedException {
+    assert command.size() > 0;
+    final GeneralCommandLine commandLine = new GeneralCommandLine(command);
+    if (workDir != null)
+      commandLine.setWorkDirectory(workDir);
+    final Process process = commandLine.createProcess();
+    CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+    return processHandler.runProcess();
+  }
+    
+  public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
+                                               @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
+    return sudoAndGetOutput(scriptPath, prompt, null);
+  }
+  public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
+                                               @NotNull final String prompt, @Nullable String workDir) throws IOException, ExecutionException, ScriptException, InterruptedException {
     if (SystemInfo.isMac) {
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
       Runtime runtime = Runtime.getRuntime();
       String[] args = {getOsascriptPath(), "-e", script};
-      runtime.exec(args);
-      return 0;
+      if (workDir != null)
+        runtime.exec(args, ArrayUtil.EMPTY_STRING_ARRAY, new File(workDir));
+      else
+        runtime.exec(args);
+      return new ProcessOutput(0);
     }
     else if (SystemInfo.isKDE) {
-      return execAndGetResult("kdesudo", "--comment", prompt, scriptPath);
+      return execAndGetOutput(Lists.<String>newArrayList("kdesudo", "--comment", prompt, scriptPath), workDir);
     }
     else if (SystemInfo.isGnome) {
-      return execAndGetResult("gksudo", "--message", prompt, scriptPath);
+      return execAndGetOutput(Lists.<String>newArrayList("gksudo", "--message", prompt, scriptPath), workDir);
     }
     else if (SystemInfo.isUnix) {
       final File sudo = createTempExecutableScript("sudo", ".sh",
@@ -113,10 +134,15 @@ public class ExecUtil {
                                                    "echo\n" +
                                                    "read -p \"Press Enter to close this window...\" TEMP\n" +
                                                    "exit $STATUS\n");
-      return execAndGetResult("xterm", "-T", "Install", "-e", sudo.getAbsolutePath());
+      return execAndGetOutput(Lists.<String>newArrayList("xterm", "-T", "Install", "-e", sudo.getAbsolutePath()), workDir);
     }
     else {
       throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
     }
+  }
+
+  public static int sudoAndGetResult(@NotNull final String scriptPath,
+                                     @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
+    return sudoAndGetOutput(scriptPath, prompt).getExitCode();
   }
 }
