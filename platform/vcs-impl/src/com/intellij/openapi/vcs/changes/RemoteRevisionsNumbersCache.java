@@ -301,7 +301,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       if ((NOT_LOADED == remote) || (UNKNOWN == remote)) {
         return true;
       }
-      return local.compareTo(remote) == 0;
+      return local.compareTo(remote) >= 0;
     }
     return true;
   }
