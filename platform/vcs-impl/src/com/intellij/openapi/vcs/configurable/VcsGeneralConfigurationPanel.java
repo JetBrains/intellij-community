@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,8 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
     }
 
     myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
-    myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") + SystemInfo.nativeFileManagerName + " after creation:");
+    myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
+                              SystemInfo.getFileManagerName() + " after creation:");
   }
 
   public void apply() throws ConfigurationException {
