@@ -51,6 +51,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/icons/icons.iml" filepath="$PROJECT_DIR$/platform/icons/icons.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/idea-ui.iml" filepath="$PROJECT_DIR$/java/idea-ui/idea-ui.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/images/images.iml" filepath="$PROJECT_DIR$/images/images.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" filepath="$PROJECT_DIR$/plugins/java-i18n/java-i18n.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/java/java-impl/java-impl.iml" filepath="$PROJECT_DIR$/java/java-impl/java-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" filepath="$PROJECT_DIR$/java/java-psi-api/java-psi-api.iml" group="java" />

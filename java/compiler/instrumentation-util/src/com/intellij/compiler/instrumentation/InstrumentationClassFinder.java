@@ -1,10 +1,7 @@
-package org.jetbrains.jps.incremental.java;
+package com.intellij.compiler.instrumentation;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 import sun.misc.Resource;
@@ -12,6 +9,7 @@ import sun.misc.Resource;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -23,22 +21,81 @@ import java.util.zip.ZipFile;
 public class InstrumentationClassFinder {
   private static final PseudoClass[] EMPTY_PSEUDOCLASS_ARRAY = new PseudoClass[0];
   private static final String CLASS_RESOURCE_EXTENSION = ".class";
+  private static final URL[] URL_EMPTY_ARRAY = new URL[0];
   private final Map<String, PseudoClass> myLoaded = new HashMap<String, PseudoClass>(); // className -> class object
   private final ClassFinderClasspath myPlatformClasspath;
   private final ClassFinderClasspath myClasspath;
+  private final URL[] myPlatformUrls;
+  private final URL[] myClasspathUrls;
+  private ClassLoader myLoader;
+  private byte[] myBuffer;
 
-  public InstrumentationClassFinder(final URL[] platformClasspath, final URL[] classpath) {
-    myPlatformClasspath = new ClassFinderClasspath(platformClasspath);
-    myClasspath = new ClassFinderClasspath(classpath);
+  public InstrumentationClassFinder(final URL[] cp) {
+    this(URL_EMPTY_ARRAY, cp);
+  }
+
+  public InstrumentationClassFinder(final URL[] platformUrls, final URL[] classpathUrls) {
+    myPlatformUrls = platformUrls;
+    myClasspathUrls = classpathUrls;
+    myPlatformClasspath = new ClassFinderClasspath(platformUrls);
+    myClasspath = new ClassFinderClasspath(classpathUrls);
+  }
+
+  // compatibility with legacy code requiring ClassLoader
+  public ClassLoader getLoader() {
+    ClassLoader loader = myLoader;
+    if (loader != null) {
+      return loader;
+    }
+    final URLClassLoader platformLoader = myPlatformUrls.length > 0 ? new URLClassLoader(myPlatformUrls, null) : null;
+    final ClassLoader cpLoader = new URLClassLoader(myClasspathUrls, platformLoader);
+    loader = new ClassLoader(cpLoader) {
+
+      public InputStream getResourceAsStream(String name) {
+        InputStream is = null;
+        is = super.getResourceAsStream(name);
+        if (is == null) {
+          try {
+            is = InstrumentationClassFinder.this.getResourceAsStream(name);
+          }
+          catch (IOException ignored) {
+          }
+        }
+        return is;
+      }
+
+      protected Class findClass(String name) throws ClassNotFoundException {
+        final InputStream is = lookupClassBeforeClasspath(name.replace('.', '/'));
+        if (is == null) {
+          throw new ClassNotFoundException(name);
+        }
+        try {
+          final byte[] bytes = loadBytes(is);
+          return defineClass(name, bytes, 0, bytes.length);
+        }
+        finally {
+          try {
+            is.close();
+          }
+          catch (IOException ignored) {
+          }
+        }
+      }
+    };
+    myLoader = loader;
+    return loader;
   }
 
   public void releaseResources() {
     myPlatformClasspath.releaseResources();
     myClasspath.releaseResources();
     myLoaded.clear();
+    myBuffer = null;
+    myLoader = null;
   }
 
-  public PseudoClass loadClass(final String internalName) throws IOException, ClassNotFoundException{
+  public PseudoClass loadClass(final String name) throws IOException, ClassNotFoundException{
+    final String internalName = name.replace('.', '/'); // normalize
     final PseudoClass aClass = myLoaded.get(internalName);
     if (aClass != null) {
       return aClass;
@@ -81,12 +138,28 @@ public class InstrumentationClassFinder {
     }
   }
 
-  @Nullable
+  public InputStream getResourceAsStream(String resourceName) throws IOException {
+    InputStream is = null;
+
+    Resource resource = myPlatformClasspath.getResource(resourceName, false);
+    if (resource != null) {
+      is = resource.getInputStream();
+    }
+
+    if (is == null) {
+      resource = myClasspath.getResource(resourceName, false);
+      if (resource != null) {
+        is = resource.getInputStream();
+      }
+    }
+
+    return is;
+  }
+
   protected InputStream lookupClassBeforeClasspath(final String internalClassName) {
     return null;
   }
 
-  @Nullable
   protected InputStream lookupClassAfterClasspath(final String internalClassName) {
     return null;
   }
@@ -97,20 +170,61 @@ public class InstrumentationClassFinder {
 
     reader.accept(visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-    return new PseudoClass(visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myIsInterface);
+    return new PseudoClass(visitor.myName, visitor.mySuperclassName, visitor.myInterfaces, visitor.myModifiers, visitor.myMethods);
   }
   
   public final class PseudoClass {
     private final String myName;
     private final String mySuperClass;
     private final String[] myInterfaces;
-    private final boolean isInterface;
+    private final int myModifiers;
+    private final List<PseudoMethod> myMethods;
 
-    private PseudoClass(final String name, final String superClass, final String[] interfaces, final boolean anInterface) {
+    private PseudoClass(final String name, final String superClass, final String[] interfaces, final int modifiers, List<PseudoMethod> methods) {
       myName = name;
       mySuperClass = superClass;
       myInterfaces = interfaces;
-      isInterface = anInterface;
+      myModifiers = modifiers;
+      myMethods = methods;
+    }
+
+    public int getModifiers() {
+      return myModifiers;
+    }
+
+    public boolean isInterface() {
+      return (myModifiers & Opcodes.ACC_INTERFACE) > 0;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public List<PseudoMethod> getMethods() {
+      return myMethods;
+    }
+
+    public List<PseudoMethod> findMethods(String name) {
+      final List<PseudoMethod> result = new ArrayList<PseudoMethod>();
+      for (PseudoMethod method : myMethods) {
+        if (method.getName().equals(name)){
+          result.add(method);
+        }
+      }
+      return result;
+    }
+
+    public PseudoMethod findMethod(String name, String descriptor) {
+      for (PseudoMethod method : myMethods) {
+        if (method.getName().equals(name) && method.getSignature().equals(descriptor)){
+          return method;
+        }
+      }
+      return null;
+    }
+
+    public InstrumentationClassFinder getFinder() {
+      return InstrumentationClassFinder.this;
     }
 
     public PseudoClass getSuperClass() throws IOException, ClassNotFoundException {
@@ -173,18 +287,47 @@ public class InstrumentationClassFinder {
       if (x.implementsInterface(this)) {
         return true;
       }
-      if (x.isInterface() && getName().equals("java/lang/Object")) {
+      if (x.isInterface() && "java/lang/Object".equals(getName())) {
         return true;
       }
       return false;
     }
 
-    public boolean isInterface() {
-      return isInterface;
+    public boolean hasDefaultPublicConstructor() {
+      for (PseudoMethod method : myMethods) {
+        if ("<init>".equals(method.getName()) && "()V".equals(method.getSignature())) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public String getDescriptor() {
+      return "L" + myName + ";";
+    }
+  }
+
+  public static final class PseudoMethod {
+    private final int myAccess;
+    private final String myName;
+    private final String mySignature;
+
+    public PseudoMethod(int access, String name, String signature) {
+      myAccess = access;
+      myName = name;
+      mySignature = signature;
+    }
+
+    public int getModifiers() {
+      return myAccess;
     }
 
     public String getName() {
       return myName;
+    }
+
+    public String getSignature() {
+      return mySignature;
     }
   }
 
@@ -192,17 +335,21 @@ public class InstrumentationClassFinder {
     public String mySuperclassName = null;
     public String[] myInterfaces = null;
     public String myName = null;
-    public boolean myIsInterface = false;
+    public int myModifiers;
+    private final List<PseudoMethod> myMethods = new ArrayList<PseudoMethod>();
 
-    public void visitAttribute(Attribute attr) {
-      super.visitAttribute(attr);
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      if ((access & Opcodes.ACC_PUBLIC) > 0) {
+        myMethods.add(new PseudoMethod(access, name, desc));
+      }
+      return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
     public void visit(int version, int access, String pName, String signature, String pSuperName, String[] pInterfaces) {
       mySuperclassName = pSuperName;
       myInterfaces = pInterfaces;
       myName = pName;
-      myIsInterface = (access & Opcodes.ACC_INTERFACE) > 0;
+      myModifiers = access;
     }
   }
 
@@ -221,7 +368,6 @@ public class InstrumentationClassFinder {
       }
     }
 
-    @Nullable
     public Resource getResource(String s, boolean flag) {
       int i = 0;
       for (Loader loader; (loader = getLoader(i)) != null; i++) {
@@ -242,7 +388,6 @@ public class InstrumentationClassFinder {
       myLoadersMap.clear();
     }
 
-    @Nullable
     private synchronized Loader getLoader(int i) {
       while (myLoaders.size() < i + 1) {
         URL url;
@@ -275,7 +420,6 @@ public class InstrumentationClassFinder {
       return myLoaders.get(i);
     }
 
-    @Nullable
     private Loader getLoader(final URL url, int index) throws IOException {
       String s;
       try {
@@ -317,7 +461,6 @@ public class InstrumentationClassFinder {
         return myURL;
       }
 
-      @Nullable
       public abstract Resource getResource(final String name, boolean flag);
 
       public abstract void releaseResources();
@@ -345,7 +488,6 @@ public class InstrumentationClassFinder {
       public void releaseResources() {
       }
 
-      @Nullable
       public Resource getResource(final String name, boolean check) {
         URL url = null;
         File file = null;
@@ -410,7 +552,6 @@ public class InstrumentationClassFinder {
         }
       }
 
-      @NonNls
       public String toString() {
         return "FileLoader [" + myRootDir + "]";
       }
@@ -438,7 +579,6 @@ public class InstrumentationClassFinder {
         }
       }
 
-      @Nullable
       private ZipFile acquireZipFile() throws IOException {
         ZipFile zipFile = myZipFile;
         if (zipFile == null) {
@@ -448,7 +588,6 @@ public class InstrumentationClassFinder {
         return zipFile;
       }
 
-      @Nullable
       private ZipFile doGetZipFile() throws IOException {
         if (FILE_PROTOCOL.equals(myURL.getProtocol())) {
           String s = unescapePercentSequences(myURL.getFile().replace('/', File.separatorChar));
@@ -463,7 +602,6 @@ public class InstrumentationClassFinder {
         return null;
       }
 
-      @Nullable
       public Resource getResource(String name, boolean flag) {
         try {
           final ZipFile file = acquireZipFile();
@@ -501,11 +639,9 @@ public class InstrumentationClassFinder {
           return myURL;
         }
 
-        @Nullable
         public InputStream getInputStream() throws IOException {
-          ZipFile file = null;
           try {
-            file = acquireZipFile();
+            final ZipFile file = acquireZipFile();
             if (file == null) {
               return null;
             }
@@ -527,7 +663,6 @@ public class InstrumentationClassFinder {
         }
       }
 
-      @NonNls
       public String toString() {
         return "JarLoader [" + myURL + "]";
       }
@@ -535,8 +670,7 @@ public class InstrumentationClassFinder {
   }
 
 
-  @NotNull
-  private static String unescapePercentSequences(@NotNull String s) {
+  private static String unescapePercentSequences(String s) {
     if (s.indexOf('%') == -1) {
       return s;
     }
@@ -589,6 +723,29 @@ public class InstrumentationClassFinder {
       return c - 'A' + 10;
     }
     return -1;
+  }
+
+  public byte[] loadBytes(InputStream stream) {
+    byte[] buf = myBuffer;
+    if (buf == null) {
+      buf = new byte[512];
+      myBuffer = buf;
+    }
+
+    final ByteArrayOutputStream result = new ByteArrayOutputStream();
+    try {
+      while (true) {
+        int n = stream.read(buf, 0, buf.length);
+        if (n <= 0) {
+          break;
+        }
+        result.write(buf, 0, n);
+      }
+      result.close();
+    }
+    catch (IOException ignored) {
+    }
+    return result.toByteArray();
   }
 
 }

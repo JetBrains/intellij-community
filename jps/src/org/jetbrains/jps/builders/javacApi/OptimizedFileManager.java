@@ -1,7 +1,7 @@
 package org.jetbrains.jps.builders.javacApi;
 
 import com.intellij.ant.InstrumentationUtil;
-import com.intellij.ant.PseudoClassLoader;
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefaultFileManager;
 import com.sun.tools.javac.util.List;
@@ -14,10 +14,9 @@ import javax.lang.model.SourceVersion;
 import javax.tools.FileObject;
 import javax.tools.ForwardingJavaFileObject;
 import javax.tools.JavaFileObject;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,11 +33,17 @@ public class OptimizedFileManager extends DefaultFileManager {
     private final Map<File, Archive> myArchives;
     private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
     private Callbacks.Backend callback;
-    private PseudoClassLoader loader;
+    private InstrumentationClassFinder classFinder;
+    private Map<String, byte[]> myCompiledClasses = new HashMap<String, byte[]>();
 
-    public void setProperties(final Callbacks.Backend c, final PseudoClassLoader l) {
+    public void setProperties(final Callbacks.Backend c, final URL[] classpath) {
         callback = c;
-        loader = l;
+        classFinder = new InstrumentationClassFinder(classpath) {
+          protected InputStream lookupClassBeforeClasspath(String internalClassName) {
+            final byte[] bytes = myCompiledClasses.get(internalClassName);
+            return bytes != null? new ByteArrayInputStream(bytes) : null;
+          }
+        };
     }
 
     public OptimizedFileManager() {
@@ -201,7 +206,7 @@ public class OptimizedFileManager extends DefaultFileManager {
                         final byte[] buffer = Arrays.copyOfRange(b, off, len);
 
                         if (kind.equals(JavaFileObject.Kind.CLASS)) {
-                            loader.defineClass(className.replaceAll("\\.", "/"), buffer);
+                            myCompiledClasses.put(className.replace('.', '/'), buffer);
 
                             if (callback != null) {
                                 final ClassReader reader = new ClassReader(buffer);
@@ -212,7 +217,7 @@ public class OptimizedFileManager extends DefaultFileManager {
                                 public void commit() throws IOException {
                                     final OutputStream result = superOpenOutputStream();
 
-                                    final byte[] instrumented = InstrumentationUtil.instrumentNotNull(buffer, loader);
+                                    final byte[] instrumented = InstrumentationUtil.instrumentNotNull(buffer, classFinder);
 
                                     if (instrumented != null) {
                                         result.write(instrumented);
@@ -247,5 +252,8 @@ public class OptimizedFileManager extends DefaultFileManager {
         }
 
         myWriters.clear();
+        if (classFinder != null) {
+          classFinder.releaseResources();
+        }
     }
 }

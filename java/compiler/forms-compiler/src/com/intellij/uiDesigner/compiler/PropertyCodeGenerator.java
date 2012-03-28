@@ -15,9 +15,12 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
 import org.objectweb.asm.commons.GeneratorAdapter;
+
+import java.io.IOException;
 
 /**
  * @author yole
@@ -26,13 +29,13 @@ public abstract class PropertyCodeGenerator {
   public abstract void generatePushValue(final GeneratorAdapter generator, final Object value);
 
   public boolean generateCustomSetValue(final LwComponent lwComponent,
-                                        final Class componentClass, final LwIntrospectedProperty property,
+                                        final InstrumentationClassFinder.PseudoClass componentClass, final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
-                                        final int componentLocal, final String formClassName) {
+                                        final int componentLocal, final String formClassName) throws IOException, ClassNotFoundException {
     return false;
   }
 
-  public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final ClassLoader loader) {
+  public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final InstrumentationClassFinder classFinder) {
   }
 
   public void generateClassEnd(AsmCodeGenerator.FormClassVisitor visitor) {

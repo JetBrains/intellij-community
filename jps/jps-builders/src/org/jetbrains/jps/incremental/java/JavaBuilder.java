@@ -1,5 +1,7 @@
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.openapi.application.PathManager;
@@ -37,7 +39,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -274,15 +275,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.checkCanceled();
 
         if (!forms.isEmpty() || addNotNullAssertions) {
-          final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, outputSink);
+          final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
+          final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
           try {
             if (!forms.isEmpty()) {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
-                final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
-                final ClassLoader loader = createInstrumentationClassLoader(platformCp, classpath, chunkSourcePath, outputSink);
-                instrumentForms(context, chunk, chunkSourcePath, loader, finder, forms, outputSink);
+                instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
               }
               finally {
                 context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
@@ -529,22 +529,24 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static InstrumentationClassFinder createInstrumentationClassFinder(Collection<File> platformCp,
                                                                              Collection<File> classpath,
-                                                                             final OutputFilesSink outputSink) throws MalformedURLException {
+                                                                             Map<File, String> chunkSourcePath, final OutputFilesSink outputSink) throws MalformedURLException {
     final URL[] platformUrls = new URL[platformCp.size()];
     int index = 0;
     for (File file : platformCp) {
       platformUrls[index++] = file.toURI().toURL();
     }
     
-    final URL[] urls = new URL[classpath.size() + 1];
-    index = 0;
+    final List<URL> urls = new ArrayList<URL>(classpath.size() + chunkSourcePath.size() + 1);
     for (File file : classpath) {
-      urls[index++] = file.toURI().toURL();
+      urls.add(file.toURI().toURL());
     }
-    urls[index++] = getResourcePath(GridConstraints.class).toURI().toURL(); // forms_rt.jar
+    urls.add(getResourcePath(GridConstraints.class).toURI().toURL()); // forms_rt.jar
     //urls.add(getResourcePath(CellConstraints.class).toURI().toURL());  // jgoodies-forms
-    
-    return new InstrumentationClassFinder(platformUrls, urls) {
+    for (File file : chunkSourcePath.keySet()) { // sourcepath for loading forms resources
+      urls.add(file.toURI().toURL());
+    }
+
+    return new InstrumentationClassFinder(platformUrls, urls.toArray(new URL[urls.size()])) {
       protected InputStream lookupClassBeforeClasspath(String internalClassName) {
         final OutputFileObject.Content content = outputSink.lookupClassBytes(internalClassName.replace("/", "."));
         if (content != null) {
@@ -553,23 +555,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
         return null;
       }
     };
-  }
-
-  private static ClassLoader createInstrumentationClassLoader(Collection<File> platformCp, Collection<File> classpath,
-                                                              Map<File, String> chunkSourcePath,
-                                                              OutputFilesSink outputSink) throws MalformedURLException {
-    final List<URL> urls = new ArrayList<URL>();
-    for (Collection<File> cp : Arrays.asList(platformCp, classpath)) {
-      for (File file : cp) {
-        urls.add(file.toURI().toURL());
-      }
-    }
-    urls.add(getResourcePath(GridConstraints.class).toURI().toURL()); // forms_rt.jar
-    //urls.add(getResourcePath(CellConstraints.class).toURI().toURL());  // jgoodies-forms
-    for (File file : chunkSourcePath.keySet()) {
-      urls.add(file.toURI().toURL());
-    }
-    return new CompiledClassesLoader(outputSink, urls.toArray(new URL[urls.size()]));
   }
 
   private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
@@ -713,7 +698,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static void instrumentForms(CompileContext context,
                                       ModuleChunk chunk,
                                       final Map<File, String> chunkSourcePath,
-                                      final ClassLoader loader,
                                       final InstrumentationClassFinder finder, Collection<File> formsToInstrument,
                                       OutputFilesSink outputSink) throws ProjectBuildException {
 
@@ -731,7 +715,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;
       try {
-        rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(loader));
+        rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
       }
       catch (AlienFormFileException e) {
         // ignore non-IDEA forms
@@ -774,7 +758,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
         final int version = getClassFileVersion(classReader);
         final InstrumenterClassWriter classWriter = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
-        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormsLoader, false, classWriter);
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, finder, nestedFormsLoader, false, classWriter);
         final byte[] patchedBytes = codeGenerator.patchClass(classReader);
         if (patchedBytes != null) {
           outputClassFile.updateContent(patchedBytes);
@@ -923,42 +907,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  public static class InstrumenterClassWriter extends ClassWriter {
-    private final InstrumentationClassFinder myFinder;
-
-    public InstrumenterClassWriter(int flags, final InstrumentationClassFinder finder) {
-      super(flags);
-      myFinder = finder;
-    }
-
-    protected String getCommonSuperClass(final String type1, final String type2) {
-      try {
-        final InstrumentationClassFinder.PseudoClass cls1 = myFinder.loadClass(type1);
-        final InstrumentationClassFinder.PseudoClass cls2 = myFinder.loadClass(type2);
-        if (cls1.isAssignableFrom(cls2)) {
-          return cls1.getName();
-        }
-        if (cls2.isAssignableFrom(cls1)) {
-          return cls2.getName();
-        }
-        if (cls1.isInterface() || cls2.isInterface()) {
-          return "java/lang/Object";
-        }
-        else {
-          InstrumentationClassFinder.PseudoClass c = cls1;
-          do {
-            c = c.getSuperClass();
-          }
-          while (!c.isAssignableFrom(cls2));
-          return c.getName();
-        }
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e.toString(), e);
-      }
-    }
-  }
-
   private static class MyNestedFormLoader implements NestedFormLoader {
     private final Map<File, String> mySourceRoots;
     private final Collection<File> myOutputRoots;
@@ -1037,27 +985,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static File getResourcePath(Class aClass) {
     return new File(PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class"));
-  }
-
-  private static class CompiledClassesLoader extends URLClassLoader {
-    private final OutputFilesSink mySink;
-
-    public CompiledClassesLoader(OutputFilesSink sink, URL[] urls) {
-      super(urls, null);
-      mySink = sink;
-    }
-
-    protected Class findClass(String name) throws ClassNotFoundException {
-      final OutputFileObject.Content content = mySink.lookupClassBytes(name);
-      if (content != null) {
-        return defineClass(name, content.getBuffer(), content.getOffset(), content.getLength());
-      }
-      return super.findClass(name);
-    }
-
-    public URL findResource(String name) {
-      return super.findResource(name);
-    }
   }
 
   private class ClassProcessingConsumer implements OutputFileConsumer {

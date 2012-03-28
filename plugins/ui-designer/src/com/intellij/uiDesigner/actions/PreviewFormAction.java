@@ -18,6 +18,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.impl.FileSetCompileScope;
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -128,118 +129,124 @@ public final class PreviewFormAction extends AnAction{
     final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
-    final ClassLoader loader = Form2ByteCodeCompiler.createClassLoader(classPath);
+    final InstrumentationClassFinder finder = Form2ByteCodeCompiler.createClassFinder(classPath);
 
-    final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
-    final LwRootContainer rootContainer;
     try {
-      rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(loader));
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(
-        module.getProject(),
-        UIDesignerBundle.message("error.cannot.read.form", formFile.getPath().replace('/', File.separatorChar), e.getMessage()),
-        CommonBundle.getErrorTitle()
-      );
-      return;
-    }
-
-    if (rootContainer.getComponentCount() == 0) {
-      Messages.showErrorDialog(
-        module.getProject(),
-        UIDesignerBundle.message("error.cannot.preview.empty.form", formFile.getPath().replace('/', File.separatorChar)),
-        CommonBundle.getErrorTitle()
-      );
-      return;
-    }
-
-    setPreviewBindings(rootContainer, CLASS_TO_BIND_NAME);
-
-    // 2. Copy previewer class and all its superclasses into TEMP directory and instrument it.
-    try {
-      PreviewNestedFormLoader nestedFormLoader = new PreviewNestedFormLoader(module, tempPath, loader);
-
-      final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
-      //CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
-      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
-      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
-      CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
-
-      Locale locale = Locale.getDefault();
-      if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
-        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() +
-                                                   "_" + locale.getCountry() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
+      final Document doc = FileDocumentManager.getInstance().getDocument(formFile);
+      final LwRootContainer rootContainer;
+      try {
+        rootContainer = Utils.getRootContainer(doc.getText(), new CompiledClassPropertiesProvider(finder.getLoader()));
       }
-      if (locale.getLanguage().length() > 0) {
-        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
-      }
-      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
-      CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + PropertiesFileType.DOT_DEFAULT_EXTENSION);
-
-      final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, nestedFormLoader, true,
-                                                                  new PsiClassWriter(module));
-      codeGenerator.patchFile(tempFile);
-      final FormErrorInfo[] errors = codeGenerator.getErrors();
-      if(errors.length != 0){
+      catch (Exception e) {
         Messages.showErrorDialog(
           module.getProject(),
-          UIDesignerBundle.message("error.cannot.preview.form",
-                                   formFile.getPath().replace('/', File.separatorChar),
-                                   errors[0].getErrorMessage()),
+          UIDesignerBundle.message("error.cannot.read.form", formFile.getPath().replace('/', File.separatorChar), e.getMessage()),
           CommonBundle.getErrorTitle()
         );
         return;
       }
-    }
-    catch (Exception e) {
-      LOG.debug(e);
-      Messages.showErrorDialog(
-        module.getProject(),
-        UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar),
-                                 e.getMessage() != null ? e.getMessage() : e.toString()),
-        CommonBundle.getErrorTitle()
-      );
-      return;
-    }
 
-    // 2.5. Copy up-to-date properties files to the output directory.
-    final HashSet<String> bundleSet = new HashSet<String>();
-    FormEditingUtil.iterateStringDescriptors(
-      rootContainer,
-      new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
-        public boolean visit(final IComponent component, final StringDescriptor descriptor) {
-          if (descriptor.getBundleName() != null) {
-            bundleSet.add(descriptor.getDottedBundleName());
-          }
-          return true;
+      if (rootContainer.getComponentCount() == 0) {
+        Messages.showErrorDialog(
+          module.getProject(),
+          UIDesignerBundle.message("error.cannot.preview.empty.form", formFile.getPath().replace('/', File.separatorChar)),
+          CommonBundle.getErrorTitle()
+        );
+        return;
+      }
+
+      setPreviewBindings(rootContainer, CLASS_TO_BIND_NAME);
+
+      // 2. Copy previewer class and all its superclasses into TEMP directory and instrument it.
+      try {
+        PreviewNestedFormLoader nestedFormLoader = new PreviewNestedFormLoader(module, tempPath, finder);
+
+        final File tempFile = CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME, true);
+        //CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$1", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyExitAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MyPackAction", true);
+        CopyResourcesUtil.copyClass(tempPath, CLASS_TO_BIND_NAME + "$MySetLafAction", true);
+
+        Locale locale = Locale.getDefault();
+        if (locale.getCountry().length() > 0 && locale.getLanguage().length() > 0) {
+          CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() +
+                                                     "_" + locale.getCountry() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
         }
-      });
+        if (locale.getLanguage().length() > 0) {
+          CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
+        }
+        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + "_" + locale.getLanguage() + PropertiesFileType.DOT_DEFAULT_EXTENSION);
+        CopyResourcesUtil.copyProperties(tempPath, RUNTIME_BUNDLE_PREFIX + PropertiesFileType.DOT_DEFAULT_EXTENSION);
 
-    if (bundleSet.size() > 0) {
-      HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
-      HashSet<Module> modules = new HashSet<Module>();
-      PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
-      for(String bundleName: bundleSet) {
-        for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
-          virtualFiles.add(propFile.getVirtualFile());
-          final Module moduleForFile = ModuleUtil.findModuleForFile(propFile.getVirtualFile(), module.getProject());
-          if (moduleForFile != null) {
-            modules.add(moduleForFile);
-          }
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(
+          rootContainer, finder, nestedFormLoader, true, new PsiClassWriter(module)
+        );
+        codeGenerator.patchFile(tempFile);
+        final FormErrorInfo[] errors = codeGenerator.getErrors();
+        if(errors.length != 0){
+          Messages.showErrorDialog(
+            module.getProject(),
+            UIDesignerBundle.message("error.cannot.preview.form",
+                                     formFile.getPath().replace('/', File.separatorChar),
+                                     errors[0].getErrorMessage()),
+            CommonBundle.getErrorTitle()
+          );
+          return;
         }
       }
-      FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[modules.size()]));
+      catch (Exception e) {
+        LOG.debug(e);
+        Messages.showErrorDialog(
+          module.getProject(),
+          UIDesignerBundle.message("error.cannot.preview.form", formFile.getPath().replace('/', File.separatorChar),
+                                   e.getMessage() != null ? e.getMessage() : e.toString()),
+          CommonBundle.getErrorTitle()
+        );
+        return;
+      }
 
-      CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
-        public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-          if (!aborted && errors == 0) {
-            runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
+      // 2.5. Copy up-to-date properties files to the output directory.
+      final HashSet<String> bundleSet = new HashSet<String>();
+      FormEditingUtil.iterateStringDescriptors(
+        rootContainer,
+        new FormEditingUtil.StringDescriptorVisitor<IComponent>() {
+          public boolean visit(final IComponent component, final StringDescriptor descriptor) {
+            if (descriptor.getBundleName() != null) {
+              bundleSet.add(descriptor.getDottedBundleName());
+            }
+            return true;
+          }
+        });
+
+      if (bundleSet.size() > 0) {
+        HashSet<VirtualFile> virtualFiles = new HashSet<VirtualFile>();
+        HashSet<Module> modules = new HashSet<Module>();
+        PropertiesReferenceManager manager = PropertiesReferenceManager.getInstance(module.getProject());
+        for(String bundleName: bundleSet) {
+          for(PropertiesFile propFile: manager.findPropertiesFiles(module, bundleName)) {
+            virtualFiles.add(propFile.getVirtualFile());
+            final Module moduleForFile = ModuleUtil.findModuleForFile(propFile.getVirtualFile(), module.getProject());
+            if (moduleForFile != null) {
+              modules.add(moduleForFile);
+            }
           }
         }
-      });
+        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[modules.size()]));
+
+        CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
+          public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
+            if (!aborted && errors == 0) {
+              runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
+            }
+          }
+        });
+      }
+      else {
+        runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
+      }
     }
-    else {
-      runPreviewProcess(tempPath, sources, module, formFile, stringDescriptorLocale);
+    finally {
+      finder.releaseResources();
     }
   }
 
