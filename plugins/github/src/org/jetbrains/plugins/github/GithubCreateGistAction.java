@@ -143,7 +143,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
           response = method.getResponseBodyAsString();
         }
         catch (IOException e1) {
-          showError(project, "Failed to create gist", null, null, e1);
+          showError(project, "Failed to create gist", "", null, e1);
           return;
         }
         finally {
@@ -155,7 +155,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
           jsonResponse = new JsonParser().parse(response).getAsJsonObject();
         }
         catch (JsonSyntaxException jse) {
-          showError(project, "Couldn't parse GitHub response", null, response, jse);
+          showError(project, "Couldn't parse GitHub response", "", response, jse);
           return;
         }
 
@@ -188,7 +188,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
   }
 
-  private static void showError(@NotNull Project project, @NotNull String title, @Nullable String content,
+  private static void showError(@NotNull Project project, @NotNull String title, @NotNull String content,
                                 @Nullable String details, @Nullable Exception e) {
     Notificator.getInstance(project).notifyError(title, content);
     LOG.info("Couldn't parse response as json data: \n" + content + "\n" + details, e);
