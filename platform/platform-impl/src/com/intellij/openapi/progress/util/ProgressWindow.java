@@ -552,7 +552,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           SwingUtilities.invokeLater(myRepaintRunnable);
         }
         else {
-          if (myUpdateAlarm.getActiveRequestCount() == 0) {
+          if (myUpdateAlarm.getActiveRequestCount() == 0 && !myUpdateAlarm.isDisposed()) {
             myUpdateAlarm.addRequest(myUpdateRequest, 500, getModalityState());
           }
         }
