@@ -29,5 +29,4 @@ public abstract class VcsFileRevisionEx implements VcsFileRevision {
 
   @Nullable
   public abstract String getCommitterEmail();
-
 }

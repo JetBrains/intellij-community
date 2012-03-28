@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.TimedDeadzone;
@@ -52,7 +52,7 @@ import java.util.List;
  * User: spLeaner
  */
 public class ConfigurationErrorsComponent extends JPanel implements Disposable, ListDataListener {
-  private static final int MAX_ERRORS_TO_SHOW = SystemInfo.getIntProperty("idea.project.structure.max.errors.to.show", 100);
+  private static final int MAX_ERRORS_TO_SHOW = SystemProperties.getIntProperty("idea.project.structure.max.errors.to.show", 100);
   private static final boolean ONE_LINE = true;
   private static final boolean MULTI_LINE = false;
 

@@ -197,6 +197,17 @@ public class PropertyParser {
     return properties;
   }
 
+  public boolean isAssignableFrom(MetaModel base, MetaModel test) {
+    try {
+      Class<?> baseClass = myClassLoader.loadClass(base.getTarget());
+      Class<?> testClass = myClassLoader.loadClass(test.getTarget());
+      return baseClass.isAssignableFrom(testClass);
+    }
+    catch (Throwable e) {
+    }
+    return false;
+  }
+
   @NotNull
   public ResourceDialog createResourceDialog(ResourceType[] types) {
     return new ResourceDialog(myModule, types);

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Throwable2Computable;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -113,6 +114,11 @@ public class SvnFileRevision implements VcsFileRevision {
 
   public String getBranchName() {
     return null;
+  }
+
+  @Override
+  public RepositoryLocation getChangedRepositoryPath() {
+    return new SvnRepositoryLocation(myURL);
   }
 
   public Date getRevisionDate() {

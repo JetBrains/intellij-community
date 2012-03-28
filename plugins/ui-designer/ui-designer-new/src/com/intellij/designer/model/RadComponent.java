@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.model;
 
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
@@ -103,7 +104,10 @@ public abstract class RadComponent {
   public void processDropOperation(OperationContext context) {
   }
 
-  public void addSelectionActions(DefaultActionGroup actionGroup, JComponent shortcuts, List<RadComponent> selection) {
+  public void addSelectionActions(DesignerEditorPanel designer,
+                                  DefaultActionGroup actionGroup,
+                                  JComponent shortcuts,
+                                  List<RadComponent> selection) {
   }
   //////////////////////////////////////////////////////////////////////////////////////////
   //

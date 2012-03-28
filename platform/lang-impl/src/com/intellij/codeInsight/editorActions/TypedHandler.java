@@ -42,9 +42,9 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -205,7 +205,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
     if (!editor.getSelectionModel().hasBlockSelection()) {
       if (')' == charTyped || ']' == charTyped || '}' == charTyped) {
-        if (StdFileTypes.PLAIN_TEXT != fileType) {
+        if (FileTypes.PLAIN_TEXT != fileType) {
           if (handleRParen(editor, fileType, charTyped)) return;
         }
       }
@@ -220,7 +220,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
     if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
         CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-        !editor.getSelectionModel().hasBlockSelection() && fileType != StdFileTypes.PLAIN_TEXT) {
+        !editor.getSelectionModel().hasBlockSelection() && fileType != FileTypes.PLAIN_TEXT) {
       handleAfterLParen(editor, fileType, charTyped);
     }
     else if ('}' == charTyped) {
@@ -436,8 +436,18 @@ public class TypedHandler extends TypedActionHandlerBase {
     myOriginalHandler.execute(editor, quote, dataContext);
     offset = editor.getCaretModel().getOffset();
 
-    if (isOpeningQuote(editor, quoteHandler, offset - 1) &&
-        hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
+    if (quoteHandler instanceof MultiCharQuoteHandler) {
+      CharSequence closingQuote = getClosingQuote(editor, (MultiCharQuoteHandler)quoteHandler, offset);
+      if (closingQuote != null && hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
+        if (offset == document.getTextLength() ||
+            !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
+          document.insertString(offset, closingQuote);
+          return true;
+        }
+      }
+    }
+
+    if (isOpeningQuote(editor, quoteHandler, offset - 1) && hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
       if (offset == document.getTextLength() ||
           !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
         document.insertString(offset, String.valueOf(quote));
@@ -455,6 +465,17 @@ public class TypedHandler extends TypedActionHandlerBase {
     }
 
     return quoteHandler.isClosingQuote(iterator,offset);
+  }
+
+  @Nullable
+  private static CharSequence getClosingQuote(Editor editor, MultiCharQuoteHandler quoteHandler, int offset) {
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
+    if (iterator.atEnd()){
+      LOG.assertTrue(false);
+      return null;
+    }
+
+    return quoteHandler.getClosingQuote(iterator, offset);
   }
 
   private static boolean isOpeningQuote(Editor editor, QuoteHandler quoteHandler, int offset) {

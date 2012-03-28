@@ -132,7 +132,9 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     }
 
     PsiElement last = element;
-    while (element != null && element.getTextRange().getStartOffset() >= startOffset && element.getTextRange().getEndOffset() <= endOffset) {
+    while (element != null &&
+           element.getTextRange().getStartOffset() >= startOffset && element.getTextRange().getEndOffset() <= endOffset &&
+           !(element instanceof PsiExpressionStatement)) {
       last = element;
       element = element.getParent();
     }

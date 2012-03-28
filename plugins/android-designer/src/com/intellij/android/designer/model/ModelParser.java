@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.XmlRecursiveElementVisitor;
@@ -36,7 +35,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
 /**
@@ -123,6 +121,45 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     return component;
   }
 
+  public static void moveComponent(final RadViewComponent container,
+                                   final RadViewComponent movedComponent,
+                                   @Nullable final RadViewComponent insertBefore)
+    throws Exception {
+    movedComponent.getParent().getChildren().remove(movedComponent);
+    movedComponent.setParent(container);
+
+    List<RadComponent> children = container.getChildren();
+    if (insertBefore == null) {
+      children.add(movedComponent);
+    }
+    else {
+      children.add(children.indexOf(insertBefore), movedComponent);
+    }
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        XmlTag xmlTag = movedComponent.getTag();
+
+        XmlTag parentTag = container.getTag();
+        XmlTag nextTag = insertBefore == null ? null : insertBefore.getTag();
+        XmlTag newXmlTag;
+        if (nextTag == null) {
+          newXmlTag = parentTag.addSubTag(xmlTag, false);
+        }
+        else {
+          newXmlTag = (XmlTag)parentTag.addBefore(xmlTag, nextTag);
+        }
+
+        xmlTag.delete();
+        movedComponent.setTag(newXmlTag);
+      }
+    });
+
+    PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
+    propertyParser.load(movedComponent);
+  }
+
   public static void addComponent(RadViewComponent container, RadViewComponent newComponent, @Nullable RadViewComponent insertBefore)
     throws Exception {
     newComponent.setParent(container);
@@ -135,13 +172,13 @@ public class ModelParser extends XmlRecursiveElementVisitor {
       children.add(children.indexOf(insertBefore), newComponent);
     }
 
-    setComponentTag(container.getTag(), newComponent, insertBefore == null ? null : insertBefore.getTag());
+    addComponentTag(container.getTag(), newComponent, insertBefore == null ? null : insertBefore.getTag());
 
     PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
     propertyParser.load(newComponent);
   }
 
-  public static void setComponentTag(final XmlTag parentTag, final RadViewComponent component, final XmlTag nextTag) {
+  public static void addComponentTag(final XmlTag parentTag, final RadViewComponent component, final XmlTag nextTag) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
+import static com.intellij.util.BitUtil.isSet;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -210,14 +212,10 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     final FileInfo fileInfo = myKernel.doGetInfo(FileUtil.toSystemDependentName(file.getPath()));
     if (fileInfo == null) return null;
 
-    final boolean isDirectory = isSet(fileInfo, Win32Kernel.FILE_ATTRIBUTE_DIRECTORY);
-    final boolean isSymlink = isSet(fileInfo, Win32Kernel.FILE_ATTRIBUTE_REPARSE_POINT);
-    final boolean isSpecial = isSet(fileInfo, Win32Kernel.FILE_ATTRIBUTE_DEVICE);
-    final boolean isWritable = !isSet(fileInfo, Win32Kernel.FILE_ATTRIBUTE_READONLY);
+    final boolean isDirectory = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DIRECTORY);
+    final boolean isSymlink = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_REPARSE_POINT);
+    final boolean isSpecial = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DEVICE);
+    final boolean isWritable = !isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_READONLY);
     return new FileAttributes(isDirectory, isSymlink, isSpecial, fileInfo.length, fileInfo.timestamp, isWritable);
-  }
-
-  private static boolean isSet(final FileInfo fileInfo, final int bit) {
-    return (fileInfo.attributes & bit) == bit;
   }
 }

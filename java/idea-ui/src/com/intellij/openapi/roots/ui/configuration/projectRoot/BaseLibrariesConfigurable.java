@@ -255,7 +255,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   protected boolean removeLibrary(final Library library) {
     final LibraryTable table = library.getTable();
     if (table != null) {
-      final Collection<ProjectStructureElementUsage> usages = myContext.getDaemonAnalyzer().getUsages(new LibraryProjectStructureElement(myContext, library));
+      final LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
+      final Collection<ProjectStructureElementUsage> usages = new ArrayList<ProjectStructureElementUsage>(myContext.getDaemonAnalyzer().getUsages(libraryElement));
       if (usages.size() > 0) {
         final MultiMap<String, ProjectStructureElementUsage> containerType2Usage = new MultiMap<String, ProjectStructureElementUsage>();
         for (final ProjectStructureElementUsage usage : usages) {
@@ -295,12 +296,12 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
           }
 
           getModelProvider().getModifiableModel().removeLibrary(library);
-          myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
+          myContext.getDaemonAnalyzer().removeElement(libraryElement);
           return true;
         }
       } else {
         getModelProvider().getModifiableModel().removeLibrary(library);
-        myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
+        myContext.getDaemonAnalyzer().removeElement(libraryElement);
         return true;
       }
     }

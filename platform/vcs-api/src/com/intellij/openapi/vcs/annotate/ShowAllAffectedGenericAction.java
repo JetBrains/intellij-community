@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -55,11 +56,16 @@ public class ShowAllAffectedGenericAction extends AnAction {
     final VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
     VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
     if ((revision != null) && (revisionVirtualFile != null)) {
-      showSubmittedFiles(project, revision.getRevisionNumber(), revisionVirtualFile, vcsKey);
+      showSubmittedFiles(project, revision.getRevisionNumber(), revisionVirtualFile, vcsKey, revision.getChangedRepositoryPath());
     }
   }
 
   public static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile, final VcsKey vcsKey) {
+    showSubmittedFiles(project, revision, virtualFile, vcsKey, null);
+  }
+
+  private static void showSubmittedFiles(final Project project, final VcsRevisionNumber revision, final VirtualFile virtualFile,
+                                         final VcsKey vcsKey, final RepositoryLocation location) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
     if (! isInLocalFSHack(virtualFile) && ! canPresentNonLocal(project, vcsKey, virtualFile)) return;
@@ -81,11 +87,28 @@ public class ShowAllAffectedGenericAction extends AnAction {
               list[0] = pair.getFirst();
             }
           } else {
-            final RepositoryLocation local = provider.getForNonLocal(virtualFile);
-            if (local != null) {
-              final List<CommittedChangeList> changes = provider.getCommittedChanges(provider.createDefaultSettings(), local, 1);
+            if (location != null) {
+              final ChangeBrowserSettings settings = provider.createDefaultSettings();
+              settings.USE_CHANGE_BEFORE_FILTER = true;
+              settings.CHANGE_BEFORE = revision.asString();
+              final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, 1);
               if (changes != null && changes.size() == 1) {
                 list[0] = changes.get(0);
+              }
+              return;
+            } else {
+              final RepositoryLocation local = provider.getForNonLocal(virtualFile);
+              if (local != null) {
+                final String number = revision.asString();
+                final ChangeBrowserSettings settings = provider.createDefaultSettings();
+                final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
+                if (changes != null) {
+                  for (CommittedChangeList change : changes) {
+                    if (number.equals(String.valueOf(change.getNumber()))) {
+                      list[0] = change;
+                    }
+                  }
+                }
               }
             }
           }

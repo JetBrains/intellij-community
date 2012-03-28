@@ -22,9 +22,9 @@ import com.intellij.lang.Language;
  */
 public class JavaLanguage extends Language {
 
-  public static JavaLanguage INSTANCE = new JavaLanguage();
+  public static final JavaLanguage INSTANCE = new JavaLanguage();
 
-  public JavaLanguage() {
+  private JavaLanguage() {
     super("JAVA", "text/java", "application/x-java", "text/x-java");
   }
 

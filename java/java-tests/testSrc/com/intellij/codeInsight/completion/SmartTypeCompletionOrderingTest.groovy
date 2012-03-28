@@ -40,14 +40,24 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
       imitateItemSelection(lookup, 2); //Container
     }
     refreshSorting(lookup);
-    assertPreferredItems(0, "Container", "FooBean3", "JComponent");
+    assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent");
 
     int component = lookup.items.findIndexOf { it.lookupString == 'Component' }
     for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
       imitateItemSelection(lookup, component);
     }
     refreshSorting(lookup);
-    assertPreferredItems(0, "Component", "Container");
+    assertPreferredItems(1, "String", "Component", "FooBean3");
+  }
+
+  public void testNewListAlwaysFirst() {
+    def lookup = invokeCompletion(getTestName(false) + ".java")
+    assertPreferredItems 1, 'List', 'AbstractList', 'AbstractSequentialList', 'ArrayList'
+    for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD + 10; i++) {
+      imitateItemSelection(lookup, 3) //ArrayList
+    }
+    refreshSorting(lookup)
+    assertPreferredItems 1, 'List', 'ArrayList', 'AbstractList', 'AbstractSequentialList'
   }
   
   public void testNoStatsOnUnsuccessfulAttempt() {

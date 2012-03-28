@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -208,7 +208,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
           public void run() {
             final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
             if (Boolean.TRUE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
-              ShowFilePathAction.open(file, file);
+              ShowFilePathAction.openFile(file);
             } else if (Boolean.FALSE.equals(configuration.SHOW_PATCH_IN_EXPLORER)) {
               return;
             } else {

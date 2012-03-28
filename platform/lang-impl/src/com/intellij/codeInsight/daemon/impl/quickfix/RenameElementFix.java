@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -29,29 +28,33 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
 public class RenameElementFix implements IntentionAction, LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix");
+
   private final PsiNamedElement myElement;
   private final String myNewName;
   private final String myText;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.RenameFileFix");
 
-  public RenameElementFix(PsiNamedElement aClass) {
-    myElement = aClass;
-    myNewName = myElement.getContainingFile().getVirtualFile().getNameWithoutExtension();
+  public RenameElementFix(@NotNull PsiNamedElement element) {
+    myElement = element;
+    final VirtualFile vFile = myElement.getContainingFile().getVirtualFile();
+    assert vFile != null : element;
+    myNewName = vFile.getNameWithoutExtension();
     myText =  CodeInsightBundle.message("rename.public.class.text", myElement.getName(), myNewName);
-
   }
 
-  public RenameElementFix(PsiNamedElement element, String newName) {
+  public RenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName) {
     myElement = element;
     myNewName = newName;
     myText = CodeInsightBundle.message("rename.named.element.text", myElement.getName(), myNewName);
@@ -72,7 +75,7 @@ public class RenameElementFix implements IntentionAction, LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("rename.public.class.family");
+    return CodeInsightBundle.message("rename.element.family");
   }
 
   @Override
@@ -89,12 +92,12 @@ public class RenameElementFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
     if (!myElement.isValid()) {
       return false;
     }
     final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(file.getLanguage());
-    return namesValidator.isIdentifier(myNewName, project);
+    return namesValidator != null && namesValidator.isIdentifier(myNewName, project);
   }
 
   @Override

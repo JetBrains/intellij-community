@@ -58,6 +58,7 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistoryProvider.MyHistorySession> {
   private final SvnVcs myVcs;
@@ -522,7 +523,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     private final SVNRevision myPegRevision;
     protected final String myUrl;
     private final SvnMergeSourceTracker myTracker;
-    private SVNURL myRepositoryRoot;
+    protected SVNURL myRepositoryRoot;
 
     public MyLogEntryHandler(SvnVcs vcs, final String url,
                              final SVNRevision pegRevision,
@@ -567,9 +568,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           }
 
           final int mergeLevel = svnLogEntryIntegerPair.getSecond();
-          final SvnFileRevision revision = createRevision(logEntry, copyPath);
+          final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
           if (copyPath != null) {
             myLastPath = copyPath;
+          } else {
+            myLastPath = correctLastPathAccordingToFolderRenames(myLastPath, logEntry);
           }
           if (mergeLevel >= 0) {
             addToListByLevel((SvnFileRevision) myPrevious, revision, mergeLevel);
@@ -578,7 +581,24 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
             myPrevious = revision;
           }
         }
+
       });
+    }
+
+    private String correctLastPathAccordingToFolderRenames(String lastPath, SVNLogEntry logEntry) {
+      final Map<String,SVNLogEntryPath> paths = logEntry.getChangedPaths();
+      for (Map.Entry<String, SVNLogEntryPath> entry : paths.entrySet()) {
+        final SVNLogEntryPath value = entry.getValue();
+        final String copyPath = value.getCopyPath();
+        if (copyPath != null) {
+          final String entryPath = value.getPath();
+          if (SVNPathUtil.isAncestor(entryPath, lastPath)) {
+            final String relativePath = SVNPathUtil.getRelativePath(entryPath, lastPath);
+            return SVNPathUtil.append(copyPath, relativePath);
+          }
+        }
+      }
+      return lastPath;
     }
 
     public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
@@ -599,12 +619,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       }
     }
 
-    protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath) throws SVNException {
+    protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath, SVNLogEntryPath entryPath) throws SVNException {
       Date date = logEntry.getDate();
       String author = logEntry.getAuthor();
       String message = logEntry.getMessage();
       SVNRevision rev = SVNRevision.create(logEntry.getRevision());
-      final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
+//      final SVNURL url = myRepositoryRoot.appendPath(myLastPath, true);
+      final SVNURL url = myRepositoryRoot.appendPath(entryPath.getPath(), true);
       return new SvnFileRevision(myVcs, myPegRevision, rev, url.toString(), author, date, message, copyPath, myCharset);
     }
   }
@@ -619,10 +640,12 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       super(vcs, url, pegRevision, lastPath, result, repoRootURL, null);
     }
 
-    /*@Override
-    protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath) {
-      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, myUrl, copyPath, null);
-    }*/
+    @Override
+    protected SvnFileRevision createRevision(final SVNLogEntry logEntry, final String copyPath, SVNLogEntryPath entryPath)
+      throws SVNException {
+      final SVNURL url = myRepositoryRoot.appendPath(entryPath.getPath(), true);
+      return new SvnFileRevision(myVcs, SVNRevision.UNDEFINED, logEntry, url.toString(), copyPath, null);
+    }
   }
 
   private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, VcsFileRevision> {

@@ -40,10 +40,12 @@ public class DesignerActionPanel implements DataProvider {
   private final DefaultActionGroup myStaticGroup = new DefaultActionGroup();
   private final DefaultActionGroup myDynamicGroup = new DefaultActionGroup();
   private JComponent myToolbar;
+  private final DesignerEditorPanel myDesigner;
   private final CommonEditActionsProvider myCommonEditActionsProvider;
   private final JComponent myShortcuts;
 
   public DesignerActionPanel(DesignerEditorPanel designer, JComponent shortcuts) {
+    myDesigner = designer;
     myCommonEditActionsProvider = new CommonEditActionsProvider(designer);
     myShortcuts = shortcuts;
 
@@ -128,10 +130,10 @@ public class DesignerActionPanel implements DataProvider {
     }
 
     for (RadComponent parent : parents) {
-      parent.getLayout().addSelectionActions(myDynamicGroup, myShortcuts, selection);
+      parent.getLayout().addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
     }
     for (RadComponent component : selection) {
-      component.addSelectionActions(myDynamicGroup, myShortcuts, selection);
+      component.addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
     }
     update |= isVisible(myDynamicGroup);
 

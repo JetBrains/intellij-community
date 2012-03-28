@@ -55,12 +55,14 @@ public class TooltipController {
                                      final TooltipRenderer tooltipObject,
                                      final boolean alignToRight,
                                      @NotNull final TooltipGroup group, final HintHint hintHint) {
-    if (myCurrentTooltip == null || !myCurrentTooltip.isVisible()) {
-      if (myCurrentTooltip != null) {
-        if (!IdeTooltipManager.getInstance().isQueuedToShow(myCurrentTooltip.getCurrentIdeTooltip())) {
+    LightweightHint currentTooltip = myCurrentTooltip;
+    if (currentTooltip == null || !currentTooltip.isVisible()) {
+      if (currentTooltip != null) {
+        if (!IdeTooltipManager.getInstance().isQueuedToShow(currentTooltip.getCurrentIdeTooltip())) {
           myCurrentTooltipObject = null;
         }
-      } else {
+      }
+      else {
         myCurrentTooltipObject = null;
       }
     }

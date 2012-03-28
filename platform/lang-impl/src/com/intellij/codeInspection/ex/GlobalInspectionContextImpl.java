@@ -27,6 +27,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -42,7 +43,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,6 +60,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.Processor;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -67,7 +69,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -201,12 +202,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     });
 
     myView = view;
-    ContentManager contentManager = getContentManager();
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
 
     myContent.setDisposer(myView);
-    contentManager.addContent(myContent);
-    contentManager.setSelectedContent(myContent);
 
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
@@ -423,14 +421,14 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
       @Override
       public void onSuccess() {
-        SwingUtilities.invokeLater(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
             LOG.info("Code inspection finished");
 
             if (myView != null) {
               if (!myView.update() && !getUIOptions().SHOW_ONLY_DIFF) {
-                Messages.showMessageDialog(myProject, InspectionsBundle.message("inspection.no.problems.message"),
-                                           InspectionsBundle.message("inspection.no.problems.dialog.title"), Messages.getInformationIcon());
+                NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION, true)
+                  .createNotification(InspectionsBundle.message("inspection.no.problems.message"), MessageType.INFO).notify(myProject);
                 close(true);
               }
               else {

@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class WhiteSpaceFormattingStrategyFactory {
 
   private static final List<WhiteSpaceFormattingStrategy> SHARED_STRATEGIES = Arrays.<WhiteSpaceFormattingStrategy>asList(
-    new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n'), new CdataWhiteSpaceDefinitionStrategy()
+    new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n')
   );
 
   private static final AtomicReference<PatchedWeakReference<Collection<WhiteSpaceFormattingStrategy>>> myCachedStrategies

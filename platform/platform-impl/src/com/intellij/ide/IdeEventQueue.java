@@ -44,7 +44,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.event.IgnorePaintEvent;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -52,13 +51,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
 import java.util.*;
-
-import static java.awt.event.WindowEvent.*;
 
 
 /**

@@ -53,7 +53,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class AbstractTreeUi {
@@ -177,8 +176,7 @@ public class AbstractTreeUi {
   private SimpleTimerTask myCleanupTask;
 
   private final AtomicBoolean myCancelRequest = new AtomicBoolean();
-  private final Lock myStateLock = new ReentrantLock();
-  private final AtomicBoolean myLockWasAcquired = new AtomicBoolean();
+  private final ReentrantLock myStateLock = new ReentrantLock();
 
   private final AtomicBoolean myResettingToReadyNow = new AtomicBoolean();
 
@@ -1923,7 +1921,7 @@ public class AbstractTreeUi {
 
   @Nullable
   public Boolean _isReady(boolean attempt) {
-    if (attempt && myLockWasAcquired.get()) return false;
+    if (attempt && myStateLock.isLocked()) return false;
 
     Boolean ready = checkValue(new Computable<Boolean>() {
       @Override
@@ -2414,20 +2412,16 @@ public class AbstractTreeUi {
   }
 
   private boolean attemptLock() throws InterruptedException {
-    myLockWasAcquired.set(myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS));
-    return myLockWasAcquired.get();
+    return myStateLock.tryLock(Registry.intValue("ide.tree.uiLockAttempt"), TimeUnit.MILLISECONDS);
   }
 
   private void acquireLock() {
     myStateLock.lock();
-    myLockWasAcquired.set(true);
   }
 
   private void releaseLock() {
     myStateLock.unlock();
-    myLockWasAcquired.set(false);
   }
-
 
   public ActionCallback batch(final Progressive progressive) {
     assertIsDispatchThread();

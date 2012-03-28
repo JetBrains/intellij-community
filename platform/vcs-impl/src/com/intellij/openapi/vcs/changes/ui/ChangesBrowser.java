@@ -268,6 +268,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myViewer.setChangesToDisplay(getCurrentDisplayedChanges(), myToSelect);
   }
 
+  public void setAlwayExpandList(final boolean value) {
+    myViewer.setAlwaysExpandList(value);
+  }
+
   private JComponent createToolbar() {
     DefaultActionGroup toolbarGroups = new DefaultActionGroup();
     myToolBarGroup = new DefaultActionGroup();

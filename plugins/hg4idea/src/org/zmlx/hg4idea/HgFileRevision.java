@@ -14,6 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Throwable2Computable;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
@@ -65,6 +66,11 @@ public class HgFileRevision implements VcsFileRevision {
 
   public String getBranchName() {
     return branchName;
+  }
+
+  @Override
+  public RepositoryLocation getChangedRepositoryPath() {
+    return null;
   }
 
   public Date getRevisionDate() {

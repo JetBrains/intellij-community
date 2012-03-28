@@ -121,7 +121,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
 
   public void refresh() {
     if (myTreeBuilder != null) {
-      myTreeBuilder.queueUpdate();
+      myTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          myComponentTree.repaint();
+        }
+      });
     }
   }
 

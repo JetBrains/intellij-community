@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +121,16 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   @Override
   public boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset) {
-    return myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
+    WhiteSpaceFormattingStrategy strategy = myWhiteSpaceStrategy;
+    PsiElement injectedElement = myFile != null ? InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset) : null;
+    if (injectedElement != null) {
+      Language injectedLanguage = injectedElement.getLanguage();
+      if (!injectedLanguage.equals(myFile.getLanguage())) {
+        WhiteSpaceFormattingStrategy localStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(injectedLanguage);
+        if (localStrategy != null) strategy = localStrategy;
+      }
+    }
+    return strategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
   }
 
   @NotNull

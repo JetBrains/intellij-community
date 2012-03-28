@@ -23,10 +23,9 @@ import com.intellij.designer.designSurface.OperationContext;
 /**
  * @author Alexander Lobas
  */
-public class RadRootViewLayout extends RadViewLayout {
-  @Override
+public class RadViewAnimatorLayout extends RadViewLayout {
   public EditOperation processChildOperation(OperationContext context) {
-    if (myContainer.getChildren().isEmpty() && (context.isCreate() || context.isPaste()) && context.getComponents().size() == 1) {
+    if ((context.isCreate() || context.isPaste() || context.isAdd()) && checkChildOperation(context)) {
       if (context.isTree()) {
         return new TreeDropToOperation(myContainer, context);
       }
@@ -34,5 +33,9 @@ public class RadRootViewLayout extends RadViewLayout {
     }
 
     return null;
+  }
+
+  protected boolean checkChildOperation(OperationContext context) {
+    return true;
   }
 }

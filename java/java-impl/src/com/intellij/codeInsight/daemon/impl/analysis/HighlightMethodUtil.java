@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -799,7 +799,7 @@ public class HighlightMethodUtil {
 
     if (aClass != null) {
       String className = aClass instanceof PsiAnonymousClass ? null : aClass.getName();
-      if (!Comparing.strEqual(methodName, className)) {
+      if (className != null && !Comparing.strEqual(methodName, className)) {
         errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, method.getNameIdentifier(),
                                                         JavaErrorMessages.message("missing.return.type"));
         QuickFixAction.registerQuickFixAction(errorResult, new RenameElementFix(method, className));

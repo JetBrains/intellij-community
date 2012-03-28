@@ -333,14 +333,17 @@ public class GroovyMarkerTypes {
     }
 
     @Override
-    public void run(@NotNull ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       super.run(indicator);
       for (PsiMethod method : PsiImplUtil.getMethodOrReflectedMethods(myMethod)) {
         OverridingMethodsSearch.search(method, true).forEach(
           new CommonProcessors.CollectProcessor<PsiMethod>() {
             @Override
             public boolean process(PsiMethod psiMethod) {
-              updateComponent(com.intellij.psi.impl.PsiImplUtil.handleMirror(psiMethod), myRenderer.getComparator());
+              if (!updateComponent(com.intellij.psi.impl.PsiImplUtil.handleMirror(psiMethod), myRenderer.getComparator())) {
+                indicator.cancel();
+              }
+              indicator.checkCanceled();
               return true;
             }
           });

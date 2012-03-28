@@ -115,7 +115,12 @@ public class CodeStyleSchemesPanel{
       schemes.addAll(myModel.getAllSortedSchemes());
       DefaultComboBoxModel model = new DefaultComboBoxModel(schemes.toArray());
       myCombo.setModel(model);
-      myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+      if (myModel.isUsePerProjectSettings()) {
+        myCombo.setSelectedItem(myModel.getProjectScheme());
+      }
+      else {
+        myCombo.setSelectedItem(myModel.getSelectedGlobalScheme());
+      }
     }
     finally {
       myIsReset = false;

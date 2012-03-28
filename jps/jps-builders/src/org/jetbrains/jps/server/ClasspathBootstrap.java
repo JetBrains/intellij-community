@@ -154,15 +154,28 @@ public class ClasspathBootstrap {
     if (systemCompiler != null) {
       try {
         final String localJarPath = FileUtil.toSystemIndependentName(getResourcePath(systemCompiler.getClass()).getPath());
-        final String localJavaHome = SystemProperties.getJavaHome();
-        String relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(localJavaHome), localJarPath, '/');
-        if (relPath != null) {
-          if (relPath.contains("..")) {
-            relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+        final String localJavaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome());
+        if (FileUtil.pathsEqual(localJavaHome, FileUtil.toSystemIndependentName(sdkHome))) {
+          cp.add(new File(localJarPath));
+        }
+        else {
+          // sdkHome is not the same as the sdk used to run this process
+          final File candidate = new File(sdkHome, "lib/tools.jar");
+          if (candidate.exists()) {
+            cp.add(candidate);
           }
-          if (relPath != null) {
-            final File targetFile = new File(sdkHome +"/" +relPath);
-            cp.add(targetFile);  // tools.jar
+          else {
+            // last resort
+            String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+            if (relPath != null) {
+              if (relPath.contains("..")) {
+                relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+              }
+              if (relPath != null) {
+                final File targetFile = new File(sdkHome, relPath);
+                cp.add(targetFile);  // tools.jar
+              }
+            }
           }
         }
       }

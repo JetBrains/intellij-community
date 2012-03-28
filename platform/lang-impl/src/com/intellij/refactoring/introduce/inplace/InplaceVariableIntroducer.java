@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -202,6 +203,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
         releaseIfNotRestart();
       }
     });
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
