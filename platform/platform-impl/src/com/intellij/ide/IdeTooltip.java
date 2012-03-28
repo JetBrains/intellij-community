@@ -50,6 +50,8 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   private Ui myUi;
 
+  private boolean hint = false;
+
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
     super(identity);
@@ -231,6 +233,16 @@ public class IdeTooltip extends ComparableObject.Impl {
   public Balloon.Layer getLayer() {
     return myLayer;
   }
+
+  public IdeTooltip setHint(boolean hint) {
+    this.hint = hint;
+    return this;
+  }
+
+  public boolean isHint() {
+    return hint;
+  }
+
 
   public boolean isInside(RelativePoint target) {
     return myUi != null && myUi.isInside(target);

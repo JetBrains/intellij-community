@@ -166,8 +166,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setFont(hintHint.getTextFont())
           .setCalloutShift(hintHint.getCalloutShift())
           .setPositionChangeShift(hintHint.getPositionChangeX(), hintHint.getPositionChangeY())
-          .setExplicitClose(hintHint.isExplicitClose());
-
+          .setExplicitClose(hintHint.isExplicitClose())
+          .setHint(true);
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately());
       } else {
