@@ -36,6 +36,7 @@ import types
 import atexit
 import keyword
 import zipfile
+import time
 
 from os.path import join, getsize
 
@@ -2297,8 +2298,6 @@ def list_sources(paths):
 def zip_sources(zip_filename):
     zip = zipfile.ZipFile(zip_filename, 'w')
 
-    f = open(zip_filename + '.log.txt', 'w')
-
     try:
         try:
             while True:
@@ -2311,7 +2310,8 @@ def zip_sources(zip_filename):
                 if line:
                     (path, arcpath) = line.split()
                     zip.write(path, arcpath)
-                    f.write(arcpath + 'added.\n')
+                else:
+                    time.sleep(0.05)
             say('OK: ' + zip_filename)
         except :
             import traceback
@@ -2321,7 +2321,6 @@ def zip_sources(zip_filename):
             sys.exit(1)
     finally:
         zip.close()
-        f.close()
 
 if sys.platform == 'cli':
     from System import DateTime
