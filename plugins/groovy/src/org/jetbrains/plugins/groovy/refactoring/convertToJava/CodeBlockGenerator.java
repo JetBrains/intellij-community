@@ -101,7 +101,8 @@ public class CodeBlockGenerator extends Generator {
     if (!method.isConstructor() && returnType != PsiType.VOID) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
       shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
-                               MissingReturnInspection.methodMissesSomeReturns(block, method.getReturnTypeElementGroovy() != null);
+                               MissingReturnInspection.methodMissesSomeReturns(block,
+                                                                               MissingReturnInspection.ReturnStatus.getReturnStatus(method));
     }
 
     if (block != null) {

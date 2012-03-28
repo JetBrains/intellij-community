@@ -65,14 +65,29 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     return GroovyInspectionBundle.message("no.return.display.name");
   }
 
+  public enum ReturnStatus {
+    mustReturnValue, shouldReturnValue, shouldNotReturnValue;
+
+    public static ReturnStatus getReturnStatus(PsiElement subject) {
+      if (subject instanceof GrClosableBlock) {
+        final PsiType inferredReturnType = GroovyExpectedTypesProvider.getExpectedClosureReturnType((GrClosableBlock)subject);
+        return inferredReturnType != null && inferredReturnType != PsiType.VOID ? shouldReturnValue : shouldNotReturnValue;
+      }
+      else if (subject instanceof GrMethod) {
+        return ((GrMethod)subject).getReturnTypeElementGroovy() != null && ((GrMethod)subject).getReturnType() != PsiType.VOID
+               ? mustReturnValue
+               : shouldNotReturnValue;
+      }
+      return shouldNotReturnValue;
+    }
+  }
+
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean onTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
       public void visitClosure(GrClosableBlock closure) {
         super.visitClosure(closure);
-
-        final PsiType expectedClosureType = GroovyExpectedTypesProvider.getExpectedClosureReturnType(closure);
-        check(closure, problemsHolder, expectedClosureType != null && expectedClosureType != PsiType.VOID);
+        check(closure, problemsHolder, ReturnStatus.getReturnStatus(closure));
       }
 
       public void visitMethod(GrMethod method) {
@@ -80,72 +95,70 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
 
         final GrOpenBlock block = method.getBlock();
         if (block != null) {
-          final boolean mustReturnValue = method.getReturnTypeElementGroovy() != null && method.getReturnType() != PsiType.VOID;
-          check(block, problemsHolder, mustReturnValue);
+          check(block, problemsHolder, ReturnStatus.getReturnStatus(method));
         }
       }
     });
-
   }
 
-  private static void check(GrCodeBlock block, ProblemsHolder holder, boolean mustReturnValue) {
-    if (methodMissesSomeReturns(block, mustReturnValue)) {
+  private static void check(GrCodeBlock block, ProblemsHolder holder, ReturnStatus returnStatus) {
+    if (methodMissesSomeReturns(block, returnStatus)) {
       addNoReturnMessage(block, holder);
     }
   }
 
-  public static boolean methodMissesSomeReturns(GrControlFlowOwner block, boolean mustReturnValue) {
-    if (!mustReturnValue) {
+  public static boolean methodMissesSomeReturns(GrControlFlowOwner block, ReturnStatus returnStatus) {
+    if (returnStatus == ReturnStatus.shouldNotReturnValue) {
       return false;
     }
 
-    final Ref<Boolean> always = new Ref<Boolean>(true);
+    final Ref<Boolean> alwaysHaveReturn = new Ref<Boolean>(true);
+    final Ref<Boolean> sometimesHaveReturn = new Ref<Boolean>(false);
     final Ref<Boolean> hasExplicitReturn = new Ref<Boolean>(false);
-    final Ref<Boolean> sometimes = new Ref<Boolean>(false);
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
         if (instruction instanceof MaybeReturnInstruction) {
           if (((MaybeReturnInstruction)instruction).mayReturnValue()) {
-            sometimes.set(true);
+            sometimesHaveReturn.set(true);
           }
           else {
-            always.set(false);
+            alwaysHaveReturn.set(false);
           }
           return true;
         }
         final PsiElement element = instruction.getElement();
         if (element instanceof GrReturnStatement) {
-          sometimes.set(true);
+          sometimesHaveReturn.set(true);
           if (returnValue != null) {
             hasExplicitReturn.set(true);
           }
         }
         else if (instruction instanceof ThrowingInstruction) {
-          sometimes.set(true);
+          sometimesHaveReturn.set(true);
         }
         else if (element instanceof GrAssertStatement) {
-          sometimes.set(true);
+          sometimesHaveReturn.set(true);
           int count = 0;
           for (Instruction _i : instruction.allSuccessors()) {
             count++;
           }
           if (count <= 1) {
-            always.set(false);
+            alwaysHaveReturn.set(false);
           }
         }
         else {
-          always.set(false);
+          alwaysHaveReturn.set(false);
         }
         return true;
       }
     });
 
-    if (!sometimes.get()) {
+    if (returnStatus == ReturnStatus.mustReturnValue && !sometimesHaveReturn.get()) {
       return true;
     }
 
-    return sometimes.get() && !always.get();
+    return sometimesHaveReturn.get() && !alwaysHaveReturn.get();
   }
 
   private static void addNoReturnMessage(GrCodeBlock block, ProblemsHolder holder) {
