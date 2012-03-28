@@ -403,7 +403,9 @@ public class SvnChangeList implements CommittedChangeList {
         }
       }
 
-      for (Change change : myDetailedList) {
+      final List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(myDetailedList);
+
+      for (Change change : preprocessed) {
         // directory statuses are already uploaded
         if ((change.getAfterRevision() == null) && (change.getBeforeRevision().getFile().isDirectory())) {
           final SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision) change.getBeforeRevision();
@@ -414,6 +416,12 @@ public class SvnChangeList implements CommittedChangeList {
           if (myCopiedAddedPaths.containsKey(revision.getPath())) {
             detailsOnly.addAll(getChildrenAsChanges(revision.getPath(), false, duplicateControl));
           }
+        } else if ((change.isIsReplaced() || change.isMoved() || change.isRenamed()) && change.getAfterRevision().getFile().isDirectory()) {
+          final SvnRepositoryContentRevision beforeRevision = (SvnRepositoryContentRevision) change.getBeforeRevision();
+          detailsOnly.addAll(getChildrenAsChanges(beforeRevision.getPath(), true, duplicateControl));
+
+          final SvnRepositoryContentRevision revision = (SvnRepositoryContentRevision) change.getAfterRevision();
+          detailsOnly.addAll(getChildrenAsChanges(revision.getPath(), false, duplicateControl));
         }
       }
 

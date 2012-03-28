@@ -81,7 +81,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          final List<Change> preprocessed = preprocessChanges(changesList);
+          final List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
           patches.addAll(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), true));
         }
         catch (final VcsException ex) {
@@ -100,35 +100,6 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
         new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null, null).execute();
       }
     });
-  }
-
-  private List<Change> preprocessChanges(List<Change> list) {
-    final List<Change> result = new ArrayList<Change>();
-    final Map<FilePath, Change> map = new HashMap<FilePath, Change>();
-    for (Change change : list) {
-      if (change.getBeforeRevision() == null) {
-        result.add(change);
-      } else {
-        final FilePath beforePath = ChangesUtil.getBeforePath(change);
-        final Change existing = map.get(beforePath);
-        if (existing == null) {
-          map.put(beforePath, change);
-          continue;
-        }
-        if (change.getAfterRevision() == null && existing.getAfterRevision() == null) continue;
-        if (change.getAfterRevision() != null && existing.getAfterRevision() != null) {
-          LOG.error("Incorrect changes list: " + list);
-        }
-        if (existing.getAfterRevision() != null && change.getAfterRevision() == null) {
-          continue; // skip delete change
-        }
-        if (change.getAfterRevision() != null && existing.getAfterRevision() == null) {
-          map.put(beforePath, change);  // skip delete change
-        }
-      }
-    }
-    result.addAll(map.values());
-    return result;
   }
 
   public void update(final AnActionEvent e) {
