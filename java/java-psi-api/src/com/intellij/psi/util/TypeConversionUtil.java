@@ -656,10 +656,10 @@ public class TypeConversionUtil {
     }
 
     if (left instanceof PsiCapturedWildcardType) {
-      return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, allowUncheckedConversion);
+      return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, false);
     }
     if (right instanceof PsiCapturedWildcardType) {
-      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), allowUncheckedConversion);
+      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), false);
     }
 
     if (left instanceof PsiWildcardType) {
