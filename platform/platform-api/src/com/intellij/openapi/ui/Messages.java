@@ -101,14 +101,14 @@ public class Messages {
   /**
    * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
    */
-  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
+  public static int showDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
   }
 
   /**
    * Please, use {@link #showOkCancelDialog} or {@link #showYesNoCancelDialog} if possible (these dialogs implements native OS behavior)!  
    */
-  public static int showDialog(Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon,
+  public static int showDialog(@Nullable Project project, String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
@@ -238,7 +238,7 @@ public class Messages {
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
-  public static int showYesNoDialog(Project project, String message, String title, String yesText, String noText, @Nullable Icon icon) {
+  public static int showYesNoDialog(@Nullable Project project, String message, String title, String yesText, String noText, @Nullable Icon icon) {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, yesText, noText, WindowManager.getInstance().suggestParentWindow(project));
     }
@@ -249,7 +249,7 @@ public class Messages {
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
-  public static int showYesNoDialog(Project project, String message, String title, @Nullable Icon icon) {
+  public static int showYesNoDialog(@Nullable Project project, String message, String title, @Nullable Icon icon) {
     if (canShowMacSheetPanel()) {
       return MacMessages.getInstance().showYesNoDialog(title, message, YES_BUTTON, NO_BUTTON, WindowManager.getInstance().suggestParentWindow(project));
     }
