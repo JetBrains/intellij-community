@@ -50,7 +50,7 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   private Ui myUi;
 
-  private boolean hint = false;
+  private boolean myHint = false;
 
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
@@ -235,12 +235,12 @@ public class IdeTooltip extends ComparableObject.Impl {
   }
 
   public IdeTooltip setHint(boolean hint) {
-    this.hint = hint;
+    this.myHint = hint;
     return this;
   }
 
   public boolean isHint() {
-    return hint;
+    return myHint;
   }
 
   public boolean isInside(RelativePoint target) {
