@@ -40,13 +40,13 @@ import java.util.Comparator;
 public abstract class Change {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.incrementalMerge.Change");
 
-  private void apply(FragmentSide original) {
+  private void apply(@NotNull FragmentSide original) {
     FragmentSide targetSide = original.otherSide();
     RangeMarker originalRangeMarker = getRangeMarker(original);
     RangeMarker rangeMarker = getRangeMarker(targetSide);
 
     if (originalRangeMarker != null && rangeMarker != null) {
-      ChangeType.apply(originalRangeMarker, rangeMarker);
+      ChangeType.apply(getProject(), originalRangeMarker, rangeMarker);
       if (isValid()) {
         removeFromList();
       }

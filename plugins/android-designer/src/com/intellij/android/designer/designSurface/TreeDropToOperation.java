@@ -34,7 +34,7 @@ public class TreeDropToOperation extends TreeEditOperation {
     RadViewComponent host = (RadViewComponent)myHost;
     RadViewComponent before = (RadViewComponent)insertBefore;
 
-    if (myContext.isAdd()) {
+    if (myContext.isAdd() || myContext.isMove()) {
       for (RadComponent component : myComponents) {
         ModelParser.moveComponent(host, (RadViewComponent)component, before);
       }

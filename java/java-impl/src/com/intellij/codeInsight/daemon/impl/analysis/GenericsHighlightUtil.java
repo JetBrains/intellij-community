@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -505,7 +506,17 @@ public class GenericsHighlightUtil {
 
     final PsiType retErasure1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
     final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
-    if (!Comparing.equal(retErasure1, retErasure2) &&
+
+    boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
+    if (checkEqualsSuper && JavaSdkVersion.isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7)) {
+      if (retErasure1 != null && retErasure2 != null) {
+        differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
+      } else {
+        differentReturnTypeErasure = !(retErasure1 == null && retErasure2 == null);
+      }
+    }
+
+    if (differentReturnTypeErasure &&
         !TypeConversionUtil.isVoidType(retErasure1) &&
         !TypeConversionUtil.isVoidType(retErasure2) &&
         !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes()))) {

@@ -44,6 +44,6 @@ public class ShowLogAction extends AnAction implements DumbAware {
 
   @NotNull
   public static String getActionName() {
-    return "Reveal Log in " + SystemInfo.nativeFileManagerName;
+    return "Reveal Log in " + SystemInfo.getFileManagerName();
   }
 }

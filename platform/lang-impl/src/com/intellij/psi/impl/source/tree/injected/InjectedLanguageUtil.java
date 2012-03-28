@@ -162,7 +162,9 @@ public class InjectedLanguageUtil {
   @NotNull
   public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, final PsiFile injectedFile) {
     if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
-    Document document = PsiDocumentManager.getInstance(hostEditor.getProject()).getDocument(injectedFile);
+    Project project = hostEditor.getProject();
+    if (project == null) project = injectedFile.getProject();
+    Document document = PsiDocumentManager.getInstance(project).getDocument(injectedFile);
     if (!(document instanceof DocumentWindowImpl)) return hostEditor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
     SelectionModel selectionModel = hostEditor.getSelectionModel();

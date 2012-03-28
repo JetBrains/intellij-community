@@ -51,7 +51,8 @@ public interface IntentionAction {
    * @return the intention family ID.
    * @see IntentionManager#registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction, java.lang.String...)
    */
-  @NotNull String getFamilyName();
+  @NotNull
+  String getFamilyName();
 
   /**
    * Checks whether this intention is available at a caret offset in file.

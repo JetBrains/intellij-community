@@ -248,7 +248,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
             DirectoryInfo info = stateAndDirs.first.myDirToInfoMap.get(dir);
             assert info != null;
 
-            if (!info.isInLibrarySource || info.libraryClassRoot != null) {
+            if (!info.isInLibrarySource || info.isInModuleSource || info.libraryClassRoot != null) {
               if (!consumer.process(dir)) return false;
             }
           }
@@ -613,7 +613,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         if (definedPackage != null && definedPackage.isEmpty()) return; // another library source root starts here
       }
 
-      info.isInModuleSource = false;
       info.isInLibrarySource = true;
       info.sourceRoot = sourceRoot;
       setPackageName(dir, packageName);

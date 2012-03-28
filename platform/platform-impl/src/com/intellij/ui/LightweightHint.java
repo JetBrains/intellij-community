@@ -110,6 +110,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
    * are in <code>parentComponent</code> coordinate system. Note that the component
    * appears on 250 layer.
    */
+  @Override
   public void show(@NotNull final JComponent parentComponent,
                    final int x,
                    final int y,
@@ -129,29 +130,33 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     myComponent.validate();
 
     if (!myForceShowAsPopup &&
-        (myForceLightweightPopup || fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)), hintHint))) {
+        (myForceLightweightPopup ||
+         fitsLayeredPane(layeredPane, myComponent, new RelativePoint(parentComponent, new Point(x, y)), hintHint))) {
       beforeShow();
       final Dimension preferredSize = myComponent.getPreferredSize();
 
 
       if (hintHint.isAwtTooltip()) {
-        IdeTooltip tooltip = new IdeTooltip(hintHint.getOriginalComponent(), hintHint.getOriginalPoint(), myComponent, hintHint, myComponent) {
-          @Override
-          protected boolean canAutohideOn(TooltipEvent event) {
-            if (event.getInputEvent() instanceof MouseEvent) {
-              return !(hintHint.isContentActive() && event.isIsEventInsideBalloon());
-            } else if (event.getAction() != null) {
-              return false;
-            } else {
-              return true;
+        IdeTooltip tooltip =
+          new IdeTooltip(hintHint.getOriginalComponent(), hintHint.getOriginalPoint(), myComponent, hintHint, myComponent) {
+            @Override
+            protected boolean canAutohideOn(TooltipEvent event) {
+              if (event.getInputEvent() instanceof MouseEvent) {
+                return !(hintHint.isContentActive() && event.isIsEventInsideBalloon());
+              }
+              else if (event.getAction() != null) {
+                return false;
+              }
+              else {
+                return true;
+              }
             }
-          }
 
-          @Override
-          protected void onHidden() {
-            fireHintHidden();
-            TooltipController.getInstance().resetCurrent();
-          }
+            @Override
+            protected void onHidden() {
+              fireHintHidden();
+              TooltipController.getInstance().resetCurrent();
+            }
 
           @Override
           public boolean canBeDismissedOnTimeout() {
@@ -170,7 +175,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setHint(true);
         myComponent.validate();
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately());
-      } else {
+      }
+      else {
         final Point layeredPanePoint = SwingUtilities.convertPoint(parentComponent, x, y, layeredPane);
         myComponent.setBounds(layeredPanePoint.x, layeredPanePoint.y, preferredSize.width, preferredSize.height);
         layeredPane.add(myComponent, JLayeredPane.POPUP_LAYER);
@@ -218,8 +224,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       myPopup.show(new RelativePoint(myParentComponent, new Point(actualPoint.x, actualPoint.y)));
     }
   }
-  
-  protected void onPopupCancel() {}
+
+  protected void onPopupCancel() {
+  }
 
   private void fixActualPoint(Point actualPoint) {
     if (!isAwtTooltip()) return;
@@ -263,11 +270,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       if (pos == Balloon.Position.above || pos == Balloon.Position.below) {
         boolean heightFit = target.y - size.height - pointer > 0 || target.y + size.height + pointer < paneSize.height;
         return heightFit && size.width + pointer < paneSize.width;
-      } else {
+      }
+      else {
         boolean widthFit = target.x - size.width - pointer > 0 || target.x + size.width + pointer < paneSize.width;
         return widthFit && size.height + pointer < paneSize.height;
       }
-    } else {
+    }
+    else {
       final Rectangle lpRect = new Rectangle(pane.getLocationOnScreen().x, pane.getLocationOnScreen().y, pane.getWidth(), pane.getHeight());
       Rectangle componentRect = new Rectangle(desiredLocation.getScreenPoint().x,
                                               desiredLocation.getScreenPoint().y,
@@ -291,12 +300,15 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     return myComponent.getBounds();
   }
 
+  @Override
   public boolean isVisible() {
     if (myIsRealPopup) {
       return myPopup != null && myPopup.isVisible();
-    } else if (myCurrentIdeTooltip != null) {
+    }
+    else if (myCurrentIdeTooltip != null) {
       return myComponent.isShowing() || IdeTooltipManager.getInstance().isQueuedToShow(myCurrentIdeTooltip);
-    } else {
+    }
+    else {
       return myComponent.isShowing();
     }
   }
@@ -305,6 +317,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     return myIsRealPopup | myForceShowAsPopup;
   }
 
+  @Override
   public void hide() {
     hide(false);
   }
@@ -314,7 +327,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       if (myIsRealPopup) {
         if (ok) {
           myPopup.closeOk(null);
-        } else {
+        }
+        else {
           myPopup.cancel();
         }
         myPopup = null;
@@ -324,7 +338,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           IdeTooltip tooltip = myCurrentIdeTooltip;
           myCurrentIdeTooltip = null;
           tooltip.hide();
-        } else {
+        }
+        else {
           final JRootPane rootPane = myComponent.getRootPane();
           if (rootPane != null) {
             final Rectangle bounds = myComponent.getBounds();
@@ -375,11 +390,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     return myComponent;
   }
 
-  public final void addHintListener(final HintListener listener) {
+  @Override
+  public final void addHintListener(@NotNull final HintListener listener) {
     myListenerList.add(HintListener.class, listener);
   }
 
-  public final void removeHintListener(final HintListener listener) {
+  @Override
+  public final void removeHintListener(@NotNull final HintListener listener) {
     myListenerList.remove(HintListener.class, listener);
   }
 
@@ -388,13 +405,14 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     if (isRealPopup()) {
       location = myPopup.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, c);
-    } else {
+    }
+    else {
       if (myCurrentIdeTooltip != null) {
         Point tipPoint = myCurrentIdeTooltip.getPoint();
         Component tipComponent = myCurrentIdeTooltip.getComponent();
         return SwingUtilities.convertPoint(tipComponent, tipPoint, c);
-
-      } else {
+      }
+      else {
         location = SwingUtilities.convertPoint(
           myComponent.getParent(),
           myComponent.getLocation(),
@@ -407,10 +425,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   @Override
-  public void setLocation(RelativePoint point) {
+  public void setLocation(@NotNull RelativePoint point) {
     if (isRealPopup()) {
       myPopup.setLocation(point.getScreenPoint());
-    } else {
+    }
+    else {
       if (myCurrentIdeTooltip != null) {
         Point screenPoint = point.getScreenPoint();
         if (!screenPoint.equals(new RelativePoint(myCurrentIdeTooltip.getComponent(), myCurrentIdeTooltip.getPoint()).getScreenPoint())) {
@@ -418,7 +437,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           myCurrentIdeTooltip.setComponent(point.getComponent());
           IdeTooltipManager.getInstance().show(myCurrentIdeTooltip, true, false);
         }
-      } else {
+      }
+      else {
         Point targetPoint = point.getPoint(myComponent.getParent());
         myComponent.setLocation(targetPoint);
 
@@ -431,11 +451,13 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   public void setSize(Dimension size) {
     if (myIsRealPopup) {
       myPopup.setSize(size);
-    } else {
+    }
+    else {
       //todo kirillk
       if (isAwtTooltip()) {
         return;
-      } else {
+      }
+      else {
         myComponent.setSize(size);
 
         myComponent.revalidate();
@@ -458,14 +480,17 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     if (myIsRealPopup) {
       Window wnd = SwingUtilities.getWindowAncestor(myComponent);
       return wnd.getBounds().contains(target.getScreenPoint());
-    } else if (myCurrentIdeTooltip != null) {
+    }
+    else if (myCurrentIdeTooltip != null) {
       return myCurrentIdeTooltip.isInside(target);
-    } else {
+    }
+    else {
       return new Rectangle(myComponent.getLocationOnScreen(), myComponent.getSize()).contains(target.getScreenPoint());
     }
   }
 
   private final class MyEscListener implements ActionListener {
+    @Override
     public final void actionPerformed(final ActionEvent e) {
       hide();
     }
@@ -477,7 +502,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   public boolean canControlAutoHide() {
-    return myCurrentIdeTooltip != null && myCurrentIdeTooltip.getTipComponent().isShowing() ;
+    return myCurrentIdeTooltip != null && myCurrentIdeTooltip.getTipComponent().isShowing();
   }
 
   public IdeTooltip getCurrentIdeTooltip() {

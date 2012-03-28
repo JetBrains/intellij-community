@@ -1,16 +1,15 @@
 /** @noinspection UnusedDeclaration*/
 interface Matcher<T> {
 
-    boolean matches(java.lang.Object object);
+    boolean matches(Object object);
 
     void _dont_implement_Matcher___instead_extend_BaseMatcher_();
 }
 
 interface ArgumentConstraintPhrases {
-    <error descr="'with(Matcher<T>)' clashes with 'with(Matcher<Boolean>)'; both methods have same erasure"><T> T with(Matcher<T> matcher)</error>;
+    <T> T with(Matcher<T> matcher);
     boolean with(Matcher<Boolean> matcher);
     byte with(Matcher<Byte> matcher);
-    short with(Matcher<Short> matcher);
     int with(Matcher<Integer> matcher);
     long with(Matcher<Long> matcher);
     float with(Matcher<Float> matcher);
@@ -19,7 +18,7 @@ interface ArgumentConstraintPhrases {
 
 class ExpectationGroupBuilder implements ArgumentConstraintPhrases {
 
-    <error descr="'with(Matcher<T>)' clashes with 'with(Matcher<Boolean>)'; both methods have same erasure">public <T> T with(final Matcher<T> matcher)</error> {
+    public <T> T with(final Matcher<T> matcher) {
         return null;
     }
 
@@ -28,10 +27,6 @@ class ExpectationGroupBuilder implements ArgumentConstraintPhrases {
     }
 
     public byte with(final Matcher<Byte> matcher) {
-        return 0;
-    }
-
-    public short with(final Matcher<Short> matcher) {
         return 0;
     }
 

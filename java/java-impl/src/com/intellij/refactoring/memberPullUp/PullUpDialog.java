@@ -192,10 +192,14 @@ public class PullUpDialog extends RefactoringDialog {
   protected void doAction() {
     if (!myCallback.checkConflicts(this)) return;
     JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC = myJavaDocPanel.getPolicy();
-    StatisticsManager
-            .getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), getSuperClass().getQualifiedName()));
+    final PsiClass superClass = getSuperClass();
+    String name = superClass.getQualifiedName();
+    if (name != null) {
+      StatisticsManager
+        .getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), name));
+    }
     
-    invokeRefactoring(new PullUpHelper(myClass, getSuperClass(), getSelectedMemberInfos(),
+    invokeRefactoring(new PullUpHelper(myClass, superClass, getSelectedMemberInfos(),
                                                new DocCommentPolicy(getJavaDocPolicy())));
     close(OK_EXIT_CODE);
   }

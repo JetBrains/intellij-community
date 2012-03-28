@@ -26,6 +26,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -41,6 +42,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.LightColors;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,45 +54,41 @@ public class Bookmark {
 
   private final VirtualFile myFile;
   private final OpenFileDescriptor myTarget;
-  private final RangeHighlighter myHighlighter;
   private final Project myProject;
 
   private String myDescription;
   private char myMnemonic = 0;
   public static final Font MNEMONIC_FONT = new Font("Monospaced", 0, 11);
 
-  public Bookmark(Project project, VirtualFile file, String description) {
-    this(project, file, -1, description);
-  }
-
-  public Bookmark(Project project, VirtualFile file, int line, String description) {
+  public Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
     myFile = file;
     myProject = project;
     myDescription = description;
 
+    myTarget = new OpenFileDescriptor(project, file, line, -1, true);
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
+    if (document != null) {
+      createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
+    }
+  }
+
+  public RangeHighlighter createHighlighter(@NotNull MarkupModelEx markup) {
+    final RangeHighlighter myHighlighter;
+    int line = getLine();
     if (line >= 0) {
-      Document document = getDocument();
-      if (document == null) {
-        myHighlighter = null;
-      }
-      else {
-        MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
-        myHighlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
+      myHighlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
+      if (myHighlighter != null) {
+        myHighlighter.setGutterIconRenderer(new MyGutterIconRenderer(this));
 
-
-        if (myHighlighter != null) {
-          myHighlighter.setGutterIconRenderer(new MyGutterIconRenderer());
-
-          myHighlighter.setErrorStripeMarkColor(Color.black);
-          myHighlighter.setErrorStripeTooltip(getBookmarkTooltip());
-        }
+        myHighlighter.setErrorStripeMarkColor(Color.black);
+        myHighlighter.setErrorStripeTooltip(getBookmarkTooltip());
       }
     }
     else {
       myHighlighter = null;
     }
-
-    myTarget = new OpenFileDescriptor(project, file, line, -1, true);
+    return myHighlighter;
   }
 
   public Document getDocument() {
@@ -98,9 +96,28 @@ public class Bookmark {
   }
 
   public void release() {
-    if (myHighlighter != null) {
-      myHighlighter.dispose();
+    int line = getLine();
+    if (line < 0) {
+      return;
     }
+    final Document document = getDocument();
+    if (document == null) return;
+    MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
+    int startOffset = markup.getDocument().getLineStartOffset(line);
+    int endOffset = markup.getDocument().getLineEndOffset(line);
+    final RangeHighlighterEx[] found = new RangeHighlighterEx[1];
+    markup.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(RangeHighlighterEx highlighter) {
+        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+        if (renderer instanceof MyGutterIconRenderer && ((MyGutterIconRenderer)renderer).myBookmark == Bookmark.this) {
+          found[0] = highlighter;
+          return false;
+        }
+        return true;
+      }
+    });
+    if (found[0] != null) found[0].dispose();
   }
 
   public Icon getIcon() {
@@ -123,25 +140,18 @@ public class Bookmark {
     myMnemonic = Character.toUpperCase(mnemonic);
   }
 
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
   @Nullable
   public String getNotEmptyDescription() {
-    return isDescriptionEmpty() ? null : myDescription;
-  }
-
-  public boolean isDescriptionEmpty() {
-    return myDescription == null || myDescription.trim().length() == 0;
-  }
-
-  OpenFileDescriptor getTarget() {
-    return myTarget;
+    return StringUtil.isEmpty(myDescription) ? null : myDescription;
   }
 
   public boolean isValid() {
-    if (!getFile().isValid() || (myHighlighter != null && !myHighlighter.isValid())) {
+    if (!getFile().isValid()) {
       return false;
     }
 
@@ -156,8 +166,10 @@ public class Bookmark {
   }
 
   public int getLine() {
-    if (myHighlighter != null && myHighlighter.isValid()) {
-      return myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset());
+    RangeMarker marker = myTarget.getRangeMarker();
+    if (marker != null && marker.isValid()) {
+      Document document = marker.getDocument();
+      return document.getLineNumber(marker.getStartOffset());
     }
     return myTarget.getLine();
   }
@@ -169,7 +181,7 @@ public class Bookmark {
 
   public String getQualifiedName() {
     String presentableUrl = myFile.getPresentableUrl();
-    if (myFile.isDirectory() || myHighlighter == null) return presentableUrl;
+    if (myFile.isDirectory()) return presentableUrl;
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
@@ -188,8 +200,7 @@ public class Bookmark {
       }
     }
 
-    return IdeBundle
-      .message("bookmark.file.X.line.Y", presentableUrl, myHighlighter.getDocument().getLineNumber(myHighlighter.getStartOffset()) + 1);
+    return IdeBundle.message("bookmark.file.X.line.Y", presentableUrl, getLine() + 1);
   }
 
   private String getBookmarkTooltip() {
@@ -211,6 +222,7 @@ public class Bookmark {
       myMnemonic = mnemonic;
     }
 
+    @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       g.setColor(LightColors.YELLOW);
       g.fillRect(x, y, getIconWidth(), getIconHeight());
@@ -226,10 +238,12 @@ public class Bookmark {
       g.setFont(oldFont);
     }
 
+    @Override
     public int getIconWidth() {
       return 10;
     }
 
+    @Override
     public int getIconHeight() {
       return 12;
     }
@@ -245,14 +259,22 @@ public class Bookmark {
     }
   }
 
-  private class MyGutterIconRenderer extends GutterIconRenderer {
-    @NotNull
-    public Icon getIcon() {
-      return Bookmark.this.getIcon();
+  private static class MyGutterIconRenderer extends GutterIconRenderer {
+    private final Bookmark myBookmark;
+
+    public MyGutterIconRenderer(@NotNull Bookmark bookmark) {
+      myBookmark = bookmark;
     }
 
+    @Override
+    @NotNull
+    public Icon getIcon() {
+      return myBookmark.getIcon();
+    }
+
+    @Override
     public String getTooltipText() {
-      return getBookmarkTooltip();
+      return myBookmark.getBookmarkTooltip();
     }
 
     @Override

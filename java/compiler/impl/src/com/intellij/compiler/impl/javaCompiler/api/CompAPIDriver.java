@@ -27,6 +27,7 @@ import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -145,6 +146,18 @@ class CompAPIDriver {
     assert !processing;
     //assert myCompilationResults.isEmpty() : myCompilationResults;
     myCompilationResults.clear();
+    cleanupInternalFields();
+  }
+
+  private static void cleanupInternalFields() {
+    try {
+      Field freelist = Class.forName("com.sun.tools.javac.util.SharedNameTable").getDeclaredField("freelist");
+      freelist.setAccessible(true);
+      freelist.set(null, com.sun.tools.javac.util.List.nil());
+    }
+    catch (Exception ignored) {
+
+    }
   }
 
   public void offerClassFile(URI uri, byte[] bytes) {

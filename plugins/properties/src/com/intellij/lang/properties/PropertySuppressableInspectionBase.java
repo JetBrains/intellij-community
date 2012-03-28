@@ -110,7 +110,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       return property != null && property.isValid();
     }
 
-    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
       if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
@@ -149,7 +149,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
       return element.isValid() && element.getContainingFile() instanceof PropertiesFile;
     }
 
-    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
       if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 

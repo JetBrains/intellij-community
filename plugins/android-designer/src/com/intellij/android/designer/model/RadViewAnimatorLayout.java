@@ -25,7 +25,7 @@ import com.intellij.designer.designSurface.OperationContext;
  */
 public class RadViewAnimatorLayout extends RadViewLayout {
   public EditOperation processChildOperation(OperationContext context) {
-    if ((context.isCreate() || context.isPaste() || context.isAdd()) && checkChildOperation(context)) {
+    if ((context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) && checkChildOperation(context)) {
       if (context.isTree()) {
         return new TreeDropToOperation(myContainer, context);
       }
