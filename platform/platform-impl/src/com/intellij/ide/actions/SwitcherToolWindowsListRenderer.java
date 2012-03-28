@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
@@ -34,24 +38,49 @@ import java.util.Map;
 class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
   private static final Map<String, Icon> iconCache = new HashMap<String, Icon>();
   private static final SimpleTextAttributes ID_STYLE = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, Color.black);
+  private final SpeedSearchBase mySpeedSearch;
   private final Map<ToolWindow, String> ids;
   private final Map<ToolWindow, String> shortcuts;
+  private boolean hide = false;
 
-  SwitcherToolWindowsListRenderer(Map<ToolWindow, String> ids, Map<ToolWindow, String> shortcuts) {
+  SwitcherToolWindowsListRenderer(SpeedSearchBase speedSearch,
+                                  Map<ToolWindow, String> ids,
+                                  Map<ToolWindow, String> shortcuts) {
+    mySpeedSearch = speedSearch;
     this.ids = ids;
     this.shortcuts = shortcuts;
   }
 
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    hide = false;
     if (value instanceof ToolWindow) {
       final ToolWindow tw = (ToolWindow)value;
       setIcon(getIcon(tw));
-      append(shortcuts.get(tw), ID_STYLE);
-      final String name =  ": " + ids.get(tw);
+      final String name;
+
+      if (UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE) {
+        append(shortcuts.get(tw), ID_STYLE);
+        name = ": " + ids.get(tw);
+      } else {
+        name = ids.get(tw);
+      }
 
       final TextAttributes attributes = new TextAttributes(Color.BLACK, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
       append(name, SimpleTextAttributes.fromTextAttributes(attributes));
+      if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
+        hide = mySpeedSearch.matchingFragments(ids.get(tw)) == null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix());
+      }
     }
+  }
+
+  @Override
+  protected void doPaint(Graphics2D g) {
+    GraphicsConfig config = new GraphicsConfig(g);
+    if (hide) {
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+    }
+    super.doPaint(g);
+    config.restore();
   }
 
   private Icon getIcon(ToolWindow toolWindow) {
