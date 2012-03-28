@@ -18,9 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.noReturnMethod;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +69,10 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     public static ReturnStatus getReturnStatus(PsiElement subject) {
       if (subject instanceof GrClosableBlock) {
         final PsiType inferredReturnType = GroovyExpectedTypesProvider.getExpectedClosureReturnType((GrClosableBlock)subject);
+        if (inferredReturnType instanceof PsiClassType) {
+          PsiClass resolved = ((PsiClassType)inferredReturnType).resolve();
+          if (resolved != null && !(resolved instanceof PsiTypeParameter)) return mustReturnValue;
+        }
         return inferredReturnType != null && inferredReturnType != PsiType.VOID ? shouldReturnValue : shouldNotReturnValue;
       }
       else if (subject instanceof GrMethod) {
