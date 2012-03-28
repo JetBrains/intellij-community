@@ -22,14 +22,12 @@ import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.PropertyParser;
+import com.intellij.android.designer.model.RadViewAnimatorLayout;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator;
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
@@ -57,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -101,6 +100,69 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               updateRenderer();
             }
           });
+        }
+      }
+    });
+  }
+
+  @Override
+  public void updateTreeArea(EditableArea area) {
+    area.addSelectionListener(new ComponentSelectionListener() {
+      @Override
+      public void selectionChanged(EditableArea area) {
+        List<RadComponent> selection = area.getSelection();
+        if (selection.size() == 1) {
+          final RadComponent component = selection.get(0);
+          final RadComponent parent = component.getParent();
+          if (parent instanceof RadViewComponent && parent.getLayout() instanceof RadViewAnimatorLayout) {
+            ApplicationManager.getApplication().invokeLater(
+              new Runnable() {
+                @Override
+                public void run() {
+                  try {
+                    int index = parent.getChildren().indexOf(component);
+                    Object parentView =
+                      ((RadViewComponent)parent).getViewInfo().getViewObject();
+                    Method method =
+                      parentView.getClass().getMethod("setDisplayedChild", int.class);
+                    method.invoke(parentView, index);
+
+                    Result result = mySession.render();
+
+                    if (!result.isSuccess()) {
+                      System.out.println(
+                        "No re render session: " +
+                        result.getErrorMessage() +
+                        " : " +
+                        result.getStatus() +
+                        " : " +
+                        result.getData() +
+                        " : " +
+                        result.getException());
+                    }
+                    else {
+                      RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+                      RootView rootView = (RootView)rootComponent.getNativeComponent();
+                      rootView.setImage(mySession.getImage());
+                      ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+
+                      myLayeredPane.repaint();
+
+                      DesignerToolWindowManager.getInstance(getProject()).refresh();
+                    }
+                  }
+                  catch (Throwable e) {
+                    showError("reRender error: ", e);
+                  }
+                }
+              }, new Condition() {
+                @Override
+                public boolean value(Object o) {
+                  return mySession == null;
+                }
+              }
+            );
+          }
         }
       }
     });

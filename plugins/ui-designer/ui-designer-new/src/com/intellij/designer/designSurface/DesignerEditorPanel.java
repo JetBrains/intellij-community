@@ -315,6 +315,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return treeArea == null ? mySurfaceArea : treeArea;
   }
 
+  public void updateTreeArea(EditableArea area) {
+  }
+
   public ToolProvider getToolProvider() {
     return myToolProvider;
   }

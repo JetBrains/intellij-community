@@ -39,6 +39,8 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     myTreeArea = new TreeEditableArea(tree, this);
     myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
 
+    designer.updateTreeArea(myTreeArea);
+
     // TODO: restore expanded state
     select(mySurfaceArea.getSelection().toArray(), null);
 
