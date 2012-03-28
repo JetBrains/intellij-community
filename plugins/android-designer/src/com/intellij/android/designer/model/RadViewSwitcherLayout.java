@@ -23,6 +23,6 @@ import com.intellij.designer.designSurface.OperationContext;
 public class RadViewSwitcherLayout extends RadViewAnimatorLayout {
   @Override
   protected boolean checkChildOperation(OperationContext context) {
-    return myContainer.getChildren().size() < 2;
+    return context.isMove() || myContainer.getChildren().size() < 2;
   }
 }
