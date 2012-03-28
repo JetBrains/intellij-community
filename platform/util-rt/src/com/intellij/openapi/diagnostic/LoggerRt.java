@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diagnostic.rt;
+package com.intellij.openapi.diagnostic;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,15 +22,16 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
  * A wrapper which uses either IDE logging subsystem (if available) or java.util.logging.
  *
  * @since 12.0
  */
-public abstract class Logger {
+public abstract class LoggerRt {
   private interface Factory {
-    Logger getInstance(@NotNull @NonNls final String category);
+    LoggerRt getInstance(@NotNull @NonNls final String category);
   }
 
   private static Factory ourFactory;
@@ -48,7 +49,7 @@ public abstract class Logger {
   }
 
   @NotNull
-  public static Logger getInstance(@NotNull @NonNls final String category) {
+  public static LoggerRt getInstance(@NotNull @NonNls final String category) {
     return getFactory().getInstance(category);
   }
 
@@ -84,9 +85,9 @@ public abstract class Logger {
     private final LogManager myManager = LogManager.getLogManager();
 
     @Override
-    public Logger getInstance(@NotNull @NonNls final String category) {
-      final java.util.logging.Logger logger = myManager.getLogger(category);
-      return new Logger() {
+    public LoggerRt getInstance(@NotNull @NonNls final String category) {
+      final Logger logger = myManager.getLogger(category);
+      return new LoggerRt() {
         @Override
         public void info(@Nullable @NonNls final String message, @Nullable final Throwable t) {
           logger.log(Level.INFO, message, t);
@@ -124,10 +125,10 @@ public abstract class Logger {
     }
 
     @Override
-    public Logger getInstance(@NotNull @NonNls final String category) {
+    public LoggerRt getInstance(@NotNull @NonNls final String category) {
       try {
         final Object logger = myGetInstance.invoke(null, category);
-        return new Logger() {
+        return new LoggerRt() {
           @Override
           public void info(@Nullable @NonNls final String message, @Nullable final Throwable t) {
             try {

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.util.io;
 
-import com.intellij.openapi.diagnostic.rt.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +34,7 @@ import java.util.UUID;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtilRt {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
+  private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
 
   protected static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     protected byte[] initialValue() {
