@@ -2,8 +2,6 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.GithubSettings;
 import org.jetbrains.plugins.github.GithubUtil;
@@ -29,38 +27,27 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
     return GithubUtil.GITHUB_ICON;
   }
 
+  @NotNull
   public String getHelpTopic() {
     return "settings.github";
   }
 
   public JComponent createComponent() {
     if (mySettingsPane == null) {
-      mySettingsPane = new GithubSettingsPanel();
+      mySettingsPane = new GithubSettingsPanel(mySettings);
     }
     reset();
     return mySettingsPane.getPanel();
   }
 
   public boolean isModified() {
-    return mySettingsPane != null && (!Comparing.equal(mySettings.getLogin(), mySettingsPane.getLogin()) ||
-           !Comparing.strEqual(mySettings.getPassword(), mySettingsPane.getPassword()) ||
-           !Comparing.equal(mySettings.getHost(), mySettingsPane.getHost()));
+    return false;
   }
 
   public void apply() throws ConfigurationException {
-    if (mySettingsPane != null) {
-      mySettings.setLogin(mySettingsPane.getLogin());
-      mySettings.setPassword(mySettingsPane.getPassword());
-      mySettings.setHost(mySettingsPane.getHost());
-    }
   }
 
   public void reset() {
-    if (mySettingsPane != null) {
-      mySettingsPane.setLogin(mySettings.getLogin());
-      mySettingsPane.setPassword(mySettings.getPassword());
-      mySettingsPane.setHost(mySettings.getHost());
-    }
   }
 
   public void disposeUIResources() {
