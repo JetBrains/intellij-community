@@ -487,12 +487,12 @@ class RunConfigurable extends BaseConfigurable {
           if (configurationType != null) {
             defaults = TreeUtil.findNodeWithObject(configurationType, myTree.getModel(), defaults);
           }
+          final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
+          final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
+          myTree.expandPath(path);
+          TreeUtil.selectInTree(defaultsNode, true, myTree);
+          myTree.scrollPathToVisible(path);
         }
-        final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
-        final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
-        myTree.expandPath(path);
-        TreeUtil.selectInTree(defaultsNode, true, myTree);
-        myTree.scrollPathToVisible(path);
       }
 
       @Override
