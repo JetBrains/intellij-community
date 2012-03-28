@@ -11,7 +11,7 @@
       <element id="module-output" name="javac2" />
       <element id="module-output" name="forms-compiler" />
       <element id="module-output" name="forms_rt" />
-      <element id="module-output" name="notNull" />
+      <element id="module-output" name="instrumentation-util" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jna-utils.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jna.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jdom.jar" path-in-jar="/" />
