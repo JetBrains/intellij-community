@@ -424,9 +424,6 @@ public class PythonSdkType extends SdkType {
 
   public void setupSdkPaths(@NotNull final Sdk sdk) {
     final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-    if (project == null) {
-      return;
-    }
     setupSdkPaths(sdk, project);
   }
 
@@ -445,7 +442,7 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-  public static boolean setupSdkPaths(@NotNull final Project project, @NotNull final Sdk sdk,
+  public static boolean setupSdkPaths(@Nullable final Project project, @NotNull final Sdk sdk,
                                       @NotNull final SdkModificator sdkModificator) {
     final ProgressManager progman = ProgressManager.getInstance();
     final Ref<Boolean> success = new Ref<Boolean>();
@@ -475,7 +472,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @NotNull
-  public static Notification createInvalidSdkNotification(@NotNull final Project project) {
+  public static Notification createInvalidSdkNotification(@Nullable final Project project) {
     return new Notification("xxx",
                             "Invalid Project Interpreter",
                             "Cannot run the project interpreter. <a href=\"xxx\">Configure...</a>",
