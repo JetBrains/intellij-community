@@ -106,6 +106,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassRef() throws Exception { doTest(false); }
   public void testPrivateInnerClassRef() throws Exception { doTest(false); }
   public void testWideningCastToTypeParam() throws Exception { doTest(false); }
+  public void testCapturedWildcardAssignments() throws Exception { doTest(false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
