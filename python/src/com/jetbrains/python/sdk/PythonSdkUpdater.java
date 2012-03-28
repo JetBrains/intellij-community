@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public class PythonSdkUpdater implements StartupActivity {
   }
 
   @Override
-  public void runActivity(final Project project) {
+  public void runActivity(@NotNull final Project project) {
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       return;
@@ -62,7 +63,7 @@ public class PythonSdkUpdater implements StartupActivity {
     updateActiveSdks(project, 7000);
   }
 
-  public void updateActiveSdks(final Project project, final int delay) {
+  public void updateActiveSdks(@NotNull final Project project, final int delay) {
     final Set<Sdk> sdksToUpdate = new HashSet<Sdk>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final Sdk sdk = PythonSdkType.findPythonSdk(module);
@@ -114,7 +115,7 @@ public class PythonSdkUpdater implements StartupActivity {
     }
   }
 
-  private static void updateSdk(Project project, final Sdk sdk) throws InvalidSdkException {
+  private static void updateSdk(@Nullable Project project, @NotNull final Sdk sdk) throws InvalidSdkException {
     PythonSdkType.refreshSkeletonsOfSDK(project, sdk); // NOTE: whole thing would need a rename
     if (!PySdkUtil.isRemote(sdk)) {
       updateSysPath(sdk);

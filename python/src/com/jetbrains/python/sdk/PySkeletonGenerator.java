@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -189,7 +190,7 @@ public class PySkeletonGenerator {
     return deleted;
   }
 
-  public void refreshGeneratedSkeletons(Project project) {
+  public void refreshGeneratedSkeletons(@Nullable Project project) {
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(getSkeletonsPath());
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);

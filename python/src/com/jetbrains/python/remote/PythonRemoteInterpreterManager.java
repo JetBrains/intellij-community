@@ -25,16 +25,16 @@ public abstract class PythonRemoteInterpreterManager {
   public static final String WEB_DEPLOYMENT_PLUGIN_IS_DISABLED =
     "Remote interpreter can't be executed. Please enable WebDeployment plugin.";
 
-  public abstract ProcessHandler startRemoteProcess(Project project,
-                                                    PythonRemoteSdkAdditionalData data,
-                                                    GeneralCommandLine commandLine,
+  public abstract ProcessHandler startRemoteProcess(@Nullable Project project,
+                                                    @NotNull PythonRemoteSdkAdditionalData data,
+                                                    @NotNull GeneralCommandLine commandLine,
                                                     @Nullable
                                                     PyPathMappingSettings mappingSettings)
     throws PyRemoteInterpreterException;
 
-  public abstract ProcessHandler startRemoteProcessWithPid(Project project,
-                                                    PythonRemoteSdkAdditionalData data,
-                                                    GeneralCommandLine commandLine,
+  public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
+                                                    @NotNull PythonRemoteSdkAdditionalData data,
+                                                    @NotNull GeneralCommandLine commandLine,
                                                     @Nullable
                                                     PyPathMappingSettings mappingSettings)
     throws PyRemoteInterpreterException;
@@ -46,9 +46,9 @@ public abstract class PythonRemoteInterpreterManager {
     throws PyRemoteInterpreterException;
 
   @NotNull
-  public abstract PyRemoteSshProcess createRemoteProcess(Project project,
-                                              PythonRemoteSdkAdditionalData data,
-                                              GeneralCommandLine commandLine, boolean printPidInFirstLine) throws PyRemoteInterpreterException;
+  public abstract PyRemoteSshProcess createRemoteProcess(@Nullable Project project,
+                                              @NotNull PythonRemoteSdkAdditionalData data,
+                                              @NotNull GeneralCommandLine commandLine, boolean printPidInFirstLine) throws PyRemoteInterpreterException;
 
   public abstract boolean testConnection(final Project project, final PythonRemoteSdkAdditionalData data,
                                          final String title) throws PyRemoteInterpreterException;

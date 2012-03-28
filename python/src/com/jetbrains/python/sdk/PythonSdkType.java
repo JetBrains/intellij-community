@@ -700,11 +700,11 @@ public class PythonSdkType extends SdkType {
     return type == OrderRootType.CLASSES;
   }
 
-  static void refreshSkeletonsOfSDK(Project project, Sdk sdk) throws InvalidSdkException {
+  static void refreshSkeletonsOfSDK(@Nullable Project project, @NotNull Sdk sdk) throws InvalidSdkException {
     refreshSkeletonsOfSDK(project, sdk, findSkeletonsPath(sdk), new Ref<Boolean>(false));
   }
 
-  static void refreshSkeletonsOfSDK(Project project, Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
+  static void refreshSkeletonsOfSDK(@Nullable Project project, @NotNull Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
     final List<String> failed_sdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

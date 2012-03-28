@@ -150,7 +150,7 @@ public class PySkeletonRefresher {
     return null;
   }
 
-  List<String> regenerateSkeletons(Project project, @Nullable SkeletonVersionChecker cachedChecker,
+  List<String> regenerateSkeletons(@Nullable Project project, @Nullable SkeletonVersionChecker cachedChecker,
                                    @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final List<String> errorList = new SmartList<String>();
     final String homePath = mySdk.getHomePath();
