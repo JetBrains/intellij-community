@@ -15,11 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -75,15 +71,4 @@ public enum JavaSdkVersion {
     );
   }
 
-  public static boolean isAtLeast(PsiElement element, JavaSdkVersion minVersion) {
-    final Module module = ModuleUtil.findModuleForPsiElement(element);
-    if (module != null) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
-        return version != null && version.isAtLeast(minVersion);
-      }
-    }
-    return false;
-  }
 }
