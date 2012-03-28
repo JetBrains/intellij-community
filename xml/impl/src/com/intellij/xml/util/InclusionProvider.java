@@ -87,6 +87,7 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
         psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
         psiElement.putUserData(XmlUtil.ORIGINAL_ELEMENT, PsiAnchor.create(xmlTag));
         result[i] = psiElement;
+        //result[i] = new IncludedXmlTag(includeTag[i], xincludeTag.getParentTag());
       }
       return result;
     }

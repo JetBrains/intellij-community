@@ -81,8 +81,15 @@ public class DropToOperation implements EditOperation {
 
   @Override
   public void execute() throws Exception {
-    for (RadComponent component : myComponents) {
-      ModelParser.addComponent(myContainer, (RadViewComponent)component, null);
+    if (myContext.isAdd()) {
+      for (RadComponent component : myComponents) {
+        ModelParser.moveComponent(myContainer, (RadViewComponent)component, null);
+      }
+    }
+    else {
+      for (RadComponent component : myComponents) {
+        ModelParser.addComponent(myContainer, (RadViewComponent)component, null);
+      }
     }
   }
 }

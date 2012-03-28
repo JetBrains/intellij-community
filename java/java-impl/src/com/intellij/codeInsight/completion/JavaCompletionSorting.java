@@ -55,7 +55,9 @@ public class JavaCompletionSorting {
     final boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
 
     List<LookupElementWeigher> afterNegativeStats = new ArrayList<LookupElementWeigher>();
-    ContainerUtil.addIfNotNull(afterNegativeStats, smart ? new PreferDefaultTypeWeigher(expectedTypes, parameters) : preferStatics(position));
+    if (!smart) {
+      ContainerUtil.addIfNotNull(afterNegativeStats, preferStatics(position));
+    }
     afterNegativeStats.add(new PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(type, position));
     ContainerUtil.addIfNotNull(afterNegativeStats, recursion(parameters, expectedTypes));
     if (!smart && !afterNew) {
@@ -73,6 +75,9 @@ public class JavaCompletionSorting {
     CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
+    }
+    if (smart) {
+      sorter = sorter.weighBefore("negativeStats", new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
     sorter = sorter.weighAfter("negativeStats", afterNegativeStats.toArray(new LookupElementWeigher[afterNegativeStats.size()]));
     sorter = sorter.weighAfter("prefix", new PreferNonGeneric(), new PreferAccessible(position), new PreferSimple(), new PreferEnumConstants(parameters));

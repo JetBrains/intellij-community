@@ -35,8 +35,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -51,6 +51,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class ShowFilePathAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
@@ -147,22 +148,14 @@ public class ShowFilePathAction extends AnAction {
 
       @Override
       public PopupStep onChosen(final VirtualFile selectedValue, final boolean finalChoice) {
-        final Ref<File> open = new Ref<File>();
-        final Ref<File> toSelect = new Ref<File>();
-        final File selectedIoFile = new File(getPresentableUrl(selectedValue));
-        if (files.indexOf(selectedValue) == 0 && files.size() > 1) {
-          open.set(new File(getPresentableUrl(files.get(1))));
-          toSelect.set(selectedIoFile);
+        final File selectedFile = new File(getPresentableUrl(selectedValue));
+        if (selectedFile.exists()) {
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              openFile(selectedFile);
+            }
+          });
         }
-        else {
-          open.set(selectedIoFile);
-        }
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
-            if (!open.get().exists()) return;
-            open(open.get(), toSelect.get());
-          }
-        });
         return FINAL_CHOICE;
       }
     };
@@ -173,44 +166,87 @@ public class ShowFilePathAction extends AnAction {
   public static boolean isSupported() {
     return SystemInfo.isWindows ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN) ||
-           SystemInfo.hasXdgOpen || SystemInfo.isGnome || SystemInfo.isKDE;
+           SystemInfo.hasXdgOpen || SystemInfo.hasNautilus;
   }
 
+  /** @deprecated use {@linkplain #openFile(java.io.File)} (to remove in IDEA 13) */
   public static void open(@NotNull final File ioFile, @Nullable final File toSelect) {
+    openFile(toSelect != null && toSelect.exists() ? toSelect : ioFile);
+  }
+
+  /**
+   * Shows system file manager with given file's parent directory open and the file highlighted in it<br/>
+   * (note that not all platforms support highlighting).
+   *
+   * @param file a file or directory to show and highlight in a file manager.
+   */
+  public static void openFile(@NotNull final File file) {
+    if (!file.exists()) return;
     try {
-      final String path = (SystemInfo.isWindows || SystemInfo.isMac) && toSelect != null && toSelect.exists() ?
-                          toSelect.getCanonicalPath() : ioFile.getCanonicalPath();
-      doOpen(path);
+      doOpen(file.getParentFile(), file);
     }
     catch (Exception e) {
       LOG.warn(e);
     }
   }
 
-  private static void doOpen(@NotNull final String path) throws IOException, ExecutionException {
+  /**
+   * Shows system file manager with given directory open in it.
+   *
+   * @param directory a directory to show in a file manager.
+   */
+  public static void openDirectory(@NotNull final File directory) {
+    if (!directory.isDirectory()) return;
+    try {
+      doOpen(directory, null);
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+    }
+  }
+
+  private static void doOpen(@NotNull final File dir, @Nullable final File toSelect) throws IOException, ExecutionException {
     if (SystemInfo.isWindows) {
-      new GeneralCommandLine("explorer", "/select,", path).createProcess();
+      if (toSelect != null) {
+        new GeneralCommandLine("explorer", "/select,", toSelect.getCanonicalPath()).createProcess();
+      }
+      else {
+        new GeneralCommandLine("explorer", "/root,", dir.getCanonicalPath()).createProcess();
+      }
       return;
     }
 
     if (SystemInfo.isMac) {
-      final String script = String.format(
-        "tell application \"Finder\"\n" +
-        "\treveal {\"%s\"} as POSIX file\n" +
-        "\tactivate\n" +
-        "end tell", path);
-      new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
+      if (toSelect != null) {
+        final String script = String.format(
+          "tell application \"Finder\"\n" +
+          "\treveal {\"%s\"} as POSIX file\n" +
+          "\tactivate\n" +
+          "end tell", toSelect.getCanonicalPath());
+        new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
+      }
+      else {
+        new GeneralCommandLine("open", dir.getCanonicalPath()).createProcess();
+      }
       return;
     }
 
+    if (Registry.is("ide.use.nautilus3") && SystemInfo.hasNautilus && hasNautilusV3()) {
+      if (toSelect != null) {
+        new GeneralCommandLine("nautilus", toSelect.getCanonicalPath()).createProcess();
+      }
+      else {
+        new GeneralCommandLine("nautilus", dir.getCanonicalPath()).createProcess();
+      }
+      return;
+    }
+
+    final String path = dir.getCanonicalPath();
     if (SystemInfo.hasXdgOpen) {
       new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
     }
-    else if (SystemInfo.isGnome) {
-      new GeneralCommandLine("gnome-open", path).createProcess();
-    }
-    else if (SystemInfo.isKDE) {
-      new GeneralCommandLine("kfmclient", "exec", path).createProcess();
+    else if (SystemInfo.hasNautilus) {
+      new GeneralCommandLine("nautilus", path).createProcess();
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       Desktop.getDesktop().open(new File(path));
@@ -218,6 +254,16 @@ public class ShowFilePathAction extends AnAction {
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
     }
+  }
+
+  private static Boolean hasNautilusV3 = null;
+
+  private static boolean hasNautilusV3() {
+    if (hasNautilusV3 == null) {
+      final String version = ExecUtil.execAndReadLine(Arrays.asList("nautilus", "--version"));
+      hasNautilusV3 = version != null && version.startsWith("GNOME nautilus 3");
+    }
+    return hasNautilusV3;
   }
 
   @Nullable
@@ -263,7 +309,7 @@ public class ShowFilePathAction extends AnAction {
     };
     if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
                                     IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == 0) {
-      open(file, file);
+      openFile(file);
     }
     return ref[0];
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -470,7 +470,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       myModel.createPatch(p.getFileName(), p.isReversePatch());
 
       showNotification(LocalHistoryBundle.message("message.patch.created"));
-      ShowFilePathAction.open(new File(p.getFileName()), null);
+      ShowFilePathAction.openFile(new File(p.getFileName()));
     }
     catch (VcsException e) {
       showError(message("message.error.during.create.patch", e));
@@ -481,7 +481,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
   private File getDefaultPatchFile() {
-    return FileUtil.findSequentNonexistentFile(new File(myProject.getBaseDir().getPath()), "local_history", "patch");
+    return FileUtil.findSequentNonexistentFile(new File(myProject.getBasePath()), "local_history", "patch");
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {

@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,17 +34,25 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class IncludedXmlElement<T extends XmlElement> extends LightElement implements XmlElement {
   private final PsiAnchor myOriginal;
+  private SoftReference<T> myRef;
   private final PsiElement myParent;
 
   public IncludedXmlElement(@NotNull T original, @Nullable PsiElement parent) {
     super(original.getManager(), original.getLanguage());
     //noinspection unchecked
-    myOriginal = PsiAnchor.create(original instanceof IncludedXmlElement ? ((IncludedXmlElement<T>)original).getOriginal() : original);
+    T realOriginal = original instanceof IncludedXmlElement ? ((IncludedXmlElement<T>)original).getOriginal() : original;
+    myOriginal = PsiAnchor.create(realOriginal);
+    myRef = new SoftReference<T>(realOriginal);
     myParent = parent;
   }
 
   @Override
   public boolean isValid() {
+    T t = myRef.get();
+    if (t != null) {
+      return t.isValid();
+    }
+
     return myOriginal.retrieve() != null;
   }
 
@@ -54,8 +63,8 @@ public abstract class IncludedXmlElement<T extends XmlElement> extends LightElem
 
     IncludedXmlElement element = (IncludedXmlElement)o;
 
-    if (!myOriginal.equals(element.myOriginal)) return false;
     if (!myParent.equals(element.myParent)) return false;
+    if (!myOriginal.equals(element.myOriginal)) return false;
 
     return true;
   }
@@ -68,11 +77,17 @@ public abstract class IncludedXmlElement<T extends XmlElement> extends LightElem
   }
 
   public T getOriginal() {
-    PsiElement element = myOriginal.retrieve();
+    T element = myRef.get();
+    if (element != null) {
+      return element;
+    }
+
+    element = (T)myOriginal.retrieve();
     if (element == null) {
       throw new PsiInvalidElementAccessException(this);
     }
-    return (T)element;
+    myRef = new SoftReference<T>(element);
+    return element;
   }
 
   @NotNull

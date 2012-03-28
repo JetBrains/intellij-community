@@ -313,6 +313,13 @@
     </intentionAction>
     -->
 
+    <!-- Modifiers -->
+
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePublicIntention</className>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+
     <!-- Other -->
     <intentionAction>
       <className>com.siyeh.ipp.expression.FlipExpressionIntention</className>

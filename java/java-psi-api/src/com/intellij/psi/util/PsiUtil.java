@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.*;
 
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
+
   public static final int ACCESS_LEVEL_PUBLIC = 4;
   public static final int ACCESS_LEVEL_PROTECTED = 3;
   public static final int ACCESS_LEVEL_PACKAGE_LOCAL = 2;
@@ -652,7 +653,7 @@ public final class PsiUtil extends PsiUtilCore {
   @NotNull
   public static List<PsiTypeElement> getParameterTypeElements(@NotNull PsiParameter parameter) {
     PsiTypeElement typeElement = parameter.getTypeElement();
-    return typeElement.getType() instanceof PsiDisjunctionType
+    return typeElement != null && typeElement.getType() instanceof PsiDisjunctionType
            ? PsiTreeUtil.getChildrenOfTypeAsList(typeElement, PsiTypeElement.class)
            : Collections.singletonList(typeElement);
   }
@@ -839,7 +840,7 @@ public final class PsiUtil extends PsiUtilCore {
     return hasDefaultCtrInHierarchy(clazz, allowProtected, checkModifiers, null);
   }
 
-  private static boolean hasDefaultCtrInHierarchy(PsiClass clazz, boolean allowProtected, boolean checkModifiers, Set<PsiClass> visited) {
+  private static boolean hasDefaultCtrInHierarchy(PsiClass clazz, boolean allowProtected, boolean checkModifiers, @Nullable Set<PsiClass> visited) {
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length > 0) {
       for (PsiMethod cls: constructors) {
@@ -927,5 +928,9 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isCatchParameter(@Nullable final PsiElement element) {
     return element instanceof PsiParameter && element.getParent() instanceof PsiCatchSection;
+  }
+
+  public static boolean isIgnoredName(@Nullable final String name) {
+    return "ignore".equals(name) || "ignored".equals(name);
   }
 }

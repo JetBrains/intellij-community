@@ -26,7 +26,9 @@ import com.intellij.designer.designSurface.OperationContext;
 public class RadSingleChildrenViewLayout extends RadViewLayout {
   @Override
   public EditOperation processChildOperation(OperationContext context) {
-    if (myContainer.getChildren().isEmpty() && (context.isCreate() || context.isPaste()) && context.getComponents().size() == 1) {
+    if (myContainer.getChildren().isEmpty() &&
+        (context.isCreate() || context.isPaste() || context.isAdd()) &&
+        context.getComponents().size() == 1) {
       if (context.isTree()) {
         return new TreeDropToOperation(myContainer, context);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Registry  {
-
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
@@ -45,7 +44,8 @@ public class Registry  {
 
     if (registry.myValues.containsKey(key)) {
       return registry.myValues.get(key);
-    } else {
+    }
+    else {
       final RegistryValue value = new RegistryValue(registry, key);
       registry.myValues.put(key, value);
       return value;
@@ -119,9 +119,9 @@ public class Registry  {
   public void loadState(Element state) {
     final List entries = state.getChildren("entry");
     for (Object each : entries) {
-      Element eachEntery = (Element) each;
-      final String eachKey = eachEntery.getAttributeValue("key");
-      final String eachValue = eachEntery.getAttributeValue("value");
+      final Element eachEntry = (Element) each;
+      final String eachKey = eachEntry.getAttributeValue("key");
+      final String eachValue = eachEntry.getAttributeValue("value");
       if (eachKey != null && eachValue != null) {
         myUserProperties.put(eachKey, eachValue);
       }

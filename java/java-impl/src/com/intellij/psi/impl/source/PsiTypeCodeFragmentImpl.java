@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.BitUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -24,7 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.BitUtil.isSet;
+import static com.intellij.util.BitUtil.isSet;
 
 /**
  * @author dsl
@@ -40,8 +39,8 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
                                  final int flags) {
     super(project, JavaElementType.TYPE_TEXT, isPhysical, name, text);
 
-    myAllowEllipsis = BitUtil.isSet(flags, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
-    myAllowDisjunction = BitUtil.isSet(flags, JavaCodeFragmentFactory.ALLOW_DISJUNCTION);
+    myAllowEllipsis = isSet(flags, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
+    myAllowDisjunction = isSet(flags, JavaCodeFragmentFactory.ALLOW_DISJUNCTION);
 
     if (isSet(flags, JavaCodeFragmentFactory.ALLOW_VOID)) {
       putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);

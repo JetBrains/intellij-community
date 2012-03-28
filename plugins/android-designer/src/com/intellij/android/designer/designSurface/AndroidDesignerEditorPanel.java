@@ -177,6 +177,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         ModelParser.updateRootComponent(rootComponent, mySession, rootView);
 
         myLayeredPane.repaint();
+
+        DesignerToolWindowManager.getInstance(getProject()).refresh();
       }
     });
   }

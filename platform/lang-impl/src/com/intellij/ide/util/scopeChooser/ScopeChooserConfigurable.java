@@ -21,7 +21,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -56,7 +55,7 @@ import java.util.*;
  * User: anna
  * Date: 01-Jul-2006
  */
-public class ScopeChooserConfigurable extends MasterDetailsComponent implements NonDefaultProjectConfigurable, SearchableConfigurable {
+public class ScopeChooserConfigurable extends MasterDetailsComponent implements /*NonDefaultProjectConfigurable,*/ SearchableConfigurable {
   private static final Icon SCOPES = IconLoader.getIcon("/ide/scopeConfigurable.png");
   private static final Icon SAVE_ICON = IconLoader.getIcon("/runConfigurations/saveTempConfig.png");
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";

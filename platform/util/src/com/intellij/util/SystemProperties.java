@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,13 +23,11 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author yole
  */
-
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SystemProperties {
   private static String ourTestUserName;
 
-  private SystemProperties() {
-  }
+  private SystemProperties() { }
 
   /**
    * Returns the value of the user.home system property.
@@ -90,5 +89,25 @@ public class SystemProperties {
    */
   public static String getJavaHome() {
     return System.getProperty("java.home");
+  }
+
+  /**
+   * Returns the value of given property as integer.
+   * Returns {@code defaultValue} if property is not specified or malformed.
+   *
+   * @param key          the property name
+   * @param defaultValue default value
+   * @return the property value as integer, or default value.
+   */
+  public static int getIntProperty(@NotNull final String key, final int defaultValue) {
+    final String value = System.getProperty(key);
+    if (value != null) {
+      try {
+        return Integer.parseInt(value);
+      }
+      catch (NumberFormatException ignored) { }
+    }
+
+    return defaultValue;
   }
 }

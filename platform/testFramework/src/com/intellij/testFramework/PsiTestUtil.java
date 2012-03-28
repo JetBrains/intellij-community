@@ -257,7 +257,12 @@ import java.util.Collection;
             jar = "/" + jar;
           }
           final String path = libPath + jar;
-          final VirtualFile root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
+          VirtualFile root;
+          if (path.endsWith(".jar")) {
+            root = JarFileSystem.getInstance().refreshAndFindFileByPath(path + "!/");
+          } else {
+            root = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+          }
           assert root != null : "Library root folder not found: " + path + "!/";
           libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
