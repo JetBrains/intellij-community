@@ -34,6 +34,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JUnit4TestResultsSender extends RunListener {
+  private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
+  private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
+  private static final String ASSERTION_CLASS_NAME = AssertionError.class.getName();
+  private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
+
   private final OutputObjectRegistry myRegistry;
   private Map myCurrentTestMeters = new HashMap();
   private Set myCurrentTests = new HashSet();
@@ -46,7 +51,8 @@ public class JUnit4TestResultsSender extends RunListener {
     final Description description = failure.getDescription();
     final Throwable throwable = failure.getException();
 
-    if (throwable instanceof AssertionError || throwable.getCause() instanceof AssertionError) {
+    final Throwable cause = throwable.getCause();
+    if (isAssertionError(throwable.getClass()) || isAssertionError(cause != null ? cause.getClass() : null)) {
       // junit4 makes no distinction between errors and failures
       doAddFailure(description, throwable);
     }
@@ -81,13 +87,25 @@ public class JUnit4TestResultsSender extends RunListener {
     createExceptionNotification(assertion).createPacket(myRegistry, test).send();
   }
 
+  private static boolean isComparisonFailure(Throwable throwable) {
+    final String throwableClassName = throwable.getClass().getName();
+    return throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME);
+  }
+
+  private static boolean isAssertionError(Class throwableClass) {
+    if (throwableClass == null) return false;
+    final String throwableClassName = throwableClass.getName();
+    if (throwableClassName.equals(ASSERTION_CLASS_NAME) || throwableClassName.equals(ASSERTION_FAILED_CLASS_NAME)) return true;
+    return isAssertionError(throwableClass.getSuperclass());
+  }
+  
   private static PacketFactory createExceptionNotification(Throwable assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    if (assertion instanceof ComparisonFailure || assertion instanceof org.junit.ComparisonFailure) {
+    if (isComparisonFailure(assertion)) {
       return ComparisonDetailsExtractor.create(assertion);
     }
     final Throwable cause = assertion.getCause();
-    if (cause instanceof ComparisonFailure || cause instanceof org.junit.ComparisonFailure) {
+    if (isComparisonFailure(cause)) {
       try {
         return ComparisonDetailsExtractor.create(assertion, ComparisonDetailsExtractor.getExpected(cause), ComparisonDetailsExtractor.getActual(cause));
       }
