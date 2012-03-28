@@ -23,9 +23,11 @@ import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.services.MavenRepositoryService;
 
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.UnmarshalException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,6 +66,9 @@ public class NexusRepositoryService extends MavenRepositoryService {
       }
       return result;
     }
+    catch (UnmarshalException e) {
+      return Collections.emptyList();
+    }
     catch (JAXBException e) {
       throw new IOException(e);
     }
@@ -74,12 +79,12 @@ public class NexusRepositoryService extends MavenRepositoryService {
   public List<MavenArtifactInfo> findArtifacts(@NotNull String url, @NotNull MavenArtifactInfo template) throws IOException {
     try {
       final String packaging = StringUtil.notNullize(template.getPackaging());
-      final ArrayList<MavenArtifactInfo> result = new ArrayList<MavenArtifactInfo>();
       final String name = StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":");
       final SearchResults results = new Endpoint.DataIndex(url).getArtifactlistAsSearchResults(
         name, template.getGroupId(), template.getArtifactId(), template.getVersion(), null, template.getClassNames());
       boolean tooManyResults = results.isTooManyResults();
       final SearchResults.Data data = results.getData();
+      final ArrayList<MavenArtifactInfo> result = new ArrayList<MavenArtifactInfo>();
       if (data != null) {
         for (ArtifactType each : data.getArtifact()) {
           if (!Comparing.equal(each.packaging, packaging)) continue;
@@ -88,6 +93,9 @@ public class NexusRepositoryService extends MavenRepositoryService {
       }
       if (tooManyResults) result.add(null);
       return result;
+    }
+    catch (UnmarshalException e) {
+      return Collections.emptyList();
     }
     catch (JAXBException e) {
       throw new IOException(e);
