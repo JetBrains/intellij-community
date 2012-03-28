@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public abstract class SdkType {
   private final String myName;
 
   /**
-   * @return path to set up filechooser to or null if not applicable
+   * @return path to set up file chooser to or null if not applicable
    */
   @Nullable
   public abstract String suggestHomePath();
