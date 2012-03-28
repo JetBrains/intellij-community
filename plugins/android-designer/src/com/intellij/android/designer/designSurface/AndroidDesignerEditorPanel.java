@@ -38,7 +38,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
@@ -50,7 +49,6 @@ import org.jetbrains.android.uipreview.LocaleData;
 import org.jetbrains.android.uipreview.RenderUtil;
 import org.jetbrains.android.uipreview.RenderingException;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,6 +65,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final ExternalPSIChangeListener myPSIChangeListener;
   private final ProfileAction myProfileAction;
   private volatile RenderSession mySession;
+  private boolean myParseTime;
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
@@ -169,26 +168,22 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   private void reparseFile() {
-    try {
-      myToolProvider.loadDefaultTool();
-      mySurfaceArea.deselectAll();
+    myToolProvider.loadDefaultTool();
+    mySurfaceArea.deselectAll();
 
-      parseFile(new Runnable() {
-        @Override
-        public void run() {
-          showDesignerCard();
-          myLayeredPane.repaint();
+    parseFile(new Runnable() {
+      @Override
+      public void run() {
+        showDesignerCard();
+        myLayeredPane.repaint();
 
-          DesignerToolWindowManager.getInstance(getProject()).refresh();
-        }
-      });
-    }
-    catch (Throwable e) {
-      showError("Parse error: ", e);
-    }
+        DesignerToolWindowManager.getInstance(getProject()).refresh();
+      }
+    });
   }
 
-  private void parseFile(final Runnable runnable) throws Exception {
+  private void parseFile(final Runnable runnable) {
+    myParseTime = true;
     final ModelParser parser = new ModelParser(getProject(), myXmlFile);
     createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
       @Override
@@ -213,12 +208,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         myRootComponent = newRootComponent;
         myLayeredPane.add(rootPanel, LAYER_COMPONENT);
 
+        myParseTime = false;
+
         runnable.run();
       }
     });
   }
 
   private void updateRenderer() {
+    myParseTime = true;
     final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
       public String compute() {
@@ -238,6 +236,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         rootView.setImage(mySession.getImage());
         ModelParser.updateRootComponent(rootComponent, mySession, rootView);
 
+        myParseTime = false;
+
         myLayeredPane.repaint();
 
         DesignerToolWindowManager.getInstance(getProject()).refresh();
@@ -255,7 +255,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         throw exception;
       }
       else {
-        throw new Exception("No session result");
+        throw new RenderingException("No session result");
       }
     }
   }
@@ -333,23 +333,17 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               }
               catch (Throwable e) {
                 showError("Parse error: ", e);
+                myParseTime = false;
               }
             }
           });
-        }
-        catch (RenderingException e) {
-          // TODO
-          e.printStackTrace();
-        }
-        catch (AndroidSdkNotConfiguredException e) {
-          // TODO
-          e.printStackTrace();
         }
         catch (final Throwable e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               showError("Render session error: ", e);
+              myParseTime = false;
             }
           });
         }
@@ -365,9 +359,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   @Override
-  public void showError(@NonNls String message, Throwable e) {
+  protected void configureError(ErrorInfo info) {
+    if (info.throwable instanceof AndroidSdkNotConfiguredException) {
+      info.message = "Please configure Android SDK";
+      info.stack = false;
+    }
+    else if (!(info.throwable instanceof RenderingException)) {
+      info.show = myParseTime;
+      info.log = true;
+    }
+  }
+
+  @Override
+  protected void showErrorPage(ErrorInfo info) {
     removeNativeRoot();
-    super.showError(message, e);
+    super.showErrorPage(info);
   }
 
   public ProfileAction getProfileAction() {
