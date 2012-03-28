@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,8 +207,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   private static VcsRevisionNumber getCurrentRevision(FilePath filePath) {
-    final Entry entryFor = CvsEntriesManager.getInstance().getEntryFor(filePath.getVirtualFileParent(),
-                                                                 filePath.getName());
+    final Entry entryFor = CvsEntriesManager.getInstance().getEntryFor(filePath.getVirtualFileParent(), filePath.getName());
     if (entryFor == null) {
       return new CvsRevisionNumber("0");
     }
@@ -219,13 +218,13 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
 
   @Nullable
   public List<VcsFileRevision> createRevisions(final FilePath filePath) {
-    final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     final File file = filePath.getIOFile();
     final VirtualFile root = CvsVfsUtil.refreshAndFindFileByIoFile(file.getParentFile());
     // check if we have a history pane open for a file in a package which has just been deleted
     if (root == null) return null;
     final LocalPathIndifferentLogOperation logOperation = new LocalPathIndifferentLogOperation(file);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
+    final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), logOperation),
                                new CvsOperationExecutorCallback() {
                                  public void executionFinished(boolean successfully) {
@@ -247,6 +246,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                    }
                                  }
                                });
+    Collections.sort(result, VcsFileRevisionComparator.INSTANCE);
     return result;
   }
 
@@ -306,12 +306,19 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
 
     private static List<VcsFileRevision> sortRevisions(List<VcsFileRevision> revisionsList) {
-      Collections.sort(revisionsList, new Comparator<VcsFileRevision>() {
-        public int compare(VcsFileRevision rev1, VcsFileRevision rev2) {
-          return VcsHistoryUtil.compare(rev1, rev2);
-        }
-      });
+      Collections.sort(revisionsList, VcsFileRevisionComparator.INSTANCE);
       return revisionsList;
+    }
+  }
+
+  private static class VcsFileRevisionComparator implements Comparator<VcsFileRevision> {
+
+    public static final VcsFileRevisionComparator INSTANCE = new VcsFileRevisionComparator();
+
+    private VcsFileRevisionComparator() {}
+
+    public int compare(VcsFileRevision rev1, VcsFileRevision rev2) {
+      return VcsHistoryUtil.compare(rev2, rev1);
     }
   }
 }

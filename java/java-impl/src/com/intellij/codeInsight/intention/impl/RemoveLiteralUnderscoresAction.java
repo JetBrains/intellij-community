@@ -40,7 +40,7 @@ public class RemoveLiteralUnderscoresAction extends PsiElementBaseIntentionActio
   }
 
   @Override
-  public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     final PsiLiteralExpression literalExpression = PsiTreeUtil.getParentOfType(element, PsiLiteralExpression.class, false);
     if (literalExpression == null) return;
 

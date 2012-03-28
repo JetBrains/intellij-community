@@ -8,6 +8,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -153,6 +154,16 @@ public class ResolveClassTest extends ResolveTestCase {
     PsiReference ref = configure();
     PsiElement target = ((PsiJavaReference)ref).advancedResolve(true).getElement();
     assertNull(target);
+  }
+
+  public void testModuleSourceAsLibrarySource() throws Exception {
+    final PsiReference ref = configure();
+    final VirtualFile file = ref.getElement().getContainingFile().getVirtualFile();
+    assertNotNull(file);
+    createFile(myModule, file.getParent(), "ModuleSourceAsLibrarySourceDep.java", loadFile("class/ModuleSourceAsLibrarySourceDep.java"));
+    addLibraryToRoots(file.getParent(), OrderRootType.SOURCES);
+
+    assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 
   public void testStaticImportInTheSameClass() throws Exception {

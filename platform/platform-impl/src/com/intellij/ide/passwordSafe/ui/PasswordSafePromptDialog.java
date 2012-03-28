@@ -18,12 +18,12 @@ package com.intellij.ide.passwordSafe.ui;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -273,7 +273,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       }
     }
     final AtomicReference<String> pw = new AtomicReference<String>(null);
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         final PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, ps, title, message);
         if (promptLabel != null) {

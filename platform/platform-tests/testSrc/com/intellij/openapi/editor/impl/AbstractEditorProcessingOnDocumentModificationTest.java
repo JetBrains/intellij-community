@@ -44,12 +44,7 @@ import java.util.regex.Pattern;
  * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorProcessingOnDocumentModificationTest extends LightPlatformCodeInsightTestCase {
-
-  protected void init(String fileText) throws IOException {
-    init(fileText, TestFileType.TEXT);
-  }
-  
-  protected void init(String fileText, TestFileType type) throws IOException {
+  protected void init(@NotNull String fileText, @NotNull TestFileType type) throws IOException {
     configureFromFileText(getFileName(type), fileText);
   }
 

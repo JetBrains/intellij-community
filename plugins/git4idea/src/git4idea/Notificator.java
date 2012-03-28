@@ -67,7 +67,7 @@ public class Notificator {
     notify(notificationGroup, title, message, type, null);
   }
 
-  public void notifyError(String title, String message) {
+  public void notifyError(@NotNull String title, @NotNull String message) {
     notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, null);
   }
 

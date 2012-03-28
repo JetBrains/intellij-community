@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -198,6 +199,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       final Object element = it.next();
       if (isMatchingElement(element, _s)) return element;
     }
+
+    if (UISettings.getInstance().CYCLE_SCROLLING) {
+      final ListIterator<Object> i = getElementIterator(0);
+      while (i.hasNext()) {
+        final Object element = i.next();
+        if (isMatchingElement(element, _s)) return element;
+      }
+    }
+
     return ( current != null && isMatchingElement(current, _s) ) ? current : null;
   }
 
@@ -217,6 +227,15 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       final Object element = it.previous();
       if (isMatchingElement(element, _s)) return element;
     }
+
+    if (UISettings.getInstance().CYCLE_SCROLLING) {
+      final ListIterator<Object> i = getElementIterator(getAllElements().length);
+      while (i.hasPrevious()) {
+        final Object element = i.previous();
+        if (isMatchingElement(element, _s)) return element;
+      }
+    }
+
     return selectedIndex != -1 && isMatchingElement(current, _s) ? current : null;
   }
 

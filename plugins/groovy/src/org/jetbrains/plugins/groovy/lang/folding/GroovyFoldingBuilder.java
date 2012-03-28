@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.HashSet;
@@ -215,6 +212,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
     return text.contains("\n") || text.contains("\r") || text.contains("\r\n");
   }
 
+  @Nullable
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final IElementType elemType = node.getElementType();
@@ -245,8 +243,21 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
       return settings.isCollapseImports();
     }
 
-    if (node.getElementType() == GROOVY_DOC_COMMENT) {
-      return settings.isCollapseJavadocs();
+    if (node.getElementType() == GROOVY_DOC_COMMENT || node.getElementType() == mML_COMMENT) {
+      PsiElement element = node.getPsi();
+      PsiElement parent = element.getParent();
+      if (parent instanceof GroovyFile) {
+        PsiElement firstChild = parent.getFirstChild();
+        if (firstChild instanceof PsiWhiteSpace) {
+          firstChild = firstChild.getNextSibling();
+        }
+        if (element.equals(firstChild)) {
+          return settings.isCollapseFileHeader();
+        }
+      }
+      if (node.getElementType() == GROOVY_DOC_COMMENT) {
+        return settings.isCollapseJavadocs();
+      }
     }
 
     if ((node.getElementType() == OPEN_BLOCK || node.getElementType() == CONSTRUCTOR_BODY) && node.getTreeParent().getElementType() == METHOD_DEFINITION) {

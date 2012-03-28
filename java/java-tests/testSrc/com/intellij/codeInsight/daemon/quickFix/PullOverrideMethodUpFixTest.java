@@ -34,6 +34,10 @@ public class PullOverrideMethodUpFixTest extends LightQuickFixTestCase {
     doSingleTest("4.java");
   }
 
+  public void test6() throws Exception {
+    doSingleTest("6.java");
+  }
+
   public void testRefactoringIntentionsAvailable() throws Exception {
     doTestActionAvailable(5, "Pull members up");
     doTestActionAvailable(5, "Extract interface");

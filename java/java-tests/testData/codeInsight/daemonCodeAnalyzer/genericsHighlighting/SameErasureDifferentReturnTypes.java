@@ -7,7 +7,7 @@ interface Matcher<T> {
 }
 
 interface ArgumentConstraintPhrases {
-    <T> T with(Matcher<T> matcher);
+    <error descr="'with(Matcher<T>)' clashes with 'with(Matcher<Boolean>)'; both methods have same erasure"><T> T with(Matcher<T> matcher)</error>;
     boolean with(Matcher<Boolean> matcher);
     byte with(Matcher<Byte> matcher);
     short with(Matcher<Short> matcher);
@@ -19,7 +19,7 @@ interface ArgumentConstraintPhrases {
 
 class ExpectationGroupBuilder implements ArgumentConstraintPhrases {
 
-    public <T> T with(final Matcher<T> matcher) {
+    <error descr="'with(Matcher<T>)' clashes with 'with(Matcher<Boolean>)'; both methods have same erasure">public <T> T with(final Matcher<T> matcher)</error> {
         return null;
     }
 

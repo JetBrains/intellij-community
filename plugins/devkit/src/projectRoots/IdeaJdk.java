@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -183,17 +184,18 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
 
   private static VirtualFile[] getIdeaLibrary(String home) {
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    appendIdeaLibrary(home + File.separator + LIB_DIR_NAME, null, result);
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JAVAEE_DIR + File.separator + LIB_DIR_NAME, "javaee-impl.jar",
-                      result);
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JSF_DIR + File.separator + LIB_DIR_NAME, "jsf-impl.jar", result);
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + PERSISTENCE_SUPPORT + File.separator + LIB_DIR_NAME, "persistence-impl.jar", result);
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + DATABASE_DIR + File.separator + LIB_DIR_NAME, "database-impl.jar", result);
-    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + CSS_DIR + File.separator + LIB_DIR_NAME, "css.jar", result);
+    appendIdeaLibrary(home + File.separator + LIB_DIR_NAME, result, "junit.jar");
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JAVAEE_DIR + File.separator + LIB_DIR_NAME, result, "javaee-impl.jar");
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + JSF_DIR + File.separator + LIB_DIR_NAME, result, "jsf-impl.jar");
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + PERSISTENCE_SUPPORT + File.separator + LIB_DIR_NAME, result, "persistence-impl.jar");
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + DATABASE_DIR + File.separator + LIB_DIR_NAME, result, "database-impl.jar");
+    appendIdeaLibrary(home + File.separator + PLUGINS_DIR + File.separator + CSS_DIR + File.separator + LIB_DIR_NAME, result, "css.jar");
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  private static void appendIdeaLibrary(final String path, @Nullable @NonNls final String forbidden, final ArrayList<VirtualFile> result) {
+  private static void appendIdeaLibrary(final String path,
+                                        final ArrayList<VirtualFile> result,
+                                        @NonNls final String... forbidden) {
     final JarFileSystem jfs = JarFileSystem.getInstance();
     final File lib = new File(path);
     if (lib.isDirectory()) {
@@ -201,7 +203,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
       if (jars != null) {
         for (File jar : jars) {
           @NonNls String name = jar.getName();
-          if (jar.isFile() && !name.equals(forbidden) && (name.endsWith(".jar") || name.endsWith(".zip"))) {
+          if (jar.isFile() && Arrays.binarySearch(forbidden, name) < 0 && (name.endsWith(".jar") || name.endsWith(".zip"))) {
             result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
           }
         }

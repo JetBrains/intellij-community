@@ -43,6 +43,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public boolean SPACE_IN_NAMED_ARGUMENT = true;
   public boolean ALIGN_MULTILINE_LIST_OR_MAP = false;
+  public boolean SPACE_WITHIN_LIST_OR_MAP = false;
 
   public GroovyCodeStyleSettings(CodeStyleSettings container) {
     super("GroovyCodeStyleSettings", container);

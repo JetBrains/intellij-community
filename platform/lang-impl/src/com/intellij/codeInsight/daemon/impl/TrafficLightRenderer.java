@@ -108,7 +108,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private void refresh() {
     int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
     if (errorCount != null && maxIndex == errorCount.length) return;
-    int[] newErrors = new int[maxIndex];
+    int[] newErrors = new int[maxIndex+1];
     if (errorCount != null) {
       System.arraycopy(errorCount, 0, newErrors, 0, Math.min(errorCount.length, newErrors.length));
     }
@@ -140,7 +140,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     HighlightSeverity infoSeverity = info.getSeverity();
     final int severityIdx = mySeverityRegistrar.getSeverityIdx(infoSeverity);
     if (severityIdx != -1) {
-      errorCount[severityIdx]+= delta;
+      errorCount[severityIdx] += delta;
     }
   }
 

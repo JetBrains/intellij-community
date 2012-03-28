@@ -67,9 +67,15 @@ public class ModulesCombobox extends ComboBox {
   }
 
   public void fillModules(@NotNull Project project) {
+    fillModules(project, null);
+  }
+
+  public void fillModules(@NotNull Project project, final @Nullable ModuleType moduleType) {
     myModel.clear();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      myModel.add(module);
+      if (moduleType == null || moduleType.equals(ModuleType.get(module))) {
+        myModel.add(module);
+      }
     }
   }
 

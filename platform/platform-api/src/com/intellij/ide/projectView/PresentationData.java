@@ -247,6 +247,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     mySeparatorAbove = false;
   }
 
+  @NotNull
   public Object[] getEqualityObjects() {
     return new Object[]{myOpenIcon, myClosedIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
       myLocationString, mySeparatorAbove};

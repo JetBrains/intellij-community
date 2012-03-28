@@ -25,7 +25,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -39,14 +38,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PluginRunConfiguration extends RunConfigurationBase implements ModuleRunConfiguration {
   private Module myModule;
@@ -246,14 +242,8 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
   @NotNull
   public Module[] getModules() {
-    List<Module> modules = new ArrayList<Module>();
-    Module[] allModules = ModuleManager.getInstance(getProject()).getModules();
-    for (Module module : allModules) {
-      if (ModuleType.get(module) == PluginModuleType.getInstance()) {
-        modules.add(module);
-      }
-    }
-    return modules.toArray(new Module[modules.size()]);
+    final Module module = getModule();
+    return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

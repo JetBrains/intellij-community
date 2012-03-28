@@ -290,6 +290,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       return myElement.equals(other.myElement) && (!other.myCheck || myCheck) && (!other.myCollectUsages || myCollectUsages);
     }
 
+    @NotNull
     @Override
     public Object[] getEqualityObjects() {
       return myEqualityObjects;

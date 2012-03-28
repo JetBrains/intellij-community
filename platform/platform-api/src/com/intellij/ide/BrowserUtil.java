@@ -133,7 +133,7 @@ public class BrowserUtil {
     if (SystemInfo.isMac || SystemInfo.isWindows) {
       return true;
     }
-    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen) {
+    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
       return true;
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
@@ -152,7 +152,7 @@ public class BrowserUtil {
     else if (SystemInfo.isMac) {
       return new String[]{ExecUtil.getOpenCommandPath()};
     }
-    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen) {
+    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
       return new String[]{"xdg-open"};
     }
 

@@ -66,7 +66,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       return PsiTreeUtil.getParentOfType(element, XmlTag.class) != null;
     }
 
-    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForTag(element, id);
     }
   }
@@ -88,7 +88,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
       return getText();
     }
 
-    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForFile(element, myInspectionId);
     }
 
