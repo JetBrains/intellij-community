@@ -13,7 +13,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         tag="merge"
         delete="false">
 
@@ -21,7 +20,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         tag="&lt;unknown&gt;">
 
     <presentation title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
@@ -567,7 +565,6 @@
   <!-- ================= Containers ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.DatePicker"
         tag="DatePicker">
 
@@ -587,7 +584,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.CalendarView"
         tag="CalendarView">
 
@@ -608,7 +604,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.TimePicker"
         tag="TimePicker">
 
@@ -629,7 +624,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.NumberPicker"
         tag="NumberPicker">
 
@@ -647,7 +641,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.ZoomControls"
         tag="ZoomControls">
 
@@ -665,7 +658,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.SearchView"
         tag="SearchView">
 
@@ -689,7 +681,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.ListView"
         tag="ListView">
 
@@ -728,7 +719,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.GridView"
         tag="GridView">
 
@@ -748,7 +738,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.webkit.WebView"
         tag="WebView">
 
@@ -806,7 +795,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.Gallery"
         tag="Gallery">
 
@@ -826,7 +814,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.Spinner"
         tag="Spinner">
 
@@ -846,7 +833,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.MediaController"
         tag="MediaController">
 
@@ -864,7 +850,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.StackView"
         tag="StackView">
 
@@ -884,7 +869,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.AdapterViewFlipper"
         tag="AdapterViewFlipper">
 

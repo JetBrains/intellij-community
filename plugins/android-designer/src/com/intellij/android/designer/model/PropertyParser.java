@@ -19,8 +19,8 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.AttributeProperty;
+import com.intellij.android.designer.propertyTable.CompoundProperty;
 import com.intellij.android.designer.propertyTable.FlagProperty;
-import com.intellij.android.designer.propertyTable.PaddingProperty;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
@@ -96,6 +96,8 @@ public class PropertyParser {
     else {
       component.setProperties(load(myClassLoader.loadClass(target), model));
     }
+
+    // TODO: load layout constrain properties
   }
 
   private List<Property> load(Class<?> componentClass, MetaModel model) throws Exception {
@@ -116,7 +118,7 @@ public class PropertyParser {
           Property property;
 
           if ("padding".equals(name) && "View".equals(component)) {
-            property = padding = new PaddingProperty(name, definition);
+            property = padding = new CompoundProperty(name, definition);
           }
           else if (formats.contains(AttributeFormat.Flag)) {
             property = new FlagProperty(name, definition);

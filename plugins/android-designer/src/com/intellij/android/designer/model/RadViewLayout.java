@@ -27,7 +27,9 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class RadViewLayout extends RadLayout {
- @Override
+  public static final RadLayout INSTANCE = new RadViewLayout();
+
+  @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     return new NonResizeSelectionDecorator(Color.RED, 1);
   }
