@@ -48,8 +48,12 @@ public class WalkingState<T> {
     if (!startedWalking) {
       stopped = false;
       startedWalking = true;
-      walkChildren(element);
-      startedWalking = false;
+      try {
+        walkChildren(element);
+      }
+      finally {
+        startedWalking = false;
+      }
     }
   }
 
