@@ -33,8 +33,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
@@ -239,7 +238,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private ExitCode compile(final CompileContext context, ModuleChunk chunk, Collection<File> files, Collection<File> forms)
     throws Exception {
-    ExitCode exitCode = ExitCode.OK;
+    ExitCode exitCode = ExitCode.NOTHING_DONE;
 
     final boolean hasSourcesToCompile = !files.isEmpty() || !forms.isEmpty();
 
@@ -264,6 +263,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     DELTA_MAPPINGS_CALLBACK_KEY.set(context, delta.getCallback());
     try {
       if (hasSourcesToCompile) {
+        exitCode = ExitCode.OK;
         final Set<File> sourcePath = TEMPORARY_SOURCE_ROOTS_KEY.get(context, Collections.<File>emptySet());
 
         final String chunkName = getChunkPresentableName(chunk);

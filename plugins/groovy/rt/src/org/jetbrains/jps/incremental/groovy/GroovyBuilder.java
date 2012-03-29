@@ -49,7 +49,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     try {
       final List<File> toCompile = collectChangedFiles(context, chunk);
       if (toCompile.isEmpty()) {
-        return ExitCode.OK;
+        return ExitCode.NOTHING_DONE;
       }
 
       String moduleOutput = getModuleOutput(context, chunk);
