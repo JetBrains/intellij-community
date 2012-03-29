@@ -137,15 +137,32 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
 
   @Override
   public void updateAllRepositories(GitRepository.TrackedTopic... topics) {
-    for (VirtualFile root : myRepositories.keySet()) {
+    Map<VirtualFile, GitRepository> repositories;
+    try {
+      REPO_LOCK.readLock().lock();
+      repositories = new HashMap<VirtualFile, GitRepository>(myRepositories);
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
+
+    for (VirtualFile root : repositories.keySet()) {
       updateRepository(root, topics);
     }
   }
 
   // note: we are not calling this method during the project startup - it is called anyway by the GitRootTracker
   private void updateRepositoriesCollection() {
-      Map<VirtualFile, GitRepository> repositories = new HashMap<VirtualFile, GitRepository>(myRepositories);
-      final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(myVcs);
+    Map<VirtualFile, GitRepository> repositories;
+    try {
+      REPO_LOCK.readLock().lock();
+      repositories = new HashMap<VirtualFile, GitRepository>(myRepositories);
+    }
+    finally {
+      REPO_LOCK.readLock().unlock();
+    }
+
+    final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(myVcs);
       // remove repositories that are not in the roots anymore
       for (Iterator<Map.Entry<VirtualFile, GitRepository>> iterator = repositories.entrySet().iterator(); iterator.hasNext(); ) {
         if (!ArrayUtil.contains(iterator.next().getValue().getRoot(), roots)) {
