@@ -25,7 +25,9 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,8 +94,9 @@ public class ChangeType {
     return CHANGE;
   }
 
-  public static void apply(RangeMarker original, RangeMarker target) {
+  public static void apply(@NotNull Project project, @NotNull RangeMarker original, @NotNull RangeMarker target) {
     Document document = target.getDocument();
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(project, document)) return;
     if (DocumentUtil.isEmpty(original)) {
       int offset = target.getStartOffset();
       document.deleteString(offset, target.getEndOffset());

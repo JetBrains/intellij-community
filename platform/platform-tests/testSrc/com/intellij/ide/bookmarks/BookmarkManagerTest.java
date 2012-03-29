@@ -19,7 +19,12 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.TestFileType;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,7 +35,6 @@ import java.util.List;
  * @since 12/27/10 1:43 PM
  */
 public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModificationTest {
-
   private final List<Bookmark> myBookmarks = new ArrayList<Bookmark>();
   
   @Override
@@ -43,13 +47,13 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
   }
 
   public void testWholeTextReplace() throws IOException {
-    String text =
+    @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text);
+    init(text, TestFileType.TEXT);
 
     addBookmark(2);
     List<Bookmark> bookmarksBefore = getManager().getValidBookmarks();
@@ -60,19 +64,19 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
     assertEquals(1, bookmarksAfter.size());
     assertSame(bookmarksBefore.get(0), bookmarksAfter.get(0));
     for (Bookmark bookmark : bookmarksAfter) {
-      checkBookmark(bookmark);
+      checkBookmarkNavigation(bookmark);
     }
   }
   
   public void testBookmarkLineRemove() throws IOException {
-    String text =
+    @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text);
-    
+    init(text, TestFileType.TEXT);
+
     addBookmark(2);
     Document document = myEditor.getDocument();
     myEditor.getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
@@ -81,13 +85,13 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
   }
   
   public void testBookmarkIsSavedAfterRemoteChange() throws IOException {
-    String text =
+    @NonNls String text =
       "public class Test {\n" +
       "    public void test() {\n" +
       "        int i = 1;\n" +
       "    }\n" +
       "}";
-    init(text);
+    init(text, TestFileType.TEXT);
     addBookmark(2);
     
     myEditor.getDocument().setText("111\n222" + text + "333");
@@ -95,7 +99,29 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
     assertEquals(1, bookmarks.size());
     Bookmark bookmark = bookmarks.get(0);
     assertEquals(3, bookmark.getLine());
-    checkBookmark(bookmark);
+    checkBookmarkNavigation(bookmark);
+  }
+
+  public void testBookmarkManagerDoesNotHardReferenceDocuments() throws IOException {
+    @NonNls String text =
+      "public class Test {\n" +
+      "}";
+
+    myVFile = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
+    VfsUtil.saveText(myVFile, text);
+
+    Bookmark bookmark = getManager().addTextBookmark(myVFile, 1, "xxx");
+    assertNotNull(bookmark);
+    LeakHunter.checkLeak(getManager(), Document.class);
+
+    Document document = FileDocumentManager.getInstance().getDocument(myVFile);
+    assertNotNull(document);
+
+    document.insertString(0, "line 0\n");
+    assertEquals(2, bookmark.getLine());
+
+    myEditor = createEditor(myVFile);
+    checkBookmarkNavigation(bookmark);
   }
   
   private void addBookmark(int line) {
@@ -106,8 +132,16 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
   private static BookmarkManager getManager() {
     return BookmarkManager.getInstance(getProject());
   }
-  
-  private static void checkBookmark(Bookmark bookmark) {
+
+  @Override
+  public Object getData(String dataId) {
+    if (dataId.equals(OpenFileDescriptor.NAVIGATE_IN_EDITOR.getName())) {
+      return myEditor;
+    }
+    return super.getData(dataId);
+  }
+
+  private static void checkBookmarkNavigation(Bookmark bookmark) {
     int line = bookmark.getLine();
     int anotherLine = line;
     if (line > 0) {
@@ -118,9 +152,7 @@ public class BookmarkManagerTest extends AbstractEditorProcessingOnDocumentModif
     }
     CaretModel caretModel = myEditor.getCaretModel();
     caretModel.moveToLogicalPosition(new LogicalPosition(anotherLine, 0));
-    OpenFileDescriptor target = bookmark.getTarget();
-    assertTrue(target.canNavigate());
-    target.navigateIn(myEditor);
+    bookmark.navigate();
     assertEquals(line, caretModel.getLogicalPosition().line);
   }
 }

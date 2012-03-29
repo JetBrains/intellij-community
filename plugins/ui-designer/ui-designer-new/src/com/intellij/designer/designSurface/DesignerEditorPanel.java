@@ -26,6 +26,7 @@ import com.intellij.designer.palette.Item;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -41,17 +42,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class DesignerEditorPanel extends JPanel implements DataProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
+
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
   protected static final Integer LAYER_STATIC_DECORATION = JLayeredPane.POPUP_LAYER;
   protected static final Integer LAYER_DECORATION = JLayeredPane.DRAG_LAYER;
@@ -85,7 +89,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected ToolProvider myToolProvider;
   protected EditableArea mySurfaceArea;
 
-  private JLabel myErrorLabel;
+  private JPanel myErrorPanel;
+  private JLabel myErrorMessage;
+  private JTextArea myErrorStack;
 
   private JPanel myProgressPanel;
   private AsyncProcessIcon myProgressIcon;
@@ -249,8 +255,18 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private void createErrorCard() {
-    myErrorLabel = new JLabel(IconLoader.getIcon("/ide/error_notifications.png"), SwingConstants.CENTER);
-    add(myErrorLabel, ERROR_CARD);
+    myErrorPanel = new JPanel(new BorderLayout());
+
+    myErrorMessage = new JLabel(IconLoader.getIcon("/ide/error_notifications.png"));
+    myErrorMessage.setFont(myErrorMessage.getFont().deriveFont(Font.BOLD));
+    myErrorPanel.add(myErrorMessage, BorderLayout.PAGE_START);
+
+    myErrorStack = new JTextArea(50, 20);
+    myErrorStack.setEditable(false);
+
+    myErrorPanel.add(ScrollPaneFactory.createScrollPane(myErrorStack), BorderLayout.CENTER);
+
+    add(myErrorPanel, ERROR_CARD);
   }
 
   private void createProgressPanel() {
@@ -283,16 +299,47 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myLayeredPane.remove(myProgressPanel);
   }
 
-  public void showError(@NonNls String message, Throwable e) {
+  public final void showError(@NonNls String message, Throwable e) {
+    while (e instanceof InvocationTargetException) {
+      e = e.getCause();
+    }
+
+    ErrorInfo info = new ErrorInfo();
+    info.message = message;
+    info.throwable = e;
+    configureError(info);
+
+    if (info.show) {
+      showErrorPage(info);
+    }
+    if (info.log || ApplicationManagerEx.getApplicationEx().isInternal()) {
+      LOG.error(message, e);
+    }
+  }
+
+  protected abstract void configureError(ErrorInfo info);
+
+  protected void showErrorPage(ErrorInfo info) {
     hideProgress();
     myRootComponent = null;
-    myErrorLabel.setText(message + e.toString());
+
+    myErrorMessage.setText(info.message);
+
+    if (info.stack) {
+      ByteArrayOutputStream stream = new ByteArrayOutputStream();
+      info.throwable.printStackTrace(new PrintStream(stream));
+      myErrorStack.setText(stream.toString());
+      myErrorStack.setVisible(true);
+    }
+    else {
+      myErrorStack.setText(null);
+      myErrorStack.setVisible(false);
+    }
+
     myLayout.show(this, ERROR_CARD);
+
     DesignerToolWindowManager.getInstance(getProject()).refresh();
     repaint();
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      e.printStackTrace();
-    }
   }
 
   public abstract String getPlatformTarget();
@@ -359,7 +406,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myDesignerCard.isVisible() ? myGlassLayer : myErrorLabel;
+    return myDesignerCard.isVisible() ? myGlassLayer : myErrorPanel;
   }
 
   public RadComponent getRootComponent() {
@@ -518,5 +565,13 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
         myResult = component;
       }
     }
+  }
+
+  public static final class ErrorInfo {
+    public String message;
+    public Throwable throwable;
+    public boolean show = true;
+    public boolean stack = true;
+    public boolean log;
   }
 }

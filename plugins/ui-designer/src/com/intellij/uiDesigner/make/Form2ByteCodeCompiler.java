@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.impl.CompilerUtil;
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +51,6 @@ import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,7 +71,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   }
 
   @NotNull
-  public static URLClassLoader createClassLoader(@NotNull final String classPath){
+  public static InstrumentationClassFinder createClassFinder(@NotNull final String classPath){
     final ArrayList<URL> urls = new ArrayList<URL>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
@@ -82,7 +82,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
         throw new RuntimeException(exc);
       }
     }
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
+    return new InstrumentationClassFinder(urls.toArray(new URL[urls.size()]));
   }
 
   @Override
@@ -274,81 +274,86 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
     List<File> filesToRefresh = new ArrayList<File>();
     for (final Module module : module2itemsList.keySet()) {
       final String classPath = OrderEnumerator.orderEntries(module).recursively().getPathsList().getPathsString();
-      final ClassLoader loader = createClassLoader(classPath);
+      final InstrumentationClassFinder finder = createClassFinder(classPath);
 
-      if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
-        final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
-        try {
-          if (moduleOutputPath != null) {
-            filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false));
+      try {
+        if (GuiDesignerConfiguration.getInstance(project).COPY_FORMS_RUNTIME_TO_OUTPUT) {
+          final String moduleOutputPath = CompilerPaths.getModuleOutputPath(module, false);
+          try {
+            if (moduleOutputPath != null) {
+              filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(moduleOutputPath, false));
+            }
+            final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
+            if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
+              filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false));
+            }
           }
-          final String testsOutputPath = CompilerPaths.getModuleOutputPath(module, true);
-          if (testsOutputPath != null && !testsOutputPath.equals(moduleOutputPath)) {
-            filesToRefresh.addAll(CopyResourcesUtil.copyFormsRuntime(testsOutputPath, false));
+          catch (IOException e) {
+            addMessage(
+              context,
+              UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime", module.getName(), e.toString()),
+              null, CompilerMessageCategory.ERROR);
           }
         }
-        catch (IOException e) {
-          addMessage(
-            context,
-            UIDesignerBundle.message("error.cannot.copy.gui.designer.form.runtime", module.getName(), e.toString()),
-            null, CompilerMessageCategory.ERROR);
+
+        final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
+
+        for (final MyInstrumentationItem item : list) {
+          //context.getProgressIndicator().setFraction((double)++formsProcessed / (double)items.length);
+
+          final VirtualFile formFile = item.getFormFile();
+          context.getProgressIndicator().setText2(formFile.getPresentableUrl());
+
+          final String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Override
+            public String compute() {
+              if (!belongsToCompileScope(context, formFile, item.getClassToBindFQname())) {
+                return null;
+              }
+              Document document = FileDocumentManager.getInstance().getDocument(formFile);
+              return document == null ? null : document.getText();
+            }
+          });
+          if (text == null) {
+            continue; // does not belong to current scope
+          }
+
+          final LwRootContainer rootContainer;
+          try {
+            rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(finder.getLoader()));
+          }
+          catch (Exception e) {
+            addMessage(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile, CompilerMessageCategory.ERROR);
+            continue;
+          }
+
+          final File classFile = VfsUtil.virtualToIoFile(item.getFile());
+          LOG.assertTrue(classFile.exists(), classFile.getPath());
+
+          final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(
+            rootContainer, finder, new PsiNestedFormLoader(module), false, new PsiClassWriter(module)
+          );
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              codeGenerator.patchFile(classFile);
+            }
+          });
+          final FormErrorInfo[] errors = codeGenerator.getErrors();
+          final FormErrorInfo[] warnings = codeGenerator.getWarnings();
+          for (FormErrorInfo warning : warnings) {
+            addMessage(context, warning, formFile, CompilerMessageCategory.WARNING);
+          }
+          for (FormErrorInfo error : errors) {
+            addMessage(context, error, formFile, CompilerMessageCategory.ERROR);
+          }
+          if (errors.length == 0) {
+            compiledItems.add(item);
+          }
         }
       }
-
-      final ArrayList<MyInstrumentationItem> list = module2itemsList.get(module);
-
-      for (final MyInstrumentationItem item : list) {
-        //context.getProgressIndicator().setFraction((double)++formsProcessed / (double)items.length);
-        
-        final VirtualFile formFile = item.getFormFile();
-        context.getProgressIndicator().setText2(formFile.getPresentableUrl());
-
-        final String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            if (!belongsToCompileScope(context, formFile, item.getClassToBindFQname())) {
-              return null;
-            }
-            Document document = FileDocumentManager.getInstance().getDocument(formFile);
-            return document == null ? null : document.getText();
-          }
-        });
-        if (text == null) {
-          continue; // does not belong to current scope
-        }
-        
-        final LwRootContainer rootContainer;
-        try {
-          rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(loader));
-        }
-        catch (Exception e) {
-          addMessage(context, UIDesignerBundle.message("error.cannot.process.form.file", e), formFile, CompilerMessageCategory.ERROR);
-          continue;
-        }
-
-        final File classFile = VfsUtil.virtualToIoFile(item.getFile());
-        LOG.assertTrue(classFile.exists(), classFile.getPath());
-
-        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader,
-                                                                    new PsiNestedFormLoader(module), false,
-                                                                    new PsiClassWriter(module));
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            codeGenerator.patchFile(classFile);
-          }
-        });
-        final FormErrorInfo[] errors = codeGenerator.getErrors();
-        final FormErrorInfo[] warnings = codeGenerator.getWarnings();
-        for (FormErrorInfo warning : warnings) {
-          addMessage(context, warning, formFile, CompilerMessageCategory.WARNING);
-        }
-        for (FormErrorInfo error : errors) {
-          addMessage(context, error, formFile, CompilerMessageCategory.ERROR);
-        }
-        if (errors.length == 0) {
-          compiledItems.add(item);
-        }
+      finally {
+        finder.releaseResources();
       }
     }
     CompilerUtil.refreshIOFiles(filesToRefresh);

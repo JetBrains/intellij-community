@@ -46,7 +46,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Returns the project to which the PSI element belongs.
    *
    * @return the project instance.
-   * @throws PsiInvalidElementAccessException if this element is invalid
+   * @throws PsiInvalidElementAccessException
+   *          if this element is invalid
    */
   @NotNull
   Project getProject() throws PsiInvalidElementAccessException;
@@ -56,7 +57,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the language instance.
    */
-  @NotNull Language getLanguage();
+  @NotNull
+  Language getLanguage();
 
   /**
    * Returns the PSI manager for the project to which the PSI element belongs.
@@ -71,7 +73,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the array of child elements.
    */
-  @NotNull PsiElement[] getChildren();
+  @NotNull
+  PsiElement[] getChildren();
 
   /**
    * Returns the parent of the PSI element.
@@ -85,34 +88,40 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the first child, or null if the element has no children.
    */
-  @Nullable PsiElement getFirstChild();
+  @Nullable
+  PsiElement getFirstChild();
 
   /**
    * Returns the last child of the PSI element.
    *
    * @return the last child, or null if the element has no children.
    */
-  @Nullable  PsiElement getLastChild();
+  @Nullable
+  PsiElement getLastChild();
 
   /**
    * Returns the next sibling of the PSI element.
    *
    * @return the next sibling, or null if the node is the last in the list of siblings.
    */
-  @Nullable  PsiElement getNextSibling();
+  @Nullable
+  PsiElement getNextSibling();
 
   /**
    * Returns the previous sibling of the PSI element.
    *
    * @return the previous sibling, or null if the node is the first in the list of siblings.
    */
-  @Nullable  PsiElement getPrevSibling();
+  @Nullable
+  PsiElement getPrevSibling();
 
   /**
    * Returns the file containing the PSI element.
-   * @throws PsiInvalidElementAccessException if this element is invalid
+   *
    * @return the file instance, or null if the PSI element is not contained in a file (for example,
-   * the element represents a package or directory).
+   *         the element represents a package or directory).
+   * @throws PsiInvalidElementAccessException
+   *          if this element is invalid
    */
   PsiFile getContainingFile() throws PsiInvalidElementAccessException;
 
@@ -178,7 +187,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the element text as a character array.
    */
-  @NotNull char[] textToCharArray();
+  @NotNull
+  char[] textToCharArray();
 
   /**
    * Returns the PSI element which should be used as a navigation target
@@ -246,7 +256,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Creates a copy of the file containing the PSI element and returns the corresponding
    * element in the created copy. Resolve operations performed on elements in the copy
-   * of the file will resolve to elements in the copy, not in the original file. 
+   * of the file will resolve to elements in the copy, not in the original file.
    *
    * @return the element in the file copy corresponding to this element.
    */
@@ -304,9 +314,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Adds a range of elements as children to this PSI element, before the specified anchor element.
    *
-   * @param first   the first child element to add.
-   * @param last    the last child element to add (must have the same parent as <code>first</code>)
-   * @param anchor  the anchor before which the child element is inserted (must be a child of this PSI element)
+   * @param first  the first child element to add.
+   * @param last   the last child element to add (must have the same parent as <code>first</code>)
+   * @param anchor the anchor before which the child element is inserted (must be a child of this PSI element)
    * @return the first child element which was actually added (either <code>first</code> or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
@@ -315,9 +325,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Adds a range of elements as children to this PSI element, after the specified anchor element.
    *
-   * @param first   the first child element to add.
-   * @param last    the last child element to add (must have the same parent as <code>first</code>)
-   * @param anchor  the anchor after which the child element is inserted (must be a child of this PSI element)
+   * @param first  the first child element to add.
+   * @param last   the last child element to add (must have the same parent as <code>first</code>)
+   * @param anchor the anchor after which the child element is inserted (must be a child of this PSI element)
    * @return the first child element which was actually added (either <code>first</code> or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
@@ -327,7 +337,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Deletes this PSI element from the tree.
    *
    * @throws IncorrectOperationException if the modification is not supported
-   * or not possible for some reason (for example, the file containing the element is read-only).
+   *                                     or not possible for some reason (for example, the file containing the element is read-only).
    */
   void delete() throws IncorrectOperationException;
 
@@ -382,7 +392,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * associated reference.
    *
    * @return the reference instance, or null if the PSI element does not have any
-   * associated references.
+   *         associated references.
    */
   @Nullable
   PsiReference getReference();
@@ -394,15 +404,16 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * contains only one text fragment which acts as a reference but the reference has
    * multiple possible targets, {@link PsiPolyVariantReference} should be used instead
    * of returning multiple references.
-   *
+   * <p/>
    * Actually, it's preferable to call {@link com.intellij.psi.PsiReferenceService#getReferences} instead
    * as it allows adding references by plugins when the element implements {@link com.intellij.psi.ContributedReferenceHost}.
    *
    * @return the array of references, or an empty array if the element has no associated
-   * references.
+   *         references.
    * @see com.intellij.psi.PsiReferenceService#getReferences
    */
-  @NotNull PsiReference[] getReferences();
+  @NotNull
+  PsiReference[] getReferences();
 
   /**
    * Returns a copyable user data object attached to this element.
@@ -411,13 +422,14 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the user data object, or null if no such object is found in the current element.
    * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
    */
-  @Nullable <T> T getCopyableUserData(Key<T> key);
+  @Nullable
+  <T> T getCopyableUserData(Key<T> key);
 
   /**
    * Attaches a copyable user data object to this element. Copyable user data objects are copied
    * when the PSI elements are copied.
    *
-   * @param key the key for accessing the user data object.
+   * @param key   the key for accessing the user data object.
    * @param value the user data object to attach.
    * @see #getCopyableUserData(com.intellij.openapi.util.Key)
    */
@@ -427,12 +439,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Passes the declarations contained in this PSI element and its children
    * for processing to the specified scope processor.
    *
-   * @param processor   the processor receiving the declarations.
+   * @param processor  the processor receiving the declarations.
    * @param state
-   * @param lastParent  the child of this element has been processed during the previous
-   *                    step of the tree up walk (declarations under this element do not need
-   *                    to be processed again)
-   * @param place       the original element from which the tree up walk was initiated.
+   * @param lastParent the child of this element has been processed during the previous
+   *                   step of the tree up walk (declarations under this element do not need
+   *                   to be processed again)
+   * @param place      the original element from which the tree up walk was initiated.
    * @return true if the declaration processing should continue or false if it should be stopped.
    */
   boolean processDeclarations(@NotNull PsiScopeProcessor processor,
@@ -444,11 +456,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Returns the element which should be used as the parent of this element in a tree up
    * walk during a resolve operation. For most elements, this returns <code>getParent()</code>,
    * but the context can be overridden for some elements like code fragments (see
-   * {@link PsiElementFactory#createCodeBlockCodeFragment(String, PsiElement, boolean)}). 
+   * {@link PsiElementFactory#createCodeBlockCodeFragment(String, PsiElement, boolean)}).
    *
    * @return the resolve context element.
    */
-  @Nullable PsiElement getContext();
+  @Nullable
+  PsiElement getContext();
 
   /**
    * Checks if an actual source or class file corresponds to the element. Non-physical elements include,
@@ -465,7 +478,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the resolve scope instance.
    */
-  @NotNull GlobalSearchScope getResolveScope();
+  @NotNull
+  GlobalSearchScope getResolveScope();
 
   /**
    * Returns the scope in which references to this element are searched.
@@ -473,7 +487,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the search scope instance.
    * @see {@link com.intellij.psi.search.PsiSearchHelper#getUseScope(PsiElement)}
    */
-  @NotNull SearchScope getUseScope();
+  @NotNull
+  SearchScope getUseScope();
 
   /**
    * Returns the AST node corresponding to the element.
@@ -485,7 +500,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * toString() should never be presented to the user.
    */
-  @NonNls String toString();
+  @NonNls
+  String toString();
 
   boolean isEquivalentTo(PsiElement another);
 }

@@ -718,6 +718,7 @@ public class DocumentationManager {
 
     myUpdateDocAlarm.addRequest(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         final Throwable[] ex = new Throwable[1];
         String text = null;
         try {

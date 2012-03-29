@@ -198,7 +198,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                        @NotNull final Project project,
                                                        @Nullable final GlobalSearchScope scope,
                                                        @NotNull final Processor<? super Psi> processor) {
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
+    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
 
     final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -212,7 +213,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         index.getReadLock().lock();
         final ValueContainer<TIntArrayList> container = index.getData(key);
 
-        final FileBasedIndex.ProjectIndexableFilesFilter projectFilesFilter = FileBasedIndex.getInstance().projectIndexableFiles(project);
+        final FileBasedIndex.ProjectIndexableFilesFilter projectFilesFilter = fileBasedIndex.projectIndexableFiles(project);
 
         return container.forEach(new ValueContainer.ContainerAction<TIntArrayList>() {
           @Override
@@ -278,7 +279,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
                       @Override
                       public void run() {
-                        FileBasedIndex.getInstance().requestReindex(file);
+                        fileBasedIndex.requestReindex(file);
                       }
                     }, ModalityState.NON_MODAL);
                   }

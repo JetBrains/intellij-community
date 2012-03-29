@@ -27,9 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.script.ScriptException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -103,12 +101,15 @@ public class ExecUtil {
   }
 
   @Nullable
-  public static String execAndReadLine(@NotNull final List<String> command) {
+  public static String execAndReadLine(final String... command) {
     try {
-      final ProcessOutput output = execAndGetOutput(command, null);
-      final List<String> lines = output.getStdoutLines();
-      if (lines.size() > 0) {
-        return lines.get(0);
+      final Process process = new GeneralCommandLine(command).createProcess();
+      final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+      try {
+        return reader.readLine();
+      }
+      finally {
+        reader.close();
       }
     }
     catch (Exception ignored) { }

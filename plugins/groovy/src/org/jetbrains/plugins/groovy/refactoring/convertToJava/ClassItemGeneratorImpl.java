@@ -247,7 +247,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     ExpressionContext extended = context.extend();
     extended.searchForLocalVarsToWrap((GroovyPsiElement)scriptFile);
     new CodeBlockGenerator(builder, extended, exitPoints)
-      .visitStatementOwner((GroovyFile)scriptFile, MissingReturnInspection.methodMissesSomeReturns((GroovyFile)scriptFile, true));
+      .visitStatementOwner((GroovyFile)scriptFile, MissingReturnInspection.methodMissesSomeReturns((GroovyFile)scriptFile, MissingReturnInspection.ReturnStatus.mustReturnValue));
     builder.append("\n}\n");
   }
 

@@ -25,6 +25,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -129,7 +130,13 @@ public class RefactoringHierarchyUtil {
       Collections.sort(
           basesList, new Comparator<PsiClass>() {
             public int compare(PsiClass c1, PsiClass c2) {
-              return c1.getQualifiedName().compareTo(c2.getQualifiedName());
+              final String fqn1 = c1.getQualifiedName();
+              final String fqn2 = c2.getQualifiedName();
+              if (fqn1 != null && fqn2 != null) return fqn1.compareTo(fqn2);
+              if (fqn1 == null && fqn2 == null) {
+                return Comparing.compare(c1.getName(), c2.getName());
+              }
+              return fqn1 == null ? 1 : -1;
             }
           }
       );

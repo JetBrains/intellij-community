@@ -27,10 +27,10 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PaddingProperty extends AttributeProperty {
+public class CompoundProperty extends AttributeProperty {
   private List<Property> myChildren = new ArrayList<Property>();
 
-  public PaddingProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
+  public CompoundProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
     super(name, definition);
   }
 
@@ -41,7 +41,7 @@ public class PaddingProperty extends AttributeProperty {
 
   @Override
   public Property createForNewPresentation() {
-    PaddingProperty property = new PaddingProperty(getName(), myDefinition);
+    CompoundProperty property = new CompoundProperty(getName(), myDefinition);
     List<Property> children = property.getChildren(null);
     for (Property childProperty : myChildren) {
       children.add(childProperty.createForNewPresentation());

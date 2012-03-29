@@ -64,8 +64,10 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     myPsiTreeChangeListener = createPsiTreeChangeListener(myProject);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
       public void beforeRootsChange(ModuleRootEvent event) {
       }
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         queueUpdate();
       }
@@ -87,6 +89,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     initRootNode();
   }
 
+  @Override
   public final void dispose() {
     super.dispose();
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
@@ -110,29 +113,35 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       super(project);
     }
 
+    @Override
     protected DefaultMutableTreeNode getRootNode(){
       return ProjectTreeBuilder.this.getRootNode();
     }
 
+    @Override
     protected AbstractTreeUpdater getUpdater() {
       return ProjectTreeBuilder.this.getUpdater();
     }
 
+    @Override
     protected boolean isFlattenPackages(){
       return ((AbstractProjectTreeStructure)getTreeStructure()).isFlattenPackages();
     }
   }
 
   private final class MyBookmarksListener implements BookmarksListener {
-    public void bookmarkAdded(Bookmark b) {
+    @Override
+    public void bookmarkAdded(@NotNull Bookmark b) {
       updateForFile(b.getFile());
     }
 
-    public void bookmarkRemoved(Bookmark b) {
+    @Override
+    public void bookmarkRemoved(@NotNull Bookmark b) {
       updateForFile(b.getFile());
     }
 
-    public void bookmarkChanged(Bookmark b) {
+    @Override
+    public void bookmarkChanged(@NotNull Bookmark b) {
       updateForFile(b.getFile());
     }
 
@@ -145,10 +154,12 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
+    @Override
     public void fileStatusesChanged() {
       queueUpdate(false);
     }
 
+    @Override
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
        queueUpdate(false);
     }
@@ -171,10 +182,12 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     private final Alarm myUpdateProblemAlarm = new Alarm();
     private final Collection<VirtualFile> myFilesToRefresh = new THashSet<VirtualFile>();
 
+    @Override
     public void problemsAppeared(VirtualFile file) {
       queueUpdate(file);
     }
 
+    @Override
     public void problemsDisappeared(VirtualFile file) {
       queueUpdate(file);
     }
@@ -184,6 +197,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         if (myFilesToRefresh.add(fileToRefresh)) {
           myUpdateProblemAlarm.cancelAllRequests();
           myUpdateProblemAlarm.addRequest(new Runnable() {
+            @Override
             public void run() {
               if (!myProject.isOpen()) return;
               Set<VirtualFile> filesToRefresh;

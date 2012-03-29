@@ -19,11 +19,10 @@ import com.google.common.collect.Maps;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentSoftHashMap;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -41,23 +40,24 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
   private final List<GrLightMethodBuilder> myMethods = new ArrayList<GrLightMethodBuilder>();
-  private static final Key<CachedValue<ConcurrentFactoryMap<Set<Map>, NonCodeMembersHolder>>> CACHED_HOLDERS = Key.create("CACHED_HOLDERS");
 
   public static NonCodeMembersHolder generateMembers(Set<Map> methods, final PsiFile place) {
-    return CachedValuesManager.getManager(place.getProject()).getCachedValue(place, CACHED_HOLDERS, new CachedValueProvider<ConcurrentFactoryMap<Set<Map>, NonCodeMembersHolder>>() {
-      public Result<ConcurrentFactoryMap<Set<Map>, NonCodeMembersHolder>> compute() {
-        final ConcurrentFactoryMap<Set<Map>, NonCodeMembersHolder> map = new ConcurrentFactoryMap<Set<Map>, NonCodeMembersHolder>() {
-          @Override
-          protected NonCodeMembersHolder create(Set<Map> key) {
-            return new NonCodeMembersHolder(key, place);
-          }
-        };
+    Map<Set<Map>, NonCodeMembersHolder> map = CachedValuesManager.getManager(place.getProject()).getCachedValue(
+      place, new CachedValueProvider<Map<Set<Map>, NonCodeMembersHolder>>() {
+      public Result<Map<Set<Map>, NonCodeMembersHolder>> compute() {
+        final Map<Set<Map>, NonCodeMembersHolder> map = new ConcurrentSoftHashMap<Set<Map>, NonCodeMembersHolder>();
         return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
       }
-    }, false).get(methods);
+    });
+
+    NonCodeMembersHolder result = map.get(methods);
+    if (result == null) {
+      map.put(methods, result = new NonCodeMembersHolder(methods, place));
+    }
+    return result;
   }
 
-  public NonCodeMembersHolder(Set<Map> data, PsiElement place) {
+  private NonCodeMembersHolder(Set<Map> data, PsiElement place) {
     final PsiManager manager = place.getManager();
     for (Map prop : data) {
       String name = String.valueOf(prop.get("name"));

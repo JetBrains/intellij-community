@@ -2,7 +2,7 @@ def mkString(def i) {}
 
 print([1, 2, 3].collect {
     mkString(it)
-<warning descr="Not all execution paths return a value">}</warning>)
+})
 
 
 print([1, 2, 3].collect {
@@ -10,5 +10,5 @@ print([1, 2, 3].collect {
 })
 
 Closure c1 = { mkString(it)}
-Closure<Integer> c2 = {mkString(it)<warning descr="Not all execution paths return a value">}</warning>
+Closure<Integer> c2 = {mkString(it); if (a) return 2<warning descr="Not all execution paths return a value">}</warning>
 def c3 = {mkString(it)}

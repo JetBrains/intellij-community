@@ -51,9 +51,6 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isKDE = _SUN_DESKTOP.contains("kde");
   public static final boolean isGnome = _SUN_DESKTOP.contains("gnome");
 
-  public static final boolean hasNautilus = isUnix && new File("/usr/bin/nautilus").canExecute();
-  public static final boolean hasXdgOpen = isUnix && new File("/usr/bin/xdg-open").canExecute();
-
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
@@ -65,10 +62,46 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
-  public static final String nativeFileManagerName = isMac ? "Finder" :
-                                                     isWindows ? "Explorer" :
-                                                     hasNautilus ? "Nautilus" :
-                                                     "File Manager";
+  /** @deprecated use {@linkplain #hasXdgOpen()} (to remove in IDEA 13) */
+  public static final boolean hasXdgOpen = false;
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return isUnix && new File("/usr/bin/xdg-open").canExecute();
+    }
+  };
+  public static boolean hasXdgOpen() {
+    return ourHasXdgOpen.getValue();
+  }
+
+  private static final NotNullLazyValue<Boolean> hasNautilus = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return isUnix && new File("/usr/bin/nautilus").canExecute();
+    }
+  };
+  public static boolean hasNautilus() {
+    return hasNautilus.getValue();
+  }
+
+  /** @deprecated use {@linkplain #getFileManagerName()} (to remove in IDEA 13) */
+  public static final String nativeFileManagerName = "File Manager";
+  private static final NotNullLazyValue<String> ourFileManagerName = new AtomicNotNullLazyValue<String>() {
+    @NotNull
+    @Override
+    protected String compute() {
+      return isMac ? "Finder" :
+             isWindows ? "Explorer" :
+             hasNautilus() ? "Nautilus" :
+             "File Manager";
+    }
+  };
+  @NotNull
+  public static String getFileManagerName() {
+    return ourFileManagerName.getValue();
+  }
 
   /**
    * Whether IDEA is running under MacOS X version 10.4 or later.

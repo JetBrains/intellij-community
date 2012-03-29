@@ -43,16 +43,17 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
     throw new IncorrectOperationException();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiElement element = getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }
 
   @Nullable
-  protected static PsiElement getElement(Editor editor, PsiFile file) {
+  protected static PsiElement getElement(Editor editor, @NotNull PsiFile file) {
     if (!file.getManager().isInProject(file)) return null;
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
+    CaretModel caretModel = editor.getCaretModel();
+    int position = caretModel.getOffset();
     return file.findElementAt(position);
   }
 

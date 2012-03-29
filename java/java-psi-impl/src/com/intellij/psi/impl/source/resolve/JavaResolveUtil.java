@@ -19,6 +19,8 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -160,15 +162,20 @@ public class JavaResolveUtil {
 
   private static PsiClass getTopLevelClass(@NotNull PsiElement place, PsiClass memberClass) {
     PsiClass lastClass = null;
+    Boolean isAtLeast17 = null;
     for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
-      if (placeParent instanceof PsiClass &&
-          !(placeParent instanceof PsiAnonymousClass) &&
-          !(placeParent instanceof PsiTypeParameter)) {
-        PsiClass aClass = (PsiClass)placeParent;
-
-        if (memberClass != null && aClass.isInheritor(memberClass, true)) return aClass;
-
-        lastClass = aClass;
+      if (placeParent instanceof PsiClass && !(placeParent instanceof PsiAnonymousClass)) {
+        final boolean isTypeParameter = placeParent instanceof PsiTypeParameter;
+        if (isTypeParameter && isAtLeast17 == null) {
+          isAtLeast17 = JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_7);
+        }
+        if (!isTypeParameter || (isAtLeast17 != null && isAtLeast17)) {
+          PsiClass aClass = (PsiClass)placeParent;
+  
+          if (memberClass != null && aClass.isInheritor(memberClass, true)) return aClass;
+  
+          lastClass = aClass;
+        }
       }
     }
 

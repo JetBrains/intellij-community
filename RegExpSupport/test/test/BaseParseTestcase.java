@@ -43,7 +43,7 @@ public abstract class BaseParseTestcase extends UsefulTestCase{
   protected void setUp() throws Exception {
     super.setUp();
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> builder = fixtureFactory.createFixtureBuilder(getName());
 
     myFixture = fixtureFactory.createCodeInsightFixture(builder.getFixture());
     myFixture.setTestDataPath(getTestDataPath());

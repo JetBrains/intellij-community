@@ -15,14 +15,21 @@
  */
 package com.intellij.uiDesigner.core;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.objectweb.asm.ClassWriter;
 
@@ -32,7 +39,13 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,19 +54,46 @@ import java.util.Map;
  */
 public class AsmCodeGeneratorTest extends TestCase {
   private MyNestedFormLoader myNestedFormLoader;
-  private MyClassLoader myClassLoader;
+  private MyClassFinder myClassFinder;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myNestedFormLoader = new MyNestedFormLoader();
-    myClassLoader = new MyClassLoader(getClass().getClassLoader());
+
+    final String swingPath = PathUtil.getJarPathForClass(AbstractButton.class);
+
+    java.util.List<URL> cp = new ArrayList<URL>();
+    appendPath(cp, JBTabbedPane.class);
+    appendPath(cp, UIUtil.class);
+    appendPath(cp, SystemInfoRt.class);
+    appendPath(cp, ApplicationManager.class);
+    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
+    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
+    appendPath(cp, GridLayoutManager.class); // forms_rt
+    myClassFinder = new MyClassFinder(
+      new URL[] {new File(swingPath).toURI().toURL()},
+      cp.toArray(new URL[cp.size()])
+    );
+  }
+
+  private static void appendPath(Collection<URL> container, Class cls) throws MalformedURLException {
+    final String path = PathUtil.getJarPathForClass(cls);
+    appendPath(container, path);
+  }
+
+  private static void appendPath(Collection<URL> container, String path) throws MalformedURLException {
+    container.add(new File(path).toURI().toURL());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myClassLoader = null;
     myNestedFormLoader = null;
+    final MyClassFinder classFinder = myClassFinder;
+    if (classFinder != null) {
+      classFinder.releaseResources();
+      myClassFinder = null;
+    }
     super.tearDown();
   }
 
@@ -70,7 +110,7 @@ public class AsmCodeGeneratorTest extends TestCase {
 
     String classPath = tmpPath + "/" + className + ".class";
     final LwRootContainer rootContainer = loadFormData(formPath);
-    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassLoader, myNestedFormLoader, false,
+    final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, myClassFinder, myNestedFormLoader, false,
                                                                 new ClassWriter(ClassWriter.COMPUTE_FRAMES));
     final FileInputStream classStream = new FileInputStream(classPath);
     try {
@@ -109,7 +149,8 @@ public class AsmCodeGeneratorTest extends TestCase {
     fos.close();
     */
 
-    return myClassLoader.doDefineClass(className, patchedData);
+    myClassFinder.addClassDefinition(className, patchedData);
+    return myClassFinder.getLoader().loadClass(className);
   }
 
   private static byte[] getVerifiedPatchedData(final AsmCodeGenerator codeGenerator) {
@@ -168,10 +209,41 @@ public class AsmCodeGeneratorTest extends TestCase {
 
   public void testGridLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
-    assertTrue(rootComponent.getLayout() instanceof GridLayoutManager);
-    GridLayoutManager gridLayout = (GridLayoutManager) rootComponent.getLayout();
-    assertEquals(1, gridLayout.getRowCount());
-    assertEquals(1, gridLayout.getColumnCount());
+    final LayoutManager layout = rootComponent.getLayout();
+    assertTrue(isInstanceOf(layout, GridLayoutManager.class.getName()));
+
+
+    assertEquals(1, invokeMethod(layout, "getRowCount"));
+    assertEquals(1, invokeMethod(layout, "getColumnCount"));
+  }
+
+  private static boolean isInstanceOf(Object object, final String className) throws ClassNotFoundException {
+    final Class<?> ethalon = object.getClass().getClassLoader().loadClass(className);
+    return ethalon.isAssignableFrom(object.getClass());
+  }
+
+  private static Object invokeMethod(Object obj, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    return invokeMethod(obj, methodName, new Class[0], new Object[0]);
+  }
+
+  private static Object invokeMethod(Object obj, String methodName, Class[] params, Object[] args) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    final Method method = findMethod(obj.getClass(), methodName, params);
+    return method.invoke(obj, args);
+  }
+
+  private static Method findMethod(Class<? extends Object> aClass, String methodName, Class[] params) {
+    try {
+      final Method method = aClass.getDeclaredMethod(methodName, params);
+      method.setAccessible(true);
+      return method;
+    }
+    catch (NoSuchMethodException ignored) {
+    }
+    final Class<?> parent = aClass.getSuperclass();
+    if (parent == null) {
+      return null;
+    }
+    return findMethod(parent, methodName, params);
   }
 
   public void testCardLayout() throws Exception {
@@ -193,10 +265,14 @@ public class AsmCodeGeneratorTest extends TestCase {
   public void testGridConstraints() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestGridConstraints.form", "BindingTest");
     assertEquals(1, rootComponent.getComponentCount());
-    GridLayoutManager gridLayout = (GridLayoutManager) rootComponent.getLayout();
-    final GridConstraints constraints = gridLayout.getConstraints(0);
-    assertEquals(1, constraints.getColSpan());
-    assertEquals(1, constraints.getRowSpan());
+    final LayoutManager layout = rootComponent.getLayout();
+    assertTrue(isInstanceOf(layout, GridLayoutManager.class.getName()));
+
+    final Object constraints = invokeMethod(layout, "getConstraints", new Class[] {int.class}, new Object[] {0});
+    assertTrue(isInstanceOf(constraints, GridConstraints.class.getName()));
+
+    assertEquals(1, invokeMethod(constraints, "getColSpan"));
+    assertEquals(1, invokeMethod(constraints, "getRowSpan"));
   }
 
   public void testIntProperty() throws Exception {
@@ -341,7 +417,7 @@ public class AsmCodeGeneratorTest extends TestCase {
       File.separatorChar + "formEmbedding" + File.separatorChar + "Ideadev14081" + File.separatorChar;
     AsmCodeGenerator embeddedClassGenerator = initCodeGenerator("Embedded.form", "Embedded", testDataPath);
     byte[] embeddedPatchedData = getVerifiedPatchedData(embeddedClassGenerator);
-    myClassLoader.doDefineClass("Embedded", embeddedPatchedData);
+    myClassFinder.addClassDefinition("Embedded", embeddedPatchedData);
     myNestedFormLoader.registerNestedForm("Embedded.form", testDataPath + "Embedded.form");
     AsmCodeGenerator mainClassGenerator = initCodeGenerator("Main.form", "Main", testDataPath);
     byte[] mainPatchedData = getVerifiedPatchedData(mainClassGenerator);
@@ -352,30 +428,34 @@ public class AsmCodeGeneratorTest extends TestCase {
     fos.close();
     */
 
-    final Class mainClass = myClassLoader.doDefineClass("Main", mainPatchedData);
+    myClassFinder.addClassDefinition("Main", mainPatchedData);
+    final Class mainClass = myClassFinder.getLoader().loadClass("Main");
     Object instance = mainClass.newInstance();
     assert instance != null : mainClass;
   }
 
-  private static class MyClassLoader extends ClassLoader {
-    private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
+  private static class MyClassFinder extends InstrumentationClassFinder {
     private static final String TEST_PROPERTY_CONTENT = "test=Test Value\nmnemonic=Mne&monic";
+    private final byte[] myTestProperties = Charset.defaultCharset().encode(TEST_PROPERTY_CONTENT).array();
+    private final Map<String, byte[]> myClassData = new HashMap<String, byte[]>();
 
-    public MyClassLoader(ClassLoader parent) {
-      super(parent);
+    private MyClassFinder(URL[] platformUrls, URL[] classpathUrls) {
+      super(platformUrls, classpathUrls);
     }
 
-    public Class doDefineClass(String name, byte[] data) {
-      return defineClass(name, data, 0, data.length);
+    public void addClassDefinition(String name, byte[] bytes) {
+      myClassData.put(name.replace('.', '/'), bytes);
     }
 
-    @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
-      return super.loadClass(name);
+    protected InputStream lookupClassBeforeClasspath(String internalClassName) {
+      final byte[] bytes = myClassData.get(internalClassName);
+      if (bytes != null) {
+        return new ByteArrayInputStream(bytes);
+      }
+      return null;
     }
 
-    @Override
-    public InputStream getResourceAsStream(String name) {
+    public InputStream getResourceAsStream(String name) throws IOException {
       if (name.equals("TestProperties.properties")) {
         return new ByteArrayInputStream(myTestProperties, 0, TEST_PROPERTY_CONTENT.length());
       }

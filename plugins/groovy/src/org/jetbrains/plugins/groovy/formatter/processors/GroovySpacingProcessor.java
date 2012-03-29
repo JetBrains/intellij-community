@@ -546,7 +546,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
     if (myType1 == mLBRACK || myType2 == mRBRACK) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
+      createSpaceInCode(myGroovySettings.SPACE_WITHIN_LIST_OR_MAP);
     }
   }
 

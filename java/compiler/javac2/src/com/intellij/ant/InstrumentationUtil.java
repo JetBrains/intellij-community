@@ -15,6 +15,8 @@
  */
 package com.intellij.ant;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.compiler.instrumentation.InstrumenterClassWriter;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.uiDesigner.compiler.*;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
@@ -39,14 +41,14 @@ import java.util.*;
  */
 
 public class InstrumentationUtil {
-  public static PseudoClassLoader createPseudoClassLoader(final String classPath) throws MalformedURLException {
+  public static InstrumentationClassFinder createInstrumentationClassFinder(final String classPath) throws MalformedURLException {
     final ArrayList urls = new ArrayList();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
       urls.add(new File(s).toURL());
     }
     final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
-    return new PseudoClassLoader(urlsArr);
+    return new InstrumentationClassFinder(urlsArr);
   }
 
   public static int getClassFileVersion(ClassReader reader) {
@@ -108,12 +110,12 @@ public class InstrumentationUtil {
     }
 
     private class AntNestedFormLoader implements NestedFormLoader {
-      private final PseudoClassLoader myLoader;
+      private final InstrumentationClassFinder myClassFinder;
       private final List myNestedFormPathList;
       private final HashMap myFormCache = new HashMap();
 
-      public AntNestedFormLoader(final PseudoClassLoader loader, List nestedFormPathList) {
-        myLoader = loader;
+      public AntNestedFormLoader(final InstrumentationClassFinder classFinder, List nestedFormPathList) {
+        myClassFinder = classFinder;
         myNestedFormPathList = nestedFormPathList;
       }
 
@@ -143,7 +145,7 @@ public class InstrumentationUtil {
             }
           }
         }
-        InputStream resourceStream = myLoader.getLoader ().getResourceAsStream(formFilePath);
+        InputStream resourceStream = myClassFinder.getResourceAsStream(formFilePath);
         if (resourceStream != null) {
           return loadForm(formFilePath, resourceStream);
         }
@@ -164,11 +166,11 @@ public class InstrumentationUtil {
       }
     }
 
-    public void instrumentForm(final File file, final PseudoClassLoader loader) {
+    public void instrumentForm(final File file, final InstrumentationClassFinder classFinder) {
       log("compiling form " + file.getAbsolutePath(), Project.MSG_VERBOSE);
       final LwRootContainer rootContainer;
       try {
-        rootContainer = Utils.getRootContainer(file.toURL(), new CompiledClassPropertiesProvider(loader.getLoader ()));
+        rootContainer = Utils.getRootContainer(file.toURL(), new CompiledClassPropertiesProvider(classFinder.getLoader()));
       }
       catch (AlienFormFileException e) {
         // ignore non-IDEA forms
@@ -216,9 +218,9 @@ public class InstrumentationUtil {
         finally {
           stream.close();
         }
-        AntNestedFormLoader formLoader = new AntNestedFormLoader(loader, myNestedFormPathList);
-        AntClassWriter classWriter = new AntClassWriter(InstrumentationUtil.getAsmClassWriterFlags(version), loader);
-        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader.getLoader(), formLoader, false, classWriter);
+        AntNestedFormLoader formLoader = new AntNestedFormLoader(classFinder, myNestedFormPathList);
+        InstrumenterClassWriter classWriter = new InstrumenterClassWriter(InstrumentationUtil.getAsmClassWriterFlags(version), classFinder);
+        final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, classFinder, formLoader, false, classWriter);
         codeGenerator.patchFile(classFile);
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -243,15 +245,15 @@ public class InstrumentationUtil {
     }
   }
 
-  public static byte[] instrumentNotNull(final byte[] buffer, final PseudoClassLoader loader) {
+  public static byte[] instrumentNotNull(final byte[] buffer, final InstrumentationClassFinder loader) {
     return instrumentNotNull(new ClassReader (buffer), loader);
   }
 
-  private static byte[] instrumentNotNull(final ClassReader reader, final PseudoClassLoader loader) {
+  private static byte[] instrumentNotNull(final ClassReader reader, final InstrumentationClassFinder loader) {
       int version = getClassFileVersion(reader);
 
       if (version >= Opcodes.V1_5) {
-        ClassWriter writer = new AntClassWriter(getAsmClassWriterFlags(version), loader);
+        ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), loader);
 
         final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
         reader.accept(instrumenter, 0);
@@ -264,7 +266,7 @@ public class InstrumentationUtil {
       return null;
     }
 
-  public static int instrumentNotNull(final File file, final PseudoClassLoader loader) throws IOException {
+  public static int instrumentNotNull(final File file, final InstrumentationClassFinder loader) throws IOException {
     int instrumented = 0;
     final String path = file.getPath();
     final FileInputStream inputStream = new FileInputStream(file);

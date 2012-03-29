@@ -41,7 +41,7 @@ public class RevealFileAction extends DumbAwareAction {
 
   @NotNull
   public static String getActionName() {
-    return SystemInfo.isMac ? "Reveal in Finder" : "Show in " + SystemInfo.nativeFileManagerName;
+    return SystemInfo.isMac ? "Reveal in Finder" : "Show in " + SystemInfo.getFileManagerName();
   }
 
   @Override

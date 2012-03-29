@@ -661,19 +661,19 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     defaults.put("Tree.ancestorInputMap", null);
     int uiFontSize = myUiSettings.FONT_SIZE;
     String uiFontFace = myUiSettings.FONT_FACE;
-    FontUIResource font = new FontUIResource(uiFontFace, Font.PLAIN, uiFontSize);
-    FontUIResource font1 = new FontUIResource("Serif", Font.PLAIN, uiFontSize);
-    FontUIResource font3 = new FontUIResource("Monospaced", Font.PLAIN, uiFontSize);
+    FontUIResource uiFont = new FontUIResource(uiFontFace, Font.PLAIN, uiFontSize);
+    FontUIResource textFont = new FontUIResource("Serif", Font.PLAIN, uiFontSize);
+    FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, uiFontSize);
 
     for (String fontResource : ourPatchableFontResources) {
-      defaults.put(fontResource, font);
+      defaults.put(fontResource, uiFont);
     }
 
-    defaults.put("PasswordField.font", font3);
-    defaults.put("TextArea.font", font3);
-    defaults.put("TextPane.font", font1);
-    defaults.put("EditorPane.font", font1);
-    defaults.put("TitledBorder.font", font);
+    defaults.put("PasswordField.font", monoFont);
+    defaults.put("TextArea.font", monoFont);
+    defaults.put("TextPane.font", textFont);
+    defaults.put("EditorPane.font", textFont);
+    defaults.put("TitledBorder.font", uiFont);
   }
 
 

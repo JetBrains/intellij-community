@@ -3,13 +3,13 @@ package com.intellij.find.impl.livePreview;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
-import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +169,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   @Nullable
   @Override
   public TextRange performReplace(final LiveOccurrence occurrence, final String replacement, final Editor editor) {
-    if (myReplaceDenied || !Utils.ensureOkToWrite(editor)) return null;
+    if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(editor.getProject(), editor.getDocument())) return null;
     TextRange range = occurrence.getPrimaryRange();
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = null;
@@ -197,7 +197,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Override
   public void performReplaceAll(Editor e) {
-    if (!Utils.ensureOkToWrite(e)) return;
+    if (!ReadonlyStatusHandler.ensureDocumentWritable(e.getProject(), e.getDocument())) return;
     if (mySearchResults.getFindModel() != null) {
       final FindModel copy = new FindModel();
       copy.copyFrom(mySearchResults.getFindModel());

@@ -70,4 +70,5 @@ public enum JavaSdkVersion {
       String.format("Can't map Java SDK by description (%s). Available values: %s", description, Arrays.toString(values()))
     );
   }
+
 }

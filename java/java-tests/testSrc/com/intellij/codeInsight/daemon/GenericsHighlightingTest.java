@@ -4,6 +4,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -30,8 +32,22 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevel level = getTestName(false).contains("Level6") ? LanguageLevel.JDK_1_6 : LanguageLevel.JDK_1_5;
+    LanguageLevel level;
+    final String testName = getTestName(false);
+    if (testName.contains("Level17")) {
+      level = LanguageLevel.JDK_1_7;
+    } else if (testName.contains("Level6")) {
+      level = LanguageLevel.JDK_1_6;
+    }
+    else {
+      level = LanguageLevel.JDK_1_5;
+    }
     LanguageLevelProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(level);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return getTestName(false).contains("Jdk14") ? JavaSdkImpl.getMockJdk14() : super.getProjectJDK();
   }
 
   public void testReferenceTypeParams() throws Exception { doTest(false); }
@@ -85,6 +101,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testGenericExtendException() throws Exception { doTest(false); }
   public void testSameErasureDifferentReturnTypes() throws Exception { doTest(false); }
+  public void testSameErasureDifferentReturnTypesJdk14() throws Exception { doTest(false); }
   public void testDeepConflictingReturnTypes() throws Exception { doTest(false); }
   public void testInheritFromTypeParameter() throws Exception { doTest(false); }
   public void testAnnotationsAsPartOfModifierList() throws Exception { doTest(false); }
@@ -98,6 +115,9 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassRef() throws Exception { doTest(false); }
   public void testPrivateInnerClassRef() throws Exception { doTest(false); }
   public void testWideningCastToTypeParam() throws Exception { doTest(false); }
+  public void testCapturedWildcardAssignments() throws Exception { doTest(false);}
+  public void testTypeParameterBoundVisibility() throws Exception { doTest(false);}
+  public void testTypeParameterBoundVisibilityJdk14() throws Exception { doTest(false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));

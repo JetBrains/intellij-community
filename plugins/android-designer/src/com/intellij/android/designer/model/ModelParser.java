@@ -114,7 +114,10 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     component.setTag(tag);
 
     Class<RadLayout> layout = metaModel.getLayout();
-    if (layout != null) {
+    if (layout == null) {
+      component.setLayout(RadViewLayout.INSTANCE);
+    }
+    else {
       component.setLayout(layout.newInstance());
     }
 

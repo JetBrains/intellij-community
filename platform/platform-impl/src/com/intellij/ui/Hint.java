@@ -48,13 +48,13 @@ public interface Hint {
    */
   void hide();
 
-  void addHintListener(HintListener listener);
+  void addHintListener(@NotNull HintListener listener);
 
-  void removeHintListener(HintListener listener);
+  void removeHintListener(@NotNull HintListener listener);
 
   void pack();
 
-  void setLocation(RelativePoint point);
+  void setLocation(@NotNull RelativePoint point);
 
   /**
    * Pack and set location

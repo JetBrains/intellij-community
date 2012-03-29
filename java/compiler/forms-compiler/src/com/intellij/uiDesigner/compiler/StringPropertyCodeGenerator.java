@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.compiler;
 
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
@@ -27,9 +28,10 @@ import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 import javax.swing.*;
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * @author yole
@@ -47,12 +49,12 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   private final Set myClassesRequiringLoadButtonText = new HashSet();
   private boolean myHaveSetDisplayedMnemonicIndex = false;
 
-  public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final ClassLoader loader) {
+  public void generateClassStart(AsmCodeGenerator.FormClassVisitor visitor, final String name, final InstrumentationClassFinder classFinder) {
     myClassesRequiringLoadLabelText.remove(name);
     myClassesRequiringLoadButtonText.remove(name);
     try {
-      Class c = loader.loadClass(AbstractButton.class.getName());
-      if (c.getMethod("getDisplayedMnemonicIndex", new Class[0]) != null) {
+      InstrumentationClassFinder.PseudoClass pseudo = classFinder.loadClass(AbstractButton.class.getName());
+      if (!pseudo.findMethods("getDisplayedMnemonicIndex").isEmpty()) {
         myHaveSetDisplayedMnemonicIndex = true;
       }
     }
@@ -62,25 +64,27 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
   }
 
   public boolean generateCustomSetValue(final LwComponent lwComponent,
-                                        final Class componentClass,
+                                        final InstrumentationClassFinder.PseudoClass componentClass,
                                         final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
                                         final int componentLocal,
-                                        final String formClassName) {
+                                        final String formClassName) throws IOException, ClassNotFoundException {
+    final InstrumentationClassFinder.PseudoClass abstractButtonClass = componentClass.getFinder().loadClass(AbstractButton.class.getName());
+    final InstrumentationClassFinder.PseudoClass jLabelClass = componentClass.getFinder().loadClass(JLabel.class.getName());
     if ("text".equals(property.getName()) &&
-        (AbstractButton.class.isAssignableFrom(componentClass) || JLabel.class.isAssignableFrom(componentClass))) {
+        (abstractButtonClass.isAssignableFrom(componentClass) || jLabelClass.isAssignableFrom(componentClass))) {
       final StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
       if (propertyValue.getValue() != null) {
         final SupportCode.TextWithMnemonic textWithMnemonic = SupportCode.parseText(propertyValue.getValue());
         if (textWithMnemonic.myMnemonicIndex >= 0) {
           generator.loadLocal(componentLocal);
           generator.push(textWithMnemonic.myText);
-          generator.invokeVirtual(Type.getType(componentClass),
+          generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
                                   new Method(property.getWriteMethodName(),
                                              Type.VOID_TYPE, new Type[] { Type.getType(String.class) } ));
 
           String setMnemonicMethodName;
-          if (AbstractButton.class.isAssignableFrom(componentClass)) {
+          if (abstractButtonClass.isAssignableFrom(componentClass)) {
             setMnemonicMethodName = "setMnemonic";
           }
           else {
@@ -89,14 +93,14 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
 
           generator.loadLocal(componentLocal);
           generator.push(textWithMnemonic.getMnemonicChar());
-          generator.invokeVirtual(Type.getType(componentClass),
+          generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
                                   new Method(setMnemonicMethodName,
                                              Type.VOID_TYPE, new Type[] { Type.CHAR_TYPE } ));
 
           if (myHaveSetDisplayedMnemonicIndex) {
             generator.loadLocal(componentLocal);
             generator.push(textWithMnemonic.myMnemonicIndex);
-            generator.invokeVirtual(Type.getType(componentClass),
+            generator.invokeVirtual(Type.getType(componentClass.getDescriptor()),
                                     new Method("setDisplayedMnemonicIndex",
                                                Type.VOID_TYPE, new Type[] { Type.INT_TYPE } ));
           }
@@ -105,7 +109,7 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
       }
       else {
         Method method;
-        if (AbstractButton.class.isAssignableFrom(componentClass)) {
+        if (abstractButtonClass.isAssignableFrom(componentClass)) {
           myClassesRequiringLoadButtonText.add(formClassName);
           method = myLoadButtonTextMethod;
         }

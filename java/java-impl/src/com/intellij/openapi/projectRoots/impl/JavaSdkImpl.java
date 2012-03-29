@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -154,33 +155,27 @@ public class JavaSdkImpl extends JavaSdk {
   public String suggestHomePath() {
     if (SystemInfo.isMac) {
       if (new File("/usr/libexec/java_home").exists()) {
-        try {
-          final Process exec = Runtime.getRuntime().exec("/usr/libexec/java_home");
-          final BufferedReader input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
-          try {
-            final String path = input.readLine();
-            if (new File(path).exists()) return path;
-          }
-          finally {
-            input.close();
-          }
+        final String path = ExecUtil.execAndReadLine("/usr/libexec/java_home");
+        if (path != null && new File(path).exists()) {
+          return path;
         }
-        catch (IOException ignore) { }
       }
-
-      return "/System/Library/Frameworks/JavaVM.framework/Versions/";
+      return "/System/Library/Frameworks/JavaVM.framework/Versions";
     }
+
     if (SystemInfo.isLinux) {
-      final String[] homes = {"/usr/java", "/opt/java", "/usr/lib/jvm/"};
+      final String[] homes = {"/usr/java", "/opt/java", "/usr/lib/jvm"};
       for (String home : homes) {
         if (new File(home).isDirectory()) {
           return home;
         }
       }
     }
+
     if (SystemInfo.isSolaris) {
-      return "/usr/jdk/";
+      return "/usr/jdk";
     }
+
     return null;
   }
 

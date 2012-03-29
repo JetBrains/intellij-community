@@ -83,7 +83,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
   }
 
   @Override
-  public void invoke(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     final PsiMethod prototype = (PsiMethod)method.getContainingClass().addBefore(generateMethodPrototype(method, parameter), method);

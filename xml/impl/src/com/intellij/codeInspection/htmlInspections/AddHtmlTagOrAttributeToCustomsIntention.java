@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ModifiableModel;
@@ -80,7 +79,6 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     final LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)model.getInspectionTool(myInspectionName, file);
     final XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection)wrapper.getTool();
     xmlEntitiesInspection.setAdditionalEntries(myType, appendName(xmlEntitiesInspection.getAdditionalEntries(myType)));
-    model.isProperSetting(HighlightDisplayKey.find(myInspectionName));//update map with non-default settings
     try {
       model.commit();
     }

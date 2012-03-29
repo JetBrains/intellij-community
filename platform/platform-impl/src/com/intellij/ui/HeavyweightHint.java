@@ -115,17 +115,17 @@ public class HeavyweightHint implements Hint {
   }
 
   @Override
-  public void setLocation(RelativePoint point) {
+  public void setLocation(@NotNull RelativePoint point) {
     if (myWindow != null) {
       myWindow.setLocation(point.getScreenPoint().x, point.getScreenPoint().y);
     }
   }
 
-  public void addHintListener(HintListener listener) {
+  public void addHintListener(@NotNull HintListener listener) {
     myListenerList.add(HintListener.class, listener);
   }
 
-  public void removeHintListener(HintListener listener) {
+  public void removeHintListener(@NotNull HintListener listener) {
     myListenerList.remove(HintListener.class, listener);
   }
 }

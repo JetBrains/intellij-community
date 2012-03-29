@@ -167,6 +167,32 @@ class Test {
     assertEquals(2, closureFolds.size())
   }
 
+  public void "test closure folding doesn't expand when editing inside"() {
+    def text = """\
+class Test {
+    void test() {
+     new Runnable() {
+      public void run() {
+        System.out.println(<caret>);
+      }
+    };
+  }
+}
+"""
+
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    def closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
+    assertNotNull closureStartFold
+    assertFalse closureStartFold.expanded
+    assert text.substring(closureStartFold.endOffset).startsWith('System') //one line closure
+
+    myFixture.type('2')
+    myFixture.doHighlighting()
+    closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
+    assert closureStartFold
+  }
+
   public void testFindInFolding() {
     def text = """\
 class Test {
