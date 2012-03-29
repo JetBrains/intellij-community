@@ -17,7 +17,6 @@ package com.siyeh.ipp.interfacetoclass;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.siyeh.ipp.base.PsiElementPredicate;

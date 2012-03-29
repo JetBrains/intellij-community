@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,11 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiModifierListOwner;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,15 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/25/11
- */
-@State(
-    name = "NullableNotNullManager",
-    storages = {@Storage( file = "$PROJECT_FILE$")}
-)
-public class NullableNotNullManager implements PersistentStateComponent<Element> {
+public class NullableNotNullManager {
   private static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
@@ -89,7 +74,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   public String getDefaultNullable() {
     return myDefaultNullable;
   }
-  
+
   @Nullable
   public String getNullable(PsiModifierListOwner owner) {
     for (String nullable : getNullables()) {
@@ -106,7 +91,7 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   public String getDefaultNotNull() {
     return myDefaultNotNull;
   }
-  
+
   @Nullable
   public String getNotNull(PsiModifierListOwner owner) {
     for (String notNull : getNotNulls()) {
@@ -169,33 +154,6 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     }
 
     return true;
-  }
-
-  @Override
-  public Element getState() {
-    final Element component = new Element("component");
-
-    if (hasDefaultValues()) {
-      return component;
-    }
-
-    try {
-      DefaultJDOMExternalizer.writeExternal(this, component);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return component;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    try {
-      DefaultJDOMExternalizer.readExternal(this, state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
   }
 
   public static boolean isNullable(@NotNull PsiModifierListOwner owner) {

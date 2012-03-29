@@ -352,7 +352,7 @@
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager"
-                    serviceImplementation="com.intellij.codeInsight.NullableNotNullManager"/>
+                    serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerComponent"/>
 
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>

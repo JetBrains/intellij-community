@@ -34,6 +34,24 @@ public class JavaCoreEnvironmentWithIndex extends JavaCoreEnvironment {
 
     registerExtensionPoint(Extensions.getRootArea(), FileBasedIndexExtension.EXTENSION_POINT_NAME, FileBasedIndexExtension.class);
 
+    registerExtensionPoint(Extensions.getRootArea(), "com.intellij.referencesSearch", com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher.class);
+    registerExtensionPoint(Extensions.getRootArea(), "com.intellij.referencesSearch", com.intellij.psi.impl.search.ConstructorReferencesSearcher.class);
+    registerExtensionPoint(Extensions.getRootArea(), "com.intellij.referencesSearch", com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher.class);
+    registerExtensionPoint(Extensions.getRootArea(), "com.intellij.referencesSearch", com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher.class);
+
+
+
+//    <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="classInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="directClassInheritorsSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="methodReferencesSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="overridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
+//    <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
+
     myApplication.registerService(SerializationManager.class, SerializationManagerImpl.class);
     myApplication.registerService(AbstractVfsAdapter.class, new AbstractVfsAdapterJavaComponent((CoreLocalFileSystemWithId)getLocalFileSystem()));
     myApplication.registerService(FileBasedIndex.class, FileBasedIndexJavaComponent.class);
