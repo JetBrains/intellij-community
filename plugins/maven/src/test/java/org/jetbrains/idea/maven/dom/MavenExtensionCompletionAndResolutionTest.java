@@ -74,6 +74,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
       System.out.println("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins"));
       System.out.println("Indexes: " + instance.getIndices());
+      throw new AssertionError("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins") + "Indexes: " + instance.getIndices());
     }
 
     assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
