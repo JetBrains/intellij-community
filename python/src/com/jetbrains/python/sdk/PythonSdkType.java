@@ -716,7 +716,7 @@ public class PythonSdkType extends SdkType {
     else {
       LOG.info("Refreshing skeletons for " + homePath);
       SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-      sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(project, checker, migrationFlag);
+      sdk_errors = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator).regenerateSkeletons(project, checker, migrationFlag);
       if (sdk_errors.size() > 0) {
         String sdk_name = sdk.getName();
         List<String> known_errors = errors.get(sdk_name);

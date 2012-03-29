@@ -54,7 +54,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator);
 
-  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(String path, Sdk sdk);
+  public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {

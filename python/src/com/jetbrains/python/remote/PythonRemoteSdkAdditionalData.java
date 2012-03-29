@@ -55,6 +55,8 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   private String myInterpreterPath;
   private String myPyCharmTempFilesPath;
 
+  private boolean myHelpersVersionChecked = false;
+
 
   public PythonRemoteSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     super(flavor);
@@ -346,6 +348,16 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     copy.setInterpreterPath(getInterpreterPath());
     copy.setStorePassword(isStorePassword());
     copy.setStorePassphrase(isStorePassphrase());
+    copy.setHelpersVersionChecked(copy.isHelpersVersionChecked());
+  }
+
+
+  public boolean isHelpersVersionChecked() {
+    return myHelpersVersionChecked;
+  }
+
+  public void setHelpersVersionChecked(boolean helpersVersionChecked) {
+    myHelpersVersionChecked = helpersVersionChecked;
   }
 
   @Override
