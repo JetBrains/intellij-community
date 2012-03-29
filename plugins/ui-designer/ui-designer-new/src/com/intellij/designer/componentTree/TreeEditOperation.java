@@ -15,23 +15,19 @@
  */
 package com.intellij.designer.componentTree;
 
-import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.AbstractEditOperation;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public abstract class TreeEditOperation implements EditOperation {
+public abstract class TreeEditOperation extends AbstractEditOperation {
   protected final RadComponent myHost;
-  protected final OperationContext myContext;
-  protected List<RadComponent> myComponents;
 
   public static boolean isTarget(RadComponent host, OperationContext context) {
     Point location = context.getLocation();
@@ -45,18 +41,8 @@ public abstract class TreeEditOperation implements EditOperation {
   }
 
   public TreeEditOperation(RadComponent host, OperationContext context) {
+    super(context);
     myHost = host;
-    myContext = context;
-  }
-
-  @Override
-  public void setComponent(RadComponent component) {
-    myComponents = Collections.singletonList(component);
-  }
-
-  @Override
-  public void setComponents(List<RadComponent> components) {
-    myComponents = components;
   }
 
   @Override
@@ -72,7 +58,8 @@ public abstract class TreeEditOperation implements EditOperation {
       layer.mark(target,
                  layer.isBeforeLocation(target, location.x, location.y) ?
                  FeedbackTreeLayer.INSERT_BEFORE : FeedbackTreeLayer.INSERT_AFTER);
-    } else {
+    }
+    else {
       eraseFeedback();
     }
   }

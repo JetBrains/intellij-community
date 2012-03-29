@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

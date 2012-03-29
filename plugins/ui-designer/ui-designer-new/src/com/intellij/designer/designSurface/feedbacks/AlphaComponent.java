@@ -46,12 +46,20 @@ public class AlphaComponent extends JComponent {
     g2d.setColor(myColor);
     g2d.setComposite(myComposite1);
     g2d.fillRect(0, 0, getWidth(), getHeight());
+    paintOther1(g2d);
 
     g2d.setColor(myBorderColor);
     g2d.setComposite(myComposite2);
     g2d.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+    paintOther2(g2d);
 
     g2d.setColor(oldColor);
     g2d.setComposite(oldComposite);
+  }
+
+  protected void paintOther1(Graphics2D g2d) {
+  }
+
+  protected void paintOther2(Graphics2D g2d) {
   }
 }
