@@ -285,6 +285,7 @@ public class Switcher extends AnAction implements DumbAware {
         final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
         final int maxFiles = Math.max(editors.size(), recentFiles.length);
         final int len = isPinnedMode() ? maxFiles : Math.min(toolWindows.getModel().getSize(), maxFiles);
+        boolean firstRecentMarked = false;
         for (int i = 0; i < len; i++) {
           final FileInfo info = new FileInfo(recentFiles[i], null);
           boolean add = true;
@@ -298,6 +299,10 @@ public class Switcher extends AnAction implements DumbAware {
           }
           if (add) {
             filesData.add(info);
+            if (!firstRecentMarked) {
+              firstRecentMarked = true;
+              info.isSeparator = true;
+            }
           }
         }
         if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
@@ -805,6 +810,7 @@ public class Switcher extends AnAction implements DumbAware {
     private final Project myProject;
     private final SpeedSearchBase mySearch;
     private boolean hide = false;
+    private boolean separator = false;
 
     public VirtualFilesRenderer(Project project, SpeedSearchBase search) {
       myProject = project;
@@ -817,10 +823,12 @@ public class Switcher extends AnAction implements DumbAware {
         final VirtualFile virtualFile = ((FileInfo)value).first;
         final String name = virtualFile.getPresentableName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
+        separator = ((FileInfo)value).isSeparator;
 
         if ( mySearch != null && mySearch.isPopupActive()) {
           hide = mySearch.matchingFragments(name) == null && !StringUtil.isEmpty(mySearch.getEnteredPrefix());
         }
+
         final FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
         final TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
@@ -835,10 +843,14 @@ public class Switcher extends AnAction implements DumbAware {
       }
       super.doPaint(g);
       config.restore();
+      if (separator) {
+        UIUtil.drawDottedLine(g, 0, 0, getWidth(), 0, Color.WHITE, Color.BLACK);
+      }
     }
   }
 
   private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
+    boolean isSeparator = false;
     public FileInfo(VirtualFile first, EditorWindow second) {
       super(first, second);
     }
