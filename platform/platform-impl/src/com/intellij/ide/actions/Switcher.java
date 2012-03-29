@@ -278,11 +278,27 @@ public class Switcher extends AnAction implements DumbAware {
       for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
         editors.add(new FileInfo(pair.first, pair.second));
       }
-      if (editors.size() < 2) {
+      if (editors.size() < 2 || isPinnedMode()) {
+        if (isPinnedMode() && editors.size() > 1) {
+          filesData.addAll(editors);
+        }
         final VirtualFile[] recentFiles = ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles());
-        final int len = Math.min(toolWindows.getModel().getSize(), Math.max(editors.size(), recentFiles.length));
+        final int maxFiles = Math.max(editors.size(), recentFiles.length);
+        final int len = isPinnedMode() ? maxFiles : Math.min(toolWindows.getModel().getSize(), maxFiles);
         for (int i = 0; i < len; i++) {
-          filesData.add(new FileInfo(recentFiles[i], null));
+          final FileInfo info = new FileInfo(recentFiles[i], null);
+          boolean add = true;
+          if (isPinnedMode()) {
+            for (FileInfo fileInfo : filesData) {
+              if (fileInfo.first.equals(info.first)) {
+                add = false;
+                break;
+              }
+            }
+          }
+          if (add) {
+            filesData.add(info);
+          }
         }
         if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
           filesData.add(0, editors.get(0));
@@ -393,7 +409,7 @@ public class Switcher extends AnAction implements DumbAware {
             }
           }).createPopup();
 
-      if (!isAutoHide()) {
+      if (isPinnedMode()) {
         new AnAction(null, null, null) {
           @Override
           public void actionPerformed(AnActionEvent e) {
@@ -779,6 +795,10 @@ public class Switcher extends AnAction implements DumbAware {
 
   private static boolean isAutoHide() {
     return UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE;
+  }
+
+  private static boolean isPinnedMode() {
+    return !isAutoHide();
   }
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
