@@ -134,7 +134,7 @@ public class TypeEvalContext {
     }
   }
 
-  public boolean maySwitchToAST(StubBasedPsiElement element) {
-    return myAllowStubToAST || element.getStub() == null;
+  public boolean maySwitchToAST(@NotNull StubBasedPsiElement element) {
+    return myAllowStubToAST || (element.getStub() == null && (myOrigin == null || myOrigin == element.getContainingFile()));
   }
 }
