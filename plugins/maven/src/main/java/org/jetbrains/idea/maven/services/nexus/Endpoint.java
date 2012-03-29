@@ -48,7 +48,7 @@ public class Endpoint {
         public DataIndex(final String nexusRoot)
             throws JAXBException
         {
-            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus");
+            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus", getClass().getClassLoader());
             _jaxbDispatcher = new JAXBDispatcher(_jc);
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
@@ -140,7 +140,7 @@ public class Endpoint {
         public DataIndexRepository(String repository)
             throws JAXBException
         {
-            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus");
+            _jc = JAXBContext.newInstance("org.jetbrains.idea.maven.services.nexus", getClass().getClassLoader());
             _jaxbDispatcher = new JAXBDispatcher(_jc);
             _dsDispatcher = new DSDispatcher();
             _uriBuilder = new UriBuilder();
