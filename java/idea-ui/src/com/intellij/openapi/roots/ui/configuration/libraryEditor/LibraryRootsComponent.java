@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
@@ -371,7 +372,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     }
   }
 
-  public abstract class AttachItemActionBase extends AnAction {
+  public abstract class AttachItemActionBase extends DumbAwareAction {
     private VirtualFile myLastChosen = null;
 
     protected AttachItemActionBase(String text) {

@@ -9,7 +9,9 @@ import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.api.SharedThreadPool;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
@@ -21,10 +23,13 @@ import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.server.ProjectDescriptor;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,6 +40,8 @@ public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
   public static final String COMPILE_SERVER_NAME = "COMPILE SERVER";
+  private static final String CLASSPATH_INDEX_FINE_NAME = "classpath.index";
+  private static final boolean GENERATE_CLASSPATH_INDEX = "true".equals(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION));
 
   private final ProjectDescriptor myProjectDescriptor;
   private final BuilderRegistry myBuilderRegistry;
@@ -54,6 +61,7 @@ public class IncProjectBuilder {
   private float myModulesProcessed = 0.0f;
   private final float myTotalModulesWork;
   private final int myTotalModuleLevelBuilderCount;
+  private final List<Future> myAsyncTasks = new ArrayList<Future>();
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs) {
     myProjectDescriptor = pd;
@@ -131,6 +139,15 @@ public class IncProjectBuilder {
     finally {
       memWatcher.stop();
       flushContext(context);
+      // wait for the async tasks
+      for (Future task : myAsyncTasks) {
+        try {
+          task.get();
+        }
+        catch (Throwable th) {
+          LOG.info(th);
+        }
+      }
     }
   }
 
@@ -309,16 +326,18 @@ public class IncProjectBuilder {
     }
   }
 
-  private void buildChunk(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  private void buildChunk(CompileContext context, final ModuleChunk chunk) throws ProjectBuildException {
+    boolean doneSomething = false;
     try {
       context.ensureFSStateInitialized(chunk);
       if (context.isMake()) {
         processDeletedPaths(context, chunk);
+        doneSomething |= context.hasRemovedSources();
       }
 
       context.onChunkBuildStart(chunk);
 
-      runModuleLevelBuilders(context, chunk);
+      doneSomething = runModuleLevelBuilders(context, chunk);
     }
     catch (ProjectBuildException e) {
       throw e;
@@ -343,10 +362,58 @@ public class IncProjectBuilder {
         }
         finally {
           Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
+          if (doneSomething && GENERATE_CLASSPATH_INDEX) {
+            final boolean forTests = context.isCompilingTests();
+            final Future<?> future = SharedThreadPool.INSTANCE.submit(new Runnable() {
+              @Override
+              public void run() {
+                createClasspathIndex(chunk, forTests);
+              }
+            });
+            myAsyncTasks.add(future);
+          }
         }
       }
     }
   }
+
+  private static void createClasspathIndex(final ModuleChunk chunk, boolean forTests) {
+    final Set<File> outputPaths = new LinkedHashSet<File>();
+    for (Module module : chunk.getModules()) {
+      if (forTests) {
+        outputPaths.add(new File(module.getTestOutputPath()));
+      }
+      else {
+        outputPaths.add(new File(module.getOutputPath()));
+      }
+    }
+    for (File outputRoot : outputPaths) {
+      try {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(outputRoot, CLASSPATH_INDEX_FINE_NAME)));
+        try {
+          writeIndex(writer, outputRoot, "");
+        }
+        finally {
+          writer.close();
+        }
+      }
+      catch (IOException e) {
+        // Ignore. Failed to create optional classpath index
+      }
+    }
+  }
+
+  private static void writeIndex(final BufferedWriter writer, final File file, final String path) throws IOException {
+    writer.write(path);
+    writer.write('\n');
+    final File[] files = file.listFiles();
+    if (files != null) {
+      for (File child : files) {
+        writeIndex(writer, child, path + "/" + child.getName());
+      }
+    }
+  }
+
 
   private void processDeletedPaths(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     try {
@@ -420,13 +487,14 @@ public class IncProjectBuilder {
     }
   }
 
-  private void runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  // return true if changed something, false otherwise
+  private boolean runModuleLevelBuilders(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+    boolean doneSomething = false;
     boolean rebuildFromScratchRequested = false;
     float stageCount = myTotalModuleLevelBuilderCount;
     final int modulesInChunk = chunk.getModules().size();
     int buildersPassed = 0;
     boolean nextPassRequired;
-
     do {
       nextPassRequired = false;
       context.beforeCompileRound(chunk);
@@ -447,6 +515,8 @@ public class IncProjectBuilder {
             processDeletedPaths(context, chunk);
           }
           final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk);
+
+          doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
           if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
             throw new ProjectBuildException("Builder " + builder.getDescription() + " requested build stop");
@@ -492,6 +562,8 @@ public class IncProjectBuilder {
       }
     }
     while (nextPassRequired);
+
+    return doneSomething;
   }
 
   private void runProjectLevelBuilders(CompileContext context) throws ProjectBuildException {

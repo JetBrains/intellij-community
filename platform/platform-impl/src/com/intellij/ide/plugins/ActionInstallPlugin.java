@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
@@ -157,7 +158,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
               }
 
               if (needToRestart) {
-                notifyPluginsWereInstalled();
+                notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null);
               }
             }
           }
@@ -256,7 +257,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     }
   }
 
-  private static void notifyPluginsWereInstalled() {
+  private static void notifyPluginsWereInstalled(@Nullable String pluginName) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
     String message = "<html>";
@@ -265,7 +266,8 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     message += "<br><a href=";
     message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
     message += "</a></html>";
-    Notifications.Bus.notify(new Notification(IdeBundle.message("title.plugin.error"), IdeBundle.message("title.plugin.error"),
+    Notifications.Bus.notify(new Notification("Plugins Lifecycle Group", 
+                                              pluginName != null ? "Plugin \'" + pluginName + "\' was successfully installed" : "Plugins were installed",
                                               message, NotificationType.INFORMATION, new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

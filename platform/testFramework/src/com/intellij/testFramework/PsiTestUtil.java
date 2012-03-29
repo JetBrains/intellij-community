@@ -30,10 +30,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -277,5 +274,27 @@ import java.util.Collection;
         model.rearrangeOrderEntries(orderEntries);
       }
     }.execute().throwException();
+  }
+
+  public static void addLibrary(final Module module,
+                                final String libName, final String libDir,
+                                final String[] classRoots,
+                                final String[] sourceRoots) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, libDir);
+        final Library library = model.getModuleLibraryTable().createLibrary(libName);
+        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
+        for (String classRoot : classRoots) {
+          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
+        }
+        for (String sourceRoot : sourceRoots) {
+          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
+        }
+        libModifiableModel.commit();
+        model.commit();
+      }
+    });
   }
 }

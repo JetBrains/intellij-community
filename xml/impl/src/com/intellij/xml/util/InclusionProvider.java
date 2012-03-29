@@ -17,13 +17,11 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xmlb.JDOMXIncluder;
@@ -82,12 +80,7 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
       final XmlTag[] includeTag = extractXpointer(rootTag, xpointer);
       PsiElement[] result = new PsiElement[includeTag.length];
       for (int i = 0; i < includeTag.length; i++) {
-        XmlTag xmlTag = includeTag[i];
-        final PsiElement psiElement = xmlTag.copy();
-        psiElement.putUserData(XmlElement.INCLUDING_ELEMENT, xincludeTag.getParentTag());
-        psiElement.putUserData(XmlUtil.ORIGINAL_ELEMENT, PsiAnchor.create(xmlTag));
-        result[i] = psiElement;
-        //result[i] = new IncludedXmlTag(includeTag[i], xincludeTag.getParentTag());
+        result[i] = new IncludedXmlTag(includeTag[i], xincludeTag.getParentTag());
       }
       return result;
     }
