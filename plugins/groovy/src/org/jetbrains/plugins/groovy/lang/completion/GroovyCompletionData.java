@@ -32,16 +32,19 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -209,10 +212,11 @@ public class GroovyCompletionData {
   }
 
   private static void registerControlCompletion(PsiElement context, CompletionResultSet result) {
-    String[] controlKeywords = {"try", "while", "with", "switch", "for", "return", "throw", "assert", "synchronized",};
+    String[] controlKeywords = {"try", "while", "with", "switch", "for", "throw", "assert", "synchronized",};
 
     if (isControlStructure(context)) {
       addKeywords(result, true, controlKeywords);
+      addKeywords(result, hasReturnValue(context), "return");
     }
     if (inCaseSection(context)) {
       result.addElement(keyword("case", TailType.INSERT_SPACE));
@@ -224,6 +228,23 @@ public class GroovyCompletionData {
     if (afterIfOrElse(context)) {
       addKeywords(result, true, "else");
     }
+  }
+
+  private static boolean hasReturnValue(PsiElement context) {
+    GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(context);
+    if (flowOwner instanceof GrClosableBlock) return true;
+    if (flowOwner instanceof GroovyFile) return true;
+    if (flowOwner == null) return true;
+
+    PsiElement parent = flowOwner.getParent();
+    if (parent instanceof GrMethod) {
+      return ((GrMethod)parent).getReturnType() != PsiType.VOID;
+    }
+    else if (parent instanceof GrClassInitializer) {
+      return false;
+    }
+
+    return true;
   }
 
   public static void addGroovyDocKeywords(CompletionParameters parameters, CompletionResultSet result) {
