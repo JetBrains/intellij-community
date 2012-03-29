@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,6 +76,8 @@ import static java.awt.event.KeyEvent.*;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "SSBasedInspection"})
 public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
+  private static final Icon PIN_ON  = IconLoader.getIcon("/general/autohideOn.png");
+  private static final Icon PIN_OFF = IconLoader.getIcon("/general/autohideOff.png");
   private static final Color BORDER_COLOR = Gray._135;
   private static final Color SEPARATOR_COLOR = BORDER_COLOR.brighter();
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
@@ -189,7 +192,7 @@ public class Switcher extends AnAction implements DumbAware {
       addKeyListener(this);
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setBackground(Color.WHITE);
-      pathLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+      pathLabel.setHorizontalAlignment(SwingConstants.LEFT);
 
       final Font font = pathLabel.getFont();
       pathLabel.setFont(font.deriveFont((float)10));
@@ -204,7 +207,19 @@ public class Switcher extends AnAction implements DumbAware {
       };
 
       descriptions.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
-      descriptions.add(pathLabel);
+      descriptions.add(pathLabel, BorderLayout.CENTER);
+      final JLabel pinLabel = new JLabel(isPinnedMode() ? PIN_ON : PIN_OFF);
+      pinLabel.setToolTipText(isPinnedMode() ? "Pinned mode" : "Floating mode");
+      pinLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+      descriptions.add(pinLabel, BorderLayout.EAST);
+      pinLabel.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE = !UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE;
+          pinLabel.setIcon(isPinnedMode() ? PIN_ON : PIN_OFF);
+          pinLabel.setToolTipText(isPinnedMode() ? "Pinned mode" : "Floating mode");
+        }
+      });
       twManager = ToolWindowManager.getInstance(project);
       final DefaultListModel twModel = new DefaultListModel();
       for (String id : twManager.getToolWindowIds()) {
