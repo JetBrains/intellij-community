@@ -33,7 +33,7 @@ import java.awt.*;
 public class HintUtil {
   public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
   public static final Color QUESTION_COLOR = new Color(181, 208, 251);
-  private static final Color ERROR_COLOR = new Color(255, 220, 220);
+  public static final Color ERROR_COLOR = new Color(255, 220, 220);
 
   private static final Icon INFORMATION_ICON = null;
   private static final Icon QUESTION_ICON = IconLoader.getIcon("/actions/help.png");
@@ -91,7 +91,7 @@ public class HintUtil {
   }
 
   public static JComponent createInformationLabel(final SimpleColoredText text, final Icon icon) {
-    SimpleColoredComponent  highlighted = new SimpleColoredComponent ();
+    SimpleColoredComponent highlighted = new SimpleColoredComponent();
 
     highlighted.setIcon(icon);
     highlighted.setBackground(INFORMATION_COLOR);
@@ -219,6 +219,5 @@ public class HintUtil {
     public String toString() {
       return "Hint: text='" + (myPane != null ? myPane.getText() : "") + "'";
     }
-
   }
 }
