@@ -868,7 +868,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
           myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "OutOfMemoryError: insufficient memory"));
         }
         else {
-          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO, line));
+          final BuildMessage.Kind kind = line.toLowerCase(Locale.US).contains("error")? BuildMessage.Kind.ERROR : BuildMessage.Kind.INFO;
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, kind, line));
         }
       }
     }
