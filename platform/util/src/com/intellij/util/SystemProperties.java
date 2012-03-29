@@ -110,4 +110,21 @@ public class SystemProperties {
 
     return defaultValue;
   }
+
+  /**
+   * Returns the value of given property as a boolean.
+   * Returns {@code defaultValue} if property is not specified or malformed.
+   *
+   * @param key          the property name
+   * @param defaultValue default value
+   * @return the property value as integer, or default value.
+   */
+  public static boolean getBooleanProperty(@NotNull final String key, final boolean defaultValue) {
+    final String value = System.getProperty(key);
+    if (value != null) {
+      return Boolean.parseBoolean(value);
+    }
+
+    return defaultValue;
+  }
 }
