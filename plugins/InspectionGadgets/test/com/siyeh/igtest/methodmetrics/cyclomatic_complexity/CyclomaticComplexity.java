@@ -1,6 +1,6 @@
-package com.siyeh.igtest.metrics;
+package com.siyeh.igtest.methodmetrics.cyclomatic_complexity;
 
-public class CyclomaticComplexityInspection
+public class CyclomaticComplexity
 {
     public void fooBar()
     {
@@ -50,6 +50,56 @@ public class CyclomaticComplexityInspection
             i++;
         }
         System.out.println("i = " + i);
+    }
+
+    public boolean equals(Object o) {
+      int i = 0;
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      if(bar())
+      {
+        i++;
+      }
+      System.out.println("i = " + i);
+      return false;
     }
 
     private boolean bar()

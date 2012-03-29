@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,20 @@
 package com.siyeh.ig.methodmetrics;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.util.Arrays;
+import java.util.Collection;
+
 public class CyclomaticComplexityInspection extends MethodMetricInspection {
+
+  @SuppressWarnings("UnusedDeclaration")
+  public boolean ignoreEqualsMethod = false;
 
   @NotNull
   public String getID() {
@@ -42,6 +51,11 @@ public class CyclomaticComplexityInspection extends MethodMetricInspection {
       "method.complexity.limit.option");
   }
 
+  @Override
+  public Collection<? extends JComponent> createExtraOptions() {
+    return Arrays.asList(new CheckBox(InspectionGadgetsBundle.message("ignore.for.equals.methods.option"), this, "ignoreEqualsMethod"));
+  }
+
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer complexity = (Integer)infos[0];
@@ -61,8 +75,10 @@ public class CyclomaticComplexityInspection extends MethodMetricInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final CyclomaticComplexityVisitor visitor =
-        new CyclomaticComplexityVisitor();
+      if (ignoreEqualsMethod && MethodUtils.isEquals(method)) {
+        return;
+      }
+      final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
       method.accept(visitor);
       final int complexity = visitor.getComplexity();
       if (complexity <= getLimit()) {

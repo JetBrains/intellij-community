@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class MethodCouplingInspection extends MethodMetricInspection {
 
@@ -51,8 +52,7 @@ public class MethodCouplingInspection extends MethodMetricInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer coupling = (Integer)infos[0];
-    return InspectionGadgetsBundle.message(
-      "method.coupling.problem.descriptor", coupling);
+    return InspectionGadgetsBundle.message("method.coupling.problem.descriptor", coupling);
   }
 
   @Override
@@ -66,47 +66,12 @@ public class MethodCouplingInspection extends MethodMetricInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final String configurationLabel = getConfigurationLabel();
-    final JLabel label = new JLabel(configurationLabel);
-
-    final JFormattedTextField valueField = prepareNumberEditor("m_limit");
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weightx = 0.0;
-    constraints.anchor = GridBagConstraints.WEST;
-    constraints.fill = GridBagConstraints.NONE;
-    panel.add(label, constraints);
-    constraints.gridx = 1;
-    constraints.gridy = 0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.NORTHWEST;
-    constraints.fill = GridBagConstraints.NONE;
-    panel.add(valueField, constraints);
-
-    final CheckBox arrayCheckBox = new CheckBox(
-      InspectionGadgetsBundle.message(
-        "include.java.system.classes.option"),
-      this, "m_includeJavaClasses");
-    final CheckBox objectCheckBox = new CheckBox(
-      InspectionGadgetsBundle.message(
-        "include.library.classes.option"),
-      this, "m_includeLibraryClasses");
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    panel.add(arrayCheckBox, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 2;
-    constraints.gridwidth = 2;
-    constraints.weighty = 1.0;
-    panel.add(objectCheckBox, constraints);
-    return panel;
+  public Collection<? extends JComponent> createExtraOptions() {
+    final CheckBox arrayCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message("include.java.system.classes.option"), this, "m_includeJavaClasses");
+    final CheckBox objectCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message("include.library.classes.option"), this, "m_includeLibraryClasses");
+    return Arrays.asList(arrayCheckBox, objectCheckBox);
   }
 
   @Override
@@ -122,8 +87,7 @@ public class MethodCouplingInspection extends MethodMetricInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final CouplingVisitor visitor = new CouplingVisitor(
-        method, m_includeJavaClasses, m_includeLibraryClasses);
+      final CouplingVisitor visitor = new CouplingVisitor(method, m_includeJavaClasses, m_includeLibraryClasses);
       method.accept(visitor);
       final int coupling = visitor.getNumDependencies();
 
