@@ -50,8 +50,7 @@ public abstract class PythonRemoteInterpreterManager {
                                               @NotNull PythonRemoteSdkAdditionalData data,
                                               @NotNull GeneralCommandLine commandLine, boolean printPidInFirstLine) throws PyRemoteInterpreterException;
 
-  public abstract boolean testConnection(final Project project, final PythonRemoteSdkAdditionalData data,
-                                         final String title) throws PyRemoteInterpreterException;
+  public abstract boolean checkRemoteConnection(final Object projectOrComponent, final PythonRemoteSdkAdditionalData data) throws PyRemoteInterpreterException;
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator);
 

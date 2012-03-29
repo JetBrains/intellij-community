@@ -548,7 +548,7 @@ public class PythonSdkType extends SdkType {
     }
   }
 
-  private static void addSkeletonsRoot(SdkModificator sdkModificator, String bin_path) {
+  private static void addSkeletonsRoot(@NotNull SdkModificator sdkModificator, String bin_path) {
     @NonNls final String skeletonsPath = getSkeletonsPath(PathManager.getSystemPath(), bin_path);
     new File(skeletonsPath).mkdirs();
     final VirtualFile builtins_root = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
