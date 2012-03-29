@@ -119,6 +119,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testTypeParameterBoundVisibility() throws Exception { doTest(false);}
   public void testTypeParameterBoundVisibilityJdk14() throws Exception { doTest(false);}
 
+  public void testUncheckedWarningsLevel6() throws Exception { doTest(true);}
+
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
 

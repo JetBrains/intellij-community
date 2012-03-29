@@ -24,7 +24,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pass;
@@ -248,7 +251,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
                 PsiParameter parameter = parameters[Math.min(i, parameters.length - 1)];
                 final PsiExpression expression = expressions[i];
                 final PsiType parameterType = substitutor.substitute(parameter.getType());
-                final PsiType expressionType = substitutor.substitute(expression.getType());
+                final PsiType expressionType = expression.getType();
                 if (expressionType != null) {
                   checkRawToGenericsAssignment(expression, parameterType, expressionType, true, myGenerifyFixes);
                 }
