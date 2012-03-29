@@ -42,7 +42,7 @@ class PycharmTestCommand(Command):
         management._commands['syncdb'] = 'django.core'
     else:
       try:
-        from south.management.commands.test import MigrateAndSyncCommand
+        from south.management.commands import MigrateAndSyncCommand
         management._commands['syncdb'] = MigrateAndSyncCommand()
       except ImportError:
         management._commands['syncdb'] = 'django.core'
