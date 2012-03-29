@@ -37,6 +37,8 @@ public class RedundantCast15Test extends InspectionTestCase {
 
   public void testRawCastsToAvoidIncompatibility() throws Exception { doTest();}
 
+  public void testTypeParameterAccessChecksJava7() throws Exception { doTest();}
+
   public void testIgnore() throws Exception {
     final RedundantCastInspection castInspection = new RedundantCastInspection();
     castInspection.IGNORE_ANNOTATED_METHODS = true;

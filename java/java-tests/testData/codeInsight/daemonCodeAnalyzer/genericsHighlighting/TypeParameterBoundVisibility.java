@@ -7,3 +7,11 @@ class A {
       }
    }
 }
+
+abstract class Foo<T extends Foo<T>> {
+    private int field;
+
+    public int bar(T t){
+        return t.<error descr="'field' has private access in 'Foo'">field</error>;
+    }
+}
