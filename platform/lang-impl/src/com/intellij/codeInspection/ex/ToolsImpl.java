@@ -150,35 +150,40 @@ public class ToolsImpl implements Tools {
     final String enabledTool = toolElement.getAttributeValue(ENABLED_TAG);
     myDefaultState.setEnabled(enabledTool != null ? Boolean.parseBoolean(enabledTool) : isEnabled);
     final InspectionToolWrapper tool = (InspectionToolWrapper)myDefaultState.getTool();
-    tool.readSettings(toolElement);
+
     final List children = toolElement.getChildren(InspectionProfileImpl.SCOPE);
-    if (!children.isEmpty()) {
-      for (Object sO : children) {
-        final Element scopeElement = (Element)sO;
-        final String scopeName = scopeElement.getAttributeValue(InspectionProfileImpl.NAME);
-        if (scopeName != null) {
-          final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
-          NamedScope namedScope = null;
-          if (scopesHolder != null) {
-            namedScope = scopesHolder.getScope(scopeName);
-          }
-          final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
-          final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
-          final InspectionProfileEntry copyTool = tool.createCopy(tool);
-          copyTool.readSettings(scopeElement);
-          HighlightDisplayLevel scopeLevel = errorLevel != null ?
-             HighlightDisplayLevel.find(((SeverityProvider)profileManager).getOwnSeverityRegistrar().getSeverity(errorLevel)) : null;
-          if (scopeLevel == null) {
-            scopeLevel = level;
-          }
-          if (namedScope != null) {
-            addTool(namedScope, copyTool, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
-          } else {
-            addTool(scopeName, copyTool, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
-          }
+    for (Object sO : children) {
+      final Element scopeElement = (Element)sO;
+      final String scopeName = scopeElement.getAttributeValue(InspectionProfileImpl.NAME);
+      if (scopeName != null) {
+        final NamedScopesHolder scopesHolder = profileManager.getScopesManager();
+        NamedScope namedScope = null;
+        if (scopesHolder != null) {
+          namedScope = scopesHolder.getScope(scopeName);
+        }
+        final String errorLevel = scopeElement.getAttributeValue(InspectionProfileImpl.LEVEL_TAG);
+        final String enabledInScope = scopeElement.getAttributeValue(InspectionProfileImpl.ENABLED_TAG);
+        final InspectionProfileEntry copyTool = tool.createCopy(tool);
+        copyTool.readSettings(scopeElement);
+        HighlightDisplayLevel scopeLevel = errorLevel != null ?
+                                           HighlightDisplayLevel
+                                             .find(((SeverityProvider)profileManager).getOwnSeverityRegistrar().getSeverity(errorLevel))
+                                                              : null;
+        if (scopeLevel == null) {
+          scopeLevel = level;
+        }
+        if (namedScope != null) {
+          addTool(namedScope, copyTool, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
+        }
+        else {
+          addTool(scopeName, copyTool, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
         }
       }
     }
+
+//    if (toolElement.getAttributes().size() > 4 || toolElement.getChildren().size() > children.size()) {
+      tool.readSettings(toolElement);
+//    }
   }
 
   public ScopeToolState addTool(String scopeName, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
@@ -386,7 +391,8 @@ public class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
-   public boolean equalTo(ToolsImpl tools) {
+   public boolean equals(Object o) {
+     ToolsImpl tools = (ToolsImpl)o;
       if (myEnabled != tools.myEnabled) return false;
       if (getTools().size() != tools.getTools().size()) return false;
       for (int i = 0; i < getTools().size(); i++) {
