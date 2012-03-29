@@ -18,7 +18,7 @@ public class PyDecoratedPropertyTest extends PyTestCase {
 
   public void testW1() throws Exception {
     Property p;
-    Maybe<Callable> accessor;
+    Maybe<PyFunction> accessor;
     final String name = "w1";
     p = myClass.findProperty(name);
     assertNotNull(p);
@@ -43,7 +43,7 @@ public class PyDecoratedPropertyTest extends PyTestCase {
 
   public void testW2() throws Exception {
     Property p;
-    Maybe<Callable> accessor;
+    Maybe<PyFunction> accessor;
     final String name = "w2";
     p = myClass.findProperty(name);
     assertNotNull(p);
@@ -52,11 +52,9 @@ public class PyDecoratedPropertyTest extends PyTestCase {
 
     accessor = p.getGetter();
     assertTrue(accessor.isDefined());
-    final Callable callable = accessor.value();
-    assertNotNull(callable);
-    assertEquals("w2", callable.getName());
-    assertInstanceOf(callable, PyFunction.class);
-    assertEquals("doc of " + name, ((PyFunction)callable).getDocStringExpression().getStringValue());
+    assertNotNull(accessor.value());
+    assertEquals("w2", accessor.value().getName());
+    assertEquals("doc of "+name, accessor.value().getDocStringExpression().getStringValue());
 
     accessor = p.getSetter();
     assertTrue(accessor.isDefined());

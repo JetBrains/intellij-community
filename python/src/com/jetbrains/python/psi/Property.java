@@ -18,19 +18,19 @@ public interface Property {
    * @return the setter: a method or null if defined, or something else callable if undefined.
    */
   @NotNull
-  Maybe<Callable> getSetter();
+  Maybe<PyFunction> getSetter();
 
   /**
    * @return the getter: a method or null if defined, or something else callable if undefined.
    */
   @NotNull
-  Maybe<Callable> getGetter();
+  Maybe<PyFunction> getGetter();
 
   /**
    * @return the deleter: a method or null if defined, or something else callable if undefined.
    */
   @NotNull
-  Maybe<Callable> getDeleter();
+  Maybe<PyFunction> getDeleter();
 
   /**
    * @return doc string as known to property() call. If null, see getter's doc.
@@ -39,7 +39,7 @@ public interface Property {
   String getDoc();
 
   /**
-   * @return the target to which the result of property() call is assigned. For things defined via @property, it is null.
+   * @return the target to which the result of property() call is assigned. For things defined via @property, it is null. 
    */
   @Nullable
   PyTargetExpression getDefinitionSite();
@@ -49,6 +49,6 @@ public interface Property {
    * @return getter, setter, or deleter.
    */
   @NotNull
-  Maybe<Callable> getByDirection(@NotNull AccessDirection direction);
+  Maybe<PyFunction> getByDirection(@NotNull AccessDirection direction);
 
 }

@@ -49,8 +49,8 @@ public abstract class PropertyBunch<MType> {
    * @param ref a reference as an argument in property() call
    * @return value we want to store (resolved callable, name, etc)
    */
-  @Nullable
-  protected abstract MType translate(@NotNull PyExpression ref);
+  protected abstract @Nullable MType translate(@NotNull PyReferenceExpression ref);
+
 
   @Nullable
   public static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
@@ -140,6 +140,10 @@ public abstract class PropertyBunch<MType> {
   }
 
   private static <MType> Maybe<MType> translateIfSet(PropertyBunch<MType> target, PyExpression accessor) {
-    return new Maybe<MType>(accessor == null ? null : target.translate(accessor));
+    // TODO[yole] I don't quite understand this subtle distinction (why an accessor defined with lambda must be treated as defined=false)
+    if (accessor != null && !(accessor instanceof PyReferenceExpression)) {
+      return new Maybe<MType>();
+    }
+    return new Maybe<MType>(accessor == null ? null : target.translate((PyReferenceExpression) accessor));
   }
 }

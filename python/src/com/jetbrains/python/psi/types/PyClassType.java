@@ -116,7 +116,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     if (resolveContext.allowProperties()) {
       Property property = myClass.findProperty(name);
       if (property != null) {
-        Maybe<Callable> accessor = property.getByDirection(direction);
+        Maybe<PyFunction> accessor = property.getByDirection(direction);
         if (accessor.isDefined()) {
           Callable accessor_code = accessor.value();
           ResolveResultList ret = new ResolveResultList();

@@ -119,10 +119,8 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           else {
             // @property; we only check getter, others are checked by visitPyFunction
             // getter is always present with this form
-            final Callable callable = property.getGetter().valueOrNull();
-            if (callable instanceof PyFunction) {
-              checkGetter(callable, getFunctionMarkingElement((PyFunction)callable));
-            }
+            final PyFunction function = property.getGetter().valueOrNull();
+            checkGetter(function, getFunctionMarkingElement(function));
           }
           return false;  // always want more
         }
@@ -280,7 +278,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
                    (element instanceof PyYieldExpression);
           }
         });
-        hasReturns = returnStatements.length > 0;
+        hasReturns = returnStatements.length > 0; 
       }
       else {
         PyReferenceExpression callSite = being_checked instanceof PyReferenceExpression ? (PyReferenceExpression) being_checked : null;
