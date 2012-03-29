@@ -35,7 +35,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 
 public class LineMarkerInfo<T extends PsiElement> {
-  private final Icon myIcon;
+  protected final Icon myIcon;
   private final WeakReference<T> elementRef;
   public final int startOffset;
   public final int endOffset;
@@ -157,7 +157,7 @@ public class LineMarkerInfo<T extends PsiElement> {
       return myInfo.myIconAlignment;
     }
 
-    private boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
+    protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
       return
         myInfo.getElement() != null &&
         renderer.myInfo.getElement() != null &&

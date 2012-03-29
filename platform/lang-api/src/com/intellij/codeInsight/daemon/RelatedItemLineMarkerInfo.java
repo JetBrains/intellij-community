@@ -60,4 +60,27 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends LineMarkerI
   public Collection<? extends GotoRelatedItem> createGotoRelatedItems() {
     return myTargets.getValue();
   }
+
+  @Override
+  public GutterIconRenderer createGutterRenderer() {
+    if (myIcon == null) return null;
+    return new RelatedItemLineMarkerGutterIconRenderer<T>(this);
+  }
+
+  private static class RelatedItemLineMarkerGutterIconRenderer<T extends PsiElement> extends LineMarkerGutterIconRenderer<T> {
+    public RelatedItemLineMarkerGutterIconRenderer(final RelatedItemLineMarkerInfo<T> markerInfo) {
+      super(markerInfo);
+    }
+
+    @Override
+    protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {
+      if (!(renderer instanceof RelatedItemLineMarkerGutterIconRenderer) || !super.looksTheSameAs(renderer)) {
+        return false;
+      }
+
+      final RelatedItemLineMarkerInfo<?> markerInfo = (RelatedItemLineMarkerInfo<?>)getLineMarkerInfo();
+      final RelatedItemLineMarkerInfo<?> otherInfo = (RelatedItemLineMarkerInfo<?>)renderer.getLineMarkerInfo();
+      return markerInfo.myTargets.equals(otherInfo.myTargets);
+    }
+  }
 }
