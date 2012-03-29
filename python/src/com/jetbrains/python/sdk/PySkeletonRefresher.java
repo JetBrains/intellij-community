@@ -44,6 +44,7 @@ public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance("#" + PySkeletonRefresher.class.getName());
 
 
+  @Nullable private Project myProject;
   private @Nullable final ProgressIndicator myIndicator;
   private final Sdk mySdk;
   private String mySkeletonsPath;
@@ -70,14 +71,15 @@ public class PySkeletonRefresher {
    * @param skeletonsPath if known; null means 'determine and create as needed'.
    * @param indicator     to report progress of long operations
    */
-  public PySkeletonRefresher(@NotNull Sdk sdk, @Nullable String skeletonsPath, @Nullable ProgressIndicator indicator)
+  public PySkeletonRefresher(@Nullable Project project, @NotNull Sdk sdk, @Nullable String skeletonsPath, @Nullable ProgressIndicator indicator)
     throws InvalidSdkException {
+    myProject = project;
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
     if (PySdkUtil.isRemote(sdk) && PythonRemoteInterpreterManager.getInstance() != null) {
       //noinspection ConstantConditions
-      mySkeletonsGenerator = PythonRemoteInterpreterManager.getInstance().createRemoteSkeletonGenerator(getSkeletonsPath(), sdk);
+      mySkeletonsGenerator = PythonRemoteInterpreterManager.getInstance().createRemoteSkeletonGenerator(myProject, getSkeletonsPath(), sdk);
     }
     else {
       mySkeletonsGenerator = new PySkeletonGenerator(getSkeletonsPath());
@@ -265,7 +267,7 @@ public class PySkeletonRefresher {
 
     indicate(PyBundle.message("sdk.gen.reloading"));
 
-    mySkeletonsGenerator.refreshGeneratedSkeletons(project);
+    mySkeletonsGenerator.refreshGeneratedSkeletons();
 
     if (!oldOrNonExisting) {
       indicate(PyBundle.message("sdk.gen.cleaning.$0", readablePath));

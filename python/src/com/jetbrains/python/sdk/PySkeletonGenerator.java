@@ -111,7 +111,7 @@ public class PySkeletonGenerator {
     );
   }
 
-  public void generateBuiltinSkeletons(Sdk sdk) throws InvalidSdkException {
+  public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
     new File(mySkeletonsPath).mkdirs();
     String binaryPath = sdk.getHomePath();
 
@@ -132,7 +132,7 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
-  public ListBinariesResult listBinaries(Sdk sdk, String extraSysPath) throws InvalidSdkException {
+  public ListBinariesResult listBinaries(@NotNull Sdk sdk, @NotNull String extraSysPath) throws InvalidSdkException {
     final String homePath = sdk.getHomePath();
     final String parentDir = new File(homePath).getParent();
     final long startTime = System.currentTimeMillis();
@@ -190,7 +190,7 @@ public class PySkeletonGenerator {
     return deleted;
   }
 
-  public void refreshGeneratedSkeletons(@Nullable Project project) {
+  public void refreshGeneratedSkeletons() {
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(getSkeletonsPath());
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
