@@ -763,6 +763,7 @@ public class Switcher extends AnAction implements DumbAware {
       public SwitcherSpeedSearch() {
         super(SwitcherPanel.this);
         addChangeListener(this);
+        setComparator(new SpeedSearchComparator(false, true));
       }
 
       @Override
