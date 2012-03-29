@@ -87,8 +87,8 @@ public class TestPackage extends TestObject {
   }
 
   @Override
-  protected JUnitProcessHandler createHandler() throws ExecutionException {
-    final JUnitProcessHandler handler = super.createHandler();
+  protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
+    final JUnitProcessHandler handler = super.createHandler(executor);
     final SearchForTestsTask[] tasks = new SearchForTestsTask[1];
     handler.addProcessListener(new ProcessAdapter() {
       @Override
