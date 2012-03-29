@@ -30,7 +30,14 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class RadLinearLayout extends RadViewLayout {
+public class RadLinearLayout extends RadViewLayoutWithData {
+  private static final String[] LAYOUT_PARAMS = {"LinearLayout_Layout", "ViewGroup_MarginLayout"};
+
+  @Override
+  public String[] getLayoutParams() {
+    return LAYOUT_PARAMS;
+  }
+
   @Override
   public EditOperation processChildOperation(OperationContext context) {
     if (context.isCreate()) {

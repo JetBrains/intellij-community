@@ -47,6 +47,25 @@ class GroovyFoldingTest extends LightCodeInsightFixtureTestCase {
     assert assertNoFolding(myFixture.file.text.indexOf(marker)), marker
   }
 
+  public void testEditingImports() {
+    configure """
+import java.util.List
+import java.util.Map
+<caret>
+
+println 'hello'
+
+class Foo { List a; Map b; }
+"""
+
+    assert myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
+
+    myFixture.type 'import '
+    myFixture.doHighlighting()
+    assert !myFixture.editor.foldingModel.getCollapsedRegionAtOffset(10)
+  }
+
+
   void testOpenBlock() {
     configure '''def foo() {print 'a'}
 def bar() {

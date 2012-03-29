@@ -30,7 +30,7 @@ public class BuilderRegistry {
     myTasksExecutor = Executors.newFixedThreadPool(runtime.availableProcessors());
     runtime.addShutdownHook(new Thread() {
       public void run() {
-        myTasksExecutor.shutdownNow();
+        myTasksExecutor.shutdown();
       }
     });
 
@@ -70,7 +70,7 @@ public class BuilderRegistry {
   }
 
   public void shutdown() {
-    myTasksExecutor.shutdownNow();
+    myTasksExecutor.shutdown();
   }
 
 }

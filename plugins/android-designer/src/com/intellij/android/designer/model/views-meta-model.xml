@@ -983,7 +983,7 @@
 
   <!-- ================= Layouts ================= -->
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
+  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
         layout="com.intellij.android.designer.model.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
@@ -1000,6 +1000,26 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
           </LinearLayout>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+        layout="com.intellij.android.designer.model.RadFrameLayout"
+        class="android.widget.FrameLayout"
+        tag="FrameLayout">
+
+    <palette title="FrameLayout" icon="/com/intellij/android/designer/icons/FrameLayout.png"
+             tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
+
+    <properties important="foreground foregroundGravity"/>
+
+    <creation>
+      <![CDATA[
+          <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </FrameLayout>
       ]]>
     </creation>
   </meta>
@@ -1061,6 +1081,7 @@
       <item tag="AdapterViewFlipper"/>
     </group>
     <group name="Layouts">
+      <item tag="FrameLayout"/>
       <item tag="LinearLayout"/>
     </group>
   </palette>

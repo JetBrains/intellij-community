@@ -354,7 +354,7 @@ public class TypeConversionUtil {
       final PsiClass class1 = PsiUtil.resolveClassInType(typeArg1);
       if (class1 instanceof PsiTypeParameter) {
         for (PsiType type : class1.getExtendsListTypes()) {
-          if (TypesDistinctProver.provablyDistinct(type, typeArg2)) return false;
+          if (TypesDistinctProver.provablyDistinct(type, typeArg2) && !isAssignable(type, typeArg2)) return false;
         }
       }
     }
@@ -746,7 +746,7 @@ public class TypeConversionUtil {
 
   private static boolean isAssignableToWildcard(PsiWildcardType wildcardType, PsiType right) {
     if (wildcardType.isSuper()) {
-      return isAssignable(right, wildcardType.getSuperBound());
+      return isAssignable(wildcardType.getSuperBound(), right);
     }
     return isAssignable(wildcardType.getExtendsBound(), right);
   }
@@ -859,7 +859,7 @@ public class TypeConversionUtil {
     return true;
   }
 
-  private static boolean typesAgree(PsiType typeLeft, PsiType typeRight, boolean allowUncheckedConversion) {
+  public static boolean typesAgree(PsiType typeLeft, PsiType typeRight, boolean allowUncheckedConversion) {
     if (typeLeft instanceof PsiWildcardType) {
       final PsiWildcardType leftWildcard = (PsiWildcardType)typeLeft;
       final PsiType leftBound = leftWildcard.getBound();

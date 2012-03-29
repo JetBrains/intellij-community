@@ -206,6 +206,10 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
     myContent.setDisposer(myView);
 
+    ContentManager contentManager = getContentManager();
+    contentManager.addContent(myContent);
+    contentManager.setSelectedContent(myContent);
+
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 

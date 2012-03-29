@@ -18,14 +18,12 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,9 +41,6 @@ import static com.intellij.util.containers.CollectionFactory.newTroveMap;
  * @author cdr
  */
 class UpdateFoldRegionsOperation implements Runnable {
-
-  static final Key<Boolean> ALLOW_FOLDING_ON_CARET_LINE_KEY = Key.create("AllowFoldingOnCaretLine.KEY");
-
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
@@ -80,9 +75,6 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
-
-    // Reset the key.
-    myEditor.putUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY, false);
   }
 
   private static void applyExpandStatus(@NotNull List<FoldRegion> newRegions,
@@ -147,24 +139,9 @@ class UpdateFoldRegionsOperation implements Runnable {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
       return !FoldingPolicy.isCollapseByDefault(element);
     }
-    boolean caretInside;
-    if (myEditor.getUserData(ALLOW_FOLDING_ON_CARET_LINE_KEY) == Boolean.TRUE) {
-      caretInside = FoldingUtil.caretInsideRange(myEditor, range);
-    }
-    else {
-      final Document document = myEditor.getDocument();
-      final int firstLine = document.getLineNumber(range.getStartOffset());
-      final int lastLine = document.getLineNumber(range.getEndOffset());
-      int caretOffset = myEditor.getCaretModel().getOffset();
-      if (caretOffset > myEditor.getDocument().getTextLength()) {
-        return false;
-      }
-      final int currentLine = document.getLineNumber(caretOffset);
-      caretInside = firstLine <= currentLine && currentLine <= lastLine;
-    }
 
     final Boolean oldStatus = rangeToExpandStatusMap.get(range);
-    return oldStatus == null || caretInside || oldStatus.booleanValue();
+    return oldStatus == null || FoldingUtil.caretInsideRange(myEditor, range) || oldStatus.booleanValue();
   }
 
   private void removeInvalidRegions(@NotNull EditorFoldingInfo info,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.actions.ReformatAndOptimizeImportsProcessor;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -292,7 +293,11 @@ public class FormatterUtil {
   private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement, final IElementType whiteSpaceTokenType) {
     final int offset = leafElement.getTextRange().getStartOffset() - 1;
     if (offset < 0) return null;
-    final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
+    final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(leafElement);
+    if (psiElement == null) {
+      return null;
+    }
+    final PsiElement found = psiElement.getContainingFile().findElementAt(offset);
     if (found == null) return null;
     final ASTNode treeElement = found.getNode();
     if (treeElement != null && treeElement.getElementType() == whiteSpaceTokenType) return treeElement;
@@ -357,6 +362,9 @@ public class FormatterUtil {
 
   public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace, final TextRange textRange) {
     ASTNode lastWS = TreeUtil.findLastLeaf(astNode);
+    if (lastWS == null) {
+      return;
+    }
     if (lastWS.getElementType() != TokenType.WHITE_SPACE) {
       lastWS = null;
     }
@@ -380,5 +388,12 @@ public class FormatterUtil {
       ASTNode treeParent = lastWS.getTreeParent();
       treeParent.replaceChild(lastWS, whiteSpaceElement);
     }
+  }
+
+  /**
+   * @return    <code>true</code> explicitly called 'reformat' is in  progress at the moment; <code>false</code> otherwise
+   */
+  public static boolean isFormatterCalledExplicitly() {
+    return FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName());
   }
 }
