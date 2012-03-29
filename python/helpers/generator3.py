@@ -35,6 +35,8 @@ import string
 import types
 import atexit
 import keyword
+import zipfile
+import time
 
 from os.path import join, getsize
 
@@ -2279,7 +2281,7 @@ def list_binaries(paths):
                     res[the_name.upper()] = (the_name, file_path, getsize(file_path), int(os.stat(file_path).st_mtime))
     return list(res.values())
 
-def find_sources(paths):
+def list_sources(paths):
     for path in paths:
         if path == os.path.dirname(sys.argv[0]): continue
         for root, dirs, files in os.walk(path):
@@ -2293,6 +2295,32 @@ def find_sources(paths):
                     filePath = join(root, name)
                     say("%s %s %d", filePath, path, getsize(filePath))
 
+def zip_sources(zip_filename):
+    zip = zipfile.ZipFile(zip_filename, 'w')
+
+    try:
+        try:
+            while True:
+                line = sys.stdin.readline()
+                line = line.strip()
+
+                if line == '-':
+                    break
+
+                if line:
+                    (path, arcpath) = line.split()
+                    zip.write(path, arcpath)
+                else:
+                    time.sleep(0.05)
+            say('OK: ' + zip_filename)
+        except :
+            import traceback
+            traceback.print_exc()
+            say('Error creating archive.')
+
+            sys.exit(1)
+    finally:
+        zip.close()
 
 if sys.platform == 'cli':
     from System import DateTime
@@ -2329,6 +2357,16 @@ def processOne(name, mod_file_name, doing_builtins):
     try:
         try:
             fname = buildOutputName(subdir, name)
+
+            if mod_file_name and fname:
+                try:
+                    fstat = os.stat(fname)
+                    mod_stat = os.stat(mod_file_name)
+                    if fstat.st_mtime>mod_stat.st_mtime:
+                        report("Skeleton for " + mod_file_name + " already exists.")
+                        return True
+                except:
+                    pass
             action("opening %r", fname)
             outfile = fopen(fname, "w")
             old_modules = list(sys.modules.keys())
@@ -2435,8 +2473,9 @@ if __name__ == "__main__":
         '    on sys.path and in directories in directory_list;' '\n'
         '    lines are "qualified.module.name /full/path/to/module_file.{pyd,dll,so}"' '\n'
         ' -S -- lists all python sources found in sys.path and in directories in directory_list'
+        ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>'
     )
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LS")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LSz")
     opts = dict(opts)
 
     if not opts or '-h' in opts:
@@ -2482,8 +2521,16 @@ if __name__ == "__main__":
             report("Expected no args with -S, got %d args", len(args))
             sys.exit(1)
         say(VERSION)
-        find_sources(sys.path)
+        list_sources(sys.path)
         sys.exit(0)
+
+    if "-z" in opts:
+        if (len(args) != 1):
+            report("Expected 1 arg with -S, got %d args", len(args))
+            sys.exit(1)
+        zip_sources(args[0])
+        sys.exit(0)
+
 
     # build skeleton(s)
     subdir = opts.get('-d', '')

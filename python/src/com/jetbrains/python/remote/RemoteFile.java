@@ -18,6 +18,10 @@ public class RemoteFile {
     this(resolveChild(parent, child, isWindowsPath(parent)), isWindowsPath(parent));
   }
 
+  public RemoteFile(@NotNull String parent, String child, boolean isWin) {
+    this(resolveChild(parent, child, isWin), isWin);
+  }
+
   private static String resolveChild(@NotNull String parent, @NotNull String child, boolean win) {
     String separator;
     if (win) {
@@ -68,6 +72,10 @@ public class RemoteFile {
 
     public RemoteFile createRemoteFile(String path) {
       return new RemoteFile(path, isWin);
+    }
+
+    public RemoteFile createRemoteFile(String path, String child) {
+      return new RemoteFile(path, child, isWin);
     }
   }
 }

@@ -174,9 +174,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
       while (true) {
         try {
-          processHandler =
-            manager.startRemoteProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
-                                       myConfig.getMappingSettings());
+          processHandler = doStartRemoteProcess(sdk, commandLine, manager);
           break;
         }
         catch (PyRemoteInterpreterException e) {
@@ -192,6 +190,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else {
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
+  }
+
+  protected ProcessHandler doStartRemoteProcess(Sdk sdk, GeneralCommandLine commandLine, PythonRemoteInterpreterManager manager)
+    throws PyRemoteInterpreterException {
+
+    return manager.startRemoteProcess(myConfig.getProject(), (PythonRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
+                                      myConfig.getMappingSettings());
   }
 
   public GeneralCommandLine generateCommandLine(CommandLinePatcher[] patchers) throws ExecutionException {
