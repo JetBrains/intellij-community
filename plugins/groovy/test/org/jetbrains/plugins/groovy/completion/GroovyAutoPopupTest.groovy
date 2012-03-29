@@ -268,5 +268,14 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert myFixture.lookupElementStrings.containsAll(['too', 'command.toString'])
   }
 
+  public void testVarargParenthesis() {
+    myFixture.configureByText 'a.groovy', '''
+void foo(File... files) { }
+foo(new <caret>)
+'''
+    type 'File('
+    assert myFixture.file.text.contains('new File()')
+  }
+
 
 }
