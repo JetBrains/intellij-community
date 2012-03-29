@@ -815,22 +815,39 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     int warnings = getWarningCount();
     final String theDateAsString = DateFormatUtil.formatDateTime(Clock.getTime());
 
-    long buildTimeInSeconds = buildTimeInMilliseconds / 1000;
+    String formattedBuildTime = formatBuildTime(buildTimeInMilliseconds / 1000);
 
     if (isAborted) {
-      return AntBundle.message("build.finished.status.ant.build.aborted", buildTimeInSeconds, theDateAsString);
+      return AntBundle.message("build.finished.status.ant.build.aborted", formattedBuildTime, theDateAsString);
     }
     else if (errors == 0 && warnings == 0) {
-      return AntBundle.message("build.finished.status.ant.build.completed.successfully", buildTimeInSeconds, theDateAsString);
+      return AntBundle.message("build.finished.status.ant.build.completed.successfully", formattedBuildTime, theDateAsString);
     }
     else if (errors == 0) {
-      return AntBundle
-        .message("build.finished.status.ant.build.completed.with.warnings", warnings, buildTimeInSeconds, theDateAsString);
+      return AntBundle.message("build.finished.status.ant.build.completed.with.warnings", warnings, formattedBuildTime, theDateAsString);
     }
     else {
       return AntBundle
-        .message("build.finished.status.ant.build.completed.with.errors.warnings", errors, warnings, buildTimeInSeconds, theDateAsString);
+        .message("build.finished.status.ant.build.completed.with.errors.warnings", errors, warnings, formattedBuildTime, theDateAsString);
     }
+  }
+
+  private String formatBuildTime(long seconds) {
+    if (seconds == 0) return "0s";
+
+    StringBuilder sb = new StringBuilder();
+    if (seconds >= 3600) {
+      sb.append(seconds / 3600).append("h ");
+      seconds %= 3600;
+    }
+    if (seconds >= 60 || sb.length() > 0) {
+      sb.append(seconds / 60).append("m ");
+      seconds %= 60;
+    }
+    if (seconds > 0 || sb.length() > 0) {
+      sb.append(seconds).append("s");
+    }
+    return sb.toString();
   }
 
   public boolean isOutputPaused() {
