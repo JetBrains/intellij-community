@@ -206,6 +206,10 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
     myContent.setDisposer(myView);
 
+    ContentManager contentManager = getContentManager();
+    contentManager.addContent(myContent);
+    contentManager.setSelectedContent(myContent);
+
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.INSPECTION).activate(null);
   }
 
@@ -631,8 +635,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
   protected List<ToolsImpl> getUsedTools() {
-    final InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
-    return profile.getAllEnabledInspectionTools(myProject);
+    return ((InspectionProfileImpl)getCurrentProfile()).getAllEnabledInspectionTools(myProject);
   }
 
   private void classifyTool(List<Tools> outGlobalTools,

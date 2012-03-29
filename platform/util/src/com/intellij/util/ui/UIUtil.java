@@ -70,7 +70,6 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public class UIUtil {
-
   private static final String TABLE_DECORATION_KEY = "TABLE_DECORATION_KEY";
   private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
 
@@ -135,6 +134,8 @@ public class UIUtil {
 
   // accessed only from EDT
   private static final HashMap<Color, BufferedImage> ourAppleDotSamples = new HashMap<Color, BufferedImage>();
+
+  private static volatile Pair<String, Integer> ourSystemFontData = null;
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -1745,16 +1746,21 @@ public class UIUtil {
     }
   }
 
-  /** @deprecated use {@linkplain #initDefaultLAF()} (to remove in IDEA 12) */
-  public static void initDefaultLAF(final String productName) {
-    initDefaultLAF();
-  }
-
   public static void initDefaultLAF() {
     try {
       UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+      if (ourSystemFontData == null) {
+        final Font font = getLabelFont();
+        ourSystemFontData = Pair.create(font.getName(), font.getSize());
+      }
     }
     catch (Exception ignored) { }
+  }
+
+  @Nullable
+  public static Pair<String, Integer> getSystemFontData() {
+    return ourSystemFontData;
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {

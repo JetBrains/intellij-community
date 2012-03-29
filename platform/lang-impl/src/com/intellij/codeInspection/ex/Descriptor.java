@@ -18,14 +18,13 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -35,26 +34,20 @@ public class Descriptor {
   private final String myText;
   private final String[] myGroup;
   private final HighlightDisplayKey myKey;
-  
-  private final Element myConfig;
+
+  private Element myConfig;
   private final InspectionProfileEntry myTool;
   private final HighlightDisplayLevel myLevel;
   private boolean myEnabled = false;
   private final NamedScope myScope;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
   private final ScopeToolState myState;
+  private final InspectionProfileImpl myInspectionProfile;
 
-  public Descriptor(ScopeToolState pair, InspectionProfile inspectionProfile) {
+  public Descriptor(ScopeToolState pair, InspectionProfileImpl inspectionProfile) {
     myState = pair;
+    myInspectionProfile = inspectionProfile;
     final InspectionProfileEntry tool = pair.getTool();
-    @NonNls Element config = new Element("options");
-    try {
-      tool.writeSettings(config);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    myConfig = config;
     myText = tool.getDisplayName();
     final String[] groupPath = tool.getGroupPath();
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.GENERAL_GROUP_NAME} : groupPath;
@@ -100,8 +93,7 @@ public class Descriptor {
     return myLevel;
   }
 
-
-
+  @Nullable
   public Element getConfig() {
     return myConfig;
   }
@@ -110,9 +102,29 @@ public class Descriptor {
     return myTool;
   }
 
+  @Nullable
   public String loadDescription() {
+    if (myConfig == null) {
+      myConfig = createConfigElement(getTool());
+    }
+
     if (!(myTool instanceof InspectionTool)) return null;
     return myTool.loadDescription();
+  }
+
+  public InspectionProfileImpl getInspectionProfile() {
+    return myInspectionProfile;
+  }
+
+  public static Element createConfigElement(InspectionProfileEntry tool) {
+    Element element = new Element("options");
+    try {
+      tool.writeSettings(element);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
+    return element;
   }
 
   public String[] getGroup() {
