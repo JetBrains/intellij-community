@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.codeInspection;
+package org.jetbrains.plugins.groovy.codeInspection.spellchecker;
 
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
@@ -31,6 +33,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
  * @author peter
  */
 public class GroovySpellcheckingStrategy extends SuppressibleSpellcheckingStrategy {
+  private final GrDocCommentTokenizer myDocCommentTokenizer = new GrDocCommentTokenizer();
+
   @NotNull
   @Override
   public Tokenizer getTokenizer(PsiElement element) {
@@ -45,9 +49,9 @@ public class GroovySpellcheckingStrategy extends SuppressibleSpellcheckingStrate
             consumer.consumeToken(name, text, false, 0, range, PlainTextSplitter.getInstance());
           }
         };
-        
       }
     }
+    if (element instanceof PsiDocComment) return myDocCommentTokenizer;
     return super.getTokenizer(element);
   }
 
