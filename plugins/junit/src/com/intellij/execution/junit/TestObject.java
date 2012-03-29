@@ -252,7 +252,7 @@ public abstract class TestObject implements JavaCommandLine {
 
   @Override
   public ExecutionResult execute(final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
-    final JUnitProcessHandler handler = createHandler();
+    final JUnitProcessHandler handler = createHandler(executor);
     final RunnerSettings runnerSettings = getRunnerSettings();
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, handler, runnerSettings);
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
@@ -360,19 +360,20 @@ public abstract class TestObject implements JavaCommandLine {
     TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties);
   }
 
-  protected JUnitProcessHandler createHandler() throws ExecutionException {
-    appendForkInfo();
+  protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
+    appendForkInfo(executor);
     return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(myJavaParameters, myProject, true));
   }
 
-  private void appendForkInfo() throws ExecutionException {
+  private void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = myConfiguration.getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {
       return;
     }
 
-    if (myRunnerSettings.getData() instanceof DebuggingRunnerData) {
-      throw new CantRunException("Debug is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to debug.");
+    if (myRunnerSettings.getData() != null) {
+      final String actionName = executor.getActionName();
+      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase() + ".");
     }
 
     final JavaParameters javaParameters = getJavaParameters();
