@@ -79,6 +79,7 @@ public class PyPackageManager {
 
     public interface Listener {
       void started();
+
       void finished(List<PyExternalProcessException> exceptions);
     }
 
@@ -139,7 +140,7 @@ public class PyPackageManager {
           return exceptions;
         }
       }, progressTitle, successTitle, "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
-         "Install packages failed");
+          "Install packages failed");
     }
 
     public void uninstall(@NotNull final List<PyPackage> packages) {
@@ -162,7 +163,7 @@ public class PyPackageManager {
           }
         }
       }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
-         "Uninstall packages failed");
+          "Uninstall packages failed");
     }
 
     private interface MultiExternalRunnable {
@@ -242,7 +243,7 @@ public class PyPackageManager {
     final File helperFile = PythonHelpersLocator.getHelperFile(name + ".tar.gz");
     ProcessOutput output = PySdkUtil.getProcessOutput(helperFile.getParent(),
                                                       new String[]{mySdk.getHomePath(),
-                                                          PACKAGING_TOOL, "untar", name});
+                                                        PACKAGING_TOOL, "untar", name});
 
     if (output.getExitCode() != 0) {
       throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
@@ -266,7 +267,7 @@ public class PyPackageManager {
         throw new PyExternalProcessException(retcode, name, Lists.newArrayList("untar"), message);
       }
     }
-    finally{
+    finally {
       FileUtil.delete(new File(dirName));
     }
   }
@@ -291,7 +292,7 @@ public class PyPackageManager {
   }
 
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs, final boolean useUserSite)
-      throws PyExternalProcessException {
+    throws PyExternalProcessException {
     final List<String> args = new ArrayList<String>();
     args.add("install");
     final File buildDir;
@@ -323,8 +324,9 @@ public class PyPackageManager {
       args.add("uninstall");
       boolean canModify = true;
       for (PyPackage pkg : packages) {
-        if (canModify)
+        if (canModify) {
           canModify = FileUtil.ensureCanCreateFile(new File(pkg.getLocation()));
+        }
         args.add(pkg.getName());
       }
       runPythonHelper(PACKAGING_TOOL, args, !canModify);
@@ -416,11 +418,7 @@ public class PyPackageManager {
   @NotNull
   private String runPythonHelper(@NotNull final String helper,
                                  @NotNull final List<String> args, final boolean askForSudo) throws PyExternalProcessException {
-    final String helperPath = PythonHelpersLocator.getHelperPath(helper);
-    if (helperPath == null) {
-      throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
-    }
-    ProcessOutput output = getProcessOutput(helperPath, args, askForSudo, null);
+    ProcessOutput output = getHelperOutput(helper, args, askForSudo, null);
     final int retcode = output.getExitCode();
     if (output.isTimeout()) {
       throw new PyExternalProcessException(ERROR_TIMEOUT, helper, args, "Timed out");
@@ -442,8 +440,34 @@ public class PyPackageManager {
     return runPythonHelper(helper, args, false);
   }
 
-  private ProcessOutput getProcessOutput(@NotNull String helper, @NotNull List<String> args, final boolean askForSudo, @Nullable String parentDir)
-      throws PyExternalProcessException {
+
+  private ProcessOutput getHelperOutput(@NotNull String helper,
+                                        @NotNull List<String> args,
+                                        final boolean askForSudo,
+                                        @Nullable String parentDir)
+    throws PyExternalProcessException {
+    final String helperPath;
+
+    final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
+    if (sdkData instanceof PythonRemoteSdkAdditionalData) {
+      final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
+      helperPath = new RemoteFile(remoteSdkData.getPyCharmHelpersPath(),
+                                  helper).getPath();
+    }
+    else {
+      helperPath = PythonHelpersLocator.getHelperPath(helper);
+    }
+    if (helperPath == null) {
+      throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
+    }
+    return getProcessOutput(helperPath, args, askForSudo, parentDir);
+  }
+
+  private ProcessOutput getProcessOutput(@NotNull String helperPath,
+                                         @NotNull List<String> args,
+                                         final boolean askForSudo,
+                                         @Nullable String parentDir)
+    throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PythonRemoteSdkAdditionalData) {
       final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
@@ -451,63 +475,66 @@ public class PyPackageManager {
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(mySdk.getHomePath());
-        cmdline.add(new RemoteFile(remoteSdkData.getPyCharmHelpersPath(),
-                             helper).getPath());
+        cmdline.add(helperPath);
         cmdline.addAll(args);
         try {
           return manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline));
         }
         catch (PyRemoteInterpreterException e) {
-          throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args, "Error running SDK");
+          throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK");
         }
       }
       else {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args,
+        throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args,
                                              PythonRemoteInterpreterManager.WEB_DEPLOYMENT_PLUGIN_IS_DISABLED);
       }
     }
     else {
       final String homePath = mySdk.getHomePath();
       if (homePath == null) {
-        throw new PyExternalProcessException(ERROR_INVALID_SDK, helper, args, "Cannot find interpreter for SDK");
+        throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Cannot find interpreter for SDK");
       }
-      if (parentDir == null)
+      if (parentDir == null) {
         parentDir = new File(homePath).getParent();
+      }
       final List<String> cmdline = new ArrayList<String>();
       cmdline.add(homePath);
-      cmdline.add(helper);
+      cmdline.add(helperPath);
       cmdline.addAll(args);
 
       final boolean canCreate = FileUtil.ensureCanCreateFile(new File(mySdk.getHomePath()));
       if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
-        try{
+        try {
           final ProcessOutput result = ExecUtil.sudoAndGetOutput(StringUtil.join(cmdline, " "),
-                                                                 "Please enter your password to make changes in system packages: ", parentDir);
+                                                                 "Please enter your password to make changes in system packages: ",
+                                                                 parentDir);
           if (result.getExitCode() != 0) {
             final String stdout = result.getStdout();
             String message = result.getStderr();
             if (message.trim().isEmpty()) {
               message = stdout;
             }
-            throw new PyExternalProcessException(result.getExitCode(), helper, args, message);
+            throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
           }
           return result;
         }
         catch (InterruptedException e) {
-          throw new PyExternalProcessException(ERROR_INTERRUPTED, helper, args, e.getMessage());
+          throw new PyExternalProcessException(ERROR_INTERRUPTED, helperPath, args, e.getMessage());
         }
         catch (ExecutionException e) {
-          throw new PyExternalProcessException(ERROR_EXECUTION, helper, args, e.getMessage());
+          throw new PyExternalProcessException(ERROR_EXECUTION, helperPath, args, e.getMessage());
         }
         catch (ScriptException e) {
-          throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, e.getMessage());
+          throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helperPath, args, e.getMessage());
         }
         catch (IOException e) {
-          throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helper, args, e.getMessage());
+          throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helperPath, args, e.getMessage());
         }
       }
       else                 //vEnv interpreter
+      {
         return PySdkUtil.getProcessOutput(parentDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
+      }
     }
   }
 
