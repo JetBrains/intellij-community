@@ -436,7 +436,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     PsiType type1 = aClass.getFields()[1].getType();
     PsiElement target1 = PsiUtil.resolveClassInType(type1);
     assertNotNull(target1);
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", RESOLVE_SCOPE);
+    PsiClass objectClass = myJavaFacade.findClasses("java.lang.Object", RESOLVE_SCOPE)[1];
     assertEquals(objectClass, target1);
   }
 
@@ -523,7 +523,7 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     assertFalse(type2 instanceof PsiPrimitiveType);
     PsiClass target2 = PsiUtil.resolveClassInType(type2);
     assertNotNull(target2);
-    PsiClass objectClass = myJavaFacade.findClass("java.lang.Object", RESOLVE_SCOPE);
+    PsiClass objectClass = myJavaFacade.findClasses("java.lang.Object", RESOLVE_SCOPE)[1];
     assertEquals(objectClass, target2);
 
     parameters[0].getModifierList();
