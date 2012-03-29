@@ -21,6 +21,8 @@ import com.intellij.psi.PsiReference;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
@@ -70,7 +72,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
     List<String> actual = getCompletionVariants(myProjectPom);
 
-    if (actual.isEmpty()) {
+    if (!new HashSet<String>(actual).equals(new HashSet<String>(Arrays.asList("maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin")))) {
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
       System.out.println("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins"));
       System.out.println("Indexes: " + instance.getIndices());
