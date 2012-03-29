@@ -50,6 +50,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private File myNoCopyJarDir;
 
   private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
+  private String[] jarPathsCache; // jarPathsCache = myHandlers.keySet()
 
   private static final class JarFileSystemImplLock {
   }
@@ -68,16 +69,22 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem) {
-            final String path = event.getPath();
-            List<String> jarPaths = new ArrayList<String>();
+            String path = event.getPath();
+
+            String[] jarPaths;
             synchronized (LOCK) {
-              jarPaths.addAll(myHandlers.keySet());
+              if (jarPathsCache == null) {
+                jarPathsCache = new String[myHandlers.size()];
+                int i = 0;
+                for (String p : myHandlers.keySet()) {
+                  jarPathsCache[i++] = p.substring(0, p.length() - JAR_SEPARATOR.length());
+                }
+              }
+              jarPaths = jarPathsCache;
             }
 
             for (String jarPath : jarPaths) {
-              if (FileUtil.startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()),
-                                      path,
-                                      SystemInfo.isFileSystemCaseSensitive)) {
+              if (FileUtil.startsWith(jarPath, path, SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
                   rootsToRefresh.add(jarRootToRefresh);
@@ -119,6 +126,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     final JarHandler handler;
     synchronized (LOCK) {
       handler = myHandlers.remove(path);
+      jarPathsCache = null;
     }
 
     if (handler != null) {
@@ -193,6 +201,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       if (handler == null) {
         freshHandler = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
         myHandlers.put(jarRootPath, handler);
+        jarPathsCache = null;
       }
       else {
         freshHandler = null;
