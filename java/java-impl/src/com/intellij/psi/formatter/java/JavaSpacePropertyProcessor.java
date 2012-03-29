@@ -767,7 +767,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       int minSpaces = 0;
       int minLineFeeds = 1;
       PsiElement psi = myChild1.getPsi();
-      if (mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE || psi != null && PsiTreeUtil.hasErrorElements(psi)) {
+      
+      // We want to avoid situations like below:
+      //   1. Call 'introduce variable' refactoring for the code like 'System.out.println(1);';
+      //   2. When KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE is on, the output looks like 'int i = 1; System.out.println(i);';
+      // That's why we process the option only during the explicit reformat (directly invoked by an user).
+      if ((mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE && FormatterUtil.isFormatterCalledExplicitly())
+          || psi != null && PsiTreeUtil.hasErrorElements(psi))
+      {
         minSpaces = 1;
         minLineFeeds = 0;
       }
