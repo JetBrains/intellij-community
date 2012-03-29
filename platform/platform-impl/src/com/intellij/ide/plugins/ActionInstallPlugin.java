@@ -245,8 +245,8 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
     for (PluginNode pluginNode : list) {
       final String idString = pluginNode.getPluginId().getIdString();
       final PluginManagerUISettings pluginManagerUISettings = PluginManagerUISettings.getInstance();
-      if (!pluginManagerUISettings.myInstalledPlugins.contains(idString)) {
-        pluginManagerUISettings.myInstalledPlugins.add(idString);
+      if (!pluginManagerUISettings.getInstalledPlugins().contains(idString)) {
+        pluginManagerUISettings.getInstalledPlugins().add(idString);
       }
       pluginManagerUISettings.myOutdatedPlugins.remove(idString);
     }
