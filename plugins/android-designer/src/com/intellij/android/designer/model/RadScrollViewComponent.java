@@ -68,6 +68,8 @@ public class RadScrollViewComponent extends RadViewComponent {
                 scrollContainer.getTag().setName(scrollContainer.getMetaModel().getTag());
               }
             });
+
+            // TODO: maybe reload properties
           }
         });
       }

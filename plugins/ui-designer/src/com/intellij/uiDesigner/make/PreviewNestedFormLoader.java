@@ -17,6 +17,7 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.PsiClassWriter;
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.module.Module;
 import com.intellij.uiDesigner.actions.PreviewFormAction;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
@@ -41,13 +42,13 @@ import java.util.Set;
  */
 public class PreviewNestedFormLoader extends PsiNestedFormLoader {
   private final String myTempPath;
-  private final ClassLoader myLoader;
+  private final InstrumentationClassFinder myFinder;
   private final Set<String> myGeneratedClasses = new HashSet<String>();
 
-  public PreviewNestedFormLoader(final Module module, final String tempPath, final ClassLoader loader) {
+  public PreviewNestedFormLoader(final Module module, final String tempPath, final InstrumentationClassFinder finder) {
     super(module);
     myTempPath = tempPath;
-    myLoader = loader;
+    myFinder = finder;
   }
 
   public LwRootContainer loadForm(String formFileName) throws Exception {
@@ -82,7 +83,7 @@ public class PreviewNestedFormLoader extends PsiNestedFormLoader {
     cw.visitEnd();
 
     ByteArrayInputStream bais = new ByteArrayInputStream(cw.toByteArray());
-    AsmCodeGenerator acg = new AsmCodeGenerator(rootContainer, myLoader, this, true, new PsiClassWriter(myModule));
+    AsmCodeGenerator acg = new AsmCodeGenerator(rootContainer, myFinder, this, true, new PsiClassWriter(myModule));
     byte[] data = acg.patchClass(bais);
     FormErrorInfo[] errors = acg.getErrors();
     if (errors.length > 0) {

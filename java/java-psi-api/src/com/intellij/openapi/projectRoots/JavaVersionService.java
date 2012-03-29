@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,21 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.util;
-
-import org.jetbrains.annotations.NotNull;
-
-/**
- * Thread-safe version: {@link com.intellij.openapi.util.AtomicNotNullLazyValue}.
- * @author peter
+/*
+ * @author max
  */
-public abstract class NotNullLazyValue<T> {
-  private T myValue;
+package com.intellij.openapi.projectRoots;
 
-  @NotNull
-  protected abstract T compute();
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtil;
 
-  @NotNull
-  public T getValue() {
-    if (myValue == null) {
-      myValue = compute();
-    }
-    return myValue;
+public class JavaVersionService {
+  public static JavaVersionService getInstance() {
+    return ServiceManager.getService(JavaVersionService.class);
   }
 
-  public void drop() {
-    myValue = null;
+  public boolean isAtLeast(PsiElement element, JavaSdkVersion version) {
+    return PsiUtil.getLanguageLevel(element).isAtLeast(version.getMaxLanguageLevel());
   }
 }

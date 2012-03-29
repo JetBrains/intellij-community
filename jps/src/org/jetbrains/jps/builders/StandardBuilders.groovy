@@ -3,6 +3,7 @@ package org.jetbrains.jps.builders
 import com.intellij.ant.InstrumentationUtil
 import com.intellij.ant.InstrumentationUtil.FormInstrumenter
 import com.intellij.ant.PrefixedPath
+import com.intellij.compiler.instrumentation.InstrumentationClassFinder
 import org.apache.tools.ant.BuildListener
 import org.jetbrains.ether.ProjectWrapper
 import org.jetbrains.ether.dependencyView.AntListener
@@ -332,17 +333,13 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, ProjectBuilder projectBuilder) {
     if (state.loader == null) {
-      final StringBuilder cp = new StringBuilder()
-
-      cp.append(state.targetFolder)
-      cp.append(File.pathSeparator)
-
+      final ArrayList urls = new ArrayList();
+      urls.add(new File(state.targetFolder).toURL());
       state.classpath.each {
-        cp.append(it)
-        cp.append(File.pathSeparator)
+        urls.add(new File(it).toURL());
       }
 
-      state.loader = InstrumentationUtil.createPseudoClassLoader(cp.toString())
+      state.loader = new InstrumentationClassFinder((URL[])urls.toArray(new URL[urls.size()]))
 
       final List<File> formFiles = new ArrayList<File>();
       final ProjectWrapper pw = state.projectWrapper;
@@ -408,6 +405,9 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       classes.each {
         InstrumentationUtil.instrumentNotNull(new File(state.targetFolder + File.separator + it + ".class"), state.loader)
       }
+    }
+    if (state.loader != null) {
+      state.loader.releaseResources();
     }
   }
 }

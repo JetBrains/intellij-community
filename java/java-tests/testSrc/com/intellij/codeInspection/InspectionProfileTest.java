@@ -15,8 +15,9 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.LightIdeaTestCase;
@@ -25,6 +26,9 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertElementsEqual;
 
@@ -170,5 +174,64 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final Element copy = new Element("inspections");
     profile.writeExternal(copy);
     assertElementsEqual(element, copy);
+  }
+
+  public void testLockProfile() throws Exception {
+
+    final List<InspectionToolWrapper> list = new ArrayList<InspectionToolWrapper>();
+    list.add(createTool("foo"));
+
+    InspectionToolRegistrar registrar = new InspectionToolRegistrar(null) {
+      @Override
+      public List<InspectionToolWrapper> createTools() {
+        LocalInspectionEP foo = new LocalInspectionEP();
+        foo.shortName = "foo";
+        return list;
+      }
+    };
+
+    InspectionProfileImpl profile = new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance());
+    profile.setBaseProfile(null);
+    List<ScopeToolState> tools = profile.getAllTools();
+    assertEquals(1, tools.size());
+    ModifiableModel model = profile.getModifiableModel();
+    model.lockProfile(true);
+    model.commit();
+    Element element = new Element("element");
+    profile.writeExternal(element);
+
+    list.add(createTool("bar"));
+
+    profile = new InspectionProfileImpl("Foo", registrar, InspectionProfileManager.getInstance());
+    profile.readExternal(element);
+
+    profile.setBaseProfile(null);
+    tools = profile.getAllTools();
+    assertEquals(2, tools.size());
+
+    assertTrue(profile.isProfileLocked());
+    assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("bar")));
+  }
+
+  public void testGlobalInspectionContext() throws Exception {
+    InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
+    profile.disableAllTools();
+    profile.enableTool(new UnusedDeclarationInspection().getShortName());
+
+    GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
+    context.setExternalProfile(profile);
+    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    Map<String,Tools> tools = context.getTools();
+    assertEquals(1, tools.size());
+  }
+
+  private static LocalInspectionToolWrapper createTool(String s) {
+    LocalInspectionEP foo = new LocalInspectionEP();
+    foo.shortName = s;
+    foo.displayName = s;
+    foo.groupDisplayName = s;
+    foo.level = "ERROR";
+    foo.enabledByDefault = true;
+    return new LocalInspectionToolWrapper(foo);
   }
 }

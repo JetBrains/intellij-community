@@ -77,7 +77,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
   //noinspection GroovyAssignabilityCheck
   List<String> implementationModules = [platformImplementationModules(),
-          "notNull",
+          "instrumentation-util",
           "platform-main",
           "java-psi-impl",
           "java-impl",
@@ -170,7 +170,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         module("javac2")
         module("forms-compiler")
         module("forms_rt")
-        module("notNull")
+        module("instrumentation-util")
       }
 
       jar("jps-server.jar") {

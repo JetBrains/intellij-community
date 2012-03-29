@@ -55,7 +55,10 @@ import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -632,14 +635,7 @@ public class XmlUtil {
       if (element instanceof XmlEntityRef) {
         XmlEntityRef ref = (XmlEntityRef)element;
 
-        //if ("Number.datatype".equals(ref.getText().substring(1, ref.getTextLength() - 1))) {
-        //  int a = 1;
-        //}
         PsiElement newElement = parseEntityRef(targetFile, ref, true);
-        //if (newElement == null) {
-        //  System.out.println("No image for :" + ref.getText());
-        //  return true;
-        //}
 
         while (newElement != null) {
           if (!processElement(newElement, deepFlag, wideFlag, processIncludes)) return false;
