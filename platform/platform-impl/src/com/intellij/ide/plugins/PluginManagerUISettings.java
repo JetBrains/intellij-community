@@ -50,12 +50,17 @@ public class PluginManagerUISettings implements PersistentStateComponent<Element
   public boolean AVAILABLE_SORT_BY_STATUS = false;
   public boolean INSTALLED_SORT_BY_STATUS = false;
   public JDOMExternalizableStringList myOutdatedPlugins = new JDOMExternalizableStringList();
-  public JDOMExternalizableStringList myInstalledPlugins = new JDOMExternalizableStringList();
+
+  private JDOMExternalizableStringList myInstalledPlugins = new JDOMExternalizableStringList();
 
   @NonNls private static final String AVAILABLE_PROPORTIONS = "available-proportions";
 
   private final SplitterProportionsData mySplitterProportionsData = new SplitterProportionsDataImpl();
   private final SplitterProportionsData myAvailableSplitterProportionsData = new SplitterProportionsDataImpl();
+
+  public JDOMExternalizableStringList getInstalledPlugins() {
+    return myInstalledPlugins;
+  }
 
   public static PluginManagerUISettings getInstance() {
     return ServiceManager.getService(PluginManagerUISettings.class);
