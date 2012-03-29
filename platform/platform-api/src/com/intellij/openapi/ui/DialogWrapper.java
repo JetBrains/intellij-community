@@ -48,6 +48,7 @@ import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -224,7 +225,7 @@ public abstract class DialogWrapper {
    * @param canBeParent can be parent
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
-  protected DialogWrapper(Component parent, boolean canBeParent) {
+  protected DialogWrapper(@NotNull Component parent, boolean canBeParent) {
     ensureEventDispatchThread();
     myPeer = createPeer(parent, canBeParent);
     createDefaultActions();
