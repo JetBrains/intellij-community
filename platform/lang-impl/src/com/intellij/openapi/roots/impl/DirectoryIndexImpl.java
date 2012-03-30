@@ -844,6 +844,22 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
                          libSourceRootEntries);
       }
       fillMapWithOrderEntries(depEntries, libClassRootEntries, libSourceRootEntries);
+
+      killOrderEntryArrayDuplicates();
+    }
+
+    private void killOrderEntryArrayDuplicates() {
+      Map<List<OrderEntry>, List<OrderEntry>> interner = new HashMap<List<OrderEntry>, List<OrderEntry>>();
+      for (DirectoryInfo info : myDirToInfoMap.values()) {
+        List<OrderEntry> entries = info.getOrderEntries();
+        if (!entries.isEmpty()) {
+          List<OrderEntry> interned = interner.get(entries);
+          if (interned == null) {
+            interner.put(entries, interned = entries);
+          }
+          info.setInternedOrderEntries(interned);
+        }
+      }
     }
 
     private void initExcludedDirMap(Module[] modules, ProgressIndicator progress) {
