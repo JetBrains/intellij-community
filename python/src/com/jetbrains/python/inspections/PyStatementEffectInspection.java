@@ -2,15 +2,15 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.StatementEffectDocstringQuickFix;
 import com.jetbrains.python.actions.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.actions.StatementEffectIntroduceVariableQuickFix;
-import com.jetbrains.python.console.PydevConsoleCommunication;
-import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
@@ -70,6 +70,17 @@ public class PyStatementEffectInspection extends PyInspection {
 
     private boolean checkStringLiteral(PyExpression expression) {
       if (expression instanceof PyStringLiteralExpression) {
+        PsiElement prevSibling = expression.getParent().getPrevSibling();
+        while (prevSibling instanceof PsiWhiteSpace)
+          prevSibling = prevSibling.getPrevSibling();
+        if (prevSibling instanceof PyAssignmentStatement) {
+          for (PyExpression target : ((PyAssignmentStatement)prevSibling).getTargets()) {
+            if (PyUtil.getAttributeDocString((PyTargetExpression)target) == expression) {
+              return true;
+            }
+          }
+        }
+        
         PyDocStringOwner parent = PsiTreeUtil.getParentOfType(expression, PyFunction.class, PyClass.class);
         if (parent != null && parent.getDocStringExpression() == null) {
           registerProblem(expression, "Docstring seems to be misplaced",
