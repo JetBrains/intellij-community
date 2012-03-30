@@ -1,18 +1,26 @@
 import sys
-import logging
 import traceback
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PACKAGING_TOOLS = 2
 ERROR_EXCEPTION = 3
 
+def exit(retcode):
+    major, minor, micro, release, serial = sys.version_info
+    version = major * 10 + minor
+    if 'java' in sys.platform and version < 25:
+        import os
+        os._exit(retcode)
+    else:
+        sys.exit(retcode)
+
 def usage():
-    logging.error('Usage: packaging_tool.py <list|install|uninstall>')
-    sys.exit(ERROR_WRONG_USAGE)
+    sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall>\n')
+    exit(ERROR_WRONG_USAGE)
 
 def error(message, retcode):
-    logging.error('Error: %s' % message)
-    sys.exit(retcode)
+    sys.stderr.write('Error: %s\n' % message)
+    exit(retcode)
 
 def error_no_pip():
     error("Python package management tool 'pip' not found. <a href=\"installPip\">Install 'pip'</a>.", ERROR_NO_PACKAGING_TOOLS)
@@ -55,7 +63,6 @@ def untarDirectory(name):
 def main():
     retcode = 0
     try:
-        logging.basicConfig(format='%(message)s')
         if len(sys.argv) < 2:
             usage()
         cmd = sys.argv[1]
@@ -82,8 +89,8 @@ def main():
             usage()
     except Exception:
         traceback.print_exc()
-        sys.exit(ERROR_EXCEPTION)
-    sys.exit(retcode)
+        exit(ERROR_EXCEPTION)
+    exit(retcode)
 
 if __name__ == '__main__':
     main()
