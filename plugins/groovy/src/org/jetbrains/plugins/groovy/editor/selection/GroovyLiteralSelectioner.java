@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.editor.selection;
 
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -33,7 +34,7 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 /**
  * @author ilyas
  */
-public class GroovyLiteralSelectioner extends GroovyBasicSelectioner {
+public class GroovyLiteralSelectioner extends ExtendWordSelectionHandlerBase {
   public boolean canSelect(PsiElement e) {
     PsiElement parent = e.getParent();
     return isLiteral(e) || isLiteral(parent);

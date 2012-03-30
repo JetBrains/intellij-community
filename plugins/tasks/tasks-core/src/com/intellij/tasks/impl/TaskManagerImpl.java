@@ -145,7 +145,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
               associatedTask.setUpdated(new Date());
               activateTask(associatedTask, true, false);              
             }
-          });
+          }, myProject.getDisposed());
           return;
         }
 
