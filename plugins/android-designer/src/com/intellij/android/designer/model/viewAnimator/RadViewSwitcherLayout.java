@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.android.designer.model.viewAnimator;
 
 import com.intellij.designer.designSurface.OperationContext;
 

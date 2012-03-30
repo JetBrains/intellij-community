@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
-
-import com.intellij.designer.designSurface.OperationContext;
+package com.intellij.android.designer.model.viewAnimator;
 
 /**
  * @author Alexander Lobas
  */
-public class RadTextSwitcherLayout extends RadTypeSwitcherLayout {
-  public RadTextSwitcherLayout() {
-    super("TextView");
+public class RadImageSwitcherLayout extends RadTypeSwitcherLayout {
+  public RadImageSwitcherLayout() {
+    super("ImageView");
   }
 }

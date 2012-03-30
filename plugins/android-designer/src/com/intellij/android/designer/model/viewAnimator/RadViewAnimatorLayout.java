@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.android.designer.model.viewAnimator;
 
 import com.intellij.android.designer.designSurface.DropToOperation;
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 

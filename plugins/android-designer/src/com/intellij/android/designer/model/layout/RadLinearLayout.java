@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.android.designer.model.layout;
 
+import com.intellij.android.designer.model.ModelParser;
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;

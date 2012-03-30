@@ -22,7 +22,7 @@ import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.PropertyParser;
-import com.intellij.android.designer.model.RadViewAnimatorLayout;
+import com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;

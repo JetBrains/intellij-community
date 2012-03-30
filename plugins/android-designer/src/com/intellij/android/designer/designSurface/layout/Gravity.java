@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.android.designer.designSurface.layout;
 
 /**
  * @author Alexander Lobas
  */
-public class RadImageSwitcherLayout extends RadTypeSwitcherLayout {
-  public RadImageSwitcherLayout() {
-    super("ImageView");
-  }
+public enum Gravity {
+  Left, Right, Center, Top, Bottom
 }
