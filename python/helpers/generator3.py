@@ -2293,7 +2293,7 @@ def list_sources(paths):
             for name in files:
                 if name.endswith('.py'):
                     filePath = join(root, name)
-                    say("%s %s %d", filePath, path, getsize(filePath))
+                    say("%s\t%s\t%d", filePath, path, getsize(filePath))
 
 def zip_sources(zip_filename):
     zip = zipfile.ZipFile(zip_filename, 'w')
@@ -2513,7 +2513,7 @@ if __name__ == "__main__":
         results = list(list_binaries(sys.path))
         results.sort()
         for name, path, size, last_modified in results:
-            say("%s %s %d %d", name, path, size, last_modified)
+            say("%s\t%s\t%d\t%d", name, path, size, last_modified)
         sys.exit(0)
 
     if "-S" in opts:

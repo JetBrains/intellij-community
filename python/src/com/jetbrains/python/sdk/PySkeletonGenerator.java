@@ -128,7 +128,7 @@ public class PySkeletonGenerator {
 
 
     long startTime = System.currentTimeMillis();
-    final ProcessOutput run_result = getProcessOutput(
+    final ProcessOutput runResult = getProcessOutput(
       new File(binaryPath).getParent(),
       new String[]{
         binaryPath,
@@ -138,7 +138,7 @@ public class PySkeletonGenerator {
       },
       PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath), MINUTE * 5
     );
-    run_result.checkSuccess(LOG);
+    runResult.checkSuccess(LOG);
     LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
   }
 
@@ -178,9 +178,9 @@ public class PySkeletonGenerator {
     final Map<String, PySkeletonRefresher.PyBinaryItem> binaries = Maps.newHashMap();
     while (iter.hasNext()) {
       final String line = iter.next();
-      int cutpos = line.indexOf(' ');
+      int cutpos = line.indexOf('\t');
       if (cutpos >= 0) {
-        String[] strs = line.split(" ");
+        String[] strs = line.split("\t");
         String moduleName = strs[0];
         String path = strs[1];
         int length = Integer.parseInt(strs[2]);
