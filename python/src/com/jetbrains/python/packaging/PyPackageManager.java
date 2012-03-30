@@ -336,6 +336,10 @@ public class PyPackageManager {
     }
   }
 
+  public boolean cacheIsNotNull() {
+    return myPackagesCache != null;
+  }
+
   @NotNull
   public List<PyPackage> getPackages() throws PyExternalProcessException {
     if (myPackagesCache == null) {
