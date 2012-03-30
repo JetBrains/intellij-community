@@ -15,32 +15,32 @@
  */
 package com.intellij.openapi.roots.libraries.ui.impl;
 
-import com.intellij.openapi.roots.libraries.ui.RootDetector;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author nik
  */
 class SuggestedChildRootInfo {
-  private RootDetector myDetector;
-  private VirtualFile myRootCandidate;
-  private VirtualFile mySuggestedRoot;
+  private final VirtualFile myRootCandidate;
+  private final OrderRoot mySuggestedRoot;
+  private final String myRootTypeName;
 
-  SuggestedChildRootInfo(RootDetector detector, VirtualFile rootCandidate, VirtualFile suggestedRoot) {
-    myDetector = detector;
+  SuggestedChildRootInfo(VirtualFile rootCandidate, OrderRoot suggestedRoot, String rootTypeName) {
     myRootCandidate = rootCandidate;
     mySuggestedRoot = suggestedRoot;
-  }
-
-  public RootDetector getDetector() {
-    return myDetector;
+    myRootTypeName = rootTypeName;
   }
 
   public VirtualFile getRootCandidate() {
     return myRootCandidate;
   }
 
-  public VirtualFile getSuggestedRoot() {
+  public OrderRoot getSuggestedRoot() {
     return mySuggestedRoot;
+  }
+
+  public String getRootTypeName() {
+    return myRootTypeName;
   }
 }
