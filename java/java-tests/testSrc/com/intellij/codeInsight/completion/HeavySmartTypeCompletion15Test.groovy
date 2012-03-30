@@ -16,9 +16,12 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
-@SuppressWarnings({"ALL"})
+@SuppressWarnings(["ALL"])
 public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartType";
 
@@ -30,7 +33,7 @@ public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCa
   public void testGetInstance() throws Throwable {
     myFixture.configureFromExistingVirtualFile(
       myFixture.copyFileToProject(BASE_PATH + "/foo/" + getTestName(false) + ".java", "foo/" + getTestName(false) + ".java"));
-    performAction();
+    myFixture.complete(CompletionType.SMART);
     myFixture.type('\n');
     myFixture.checkResultByFile(BASE_PATH + "/foo/" + getTestName(false) + "-out.java");
   }
@@ -79,7 +82,7 @@ public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCa
 
   private void configure() {
     myFixture.configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    performAction();
+    myFixture.complete(CompletionType.SMART);
   }
 
   public void testClassLiteralShouldInsertImport() throws Throwable {
@@ -91,8 +94,19 @@ public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCa
     checkResult();
   }
 
-  private void performAction() {
-    myFixture.complete(CompletionType.SMART);
+  public void testInaccessibleClassAfterNew() {
+    Module moduleA = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'A', myFixture.tempDirFixture.findOrCreateDir("a"))
+    Module moduleB = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'B', myFixture.tempDirFixture.findOrCreateDir("b"))
+
+    PsiTestUtil.addDependency(myModule, moduleB)
+    PsiTestUtil.addDependency(moduleB, moduleA)
+
+    myFixture.addFileToProject('a/foo/Foo.java', 'package foo; public interface Foo {}')
+    myFixture.addFileToProject('b/bar/Bar.java', 'package bar; public class Bar { public static void accept(foo.Foo i) {}  }')
+
+    configure()
+    myFixture.type('\n')
+    checkResult()
   }
 
 }
