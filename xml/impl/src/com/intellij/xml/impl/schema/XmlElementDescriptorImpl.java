@@ -74,7 +74,8 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
           if (rootTag != null && 
               ( NONQUALIFIED_ATTR_VALUE.equals(elementFormDefault = rootTag.getAttributeValue(ELEMENT_FORM_DEFAULT)) || elementFormDefault == null /*unqualified is default*/) &&
-              tag.getNamespaceByPrefix("").length() == 0
+              tag.getNamespaceByPrefix("").isEmpty()
+            && myDescriptorTag.getParentTag() != rootTag
              ) {
             value = XmlUtil.findLocalNameByQualifiedName(value);
           } else {
