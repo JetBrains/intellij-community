@@ -191,10 +191,10 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   @Nullable
-  public SourceFolder addSourceFolder(@NotNull final VirtualFile file, boolean isTestSource) {
+  public SourceFolder addSourceFolder(@NotNull final VirtualFile file, boolean isTestSource, String packagePrefix) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry != null) {
-      final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, isTestSource);
+      final SourceFolder sourceFolder = contentEntry.addSourceFolder(file, isTestSource, packagePrefix);
       try {
         return sourceFolder;
       }

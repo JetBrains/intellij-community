@@ -23,6 +23,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -444,12 +445,12 @@ public abstract class VcsVFSListener implements Disposable {
       }
 
       for (Iterator<FilePath> iter = myDeletedFiles.iterator(); iter.hasNext(); ) {
-        if (copiedAddedMoved.contains(iter.next().getPath())) {
+        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iter.next().getPath()))) {
           iter.remove();
         }
       }
       for (Iterator<FilePath> iter = myDeletedWithoutConfirmFiles.iterator(); iter.hasNext(); ) {
-        if (copiedAddedMoved.contains(iter.next().getPath())) {
+        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iter.next().getPath()))) {
           iter.remove();
         }
       }

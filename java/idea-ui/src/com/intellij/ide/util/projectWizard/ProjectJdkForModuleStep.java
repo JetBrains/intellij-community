@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,6 @@ import java.awt.event.ActionListener;
  *         Date: Jan 21, 2004
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   private final JdkChooserPanel myJdkChooser;
   private final JPanel myPanel;
   private final WizardContext myContext;
@@ -147,7 +145,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return NEW_PROJECT_ICON;
+    return myContext.getStepIcon();
   }
 
   @Nullable
