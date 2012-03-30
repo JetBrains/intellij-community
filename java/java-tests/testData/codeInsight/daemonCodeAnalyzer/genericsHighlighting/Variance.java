@@ -1,10 +1,4 @@
-import java.util.List;
-import java.util.Map;
-import java.util.Iterator;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 
 /**
@@ -244,3 +238,12 @@ class Use99<U extends GenericTest99<?,F>,F> {
 class Use99n extends Use99<GenericTest99D<?>,Double> {
 }
 //end of IDEADEV-8697
+
+class IDEA79360 {
+    public static void main(Map<?, ?> map, Map<Object, Object> test) {
+        map.putAll<error descr="'putAll(java.util.Map<capture<?>,capture<?>>)' in 'java.util.Map' cannot be applied to '(java.util.Map<java.lang.Object,java.lang.Object>)'">(test)</error>;
+        map.put<error descr="'put(capture<?>, capture<?>)' in 'java.util.Map' cannot be applied to '(java.lang.String, java.lang.String)'">("", "")</error>;
+        map.put<error descr="'put(capture<?>, capture<?>)' in 'java.util.Map' cannot be applied to '(java.lang.Object, java.lang.Object)'">(new Object(), new Object())</error>;
+        map = new HashMap<Object, Object>(test);
+    }
+}

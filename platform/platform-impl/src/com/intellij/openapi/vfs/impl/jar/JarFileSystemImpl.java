@@ -50,6 +50,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private File myNoCopyJarDir;
 
   private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
+  private String[] jarPathsCache; // jarPathsCache = myHandlers.keySet()
 
   private static final class JarFileSystemImplLock {
   }
@@ -68,10 +69,15 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
         for (VFileEvent event : events) {
           if (event.getFileSystem() instanceof LocalFileSystem) {
-            final String path = event.getPath();
-            List<String> jarPaths = new ArrayList<String>();
+            String path = event.getPath();
+
+            String[] jarPaths;
             synchronized (LOCK) {
-              jarPaths.addAll(myHandlers.keySet());
+              if (jarPathsCache == null) {
+                Set<String> jarPathsSet = myHandlers.keySet();
+                jarPathsCache = jarPathsSet.toArray(new String[jarPathsSet.size()]);
+              }
+              jarPaths = jarPathsCache;
             }
 
             for (String jarPath : jarPaths) {
@@ -119,6 +125,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     final JarHandler handler;
     synchronized (LOCK) {
       handler = myHandlers.remove(path);
+      jarPathsCache = null;
     }
 
     if (handler != null) {
@@ -193,6 +200,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
       if (handler == null) {
         freshHandler = handler = new JarHandler(this, jarRootPath.substring(0, jarRootPath.length() - JAR_SEPARATOR.length()));
         myHandlers.put(jarRootPath, handler);
+        jarPathsCache = null;
       }
       else {
         freshHandler = null;

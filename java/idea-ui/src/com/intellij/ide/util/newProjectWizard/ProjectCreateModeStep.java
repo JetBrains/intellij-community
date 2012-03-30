@@ -43,9 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectCreateModeStep extends ModuleWizardStep {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-
-
   private final JPanel myWholePanel;
 
   private WizardMode myMode;
@@ -138,7 +135,7 @@ public class ProjectCreateModeStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return myWizardContext.getProject() == null ? NEW_PROJECT_ICON : ICON;
+    return myWizardContext.getStepIcon();
   }
 
   public WizardMode getMode() {

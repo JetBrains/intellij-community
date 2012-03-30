@@ -16,11 +16,9 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.junit.JUnitProcessHandler;
-import com.intellij.execution.junit2.segments.DeferredActionsQueue;
-import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
-import com.intellij.execution.junit2.segments.InputConsumer;
-import com.intellij.execution.junit2.segments.SegmentReader;
+import com.intellij.execution.junit2.segments.*;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +30,7 @@ import com.intellij.rt.execution.junit.segments.PacketProcessor;
 
 import java.io.IOException;
 
-final class OutputParser2 extends OutputParser implements PacketProcessor, InputConsumer {
+final class OutputParser2 extends OutputParser implements PacketProcessor, InputConsumer, OutputPacketProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser2");
   private int myLastPacketIndex = -1;
 
@@ -42,6 +40,11 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
                         ProgressIndicator progress,
                         String buildName) {
     super(project, processHandler, errorsView, progress, buildName);
+  }
+
+  @Override
+  public void processOutput(Printable printable) {
+    printable.printOn(null);
   }
 
   public void processPacket(String packet) {

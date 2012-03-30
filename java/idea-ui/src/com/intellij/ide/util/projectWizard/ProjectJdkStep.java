@@ -29,7 +29,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,7 +38,6 @@ import java.awt.*;
  *         Date: Jan 21, 2004
  */
 public class ProjectJdkStep extends ModuleWizardStep {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
   private final WizardContext myContext;
 
   protected final ProjectJdksConfigurable myProjectJdksConfigurable;
@@ -85,7 +83,7 @@ public class ProjectJdkStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return NEW_PROJECT_ICON;
+    return myContext.getStepIcon();
   }
 
   public boolean validate() throws ConfigurationException {

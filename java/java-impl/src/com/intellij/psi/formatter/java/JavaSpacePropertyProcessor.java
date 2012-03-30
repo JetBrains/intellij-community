@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -772,7 +773,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       //   1. Call 'introduce variable' refactoring for the code like 'System.out.println(1);';
       //   2. When KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE is on, the output looks like 'int i = 1; System.out.println(i);';
       // That's why we process the option only during the explicit reformat (directly invoked by an user).
-      if ((mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE && FormatterUtil.isFormatterCalledExplicitly())
+      if ((mySettings.KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE
+             && (FormatterUtil.isFormatterCalledExplicitly() || ApplicationManager.getApplication().isUnitTestMode()))
           || psi != null && PsiTreeUtil.hasErrorElements(psi))
       {
         minSpaces = 1;

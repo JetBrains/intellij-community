@@ -57,6 +57,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Entry point to work with remote {@link GradleApiFacade}.
@@ -77,12 +78,13 @@ public class GradleApiFacadeManager {
 
   private final ConcurrentMap<String /*project name*/, GradleApiFacade> myFacadeWrappers
     = new ConcurrentWeakHashMap<String, GradleApiFacade>();
-  private final ConcurrentMap<String /*project name*/, RemoteGradleProgressNotificationManager> myRemoteNotificationManagers
-    = new ConcurrentWeakHashMap<String, RemoteGradleProgressNotificationManager>();
   private final ConcurrentMap<String /*project name*/, Pair<GradleApiFacade, RemoteGradleProcessSettings>> myRemoteFacades
     = new ConcurrentWeakHashMap<String, Pair<GradleApiFacade, RemoteGradleProcessSettings>>();
 
-  @NotNull private final GradleLibraryManager                  myGradleLibraryManager;
+  @NotNull private final GradleLibraryManager myGradleLibraryManager;
+
+  private final AtomicReference<RemoteGradleProgressNotificationManager> myExportedProgressManager
+    = new AtomicReference<RemoteGradleProgressNotificationManager>();
   @NotNull private final GradleProgressNotificationManagerImpl myProgressManager;
 
   // Please note that we don't use RemoteGradleProcessSettings as the 'Configuration' type parameter here because we need
@@ -283,14 +285,14 @@ public class GradleApiFacadeManager {
       GradleLog.LOG.info("Instructing gradle to use java from " + newPair.second.getJavaHome());
     }
     result.applySettings(newPair.second);
-    RemoteGradleProgressNotificationManager exported = myRemoteNotificationManagers.get(project.getName());
+    RemoteGradleProgressNotificationManager exported = myExportedProgressManager.get();
     if (exported == null) {
       try {
         exported = (RemoteGradleProgressNotificationManager)UnicastRemoteObject.exportObject(myProgressManager, 0);
-        myRemoteNotificationManagers.putIfAbsent(project.getName(), exported);
+        myExportedProgressManager.set(exported);
       }
       catch (RemoteException e) {
-        exported = myRemoteNotificationManagers.get(project.getName());
+        exported = myExportedProgressManager.get();
       }
     }
     if (exported == null) {

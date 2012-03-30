@@ -421,7 +421,7 @@ public class MavenIndex {
   }
 
   @TestOnly
-  protected File getDir() {
+  public File getDir() {
     return myDir;
   }
 
@@ -487,6 +487,17 @@ public class MavenIndex {
       public Set<String> doTask() throws Exception {
         Set<String> result = myData.groupToArtifactMap.get(groupId);
         return result == null ? Collections.<String>emptySet() : result;
+      }
+    }, Collections.<String>emptySet());
+  }
+
+  @TestOnly
+  public void printInfo() {
+    doIndexTask(new IndexTask<Set<String>>() {
+      public Set<String> doTask() throws Exception {
+        System.out.println("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
+        System.out.println("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
+        return Collections.<String>emptySet();
       }
     }, Collections.<String>emptySet());
   }

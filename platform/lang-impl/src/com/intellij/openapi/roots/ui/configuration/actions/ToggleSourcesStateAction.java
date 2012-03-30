@@ -71,12 +71,13 @@ public class ToggleSourcesStateAction extends ContentEntryEditingAction {
       final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
       if (isSelected) {
         if (sourceFolder == null) { // not marked yet
-          contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
+          contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources, "");
         }
         else {
           if (myEditTestSources != sourceFolder.isTestSource()) {
+            final String packagePrefix = sourceFolder.getPackagePrefix();
             contentEntryEditor.removeSourceFolder(sourceFolder);
-            contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources);
+            contentEntryEditor.addSourceFolder(selectedFile, myEditTestSources, packagePrefix);
           }
         }
       }

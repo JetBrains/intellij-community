@@ -1045,4 +1045,15 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       EditorFactory.getInstance().releaseEditor(editor);
     }
   }
+  public void testPersistent() throws Exception {
+    String text = "xxx\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz";
+    Document document = EditorFactory.getInstance().createDocument(text);
+    int startOffset = text.indexOf('z');
+    int endOffset = text.lastIndexOf('z');
+    RangeMarker marker = document.createRangeMarker(startOffset, endOffset, true);
+
+    document.replaceString(startOffset+1, endOffset-1, "ccc");
+
+    assertTrue(marker.isValid());
+  }
 }
