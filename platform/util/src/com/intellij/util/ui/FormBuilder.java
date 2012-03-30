@@ -39,7 +39,7 @@ public class FormBuilder {
   private int myVerticalGap;
   private int myHorizontalGap;
 
-  public FormBuilder() {
+  private FormBuilder() {
     myPanel = new JPanel(new GridBagLayout());
     myVertical = false;
     myIndent = 0;

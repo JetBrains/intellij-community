@@ -759,7 +759,18 @@ public class SingleInspectionProfilePanel extends JPanel {
       final NamedScope scope = node.getScope();
       if (scope != null || node.isInspectionNode()) {
         final HighlightDisplayKey key = descriptor.getKey();
-        final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar());
+        final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar()) {
+          @Override
+          public Dimension getPreferredSize() {
+            Dimension preferredSize = super.getPreferredSize();
+            return new Dimension(Math.min(300, preferredSize.width), preferredSize.height);
+          }
+
+          @Override
+          public Dimension getMinimumSize() {
+            return getPreferredSize();
+          }
+        };
         chooser.getComboBox().addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope) != chooser.getLevel();
@@ -768,7 +779,6 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         });
         chooser.setLevel(mySelectedProfile.getErrorLevel(key, scope));
-        chooser.setMinimumSize(new Dimension(150, chooser.getPreferredSize().height));
 
         final JPanel withSeverity = new JPanel(new GridBagLayout());
         withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")),
