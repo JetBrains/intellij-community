@@ -39,6 +39,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
@@ -298,10 +299,10 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
         //the case of print '\<caret>'
         if (fileText.charAt(caretOffset) == '\'' && caretOffset > 0 && fileText.charAt(caretOffset - 1) == '\\') {
-          convertEndToMultiline(caretOffset, document, fileText);
+          convertEndToMultiline(caretOffset, document, fileText, '\'');
         }
         else {
-          convertEndToMultiline(literalRange.getEndOffset(), document, fileText);
+          convertEndToMultiline(literalRange.getEndOffset(), document, fileText, '\'');
         }
         document.insertString(literalRange.getStartOffset(), "''");
         editor.getCaretModel().moveToOffset(caretOffset + 2);
@@ -324,13 +325,19 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
           parent = parent.getParent();
         }
       }
-      if (parent == null || parent.getLastChild() instanceof PsiErrorElement) return false;
+      if (parent == null) return false;
       if (GroovyEditorActionUtil.isPlainGString(parent.getNode())) {
         PsiElement exprSibling = stringElement.getNextSibling();
         boolean rightFromDollar = exprSibling instanceof GrExpression && exprSibling.getTextRange().getStartOffset() == caretOffset;
         if (rightFromDollar) caretOffset--;
         TextRange parentRange = parent.getTextRange();
-        document.insertString(parentRange.getEndOffset(), "\"\"");
+        //the case of print '\<caret>'
+        if (fileText.charAt(caretOffset) == '\"' && caretOffset > 0 && fileText.charAt(caretOffset - 1) == '\\') {
+          convertEndToMultiline(caretOffset, document, fileText, '"');
+        }
+        else {
+          convertEndToMultiline(parent.getTextRange().getEndOffset(), document, fileText, '"');
+        }
         document.insertString(parentRange.getStartOffset(), "\"\"");
         editor.getCaretModel().moveToOffset(caretOffset + 2);
         EditorModificationUtil.insertStringAtCaret(editor, "\n");
@@ -388,13 +395,13 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     return stringOffset < i && i < caret;
   }
 
-  private static void convertEndToMultiline(int caretOffset, Document document, String fileText) {
-    if (caretOffset < fileText.length() && fileText.charAt(caretOffset) == '\'' ||
-        caretOffset > 0 && fileText.charAt(caretOffset - 1) == '\'') {
-      document.insertString(caretOffset, "''");
+  private static void convertEndToMultiline(int caretOffset, Document document, String fileText, char c) {
+    if (caretOffset < fileText.length() && fileText.charAt(caretOffset) == c ||
+        caretOffset > 0 && fileText.charAt(caretOffset - 1) == c) {
+      document.insertString(caretOffset, new CharArrayCharSequence(c, c));
     }
     else {
-      document.insertString(caretOffset, "'''");
+      document.insertString(caretOffset, new CharArrayCharSequence(c, c, c));
     }
   }
 
