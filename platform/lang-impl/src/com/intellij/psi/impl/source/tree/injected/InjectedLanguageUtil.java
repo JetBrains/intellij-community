@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class InjectedLanguageUtil {
+public class InjectedLanguageUtil extends InjectedLanguageUtilCore{
   static final Key<List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
