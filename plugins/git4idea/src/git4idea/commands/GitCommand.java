@@ -59,19 +59,16 @@ public class GitCommand {
 
   @NotNull @NonNls private final String myName; // command name passed to git
   @NotNull private final LockingPolicy myLocking; // Locking policy for the command
-  @NotNull private final ThreadPolicy myThreading; // Thread policy for the command
 
   /**
    * The constructor
    *
    * @param name      the command myName
    * @param locking   the myLocking policy
-   * @param threading the thread policy
    */
-  private GitCommand(@NonNls @NotNull String name, @NotNull LockingPolicy locking, @NotNull ThreadPolicy threading) {
-    this.myLocking = locking;
-    this.myName = name;
-    this.myThreading = threading;
+  private GitCommand(@NonNls @NotNull String name, @NotNull LockingPolicy locking) {
+    myLocking = locking;
+    myName = name;
   }
 
   /**
@@ -81,7 +78,7 @@ public class GitCommand {
    * @return the created command object
    */
   private static GitCommand meta(String name) {
-    return new GitCommand(name, LockingPolicy.META, ThreadPolicy.ANY);
+    return new GitCommand(name, LockingPolicy.META);
   }
 
   /**
@@ -91,7 +88,7 @@ public class GitCommand {
    * @return the create command objects
    */
   private static GitCommand read(String name) {
-    return new GitCommand(name, LockingPolicy.READ, ThreadPolicy.BACKGROUND_ONLY);
+    return new GitCommand(name, LockingPolicy.READ);
   }
 
   /**
@@ -101,7 +98,7 @@ public class GitCommand {
    * @return the created command object
    */
   private static GitCommand write(String name) {
-    return new GitCommand(name, LockingPolicy.WRITE, ThreadPolicy.BACKGROUND_ONLY);
+    return new GitCommand(name, LockingPolicy.WRITE);
   }
 
   /**
@@ -111,7 +108,7 @@ public class GitCommand {
    * @return the created command object
    */
   private static GitCommand writeSuspendable(String name) {
-    return new GitCommand(name, LockingPolicy.WRITE_SUSPENDABLE, ThreadPolicy.BACKGROUND_ONLY);
+    return new GitCommand(name, LockingPolicy.WRITE_SUSPENDABLE);
   }
 
   /**
@@ -128,14 +125,6 @@ public class GitCommand {
   @NotNull
   public LockingPolicy lockingPolicy() {
     return myLocking;
-  }
-
-  /**
-   * @return the locking policy for the command
-   */
-  @NotNull
-  public ThreadPolicy threadingPolicy() {
-    return myThreading;
   }
 
   /**
@@ -158,19 +147,5 @@ public class GitCommand {
      * Metadata read/write command
      */
     META,
-  }
-
-  /**
-   * Thread policy for command
-   */
-  enum ThreadPolicy {
-    /**
-     * Any thread could be used
-     */
-    ANY,
-    /**
-     * Only background thread could be used
-     */
-    BACKGROUND_ONLY
   }
 }
