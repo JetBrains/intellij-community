@@ -219,12 +219,7 @@ public class VirtualFilePointerImpl extends UserDataHolderBase implements Virtua
       disposed = true;
 
       final Pair<VirtualFile, String> pair = myFileAndUrl;
-      if (pair.first != null) {
-        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(pair.first.getUrl(), myListener);
-      }
-      if (pair.second != null) {
-        ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(pair.second, myListener);
-      }
+      ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).clearPointerCaches(pair.first, pair.second, myListener);
     }
   }
 

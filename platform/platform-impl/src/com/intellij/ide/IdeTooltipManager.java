@@ -139,11 +139,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           if (!myCurrentTipIsCentered) {
             myX = me.getX();
             myY = me.getY();
-            if (c instanceof JComponent && ((JComponent)c).getToolTipText(me) == null) {
-              hideCurrent(me, null, null);//There is no tooltip here, let's proceed it as MOUSE_EXITED
+            if (c instanceof JComponent && ((JComponent)c).getToolTipText(me) == null && (myQueuedTooltip == null || !myQueuedTooltip.isHint())) {
+              hideCurrent(me, null, null);//There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
             }
-            else
+            else {
               maybeShowFor(c, me);
+            }
           }
         }
       } else if (myCurrentComponent == null && myQueuedComponent == null) {

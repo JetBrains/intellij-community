@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>CyclomaticComplexity.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Overly complex method</problem_class>
+    <description>&lt;code&gt;fooBar&lt;/code&gt; is overly complex (cyclomatic complexity = 12) #loc</description>
+  </problem>
+</problems>

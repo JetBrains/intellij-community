@@ -1291,6 +1291,8 @@ public class ListUtils {
     checkResult()
   }
 
+  public void testNoParenthesesAroundCallQualifier() { doTest() }
+
   public void testAllAssertClassesMethods() {
     myFixture.addClass 'package foo; public class Assert { public static boolean foo() {} }'
     myFixture.addClass 'package bar; public class Assert { public static boolean bar() {} }'

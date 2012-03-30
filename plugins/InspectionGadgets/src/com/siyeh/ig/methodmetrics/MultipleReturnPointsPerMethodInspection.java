@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,9 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class MultipleReturnPointsPerMethodInspection
   extends MethodMetricInspection {
@@ -66,53 +63,21 @@ public class MultipleReturnPointsPerMethodInspection
   }
 
   @Override
+  public Collection<? extends JComponent> createExtraOptions() {
+    final CheckBox ignoreGuardClausesCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message("ignore.guard.clauses.option"), this, "ignoreGuardClauses");
+    final CheckBox ignoreEqualsMethodCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message("ignore.for.equals.methods.option"), this, "ignoreEqualsMethod");
+    return Arrays.asList(ignoreGuardClausesCheckBox, ignoreEqualsMethodCheckBox);
+  }
+
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer returnPointCount = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "multiple.return.points.per.method.problem.descriptor",
       returnPointCount);
-  }
-
-  @Override
-  public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
-    final JLabel label = new JLabel(InspectionGadgetsBundle.message(
-      "return.point.limit.option"));
-    final JFormattedTextField termLimitTextField =
-      prepareNumberEditor("m_limit");
-    final CheckBox ignoreGuardClausesCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message(
-        "ignore.guard.clauses.option"),
-                   this, "ignoreGuardClauses");
-    final CheckBox ignoreEqualsMethodCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message(
-        "ignore.for.equals.methods.option"),
-                   this, "ignoreEqualsMethod");
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-
-    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    panel.add(label, constraints);
-
-    constraints.fill = GridBagConstraints.NONE;
-    constraints.gridx = 1;
-    panel.add(termLimitTextField, constraints);
-
-    constraints.gridx = 0;
-    constraints.gridy = 1;
-    constraints.gridwidth = 2;
-    constraints.weightx = 1.0;
-    panel.add(ignoreGuardClausesCheckBox, constraints);
-
-    constraints.gridy = 2;
-    constraints.weighty = 1.0;
-    panel.add(ignoreEqualsMethodCheckBox, constraints);
-
-    return panel;
   }
 
   @Override
@@ -129,10 +94,8 @@ public class MultipleReturnPointsPerMethodInspection
       if (method.getNameIdentifier() == null) {
         return;
       }
-      if (ignoreEqualsMethod) {
-        if (MethodUtils.isEquals(method)) {
-          return;
-        }
+      if (ignoreEqualsMethod && MethodUtils.isEquals(method)) {
+        return;
       }
       final int returnPointCount = calculateReturnPointCount(method);
       if (returnPointCount <= getLimit()) {
@@ -142,8 +105,7 @@ public class MultipleReturnPointsPerMethodInspection
     }
 
     private int calculateReturnPointCount(PsiMethod method) {
-      final ReturnPointCountVisitor visitor =
-        new ReturnPointCountVisitor(ignoreGuardClauses);
+      final ReturnPointCountVisitor visitor = new ReturnPointCountVisitor(ignoreGuardClauses);
       method.accept(visitor);
       final int count = visitor.getCount();
       if (!mayFallThroughBottom(method)) {
@@ -157,8 +119,7 @@ public class MultipleReturnPointsPerMethodInspection
       if (statements.length == 0) {
         return count + 1;
       }
-      final PsiStatement lastStatement =
-        statements[statements.length - 1];
+      final PsiStatement lastStatement = statements[statements.length - 1];
       if (ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
         return count + 1;
       }

@@ -40,6 +40,8 @@ import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAc
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
@@ -144,8 +146,11 @@ public class ContentEntryTreeEditor {
     final ContentEntry entry = contentEntryEditor.getContentEntry();
     assert entry != null : contentEntryEditor;
     final VirtualFile file = entry.getFile();
-    assert file != null : entry.getUrl();
     myDescriptor.setRoots(file);
+    if (file == null) {
+      final String path = VfsUtil.urlToPath(entry.getUrl());
+      myDescriptor.setTitle(FileUtil.toSystemDependentName(path));
+    }
 
     final Runnable init = new Runnable() {
       public void run() {

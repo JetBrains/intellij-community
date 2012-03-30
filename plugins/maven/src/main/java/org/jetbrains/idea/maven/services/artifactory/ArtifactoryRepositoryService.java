@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.services.artifactory;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -53,6 +55,9 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
       }
       return result;
     }
+    catch (JsonSyntaxException e) {
+      return Collections.emptyList();
+    }
     catch (Exception e) {
       throw new IOException(e);
     }
@@ -74,7 +79,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
         final String name = StringUtil.join(Arrays.asList(template.getGroupId(), template.getArtifactId(), template.getVersion()), ":");
         final InputStream stream = new Endpoint.Search.Artifact(url).getArtifactSearchResultJson(name, null).getInputStream();
 
-        final ArtifactoryModel.GavcResults results = gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.GavcResults.class);
+        final ArtifactoryModel.GavcResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.GavcResults.class);
         if (results != null && results.results != null) {
           for (ArtifactoryModel.GavcResult result : results.results) {
             if (!result.uri.endsWith(packaging)) continue;
@@ -87,7 +92,7 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
         final String searchString = className.endsWith("*") || className.endsWith("?") ? className : className + ".class";
         final InputStream stream = new Endpoint.Search.Archive(url).getArchiveSearchResultJson(searchString, null).getInputStream();
 
-        final ArtifactoryModel.ArchiveResults results = gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.ArchiveResults.class);
+        final ArtifactoryModel.ArchiveResults results = stream == null? null : gson.fromJson(new InputStreamReader(stream), ArtifactoryModel.ArchiveResults.class);
         if (results != null && results.results != null) {
           for (ArtifactoryModel.ArchiveResult result : results.results) {
             for (String uri : result.archiveUris) {
@@ -98,6 +103,9 @@ public class ArtifactoryRepositoryService extends MavenRepositoryService {
         }
       }
       return artifacts;
+    }
+    catch (JsonSyntaxException e) {
+      return Collections.emptyList();
     }
     catch (Exception e) {
       throw new IOException(e);

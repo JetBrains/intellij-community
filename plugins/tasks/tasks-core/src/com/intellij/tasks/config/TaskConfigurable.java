@@ -48,6 +48,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   @BindControl("changelistNameFormat")
   private JTextField myChangelistNameFormat;
   private JBCheckBox myAlwaysDisplayTaskCombo;
+  private JTextField myConnectionTimeout;
 
   private final Project myProject;
   private Configurable[] myConfigurables;
@@ -87,6 +88,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     super.reset();
     enableFields();
     myAlwaysDisplayTaskCombo.setSelected(TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO);
+    myConnectionTimeout.setText(Integer.toString(TaskSettings.getInstance().CONNECTION_TIMEOUT));
   }
 
   @Override
@@ -97,11 +99,14 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
       TaskManager.getManager(myProject).updateIssues(null);
     }
     TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = myAlwaysDisplayTaskCombo.isSelected();
+    TaskSettings.getInstance().CONNECTION_TIMEOUT = Integer.valueOf(myConnectionTimeout.getText());
   }
 
   @Override
   public boolean isModified() {
-    return super.isModified() || TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected();
+    return super.isModified() ||
+           TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
+      TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText());
   }
 
   @Nls
