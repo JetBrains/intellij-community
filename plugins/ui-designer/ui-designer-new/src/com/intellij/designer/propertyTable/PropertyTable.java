@@ -164,7 +164,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     return myShowExpert;
   }
 
-  public void setShowExpert(boolean showExpert) {
+  public void showExpert(boolean showExpert) {
     myShowExpert = showExpert;
     updateProperties();
   }
@@ -389,6 +389,17 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     return property.getChildren(getCurrentComponent());
   }
 
+  private List<Property> getFilterChildren(Property property) {
+    List<Property> properties = new ArrayList<Property>(getChildren(property));
+    for (Iterator<Property> I = properties.iterator(); I.hasNext(); ) {
+      Property child = I.next();
+      if (child.isExpert() && !myShowExpert) {
+        I.remove();
+      }
+    }
+    return properties;
+  }
+
   private boolean isDefault(Property property) throws Exception {
     for (RadComponent component : myComponents) {
       if (!property.isDefaultValue(component)) {
@@ -424,7 +435,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     Property property = myProperties.get(rowIndex);
 
     LOG.assertTrue(myExpandedProperties.remove(property.getPath()));
-    int size = getChildren(property).size();
+    int size = getFilterChildren(property).size();
     for (int i = 0; i < size; i++) {
       myProperties.remove(rowIndex + 1);
     }
@@ -447,10 +458,11 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     if (myExpandedProperties.contains(path)) {
       return;
     }
-
     myExpandedProperties.add(path);
-    List<Property> properties = getChildren(property);
+
+    List<Property> properties = getFilterChildren(property);
     myProperties.addAll(rowIndex + 1, properties);
+
     myModel.fireTableDataChanged();
 
     if (selectedRow != -1) {

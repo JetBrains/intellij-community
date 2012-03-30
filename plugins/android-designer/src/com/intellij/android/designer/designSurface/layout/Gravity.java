@@ -15,9 +15,123 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Alexander Lobas
  */
 public enum Gravity {
-  Left, Right, Center, Top, Bottom
+  left, right, center, top, bottom;
+
+  public static final int NONE = 0;
+  public static final int TOP = 1 << 0;
+  public static final int BOTTOM = 1 << 1;
+  public static final int LEFT = 1 << 2;
+  public static final int RIGHT = 1 << 3;
+  public static final int CENTER_VERTICAL = 1 << 4;
+  public static final int FILL_VERTICAL = 1 << 5;
+  public static final int CENTER_HORIZONTAL = 1 << 6;
+  public static final int FILL_HORIZONTAL = 1 << 7;
+  public static final int CENTER = CENTER_HORIZONTAL | CENTER_VERTICAL;
+  public static final int FILL = FILL_HORIZONTAL | FILL_VERTICAL;
+  public static final int CLIP_VERTICAL = 1 << 8;
+  public static final int CLIP_HORIZONTAL = 1 << 9;
+  public static final int START = (1 << 10) | LEFT;
+  public static final int END = (1 << 11) | RIGHT;
+
+  @Nullable
+  public static String getValue(Gravity horizontal, Gravity vertical) {
+    StringBuilder gravity = new StringBuilder();
+
+    if (horizontal == center && vertical == center) {
+      gravity.append("center");
+    }
+    else {
+      if (horizontal == left) {
+        gravity.append("left");
+      }
+      else if (horizontal == center) {
+        gravity.append("center_horizontal");
+      }
+      else if (horizontal == right) {
+        gravity.append("right");
+      }
+
+      if (vertical == top) {
+        if (gravity.length() > 0) {
+          gravity.append("|");
+        }
+        gravity.append("top");
+      }
+      else if (vertical == center) {
+        if (gravity.length() > 0) {
+          gravity.append("|");
+        }
+        gravity.append("center_vertical");
+      }
+      else if (vertical == bottom) {
+        if (gravity.length() > 0) {
+          gravity.append("|");
+        }
+        gravity.append("bottom");
+      }
+    }
+
+    return gravity.length() == 0 ? null : gravity.toString();
+  }
+
+  public static int getFlags(String value) {
+    int flags = NONE;
+
+    if (!StringUtil.isEmpty(value)) {
+      for (String option : StringUtil.split(value, "|")) {
+        option = option.trim();
+
+        if ("top".equals(option)) {
+          flags |= TOP;
+        }
+        else if ("bottom".equals(option)) {
+          flags |= BOTTOM;
+        }
+        else if ("left".equals(option)) {
+          flags |= LEFT;
+        }
+        else if ("right".equals(option)) {
+          flags |= RIGHT;
+        }
+        else if ("center_vertical".equals(option)) {
+          flags |= CENTER_VERTICAL;
+        }
+        else if ("fill_vertical".equals(option)) {
+          flags |= FILL_VERTICAL;
+        }
+        else if ("center_horizontal".equals(option)) {
+          flags |= CENTER_HORIZONTAL;
+        }
+        else if ("fill_horizontal".equals(option)) {
+          flags |= FILL_HORIZONTAL;
+        }
+        else if ("center".equals(option)) {
+          flags |= CENTER;
+        }
+        else if ("fill".equals(option)) {
+          flags |= FILL;
+        }
+        else if ("clip_vertical".equals(option)) {
+          flags |= CLIP_VERTICAL;
+        }
+        else if ("clip_horizontal".equals(option)) {
+          flags |= CLIP_HORIZONTAL;
+        }
+        else if ("start".equals(option)) {
+          flags |= START;
+        }
+        else if ("end".equals(option)) {
+          flags |= END;
+        }
+      }
+    }
+    return flags;
+  }
 }

@@ -115,7 +115,7 @@ public class PropertyParser {
       }
 
       if (layoutParams != null) {
-        List<Property> properties = loadLayoutProperties(layoutParams, 0);
+        List<Property> properties = loadLayoutProperties(layoutParams, 0, parent.getMetaModel());
 
         if (!properties.isEmpty()) {
           properties = new ArrayList<Property>(properties);
@@ -148,7 +148,7 @@ public class PropertyParser {
             property = padding = new CompoundProperty(name, definition);
           }
           else if (formats.contains(AttributeFormat.Flag)) {
-            property = new FlagProperty(name, definition);
+            property = new FlagProperty(name, definition, model);
           }
           else {
             property = new AttributeProperty(name, definition);
@@ -225,7 +225,7 @@ public class PropertyParser {
     return properties;
   }
 
-  private List<Property> loadLayoutProperties(String[] components, int index) throws Exception {
+  private List<Property> loadLayoutProperties(String[] components, int index, MetaModel model) throws Exception {
     String component = components[index];
 
     List<Property> properties = myCachedProperties.get(component);
@@ -256,7 +256,7 @@ public class PropertyParser {
             property = margin = new CompoundProperty(name, definition);
           }
           else if (formats.contains(AttributeFormat.Flag)) {
-            property = new FlagProperty(name, definition);
+            property = new FlagProperty(name, definition, model);
           }
           else {
             property = new AttributeProperty(name, definition);
@@ -278,7 +278,7 @@ public class PropertyParser {
       }
 
       if (++index < components.length) {
-        for (Property property : loadLayoutProperties(components, index)) {
+        for (Property property : loadLayoutProperties(components, index, model)) {
           if (PropertyTable.findProperty(properties, property) == -1) {
             properties.add(property);
           }

@@ -17,6 +17,7 @@ package com.intellij.android.designer.model.layout;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.FrameLayoutOperation;
+import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.designSurface.ComponentDecorator;
@@ -48,12 +49,15 @@ public class RadFrameLayout extends RadViewLayoutWithData {
       }
       return new FrameLayoutOperation((RadViewComponent)myContainer, context);
     }
+    else if (context.is(ResizeOperation.TYPE)) {
+      return new ResizeOperation(context);
+    }
     return null;
   }
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    return super.getChildSelectionDecorator(component, selection); // TODO: Auto-generated method stub
+    return ResizeOperation.full();
   }
 
   @Override

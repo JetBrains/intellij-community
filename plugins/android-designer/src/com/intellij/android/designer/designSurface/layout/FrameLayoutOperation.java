@@ -23,7 +23,6 @@ import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightColors;
 import com.intellij.util.containers.hash.HashSet;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -40,7 +40,7 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   private GravityFeedback myFeedback;
   private JLabel myTextFeedback;
   private String myGravity;
-  private Set<Pair<Gravity, Gravity>> myExcludes;
+  private Set<Pair<Gravity, Gravity>> myExcludes = Collections.emptySet();
 
   public FrameLayoutOperation(RadViewComponent container, OperationContext context) {
     super(container, context);
@@ -50,23 +50,42 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
       for (RadComponent component : context.getComponents()) {
         String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
-        if (StringUtil.isEmpty(value)) {
-          myExcludes.add(new Pair<Gravity, Gravity>(Gravity.Left, Gravity.Top));
+        int flags = Gravity.getFlags(value);
+
+        Gravity horizontal = Gravity.left;
+        if ((flags & Gravity.LEFT) != 0) {
+          horizontal = Gravity.left;
         }
-        else {
-          for (String option : StringUtil.split(value, "|")) {
-            // TODO
-          }
+        else if ((flags & Gravity.CENTER_HORIZONTAL) != 0) {
+          horizontal = Gravity.center;
         }
+        else if ((flags & Gravity.RIGHT) != 0) {
+          horizontal = Gravity.right;
+        }
+
+        Gravity vertical = Gravity.top;
+        if ((flags & Gravity.TOP) != 0) {
+          vertical = Gravity.top;
+        }
+        else if ((flags & Gravity.CENTER_VERTICAL) != 0) {
+          vertical = Gravity.center;
+        }
+        else if ((flags & Gravity.BOTTOM) != 0) {
+          vertical = Gravity.bottom;
+        }
+
+        myExcludes.add(new Pair<Gravity, Gravity>(horizontal, vertical));
       }
     }
   }
 
-  private void createFeedback(FeedbackLayer layer, Rectangle bounds) {
+  private void createFeedback(Rectangle bounds) {
     if (myFeedback == null) {
+      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+
       myFeedback = new GravityFeedback();
-      layer.add(myFeedback);
       myFeedback.setBounds(bounds);
+      layer.add(myFeedback);
 
       myTextFeedback = new JLabel();
       myTextFeedback.setFont(myTextFeedback.getFont().deriveFont(Font.BOLD));
@@ -81,23 +100,22 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
   @Override
   public void showFeedback() {
-    FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-    Rectangle bounds = myContainer.getBounds(layer);
+    Rectangle bounds = myContainer.getBounds(myContext.getArea().getFeedbackLayer());
 
-    createFeedback(layer, bounds);
+    createFeedback(bounds);
 
     Point location = myContext.getLocation();
     Gravity horizontal = calculateHorizontal(bounds, location);
     Gravity vertical = calculateVertical(bounds, location);
 
-    if (myContext.isMove() && myExcludes.contains(new Pair<Gravity, Gravity>(horizontal, vertical))) {
+    if (myContext.isMove() && exclude(horizontal, vertical)) {
       horizontal = vertical = null;
     }
 
     myFeedback.setGravity(horizontal, vertical);
     configureTextFeedback(bounds, horizontal, vertical);
 
-    configureGravity(horizontal, vertical);
+    myGravity = Gravity.getValue(horizontal, vertical);
   }
 
   private void configureTextFeedback(Rectangle bounds, Gravity horizontal, Gravity vertical) {
@@ -120,13 +138,13 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     double right = bounds.x + 2 * bounds.width / 3.0;
 
     if (location.x < left) {
-      horizontal = Gravity.Left;
+      horizontal = Gravity.left;
     }
     else if (left < location.x && location.x < right) {
-      horizontal = Gravity.Center;
+      horizontal = Gravity.center;
     }
     else if (location.x > right) {
-      horizontal = Gravity.Right;
+      horizontal = Gravity.right;
     }
 
     return horizontal;
@@ -139,56 +157,26 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     double bottom = bounds.y + 2 * bounds.height / 3.0;
 
     if (location.y < top) {
-      vertical = Gravity.Top;
+      vertical = Gravity.top;
     }
     else if (top < location.y && location.y < bottom) {
-      vertical = Gravity.Center;
+      vertical = Gravity.center;
     }
     else if (location.y > bottom) {
-      vertical = Gravity.Bottom;
+      vertical = Gravity.bottom;
     }
 
     return vertical;
   }
 
-  private void configureGravity(Gravity horizontal, Gravity vertical) {
-    StringBuffer gravity = new StringBuffer();
-
-    if (horizontal == Gravity.Center && vertical == Gravity.Center) {
-      gravity.append("center");
-    }
-    else {
-      if (horizontal == Gravity.Left) {
-        gravity.append("left");
-      }
-      else if (horizontal == Gravity.Center) {
-        gravity.append("center_horizontal");
-      }
-      else if (horizontal == Gravity.Right) {
-        gravity.append("right");
-      }
-
-      if (vertical == Gravity.Top) {
-        if (gravity.length() > 0) {
-          gravity.append("|");
-        }
-        gravity.append("top");
-      }
-      else if (vertical == Gravity.Center) {
-        if (gravity.length() > 0) {
-          gravity.append("|");
-        }
-        gravity.append("center_vertical");
-      }
-      else if (vertical == Gravity.Bottom) {
-        if (gravity.length() > 0) {
-          gravity.append("|");
-        }
-        gravity.append("bottom");
+  private boolean exclude(Gravity horizontal, Gravity vertical) {
+    for (Pair<Gravity, Gravity> p : myExcludes) {
+      if (p.first == horizontal && p.second == vertical) {
+        return true;
       }
     }
 
-    myGravity = gravity.length() == 0 ? null : gravity.toString();
+    return false;
   }
 
   @Override
@@ -227,10 +215,10 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   // Feedback
   //
   //////////////////////////////////////////////////////////////////////////////////////////
+  private static final Gravity[] HORIZONTAL = {Gravity.left, Gravity.center, Gravity.right};
+  private static final Gravity[] VERTICAL = {Gravity.top, Gravity.center, Gravity.bottom};
 
-  private static class GravityFeedback extends AlphaComponent {
-    private static final Gravity[] HORIZONTAL = {Gravity.Left, Gravity.Center, Gravity.Right};
-    private static final Gravity[] VERTICAL = {Gravity.Top, Gravity.Center, Gravity.Bottom};
+  private class GravityFeedback extends AlphaComponent {
 
     private static final int SPACE = 5;
 
@@ -251,7 +239,9 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     protected void paintOther1(Graphics2D g2d) {
       for (Gravity h : HORIZONTAL) {
         for (Gravity v : VERTICAL) {
-          paintCell(g2d, h, v, false);
+          if (!exclude(h, v)) {
+            paintCell(g2d, h, v, false);
+          }
         }
       }
     }
@@ -273,17 +263,17 @@ public class FrameLayoutOperation extends AbstractEditOperation {
       int width = getWidth() / 3;
       int height = getHeight() / 3;
 
-      if (horizontal == Gravity.Center) {
+      if (horizontal == Gravity.center) {
         x = width;
       }
-      else if (horizontal == Gravity.Right) {
+      else if (horizontal == Gravity.right) {
         x = getWidth() - width;
       }
 
-      if (vertical == Gravity.Center) {
+      if (vertical == Gravity.center) {
         y = height;
       }
-      else if (vertical == Gravity.Bottom) {
+      else if (vertical == Gravity.bottom) {
         y = getHeight() - height;
       }
 
