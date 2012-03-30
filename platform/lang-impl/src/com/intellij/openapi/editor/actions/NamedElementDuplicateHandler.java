@@ -50,9 +50,9 @@ public class NamedElementDuplicateHandler extends EditorWriteActionHandler {
         Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLinesRange(editor, caret, caret);
         TextRange toDuplicate = new TextRange(editor.logicalPositionToOffset(lines.first), editor.logicalPositionToOffset(lines.second));
 
-        PsiNamedElement named = findNamedElement(editor, file, toDuplicate);
-        if (named != null) {
-          editor.getCaretModel().moveToOffset(named.getTextOffset());
+        PsiElement name = findNameIdentifier(editor, file, toDuplicate);
+        if (name != null) {
+          editor.getCaretModel().moveToOffset(name.getTextOffset());
         }
       }
     }
@@ -61,17 +61,17 @@ public class NamedElementDuplicateHandler extends EditorWriteActionHandler {
   }
 
   @Nullable
-  private static PsiNamedElement findNamedElement(Editor editor, PsiFile file, TextRange toDuplicate) {
+  private static PsiElement findNameIdentifier(Editor editor, PsiFile file, TextRange toDuplicate) {
     int nonWs = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), toDuplicate.getStartOffset(), "\n\t ");
     PsiElement psi = file.findElementAt(nonWs);
-    PsiNamedElement named = null;
+    PsiElement named = null;
     while (psi != null) {
       TextRange range = psi.getTextRange();
       if (range == null || psi instanceof PsiFile || !toDuplicate.contains(psi.getTextRange())) {
         break;
       }
-      if (psi instanceof PsiNamedElement) {
-        named = (PsiNamedElement)psi;
+      if (psi instanceof PsiNameIdentifierOwner) {
+        named = ((PsiNameIdentifierOwner)psi).getNameIdentifier();
       }
       psi = psi.getParent();
     }
