@@ -95,7 +95,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
   @NotNull
   @Override
   public String getFamilyName() {
-    return AndroidBundle.message("intention.family");
+    return getText();
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
