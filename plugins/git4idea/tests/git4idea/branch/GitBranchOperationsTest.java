@@ -97,6 +97,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     createAddCommit(myContrib, "a");
 
     myUltimate.getRoot().refresh(false, true);
+    updateRepositories();
   }
   
   protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
@@ -314,6 +315,13 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     });
 
     doCheckoutOrMerge(checkout, "feature");
+    updateRepositories();
+  }
+
+  private void updateRepositories() {
+    myUltimate.update(GitRepository.TrackedTopic.ALL);
+    myCommunity.update(GitRepository.TrackedTopic.ALL);
+    myContrib.update(GitRepository.TrackedTopic.ALL);
   }
 
   @Test
