@@ -35,6 +35,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 public class TaskSettings implements PersistentStateComponent<TaskSettings> {
 
   public boolean ALWAYS_DISPLAY_COMBO = false;
+  public int CONNECTION_TIMEOUT = 5000;
 
   public static TaskSettings getInstance() {
     return ServiceManager.getService(TaskSettings.class);
