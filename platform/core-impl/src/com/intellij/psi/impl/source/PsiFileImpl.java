@@ -684,7 +684,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       myStub = new SoftReference<StubTree>(stubHolder);
       StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
       base.setPsi(this);
-      base.putUserData(STUB_TREE_IN_PARSED_TREE, stubHolder); // This will prevent soft reference myStub to be collected before all of the stubs are collected.
       return stubHolder;
     }
   }
