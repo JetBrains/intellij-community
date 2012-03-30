@@ -120,7 +120,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   }
 
   @Nullable
-  public T getImmediateMapping(final VirtualFile file) {
+  public T getImmediateMapping(@Nullable final VirtualFile file) {
     synchronized (myMappings) {
       return myMappings.get(file);
     }
