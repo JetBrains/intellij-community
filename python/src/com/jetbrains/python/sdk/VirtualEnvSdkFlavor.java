@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,10 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       if (!child.isDirectory()) {
         final String childName = child.getName();
         for (String name : NAMES) {
-          if (childName.startsWith(name)) {
+          if (SystemInfo.isWindows && childName.equals(name)) {
+            candidates.add(child.getPath());
+          }
+          else if (childName.startsWith(name)) {
             if (!childName.endsWith("-config")) candidates.add(child.getPath());
             break;
           }
