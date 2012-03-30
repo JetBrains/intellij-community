@@ -160,7 +160,9 @@ public class TestIntegrationUtils {
               if (el != null) {
                 PsiMethod method = PsiTreeUtil.getParentOfType(el, PsiMethod.class, false);
                 if (method != null) {
-                  GenerateMembersUtil.setupGeneratedMethod(method);
+                  if (method.findDeepestSuperMethods().length > 0) {
+                    GenerateMembersUtil.setupGeneratedMethod(method);
+                  }
                   CreateFromUsageUtils.setupEditor(method, editor);
                 }
               }
