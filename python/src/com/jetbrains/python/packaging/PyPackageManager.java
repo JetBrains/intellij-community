@@ -59,6 +59,10 @@ public class PyPackageManager {
   public static final int ERROR_EXECUTION = -6;
   public static final int ERROR_INTERRUPTED = -7;
 
+  public static final String PACKAGE_PIP = "pip";
+  public static final String PACKAGE_DISTRIBUTE = "distribute";
+  public static final String PACKAGE_SETUPTOOLS = "setuptools";
+
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
   private static final String PACKAGING_TOOL = "packaging_tool.py";
@@ -359,6 +363,15 @@ public class PyPackageManager {
       }
     }
     return null;
+  }
+
+  public boolean hasPip() {
+    try {
+      return findPackage(PACKAGE_PIP) != null;
+    }
+    catch (PyExternalProcessException e) {
+      return false;
+    }
   }
 
   @NotNull

@@ -103,10 +103,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
             for (PyRequirement req : unsatisfied) {
               unsatisfiedNames.add(req.getName());
             }
+            final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+            if (PyPackageManager.getInstance(sdk).hasPip()) {
+              quickFixes.add(new InstallRequirementsFix(null, module, sdk, unsatisfied));
+            }
+            quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(node, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
-                            new InstallRequirementsFix(null, module, sdk, unsatisfied),
-                            new IgnoreRequirementFix(unsatisfiedNames));
+                            quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
       }
@@ -136,6 +140,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
       }
     }
 
+    @Nullable
+    private static Sdk findPythonSdk(@NotNull PsiElement element) {
+      final Module module = ModuleUtil.findModuleForPsiElement(element);
+      return PythonSdkType.findPythonSdk(module);
+    }
+
     private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
       final List<PyExpression> expressions = PyResolveUtil.unwindQualifiers(importedExpression);
       if (!expressions.isEmpty()) {
@@ -148,7 +158,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
-          if ("setuptools".equals(packageName)) {
+          if (PyPackageManager.PACKAGE_SETUPTOOLS.equals(packageName)) {
             return;
           }
           final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
@@ -171,10 +181,15 @@ public class PyPackageRequirementsInspection extends PyInspection {
                   }
                 }
               }
+              final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+              final Sdk sdk = findPythonSdk(importedExpression);
+              if (sdk != null && PyPackageManager.getInstance(sdk).hasPip()) {
+                quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
+              }
+              quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
               registerProblem(packageReferenceExpression, String.format("Package '%s' is not listed in project requirements", packageName),
                               ProblemHighlightType.WEAK_WARNING, null,
-                              new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)),
-                              new IgnoreRequirementFix(Collections.singleton(packageName)));
+                              quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
             }
           }
         }
