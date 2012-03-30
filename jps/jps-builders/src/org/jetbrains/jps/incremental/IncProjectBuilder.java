@@ -409,7 +409,8 @@ public class IncProjectBuilder {
     final File[] files = file.listFiles();
     if (files != null) {
       for (File child : files) {
-        writeIndex(writer, child, path + "/" + child.getName());
+        final String _path = path.isEmpty()? child.getName() : path + "/" + child.getName();
+        writeIndex(writer, child, _path);
       }
     }
   }
