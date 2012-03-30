@@ -20,12 +20,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsDetector;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,26 +48,31 @@ public class RootDetectionUtil {
   public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates,
                                             @Nullable Component parentComponent,
                                             @Nullable Project project,
-                                            @NotNull final List<? extends RootDetector> detectors,
-                                            boolean allowUserToSelectRootTypeIfNothingIsDetected) {
-    LOG.assertTrue(!detectors.isEmpty());
+                                            @NotNull final LibraryRootsComponentDescriptor rootsComponentDescriptor) {
+    return detectRoots(rootCandidates, parentComponent, project, rootsComponentDescriptor.getRootsDetector(),
+                       rootsComponentDescriptor.getRootTypes());
+  }
+
+  @NotNull
+  public static List<OrderRoot> detectRoots(@NotNull final Collection<VirtualFile> rootCandidates, @Nullable Component parentComponent,
+                                            @Nullable Project project, @NotNull final LibraryRootsDetector detector,
+                                            @NotNull OrderRootType[] rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
     final List<OrderRoot> result = new ArrayList<OrderRoot>();
     final List<SuggestedChildRootInfo> suggestedRoots = new ArrayList<SuggestedChildRootInfo>();
     new Task.Modal(project, "Scanning for Roots", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          for (RootDetector detector : detectors) {
-            for (VirtualFile rootCandidate : rootCandidates) {
-              final Collection<VirtualFile> roots = detector.detectRoots(rootCandidate, indicator);
-              final VirtualFile first = ContainerUtil.getFirstItem(roots);
-              if (first != null && roots.size() == 1 && first.equals(rootCandidate)) {
-                result.add(new OrderRoot(first, detector.getRootType(), detector.isJarDirectory()));
-              }
-              else {
-                for (VirtualFile root : roots) {
-                  suggestedRoots.add(new SuggestedChildRootInfo(detector, rootCandidate, root));
-                }
+          for (VirtualFile rootCandidate : rootCandidates) {
+            final Collection<OrderRoot> roots = detector.detectRoots(rootCandidate, indicator);
+            if (!roots.isEmpty() && allRootsEqualTo(roots, rootCandidate)) {
+              result.addAll(roots);
+            }
+            else {
+              for (OrderRoot root : roots) {
+                final String typeName = detector.getRootTypeName(root.getType(), root.isJarDirectory());
+                LOG.assertTrue(typeName != null, "Unexpected root type " + root.getType().name() + (root.isJarDirectory() ? " (jar directory)" : "") + ", detectors: " + detector);
+                suggestedRoots.add(new SuggestedChildRootInfo(rootCandidate, root, typeName));
               }
             }
           }
@@ -84,33 +91,42 @@ public class RootDetectionUtil {
         return Collections.emptyList();
       }
       for (SuggestedChildRootInfo rootInfo : dialog.getChosenRoots()) {
-        result
-          .add(new OrderRoot(rootInfo.getSuggestedRoot(), rootInfo.getDetector().getRootType(), rootInfo.getDetector().isJarDirectory()));
+        result.add(rootInfo.getSuggestedRoot());
       }
     }
 
-    if (result.isEmpty() && allowUserToSelectRootTypeIfNothingIsDetected) {
-      List<RootDetector> sortedDetectors = new ArrayList<RootDetector>(detectors);
-      Collections.sort(sortedDetectors, new Comparator<RootDetector>() {
-        @Override
-        public int compare(final RootDetector o1, final RootDetector o2) {
-          return o1.getPresentableRootTypeName().compareToIgnoreCase(o2.getPresentableRootTypeName());
+    if (result.isEmpty() && rootTypesAllowedToBeSelectedByUserIfNothingIsDetected.length > 0) {
+      Map<String, Pair<OrderRootType, Boolean>> types = new HashMap<String, Pair<OrderRootType, Boolean>>();
+      for (OrderRootType type : rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
+        for (boolean isDirectory : new boolean[]{false, true}) {
+          final String typeName = detector.getRootTypeName(type, isDirectory);
+          if (typeName != null) {
+            types.put(typeName, Pair.create(type, isDirectory));
+          }
         }
-      });
-
-      List<String> names = new ArrayList<String>();
-      for (RootDetector detector : sortedDetectors) {
-        names.add(detector.getPresentableRootTypeName());
       }
+      LOG.assertTrue(!types.isEmpty(), "No allowed root types found for " + detector);
+      List<String> sortedNames = new ArrayList<String>(types.keySet());
+      Collections.sort(sortedNames, String.CASE_INSENSITIVE_ORDER);
       final int i = Messages.showChooseDialog("Choose category for selected files:", "Attach Files",
-                                              ArrayUtil.toStringArray(names), names.get(0), null);
+                                              ArrayUtil.toStringArray(sortedNames), sortedNames.get(0), null);
       if (i != -1) {
-        final RootDetector detector = sortedDetectors.get(i);
+        final Pair<OrderRootType, Boolean> pair = types.get(sortedNames.get(i));
         for (VirtualFile candidate : rootCandidates) {
-          result.add(new OrderRoot(candidate, detector.getRootType(), detector.isJarDirectory()));
+          result.add(new OrderRoot(candidate, pair.getFirst(), pair.getSecond()));
         }
       }
     }
+
     return result;
+  }
+
+  private static boolean allRootsEqualTo(Collection<OrderRoot> roots, VirtualFile candidate) {
+    for (OrderRoot root : roots) {
+      if (!root.getFile().equals(candidate)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

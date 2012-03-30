@@ -141,7 +141,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
   private static CheckedTreeNode createTree(List<SuggestedChildRootInfo> suggestedRoots) {
     TObjectIntHashMap<VirtualFile> rootTypesCount = new TObjectIntHashMap<VirtualFile>();
     for (SuggestedChildRootInfo suggestedRoot : suggestedRoots) {
-      final VirtualFile root = suggestedRoot.getSuggestedRoot();
+      final VirtualFile root = suggestedRoot.getSuggestedRoot().getFile();
       if (!rootTypesCount.containsKey(root)) {
         rootTypesCount.put(root, 0);
       }
@@ -158,7 +158,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
         rootCandidateNodes.put(rootCandidate, parent);
         root.add(parent);
       }
-      final String rootType = rootTypesCount.get(rootInfo.getSuggestedRoot()) > 1 ? rootInfo.getDetector().getPresentableRootTypeName() : null;
+      final String rootType = rootTypesCount.get(rootInfo.getSuggestedRoot().getFile()) > 1 ? rootInfo.getRootTypeName() : null;
       parent.add(new VirtualFileCheckedTreeNode(rootInfo, rootType));
     }
     return root;
@@ -197,7 +197,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
 
     public VirtualFileCheckedTreeNode(SuggestedChildRootInfo rootInfo, String rootType) {
       super(rootInfo);
-      myFile = rootInfo.getSuggestedRoot();
+      myFile = rootInfo.getSuggestedRoot().getFile();
       myRootType = rootType;
     }
 

@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.libraries.LibraryTypeService;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
-import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,22 +58,15 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
                                                         @Nullable VirtualFile contextDirectory,
                                                         LibraryType<?> type,
                                                         final Project project) {
-    final List<? extends RootDetector> rootDetectors = descriptor.getRootDetectors();
-    final List<OrderRoot> roots;
-    if (!rootDetectors.isEmpty()) {
-      final FileChooserDescriptor chooserDescriptor = descriptor.createAttachFilesChooserDescriptor();
-      chooserDescriptor.setTitle("Select Library Files");
-      final VirtualFile[] rootCandidates = FileChooser.chooseFiles(parentComponent, chooserDescriptor, contextDirectory);
-      if (rootCandidates.length == 0) {
-        return null;
-      }
+    final FileChooserDescriptor chooserDescriptor = descriptor.createAttachFilesChooserDescriptor();
+    chooserDescriptor.setTitle("Select Library Files");
+    final VirtualFile[] rootCandidates = FileChooser.chooseFiles(parentComponent, chooserDescriptor, contextDirectory);
+    if (rootCandidates.length == 0) {
+      return null;
+    }
 
-      roots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, project, rootDetectors, true);
-      if (roots.isEmpty()) return null;
-    }
-    else {
-      roots = Collections.emptyList();
-    }
+    final List<OrderRoot> roots = RootDetectionUtil.detectRoots(Arrays.asList(rootCandidates), parentComponent, project, descriptor);
+    if (roots.isEmpty()) return null;
     String name = suggestLibraryName(roots);
     return doCreate(type, name, roots);
   }

@@ -173,7 +173,6 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       });
 
-    final List<? extends RootDetector> detectors = myDescriptor.getRootDetectors();
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
@@ -188,9 +187,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
       private AnAction[] getActions() {
         List<AnAction> actions = new ArrayList<AnAction>();
-        if (!detectors.isEmpty()) {
-          actions.add(new AttachFilesAction(detectors, ProjectBundle.message("button.text.attach.files")));
-        }
+        actions.add(new AttachFilesAction(ProjectBundle.message("button.text.attach.files")));
         for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
           actions.add(new AttachItemAction(descriptor, descriptor.getButtonText()));
         }
@@ -348,11 +345,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    private final List<? extends RootDetector> myDetectors;
-
-    public AttachFilesAction(List<? extends RootDetector> detectors, String title) {
+    public AttachFilesAction(String title) {
       super(title);
-      myDetectors = detectors;
     }
 
     @Override
@@ -368,7 +362,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       final VirtualFile[] files = FileChooser.chooseFiles(myPanel, chooserDescriptor, initialSelection);
       if (files.length == 0) return Collections.emptyList();
 
-      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDetectors, true);
+      return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDescriptor);
     }
   }
 
