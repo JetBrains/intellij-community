@@ -76,6 +76,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   public static final String UPGRADE_AUTO_16 = "auto1.6";
   public static final String UPGRADE_AUTO_17 = "auto1.7";
   public static final String UPGRADE_NONE = "none";
+  public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
 
   public String USER = "";
   public String PASSWORD = "";
@@ -93,6 +94,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private SvnAuthenticationManager myInteractiveManager;
   private String myUpgradeMode;
   private SvnSupportOptions mySupportOptions;
+  private boolean myCleanupRun;
   private int myMaxAnnotateRevisions = ourMaxAnnotateRevisionsDefault;
   private final static long DEFAULT_SSH_TIMEOUT = 30 * 1000;
   public long mySSHConnectionTimeout = DEFAULT_SSH_TIMEOUT;
@@ -405,6 +407,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     if (autoUpdateAfterCommit != null) {
       myAutoUpdateAfterCommit = Boolean.parseBoolean(autoUpdateAfterCommit.getValue());
     }
+    final Attribute cleanupRun = element.getAttribute(CLEANUP_ON_START_RUN);
+    if (cleanupRun != null) {
+      myCleanupRun = Boolean.parseBoolean(cleanupRun.getValue());
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -439,6 +445,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     element.setAttribute("maxAnnotateRevisions", "" + myMaxAnnotateRevisions);
     element.setAttribute("myUseAcceleration", "" + myUseAcceleration);
     element.setAttribute("myAutoUpdateAfterCommit", "" + myAutoUpdateAfterCommit);
+    element.setAttribute(CLEANUP_ON_START_RUN, "" + myCleanupRun);
   }
 
   public boolean isAutoUpdateAfterCommit() {
@@ -566,5 +573,13 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     javaHL,
     commandLine,
     nothing
+  }
+
+  public boolean isCleanupRun() {
+    return myCleanupRun;
+  }
+
+  public void setCleanupRun(boolean cleanupRun) {
+    myCleanupRun = cleanupRun;
   }
 }

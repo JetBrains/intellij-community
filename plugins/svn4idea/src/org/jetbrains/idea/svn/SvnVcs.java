@@ -260,9 +260,43 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public void postStartup() {
     if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
+    if (! myConfiguration.isCleanupRun()) {
+      if (cleanup17copies()) {
+        myConfiguration.setCleanupRun(true);
+      }
+    }
 
     invokeRefreshSvnRoots(true);
     myWorkingCopiesContent.activate();
+  }
+
+  private boolean cleanup17copies() {
+    final boolean[] result = new boolean[1];
+    result[0] = true;
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        myCopiesRefreshManager.getCopiesRefresh().synchRequest();
+        final List<WCInfo> infos = getAllWcInfos();
+        for (WCInfo info : infos) {
+          if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
+            try {
+              createWCClient().doCleanup(new File(info.getPath()));
+            }
+            catch (SVNException e) {
+              LOG.info(e);
+              result[0] = false;          }
+          }
+        }
+      }
+    };
+
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
+        "Cleanup working copies", true, myProject);
+    } else {
+      runnable.run();
+    }
+    return result[0];
   }
 
   public void invokeRefreshSvnRoots(final boolean asynchronous) {
