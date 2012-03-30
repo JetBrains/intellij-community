@@ -108,8 +108,7 @@ public class BuildPropertiesImpl extends BuildProperties {
         Path javac2 = new Path(PROPERTY_JAVAC2_CLASSPATH_ID);
         javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "javac2.jar")));
         javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jdom.jar")));
-        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm.jar")));
-        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm-commons.jar")));
+        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm4-all.jar")));
         javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jgoodies-forms.jar")));
         add(javac2);
         //noinspection HardCodedStringLiteral

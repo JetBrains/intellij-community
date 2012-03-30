@@ -4,8 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.Opcodes;
 
 import java.io.File;
 import java.io.IOException;

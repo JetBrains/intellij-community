@@ -31,7 +31,7 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
-import org.objectweb.asm.ClassWriter;
+import org.jetbrains.asm4.ClassWriter;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;

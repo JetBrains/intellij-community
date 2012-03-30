@@ -15,8 +15,16 @@
  */
 package org.intellij.plugins.intelliLang.pattern.compiler;
 
-import org.objectweb.asm.ClassVisitor;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.Opcodes;
 
-public interface Instrumenter extends ClassVisitor {
-  boolean instrumented();
+public abstract class Instrumenter extends ClassVisitor {
+  protected Instrumenter() {
+    super(Opcodes.ASM4);
+  }
+  protected Instrumenter(ClassVisitor visitor) {
+    super(Opcodes.ASM4, visitor);
+  }
+
+  public abstract boolean instrumented();
 }

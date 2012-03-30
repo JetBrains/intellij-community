@@ -19,14 +19,14 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.pattern.compiler.InstrumentationException;
 import org.intellij.plugins.intelliLang.pattern.compiler.Instrumenter;
 import org.jetbrains.annotations.NonNls;
-import org.objectweb.asm.*;
+import org.jetbrains.asm4.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
-public class PatternValidationInstrumenter extends ClassAdapter implements Instrumenter, Opcodes {
+public class PatternValidationInstrumenter extends Instrumenter implements Opcodes {
   @NonNls static final String PATTERN_CACHE_NAME = "$_PATTERN_CACHE_$";
   @NonNls static final String ASSERTIONS_DISABLED_NAME = "$assertionsDisabled";
   @NonNls static final String JAVA_LANG_STRING = "Ljava/lang/String;";
@@ -167,7 +167,7 @@ public class PatternValidationInstrumenter extends ClassAdapter implements Instr
     if ((access & ACC_STATIC) != 0 && name.equals("<clinit>")) {
       myHasStaticInitializer = true;
 
-      return new MethodAdapter(methodvisitor) {
+      return new MethodVisitor(Opcodes.ASM4, methodvisitor) {
         public void visitCode() {
           super.visitCode();
           patchStaticInitializer(mv);

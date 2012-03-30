@@ -27,7 +27,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NonNls;
-import org.objectweb.asm.ClassWriter;
+import org.jetbrains.asm4.ClassWriter;
 
 /**
  * @author yole

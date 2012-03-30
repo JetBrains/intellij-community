@@ -17,6 +17,10 @@ import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
@@ -29,10 +33,6 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.EmptyVisitor;
 
 import javax.tools.*;
 import java.io.*;
@@ -821,7 +821,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static int getClassFileVersion(ClassReader reader) {
     final Ref<Integer> result = new Ref<Integer>(0);
-    reader.accept(new EmptyVisitor() {
+    reader.accept(new ClassVisitor(Opcodes.ASM4) {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         result.set(version);
       }

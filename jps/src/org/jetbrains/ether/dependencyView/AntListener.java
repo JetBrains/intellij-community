@@ -2,7 +2,7 @@ package org.jetbrains.ether.dependencyView;
 
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.BuildListener;
-import org.objectweb.asm.ClassReader;
+import org.jetbrains.asm4.ClassReader;
 
 import java.io.File;
 import java.io.FileInputStream;
