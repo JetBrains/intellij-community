@@ -21,6 +21,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.junit.JUnitProcessHandler;
+import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -135,7 +136,7 @@ public final class ExecutionHandler {
 
     final long startTime = System.currentTimeMillis();
     LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
-    JUnitProcessHandler handler;
+    final JUnitProcessHandler handler;
     try {
       handler = JUnitProcessHandler.runCommandLine(commandLine);
     }
@@ -154,7 +155,7 @@ public final class ExecutionHandler {
   }
 
   private static void processRunningAnt(final ProgressIndicator progress,
-                                        JUnitProcessHandler handler,
+                                        final JUnitProcessHandler handler,
                                         final AntBuildMessageView errorView,
                                         final AntBuildFile buildFile,
                                         final long startTime,
@@ -172,9 +173,9 @@ public final class ExecutionHandler {
 
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(ProcessEvent event) {
+        final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
         parser.setStopped(true);
-        errorView.stopScrollerThread();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
             if (project.isDisposed()) return;
@@ -182,14 +183,13 @@ public final class ExecutionHandler {
             ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
             if (toolWindow != null) { // can be null if project is closed
               toolWindow.activate(null, false);
-              final long buildTime = System.currentTimeMillis() - startTime;
-              errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener);
+              final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
+              errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
             }
           }
         }, ModalityState.NON_MODAL);
       }
     });
-    errorView.startScrollerThread();
     handler.startNotify();
   }
 
