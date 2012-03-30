@@ -54,7 +54,7 @@ import java.util.Map;
 public abstract class ComponentManagerImpl extends UserDataHolderBase implements ComponentManagerEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentManager");
 
-  private final Map<Class, Object> myInitializedComponents = new ConcurrentHashMap<Class, Object>(4096);
+  private final Map<Class, Object> myInitializedComponents = new ConcurrentHashMap<Class, Object>();
 
   private boolean myComponentsCreated = false;
 
