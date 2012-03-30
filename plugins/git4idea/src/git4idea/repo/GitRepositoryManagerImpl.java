@@ -116,7 +116,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
 
   @Override
   public boolean moreThanOneRoot() {
-    return myRepositories.values().size() > 1;
+    return myRepositories.size() > 1;
   }
 
   @Override
