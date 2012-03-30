@@ -5099,6 +5099,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       for (EditorMouseListener mouseListener : myMouseListeners) {
         mouseListener.mousePressed(event);
       }
+      putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, null);
 
       // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
       // But this trigger is always consumed by popup handler. In that case we have to
