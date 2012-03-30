@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -125,11 +124,10 @@ public class Switcher extends AnAction implements DumbAware {
           ToolWindow tw;
           if (SWITCHER != null && event instanceof KeyEvent) {
             final KeyEvent keyEvent = (KeyEvent)event;
-            if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY && isAutoHide()) {
+            if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
               SwingUtilities.invokeLater(CHECKER);
             }
-            else if (isAutoHide()
-                     && event.getID() == KEY_PRESSED
+            else if (event.getID() == KEY_PRESSED
                      && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
               SWITCHER.myPopup.closeOk(null);
               tw.activate(null, true, true);
@@ -150,7 +148,7 @@ public class Switcher extends AnAction implements DumbAware {
     if (SWITCHER == null) {
       synchronized (Switcher.class) {
         if (SWITCHER == null) {
-          SWITCHER = new SwitcherPanel(project);
+          SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
           selectFirstItem = !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile();
         }
@@ -169,7 +167,11 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  private class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
+  public static SwitcherPanel createAndShowSwitcher(Project project, String title, boolean pinned) {
+    return new SwitcherPanel(project, title, pinned);
+  }
+
+  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
     private static final int MAX_FILES_IN_SWITCHER = 30;
     final JBPopup myPopup;
     final Map<ToolWindow, String> ids = new HashMap<ToolWindow, String>();
@@ -180,14 +182,18 @@ public class Switcher extends AnAction implements DumbAware {
     final JLabel pathLabel = new JLabel(" ");
     final JPanel descriptions;
     final Project project;
+    private final boolean myPinned;
     final Map<String, ToolWindow> twShortcuts;
     final Alarm myAlarm;
-    final SwitcherSpeedSearch mySpeedSearch = isAutoHide() ? null : new SwitcherSpeedSearch();
+    final SwitcherSpeedSearch mySpeedSearch;
 
     @SuppressWarnings({"ManualArrayToCollectionCopy"})
-    SwitcherPanel(Project project) {
+    SwitcherPanel(Project project, String title, boolean pinned) {
       super(new BorderLayout(0, 0));
       this.project = project;
+      myPinned = pinned;
+      mySpeedSearch =  pinned ? new SwitcherSpeedSearch() : null;
+
       setFocusable(true);
       addKeyListener(this);
       setBorder(new EmptyBorder(0, 0, 0, 0));
@@ -208,18 +214,6 @@ public class Switcher extends AnAction implements DumbAware {
 
       descriptions.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));
       descriptions.add(pathLabel, BorderLayout.CENTER);
-      final JLabel pinLabel = new JLabel(isPinnedMode() ? PIN_ON : PIN_OFF);
-      pinLabel.setToolTipText(isPinnedMode() ? "Pinned mode" : "Floating mode");
-      pinLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
-      descriptions.add(pinLabel, BorderLayout.EAST);
-      pinLabel.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE = !UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE;
-          pinLabel.setIcon(isPinnedMode() ? PIN_ON : PIN_OFF);
-          pinLabel.setToolTipText(isPinnedMode() ? "Pinned mode" : "Floating mode");
-        }
-      });
       twManager = ToolWindowManager.getInstance(project);
       final DefaultListModel twModel = new DefaultListModel();
       for (String id : twManager.getToolWindowIds()) {
@@ -244,7 +238,7 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows = new JBList(twModel);
       toolWindows.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 20));
       toolWindows.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, ids, map) {
+      toolWindows.setCellRenderer(new SwitcherToolWindowsListRenderer(mySpeedSearch, ids, map, myPinned) {
         @Override
         public Component getListCellRendererComponent(JList list,
                                                       Object value,
@@ -408,7 +402,8 @@ public class Switcher extends AnAction implements DumbAware {
         }
       });
 
-      final int modifiers = getModifiers(Switcher.this.getShortcutSet());
+      final ShortcutSet shortcutSet = ActionManager.getInstance().getAction("Switcher").getShortcutSet();
+      final int modifiers = getModifiers(shortcutSet);
       final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
       ALT_KEY = isAlt ? VK_CONTROL : VK_ALT;
       CTRL_KEY = isAlt ? VK_ALT : VK_CONTROL;
@@ -419,7 +414,7 @@ public class Switcher extends AnAction implements DumbAware {
           .setModalContext(false)
           .setFocusable(true)
           .setRequestFocus(true)
-          .setTitle(SWITCHER_TITLE)
+          .setTitle(title)
           .setMovable(false)
           .setCancelKeyEnabled(false)
           .setCancelCallback(new Computable<Boolean>() {
@@ -812,14 +807,14 @@ public class Switcher extends AnAction implements DumbAware {
         toolWindows.repaint();
       }
     }
-  }
 
-  private static boolean isAutoHide() {
-    return UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE;
-  }
+    public boolean isAutoHide() {
+      return !myPinned;
+    }
 
-  private static boolean isPinnedMode() {
-    return !isAutoHide();
+    public boolean isPinnedMode() {
+      return myPinned;
+    }
   }
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
@@ -855,7 +850,7 @@ public class Switcher extends AnAction implements DumbAware {
     protected void doPaint(Graphics2D g) {
       GraphicsConfig config = new GraphicsConfig(g);
       if (hide) {
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
       }
       super.doPaint(g);
       config.restore();
