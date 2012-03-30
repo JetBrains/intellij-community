@@ -508,12 +508,18 @@ public class PyPackageManager {
           final ProcessOutput result = ExecUtil.sudoAndGetOutput(StringUtil.join(cmdline, " "),
                                                                  "Please enter your password to make changes in system packages: ",
                                                                  parentDir);
+          String message = result.getStderr();
           if (result.getExitCode() != 0) {
             final String stdout = result.getStdout();
-            String message = result.getStderr();
-            if (message.trim().isEmpty()) {
+            if (StringUtil.isEmptyOrSpaces(message)) {
               message = stdout;
             }
+            if (StringUtil.isEmptyOrSpaces(message)) {
+              message = "Failed to perform action. Permission denied.";
+            }
+            throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
+          }
+          if (SystemInfo.isMac && !StringUtil.isEmptyOrSpaces(message)) {
             throw new PyExternalProcessException(result.getExitCode(), helperPath, args, message);
           }
           return result;
