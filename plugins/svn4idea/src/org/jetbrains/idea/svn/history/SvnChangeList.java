@@ -71,7 +71,7 @@ public class SvnChangeList implements CommittedChangeList {
   private boolean myCachedInfoLoaded;
 
   // key: added path, value: copied-from
-  private final Map<String, String> myCopiedAddedPaths = new HashMap<String, String>();
+  private final TreeMap<String, String> myCopiedAddedPaths = new TreeMap<String, String>();
   private RootUrlInfo myWcRoot;
   private final CommonPathSearcher myCommonPathSearcher;
   private final Set<String> myKnownAsDirectories;
@@ -188,26 +188,32 @@ public class SvnChangeList implements CommittedChangeList {
     // key: copied-from
     final Map<String, ExternallyRenamedChange> copiedAddedChanges = new HashMap<String, ExternallyRenamedChange>();
 
+    correctBeforePaths();
+    final List<String> copyDeleted = new ArrayList<String>(myDeletedPaths);
+
     for(String path: myAddedPaths) {
       final Change addedChange;
       if (myCopiedAddedPaths.containsKey(path)) {
-        if (myDeletedPaths.contains(myCopiedAddedPaths.get(path))) {
-          addedChange = new ExternallyRenamedChange(myListsHolder.createRevisionLazily(myCopiedAddedPaths.get(path), true),
-                                                    myListsHolder.createRevisionLazily(path, false), myCopiedAddedPaths.get(path));
+        final String copyTarget = myCopiedAddedPaths.get(path);
+        if (copyDeleted.contains(copyTarget)) {
+          addedChange = new ExternallyRenamedChange(myListsHolder.createRevisionLazily(copyTarget, true),
+                                                    myListsHolder.createRevisionLazily(path, false), copyTarget);
           addedChange.getMoveRelativePath(myVcs.getProject());
           ((ExternallyRenamedChange) addedChange).setCopied(false);
+          copyDeleted.remove(copyTarget);
         } else {
-          addedChange = new ExternallyRenamedChange(null, myListsHolder.createRevisionLazily(path, false), myCopiedAddedPaths.get(path));
+          addedChange = new ExternallyRenamedChange(null, myListsHolder.createRevisionLazily(path, false), copyTarget);
         }
-        copiedAddedChanges.put(myCopiedAddedPaths.get(path), (ExternallyRenamedChange) addedChange);
+        copiedAddedChanges.put(copyTarget, (ExternallyRenamedChange) addedChange);
       } else {
         addedChange = new Change(null, myListsHolder.createRevisionLazily(path, false));
       }
       myListsHolder.add(path, addedChange);
     }
-    for(String path: myDeletedPaths) {
+    for(String path: copyDeleted) {
       final Change deletedChange;
       if (copiedAddedChanges.containsKey(path)) {
+        // seems never occurs any more
         final ExternallyRenamedChange addedChange = copiedAddedChanges.get(path);
         final FilePath source = addedChange.getAfterRevision().getFile();
         deletedChange = new ExternallyRenamedChange(myListsHolder.createDeletedItemRevision(path, true), null, path);
@@ -261,6 +267,31 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
+  private void correctBeforePaths() {
+    processDeletedForBeforePaths(myDeletedPaths);
+    processModifiedForBeforePaths(myChangedPaths);
+    processModifiedForBeforePaths(myReplacedPaths);
+  }
+
+  private void processModifiedForBeforePaths(Set<String> paths) {
+    final RenameHelper helper = new RenameHelper();
+    for (String s : paths) {
+      final String converted = helper.convertBeforePath(s, myCopiedAddedPaths);
+      if (! s.equals(converted)) {
+        myCopiedAddedPaths.put(s, converted);
+      }
+    }
+  }
+
+  private void processDeletedForBeforePaths(Set<String> paths) {
+    final RenameHelper helper = new RenameHelper();
+    final HashSet<String> copy = new HashSet<String>(paths);
+    paths.clear();
+    for (String s : copy) {
+      paths.add(helper.convertBeforePath(s, myCopiedAddedPaths));
+    }
+  }
+
   @Nullable
   private FilePath getLocalPath(final String path, final NotNullFunction<File, Boolean> detector) {
     final String fullPath = myRepositoryRoot + path;
@@ -301,21 +332,25 @@ public class SvnChangeList implements CommittedChangeList {
       return myPathToChangeMapping.get(path);
     }
 
-    private FilePath localDeletedPath(final String fullPath) {
+    private FilePath localDeletedPath(final String fullPath, final boolean isDir) {
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
       final String path = urlMapping.getLocalPath(fullPath);
       if (path != null) {
         final File file = new File(path);
-        return FilePathImpl.createForDeletedFile(file, file.isDirectory());
+        return FilePathImpl.createForDeletedFile(file, isDir || file.isDirectory());
       }
 
       return null;
     }
 
     public SvnRepositoryContentRevision createDeletedItemRevision(final String path, final boolean isBeforeRevision) {
+      final boolean knownAsDirectory = myKnownAsDirectories.contains(path);
       final String fullPath = myRepositoryRoot + path;
-      myWithoutDirStatus.add(new Pair<Integer, Boolean>(myList.size(), isBeforeRevision));
-      return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localDeletedPath(fullPath), getRevision(isBeforeRevision));
+      if (! knownAsDirectory) {
+        myWithoutDirStatus.add(new Pair<Integer, Boolean>(myList.size(), isBeforeRevision));
+      }
+      return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localDeletedPath(fullPath, knownAsDirectory),
+                                                 getRevision(isBeforeRevision));
     }
 
     public SvnRepositoryContentRevision createRevisionLazily(final String path, final boolean isBeforeRevision) {
@@ -350,6 +385,10 @@ public class SvnChangeList implements CommittedChangeList {
 
           doRemoteDetails();
           uploadDeletedRenamedChildren();
+          // remove duplicates
+          final HashSet<Change> set = new HashSet<Change>(myDetailedList);
+          myDetailedList.clear();
+          myDetailedList.addAll(set);
         }
         catch (SVNException e) {
           LOG.info(e);
@@ -454,6 +493,33 @@ public class SvnChangeList implements CommittedChangeList {
     private SvnRepositoryContentRevision createRevision(final String path, final boolean isBeforeRevision, final boolean isDir) {
       return SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path,
                                                  getLocalPath(path, new ConstantFunction<File, Boolean>(isDir)), getRevision(isBeforeRevision));
+    }
+  }
+
+  private static class RenameHelper {
+    /*private final TreeMap<String, String> myRenamesMap;
+
+    private RenameHelper(final List<Change> svnRepositoryChanges) {
+      myRenamesMap = new TreeMap<String, String>();
+      for (Change change : svnRepositoryChanges) {
+        if (change.isMoved() || change.isRenamed()) {
+          final SvnRepositoryContentRevision before = (SvnRepositoryContentRevision) change.getBeforeRevision();
+          final SvnRepositoryContentRevision after = (SvnRepositoryContentRevision) change.getAfterRevision();
+          myRenamesMap.put(after.getPath(), before.getPath());
+        }
+      }
+    } */
+
+    public String convertBeforePath(final String path, final TreeMap<String, String> after2before) {
+      String current = path;
+      // backwards
+      for (String key : after2before.descendingKeySet()) {
+        if (SVNPathUtil.isAncestor(key, current)) {
+          final String relativePath = SVNPathUtil.getRelativePath(key, current);
+          current = SVNPathUtil.append(after2before.get(key), relativePath);
+        }
+      }
+      return current;
     }
   }
 
