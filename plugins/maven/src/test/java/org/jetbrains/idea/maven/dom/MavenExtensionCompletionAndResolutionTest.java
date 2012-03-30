@@ -73,7 +73,10 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
     List<String> actual = getCompletionVariants(myProjectPom);
 
-    if (!new HashSet<String>(actual).equals(new HashSet<String>(Arrays.asList("maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin")))) {
+    try {
+      assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
+    }
+    catch (Throwable t) {
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
       System.out.println("GetArtifacts: " + new HashSet<String>(instance.getArtifactIds("org.apache.maven.plugins")));
       System.out.println("Indexes: " + instance.getIndices());
@@ -86,8 +89,6 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
       throw new AssertionError("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins") + " Indexes: " + instance.getIndices());
     }
-
-    assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {
