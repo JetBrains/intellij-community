@@ -19,7 +19,18 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The descriptor of git command. It contains policy information about myLocking and GUI thread policy.
+ * <p>
+ *   The descriptor of git command.
+ * </p>
+ * <p>
+ *   It contains policy information about locking which is handled in {@link GitHandler#runInCurrentThread(java.lang.Runnable)} to prevent
+ *   simultaneous Git commands conflict on the index.lock file.
+ *   write-commands can't be executed simultaneously, but a write-command doesn't prevent read-commands to execute.
+ * </p>
+ * <p>
+ *   A lock-policy can be different for a single command, for example, {@code git stash} may change the index (and thus should hold the
+ *   write lock), which {@code git stash list} doesn't (and therefore no lock is needed).
+ * </p>
  */
 public class GitCommand {
 
