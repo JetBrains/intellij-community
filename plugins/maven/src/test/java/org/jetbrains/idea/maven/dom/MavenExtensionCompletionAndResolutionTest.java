@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
@@ -74,9 +75,16 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
     if (!new HashSet<String>(actual).equals(new HashSet<String>(Arrays.asList("maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin")))) {
       MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
-      System.out.println("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins"));
+      System.out.println("GetArtifacts: " + new HashSet<String>(instance.getArtifactIds("org.apache.maven.plugins")));
       System.out.println("Indexes: " + instance.getIndices());
-      throw new AssertionError("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins") + "Indexes: " + instance.getIndices());
+
+      for (MavenIndex index : instance.getIndices()) {
+        System.out.println("Index: repositoryId=" + index.getRepositoryId() + " repositoryUrl=" + index.getRepositoryUrl() + " repositoryPathOrUrl" + index.getRepositoryPathOrUrl());
+        System.out.println("Dir: " + index.getDir());
+        index.printInfo();
+      }
+
+      throw new AssertionError("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins") + " Indexes: " + instance.getIndices());
     }
 
     assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
