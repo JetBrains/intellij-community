@@ -49,6 +49,8 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
       return true;
     }
 
+    if (method.hasModifierProperty(PsiModifier.STATIC)) return true;
+
     final PsiClass psiClass = method.getContainingClass();
     if (psiClass == null) return true;
 
