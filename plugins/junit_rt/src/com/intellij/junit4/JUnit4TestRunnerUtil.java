@@ -17,7 +17,6 @@ package com.intellij.junit4;
 
 import org.junit.Ignore;
 import org.junit.internal.AssumptionViolatedException;
-import org.junit.internal.builders.JUnit3Builder;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
@@ -151,7 +150,7 @@ public class JUnit4TestRunnerUtil {
           }
           try {
             if (clazz.getMethod("suite", new Class[0]) != null && !methodName.equals("suite")) {
-              return Request.runner(new JUnit3Builder().runnerForClass(clazz)).filterWith(Description.createTestDescription(clazz, methodName));
+              return Request.classWithoutSuiteMethod(clazz).filterWith(Description.createTestDescription(clazz, methodName));
             }
           }
           catch (Throwable e) {

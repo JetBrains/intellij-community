@@ -30,9 +30,9 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
   }
 
   @Override
-  public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
+  public ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
-      return ModuleLevelBuilder.ExitCode.OK;
+      return ExitCode.NOTHING_DONE;
     }
 
     try {
@@ -48,6 +48,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     final AndroidFileSetStorage storage = new AndroidFileSetStorage(context.getDataManager().getDataStorageRoot(), "libs_packaging");
 
     try {
+      boolean doneSomething = false;
       for (Module module : chunk.getModules()) {
         final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
         if (facet == null || !facet.isLibrary()) {
@@ -82,7 +83,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
         if (subdirs.size() > 0) {
           context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging", module.getName())));
           final File outputJarFile = new File(outputDirectoryForPackagedFiles, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
-
+          doneSomething = true;
           try {
             AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);
             storage.update(module.getName(), newState);
@@ -94,7 +95,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
           }
         }
       }
-      return success ? ModuleLevelBuilder.ExitCode.OK : ModuleLevelBuilder.ExitCode.ABORT;
+      return success ? (doneSomething? ExitCode.OK : ExitCode.NOTHING_DONE) : ExitCode.ABORT;
     }
     finally {
       storage.close();

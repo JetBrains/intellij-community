@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports;
-
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+package com.intellij.android.designer.model.viewAnimator;
 
 /**
- * @author ilyas
+ * @author Alexander Lobas
  */
-public interface GrImportReference extends GroovyPsiElement {
+public class RadImageSwitcherLayout extends RadTypeSwitcherLayout {
+  public RadImageSwitcherLayout() {
+    super("ImageView");
+  }
 }

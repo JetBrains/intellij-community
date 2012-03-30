@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
@@ -38,12 +39,14 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     }
     try {
       final ResourcePatterns finalPatterns = patterns;
+      final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
       context.processFilesToRecompile(chunk, new FileProcessor() {
         public boolean apply(final Module module, final File file, final String sourceRoot) throws IOException {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
               final String moduleName = module.getName().toLowerCase(Locale.US);
+              doneSomething.set(true);
               copyResource(context, module, file, sourceRoot, context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests()));
             }
             catch (IOException e) {
@@ -56,7 +59,7 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
         }
       });
 
-      return ExitCode.OK;
+      return doneSomething.get()? ExitCode.OK : ExitCode.NOTHING_DONE;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e.getMessage(), e);

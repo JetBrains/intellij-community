@@ -688,7 +688,7 @@ public class GenericsHighlightUtil {
           return true;
         }
       }
-      if (isUncheckedTypeArgumentConversion(lTypeArg, rTypeArg)) return true;
+      if (!TypeConversionUtil.typesAgree(lTypeArg, rTypeArg, false)) return true;
     }
     return false;
   }
@@ -728,48 +728,6 @@ public class GenericsHighlightUtil {
     }
 
     return false;
-  }
-
-  private static boolean isUncheckedTypeArgumentConversion (PsiType lTypeArg, PsiType rTypeArg) {
-    if (lTypeArg instanceof PsiPrimitiveType || rTypeArg instanceof PsiPrimitiveType) return false;
-    if (lTypeArg.equals(rTypeArg)) return false;
-    if (lTypeArg instanceof PsiCapturedWildcardType) {
-      //ignore capture conversion
-      return isUncheckedTypeArgumentConversion(((PsiCapturedWildcardType)lTypeArg).getWildcard(), rTypeArg);
-    }
-    if (rTypeArg instanceof PsiCapturedWildcardType) {
-      //ignore capture conversion
-      return isUncheckedTypeArgumentConversion(lTypeArg, ((PsiCapturedWildcardType)rTypeArg).getWildcard());
-    }
-
-    if (lTypeArg instanceof PsiWildcardType || rTypeArg instanceof PsiWildcardType) {
-      return !lTypeArg.isAssignableFrom(rTypeArg);
-    }
-
-    if (lTypeArg instanceof PsiArrayType && rTypeArg instanceof PsiArrayType) {
-      return isUncheckedTypeArgumentConversion(((PsiArrayType)rTypeArg).getComponentType(), ((PsiArrayType)lTypeArg).getComponentType());
-    }
-    if (lTypeArg instanceof PsiArrayType || rTypeArg instanceof PsiArrayType) return false;
-    if (lTypeArg instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)lTypeArg).getConjuncts()) {
-        if (!isUncheckedTypeArgumentConversion(type, rTypeArg)) return false;
-      }
-      return true;
-    }
-    if (!(lTypeArg instanceof PsiClassType)) {
-      LOG.error("left: "+lTypeArg + "; "+lTypeArg.getClass());
-    }
-    if (rTypeArg instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)rTypeArg).getConjuncts()) {
-        if (!isUncheckedTypeArgumentConversion(lTypeArg, type)) return false;
-      }
-      return true;
-    }
-    if (!(rTypeArg instanceof PsiClassType)) {
-      LOG.error("right :"+rTypeArg + "; "+rTypeArg.getClass());
-    }
-    return ((PsiClassType)lTypeArg).resolve() instanceof PsiTypeParameter ||
-           ((PsiClassType)rTypeArg).resolve() instanceof PsiTypeParameter;
   }
 
   @Nullable

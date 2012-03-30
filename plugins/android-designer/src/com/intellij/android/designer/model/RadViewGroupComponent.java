@@ -15,14 +15,22 @@
  */
 package com.intellij.android.designer.model;
 
-import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+
+import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadViewSwitcherLayout extends RadViewAnimatorLayout {
+public class RadViewGroupComponent extends RadViewComponent {
   @Override
-  protected boolean checkChildOperation(OperationContext context) {
-    return context.isMove() || myContainer.getChildren().size() < 2;
+  public void addSelectionActions(DesignerEditorPanel designer,
+                                  DefaultActionGroup actionGroup,
+                                  JComponent shortcuts,
+                                  List<RadComponent> selection) {
+    super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
   }
 }

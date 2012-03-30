@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 
 public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
@@ -38,22 +39,8 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
     final Project project = getProject();
     final String path = project.getBaseDir().getPath() + "/test";
     final Module module = EclipseClasspathTest.setUpModule(path, project);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, model.getContentRoots()[0].getParent().getPath());
-        final Library library = model.getModuleLibraryTable().createLibrary("created");
-        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
-        for (String classRoot : classRoots) {
-          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
-        }
-        for (String sourceRoot : sourceRoots) {
-          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
-        }
-        libModifiableModel.commit();
-        model.commit();
-      }
-    });
+    PsiTestUtil.addLibrary(module, "created", ModuleRootManager.getInstance(module).getContentRoots()[0].getParent().getPath(), classRoots,
+                           sourceRoots);
 
     EclipseClasspathTest.checkModule(project.getBaseDir().getPath() + "/expected", module);
   }

@@ -754,8 +754,8 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadScrollViewComponent"
-        layout="com.intellij.android.designer.model.RadScrollViewLayout"
+  <meta model="com.intellij.android.designer.model.scroll.RadScrollViewComponent"
+        layout="com.intellij.android.designer.model.scroll.RadScrollViewLayout"
         class="android.widget.ScrollView"
         tag="ScrollView">
 
@@ -774,8 +774,8 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadScrollViewComponent"
-        layout="com.intellij.android.designer.model.RadScrollViewLayout"
+  <meta model="com.intellij.android.designer.model.scroll.RadScrollViewComponent"
+        layout="com.intellij.android.designer.model.scroll.RadScrollViewLayout"
         class="android.widget.HorizontalScrollView"
         tag="HorizontalScrollView">
 
@@ -888,7 +888,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewAnimatorLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout"
         class="android.widget.ViewAnimator"
         tag="ViewAnimator">
 
@@ -908,7 +908,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewAnimatorLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout"
         class="android.widget.ViewFlipper"
         tag="ViewFlipper">
 
@@ -928,7 +928,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewSwitcherLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadViewSwitcherLayout"
         class="android.widget.ViewSwitcher"
         tag="ViewSwitcher">
 
@@ -946,7 +946,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadImageSwitcherLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadImageSwitcherLayout"
         class="android.widget.ImageSwitcher"
         tag="ImageSwitcher">
 
@@ -964,7 +964,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadTextSwitcherLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadTextSwitcherLayout"
         class="android.widget.TextSwitcher"
         tag="TextSwitcher">
 
@@ -983,8 +983,8 @@
 
   <!-- ================= Layouts ================= -->
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadLinearLayout"
+  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+        layout="com.intellij.android.designer.model.layout.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
 
@@ -1000,6 +1000,26 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
           </LinearLayout>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+        layout="com.intellij.android.designer.model.layout.RadFrameLayout"
+        class="android.widget.FrameLayout"
+        tag="FrameLayout">
+
+    <palette title="FrameLayout" icon="/com/intellij/android/designer/icons/FrameLayout.png"
+             tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
+
+    <properties important="foreground foregroundGravity"/>
+
+    <creation>
+      <![CDATA[
+          <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </FrameLayout>
       ]]>
     </creation>
   </meta>
@@ -1061,6 +1081,7 @@
       <item tag="AdapterViewFlipper"/>
     </group>
     <group name="Layouts">
+      <item tag="FrameLayout"/>
       <item tag="LinearLayout"/>
     </group>
   </palette>

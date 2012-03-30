@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.android.designer.model.scroll;
 
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.ViewsMetaManager;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;

@@ -1195,4 +1195,25 @@ new Base().fie<caret>x''')
     assert doContainsTest('in', 'for (i i<caret>')
   }
 
+  public void testReturnInVoidMethod() {
+    myFixture.configureByText('''\
+void foo() {
+  retur<caret>
+}
+''', '''\
+void foo() {
+  return<caret>
+}''')
+  }
+
+  public void testReturnInNotVoidMethod() {
+    myFixture.configureByText('''\
+void foo() {
+  retur<caret>
+}
+''', '''\
+void foo() {
+  return <caret>
+}''')
+  }
 }

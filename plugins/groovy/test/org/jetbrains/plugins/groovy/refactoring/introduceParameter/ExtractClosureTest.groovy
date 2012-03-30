@@ -79,7 +79,7 @@ def foo(String s, Closure closure) {
     <selection>closure(s)</selection>
 }
 
-foo('a') {String s -> print s}
+foo('a') { String s -> print s }
 ''', [], [], false)
     }
 
@@ -99,7 +99,7 @@ class X {
     }
 }
 
-new X().foo {print 'a'}
+new X().foo { print 'a' }
 ''', [0], [0], false)
 
     }
@@ -144,7 +144,7 @@ class X {
 }
 
 final X x = new X()
-x.foo {x.bar()}
+x.foo { x.bar() }
 ''', [0], [], false)
 
     }
@@ -163,7 +163,7 @@ def foo(Closure closure) {
     <selection>closure(a)</selection>
 }
 
-foo {int a -> print 45 + 3 + a}
+foo { int a -> print 45 + 3 + a }
 ''', [0, 1], [0], false)
     }
 
@@ -213,7 +213,7 @@ def killMonsters(){2}
 def collectLoot(){3}
 def becomeTownGuard(){}
 ''', '''
-adventure {return killMonsters() + collectLoot()}
+adventure { return killMonsters() + collectLoot() }
 
 def adventure(Closure<Integer> closure) {
     try {
@@ -271,7 +271,7 @@ foo()
 void foo(Closure<Character> closure) {
     def s = <selection><caret>closure()</selection>
 }
-foo {return "zxcvbn".substring(2).charAt(1)}
+foo { return "zxcvbn".substring(2).charAt(1) }
 ''')
     }
   }
@@ -291,7 +291,7 @@ def foo = {String s, Closure closure ->
     <selection>closure(s)</selection>
 }
 
-foo('a') {String s -> print s}
+foo('a') { String s -> print s }
 ''', [], [], false)
     }
 
@@ -312,7 +312,7 @@ class X {
 }
 
 final X x = new X()
-x.foo {x.print 'a'}
+x.foo { x.print 'a' }
 ''', [0], [0], false)
 
     }
@@ -357,7 +357,7 @@ class X {
 }
 
 final X x = new X()
-x.foo {x.bar()}
+x.foo { x.bar() }
 ''', [0], [], false)
 
     }
@@ -376,7 +376,7 @@ def foo = {Closure closure ->
     <selection>closure(a)</selection>
 }
 
-foo {int a -> print 45 + 3 + a}
+foo { int a -> print 45 + 3 + a }
 ''', [0, 1], [0], false)
     }
 
@@ -435,7 +435,7 @@ def adventure = {Closure<Integer> closure ->
     }
 }
 
-adventure {return killMonsters() + collectLoot()}
+adventure { return killMonsters() + collectLoot() }
 
 class ArrowToKneeException extends Exception{}
 def killMonsters(){2}
@@ -487,7 +487,7 @@ foo()
 void foo = {Closure<Character> closure ->
     def s = <selection><caret>closure()</selection>
 }
-foo {return "zxcvbn".substring(2).charAt(1)}
+foo { return "zxcvbn".substring(2).charAt(1) }
 ''')
     }
   }

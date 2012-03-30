@@ -95,6 +95,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final JPanel myPanel = new JPanel(new MyLayout());
 
   private String myTitle;
+  @Nullable
   private String myPrompt = "> ";
   private final LightVirtualFile myHistoryFile;
   private Editor myCurrentEditor;
@@ -316,11 +317,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return myHistoryFile;
   }
 
+  @Nullable
   public String getPrompt() {
     return myPrompt;
   }
 
-  public void setPrompt(String prompt) {
+  public void setPrompt(@Nullable String prompt) {
     // always add space to the prompt otherwise it may look ugly
     myPrompt = prompt != null && !prompt.endsWith(" ") ? prompt + " " : prompt;
     setPromptInner(myPrompt);
@@ -435,8 +437,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   protected String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    appendToHistoryDocument(history, myPrompt);
-    markupModel.addRangeHighlighter(history.getTextLength() - myPrompt.length(), history.getTextLength(), HighlighterLayer.SYNTAX,
+    if (myPrompt != null) {
+      appendToHistoryDocument(history, myPrompt);
+    }
+    markupModel.addRangeHighlighter(history.getTextLength() - StringUtil.length(myPrompt), history.getTextLength(), HighlighterLayer.SYNTAX,
                                     ConsoleViewContentType.USER_INPUT.getAttributes(),
                                     HighlighterTargetArea.EXACT_RANGE);
 

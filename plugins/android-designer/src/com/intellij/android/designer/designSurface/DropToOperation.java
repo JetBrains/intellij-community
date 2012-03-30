@@ -15,41 +15,22 @@
  */
 package com.intellij.android.designer.designSurface;
 
-import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
-import com.intellij.designer.model.RadComponent;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class DropToOperation implements EditOperation {
-  private final RadViewComponent myContainer;
-  private final OperationContext myContext;
-  private List<RadComponent> myComponents;
+public class DropToOperation extends AbstractEditOperation {
   private JComponent myFeedback;
 
   public DropToOperation(RadViewComponent container, OperationContext context) {
-    myContainer = container;
-    myContext = context;
-  }
-
-  @Override
-  public void setComponent(RadComponent component) {
-    myComponents = Collections.singletonList(component);
-  }
-
-  @Override
-  public void setComponents(List<RadComponent> components) {
-    myComponents = components;
+    super(container, context);
   }
 
   @Override
@@ -71,25 +52,6 @@ public class DropToOperation implements EditOperation {
       layer.remove(myFeedback);
       layer.repaint();
       myFeedback = null;
-    }
-  }
-
-  @Override
-  public boolean canExecute() {
-    return true;
-  }
-
-  @Override
-  public void execute() throws Exception {
-    if (myContext.isAdd() || myContext.isMove()) {
-      for (RadComponent component : myComponents) {
-        ModelParser.moveComponent(myContainer, (RadViewComponent)component, null);
-      }
-    }
-    else {
-      for (RadComponent component : myComponents) {
-        ModelParser.addComponent(myContainer, (RadViewComponent)component, null);
-      }
     }
   }
 }

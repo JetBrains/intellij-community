@@ -60,9 +60,9 @@ class AssociationsEditor {
   private final ProjectTreeBuilder myBuilder;
 
   public AssociationsEditor(final Project project, final TreeState oldState) {
-    initUI();
-
     myManager = ((FileAssociationsManagerImpl)FileAssociationsManager.getInstance(project)).getTempManager();
+
+    initUI();
 
     final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree.setModel(treeModel);
@@ -341,7 +341,7 @@ class AssociationsEditor {
       }
     }
 
-    public void update(PsiFile selection) {
+    public void update(@Nullable PsiFile selection) {
       final int oldSize = myFiles.length;
       myFiles = PsiFile.EMPTY_ARRAY;
       if (myFiles.length != oldSize) fireIntervalRemoved(this, 0, oldSize - 1);

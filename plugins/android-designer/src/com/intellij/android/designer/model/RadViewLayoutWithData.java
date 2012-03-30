@@ -18,8 +18,6 @@ package com.intellij.android.designer.model;
 /**
  * @author Alexander Lobas
  */
-public class RadImageSwitcherLayout extends RadTypeSwitcherLayout {
-  public RadImageSwitcherLayout() {
-    super("ImageView");
-  }
+public abstract class RadViewLayoutWithData extends RadViewLayout {
+  public abstract String[] getLayoutParams();
 }

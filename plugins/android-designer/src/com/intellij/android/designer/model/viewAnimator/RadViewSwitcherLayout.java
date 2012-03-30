@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.android.designer.model.viewAnimator;
 
 import com.intellij.designer.designSurface.OperationContext;
 
 /**
  * @author Alexander Lobas
  */
-public class RadTextSwitcherLayout extends RadTypeSwitcherLayout {
-  public RadTextSwitcherLayout() {
-    super("TextView");
+public class RadViewSwitcherLayout extends RadViewAnimatorLayout {
+  @Override
+  protected boolean checkChildOperation(OperationContext context) {
+    return context.isMove() || myContainer.getChildren().size() < 2;
   }
 }

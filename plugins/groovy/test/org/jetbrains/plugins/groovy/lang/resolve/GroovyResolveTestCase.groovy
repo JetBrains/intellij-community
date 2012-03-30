@@ -76,7 +76,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   }
 
   protected PsiReference configureByText(String text) {
-    configureByText('a.groovy', text);
+    configureByText('_a.groovy', text);
   }
 
   protected PsiReference configureByText(String fileName, String text) {

@@ -221,7 +221,7 @@ public class GradleUtil {
       @Override
       public void run() {
         if (modal) {
-          ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), true) {
+          ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               task.execute(indicator);

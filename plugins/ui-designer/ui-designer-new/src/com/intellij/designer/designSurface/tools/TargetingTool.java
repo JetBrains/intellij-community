@@ -116,11 +116,11 @@ public abstract class TargetingTool extends InputTool {
 
     @Override
     public boolean resultFilter(RadComponent target) {
+      updateContext(target);
+
       if (myTarget == target) {
         return true;
       }
-
-      updateContext(target);
 
       RadLayout layout = target.getLayout();
       if (layout != null) {

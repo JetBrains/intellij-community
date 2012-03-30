@@ -13,26 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.designer.designSurface;
 
-import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
-import javax.swing.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadScrollViewLayout extends RadSingleChildrenViewLayout {
+public abstract class AbstractEditOperation implements EditOperation {
+  protected final OperationContext myContext;
+  protected List<RadComponent> myComponents;
+
+  public AbstractEditOperation(OperationContext context) {
+    myContext = context;
+  }
+
   @Override
-  public void addSelectionActions(DesignerEditorPanel designer,
-                                  DefaultActionGroup actionGroup,
-                                  JComponent shortcuts,
-                                  List<RadComponent> selection) {
-    if (selection.size() == 1) {
-      RadScrollViewComponent.addScrollAction(designer, actionGroup, shortcuts, (RadViewComponent)myContainer);
-    }
+  public void setComponent(RadComponent component) {
+    myComponents = Collections.singletonList(component);
+  }
+
+  @Override
+  public void setComponents(List<RadComponent> components) {
+    myComponents = components;
+  }
+
+  @Override
+  public boolean canExecute() {
+    return true;
   }
 }

@@ -153,7 +153,7 @@
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings" serviceImplementation="org.jetbrains.plugins.groovy.gant.GantSettings"/>
 
-    <spellchecker.support language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovySpellcheckingStrategy"/>
+    <spellchecker.support language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInspection.spellchecker.GroovySpellcheckingStrategy"/>
 
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <framework.type implementation="org.jetbrains.plugins.groovy.config.GroovyFrameworkType"/>
@@ -316,6 +316,7 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyArgListSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyGStringSelectioner" order="before wordSelectioner"/>
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyParameterListSelectioner"/>
+    <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyElseSelectioner"/>
 
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorMethodReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
