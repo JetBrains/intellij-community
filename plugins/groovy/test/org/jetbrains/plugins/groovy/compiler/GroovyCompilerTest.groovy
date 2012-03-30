@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import junit.framework.AssertionFailedError
+import com.intellij.testFramework.PsiTestUtil
 
 /**
  * @author peter
@@ -301,8 +302,8 @@ public class Transf implements ASTTransformation {
 
     Module dep1 = addModule('dependent1')
     Module dep2 = addModule('dependent2')
-    addDependency dep2, dep1
-    addDependency myModule, dep2
+    PsiTestUtil.addDependency dep2, dep1
+    PsiTestUtil.addDependency myModule, dep2
 
     addGroovyLibrary(dep1);
     addGroovyLibrary(dep2);

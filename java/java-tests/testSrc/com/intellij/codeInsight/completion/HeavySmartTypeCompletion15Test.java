@@ -1,84 +1,98 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 @SuppressWarnings({"ALL"})
-public class HeavySmartTypeCompletion15Test extends CompletionTestCase {
+public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartType";
-
-  public HeavySmartTypeCompletion15Test() {
-    setType(CompletionType.SMART);
-  }
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
-  
 
   public void testGetInstance() throws Throwable {
-    configureByFile(BASE_PATH + "/foo/" + getTestName(false) + ".java", BASE_PATH);
+    myFixture.configureFromExistingVirtualFile(
+      myFixture.copyFileToProject(BASE_PATH + "/foo/" + getTestName(false) + ".java", "foo/" + getTestName(false) + ".java"));
     performAction();
-    selectItem(myItems[0]);
-    checkResultByFile(BASE_PATH + "/foo/" + getTestName(false) + "-out.java");
+    myFixture.type('\n');
+    myFixture.checkResultByFile(BASE_PATH + "/foo/" + getTestName(false) + "-out.java");
   }
 
   public void testProtectedAnonymousConstructor() throws Throwable {
-    createClass("package pkg;" +
-                                "public class Foo {" +
-                                "  protected Foo(int a) {}" +
-                                "}");
-    createClass("package pkg;" +
-                                "public class Bar<T> {" +
-                                "  protected Bar(java.util.List<T> list) {}" +
-                                "}");
+    myFixture.addClass("package pkg;" +
+                       "public class Foo {" +
+                       "  protected Foo(int a) {}" +
+                       "}");
+    myFixture.addClass("package pkg;" +
+                       "public class Bar<T> {" +
+                       "  protected Bar(java.util.List<T> list) {}" +
+                       "}");
     doTest();
   }
 
   public void testProtectedAnonymousConstructor2() throws Throwable {
-    createClass("package pkg;" +
-                                "public class Foo {" +
-                                "  protected Foo(int a) {}" +
-                                "}");
-    createClass("package pkg;" +
-                                "public class Bar<T> {" +
-                                "  protected Bar(java.util.List<T> list) {}" +
-                                "}");
+    myFixture.addClass("package pkg;" +
+                       "public class Foo {" +
+                       "  protected Foo(int a) {}" +
+                       "}");
+    myFixture.addClass("package pkg;" +
+                       "public class Bar<T> {" +
+                       "  protected Bar(java.util.List<T> list) {}" +
+                       "}");
     doTest();
   }
 
   public void testUnlockDocument() throws Throwable {
-    createClass("package pkg; public class Bar {}");
-    createClass("package pkg; public class Foo {" +
-                              "  public static void foo(java.util.List<pkg.Bar> list) {}" +
-                              "}");
+    myFixture.addClass("package pkg; public class Bar {}");
+    myFixture.addClass("package pkg; public class Foo {" +
+                       "  public static void foo(java.util.List<pkg.Bar> list) {}" +
+                       "}");
 
     doTest();
   }
 
   private void doTest() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    configure();
+    checkResult();
+  }
+
+  private void checkResult() {
+    myFixture.checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+  }
+
+  private void configure() {
+    myFixture.configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    performAction();
   }
 
   public void testClassLiteralShouldInsertImport() throws Throwable {
-    createClass("package bar; public class Intf {}");
-    createClass("package foo; public class Bar extends bar.Intf {}");
+    myFixture.addClass("package bar; public class Intf {}");
+    myFixture.addClass("package foo; public class Bar extends bar.Intf {}");
 
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    selectItem(myItems[0]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    configure();
+    myFixture.type('\n');
+    checkResult();
   }
 
   private void performAction() {
-    complete();
+    myFixture.complete(CompletionType.SMART);
   }
 
-  protected void tearDown() throws Exception {
-    LookupManager.getInstance(myProject).hideActiveLookup();
-    super.tearDown();
-  }
 }
