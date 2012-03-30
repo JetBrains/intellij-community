@@ -29,12 +29,9 @@ public class GitCommand {
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand COMMIT = write("commit");
   public static final GitCommand CONFIG = meta("config");
-  public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
   public static final GitCommand CLONE = write("clone");
-  public static final GitCommand DESCRIBE = meta("describe");
   public static final GitCommand DIFF = read("diff");
-  public static final GitCommand DIFF_INDEX = read("diff-index");
   public static final GitCommand FETCH = write("fetch");
   public static final GitCommand INIT = write("init");
   public static final GitCommand LOG = meta("log");
@@ -54,8 +51,6 @@ public class GitCommand {
   public static final GitCommand STATUS = read("status");
   public static final GitCommand TAG = meta("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
-  public static final GitCommand VERSION = meta("version");
-  public static final GitCommand GC = write("gc");
 
   /**
    * Name of environment variable that specifies editor for the git
