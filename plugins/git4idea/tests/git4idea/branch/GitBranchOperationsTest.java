@@ -18,10 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
-import git4idea.test.GitTestScenarioGenerator;
-import git4idea.test.GitTestUtil;
-import git4idea.test.TestMessageManager;
-import git4idea.test.TestNotificator;
+import git4idea.test.*;
 import git4idea.tests.TestDialogHandler;
 import git4idea.tests.TestDialogManager;
 import git4idea.util.UntrackedFilesNotifier;
@@ -90,11 +87,11 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
 
-    myDialogManager = GitTestUtil.registerDialogManager(myProject);
     myNotificationManager = GitTestUtil.registerNotificationManager(myProject);
     myMessageManager = GitTestUtil.registerMessageManager(myProject);
-    GitTestUtil.registerPlatformFacade(myProject);
-    
+    GitTestPlatformFacade platformFacade = GitTestUtil.registerPlatformFacade(myProject);
+    myDialogManager = platformFacade.getDialogManager();
+
     createAddCommit(myUltimate, "a");
     createAddCommit(myCommunity, "a");
     createAddCommit(myContrib, "a");
@@ -338,8 +335,6 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
     doCheckoutOrMerge(checkout, "feature");
     String operation = checkout ? "checkout" : "merge";
-    assertNotify(NotificationType.ERROR, "Couldn't " + operation + " feature",
-                 stripHtmlAndBreaks("Local changes would be overwritten by " + operation + "." + "You should stash or commit them."));
     assertBranch("master");
   }
 
@@ -365,7 +360,6 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
                               String.format(GitCheckoutOperation.ROLLBACK_PROPOSAL_FORMAT, "master") :
                               GitMergeOperation.ROLLBACK_PROPOSAL;
     assertMessage("Couldn't " + operationName + " feature",
-                  "Local changes would be overwritten by " + operationName + ".<br/>You should stash or commit them.<br/>" +
                   "However " + operationName + " has succeeded for the following repository:<br/>" +
                   myUltimate.getPresentableUrl() +
                   "<br/>" + rollbackProposal,
