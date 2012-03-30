@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.Consumer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.sdk.*;
@@ -61,7 +62,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
 
         try {
           final PySkeletonRefresher refresher = new PySkeletonRefresher(project, mySdk, null, null);
-          refresher.generateSkeleton(myQualifiedName, "", assemblyRefs);
+          refresher.generateSkeleton(myQualifiedName, "", assemblyRefs, Consumer.EMPTY_CONSUMER);
           final VirtualFile skeletonDir;
           skeletonDir = LocalFileSystem.getInstance().findFileByPath(refresher.getSkeletonsPath());
           if (skeletonDir != null) {

@@ -10,6 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,9 @@ public class PySkeletonGenerator {
 
   private final String mySkeletonsPath;
 
+  public void finishSkeletonsGeneration() {
+  }
+
   static class ListBinariesResult {
     public final int generatorVersion;
     public final Map<String, PySkeletonRefresher.PyBinaryItem> modules;
@@ -49,7 +54,12 @@ public class PySkeletonGenerator {
     return mySkeletonsPath;
   }
 
-  protected boolean generateSkeleton(String modname, String modfilename, List<String> assemblyRefs, String syspath, String sdkHomePath)
+  protected void generateSkeleton(String modname,
+                                  String modfilename,
+                                  List<String> assemblyRefs,
+                                  String syspath,
+                                  String sdkHomePath,
+                                  Consumer<Boolean> resultConsumer)
     throws InvalidSdkException {
     boolean ret = true;
 
@@ -69,7 +79,8 @@ public class PySkeletonGenerator {
         LOG.info(sb.toString());
       }
     }
-    return ret;
+
+    resultConsumer.consume(ret);
   }
 
   public ProcessOutput runSkeletonGeneration(String modname,

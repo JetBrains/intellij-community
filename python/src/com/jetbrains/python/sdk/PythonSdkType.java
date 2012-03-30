@@ -706,7 +706,7 @@ public class PythonSdkType extends SdkType {
 
   static void refreshSkeletonsOfSDK(@Nullable Project project, @NotNull Sdk sdk, String skeletonsPath, @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final Map<String, List<String>> errors = new TreeMap<String, List<String>>();
-    final List<String> failed_sdks = new SmartList<String>();
+    final List<String> failedSdks = new SmartList<String>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     List<String> sdk_errors;
     final String homePath = sdk.getHomePath();
@@ -716,24 +716,24 @@ public class PythonSdkType extends SdkType {
     else {
       LOG.info("Refreshing skeletons for " + homePath);
       SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-      sdk_errors = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator).regenerateSkeletons(project, checker, migrationFlag);
+      sdk_errors = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migrationFlag);
       if (sdk_errors.size() > 0) {
-        String sdk_name = sdk.getName();
-        List<String> known_errors = errors.get(sdk_name);
-        if (known_errors == null) {
-          errors.put(sdk_name, sdk_errors);
+        String sdkName = sdk.getName();
+        List<String> knownErrors = errors.get(sdkName);
+        if (knownErrors == null) {
+          errors.put(sdkName, sdk_errors);
         }
         else {
-          known_errors.addAll(sdk_errors);
+          knownErrors.addAll(sdk_errors);
         }
       }
     }
-    if (failed_sdks.size() > 0 || errors.size() > 0) {
+    if (failedSdks.size() > 0 || errors.size() > 0) {
       int module_errors = 0;
       for (String sdk_name : errors.keySet()) module_errors += errors.get(sdk_name).size();
       String message;
-      if (failed_sdks.size() > 0) {
-        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failed_sdks.size());
+      if (failedSdks.size() > 0) {
+        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failedSdks.size());
       }
       else {
         message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
@@ -745,7 +745,7 @@ public class PythonSdkType extends SdkType {
           new NotificationListener() {
             @Override
             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              new SkeletonErrorsDialog(errors, failed_sdks).setVisible(true);
+              new SkeletonErrorsDialog(errors, failedSdks).setVisible(true);
             }
           }
         )
