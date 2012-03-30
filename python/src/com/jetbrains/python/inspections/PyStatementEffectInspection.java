@@ -70,13 +70,15 @@ public class PyStatementEffectInspection extends PyInspection {
 
     private boolean checkStringLiteral(PyExpression expression) {
       if (expression instanceof PyStringLiteralExpression) {
-        PsiElement prevSibling = expression.getParent().getPrevSibling();
-        while (prevSibling instanceof PsiWhiteSpace)
-          prevSibling = prevSibling.getPrevSibling();
-        if (prevSibling instanceof PyAssignmentStatement) {
-          for (PyExpression target : ((PyAssignmentStatement)prevSibling).getTargets()) {
-            if (PyUtil.getAttributeDocString((PyTargetExpression)target) == expression) {
-              return true;
+        if (expression.getText().contains(":type:")) {
+          PsiElement prevSibling = expression.getParent().getPrevSibling();
+          while (prevSibling instanceof PsiWhiteSpace)
+            prevSibling = prevSibling.getPrevSibling();
+          if (prevSibling instanceof PyAssignmentStatement) {
+            for (PyExpression target : ((PyAssignmentStatement)prevSibling).getTargets()) {
+              if (PyUtil.getAttributeDocString((PyTargetExpression)target) == expression) {
+                return true;
+              }
             }
           }
         }
