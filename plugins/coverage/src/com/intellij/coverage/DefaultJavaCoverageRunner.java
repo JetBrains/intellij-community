@@ -18,19 +18,24 @@ package com.intellij.coverage;
 import com.intellij.execution.configurations.ConfigurationInfoProvider;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultJavaCoverageRunner extends DefaultJavaProgramRunner {
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
-    return executorId.equals(CoverageExecutor.EXECUTOR_ID) &&
-           //profile instanceof ModuleBasedConfiguration &&
-           !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction) &&
-           profile instanceof RunConfigurationBase &&
-           CoverageEnabledConfiguration.isApplicableTo((RunConfigurationBase)profile);
+    try {
+      return executorId.equals(CoverageExecutor.EXECUTOR_ID) &&
+             //profile instanceof ModuleBasedConfiguration &&
+             !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction) &&
+             profile instanceof RunConfigurationBase &&
+             Extensions.findExtension(CoverageEngine.EP_NAME, JavaCoverageEngine.class).isApplicableTo((RunConfigurationBase)profile);
+    }
+    catch (Exception e) {
+      return false;
+    }
   }
 
   @Override
