@@ -89,6 +89,18 @@ public class GitCommand {
   @NotNull @NonNls private final String myName; // command name passed to git
   @NotNull private final LockingPolicy myLocking; // Locking policy for the command
 
+  /**
+   * Creates a git command with LockingPolicy different from the default one.
+   * Use this constructor with care: specifying read-policy on a write operation may result in a conflict during simultaneous
+   * modification of index.
+   * @param command       Original command.
+   * @param lockingPolicy Locking policy overriding default locking policy of the original command.
+   */
+  private GitCommand(@NotNull GitCommand command, @NotNull LockingPolicy lockingPolicy) {
+    myName = command.name();
+    myLocking = lockingPolicy;
+  }
+
   private GitCommand(@NonNls @NotNull String name, @NotNull LockingPolicy locking) {
     myLocking = locking;
     myName = name;
@@ -117,6 +129,11 @@ public class GitCommand {
   @NotNull
   public LockingPolicy lockingPolicy() {
     return myLocking;
+  }
+
+  @NotNull
+  public GitCommand readLockingCommand() {
+    return new GitCommand(this, LockingPolicy.READ);
   }
 
 }

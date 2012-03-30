@@ -64,7 +64,7 @@ public class GitStashUtils {
 
   public static void loadStashStack(@NotNull Project project, @NotNull VirtualFile root, final Charset charset,
                                     final Consumer<StashInfo> consumer) {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH);
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand());
     h.setSilent(true);
     h.setNoSSH(true);
     h.addParameters("list");
