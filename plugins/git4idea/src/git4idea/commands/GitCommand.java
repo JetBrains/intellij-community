@@ -68,66 +68,6 @@ public class GitCommand {
    */
   public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
 
-  @NotNull @NonNls private final String myName; // command name passed to git
-  @NotNull private final LockingPolicy myLocking; // Locking policy for the command
-
-  /**
-   * The constructor
-   *
-   * @param name      the command myName
-   * @param locking   the myLocking policy
-   */
-  private GitCommand(@NonNls @NotNull String name, @NotNull LockingPolicy locking) {
-    myLocking = locking;
-    myName = name;
-  }
-
-  /**
-   * Create command descriptor that performs reads from index
-   *
-   * @param name the command myName
-   * @return the create command objects
-   */
-  private static GitCommand read(String name) {
-    return new GitCommand(name, LockingPolicy.READ);
-  }
-
-  /**
-   * Create command descriptor that performs write operations
-   *
-   * @param name the command myName
-   * @return the created command object
-   */
-  private static GitCommand write(String name) {
-    return new GitCommand(name, LockingPolicy.WRITE);
-  }
-
-  /**
-   * Create command descriptor that performs write operations
-   *
-   * @param name the command myName
-   * @return the created command object
-   */
-  private static GitCommand writeSuspendable(String name) {
-    return new GitCommand(name, LockingPolicy.WRITE_SUSPENDABLE);
-  }
-
-  /**
-   * @return the command name
-   */
-  @NotNull
-  public String name() {
-    return myName;
-  }
-
-  /**
-   * @return the locking policy for the command
-   */
-  @NotNull
-  public LockingPolicy lockingPolicy() {
-    return myLocking;
-  }
-
   /**
    * The myLocking policy for the command
    */
@@ -145,4 +85,38 @@ public class GitCommand {
      */
     WRITE_SUSPENDABLE,
   }
+
+  @NotNull @NonNls private final String myName; // command name passed to git
+  @NotNull private final LockingPolicy myLocking; // Locking policy for the command
+
+  private GitCommand(@NonNls @NotNull String name, @NotNull LockingPolicy locking) {
+    myLocking = locking;
+    myName = name;
+  }
+
+  @NotNull
+  private static GitCommand read(@NotNull String name) {
+    return new GitCommand(name, LockingPolicy.READ);
+  }
+
+  @NotNull
+  private static GitCommand write(@NotNull String name) {
+    return new GitCommand(name, LockingPolicy.WRITE);
+  }
+
+  @NotNull
+  private static GitCommand writeSuspendable(@NotNull String name) {
+    return new GitCommand(name, LockingPolicy.WRITE_SUSPENDABLE);
+  }
+
+  @NotNull
+  public String name() {
+    return myName;
+  }
+
+  @NotNull
+  public LockingPolicy lockingPolicy() {
+    return myLocking;
+  }
+
 }
