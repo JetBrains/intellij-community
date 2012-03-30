@@ -74,17 +74,16 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
             String[] jarPaths;
             synchronized (LOCK) {
               if (jarPathsCache == null) {
-                jarPathsCache = new String[myHandlers.size()];
-                int i = 0;
-                for (String p : myHandlers.keySet()) {
-                  jarPathsCache[i++] = p.substring(0, p.length() - JAR_SEPARATOR.length());
-                }
+                Set<String> jarPathsSet = myHandlers.keySet();
+                jarPathsCache = jarPathsSet.toArray(new String[jarPathsSet.size()]);
               }
               jarPaths = jarPathsCache;
             }
 
             for (String jarPath : jarPaths) {
-              if (FileUtil.startsWith(jarPath, path, SystemInfo.isFileSystemCaseSensitive)) {
+              if (FileUtil.startsWith(jarPath.substring(0, jarPath.length() - JAR_SEPARATOR.length()),
+                                      path,
+                                      SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
                   rootsToRefresh.add(jarRootToRefresh);
