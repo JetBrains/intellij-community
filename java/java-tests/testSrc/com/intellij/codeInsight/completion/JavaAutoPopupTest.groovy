@@ -1252,4 +1252,15 @@ class Foo {
     assert !lookup
   }
 
+  public void testVarargParenthesis() {
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  void foo(File... files) { }
+  { foo(new <caret>) }
+}
+'''
+    type 'File('
+    assert myFixture.file.text.contains('new File()')
+  }
+
 }
