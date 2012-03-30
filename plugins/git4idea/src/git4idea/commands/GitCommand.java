@@ -36,31 +36,31 @@ public class GitCommand {
 
   public static final GitCommand ADD = write("add");
   public static final GitCommand ANNOTATE = read("annotate");
-  public static final GitCommand BRANCH = meta("branch");
+  public static final GitCommand BRANCH = read("branch");
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand COMMIT = write("commit");
-  public static final GitCommand CONFIG = meta("config");
+  public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
   public static final GitCommand CLONE = write("clone");
   public static final GitCommand DIFF = read("diff");
   public static final GitCommand FETCH = write("fetch");
   public static final GitCommand INIT = write("init");
-  public static final GitCommand LOG = meta("log");
+  public static final GitCommand LOG = read("log");
   public static final GitCommand LS_FILES = read("ls-files");
-  public static final GitCommand LS_REMOTE = meta("ls-remote");
+  public static final GitCommand LS_REMOTE = read("ls-remote");
   public static final GitCommand MERGE = write("merge");
-  public static final GitCommand MERGE_BASE = meta("merge-base");
+  public static final GitCommand MERGE_BASE = read("merge-base");
   public static final GitCommand PULL = write("pull");
   public static final GitCommand PUSH = write("push");
   public static final GitCommand REBASE = writeSuspendable("rebase");
-  public static final GitCommand REMOTE = meta("remote");
+  public static final GitCommand REMOTE = read("remote");
   public static final GitCommand RESET = write("reset");
-  public static final GitCommand REV_LIST = meta("rev-list");
+  public static final GitCommand REV_LIST = read("rev-list");
   public static final GitCommand RM = write("rm");
   public static final GitCommand SHOW = write("show");
   public static final GitCommand STASH = write("stash");
   public static final GitCommand STATUS = read("status");
-  public static final GitCommand TAG = meta("tag");
+  public static final GitCommand TAG = read("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
 
   /**
@@ -80,16 +80,6 @@ public class GitCommand {
   private GitCommand(@NonNls @NotNull String name, @NotNull LockingPolicy locking) {
     myLocking = locking;
     myName = name;
-  }
-
-  /**
-   * Create command descriptor that performs metadata operations only
-   *
-   * @param name the command myName
-   * @return the created command object
-   */
-  private static GitCommand meta(String name) {
-    return new GitCommand(name, LockingPolicy.META);
   }
 
   /**
@@ -154,9 +144,5 @@ public class GitCommand {
      * Write lock should be acquired for the command, and it could be acquired in several intervals
      */
     WRITE_SUSPENDABLE,
-    /**
-     * Metadata read/write command
-     */
-    META,
   }
 }
