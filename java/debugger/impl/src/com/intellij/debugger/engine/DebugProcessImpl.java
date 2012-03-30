@@ -1755,7 +1755,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                 fail();
                 if (myExecutionResult != null || !connectorIsReady.get()) {
                   // propagate exception only in case we succeded to obtain execution result,
-                  // otherwise it the error is induced by the fact that there is nothing to debug, and there is no need to show
+                  // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
                   final RunProfile runProfile = state.getRunnerSettings().getRunProfile();
                   if (runProfile != null) {

@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -25,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -91,6 +93,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
       List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
 
+      LibraryOrderEntry lib = null;
       for (OrderEntry entry : orderEntries) {
         ProgressManager.checkCanceled();
 
@@ -98,12 +101,32 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
           return ((ProjectRootManagerEx)myProjectRootManager).getScopeForJdk((JdkOrderEntry)entry);
         }
 
-        if (entry instanceof LibraryOrderEntry || entry instanceof ModuleOrderEntry) {
+        if (entry instanceof LibraryOrderEntry) {
+          lib = (LibraryOrderEntry)entry;
+          modulesLibraryUsedIn.add(entry.getOwnerModule());
+        }
+        else if (entry instanceof ModuleOrderEntry) {
           modulesLibraryUsedIn.add(entry.getOwnerModule());
         }
       }
 
-      return ((ProjectRootManagerEx)myProjectRootManager).getScopeForLibraryUsedIn(modulesLibraryUsedIn);
+      GlobalSearchScope allCandidates = ((ProjectRootManagerEx)myProjectRootManager).getScopeForLibraryUsedIn(modulesLibraryUsedIn);
+      if (lib != null) {
+        final LibraryRuntimeClasspathScope preferred = new LibraryRuntimeClasspathScope(myProject, lib);
+        // prefer current library
+        return new DelegatingGlobalSearchScope(allCandidates, preferred) {
+          @Override
+          public int compare(VirtualFile file1, VirtualFile file2) {
+            boolean c1 = preferred.contains(file1);
+            boolean c2 = preferred.contains(file2);
+            if (c1 && !c2) return 1;
+            if (c2 && !c1) return -1;
+
+            return super.compare(file1, file2);
+          }
+        };
+      }
+      return allCandidates;
     }
   }
 

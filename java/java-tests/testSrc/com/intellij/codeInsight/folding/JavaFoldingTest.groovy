@@ -20,6 +20,8 @@ import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
 import com.intellij.find.FindManager
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
@@ -167,6 +169,32 @@ class Test {
     assertEquals(2, closureFolds.size())
   }
 
+  public void "test closure folding doesn't expand when editing inside"() {
+    def text = """\
+class Test {
+    void test() {
+     new Runnable() {
+      public void run() {
+        System.out.println(<caret>);
+      }
+    };
+  }
+}
+"""
+
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+    def closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
+    assertNotNull closureStartFold
+    assertFalse closureStartFold.expanded
+    assert text.substring(closureStartFold.endOffset).startsWith('System') //one line closure
+
+    myFixture.type('2')
+    myFixture.doHighlighting()
+    closureStartFold = foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable"))
+    assert closureStartFold
+  }
+
   public void testFindInFolding() {
     def text = """\
 class Test {
@@ -189,9 +217,56 @@ class Test {
     myFixture.testFolding("$PathManagerEx.testDataPath/codeInsight/folding/${getTestName(false)}.java");
   }
   
+  public void "test move methods"() {
+    def initialText = '''\
+class Test {
+    void test1() {
+    }
+    
+    void test2() {
+    }
+}
+'''
+    
+    Closure<FoldRegion> fold = { String methodName ->
+      def text = myFixture.editor.document.text
+      def nameIndex = text.indexOf(methodName)
+      def start = text.indexOf('{', nameIndex)
+      def end = text.indexOf('}', start) + 1
+      def regions = myFixture.editor.foldingModel.allFoldRegions
+      for (region in regions) {
+        if (region.startOffset == start && region.endOffset == end) {
+          return region
+        }
+      }
+      fail("Can't find target fold region for method with name '$methodName'. Registered regions: $regions")
+      null
+    }
+
+    configure initialText
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelEx
+    foldingModel.runBatchFoldingOperation {
+      fold('test1').expanded = true
+      fold('test2').expanded = false
+    }
+
+    myFixture.editor.caretModel.moveToOffset(initialText.indexOf('void'))
+    myFixture.performEditorAction 'MoveStatementDown'
+    CodeFoldingManager.getInstance(project).updateFoldRegions(myFixture.editor)
+    assertTrue(fold('test1').expanded)
+    assertFalse(fold('test2').expanded)
+
+    myFixture.performEditorAction 'MoveStatementUp'
+    CodeFoldingManager.getInstance(project).updateFoldRegions(myFixture.editor)
+    assertTrue(fold('test1').expanded)
+    assertFalse(fold('test2').expanded)
+  }
+  
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
     CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelEx
+    foldingModel.rebuild()
     myFixture.doHighlighting()
   }
 

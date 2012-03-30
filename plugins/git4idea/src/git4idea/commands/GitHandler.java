@@ -620,7 +620,6 @@ public abstract class GitHandler {
 
     boolean suspendable = false;
     switch (myCommand.lockingPolicy()) {
-      case META:
       case READ:
         // need to lock only write operations: reads can be performed even when a write operation is going on
         break;
@@ -713,7 +712,6 @@ public abstract class GitHandler {
     }
     finally {
       switch (myCommand.lockingPolicy()) {
-        case META:
         case READ:
           break;
         case WRITE_SUSPENDABLE:

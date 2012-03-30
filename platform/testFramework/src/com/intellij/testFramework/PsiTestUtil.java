@@ -20,7 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -30,10 +33,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -277,5 +277,58 @@ import java.util.Collection;
         model.rearrangeOrderEntries(orderEntries);
       }
     }.execute().throwException();
+  }
+
+  public static void addLibrary(final Module module,
+                                final String libName, final String libDir,
+                                final String[] classRoots,
+                                final String[] sourceRoots) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, libDir);
+        final Library library = model.getModuleLibraryTable().createLibrary(libName);
+        final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
+        for (String classRoot : classRoots) {
+          libModifiableModel.addRoot(parentUrl + classRoot, OrderRootType.CLASSES);
+        }
+        for (String sourceRoot : sourceRoots) {
+          libModifiableModel.addRoot(parentUrl + sourceRoot, OrderRootType.SOURCES);
+        }
+        libModifiableModel.commit();
+        model.commit();
+      }
+    });
+  }
+
+  public static Module addModule(final Project project, final ModuleType type, final String name, final VirtualFile root) {
+    return new WriteCommandAction<Module>(project) {
+      @Override
+      protected void run(Result<Module> result) throws Throwable {
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+        String moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type).getName();
+        moduleModel.commit();
+
+        final Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
+        final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
+        final ContentEntry entry = model.addContentEntry(root);
+        entry.addSourceFolder(root, false);
+
+        model.commit();
+        result.setResult(dep);
+      }
+    }.execute().getResultObject();
+  }
+
+  public static void addDependency(final Module from, final Module to) {
+    new WriteCommandAction(from.getProject()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(from).getModifiableModel();
+        model.addModuleOrderEntry(to);
+        model.commit();
+      }
+    }.execute().getResultObject();
+
   }
 }

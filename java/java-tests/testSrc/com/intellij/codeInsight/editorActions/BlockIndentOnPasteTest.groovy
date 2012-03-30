@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -618,7 +618,7 @@ class Test {
     doTest(before, toPaste2, expected)
   } 
   
-  def testPlainTextPaste() {
+  void testPlainTextPaste() {
     def before = '''\
   line1
   line2
@@ -628,7 +628,7 @@ class Test {
     def toPaste =
     '''\
 line to paste #1
-     line to paste #2
+     line to paste #2\
 '''
 
 
@@ -641,10 +641,33 @@ line to paste #1
     doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
   }
   
-  def testPlainTextPasteWithCompleteReplacement() {
+  void "test plain text when pasted string ends by line feed"() {
+    def before = '''\
+  line1
+  line2
+  <caret>
+'''
+
+    def toPaste =
+    '''\
+line to paste #1
+line to paste #2
+'''
+
+    def expected = '''\
+  line1
+  line2
+  line to paste #1
+  line to paste #2
+
+'''
+    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
+  }
+
+  void "test plain text when caret is after selection"() {
     def before = '''\
 <selection>  line1
-  line2</selection>\
+</selection><caret>\
 '''
 
     def toPaste =
@@ -655,32 +678,14 @@ line to paste #2
 
 
     def expected = '''\
+  line1
 line to paste #1
 line to paste #2
 '''
     doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
   }
 
-  def testPlainTextMultilinePasteWithCaretAfterSelection() {
-    def before = '''\
-<selection>  line1</selection><caret>\
-'''
-
-    def toPaste =
-    '''\
-line to paste #1
-line to paste #2
-'''
-
-
-    def expected = '''\
-line to paste #1
-line to paste #2
-'''
-    doTest(before, toPaste, expected, StdFileTypes.PLAIN_TEXT)
-  }
-
-  def testPlainTextThatStartsByLineFeed() {
+  void testPlainTextThatStartsByLineFeed() {
     def before = '''\
 line 1
   # item1<caret>
@@ -715,6 +720,37 @@ line 1
     doTest(before, toPaste2, expected2, StdFileTypes.PLAIN_TEXT)
   }
   
+  void "test formatter-based paste that starts with white space"() {
+    def before = '''\
+class Test {
+    int i;
+    int j;
+
+    void test() {
+        <caret>
+    }
+}
+'''
+    
+    def toPaste = '''\
+    int i;
+    int j;\
+'''
+    
+    def expected = '''\
+class Test {
+    int i;
+    int j;
+
+    void test() {
+        int i;
+        int j;
+    }
+}
+'''
+    doTest(before, toPaste, expected)
+  }
+  
   def doTest(String before, toPaste, expected, FileType fileType = StdFileTypes.JAVA) {
     myFixture.configureByText(fileType, before)
 
@@ -732,6 +768,7 @@ line 1
     finally {
       settings.REFORMAT_ON_PASTE = old
     }
+    myFixture.editor.selectionModel.removeSelection()
     myFixture.checkResult(expected)
   }
 }

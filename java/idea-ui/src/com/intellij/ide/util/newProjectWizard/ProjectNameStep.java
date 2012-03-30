@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 
@@ -38,8 +37,6 @@ import java.io.File;
  *         Date: Jul 17, 2007
  */
 public class ProjectNameStep extends ModuleWizardStep {
-  private static final Icon NEW_PROJECT_ICON = IconLoader.getIcon("/newprojectwizard.png");
-
   private final JPanel myPanel;
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
@@ -97,7 +94,7 @@ public class ProjectNameStep extends ModuleWizardStep {
   }
 
   public Icon getIcon() {
-    return myWizardContext.getProject() == null ? NEW_PROJECT_ICON : ICON;
+    return myWizardContext.getStepIcon();
   }
 
   public JComponent getPreferredFocusedComponent() {

@@ -34,7 +34,7 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private final AtomicReference<State> myState = new AtomicReference<State>(State.DISCONNECTED);
   protected final ChannelPipelineFactory myPipelineFactory;
   protected final ChannelFactory myChannelFactory;
-  protected ChannelFuture myConnectFuture;
+  protected volatile ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final AsyncTaskExecutor asyncExec, final UUIDGetter uuidGetter) {
@@ -146,8 +146,9 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   public final RequestFuture<T> sendMessage(final UUID messageId, MessageLite message, @Nullable final T responseHandler, @Nullable final RequestFuture.CancelAction<T> cancelAction) {
     final RequestFuture<T> requestFuture = new RequestFuture<T>(responseHandler, messageId, cancelAction);
     myMessageHandler.registerFuture(messageId, requestFuture);
-    final Channel channel = myConnectFuture.getChannel();
-    if (channel.isConnected()) {
+    final ChannelFuture connectFuture = myConnectFuture;
+    final Channel channel = connectFuture != null? connectFuture.getChannel() : null;
+    if (channel != null && channel.isConnected()) {
       Channels.write(channel, message).addListener(new ChannelFutureListener() {
         public void operationComplete(ChannelFuture future) throws Exception {
           if (!future.isSuccess()) {

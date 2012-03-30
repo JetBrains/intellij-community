@@ -55,7 +55,7 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
-                                     PsiElement lastParent,
+                                     @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (PsiTreeUtil.isAncestor(this, place, false)) {
       return true;

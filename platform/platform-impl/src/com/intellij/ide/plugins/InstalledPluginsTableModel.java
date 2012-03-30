@@ -255,7 +255,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     int state = StringUtil.compareVersionNumbers(descr.getVersion(), existing.getVersion());
     final PluginId pluginId = existing.getPluginId();
     final String idString = pluginId.getIdString();
-    final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().myInstalledPlugins;
+    final JDOMExternalizableStringList installedPlugins = PluginManagerUISettings.getInstance().getInstalledPlugins();
     if (!installedPlugins.contains(idString) && !((IdeaPluginDescriptorImpl)existing).isDeleted()){
       installedPlugins.add(idString);
     }
@@ -537,7 +537,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
             }
             myBundledLabel.setText("From " + presentableUrl);
           } else {
-            if (PluginManagerUISettings.getInstance().myInstalledPlugins.contains(idString)) {
+            if (PluginManagerUISettings.getInstance().getInstalledPlugins().contains(idString)) {
               myBundledLabel.setText("From repository");
             } else {
               myBundledLabel.setText("Custom");

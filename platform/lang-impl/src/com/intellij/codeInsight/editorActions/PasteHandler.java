@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,7 +379,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     // Algorithm: the main idea is to process the first line of the pasted block, adjust its indent if necessary, calculate indent
     // adjustment string and apply to each line of the pasted block starting from the second one.
     //
-    // We differentiate three possible states here:
+    // We differentiate the following possible states here:
     //   --- pasted block doesn't start new line, i.e. there are non-white space symbols before it at the first line.
     //      Example:
     //         old content [pasted line 1
@@ -460,7 +460,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     
     final int i = CharArrayUtil.shiftBackward(chars, startOffset - 1, " \t");
     
-    // Handle situation when pasted block doesn't start new line.
+    // Handle a situation when pasted block doesn't start a new line.
     if (chars.charAt(startOffset) != '\n' && i > 0 && chars.charAt(i) != '\n') {
       int firstNonWsOffset = CharArrayUtil.shiftForward(chars, firstLineStart, " \t");
       if (firstNonWsOffset > firstLineStart) {
@@ -550,7 +550,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       }
     }
     else {
-      CharSequence toInsert = chars.subSequence(anchorLineStart, j + diff);
+      CharSequence toInsert = chars.subSequence(anchorLineStart, diff + startOffset);
       for (int line = anchorLine + 1; line <= lastLine; line++) {
         document.insertString(document.getLineStartOffset(line), toInsert);
       }

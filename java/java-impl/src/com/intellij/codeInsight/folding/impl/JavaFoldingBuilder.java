@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.lang.ASTNode;
@@ -47,7 +48,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
@@ -312,7 +316,9 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       if (importKeyword == null) return null;
       int startOffset = importKeyword.getTextRange().getEndOffset() + 1;
       int endOffset = statements[statements.length - 1].getTextRange().getEndOffset();
-      return new TextRange(startOffset, endOffset);
+      if (!hasErrorElementsNearby(element.getContainingFile(), startOffset, endOffset)) {
+        return new TextRange(startOffset, endOffset);
+      }
     }
     if (element instanceof PsiDocComment) {
       return element.getTextRange();
@@ -328,6 +334,16 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       return new TextRange(startOffset, last.getTextRange().getEndOffset());
     }
     return null;
+  }
+
+  public static boolean hasErrorElementsNearby(final PsiFile file, int startOffset, int endOffset) {
+    endOffset = CharArrayUtil.shiftForward(file.getText(), endOffset, " \t\n");
+    for (PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset)) {
+      if (element instanceof PsiErrorElement) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

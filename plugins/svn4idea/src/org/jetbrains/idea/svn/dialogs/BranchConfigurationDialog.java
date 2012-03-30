@@ -16,6 +16,7 @@
 
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -23,7 +24,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -35,6 +40,7 @@ import org.jetbrains.idea.svn.integrate.SvnBranchItem;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -48,8 +54,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
   private JPanel myTopPanel;
   private TextFieldWithBrowseButton myTrunkLocationTextField;
   private JList myLocationList;
-  private JButton myAddButton;
-  private JButton myRemoveButton;
+  private JPanel myListPanel;
   private final SvnBranchConfigManager mySvnBranchConfigManager;
   private final VirtualFile myRoot;
 
@@ -82,37 +87,42 @@ public class BranchConfigurationDialog extends DialogWrapper {
     trunkUrlValidator.textChanged(null);
 
     final MyListModel listModel = new MyListModel(configuration);
-    myLocationList.setModel(listModel);
-    myAddButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final String selectedUrl = SelectLocationDialog.selectLocation(project, rootUrl);
-        if (selectedUrl != null) {
-          if (!configuration.getBranchUrls().contains(selectedUrl)) {
-            configuration.addBranches(selectedUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
-            mySvnBranchConfigManager.reloadBranches(myRoot, selectedUrl, null);
-            listModel.fireItemAdded();
-            myLocationList.setSelectedIndex(listModel.getSize()-1);
+    myLocationList = new JBList(listModel);
+
+    myListPanel.add(
+      ToolbarDecorator.createDecorator(myLocationList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            final String selectedUrl = SelectLocationDialog.selectLocation(project, rootUrl);
+            if (selectedUrl != null) {
+              if (!configuration.getBranchUrls().contains(selectedUrl)) {
+                configuration
+                  .addBranches(selectedUrl, new InfoStorage<List<SvnBranchItem>>(new ArrayList<SvnBranchItem>(), InfoReliability.empty));
+                mySvnBranchConfigManager.reloadBranches(myRoot, selectedUrl, null);
+                listModel.fireItemAdded();
+                myLocationList.setSelectedIndex(listModel.getSize() - 1);
+              }
+            }
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+        @Override
+        public void run(AnActionButton button) {
+          int selIndex = myLocationList.getSelectedIndex();
+          Object[] selection = myLocationList.getSelectedValues();
+          for (Object urlObj : selection) {
+            String url = (String)urlObj;
+            int index = configuration.getBranchUrls().indexOf(url);
+            configuration.removeBranch(url);
+            listModel.fireItemRemoved(index);
+          }
+          if (listModel.getSize() > 0) {
+            if (selIndex >= listModel.getSize())
+              selIndex = listModel.getSize() - 1;
+            myLocationList.setSelectedIndex(selIndex);
           }
         }
-      }
-    });
-    myRemoveButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        int selIndex = myLocationList.getSelectedIndex();
-        Object[] selection = myLocationList.getSelectedValues();
-        for(Object urlObj: selection) {
-          String url = (String) urlObj;
-          int index = configuration.getBranchUrls().indexOf(url);
-          configuration.removeBranch(url);
-          listModel.fireItemRemoved(index);
-        }
-        if (listModel.getSize() > 0) {
-          if (selIndex >= listModel.getSize())
-            selIndex = listModel.getSize()-1;
-          myLocationList.setSelectedIndex(selIndex);
-        }
-      }
-    });
+      }).disableUpDownActions().setToolbarPosition(ActionToolbarPosition.BOTTOM).createPanel(), BorderLayout.CENTER);
   }
 
   private class TrunkUrlValidator extends DocumentAdapter {

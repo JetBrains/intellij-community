@@ -31,7 +31,7 @@ public class CodeCompletionOptions extends BaseConfigurable implements Searchabl
   private CodeCompletionPanel myPanel;
 
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
   public JComponent createComponent() {

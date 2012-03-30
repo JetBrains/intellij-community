@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.ui.UISettings;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -66,7 +67,7 @@ public class DialogUtil{
     }
   }
 
-  public static void registerMnemonic(JLabel label, JComponent target) {
+  public static void registerMnemonic(JLabel label, @Nullable JComponent target) {
     registerMnemonic(label, target, UIUtil.MNEMONIC);
   }
 
@@ -76,7 +77,7 @@ public class DialogUtil{
    * @param mn mnemonic char
    * @since 11.0
    */
-  public static void registerMnemonic(JLabel label, JComponent target, char mn) {
+  public static void registerMnemonic(JLabel label, @Nullable JComponent target, char mn) {
     String text = label.getText();
     if (text != null) {
       final StringBuilder realText = new StringBuilder(text.length());

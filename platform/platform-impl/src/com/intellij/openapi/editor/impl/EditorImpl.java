@@ -2628,6 +2628,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int myCount = 0;
     @NotNull final FontInfo myFontType;
+    final boolean myHasBreakSymbols;
     final int spaceWidth;
 
     @Nullable private char[] myLastData;
@@ -2635,6 +2636,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private CachedFontContent(@NotNull FontInfo fontInfo) {
       myFontType = fontInfo;
       spaceWidth = fontInfo.charWidth(' ', myEditorComponent);
+      myHasBreakSymbols = fontInfo.hasGlyphsToBreakDrawingIteration();
     }
 
     private void flushContent(@NotNull Graphics g) {
@@ -2666,7 +2668,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final int lastCount = count - 1;
         final Color lastColor = color[lastCount];
         if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color.equals(lastColor))
-          && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */)
+          && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */
+          && (!myHasBreakSymbols || !myFontType.getSymbolsToBreakDrawingIteration().contains(_data[ends[lastCount] - 1])))
         {
           ends[lastCount] = _end;
           if (lastColor == null) color[lastCount] = _color;
@@ -3054,6 +3057,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           myForceRefreshFont = true;
         }
         endX += charWidth;
+
+        if (newFont.hasGlyphsToBreakDrawingIteration() && newFont.getSymbolsToBreakDrawingIteration().contains(c)) {
+          drawCharsCached(g, text, start, j + 1, x, y, fontType, fontColor);
+          x = endX;
+          start = j + 1;
+        }
       }
 
       if (!(x < clip.x && endX < clip.x || x > clip.x + clip.width && endX > clip.x + clip.width)) {
@@ -5090,6 +5099,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       for (EditorMouseListener mouseListener : myMouseListeners) {
         mouseListener.mousePressed(event);
       }
+      putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, null);
 
       // On some systems (for example on Linux) popup trigger is MOUSE_PRESSED event.
       // But this trigger is always consumed by popup handler. In that case we have to

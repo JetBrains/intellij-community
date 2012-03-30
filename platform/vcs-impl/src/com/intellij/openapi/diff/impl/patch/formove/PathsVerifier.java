@@ -516,18 +516,13 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
     public VirtualFile doMove() throws IOException {
       final VirtualFile oldParent = myCurrent.getParent();
-      final VirtualFile afterFile;
-      if (myNewParent.equals(oldParent)) {
-        // rename: no move
-        afterFile = myCurrent;
-      } else {
-        myCurrent.move(PatchApplier.class, myNewParent);
-        afterFile = myCurrent;
-      }
       if (! Comparing.equal(myCurrent.getName(), myNewName)) {
-        afterFile.rename(PatchApplier.class, myNewName);
+        myCurrent.rename(PatchApplier.class, myNewName);
       }
-      return afterFile;
+      if (! myNewParent.equals(oldParent)) {
+        myCurrent.move(PatchApplier.class, myNewParent);
+      }
+      return myCurrent;
     }
   }
 

@@ -182,7 +182,7 @@ public class GitImpl implements Git {
   @Override
   public GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                                    @Nullable GitLineHandlerListener listener) {
-    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT.readLockingCommand());
     h.setSilent(false);
     h.addParameters("-b");
     h.addParameters(branchName);

@@ -128,11 +128,16 @@ public class JavaCharFilter extends CharFilter {
     
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-    if (c == '(' && o instanceof PsiClass) {
-      if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.NEW).accepts(lookup.getPsiElement())) {
-        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '(') {
+      if (o instanceof PsiClass) {
+        if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.NEW).accepts(lookup.getPsiElement())) {
+          return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+        }
+        return Result.HIDE_LOOKUP;
       }
-      return Result.HIDE_LOOKUP;
+      if (o instanceof PsiType) {
+        return Result.HIDE_LOOKUP;
+      }
     }
     if ((c == ',' || c == '=') && o instanceof PsiVariable) {
       int lookupStart = ((LookupImpl)lookup).getLookupStart();

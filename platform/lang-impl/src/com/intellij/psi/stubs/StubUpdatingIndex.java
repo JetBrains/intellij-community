@@ -306,7 +306,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       final Map<StubIndexKey, Map<Object, TIntArrayList>> stubTree;
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();
-        stubTree = new StubTree((PsiFileStub)stub.getStub()).indexStubTree();
+        stubTree = new StubTree((PsiFileStub)stub.getStub(), false).indexStubTree();
       }
       else {
         stubTree = Collections.emptyMap();

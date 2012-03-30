@@ -243,9 +243,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   private void assertFolderUnderMe(@NotNull String url) {
-    final String rootUrl = getUrl();
-    if (!FileUtil.isAncestor(rootUrl, url, false)) {
-      LOG.error("The file " + url + " is not under content entry root " + rootUrl);
+    final String path = VfsUtil.urlToPath(url);
+    final String rootPath = VfsUtil.urlToPath(getUrl());
+    if (!FileUtil.isAncestor(rootPath, path, false)) {
+      LOG.error("The file '" + path + "' is not under content entry root '" + rootPath + "'");
     }
   }
 

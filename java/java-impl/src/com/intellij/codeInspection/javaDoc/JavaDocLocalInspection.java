@@ -5,7 +5,6 @@ package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -1176,7 +1175,6 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       final InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       //correct save settings
-      ((ModifiableModel)inspectionProfile).isProperSetting(HighlightDisplayKey.find(SHORT_NAME));
       InspectionProfileManager.getInstance().fireProfileChanged(inspectionProfile);
       //TODO lesya
 

@@ -120,7 +120,7 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
     if (PluginManager.isPluginInstalled(pluginId)) {
       return false;
     }
-    return PluginManagerUISettings.getInstance().myInstalledPlugins.contains(pluginId.getIdString());
+    return PluginManagerUISettings.getInstance().getInstalledPlugins().contains(pluginId.getIdString());
   }
 
   public Comparator<IdeaPluginDescriptor> getComparator() {

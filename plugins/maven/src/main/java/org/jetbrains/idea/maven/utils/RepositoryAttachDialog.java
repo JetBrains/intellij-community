@@ -76,6 +76,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   private TextFieldWithBrowseButton myDirectoryField;
   private String myFilterString;
+  private boolean myInUpdate;
 
   public RepositoryAttachDialog(Project project, boolean managed, final @Nullable String initialFilter) {
     super(project, true);
@@ -117,7 +118,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         final boolean popupVisible = myCombobox.isPopupVisible();
-        if (!popupVisible || myCoordinates.isEmpty()) {
+        if (!myInUpdate && (!popupVisible || myCoordinates.isEmpty())) {
           performSearch();
         }
         else {
@@ -181,6 +182,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
     if (!force && Comparing.equal(myFilterString, prevFilter)) return;
     int prevSize = myShownItems.size();
     myShownItems.clear();
+
+    myInUpdate = true;
     final boolean itemSelected = myCoordinates.containsKey(myFilterString) &&
                                  Comparing.strEqual((String)myCombobox.getSelectedItem(), myFilterString, false);
     final boolean filtered;
@@ -205,6 +208,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     }
     Collections.sort(myShownItems);
     ((CollectionComboBoxModel)myCombobox.getModel()).update();
+    myInUpdate = false;
     field.setText(myFilterString);
     field.setCaretPosition(caret);
     updateInfoLabel();

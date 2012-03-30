@@ -87,7 +87,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return myPanel;
   }
 
-  protected ToolbarDecorator initPositionAndBorder() {
+  public ToolbarDecorator initPositionAndBorder() {
     myToolbarPosition = UIUtil.isUnderAquaLookAndFeel() ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
     myBorder = new CustomLineBorder(0,
                                     myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,

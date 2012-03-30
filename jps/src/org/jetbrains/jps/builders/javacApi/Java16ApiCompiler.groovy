@@ -1,16 +1,16 @@
 package org.jetbrains.jps.builders.javacApi
 
-import com.intellij.ant.InstrumentationUtil
-import javax.tools.JavaCompiler
-import javax.tools.JavaCompiler.CompilationTask
-import javax.tools.JavaFileObject
-import javax.tools.StandardLocation
-import javax.tools.ToolProvider
 import org.jetbrains.jps.ModuleBuildState
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectBuilder
 import org.jetbrains.jps.Sdk
 import org.jetbrains.jps.builders.JavaFileCollector
+
+import javax.tools.JavaCompiler
+import javax.tools.JavaCompiler.CompilationTask
+import javax.tools.JavaFileObject
+import javax.tools.StandardLocation
+import javax.tools.ToolProvider
 
 /**
  * @author nik
@@ -89,7 +89,7 @@ class Java16ApiCompiler {
             cp.append(state.targetFolder)
 
             fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)
-            fileManager.setProperties(state.callback, InstrumentationUtil.createPseudoClassLoader(cp.toString()))
+            fileManager.setProperties(state.callback, toURLs(cp.toString()))
 
             Iterable<? extends JavaFileObject> toCompile = fileManager.getJavaFileObjectsFromFiles(filesToCompile)
             StringWriter out = new StringWriter()
@@ -108,5 +108,14 @@ class Java16ApiCompiler {
             projectBuilder.info("No java source files found in '${chunk.name}', skipping compilation")
         }
     }
+
+  private URL[] toURLs(final String classPath) {
+    final List urls = new ArrayList();
+    for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
+      final String s = tokenizer.nextToken();
+      urls.add(new File(s).toURL());
+    }
+    return (URL[])urls.toArray(new URL[urls.size()]);
+  }
 
 }

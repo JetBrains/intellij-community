@@ -57,7 +57,7 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     return null;
   }
 
-  public final Window suggestParentWindow(final Project project) {
+  public final Window suggestParentWindow(@Nullable final Project project) {
     return null;
   }
 

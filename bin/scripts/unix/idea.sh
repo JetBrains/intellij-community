@@ -5,7 +5,22 @@
 # ---------------------------------------------------------------------
 #
 
-OS_TYPE="`uname -s`"
+UNAME=`which uname`
+GREP=`which grep`
+GREP_OPTIONS=""
+CUT=`which cut`
+READLINK=`which readlink`
+MKTEMP=`which mktemp`
+RM=`which rm`
+CAT=`which cat`
+TR=`which tr`
+
+if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$TR" ]; then
+  echo "ERROR: required tools are missing - check beginning of \"$0\" file for details."
+  exit 1
+fi
+
+OS_TYPE=`"$UNAME" -s`
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
@@ -21,7 +36,7 @@ else
   JAVA_BIN_PATH=`which java`
   if [ -n "$JAVA_BIN_PATH" ]; then
     if [ "$OS_TYPE" = "FreeBSD" ]; then
-      JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | grep '^JAVA_HOME' | cut -c11-`
+      JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
         JDK="$JAVA_LOCATION"
       fi
@@ -37,8 +52,8 @@ else
       fi
     fi
 
-    if [ -z "$JDK" -a -x "/bin/readlink" ]; then
-      JAVA_LOCATION=`readlink -f "$JAVA_BIN_PATH"`
+    if [ -z "$JDK" -a -x "$READLINK" ]; then
+      JAVA_LOCATION=`"$READLINK" -f "$JAVA_BIN_PATH"`
       case "$JAVA_LOCATION" in
         */jre/bin/java)
           JAVA_LOCATION=`echo "$JAVA_LOCATION" | xargs dirname | xargs dirname | xargs dirname` ;;
@@ -61,13 +76,13 @@ if [ -z "$JDK" ]; then
   exit 1
 fi
 
-VERSION_LOG=`mktemp -t java.version.log.XXXXXX`
-$JDK/bin/java -version 2> "$VERSION_LOG"
-grep 'OpenJDK' "$VERSION_LOG"
+VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
+"$JDK/bin/java" -version 2> "$VERSION_LOG"
+"$GREP" 'OpenJDK' "$VERSION_LOG"
 OPEN_JDK=$?
-grep "64-Bit\|x86_64" "$VERSION_LOG"
+"$GREP" "64-Bit\|x86_64" "$VERSION_LOG"
 BITS=$?
-rm "$VERSION_LOG"
+"$RM" -f "$VERSION_LOG"
 if [ $OPEN_JDK -eq 0 ]; then
   echo "WARNING: You are launching the IDE using OpenJDK Java runtime."
   echo
@@ -90,9 +105,11 @@ fi
 # Ensure IDE_HOME points to the directory where the IDE is installed.
 # ---------------------------------------------------------------------
 SCRIPT_LOCATION=$0
-while [ -L "$SCRIPT_LOCATION" ]; do
-  SCRIPT_LOCATION=`readlink -e "$SCRIPT_LOCATION"`
-done
+if [ -x "$READLINK" ]; then
+  while [ -L "$SCRIPT_LOCATION" ]; do
+    SCRIPT_LOCATION=`"$READLINK" -e "$SCRIPT_LOCATION"`
+  done
+fi
 
 IDE_HOME=`dirname "$SCRIPT_LOCATION"`/..
 IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
@@ -115,13 +132,13 @@ if [ -z "$VM_OPTIONS_FILE" ]; then
 fi
 
 if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`cat "$VM_OPTIONS_FILE" | grep -ve "^#.*" | tr '\n' ' '`
+  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -ve "^#.*" | "$TR" '\n' ' '`
   VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
 fi
 
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
-  OS_NAME=`echo $OS_TYPE | tr '[:upper:]' '[:lower:]'`
+  OS_NAME=`echo $OS_TYPE | "$TR" '[:upper:]' '[:lower:]'`
   AGENT_LIB="yjpagent-$OS_NAME$BITS"
   if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
     AGENT="-agentlib:$AGENT_LIB=disablej2ee,disablecounts,disablealloc,sessionname=@@system_selector@@"
@@ -145,6 +162,6 @@ export LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
 # ---------------------------------------------------------------------
 cd "$IDE_BIN_HOME"
 while true ; do
-  eval $JDK/bin/java $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME $*
+  eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME $*
   test $? -ne 88 && break
 done

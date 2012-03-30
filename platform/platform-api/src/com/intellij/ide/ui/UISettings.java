@@ -26,8 +26,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -93,7 +96,6 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public int MAX_LOOKUP_WIDTH = 500;
   public int MAX_LOOKUP_LIST_HEIGHT = 11;
   public boolean HIDE_NAVIGATION_ON_FOCUS_LOSS = true;
-  public boolean HIDE_SWITCHER_ON_CONTROL_RELEASE = true;
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not
@@ -107,19 +109,15 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
    */
   public static final int TABS_NONE = 0;
 
-  /**
-   * Invoked by reflection.
-   */
   public UISettings() {
-    tweakPlatformDefaults();
     myListenerList = new EventListenerList();
+    tweakPlatformDefaults();
     setSystemFontFaceAndSize();
   }
 
   private void tweakPlatformDefaults() {
     // TODO: Make it pluggable
     if (PlatformUtils.isCidr()) {
-      //HIDE_TOOL_STRIPES = true;
       SHOW_MAIN_TOOLBAR = false;
       SHOW_ICONS_IN_MENUS = false;
       SHOW_MEMORY_INDICATOR = false;
@@ -133,7 +131,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     myListenerList.add(UISettingsListener.class, listener);
   }
 
-  public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable){
+  public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable) {
     myListenerList.add(UISettingsListener.class,listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -146,7 +144,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   /**
    * Notifies all registered listeners that UI settings has been changed.
    */
-  public void fireUISettingsChanged(){
+  public void fireUISettingsChanged() {
     UISettingsListener[] listeners= myListenerList.getListeners(UISettingsListener.class);
     for (UISettingsListener listener : listeners) {
       listener.uiSettingsChanged(this);
@@ -166,29 +164,18 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     return application != null ? getInstance() : new UISettings();
   }
 
-  public void removeUISettingsListener(UISettingsListener listener){
+  public void removeUISettingsListener(UISettingsListener listener) {
     myListenerList.remove(UISettingsListener.class,listener);
   }
 
-  private void setDefaultFontSettings() {
-    final Application application = ApplicationManager.getApplication();
-    if (application == null) {
-      // we're the shadow settings
-      return;
-    }
-    FONT_FACE = SystemInfo.isLinux && application.isUnitTestMode() ? "Dialog.plain" : "Dialog";
-    FONT_SIZE = 12;
-  }
-
-  private static boolean isValidFont(final Font font){
+  private static boolean isValidFont(final Font font) {
     try {
-      return
-        font.canDisplay('a') &&
-        font.canDisplay('z') &&
-        font.canDisplay('A') &&
-        font.canDisplay('Z') &&
-        font.canDisplay('0') &&
-        font.canDisplay('1');
+      return font.canDisplay('a') &&
+             font.canDisplay('z') &&
+             font.canDisplay('A') &&
+             font.canDisplay('Z') &&
+             font.canDisplay('0') &&
+             font.canDisplay('1');
     }
     catch (Exception e) {
       // JRE has problems working with the font. Just skip.
@@ -196,30 +183,41 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     }
   }
 
-  /**
-   * Under Win32 it's possible to determine face and size of default fount.
-   */
-  private void setSystemFontFaceAndSize(){
-    if(FONT_FACE == null || FONT_SIZE <= 0){
-      if(SystemInfo.isWindows){
-        //noinspection HardCodedStringLiteral
-        Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-        if(font != null){
-          FONT_FACE = font.getName();
-          FONT_SIZE = font.getSize();
-        }else{
-          setDefaultFontSettings();
-        }
-      }else{ // UNIXes go here
-        setDefaultFontSettings();
+  private void setSystemFontFaceAndSize() {
+    if (FONT_FACE == null || FONT_SIZE <= 0) {
+      final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
+      FONT_FACE = fontData.first;
+      FONT_SIZE = fontData.second;
+    }
+  }
+
+  private static Pair<String, Integer> getSystemFontFaceAndSize() {
+    final Pair<String,Integer> fontData = UIUtil.getSystemFontData();
+    if (fontData != null) {
+      return fontData;
+    }
+
+    if (SystemInfo.isWindows) {
+      //noinspection HardCodedStringLiteral
+      final Font font = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
+      if (font != null) {
+        return Pair.create(font.getName(), font.getSize());
       }
+    }
+
+    return Pair.create("Dialog", 12);
+  }
+
+  public static class FontFilter implements SerializationFilter {
+    public boolean accepts(Accessor accessor, Object bean) {
+      UISettings settings = (UISettings)bean;
+      return !hasDefaultFontSetting(settings);
     }
   }
 
   private static boolean hasDefaultFontSetting(final UISettings settings) {
-    Font font=(Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-    return SystemInfo.isWindows && font != null && settings.FONT_FACE.equals(font.getName()) && settings.FONT_SIZE == font.getSize();
-
+    final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
+    return fontData.first.equals(settings.FONT_FACE) && fontData.second.equals(settings.FONT_SIZE);
   }
 
   public UISettings getState() {
@@ -230,28 +228,27 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
     XmlSerializerUtil.copyBean(object, this);
 
     // Check tab placement in editor
-    if(
-      EDITOR_TAB_PLACEMENT != TABS_NONE &&
-      EDITOR_TAB_PLACEMENT != SwingConstants.TOP&&
-      EDITOR_TAB_PLACEMENT != SwingConstants.LEFT&&
-      EDITOR_TAB_PLACEMENT != SwingConstants.BOTTOM&&
-      EDITOR_TAB_PLACEMENT != SwingConstants.RIGHT
-    ){
-      EDITOR_TAB_PLACEMENT=SwingConstants.TOP;
+    if (EDITOR_TAB_PLACEMENT != TABS_NONE &&
+        EDITOR_TAB_PLACEMENT != SwingConstants.TOP &&
+        EDITOR_TAB_PLACEMENT != SwingConstants.LEFT &&
+        EDITOR_TAB_PLACEMENT != SwingConstants.BOTTOM &&
+        EDITOR_TAB_PLACEMENT != SwingConstants.RIGHT) {
+      EDITOR_TAB_PLACEMENT = SwingConstants.TOP;
     }
-    // Check that alpha ration in in valid range
-    if(ALPHA_MODE_DELAY<0){
-      ALPHA_MODE_DELAY=1500;
+
+    // Check that alpha delay and ratio are valid
+    if (ALPHA_MODE_DELAY < 0) {
+      ALPHA_MODE_DELAY = 1500;
     }
-    if(ALPHA_MODE_RATIO< 0.0f ||ALPHA_MODE_RATIO>1.0f){
-      ALPHA_MODE_RATIO=0.5f;
+    if (ALPHA_MODE_RATIO < 0.0f || ALPHA_MODE_RATIO > 1.0f) {
+      ALPHA_MODE_RATIO = 0.5f;
     }
 
     setSystemFontFaceAndSize();
-    // 1. Sometimes system font cannot display standard ASCI symbols. If so we have
+    // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
     // find any other suitable font withing "preferred" fonts first.
     boolean fontIsValid = isValidFont(new Font(FONT_FACE, Font.PLAIN, FONT_SIZE));
-    if(!fontIsValid){
+    if (!fontIsValid) {
       @NonNls final String[] preferredFonts = {"dialog", "Arial", "Tahoma"};
       for (String preferredFont : preferredFonts) {
         if (isValidFont(new Font(preferredFont, Font.PLAIN, FONT_SIZE))) {
@@ -263,7 +260,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
 
       // 2. If all preferred fonts are not valid in current environment
       // we have to find first valid font (if any)
-      if(!fontIsValid){
+      if (!fontIsValid) {
         Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
         for (Font font : fonts) {
           if (isValidFont(font)) {
@@ -278,23 +275,13 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
       MAX_CLIPBOARD_CONTENTS = 5;
     }
 
-
     fireUISettingsChanged();
   }
 
-  public static class FontFilter implements SerializationFilter {
-    public boolean accepts(Accessor accessor, Object bean) {
-      UISettings settings = (UISettings)bean;
-
-      return !hasDefaultFontSetting(settings);
-    }
-
-  }
-
-  private static final boolean DONT_TOUCH_ALIASING = "true".equalsIgnoreCase(System.getProperty("idea.use.default.antialiasing.in.editor"));
+  private static final boolean DEFAULT_ALIASING = SystemProperties.getBooleanProperty("idea.use.default.antialiasing.in.editor", false);
 
   public static void setupAntialiasing(final Graphics g) {
-    if (DONT_TOUCH_ALIASING) return;
+    if (DEFAULT_ALIASING) return;
 
     Graphics2D g2d=(Graphics2D)g;
     UISettings uiSettings=getInstance();
@@ -350,10 +337,8 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   }
 
   public void initComponent() {
-
   }
 
   public void disposeComponent() {
-
   }
 }

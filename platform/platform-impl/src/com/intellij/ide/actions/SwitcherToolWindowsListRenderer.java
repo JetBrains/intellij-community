@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,14 +40,16 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
   private final SpeedSearchBase mySpeedSearch;
   private final Map<ToolWindow, String> ids;
   private final Map<ToolWindow, String> shortcuts;
+  private final boolean myPinned;
   private boolean hide = false;
 
   SwitcherToolWindowsListRenderer(SpeedSearchBase speedSearch,
                                   Map<ToolWindow, String> ids,
-                                  Map<ToolWindow, String> shortcuts) {
+                                  Map<ToolWindow, String> shortcuts, boolean pinned) {
     mySpeedSearch = speedSearch;
     this.ids = ids;
     this.shortcuts = shortcuts;
+    myPinned = pinned;
   }
 
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -58,11 +59,11 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
       setIcon(getIcon(tw));
       final String name;
 
-      if (UISettings.getInstance().HIDE_SWITCHER_ON_CONTROL_RELEASE) {
+      if (myPinned) {
+        name = ids.get(tw);
+      } else {
         append(shortcuts.get(tw), ID_STYLE);
         name = ": " + ids.get(tw);
-      } else {
-        name = ids.get(tw);
       }
 
       final TextAttributes attributes = new TextAttributes(Color.BLACK, null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
@@ -77,7 +78,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
   protected void doPaint(Graphics2D g) {
     GraphicsConfig config = new GraphicsConfig(g);
     if (hide) {
-      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
     }
     super.doPaint(g);
     config.restore();

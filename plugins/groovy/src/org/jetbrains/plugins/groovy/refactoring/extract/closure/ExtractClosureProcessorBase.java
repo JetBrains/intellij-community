@@ -63,7 +63,7 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
   public static GrClosableBlock generateClosure(GrIntroduceParameterSettings helper) {
     StringBuilder buffer = new StringBuilder();
 
-    buffer.append('{');
+    buffer.append("{ ");
 
     final String[] params = ExtractUtil.getParameterString(helper, true);
     if (params.length > 0) {
@@ -77,7 +77,7 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
     }
 
     ExtractUtil.generateBody(helper, false, buffer, helper.isForceReturn());
-    buffer.append('}');
+    buffer.append(" }");
 
     return GroovyPsiElementFactory.getInstance(helper.getProject()).createClosureFromText(buffer.toString(), helper.getToReplaceIn());
   }

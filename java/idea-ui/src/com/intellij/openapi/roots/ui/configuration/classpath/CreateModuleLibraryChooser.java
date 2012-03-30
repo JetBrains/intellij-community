@@ -168,7 +168,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
       rootsComponentDescriptor = myDefaultDescriptor;
     }
     List<OrderRoot> chosenRoots = RootDetectionUtil.detectRoots(Arrays.asList(files), myParentComponent, myModule.getProject(),
-                                                                rootsComponentDescriptor.getRootDetectors(), true);
+                                                                rootsComponentDescriptor);
 
     final List<OrderRoot> roots = filterAlreadyAdded(chosenRoots);
     if (roots.isEmpty()) {

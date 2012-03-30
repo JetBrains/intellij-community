@@ -32,7 +32,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   public static enum ExitCode {
-    OK, ABORT, ADDITIONAL_PASS_REQUIRED, CHUNK_REBUILD_REQUIRED
+    NOTHING_DONE, OK, ABORT, ADDITIONAL_PASS_REQUIRED, CHUNK_REBUILD_REQUIRED
   }
 
   public abstract ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException;
@@ -103,7 +103,9 @@ public abstract class ModuleLevelBuilder extends Builder {
           newlyAffectedFiles.removeAll(affectedBeforeDif);
           newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
-          context.processMessage(new ProgressMessage("Found " + newlyAffectedFiles.size() + " affected files"));
+          final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
+          LOG.info(infoMessage);
+          context.processMessage(new ProgressMessage(infoMessage));
 
           if (!newlyAffectedFiles.isEmpty()) {
 

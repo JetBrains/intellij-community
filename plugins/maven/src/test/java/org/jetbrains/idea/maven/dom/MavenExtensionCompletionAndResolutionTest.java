@@ -18,9 +18,12 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
@@ -70,13 +73,22 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
 
     List<String> actual = getCompletionVariants(myProjectPom);
 
-    if (actual.isEmpty()) {
-      MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
-      System.out.println("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins"));
-      System.out.println("Indexes: " + instance.getIndices());
+    try {
+      assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
     }
+    catch (Throwable t) {
+      MavenProjectIndicesManager instance = MavenProjectIndicesManager.getInstance(myProject);
+      System.out.println("GetArtifacts: " + new HashSet<String>(instance.getArtifactIds("org.apache.maven.plugins")));
+      System.out.println("Indexes: " + instance.getIndices());
 
-    assertUnorderedElementsAreEqual(actual, "maven-compiler-plugin", "maven-war-plugin", "maven-eclipse-plugin", "maven-surefire-plugin");
+      for (MavenIndex index : instance.getIndices()) {
+        System.out.println("Index: repositoryId=" + index.getRepositoryId() + " repositoryUrl=" + index.getRepositoryUrl() + " repositoryPathOrUrl" + index.getRepositoryPathOrUrl());
+        System.out.println("Dir: " + index.getDir());
+        index.printInfo();
+      }
+
+      throw new AssertionError("GetArtifacts: " + instance.getArtifactIds("org.apache.maven.plugins") + " Indexes: " + instance.getIndices());
+    }
   }
 
   public void testArtifactWithoutGroupCompletion() throws Exception {

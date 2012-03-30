@@ -15,7 +15,6 @@
  */
 package com.intellij.designer.designSurface.selection;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
@@ -36,9 +35,11 @@ public class ResizeSelectionDecorator extends NonResizeSelectionDecorator {
   @Override
   public InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
     for (ResizePoint point : myPoints) {
-      InputTool tracker = point.findTargetTool(layer, component, x, y);
-      if (tracker != null) {
-        return tracker;
+      if (visible(component, point)) {
+        InputTool tracker = point.findTargetTool(layer, component, x, y);
+        if (tracker != null) {
+          return tracker;
+        }
       }
     }
 
@@ -50,7 +51,13 @@ public class ResizeSelectionDecorator extends NonResizeSelectionDecorator {
     super.decorate(layer, g, component);
 
     for (ResizePoint point : myPoints) {
-      point.decorate(layer, g, component);
+      if (visible(component, point)) {
+        point.decorate(layer, g, component);
+      }
     }
+  }
+
+  protected boolean visible(RadComponent component, ResizePoint point) {
+    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,29 +22,20 @@ package com.intellij.ide.actions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 
-public class ShowRecentFilesAction extends BaseShowRecentFilesAction  {
-
+/**
+ * @author Konstantin Bulenkov
+ */
+public class ShowRecentFilesAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
-    super.actionPerformed(e);
-  }
-
-  @Override
-  protected VirtualFile[] filesToShow(Project project) {
-    return EditorHistoryManager.getInstance(project).getFiles();
-  }
-
-  @Override
-  protected String getPeerActionId() {
-    return "RecentChangedFiles";
-  }
-
-  protected String getTitle() {
-    return IdeBundle.message("title.popup.recent.files");
+    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.recent.files");
+      Switcher.createAndShowSwitcher(project, IdeBundle.message("title.popup.recent.files"), true).goForward();
+    }
   }
 }

@@ -150,22 +150,10 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   protected Module addDependentModule() {
     Module module = addModule("dependent");
-    addDependency(module, myModule);
+    PsiTestUtil.addDependency(module, myModule);
     return module;
   }
 
-  protected void addDependency(final Module from, final Module to) {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(Result result) throws Throwable {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(from).getModifiableModel();
-        model.addModuleOrderEntry(to);
-        model.commit();
-      }
-    }.execute().getResultObject();
-
-  }
-  
   protected Module addModule(final String name) {
     return new WriteCommandAction<Module>(getProject()) {
       @Override

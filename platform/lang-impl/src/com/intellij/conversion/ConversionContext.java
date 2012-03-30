@@ -64,4 +64,6 @@ public interface ConversionContext {
 
   ProjectLibrariesSettings getProjectLibrariesSettings() throws CannotConvertException;
 
+  @NotNull
+  String expandPath(@NotNull String path);
 }

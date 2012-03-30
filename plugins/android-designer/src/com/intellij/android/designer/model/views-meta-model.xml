@@ -13,7 +13,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         tag="merge"
         delete="false">
 
@@ -21,7 +20,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         tag="&lt;unknown&gt;">
 
     <presentation title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
@@ -567,7 +565,6 @@
   <!-- ================= Containers ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.DatePicker"
         tag="DatePicker">
 
@@ -587,7 +584,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.CalendarView"
         tag="CalendarView">
 
@@ -608,7 +604,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.TimePicker"
         tag="TimePicker">
 
@@ -629,7 +624,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.NumberPicker"
         tag="NumberPicker">
 
@@ -647,7 +641,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.ZoomControls"
         tag="ZoomControls">
 
@@ -665,7 +658,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.SearchView"
         tag="SearchView">
 
@@ -689,7 +681,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.ListView"
         tag="ListView">
 
@@ -728,7 +719,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.GridView"
         tag="GridView">
 
@@ -748,7 +738,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.webkit.WebView"
         tag="WebView">
 
@@ -765,8 +754,8 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadScrollViewComponent"
-        layout="com.intellij.android.designer.model.RadScrollViewLayout"
+  <meta model="com.intellij.android.designer.model.scroll.RadScrollViewComponent"
+        layout="com.intellij.android.designer.model.scroll.RadScrollViewLayout"
         class="android.widget.ScrollView"
         tag="ScrollView">
 
@@ -785,8 +774,8 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadScrollViewComponent"
-        layout="com.intellij.android.designer.model.RadScrollViewLayout"
+  <meta model="com.intellij.android.designer.model.scroll.RadScrollViewComponent"
+        layout="com.intellij.android.designer.model.scroll.RadScrollViewLayout"
         class="android.widget.HorizontalScrollView"
         tag="HorizontalScrollView">
 
@@ -806,7 +795,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.Gallery"
         tag="Gallery">
 
@@ -826,7 +814,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.Spinner"
         tag="Spinner">
 
@@ -846,7 +833,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.MediaController"
         tag="MediaController">
 
@@ -864,7 +850,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.StackView"
         tag="StackView">
 
@@ -884,7 +869,6 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewLayout"
         class="android.widget.AdapterViewFlipper"
         tag="AdapterViewFlipper">
 
@@ -904,7 +888,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewAnimatorLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout"
         class="android.widget.ViewAnimator"
         tag="ViewAnimator">
 
@@ -924,7 +908,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewAnimatorLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout"
         class="android.widget.ViewFlipper"
         tag="ViewFlipper">
 
@@ -944,7 +928,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadViewSwitcherLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadViewSwitcherLayout"
         class="android.widget.ViewSwitcher"
         tag="ViewSwitcher">
 
@@ -962,7 +946,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadImageSwitcherLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadImageSwitcherLayout"
         class="android.widget.ImageSwitcher"
         tag="ImageSwitcher">
 
@@ -980,7 +964,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadTextSwitcherLayout"
+        layout="com.intellij.android.designer.model.viewAnimator.RadTextSwitcherLayout"
         class="android.widget.TextSwitcher"
         tag="TextSwitcher">
 
@@ -999,8 +983,8 @@
 
   <!-- ================= Layouts ================= -->
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
-        layout="com.intellij.android.designer.model.RadLinearLayout"
+  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+        layout="com.intellij.android.designer.model.layout.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
 
@@ -1016,6 +1000,28 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
           </LinearLayout>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+        layout="com.intellij.android.designer.model.layout.RadFrameLayout"
+        class="android.widget.FrameLayout"
+        tag="FrameLayout">
+
+    <palette title="FrameLayout" icon="/com/intellij/android/designer/icons/FrameLayout.png"
+             tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
+
+    <properties important="foreground foregroundGravity"
+                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal"
+        />
+
+    <creation>
+      <![CDATA[
+          <FrameLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </FrameLayout>
       ]]>
     </creation>
   </meta>
@@ -1077,6 +1083,7 @@
       <item tag="AdapterViewFlipper"/>
     </group>
     <group name="Layouts">
+      <item tag="FrameLayout"/>
       <item tag="LinearLayout"/>
     </group>
   </palette>
