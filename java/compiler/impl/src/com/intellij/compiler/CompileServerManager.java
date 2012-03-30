@@ -286,6 +286,7 @@ public class CompileServerManager implements ApplicationComponent{
   }
 
   private void runAutoMake() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     final Project[] openProjects = myProjectManager.getOpenProjects();
     if (openProjects.length > 0) {
       final List<RequestFuture> futures = new ArrayList<RequestFuture>();
