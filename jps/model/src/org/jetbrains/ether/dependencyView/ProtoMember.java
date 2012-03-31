@@ -170,6 +170,11 @@ abstract class ProtoMember extends Proto {
       public boolean packageLocalOn() {
         return diff.packageLocalOn();
       }
+
+      @Override
+      public boolean hadValue() {
+        return ((ProtoMember)past).hasValue();
+      }
     };
   }
 }

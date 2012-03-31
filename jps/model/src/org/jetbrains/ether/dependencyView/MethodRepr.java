@@ -80,6 +80,11 @@ class MethodRepr extends ProtoMember {
       public boolean packageLocalOn() {
         return diff.packageLocalOn();
       }
+
+      @Override
+      public boolean hadValue() {
+        return ((MethodRepr)past).hasValue();
+      }
     };
   }
 

@@ -90,6 +90,11 @@ class Proto implements RW.Savable {
 
                ((access & Opcodes.ACC_PRIVATE) == 0 && (access & Opcodes.ACC_PROTECTED) == 0 && (access & Opcodes.ACC_PUBLIC) == 0);
       }
+
+      @Override
+      public boolean hadValue() {
+        return false;
+      }
     };
   }
 }
