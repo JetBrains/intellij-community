@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -46,10 +47,20 @@ public class PyPackageUtil {
 
   @Nullable
   public static Document findRequirementsTxt(@NotNull Module module) {
-    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
-      final VirtualFile child = root.findChild("requirements.txt");
-      if (child != null) {
-        return FileDocumentManager.getInstance().getDocument(child);
+    final String requirementsPath = PyPackageRequirementsSettings.getInstance(module).getRequirementsPath();
+    if (!requirementsPath.isEmpty()) {
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(requirementsPath);
+      if (file == null) {
+        final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+        for (VirtualFile root : manager.getContentRoots()) {
+          file = root.findFileByRelativePath(requirementsPath);
+          if (file != null) {
+            break;
+          }
+        }
+      }
+      if (file != null) {
+        return FileDocumentManager.getInstance().getDocument(file);
       }
     }
     return null;
