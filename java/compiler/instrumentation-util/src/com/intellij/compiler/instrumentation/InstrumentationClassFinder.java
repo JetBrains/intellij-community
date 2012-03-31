@@ -1,9 +1,9 @@
 package com.intellij.compiler.instrumentation;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.EmptyVisitor;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.MethodVisitor;
+import org.jetbrains.asm4.Opcodes;
 import sun.misc.Resource;
 
 import java.io.*;
@@ -331,12 +331,16 @@ public class InstrumentationClassFinder {
     }
   }
 
-  private static class V extends EmptyVisitor {
+  private static class V extends ClassVisitor {
     public String mySuperclassName = null;
     public String[] myInterfaces = null;
     public String myName = null;
     public int myModifiers;
     private final List<PseudoMethod> myMethods = new ArrayList<PseudoMethod>();
+
+    private V() {
+      super(Opcodes.ASM4);
+    }
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_PUBLIC) > 0) {

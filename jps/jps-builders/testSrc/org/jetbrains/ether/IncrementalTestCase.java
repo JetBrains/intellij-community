@@ -71,7 +71,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     FileUtil.copyDir(new File(getBaseDir()), new File(getWorkDir()));
     
-    Paths.getInstance().setSystemRoot(new File(workDir));
+    Utils.setSystemRoot(new File(workDir));
   }
 
   @Override
@@ -201,7 +201,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
     IdeaProjectLoader.loadFromPath(project, projectPath, "");
 
-    final File dataStorageRoot = Paths.getDataStorageRoot(project);
+    final File dataStorageRoot = Utils.getDataStorageRoot(project);
     final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
     final ProjectDescriptor projectDescriptor =
       new ProjectDescriptor(project, new FSState(true), new ProjectTimestamps(dataStorageRoot),

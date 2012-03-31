@@ -10,13 +10,20 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.uiDesigner.compiler.*;
+import com.intellij.uiDesigner.compiler.AlienFormFileException;
+import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import com.intellij.uiDesigner.compiler.FormErrorInfo;
+import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
@@ -29,10 +36,6 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.EmptyVisitor;
 
 import javax.tools.*;
 import java.io.*;
@@ -456,7 +459,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final BaseOSProcessHandler processHandler = JavacServerBootstrap.launchJavacServer(
-      javaHome, heapSize, port, Paths.getSystemRoot(), getCompilationVMOptions(context)
+      javaHome, heapSize, port, Utils.getSystemRoot(), getCompilationVMOptions(context)
     );
     final JavacServerClient client = new JavacServerClient();
     try {
@@ -718,7 +721,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;
       try {
-        rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
+        rootContainer = com.intellij.uiDesigner.compiler.Utils
+          .getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
       }
       catch (AlienFormFileException e) {
         // ignore non-IDEA forms
@@ -821,7 +825,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static int getClassFileVersion(ClassReader reader) {
     final Ref<Integer> result = new Ref<Integer>(0);
-    reader.accept(new EmptyVisitor() {
+    reader.accept(new ClassVisitor(Opcodes.ASM4) {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         result.set(version);
       }
@@ -894,7 +898,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           kind = BuildMessage.Kind.INFO;
       }
       final JavaFileObject source = diagnostic.getSource();
-      final File sourceFile = source != null ? Paths.convertToFile(source.toUri()) : null;
+      final File sourceFile = source != null ? Utils.convertToFile(source.toUri()) : null;
       final String srcPath = sourceFile != null ? FileUtil.toSystemIndependentName(sourceFile.getPath()) : null;
       myContext.processMessage(
         new CompilerMessage(BUILDER_NAME, kind, diagnostic.getMessage(Locale.US), srcPath, diagnostic.getStartPosition(),
@@ -955,7 +959,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     private LwRootContainer loadForm(String formFileName, InputStream resourceStream) throws Exception {
-      final LwRootContainer container = Utils.getRootContainer(resourceStream, null);
+      final LwRootContainer container = com.intellij.uiDesigner.compiler.Utils.getRootContainer(resourceStream, null);
       myCache.put(formFileName, container);
       return container;
     }

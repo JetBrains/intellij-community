@@ -153,6 +153,7 @@ binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedM
 libraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", license: "link (company license)", url: "http://www.incors.com/lookandfeel/", licenseUrl: "http://lookandfeel.incors.com/display_licence.php?back=purchase.php&selMenu=Purchase")
 libraryLicense(name: "Ant", version: "1.7", license: "Apache 2.0", url: "http://ant.apache.org/", licenseUrl: "http://ant.apache.org/license.html")
 libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm", version: "3.3", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
+libraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "asm4", version: "4.0", license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html")
 libraryLicense(name: "Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0", url: "http://ws.apache.org/axis/", licenseUrl: "http://svn.jetbrains.org/idea/Trunk/bundled/WebServices/resources/lib/axis-1.4.0/axis.LICENSE")
 libraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2.2", license: "Apache", url: "http://cglib.sourceforge.net/", licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html")
 libraryLicense(name: "classworlds", libraryName: "classworlds-1.1.jar", version: "1.1", license: "codehaus", url: "http://classworlds.codehaus.org/", licenseUrl: "http://classworlds.codehaus.org/license.html")

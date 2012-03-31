@@ -198,7 +198,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   private static Set<String> getRemovedPaths(CompileContext context) {
-    final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
+    final Set<String> removed = Utils.CHUNK_REMOVED_SOURCES_KEY.get(context);
     return removed != null? removed : Collections.<String>emptySet();
   }
 
@@ -227,15 +227,8 @@ public abstract class ModuleLevelBuilder extends Builder {
         moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
         myCache.put(moduleOfFile, moduleOfFileWithDependencies);
       }
-      return intersects(moduleOfFileWithDependencies, myChunkModules);
+      return Utils.intersects(moduleOfFileWithDependencies, myChunkModules);
     }
 
-    private static boolean intersects(Set<Module> set1, Set<Module> set2) {
-      if (set1.size() < set2.size()) {
-        return new HashSet<Module>(set1).removeAll(set2);
-      }
-      return new HashSet<Module>(set2).removeAll(set1);
-    }
   }
-
 }

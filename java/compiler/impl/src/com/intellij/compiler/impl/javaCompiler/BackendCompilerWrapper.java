@@ -64,8 +64,8 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.ClassWriter;
 
 import java.io.File;
 import java.io.IOException;

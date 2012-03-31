@@ -19,11 +19,10 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import org.objectweb.asm.*;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.commons.EmptyVisitor;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
+import org.jetbrains.asm4.*;
+import org.jetbrains.asm4.Label;
+import org.jetbrains.asm4.commons.GeneratorAdapter;
+import org.jetbrains.asm4.commons.Method;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -229,7 +228,7 @@ public class AsmCodeGenerator {
     return Type.getType("L" + className.replace('.', '/') + ";");
   }
 
-  class FormClassVisitor extends ClassAdapter {
+  class FormClassVisitor extends ClassVisitor {
     private String myClassName;
     private String mySuperName;
     private final Map myFieldDescMap = new HashMap();
@@ -239,7 +238,7 @@ public class AsmCodeGenerator {
     private final boolean myExplicitSetupCall;
 
     public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
-      super(cv);
+      super(Opcodes.ASM4, cv);
       myExplicitSetupCall = explicitSetupCall;
     }
 
@@ -893,7 +892,7 @@ public class AsmCodeGenerator {
     }
   }
 
-  private class FormConstructorVisitor extends MethodAdapter {
+  private class FormConstructorVisitor extends MethodVisitor {
     private final String myClassName;
     private final String mySuperName;
     private boolean callsSelfConstructor = false;
@@ -901,7 +900,7 @@ public class AsmCodeGenerator {
     private boolean mySuperCalled = false;
 
     public FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
-      super(mv);
+      super(Opcodes.ASM4, mv);
       myClassName = className;
       mySuperName = superName;
     }
@@ -954,11 +953,11 @@ public class AsmCodeGenerator {
     }
   }
 
-  private static class FirstPassClassVisitor extends ClassAdapter {
+  private static class FirstPassClassVisitor extends ClassVisitor {
     private boolean myExplicitSetupCall = false;
 
     public FirstPassClassVisitor() {
-      super(new EmptyVisitor());
+      super(Opcodes.ASM4, new ClassVisitor(Opcodes.ASM4){});
     }
 
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -972,9 +971,9 @@ public class AsmCodeGenerator {
       return myExplicitSetupCall;
     }
 
-    private class FirstPassConstructorVisitor extends MethodAdapter {
+    private class FirstPassConstructorVisitor extends MethodVisitor {
       public FirstPassConstructorVisitor() {
-        super(new EmptyVisitor());
+        super(Opcodes.ASM4, new MethodVisitor(Opcodes.ASM4){});
       }
 
       public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc) {
