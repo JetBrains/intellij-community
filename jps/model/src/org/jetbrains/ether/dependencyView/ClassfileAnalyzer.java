@@ -1,10 +1,9 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.Pair;
-import org.objectweb.asm.*;
-import org.objectweb.asm.commons.EmptyVisitor;
-import org.objectweb.asm.signature.SignatureReader;
-import org.objectweb.asm.signature.SignatureVisitor;
+import org.jetbrains.asm4.*;
+import org.jetbrains.asm4.signature.SignatureReader;
+import org.jetbrains.asm4.signature.SignatureVisitor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
@@ -37,8 +36,12 @@ class ClassfileAnalyzer {
     }
   }
 
-  private class ClassCrawler extends EmptyVisitor {
-    private class AnnotationRetentionPolicyCrawler implements AnnotationVisitor {
+  private class ClassCrawler extends ClassVisitor {
+    private class AnnotationRetentionPolicyCrawler extends AnnotationVisitor {
+      private AnnotationRetentionPolicyCrawler() {
+        super(Opcodes.ASM4);
+      }
+
       public void visit(String name, Object value) {
       }
 
@@ -58,7 +61,11 @@ class ClassfileAnalyzer {
       }
     }
 
-    private class AnnotationTargetCrawler implements AnnotationVisitor {
+    private class AnnotationTargetCrawler extends AnnotationVisitor {
+      private AnnotationTargetCrawler() {
+        super(Opcodes.ASM4);
+      }
+
       public void visit(String name, Object value) {
       }
 
@@ -78,13 +85,14 @@ class ClassfileAnalyzer {
       }
     }
 
-    private class AnnotationCrawler implements AnnotationVisitor {
+    private class AnnotationCrawler extends AnnotationVisitor {
       private final TypeRepr.ClassType type;
       private final ElementType target;
 
       private final Set<DependencyContext.S> usedArguments = new HashSet<DependencyContext.S>();
 
       private AnnotationCrawler(final TypeRepr.ClassType type, final ElementType target) {
+        super(Opcodes.ASM4);
         this.type = type;
         this.target = target;
         annotationTargets.put(type, target);
@@ -182,7 +190,7 @@ class ClassfileAnalyzer {
       if (sig != null) new SignatureReader(sig).accept(signatureCrawler);
     }
 
-    private final SignatureVisitor signatureCrawler = new SignatureVisitor() {
+    private final SignatureVisitor signatureCrawler = new SignatureVisitor(Opcodes.ASM4) {
       public void visitFormalTypeParameter(String name) {
         return;
       }
@@ -284,6 +292,7 @@ class ClassfileAnalyzer {
       new TransientMultiMaplet<TypeRepr.ClassType, ElementType>(elementTypeSetConstructor);
 
     public ClassCrawler(final DependencyContext.S fn) {
+      super(Opcodes.ASM4);
       fileName = fn;
     }
 
@@ -369,7 +378,7 @@ class ClassfileAnalyzer {
         fields.add(new FieldRepr(context, access, context.get(n), context.get(desc), context.get(signature), value));
       }
 
-      return new EmptyVisitor() {
+      return new FieldVisitor(Opcodes.ASM4) {
         @Override
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           return new AnnotationCrawler((TypeRepr.ClassType)TypeRepr.getType(context, context.get(desc)), ElementType.FIELD);
@@ -387,7 +396,7 @@ class ClassfileAnalyzer {
 
       processSignature(signature);
 
-      return new EmptyVisitor() {
+      return new MethodVisitor(Opcodes.ASM4) {
         @Override
         public void visitEnd() {
           if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
@@ -403,7 +412,7 @@ class ClassfileAnalyzer {
 
         @Override
         public AnnotationVisitor visitAnnotationDefault() {
-          return new EmptyVisitor() {
+          return new AnnotationVisitor(Opcodes.ASM4) {
             public void visit(String name, Object value) {
               defaultValue.set(value);
             }

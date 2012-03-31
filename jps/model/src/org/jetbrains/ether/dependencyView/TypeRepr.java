@@ -2,13 +2,14 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.asm4.Type;
 import org.jetbrains.ether.RW;
-import org.objectweb.asm.Type;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedList;
 
 /**
  * Created by IntelliJ IDEA.

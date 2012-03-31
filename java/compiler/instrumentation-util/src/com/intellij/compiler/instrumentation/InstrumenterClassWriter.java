@@ -1,6 +1,6 @@
 package com.intellij.compiler.instrumentation;
 
-import org.objectweb.asm.ClassWriter;
+import org.jetbrains.asm4.ClassWriter;
 
 /**
 * @author Eugene Zhuravlev

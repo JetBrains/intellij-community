@@ -1,9 +1,10 @@
 package org.jetbrains.ether.dependencyView;
 
-import org.jetbrains.ether.RW;
-import org.objectweb.asm.Type;
+import org.jetbrains.asm4.Type;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.

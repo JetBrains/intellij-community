@@ -6,14 +6,12 @@ import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefaultFileManager;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.ListBuffer;
+import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.jps.PathUtil;
-import org.objectweb.asm.ClassReader;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.FileObject;
-import javax.tools.ForwardingJavaFileObject;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URL;

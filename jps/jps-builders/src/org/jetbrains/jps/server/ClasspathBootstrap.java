@@ -28,14 +28,12 @@ import net.n3.nanoxml.IXMLBuilder;
 import org.codehaus.groovy.GroovyException;
 import org.jboss.netty.util.Version;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.EmptyVisitor;
 
-import javax.tools.JavaCompiler;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -95,7 +93,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(Message.class)); // protobuf
     cp.add(getResourcePath(Version.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
-    cp.add(getResourcePath(EmptyVisitor.class));  // asm-commons
+    cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(MacroExpander.class));  // jps-model
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
     cp.add(getResourcePath(GroovyException.class));  // groovy

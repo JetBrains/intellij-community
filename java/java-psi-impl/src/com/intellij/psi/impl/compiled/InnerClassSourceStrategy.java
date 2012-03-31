@@ -20,7 +20,7 @@
 package com.intellij.psi.impl.compiled;
 
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
+import org.jetbrains.asm4.ClassReader;
 
 public interface InnerClassSourceStrategy<T> {
   @Nullable
