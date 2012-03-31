@@ -1,7 +1,11 @@
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +21,7 @@ public class PyRequirement {
   private static final Pattern NAME = Pattern.compile("\\s*(\\w(\\w|[-.])*)\\s*(.*)");
   private static final Pattern VERSION_SPEC = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+)");
   private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*-e\\s+([^#]*)#egg=(.*)");
+  private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("\\s*-r\\s+(.*)");
   private static final Pattern NAME_VERSION = Pattern.compile("\\s*(\\w(\\w|[.])*)-((\\w|[-.])+)");
 
   public enum Relation {
@@ -265,13 +270,13 @@ public class PyRequirement {
   }
 
   @Nullable
-  public static PyRequirement fromString(@NotNull String s) {
+  public static PyRequirement fromString(@NotNull String line) {
     // TODO: Extras, multi-line requirements '\'
-    final PyRequirement editableEgg = parseEditableEgg(s);
+    final PyRequirement editableEgg = parseEditableEgg(line);
     if (editableEgg != null) {
       return editableEgg;
     }
-    final Matcher nameMatcher = NAME.matcher(s);
+    final Matcher nameMatcher = NAME.matcher(line);
     if (!nameMatcher.matches()) {
       return null;
     }
@@ -295,6 +300,33 @@ public class PyRequirement {
 
   @NotNull
   public static List<PyRequirement> parse(@NotNull String s) {
+    return parse(s, null, new HashSet<VirtualFile>());
+  }
+
+  @NotNull
+  public static List<PyRequirement> parse(@NotNull VirtualFile file) {
+    return parse(file, new HashSet<VirtualFile>());
+  }
+
+  @NotNull
+  public static List<PyRequirement> parse(@NotNull VirtualFile file, @NotNull Set<VirtualFile> visited) {
+    if (!visited.contains(file)) {
+      visited.add(file);
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        return parse(document.getText(), file, visited);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
+  }
+
+  @NotNull
+  private static List<PyRequirement> parse(@NotNull String s, @Nullable VirtualFile anchor, @NotNull Set<VirtualFile> visited) {
     final List<PyRequirement> result = new ArrayList<PyRequirement>();
     for (String line : StringUtil.splitByLines(s)) {
       final String trimmed = line.trim();
@@ -303,19 +335,38 @@ public class PyRequirement {
         if (req != null) {
           result.add(req);
         }
+        else if (anchor != null) {
+          result.addAll(parseRecursiveRequirement(trimmed, anchor, visited));
+        }
       }
     }
     return result;
   }
 
   @NotNull
-  public String getName() {
-    return myName;
+  private static List<PyRequirement> parseRecursiveRequirement(@NotNull String line, @NotNull VirtualFile anchor,
+                                                               @NotNull Set<VirtualFile> visited) {
+    final Matcher matcher = RECURSIVE_REQUIREMENT.matcher(line);
+    if (matcher.matches()) {
+      final String fileName = matcher.group(1);
+      final VirtualFile dir = anchor.getParent();
+      if (dir != null) {
+        VirtualFile file = dir.findFileByRelativePath(fileName);
+        if (file == null) {
+          file = LocalFileSystem.getInstance().findFileByPath(fileName);
+        }
+        if (file != null) {
+          return parse(file, visited);
+        }
+
+      }
+    }
+    return Collections.emptyList();
   }
 
   @Nullable
-  private static PyRequirement parseEditableEgg(@NotNull String s) {
-    final Matcher editableEggMatcher = EDITABLE_EGG.matcher(s);
+  private static PyRequirement parseEditableEgg(@NotNull String line) {
+    final Matcher editableEggMatcher = EDITABLE_EGG.matcher(line);
     if (!editableEggMatcher.matches()) {
       return null;
     }

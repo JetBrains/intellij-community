@@ -371,7 +371,7 @@
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
     <applicationConfigurable instance="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
-    <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsConfigurable"/>
+    <projectConfigurable instance="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable"/>
     <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
@@ -730,6 +730,10 @@
     <useScopeEnlarger implementation="com.jetbrains.jinja2.findUsages.Jinja2UseScopeEnlarger"/>
     <usageTypeProvider implementation="com.jetbrains.jinja2.findUsages.Jinja2UsageTypeProvider"/>
     <lang.commenter language="Jinja2" implementationClass="com.jetbrains.jinja2.Jinja2Commenter"/>
+
+    <!-- Packaging -->
+    <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
+                   serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
   </extensions>
 
   <extensionPoints>

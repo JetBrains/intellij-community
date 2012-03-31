@@ -20,9 +20,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.packaging.PyExternalProcessException;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -44,22 +42,40 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
   private JComboBox myTestRunnerComboBox;
   private JComboBox myDocstringFormatComboBox;
   private PythonTestConfigurationsModel myModel;
-  private Project myProject;
+  @NotNull private final Module myModule;
+  @NotNull private final Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
   private TextFieldWithBrowseButton myWorkDir;
   private JCheckBox txtIsRst;
   private JPanel myErrorPanel;
+  private TextFieldWithBrowseButton myRequirementsPathField;
 
-  public PyIntegratedToolsConfigurable(Project project) {
-    myProject = project;
-    myDocumentationSettings = PyDocumentationSettings.getInstance(project);
+  public PyIntegratedToolsConfigurable(@NotNull Module module) {
+    myModule = module;
+    myProject = myModule.getProject();
+    myDocumentationSettings = PyDocumentationSettings.getInstance(myProject);
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myWorkDir.addBrowseFolderListener("Please choose working directory:", null, project, fileChooserDescriptor);
+    myWorkDir.addBrowseFolderListener("Please choose working directory:", null, myProject, fileChooserDescriptor);
     ReSTService service = ReSTService.getInstance(myProject);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
+    myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
+                                                    FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+    myRequirementsPathField.setText(getRequirementsPath());
+  }
+
+  @NotNull
+  private String getRequirementsPath() {
+    final String path = PyPackageRequirementsSettings.getInstance(myModule).getRequirementsPath();
+    final String text;
+    if (path.equals(PyPackageRequirementsSettings.DEFAULT_REQUIREMENTS_PATH) && PyPackageUtil.findRequirementsTxt(myModule) == null) {
+      return "";
+    }
+    else {
+      return path;
+    }
   }
 
   private void initErrorValidation() {
@@ -75,19 +91,22 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
         if (sdk != null) {
           final Object selectedItem = myTestRunnerComboBox.getSelectedItem();
           if (PythonTestConfigurationsModel.PY_TEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath()))
+            if (!VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk.getHomePath())) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "py.test"),
                                           createQuickFix(sdk, facetErrorPanel, "pytest"));
+            }
           }
           else if (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath()))
+            if (!VFSTestFrameworkListener.getInstance().isNoseTestInstalled(sdk.getHomePath())) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "nosetest"),
                                           createQuickFix(sdk, facetErrorPanel, "nose"));
+            }
           }
           else if (PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME.equals(selectedItem)) {
-            if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk.getHomePath()))
+            if (!VFSTestFrameworkListener.getInstance().isAtTestInstalled(sdk.getHomePath())) {
               return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", "attest"),
                                           createQuickFix(sdk, facetErrorPanel, "attest"));
+            }
           }
         }
         return ValidationResult.OK;
@@ -159,10 +178,15 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
       DaemonCodeAnalyzer.getInstance(myProject).restart();
       return true;
     }
-    if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText()))
+    if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText())) {
       return true;
-    if (!ReSTService.getInstance(myProject).txtIsRst() == txtIsRst.isSelected())
+    }
+    if (!ReSTService.getInstance(myProject).txtIsRst() == txtIsRst.isSelected()) {
       return true;
+    }
+    if (!getRequirementsPath().equals(myRequirementsPathField.getText())) {
+      return true;
+    }
     return false;
   }
 
@@ -172,6 +196,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
     ReSTService.getInstance(myProject).setWorkdir(myWorkDir.getText());
     ReSTService.getInstance(myProject).setTxtIsRst(txtIsRst.isSelected());
+    PyPackageRequirementsSettings.getInstance(myModule).setRequirementsPath(myRequirementsPathField.getText());
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   @Override
@@ -182,6 +208,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable, No
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
     myWorkDir.setText(ReSTService.getInstance(myProject).getWorkdir());
     txtIsRst.setSelected(ReSTService.getInstance(myProject).txtIsRst());
+    myRequirementsPathField.setText(getRequirementsPath());
   }
 
   @Override
