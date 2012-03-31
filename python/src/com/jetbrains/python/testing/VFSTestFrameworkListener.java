@@ -141,9 +141,9 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
     return ServiceManager.getService(VFSTestFrameworkListener.class);
   }
 
-  public Map<String, Boolean> SDK_TO_PYTEST = new HashMap<String, Boolean>();;
-  public Map <String, Boolean> SDK_TO_NOSETEST = new HashMap<String, Boolean>();;
-  public Map <String, Boolean> SDK_TO_ATTEST = new HashMap<String, Boolean>();;
+  public Map<String, Boolean> SDK_TO_PYTEST = new HashMap<String, Boolean>();
+  public Map <String, Boolean> SDK_TO_NOSETEST = new HashMap<String, Boolean>();
+  public Map <String, Boolean> SDK_TO_ATTEST = new HashMap<String, Boolean>();
 
   @Override
   public VFSTestFrameworkListener getState() {

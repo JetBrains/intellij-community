@@ -130,7 +130,7 @@ public class PyPackageManager {
               indicator.setFraction((double)i / size);
             }
             try {
-              final boolean useUserSite = PyPackageService.getInstance(myProject).useUserSite(mySdk.getHomePath());
+              final boolean useUserSite = PyPackageService.getInstance().useUserSite(mySdk.getHomePath());
               manager.install(list(requirement), extraArgs, useUserSite);
             }
             catch (PyExternalProcessException e) {
@@ -334,6 +334,10 @@ public class PyPackageManager {
     finally {
       clearCaches();
     }
+  }
+
+  public boolean cacheIsNotNull() {
+    return myPackagesCache != null;
   }
 
   @NotNull

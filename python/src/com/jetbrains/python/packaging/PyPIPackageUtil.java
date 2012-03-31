@@ -85,10 +85,10 @@ public class PyPIPackageUtil {
     return names;
   }
 
-  public Set<ComparablePair> getAdditionalPackageNames(Project project) {
+  public Set<ComparablePair> getAdditionalPackageNames() {
     if (myAdditionalPackageNames == null) {
       myAdditionalPackageNames = new TreeSet<ComparablePair>();
-      for (String url : PyPackageService.getInstance(project).additionalRepositories) {
+      for (String url : PyPackageService.getInstance().additionalRepositories) {
         try {
           for (String pyPackage : getPackageNames(url)) {
             if (!pyPackage.contains(" "))
@@ -210,19 +210,19 @@ public class PyPIPackageUtil {
     return packages;
   }
 
-  public Collection<String> getPackageNames(Project project) throws IOException {
-    Map<String, String> pyPIPackages = getPyPIPackages(project);
+  public Collection<String> getPackageNames() throws IOException {
+    Map<String, String> pyPIPackages = getPyPIPackages();
     if (pyPIPackages.isEmpty()) {
-      updatePyPICache(PyPackageService.getInstance(project));
-      pyPIPackages = getPyPIPackages(project);
+      updatePyPICache(PyPackageService.getInstance());
+      pyPIPackages = getPyPIPackages();
     }
     ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
     Collections.sort(list);
     return list;
   }
 
-  public static Map<String, String> getPyPIPackages(Project project) {
-    return PyPackageService.getInstance(project).PY_PACKAGES;
+  public static Map<String, String> getPyPIPackages() {
+    return PyPackageService.getInstance().PY_PACKAGES;
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description) {

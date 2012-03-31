@@ -245,6 +245,10 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertNull(psiElement);
   }
 
+  public void testModulePackageConflict() {  // PY-6011
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
   public void testCythonFromModuleCImport() {
     assertResolvesTo(CythonFunction.class, "foo");
   }

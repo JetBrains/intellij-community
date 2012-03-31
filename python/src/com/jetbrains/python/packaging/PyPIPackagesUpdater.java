@@ -37,7 +37,7 @@ public class PyPIPackagesUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    final PyPackageService service = PyPackageService.getInstance(project);
+    final PyPackageService service = PyPackageService.getInstance();
     if (checkNeeded(project, service)) {
       application.executeOnPooledThread(new Runnable() {
         @Override

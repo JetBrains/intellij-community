@@ -1,7 +1,9 @@
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 import java.util.ArrayList;
@@ -55,8 +57,8 @@ public class PyPackageService implements
     return false;
   }
 
-  public static PyPackageService getInstance(Project project) {
-    return ServiceManager.getService(project, PyPackageService.class);
+  public static PyPackageService getInstance() {
+    return ServiceManager.getService(PyPackageService.class);
   }
 
   public String getVirtualEnvBasePath() {
