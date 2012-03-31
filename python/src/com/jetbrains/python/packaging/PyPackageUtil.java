@@ -1,7 +1,5 @@
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -46,21 +44,19 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static Document findRequirementsTxt(@NotNull Module module) {
+  public static VirtualFile findRequirementsTxt(@NotNull Module module) {
     final String requirementsPath = PyPackageRequirementsSettings.getInstance(module).getRequirementsPath();
     if (!requirementsPath.isEmpty()) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(requirementsPath);
-      if (file == null) {
-        final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-        for (VirtualFile root : manager.getContentRoots()) {
-          file = root.findFileByRelativePath(requirementsPath);
-          if (file != null) {
-            break;
-          }
-        }
-      }
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(requirementsPath);
       if (file != null) {
-        return FileDocumentManager.getInstance().getDocument(file);
+        return file;
+      }
+      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+      for (VirtualFile root : manager.getContentRoots()) {
+        final VirtualFile fileInRoot = root.findFileByRelativePath(requirementsPath);
+        if (fileInRoot != null) {
+          return fileInRoot;
+        }
       }
     }
     return null;

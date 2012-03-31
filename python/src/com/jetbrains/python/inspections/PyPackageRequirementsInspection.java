@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -340,7 +341,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   private static class AddToRequirementsFix implements LocalQuickFix {
     @Nullable private final PyListLiteralExpression mySetupPyRequires;
-    @Nullable private final Document myRequirementsTxt;
+    @Nullable private final VirtualFile myRequirementsTxt;
     @Nullable private final PyArgumentList mySetupArgumentList;
     @NotNull private final String myPackageName;
     @NotNull private final LanguageLevel myLanguageLevel;
@@ -370,7 +371,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public String getName() {
       final String target;
       if (myRequirementsTxt != null) {
-        target = "requirements.txt";
+        target = myRequirementsTxt.getName();
       }
       else if (mySetupPyRequires != null || mySetupArgumentList != null) {
         target = "setup.py";
@@ -397,7 +398,10 @@ public class PyPackageRequirementsInspection extends PyInspection {
             public void run() {
               if (myRequirementsTxt != null) {
                 if (myRequirementsTxt.isWritable()) {
-                  myRequirementsTxt.insertString(0, myPackageName + "\n");
+                  final Document document = FileDocumentManager.getInstance().getDocument(myRequirementsTxt);
+                  if (document != null) {
+                    document.insertString(0, myPackageName + "\n");
+                  }
                 }
               }
               else {

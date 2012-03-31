@@ -9,7 +9,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -396,9 +396,9 @@ public class PyPackageManager {
   @Nullable
   public static List<PyRequirement> getRequirements(@NotNull Module module) {
     // TODO: Cache requirements, clear cache on requirements.txt or setup.py updates
-    final Document requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
+    final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
     if (requirementsTxt != null) {
-      return PyRequirement.parse(requirementsTxt.getText());
+      return PyRequirement.parse(requirementsTxt);
     }
     final List<String> lines = new ArrayList<String>();
     for (String name : PyPackageUtil.SETUP_PY_REQUIRES_KWARGS_NAMES) {
