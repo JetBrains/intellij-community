@@ -20,16 +20,21 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public class ResizeSelectionDecorator extends NonResizeSelectionDecorator {
-  private final ResizePoint[] myPoints;
+  private final List<ResizePoint> myPoints = new ArrayList<ResizePoint>();
 
-  public ResizeSelectionDecorator(Color color, int lineWidth, ResizePoint... points) {
+  public ResizeSelectionDecorator(Color color, int lineWidth) {
     super(color, lineWidth);
-    myPoints = points;
+  }
+
+  public void addPoint(ResizePoint point) {
+    myPoints.add(point);
   }
 
   @Override

@@ -156,6 +156,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
 
       @Override
+      public void showSelection(boolean value) {
+        myDecorationLayer.showSelection(value);
+      }
+
+      @Override
       public ComponentDecorator getRootSelectionDecorator() {
         return DesignerEditorPanel.this.getRootSelectionDecorator();
       }

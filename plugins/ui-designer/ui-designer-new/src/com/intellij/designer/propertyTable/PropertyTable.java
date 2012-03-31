@@ -360,6 +360,13 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     return -1;
   }
 
+  public static void top(List<Property> properties, String name) {
+    Property property = extractProperty(properties, name);
+    if (property != null) {
+      properties.add(0, property);
+    }
+  }
+
   @Nullable
   public static Property extractProperty(List<Property> properties, String name) {
     int size = properties.size();

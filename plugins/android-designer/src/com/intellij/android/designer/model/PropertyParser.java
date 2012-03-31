@@ -292,6 +292,11 @@ public class PropertyParser {
             return p1.getName().compareTo(p2.getName());
           }
         });
+
+        PropertyTable.top(properties, "layout:margin");
+        PropertyTable.top(properties, "layout:gravity");
+        PropertyTable.top(properties, "layout:height");
+        PropertyTable.top(properties, "layout:width");
       }
     }
 
