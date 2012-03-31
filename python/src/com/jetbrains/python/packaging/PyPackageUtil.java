@@ -1,13 +1,12 @@
 package com.jetbrains.python.packaging;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -45,11 +44,19 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static Document findRequirementsTxt(@NotNull Module module) {
-    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
-      final VirtualFile child = root.findChild("requirements.txt");
-      if (child != null) {
-        return FileDocumentManager.getInstance().getDocument(child);
+  public static VirtualFile findRequirementsTxt(@NotNull Module module) {
+    final String requirementsPath = PyPackageRequirementsSettings.getInstance(module).getRequirementsPath();
+    if (!requirementsPath.isEmpty()) {
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(requirementsPath);
+      if (file != null) {
+        return file;
+      }
+      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+      for (VirtualFile root : manager.getContentRoots()) {
+        final VirtualFile fileInRoot = root.findFileByRelativePath(requirementsPath);
+        if (fileInRoot != null) {
+          return fileInRoot;
+        }
       }
     }
     return null;

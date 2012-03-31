@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -103,10 +104,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
             for (PyRequirement req : unsatisfied) {
               unsatisfiedNames.add(req.getName());
             }
+            final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+            if (PyPackageManager.getInstance(sdk).hasPip()) {
+              quickFixes.add(new InstallRequirementsFix(null, module, sdk, unsatisfied));
+            }
+            quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(node, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
-                            new InstallRequirementsFix(null, module, sdk, unsatisfied),
-                            new IgnoreRequirementFix(unsatisfiedNames));
+                            quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
           }
         }
       }
@@ -136,6 +141,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
       }
     }
 
+    @Nullable
+    private static Sdk findPythonSdk(@NotNull PsiElement element) {
+      final Module module = ModuleUtil.findModuleForPsiElement(element);
+      return PythonSdkType.findPythonSdk(module);
+    }
+
     private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
       final List<PyExpression> expressions = PyResolveUtil.unwindQualifiers(importedExpression);
       if (!expressions.isEmpty()) {
@@ -148,7 +159,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
-          if ("setuptools".equals(packageName)) {
+          if (PyPackageManager.PACKAGE_SETUPTOOLS.equals(packageName)) {
             return;
           }
           final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
@@ -171,10 +182,15 @@ public class PyPackageRequirementsInspection extends PyInspection {
                   }
                 }
               }
+              final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+              final Sdk sdk = findPythonSdk(importedExpression);
+              if (sdk != null && PyPackageManager.getInstance(sdk).hasPip()) {
+                quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
+              }
+              quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
               registerProblem(packageReferenceExpression, String.format("Package '%s' is not listed in project requirements", packageName),
                               ProblemHighlightType.WEAK_WARNING, null,
-                              new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)),
-                              new IgnoreRequirementFix(Collections.singleton(packageName)));
+                              quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
             }
           }
         }
@@ -325,7 +341,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   private static class AddToRequirementsFix implements LocalQuickFix {
     @Nullable private final PyListLiteralExpression mySetupPyRequires;
-    @Nullable private final Document myRequirementsTxt;
+    @Nullable private final VirtualFile myRequirementsTxt;
     @Nullable private final PyArgumentList mySetupArgumentList;
     @NotNull private final String myPackageName;
     @NotNull private final LanguageLevel myLanguageLevel;
@@ -355,7 +371,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public String getName() {
       final String target;
       if (myRequirementsTxt != null) {
-        target = "requirements.txt";
+        target = myRequirementsTxt.getName();
       }
       else if (mySetupPyRequires != null || mySetupArgumentList != null) {
         target = "setup.py";
@@ -382,7 +398,10 @@ public class PyPackageRequirementsInspection extends PyInspection {
             public void run() {
               if (myRequirementsTxt != null) {
                 if (myRequirementsTxt.isWritable()) {
-                  myRequirementsTxt.insertString(0, myPackageName + "\n");
+                  final Document document = FileDocumentManager.getInstance().getDocument(myRequirementsTxt);
+                  if (document != null) {
+                    document.insertString(0, myPackageName + "\n");
+                  }
                 }
               }
               else {
