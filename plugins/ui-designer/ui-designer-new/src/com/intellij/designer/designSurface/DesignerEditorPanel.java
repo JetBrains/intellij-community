@@ -211,8 +211,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
 
       @Override
-      public boolean execute(ThrowableRunnable<Exception> operation) {
-        return DesignerEditorPanel.this.execute(operation);
+      public boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties) {
+        return DesignerEditorPanel.this.execute(operation, updateProperties);
       }
 
       @Override
@@ -343,7 +343,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myLayout.show(this, ERROR_CARD);
 
-    DesignerToolWindowManager.getInstance(getProject()).refresh();
+    DesignerToolWindowManager.getInstance(getProject()).refresh(true);
     repaint();
   }
 
@@ -383,7 +383,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Nullable
   protected abstract EditOperation processRootOperation(OperationContext context);
 
-  protected abstract boolean execute(ThrowableRunnable<Exception> operation);
+  protected abstract boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties);
 
   protected abstract void execute(List<EditOperation> operations);
 

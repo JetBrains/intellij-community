@@ -20,7 +20,6 @@ import com.intellij.designer.componentTree.ComponentTreeBuilder;
 import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.propertyTable.PropertyTablePanel;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -119,12 +118,15 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     return project.getComponent(DesignerToolWindowManager.class);
   }
 
-  public void refresh() {
+  public void refresh(final boolean updateProperties) {
     if (myTreeBuilder != null) {
       myTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
         @Override
         public void run() {
           myComponentTree.repaint();
+          if (updateProperties) {
+            myPropertyTablePanel.getPropertyTable().updateProperties();
+          }
         }
       });
     }

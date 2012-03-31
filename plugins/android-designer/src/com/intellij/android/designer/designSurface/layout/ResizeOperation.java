@@ -20,20 +20,18 @@ import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
 import com.intellij.designer.designSurface.feedbacks.RectangleComponent;
+import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.Colors;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
 
@@ -43,8 +41,7 @@ import java.util.List;
 public class ResizeOperation implements EditOperation {
   public static final String TYPE = "resize_children";
 
-  private static SimpleTextAttributes DIMENSION_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.lightGray);
-  private static SimpleTextAttributes SNAP_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Colors.DARK_GREEN);
+  private final static Color blue = new Color(0, 50, 255);
   private static final int SNAP_DELTA = 4;
   private static final int WRAP_CONTENT = 0 << 30;
 
@@ -54,7 +51,7 @@ public class ResizeOperation implements EditOperation {
   private RectangleComponent myWrapFeedback;
   private RectangleComponent myFillFeedback;
   private RectangleComponent myFeedback;
-  private SimpleColoredComponent myTextFeedback;
+  private TextFeedback myTextFeedback;
 
   private String myStaticWidth;
   private String myStaticHeight;
@@ -64,14 +61,14 @@ public class ResizeOperation implements EditOperation {
 
   private Rectangle myBounds;
 
-  public static void points(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(Position.EAST, TYPE));
-    decorator.addPoint(new DirectionResizePoint(Position.SOUTH, TYPE));
-    decorator.addPoint(new DirectionResizePoint(Position.SOUTH_EAST, TYPE));
-  }
-
   public ResizeOperation(OperationContext context) {
     myContext = context;
+  }
+
+  public static void points(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE));
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE));
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE));
   }
 
   @Override
@@ -193,17 +190,8 @@ public class ResizeOperation implements EditOperation {
       myFeedback = new RectangleComponent(Color.blue, 2);
       layer.add(myFeedback);
 
-      myTextFeedback = new SimpleColoredComponent();
-      myTextFeedback.setBackground(LightColors.YELLOW);
-      myTextFeedback.setBorder(new EmptyBorder(0, 5, 3, 0) {
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-          Color oldColor = g.getColor();
-          g.setColor(Color.darkGray);
-          g.drawRect(x, y, width - 1, height - 1);
-          g.setColor(oldColor);
-        }
-      });
+      myTextFeedback = new TextFeedback();
+      myTextFeedback.setBorder(new LineMarginBorder(0, 5, 3, 0));
       layer.add(myTextFeedback);
       layer.add(myWrapFeedback);
       layer.add(myFillFeedback);
@@ -214,12 +202,9 @@ public class ResizeOperation implements EditOperation {
 
   @Override
   public void showFeedback() {
-    FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-
     createFeedback();
 
-    myBounds = myContext.getTransformedRectangle(myComponent.getBounds(layer));
-
+    myBounds = myContext.getTransformedRectangle(myComponent.getBounds(myContext.getArea().getFeedbackLayer()));
     int direction = myContext.getResizeDirection();
 
     if ((direction & Position.EAST) != 0) {
@@ -236,26 +221,25 @@ public class ResizeOperation implements EditOperation {
     myFeedback.setBounds(myBounds);
 
     myTextFeedback.clear();
+
     addTextSize(myStaticWidth, myBounds.width, myWrapSize.width, myFillSize.width);
     myTextFeedback.append(" x ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     addTextSize(myStaticHeight, myBounds.height, myWrapSize.height, myFillSize.height);
 
-    Dimension textSize = myTextFeedback.getPreferredSize();
-    Point location = myContext.getLocation();
-    myTextFeedback.setBounds(location.x + 15, location.y + 15, textSize.width, textSize.height);
+    myTextFeedback.locationTo(myContext.getLocation(), 15);
   }
 
   private void addTextSize(String staticText, int size, int wrap, int fill) {
     if (staticText == null) {
       if (size == wrap) {
-        myTextFeedback.append("wrap_content", SNAP_ATTRIBUTES);
+        myTextFeedback.snap("wrap_content");
       }
       else if (size == fill) {
-        myTextFeedback.append("match_parent", SNAP_ATTRIBUTES);
+        myTextFeedback.snap("match_parent");
       }
       else {
         myTextFeedback.append(Integer.toString(size));
-        myTextFeedback.append("dp", DIMENSION_ATTRIBUTES);
+        myTextFeedback.dimension("dp");
       }
     }
     else {
@@ -264,7 +248,7 @@ public class ResizeOperation implements EditOperation {
         String dimension = staticText.substring(index);
         if (ArrayUtil.indexOf(ResourceRenderer.DIMENSIONS, dimension) != -1) {
           myTextFeedback.append(staticText.substring(0, index));
-          myTextFeedback.append(dimension, DIMENSION_ATTRIBUTES);
+          myTextFeedback.dimension(dimension);
         }
         else {
           myTextFeedback.append(staticText);

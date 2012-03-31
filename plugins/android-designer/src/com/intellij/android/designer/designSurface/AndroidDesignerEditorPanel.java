@@ -96,7 +96,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           myPSIChangeListener.addRequest(new Runnable() {
             @Override
             public void run() {
-              updateRenderer();
+              updateRenderer(true);
             }
           });
         }
@@ -147,7 +147,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
                       myLayeredPane.repaint();
 
-                      DesignerToolWindowManager.getInstance(getProject()).refresh();
+                      DesignerToolWindowManager.getInstance(getProject()).refresh(true);
                     }
                   }
                   catch (Throwable e) {
@@ -177,7 +177,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         showDesignerCard();
         myLayeredPane.repaint();
 
-        DesignerToolWindowManager.getInstance(getProject()).refresh();
+        DesignerToolWindowManager.getInstance(getProject()).refresh(true);
       }
     });
   }
@@ -215,7 +215,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
   }
 
-  private void updateRenderer() {
+  private void updateRenderer(final boolean updateProperties) {
     myParseTime = true;
     final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
@@ -240,7 +240,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
         myLayeredPane.repaint();
 
-        DesignerToolWindowManager.getInstance(getProject()).refresh();
+        DesignerToolWindowManager.getInstance(getProject()).refresh(updateProperties);
       }
     });
   }
@@ -430,11 +430,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   @Override
-  protected boolean execute(ThrowableRunnable<Exception> operation) {
+  protected boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties) {
     try {
       myPSIChangeListener.stop();
       operation.run();
-      updateRenderer();
+      updateRenderer(updateProperties);
       return true;
     }
     catch (Throwable e) {
@@ -453,7 +453,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       for (EditOperation operation : operations) {
         operation.execute();
       }
-      updateRenderer();
+      updateRenderer(true);
     }
     catch (Throwable e) {
       showError("Execute command", e);

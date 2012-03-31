@@ -187,7 +187,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
                 }
               }
             }
-          });
+          }, false);
         }
       }, DesignerBundle.message("designer.properties.restore_default"), null);
 
@@ -201,7 +201,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private void updateProperties() {
+  public void updateProperties() {
     if (mySkipUpdate) {
       return;
     }
@@ -590,7 +590,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
                 property.setValue(component, newValue);
               }
             }
-          });
+          }, false);
         }
       }, DesignerBundle.message("command.set.property.value"), null);
     }

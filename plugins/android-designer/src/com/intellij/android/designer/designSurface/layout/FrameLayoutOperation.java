@@ -17,9 +17,11 @@ package com.intellij.android.designer.designSurface.layout;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
+import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
@@ -28,7 +30,6 @@ import com.intellij.ui.LightColors;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.Set;
@@ -38,7 +39,7 @@ import java.util.Set;
  */
 public class FrameLayoutOperation extends AbstractEditOperation {
   private GravityFeedback myFeedback;
-  private JLabel myTextFeedback;
+  private TextFeedback myTextFeedback;
   private String myGravity;
   private Set<Pair<Gravity, Gravity>> myExcludes = Collections.emptySet();
 
@@ -49,32 +50,7 @@ public class FrameLayoutOperation extends AbstractEditOperation {
       myExcludes = new HashSet<Pair<Gravity, Gravity>>();
 
       for (RadComponent component : context.getComponents()) {
-        String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
-        int flags = Gravity.getFlags(value);
-
-        Gravity horizontal = Gravity.left;
-        if ((flags & Gravity.LEFT) != 0) {
-          horizontal = Gravity.left;
-        }
-        else if ((flags & Gravity.CENTER_HORIZONTAL) != 0) {
-          horizontal = Gravity.center;
-        }
-        else if ((flags & Gravity.RIGHT) != 0) {
-          horizontal = Gravity.right;
-        }
-
-        Gravity vertical = Gravity.top;
-        if ((flags & Gravity.TOP) != 0) {
-          vertical = Gravity.top;
-        }
-        else if ((flags & Gravity.CENTER_VERTICAL) != 0) {
-          vertical = Gravity.center;
-        }
-        else if ((flags & Gravity.BOTTOM) != 0) {
-          vertical = Gravity.bottom;
-        }
-
-        myExcludes.add(new Pair<Gravity, Gravity>(horizontal, vertical));
+        myExcludes.add(RadFrameLayout.gravity(component));
       }
     }
   }
@@ -87,11 +63,8 @@ public class FrameLayoutOperation extends AbstractEditOperation {
       myFeedback.setBounds(bounds);
       layer.add(myFeedback);
 
-      myTextFeedback = new JLabel();
-      myTextFeedback.setFont(myTextFeedback.getFont().deriveFont(Font.BOLD));
-      myTextFeedback.setBackground(LightColors.YELLOW);
+      myTextFeedback = new TextFeedback();
       myTextFeedback.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 2, 0));
-      myTextFeedback.setOpaque(true);
       layer.add(myTextFeedback);
 
       layer.repaint();
@@ -119,16 +92,16 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   }
 
   private void configureTextFeedback(Rectangle bounds, Gravity horizontal, Gravity vertical) {
+    myTextFeedback.clear();
+
     if (horizontal == null || vertical == null) {
-      myTextFeedback.setText("None");
+      myTextFeedback.bold("None");
     }
     else {
-      myTextFeedback.setText("[" + vertical.name() + ", " + horizontal.name() + "]");
+      myTextFeedback.bold("[" + vertical.name() + ", " + horizontal.name() + "]");
     }
 
-    Dimension textSize = myTextFeedback.getPreferredSize();
-    myTextFeedback
-      .setBounds(bounds.x + bounds.width / 2 - textSize.width / 2, bounds.y - textSize.height - 10, textSize.width, textSize.height);
+    myTextFeedback.centerTop(bounds);
   }
 
   @Nullable

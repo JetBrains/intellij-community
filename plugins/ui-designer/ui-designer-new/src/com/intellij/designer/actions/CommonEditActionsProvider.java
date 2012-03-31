@@ -96,7 +96,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
               area.select(newSelection);
             }
           }
-        });
+        }, true);
       }
     }, DesignerBundle.message("command.delete.selection"), null);
   }
