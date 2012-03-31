@@ -165,43 +165,47 @@ public class QualifiedNameResolver implements RootVisitor {
     }
 
     if (!myWithoutRoots) {
-      PythonPathCache cache = findMyCache();
-      if (cache != null) {
-        final List<PsiFileSystemItem> cachedResults = cache.get(myQualifiedName);
-        if (cachedResults != null) {
-          return cachedResults;
-        }
-      }
-
-      if (myVisitAllModules) {
-        for (Module mod : ModuleManager.getInstance(myPsiManager.getProject()).getModules()) {
-          RootVisitorHost.visitRoots(mod, false, this);
-        }
-      }
-      else if (myModule != null) {
-        final boolean otherSdk = withOtherSdk();
-        RootVisitorHost.visitRoots(myModule, otherSdk, this);
-        if (otherSdk) {
-          RootVisitorHost.visitSdkRoots(myWithSdk, this);
-        }
-      }
-      else if (myFootholdFile != null) {
-        RootVisitorHost.visitSdkRoots(myFootholdFile, this);
-      }
-      else {
-        throw new IllegalStateException();
-      }
-
-      final ArrayList<PsiFileSystemItem> resultList = Lists.newArrayList(results);
-      if (cache != null) {
-        cache.put(myQualifiedName, resultList);
-      }
-      return resultList;
+      results.addAll(resolveInRoots());
     }
 
     return Lists.newArrayList(results);
   }
-  
+
+  private List<PsiFileSystemItem> resolveInRoots() {
+    PythonPathCache cache = findMyCache();
+    if (cache != null) {
+      final List<PsiFileSystemItem> cachedResults = cache.get(myQualifiedName);
+      if (cachedResults != null) {
+        return cachedResults;
+      }
+    }
+
+    if (myVisitAllModules) {
+      for (Module mod : ModuleManager.getInstance(myPsiManager.getProject()).getModules()) {
+        RootVisitorHost.visitRoots(mod, false, this);
+      }
+    }
+    else if (myModule != null) {
+      final boolean otherSdk = withOtherSdk();
+      RootVisitorHost.visitRoots(myModule, otherSdk, this);
+      if (otherSdk) {
+        RootVisitorHost.visitSdkRoots(myWithSdk, this);
+      }
+    }
+    else if (myFootholdFile != null) {
+      RootVisitorHost.visitSdkRoots(myFootholdFile, this);
+    }
+    else {
+      throw new IllegalStateException();
+    }
+
+    final ArrayList<PsiFileSystemItem> resultList = Lists.newArrayList(results);
+    if (cache != null) {
+      cache.put(myQualifiedName, resultList);
+    }
+    return resultList;
+  }
+
   @Nullable
   public PsiFileSystemItem firstResult() {
     final List<PsiFileSystemItem> results = resultsAsList();
