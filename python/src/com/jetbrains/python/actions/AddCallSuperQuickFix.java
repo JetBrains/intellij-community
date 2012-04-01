@@ -130,7 +130,27 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     }
 
     superCall.append(")");
-    newFunction.append("):\n\t").append(superCall).append("\n\t").append(problemFunction.getStatementList().getText());
+    final PyStatementList statementList = problemFunction.getStatementList();
+    PyExpression docstring = null;
+    final PyStatement[] statements = statementList.getStatements();
+    if (statements.length != 0 && statements[0] instanceof PyExpressionStatement) {
+      PyExpressionStatement st = (PyExpressionStatement)statements[0];
+      if (st.getExpression() instanceof PyStringLiteralExpression)
+        docstring = st.getExpression();
+    }
+
+    newFunction.append("):\n\t");
+    if (docstring != null)
+      newFunction.append(docstring.getText()).append("\n\t");
+    newFunction.append(superCall).append("\n\t");
+    boolean first = true;
+    for (PyStatement statement : statements) {
+      if (first && docstring != null) {
+        first = false;
+        continue;
+      }
+      newFunction.append(statement.getText()).append("\n\t");
+    }
 
     problemFunction.replace(
       PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class,
