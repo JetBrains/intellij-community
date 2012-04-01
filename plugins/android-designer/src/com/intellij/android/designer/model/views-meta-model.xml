@@ -1013,7 +1013,7 @@
              tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
 
     <properties important="foreground foregroundGravity"
-                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal"
+                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal layout:margin.marginStart layout:margin.marginEnd"
         />
 
     <creation>

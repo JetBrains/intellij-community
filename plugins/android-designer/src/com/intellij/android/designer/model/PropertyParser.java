@@ -155,16 +155,15 @@ public class PropertyParser {
           }
 
           if (model != null) {
-            property.setImportant(model.isImportantProperty(name));
-            property.setExpert(model.isExpertProperty(name));
-            property.setDeprecated(model.isDeprecatedProperty(name));
+            model.decorate(property, name);
           }
 
           properties.add(property);
         }
 
         if (padding != null) {
-          List children = padding.getChildren(null);
+          List<Property> children = padding.getChildren(null);
+
           children.add(PropertyTable.extractProperty(properties, "paddingLeft"));
           children.add(PropertyTable.extractProperty(properties, "paddingTop"));
           children.add(PropertyTable.extractProperty(properties, "paddingRight"));
@@ -267,13 +266,20 @@ public class PropertyParser {
         }
 
         if (margin != null) {
-          List children = margin.getChildren(null);
+          List<Property> children = margin.getChildren(null);
+
           children.add(PropertyTable.extractProperty(properties, "marginLeft"));
           children.add(PropertyTable.extractProperty(properties, "marginTop"));
           children.add(PropertyTable.extractProperty(properties, "marginRight"));
           children.add(PropertyTable.extractProperty(properties, "marginBottom"));
           children.add(PropertyTable.extractProperty(properties, "marginStart"));
           children.add(PropertyTable.extractProperty(properties, "marginEnd"));
+
+          if (model != null) {
+            for (Property child : children) {
+              model.decorate(child, "layout:margin." + child.getName());
+            }
+          }
         }
       }
 

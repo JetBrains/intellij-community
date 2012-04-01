@@ -16,6 +16,7 @@
 package com.intellij.designer.model;
 
 import com.intellij.designer.palette.Item;
+import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,5 +144,11 @@ public class MetaModel {
 
   public void setDeprecatedProperties(List<String> deprecatedProperties) {
     myDeprecatedProperties = deprecatedProperties;
+  }
+
+  public void decorate(Property property, String name) {
+    property.setImportant(isImportantProperty(name));
+    property.setExpert(isExpertProperty(name));
+    property.setDeprecated(isDeprecatedProperty(name));
   }
 }
