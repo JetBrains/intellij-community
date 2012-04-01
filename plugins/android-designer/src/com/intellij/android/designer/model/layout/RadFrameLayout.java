@@ -16,10 +16,7 @@
 package com.intellij.android.designer.model.layout;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.designSurface.layout.FrameLayoutMarginOperation;
-import com.intellij.android.designer.designSurface.layout.FrameLayoutOperation;
-import com.intellij.android.designer.designSurface.layout.Gravity;
-import com.intellij.android.designer.designSurface.layout.ResizeOperation;
+import com.intellij.android.designer.designSurface.layout.*;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.designSurface.ComponentDecorator;
@@ -76,10 +73,10 @@ public class RadFrameLayout extends RadViewLayoutWithData {
         return true;
       }
     };
-    ResizeOperation.points(decorator);
     if (selection.size() == 1) {
       FrameLayoutMarginOperation.points(decorator);
     }
+    ResizeOperation.points(decorator);
     return decorator;
   }
 
@@ -90,6 +87,12 @@ public class RadFrameLayout extends RadViewLayoutWithData {
                                   List<RadComponent> selection) {
     super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Utils
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   public static Pair<Gravity, Gravity> gravity(RadComponent component) {
     String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
