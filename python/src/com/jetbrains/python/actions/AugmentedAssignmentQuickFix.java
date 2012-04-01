@@ -42,65 +42,73 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
 
     if (element instanceof PyAssignmentStatement && element.isWritable()) {
-      PyAssignmentStatement statement = (PyAssignmentStatement)element;
+      final PyAssignmentStatement statement = (PyAssignmentStatement)element;
 
-      PyExpression target = statement.getLeftHandSideExpression();
-      PyBinaryExpression expression = (PyBinaryExpression)statement.getAssignedValue();
+      final PyExpression target = statement.getLeftHandSideExpression();
+      final PyBinaryExpression expression = (PyBinaryExpression)statement.getAssignedValue();
+      if (expression == null) return;
       PyExpression leftExpression = expression.getLeftExpression();
       PyExpression rightExpression = expression.getRightExpression();
-      if (rightExpression.getText().equals(target.getText())) {
-        PyExpression tmp = rightExpression;
-        rightExpression = leftExpression;
-        leftExpression = tmp;
-      }
-      List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(statement, PsiComment.class);
-      
-      if (leftExpression != null
-          && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
-        if (leftExpression.getText().equals(target.getText())) {
-          if (rightExpression instanceof PyNumericLiteralExpression || rightExpression instanceof PyStringLiteralExpression
-            || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) || isCompound(rightExpression)
-            || isMathOperation(rightExpression, expression.getOperator())) {
+      if (rightExpression instanceof PyParenthesizedExpression)
+        rightExpression = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
+      if (target != null && rightExpression != null) {
+        final String targetText = target.getText();
+        final String rightText = rightExpression.getText();
+        if (rightText.equals(targetText)) {
+          final PyExpression tmp = rightExpression;
+          rightExpression = leftExpression;
+          leftExpression = tmp;
+        }
+        final List<PsiComment> comments = PsiTreeUtil.getChildrenOfTypeAsList(statement, PsiComment.class);
 
-            PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(target.getText()).append(" ").
-                append(expression.getPsiOperator().getText()).append("= ").append(rightExpression.getText());
-            PyAugAssignmentStatementImpl augAssignment = elementGenerator.createFromText(LanguageLevel.forElement(element),
-                                                          PyAugAssignmentStatementImpl.class, stringBuilder.toString());
-            for (PsiComment comment : comments)
-              augAssignment.add(comment);
-            statement.replace(augAssignment);
+        if ((leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
+          if (leftExpression.getText().equals(targetText)) {
+            if (rightExpression instanceof PyNumericLiteralExpression || rightExpression instanceof PyStringLiteralExpression
+              || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) || isCompound(rightExpression)
+              || isMathOperation(rightExpression, expression.getOperator())) {
+
+              final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+              final StringBuilder stringBuilder = new StringBuilder();
+              final PsiElement psiOperator = expression.getPsiOperator();
+              if (psiOperator == null) return;
+              stringBuilder.append(targetText).append(" ").
+                  append(psiOperator.getText()).append("= ").append(rightText);
+              final PyAugAssignmentStatementImpl augAssignment = elementGenerator.createFromText(LanguageLevel.forElement(element),
+                                                            PyAugAssignmentStatementImpl.class, stringBuilder.toString());
+              for (PsiComment comment : comments)
+                augAssignment.add(comment);
+              statement.replace(augAssignment);
+            }
           }
         }
       }
     }
   }
 
-  private boolean isCompound(PyExpression rightExpression) {
+  private static boolean isCompound(final PyExpression rightExpression) {
     if (rightExpression instanceof PyCallExpression) {
-      PyType type = rightExpression.getType(TypeEvalContext.fast());
+      final PyType type = rightExpression.getType(TypeEvalContext.fast());
       if (type != null && type.isBuiltin(TypeEvalContext.fast()) &&
           ("int".equals(type.getName()) || "str".equals(type.getName()))) return true;
     }
     return false;
   }
 
-  private boolean isPercentage(PyExpression rightExpression) {
+  private static boolean isPercentage(final PyExpression rightExpression) {
     return (rightExpression instanceof PyBinaryExpression &&
               ((PyBinaryExpression)rightExpression).getLeftExpression() instanceof PyStringLiteralExpression &&
               ((PyBinaryExpression)rightExpression).getOperator() == PyTokenTypes.PERC);
   }
 
-  private boolean isMathOperation(PyExpression rightExpression, PyElementType mainOperator) {
-    TokenSet first = TokenSet.create(PyTokenTypes.EXP, PyTokenTypes.FLOORDIV);
-    TokenSet second = TokenSet.create(PyTokenTypes.MULT, PyTokenTypes.DIV, PyTokenTypes.PERC);
-    TokenSet third = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS);
+  private static boolean isMathOperation(final PyExpression rightExpression, final PyElementType mainOperator) {
+    final TokenSet first = TokenSet.create(PyTokenTypes.EXP, PyTokenTypes.FLOORDIV);
+    final TokenSet second = TokenSet.create(PyTokenTypes.MULT, PyTokenTypes.DIV, PyTokenTypes.PERC);
+    final TokenSet third = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS);
     if (rightExpression instanceof PyBinaryExpression){
-      PyElementType operator = ((PyBinaryExpression)rightExpression).getOperator();
-      if (third.contains(mainOperator) && (second.contains(operator) || first.contains(operator)))
+      final PyElementType operator = ((PyBinaryExpression)rightExpression).getOperator();
+      if (third.contains(mainOperator))
         return true;
-      else if (second.contains(mainOperator) && first.contains(operator))
+      else if (second.contains(mainOperator) && (second.contains(operator) || first.contains(operator)))
         return true;
     }
     return false;
