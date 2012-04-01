@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -335,6 +336,18 @@ public class PyPackageManager {
       clearCaches();
     }
   }
+  
+  public static String getUserSite() {
+    if (SystemInfo.isWindows) {
+      final String appdata = System.getenv("APPDATA");
+      return appdata + File.separator + "Python";
+    }
+    else {
+      final String userHome = SystemProperties.getUserHome();
+      return userHome + File.separator + ".local";
+    }
+  }
+  
 
   public boolean cacheIsNotNull() {
     return myPackagesCache != null;
