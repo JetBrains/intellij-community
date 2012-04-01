@@ -4,12 +4,14 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -37,7 +39,9 @@ public class PyAnnotatingVisitor implements Annotator {
   }
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
+    final PsiFile file = psiElement.getContainingFile();
     for(PyAnnotator annotator: myAnnotators) {
+      if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(annotator.getClass())) continue;
       annotator.annotateElement(psiElement, holder);
     }
   }
