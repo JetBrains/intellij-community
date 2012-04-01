@@ -236,6 +236,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myHead = instruction;
   }
 
+  private void addNodeAndCheckPending(InstructionImpl i) {
+    addNode(i);
+    checkPending(i);
+  }
+
   private static void addEdge(InstructionImpl begin, InstructionImpl end) {
     begin.addSuccessor(end);
     end.addPredecessor(begin);
@@ -256,15 +261,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     for (String name : names) {
-      ReadWriteVariableInstruction i = new ReadWriteVariableInstruction(name, closure, myInstructionNumber++, READ);
-      addNode(i);
-      checkPending(i);
+      addNodeAndCheckPending(new ReadWriteVariableInstruction(name, closure, myInstructionNumber++, READ));
     }
 
-
-    InstructionImpl i = new InstructionImpl(closure, myInstructionNumber++);
-    addNode(i);
-    checkPending(i);
+    addNodeAndCheckPending(new InstructionImpl(closure, myInstructionNumber++));
   }
 
   public void visitBreakStatement(GrBreakStatement breakStatement) {
@@ -332,8 +332,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     exception.accept(this);
     final InstructionImpl throwInstruction = new ThrowingInstruction(throwStatement, myInstructionNumber++);
-    addNode(throwInstruction);
-    checkPending(throwInstruction);
+    addNodeAndCheckPending(throwInstruction);
 
     interruptFlow();
     final PsiType type = exception.getNominalType();
@@ -382,9 +381,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (lValue instanceof GrReferenceExpression) {
         String referenceName = ((GrReferenceExpression)lValue).getReferenceName();
         if (referenceName != null) {
-          ReadWriteVariableInstruction instruction = new ReadWriteVariableInstruction(referenceName, lValue, myInstructionNumber++, READ);
-          addNode(instruction);
-          checkPending(instruction);
+          addNodeAndCheckPending(new ReadWriteVariableInstruction(referenceName, lValue, myInstructionNumber++, READ));
         }
       }
     }
@@ -438,9 +435,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
       else {
         boolean isWrite = !myAssertionsOnly && PsiUtil.isLValue(refExpr);
-        final InstructionImpl i = new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, isWrite ? WRITE : READ);
-        addNode(i);
-        checkPending(i);
+        addNodeAndCheckPending(new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, isWrite ? WRITE : READ));
       }
     }
     else if (!(refExpr.getParent() instanceof GrCall)) {
@@ -507,8 +502,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return;
     }
     final InstructionImpl instruction = new ThrowingInstruction(call, myInstructionNumber++);
-    addNode(instruction);
-    checkPending(instruction);
+    addNodeAndCheckPending(instruction);
 
     for (ExceptionInfo info : myCaughtExceptionInfos) {
       info.myThrowers.add(instruction);
@@ -934,13 +928,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     for (String var : vars) {
-      ReadWriteVariableInstruction i = new ReadWriteVariableInstruction(var, typeDefinition, myInstructionNumber++, READ);
-      addNode(i);
-      checkPending(i);
+      addNodeAndCheckPending(new ReadWriteVariableInstruction(var, typeDefinition, myInstructionNumber++, READ));
     }
-    InstructionImpl i = new InstructionImpl(typeDefinition, myInstructionNumber++);
-    addNode(i);
-    checkPending(i);
+    addNodeAndCheckPending(new InstructionImpl(typeDefinition, myInstructionNumber++));
   }
 
   public void visitVariable(GrVariable variable) {
