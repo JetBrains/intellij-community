@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.test.GitExec.*;
 import static git4idea.util.GitUIUtil.getShortRepositoryName;
+import static java.util.Collections.singletonList;
 import static org.testng.Assert.*;
 
 /**
@@ -428,6 +429,43 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     });
 
     doDeleteBranch("unmerged_branch");
+    assertTrue(dialogShown.get());
+  }
+
+  @Test
+  public void delete_branch_merged_to_head_but_unmerged_to_upstream_should_show_dialog() throws Exception {
+    // inspired by IDEA-83604
+    // dealing with a single myCommunity repository here
+
+    // prepare parent repository
+    final File parentDir = new File(myTempDirFixture.getTempDirPath(), "parent.git");
+    GitExec.clone(myProject, myCommunity.getRoot().getPath(), parentDir.getPath(), true);
+
+    // initialize feature branch and push to make origin/feature, set up tracking
+    checkout(myCommunity, "-b", "feature");
+    remoteAdd(myCommunity, "origin", parentDir.getPath());
+    push(myCommunity, "-u", "origin", "feature");
+
+    // create a commit and merge it to master, but not to feature's upstream
+    createAddCommit(myCommunity, "file");
+    checkout(myCommunity, "master");
+    merge(myCommunity, "feature");
+    refresh(myCommunity);
+
+    // delete feature fully merged to current HEAD, but not to the upstream
+    final AtomicBoolean dialogShown = new AtomicBoolean();
+    myDialogManager.registerDialogHandler(GitBranchIsNotFullyMergedDialog.class, new TestDialogHandler<GitBranchIsNotFullyMergedDialog>() {
+      @Override
+      public int handleDialog(GitBranchIsNotFullyMergedDialog dialog) {
+        dialogShown.set(true);
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, singletonList(myCommunity), myCommunity);
+    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod("doDelete", String.class, ProgressIndicator.class);
+    method.setAccessible(true);
+    method.invoke(processor, "feature", new EmptyProgressIndicator());
+
     assertTrue(dialogShown.get());
   }
 
