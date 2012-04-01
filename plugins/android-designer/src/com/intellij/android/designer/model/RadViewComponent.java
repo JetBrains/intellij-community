@@ -19,12 +19,16 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.hash.HashMap;
+import org.jdom.Element;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -104,5 +108,49 @@ public class RadViewComponent extends RadComponent {
 
   public void setProperties(List<Property> properties) {
     myProperties = properties;
+  }
+
+  @Override
+  public void copyTo(Element parent) throws Exception {
+    // skip root
+    if (getParent() != null) {
+      Element component = new Element("component");
+      component.setAttribute("tag", myTag.getName());
+
+      XmlAttribute[] attributes = myTag.getAttributes();
+      if (attributes.length > 0) {
+        Element properties = new Element("properties");
+        component.addContent(properties);
+
+        Map<String, Element> namespaces = new HashMap<String, Element>();
+
+        for (XmlAttribute attribute : attributes) {
+          String namespace = attribute.getNamespacePrefix();
+          if (namespace.length() == 0) {
+            properties.setAttribute(attribute.getName(), attribute.getValue());
+          }
+          else {
+            Element element = namespaces.get(namespace);
+            if (element == null) {
+              element = new Element(namespace);
+              namespaces.put(namespace, element);
+            }
+
+            element.setAttribute(attribute.getLocalName(), attribute.getValue());
+          }
+        }
+
+        for (Element element : namespaces.values()) {
+          properties.addContent(element);
+        }
+      }
+
+      parent.addContent(component);
+      parent = component;
+    }
+
+    for (RadComponent child : myChildren) {
+      child.copyTo(parent);
+    }
   }
 }

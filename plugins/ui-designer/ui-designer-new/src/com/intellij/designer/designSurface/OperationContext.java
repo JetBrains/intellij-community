@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ public final class OperationContext {
   private Object myType;
   private EditableArea myArea;
   private List<RadComponent> myComponents;
+  private ComponentPasteFactory myPasteFactory;
   private InputEvent myInputEvent;
   private Point myLocation;
   private Point myMoveDelta;
@@ -102,6 +104,14 @@ public final class OperationContext {
 
   public void setComponents(List<RadComponent> components) {
     myComponents = components;
+  }
+
+  public ComponentPasteFactory getPasteFactory() {
+    return myPasteFactory;
+  }
+
+  public void setPasteFactory(ComponentPasteFactory pasteFactory) {
+    myPasteFactory = pasteFactory;
   }
 
   public boolean isMoveEnabled() {

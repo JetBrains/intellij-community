@@ -16,7 +16,6 @@
 package com.intellij.designer.actions;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.uiDesigner.SerializedComponentData;
 import com.intellij.designer.clipboard.SimpleTransferable;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
@@ -29,8 +28,8 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.uiDesigner.SerializedComponentData;
 import com.intellij.util.ThrowableRunnable;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
@@ -75,30 +74,26 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
 
   @Override
   public void deleteElement(@NotNull DataContext dataContext) {
-    CommandProcessor.getInstance().executeCommand(myDesigner.getProject(), new Runnable() {
-      public void run() {
-        myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-          @Override
-          public void run() throws Exception {
-            EditableArea area = myDesigner.getActionsArea();
-            List<RadComponent> selection = area.getSelection();
-            List<RadComponent> components = RadComponent.getPureSelection(selection);
-            RadComponent newSelection = getNewSelection(components.get(0), selection);
+    myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        EditableArea area = myDesigner.getActionsArea();
+        List<RadComponent> selection = area.getSelection();
+        List<RadComponent> components = RadComponent.getPureSelection(selection);
+        RadComponent newSelection = getNewSelection(components.get(0), selection);
 
-            for (RadComponent component : components) {
-              component.delete();
-            }
+        for (RadComponent component : components) {
+          component.delete();
+        }
 
-            if (newSelection == null) {
-              area.deselectAll();
-            }
-            else {
-              area.select(newSelection);
-            }
-          }
-        }, true);
+        if (newSelection == null) {
+          area.deselectAll();
+        }
+        else {
+          area.select(newSelection);
+        }
       }
-    }, DesignerBundle.message("command.delete.selection"), null);
+    }, DesignerBundle.message("command.delete.selection"), true);
   }
 
   @Nullable

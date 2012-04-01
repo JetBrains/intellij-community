@@ -426,7 +426,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   public ComponentPasteFactory createPasteFactory(String xmlComponents) {
-    return null; // TODO: Auto-generated method stub
+    return new AndroidPasteFactory(getProject(), xmlComponents);
   }
 
   @Override

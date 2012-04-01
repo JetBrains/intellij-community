@@ -73,7 +73,7 @@ public class RadScrollViewComponent extends RadViewComponent {
 
             // TODO: maybe reload properties
           }
-        }, true);
+        }, getTemplatePresentation().getText(), true);
       }
     });
   }
