@@ -10,6 +10,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,9 @@ public class PySkeletonGenerator {
 
   private final String mySkeletonsPath;
 
+  public void finishSkeletonsGeneration() {
+  }
+
   static class ListBinariesResult {
     public final int generatorVersion;
     public final Map<String, PySkeletonRefresher.PyBinaryItem> modules;
@@ -49,7 +54,12 @@ public class PySkeletonGenerator {
     return mySkeletonsPath;
   }
 
-  protected boolean generateSkeleton(String modname, String modfilename, List<String> assemblyRefs, String syspath, String sdkHomePath)
+  protected void generateSkeleton(String modname,
+                                  String modfilename,
+                                  List<String> assemblyRefs,
+                                  String syspath,
+                                  String sdkHomePath,
+                                  Consumer<Boolean> resultConsumer)
     throws InvalidSdkException {
     boolean ret = true;
 
@@ -69,7 +79,8 @@ public class PySkeletonGenerator {
         LOG.info(sb.toString());
       }
     }
-    return ret;
+
+    resultConsumer.consume(ret);
   }
 
   public ProcessOutput runSkeletonGeneration(String modname,
@@ -117,7 +128,7 @@ public class PySkeletonGenerator {
 
 
     long startTime = System.currentTimeMillis();
-    final ProcessOutput run_result = getProcessOutput(
+    final ProcessOutput runResult = getProcessOutput(
       new File(binaryPath).getParent(),
       new String[]{
         binaryPath,
@@ -127,7 +138,7 @@ public class PySkeletonGenerator {
       },
       PythonSdkType.getVirtualEnvAdditionalEnv(binaryPath), MINUTE * 5
     );
-    run_result.checkSuccess(LOG);
+    runResult.checkSuccess(LOG);
     LOG.info("Rebuilding builtin skeletons took " + (System.currentTimeMillis() - startTime) + " ms");
   }
 
@@ -167,9 +178,9 @@ public class PySkeletonGenerator {
     final Map<String, PySkeletonRefresher.PyBinaryItem> binaries = Maps.newHashMap();
     while (iter.hasNext()) {
       final String line = iter.next();
-      int cutpos = line.indexOf(' ');
+      int cutpos = line.indexOf('\t');
       if (cutpos >= 0) {
-        String[] strs = line.split(" ");
+        String[] strs = line.split("\t");
         String moduleName = strs[0];
         String path = strs[1];
         int length = Integer.parseInt(strs[2]);

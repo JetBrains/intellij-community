@@ -9,7 +9,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -59,6 +59,10 @@ public class PyPackageManager {
   public static final int ERROR_ACCESS_DENIED = -5;
   public static final int ERROR_EXECUTION = -6;
   public static final int ERROR_INTERRUPTED = -7;
+
+  public static final String PACKAGE_PIP = "pip";
+  public static final String PACKAGE_DISTRIBUTE = "distribute";
+  public static final String PACKAGE_SETUPTOOLS = "setuptools";
 
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
@@ -217,7 +221,9 @@ public class PyPackageManager {
                 myListener.finished(exceptions);
               }
               VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-              PythonSdkType.getInstance().setupSdkPaths(mySdk);
+              if (exceptions.isEmpty()) {
+                PythonSdkType.getInstance().setupSdkPaths(mySdk);
+              }
               final Notification notification = notificationRef.get();
               if (notification != null) {
                 notification.notify(myProject);
@@ -242,9 +248,10 @@ public class PyPackageManager {
 
   private void installManagement(String name) throws PyExternalProcessException {
     final File helperFile = PythonHelpersLocator.getHelperFile(name + ".tar.gz");
-    ProcessOutput output = PySdkUtil.getProcessOutput(helperFile.getParent(),
-                                                      new String[]{mySdk.getHomePath(),
-                                                        PACKAGING_TOOL, "untar", name});
+
+    String helpersPath = getHelperPath(name);
+
+    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList("untar", helpersPath), false, helperFile.getParent());
 
     if (output.getExitCode() != 0) {
       throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
@@ -253,11 +260,12 @@ public class PyPackageManager {
     final String dirName = output.getStdout().trim();
     final String fileName = dirName + File.separatorChar + name + File.separatorChar + "setup.py";
     final File setupFile = new File(fileName);
+    name = setupFile.getAbsolutePath();
     try {
       output = getProcessOutput(setupFile.getAbsolutePath(), Collections.<String>singletonList("install"), true, setupFile.getParent());
       final int retcode = output.getExitCode();
       if (output.isTimeout()) {
-        throw new PyExternalProcessException(ERROR_TIMEOUT, name, Lists.newArrayList("untar"), "Timed out");
+        throw new PyExternalProcessException(ERROR_TIMEOUT, name, Lists.newArrayList("install"), "Timed out");
       }
       else if (retcode != 0) {
         final String stdout = output.getStdout();
@@ -265,7 +273,7 @@ public class PyPackageManager {
         if (message.trim().isEmpty()) {
           message = stdout;
         }
-        throw new PyExternalProcessException(retcode, name, Lists.newArrayList("untar"), message);
+        throw new PyExternalProcessException(retcode, name, Lists.newArrayList("install"), message);
       }
     }
     finally {
@@ -378,6 +386,15 @@ public class PyPackageManager {
     return null;
   }
 
+  public boolean hasPip() {
+    try {
+      return findPackage(PACKAGE_PIP) != null;
+    }
+    catch (PyExternalProcessException e) {
+      return false;
+    }
+  }
+
   @NotNull
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException {
     List<String> args = new ArrayList<String>();
@@ -400,9 +417,9 @@ public class PyPackageManager {
   @Nullable
   public static List<PyRequirement> getRequirements(@NotNull Module module) {
     // TODO: Cache requirements, clear cache on requirements.txt or setup.py updates
-    final Document requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
+    final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
     if (requirementsTxt != null) {
-      return PyRequirement.parse(requirementsTxt.getText());
+      return PyRequirement.parse(requirementsTxt);
     }
     final List<String> lines = new ArrayList<String>();
     for (String name : PyPackageUtil.SETUP_PY_REQUIRES_KWARGS_NAMES) {
@@ -463,8 +480,16 @@ public class PyPackageManager {
                                         final boolean askForSudo,
                                         @Nullable String parentDir)
     throws PyExternalProcessException {
-    final String helperPath;
+    final String helperPath = getHelperPath(helper);
 
+    if (helperPath == null) {
+      throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
+    }
+    return getProcessOutput(helperPath, args, askForSudo, parentDir);
+  }
+
+  private String getHelperPath(String helper) {
+    String helperPath;
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
     if (sdkData instanceof PythonRemoteSdkAdditionalData) {
       final PythonRemoteSdkAdditionalData remoteSdkData = (PythonRemoteSdkAdditionalData)sdkData;
@@ -474,15 +499,12 @@ public class PyPackageManager {
     else {
       helperPath = PythonHelpersLocator.getHelperPath(helper);
     }
-    if (helperPath == null) {
-      throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helper, args, "Cannot find external tool");
-    }
-    return getProcessOutput(helperPath, args, askForSudo, parentDir);
+    return helperPath;
   }
 
   private ProcessOutput getProcessOutput(@NotNull String helperPath,
                                          @NotNull List<String> args,
-                                         final boolean askForSudo,
+                                         boolean askForSudo,
                                          @Nullable String parentDir)
     throws PyExternalProcessException {
     final SdkAdditionalData sdkData = mySdk.getSdkAdditionalData();
@@ -492,10 +514,13 @@ public class PyPackageManager {
       if (manager != null) {
         final List<String> cmdline = new ArrayList<String>();
         cmdline.add(mySdk.getHomePath());
-        cmdline.add(helperPath);
+        cmdline.add(RemoteFile.detectSystemByPath(mySdk.getHomePath()).createRemoteFile(helperPath).getPath());
         cmdline.addAll(args);
         try {
-          return manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline));
+          if (askForSudo) {
+            askForSudo = !manager.ensureCanWrite(null, remoteSdkData, remoteSdkData.getInterpreterPath());
+          }
+          return manager.runRemoteProcess(null, remoteSdkData, ArrayUtil.toStringArray(cmdline), askForSudo);
         }
         catch (PyRemoteInterpreterException e) {
           throw new PyExternalProcessException(ERROR_INVALID_SDK, helperPath, args, "Error running SDK");

@@ -33,28 +33,35 @@ public abstract class PythonRemoteInterpreterManager {
     throws PyRemoteInterpreterException;
 
   public abstract ProcessHandler startRemoteProcessWithPid(@Nullable Project project,
-                                                    @NotNull PythonRemoteSdkAdditionalData data,
-                                                    @NotNull GeneralCommandLine commandLine,
-                                                    @Nullable
-                                                    PyPathMappingSettings mappingSettings)
+                                                           @NotNull PythonRemoteSdkAdditionalData data,
+                                                           @NotNull GeneralCommandLine commandLine,
+                                                           @Nullable
+                                                           PyPathMappingSettings mappingSettings)
     throws PyRemoteInterpreterException;
 
   @Nullable
   public abstract Sdk addRemoteSdk(Project project);
 
-  public abstract ProcessOutput runRemoteProcess(@Nullable Project project, PythonRemoteSdkAdditionalData data, String[] command)
+  public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
+                                                 PythonRemoteSdkAdditionalData data,
+                                                 String[] command,
+                                                 boolean askForSudo)
     throws PyRemoteInterpreterException;
 
   @NotNull
   public abstract PyRemoteSshProcess createRemoteProcess(@Nullable Project project,
-                                              @NotNull PythonRemoteSdkAdditionalData data,
-                                              @NotNull GeneralCommandLine commandLine, boolean printPidInFirstLine) throws PyRemoteInterpreterException;
+                                                         @NotNull PythonRemoteSdkAdditionalData data,
+                                                         @NotNull GeneralCommandLine commandLine, boolean printPidInFirstLine)
+    throws PyRemoteInterpreterException;
 
-  public abstract boolean checkRemoteConnection(final Object projectOrComponent, final PythonRemoteSdkAdditionalData data) throws PyRemoteInterpreterException;
+  public abstract boolean checkRemoteConnection(final Object projectOrComponent, final PythonRemoteSdkAdditionalData data)
+    throws PyRemoteInterpreterException;
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator);
 
   public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
+
+  public abstract boolean ensureCanWrite(Object o, PythonRemoteSdkAdditionalData data, String path);
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
@@ -80,7 +87,10 @@ public abstract class PythonRemoteInterpreterManager {
     return FileUtil.toSystemIndependentName(path).replace('/', separator);
   }
 
-  public static void addHelpersMapping(@NotNull PythonRemoteSdkAdditionalData data, @NotNull PyPathMappingSettings newMappingSettings) {
+  public static void addHelpersMapping(@NotNull PythonRemoteSdkAdditionalData data, @Nullable PyPathMappingSettings newMappingSettings) {
+    if (newMappingSettings == null) {
+      newMappingSettings = new PyPathMappingSettings();
+    }
     newMappingSettings.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getPyCharmHelpersPath());
   }
 

@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.google.common.collect.Lists;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -16,6 +17,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.python.PyBundle;
@@ -71,7 +74,10 @@ public class PySkeletonRefresher {
    * @param skeletonsPath if known; null means 'determine and create as needed'.
    * @param indicator     to report progress of long operations
    */
-  public PySkeletonRefresher(@Nullable Project project, @NotNull Sdk sdk, @Nullable String skeletonsPath, @Nullable ProgressIndicator indicator)
+  public PySkeletonRefresher(@Nullable Project project,
+                             @NotNull Sdk sdk,
+                             @Nullable String skeletonsPath,
+                             @Nullable ProgressIndicator indicator)
     throws InvalidSdkException {
     myProject = project;
     myIndicator = indicator;
@@ -152,7 +158,7 @@ public class PySkeletonRefresher {
     return null;
   }
 
-  List<String> regenerateSkeletons(@Nullable Project project, @Nullable SkeletonVersionChecker cachedChecker,
+  List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cachedChecker,
                                    @Nullable Ref<Boolean> migrationFlag) throws InvalidSdkException {
     final List<String> errorList = new SmartList<String>();
     final String homePath = mySdk.getHomePath();
@@ -250,7 +256,8 @@ public class PySkeletonRefresher {
     if (!binaries.modules.isEmpty()) {
 
       indicate(PyBundle.message("sdk.gen.updating.$0", readablePath));
-      List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules);
+
+      List<UpdateResult> updateErrors = updateOrCreateSkeletons(binaries.modules); //Skeletons regeneration
 
       if (updateErrors.size() > 0) {
         indicateMinor(BLACKLIST_FILE_NAME);
@@ -466,7 +473,9 @@ public class PySkeletonRefresher {
    * @return blacklist data; whatever was not generated successfully is put here.
    */
   private List<UpdateResult> updateOrCreateSkeletons(Map<String, PyBinaryItem> modules) throws InvalidSdkException {
-    final List<String> names = new ArrayList<String>(modules.keySet());
+    long startTime = System.currentTimeMillis();
+
+    final List<String> names = Lists.newArrayList(modules.keySet());
     Collections.sort(names);
     final List<UpdateResult> results = new ArrayList<UpdateResult>();
     final int count = names.size();
@@ -481,7 +490,18 @@ public class PySkeletonRefresher {
         updateOrCreateSkeleton(module, results);
       }
     }
+    finishSkeletonsGeneration();
+
+
+    long doneInMs = System.currentTimeMillis() - startTime;
+
+    LOG.info("Rebuilding skeletons for binaries took " + doneInMs + " ms");
+
     return results;
+  }
+
+  private void finishSkeletonsGeneration() {
+    mySkeletonsGenerator.finishSkeletonsGeneration();
   }
 
   private static File getSkeleton(String moduleName, String skeletonsPath) {
@@ -499,9 +519,9 @@ public class PySkeletonRefresher {
     return new File(new File(skeletonsPath, packagePath), PyNames.INIT_DOT_PY);
   }
 
-  private boolean updateOrCreateSkeleton(PyBinaryItem binaryItem,
-                                         List<UpdateResult> errorList) throws InvalidSdkException {
-    String moduleName = binaryItem.getModule();
+  private boolean updateOrCreateSkeleton(final PyBinaryItem binaryItem,
+                                         final List<UpdateResult> errorList) throws InvalidSdkException {
+    final String moduleName = binaryItem.getModule();
 
     final File skeleton = getSkeleton(moduleName, getSkeletonsPath());
 
@@ -533,9 +553,15 @@ public class PySkeletonRefresher {
         return true;
       }
       LOG.info("Skeleton for " + moduleName);
-      if (!generateSkeleton(moduleName, binaryItem.getPath(), null)) { // NOTE: are assembly refs always empty for built-ins?
-        errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), true));
-      }
+
+      generateSkeleton(moduleName, binaryItem.getPath(), null, new Consumer<Boolean>() {
+        @Override
+        public void consume(Boolean generated) {
+          if (!generated) {
+            errorList.add(new UpdateResult(moduleName, binaryItem.getPath(), binaryItem.lastModified(), true));
+          }
+        }
+      });
     }
     return false;
   }
@@ -667,14 +693,14 @@ public class PySkeletonRefresher {
   /**
    * Generates a skeleton for a particular binary module.
    *
-   * @param modname      name of the binary module as known to Python (e.g. 'foo.bar')
-   * @param modfilename  name of file which defines the module, null for built-in modules
-   * @param assemblyRefs refs that generator wants to know in .net environment, if applicable
-   * @return true if generation completed successfully
+   * @param modname        name of the binary module as known to Python (e.g. 'foo.bar')
+   * @param modfilename    name of file which defines the module, null for built-in modules
+   * @param assemblyRefs   refs that generator wants to know in .net environment, if applicable
+   * @param resultConsumer accepts true if generation completed successfully
    */
-  public boolean generateSkeleton(@NotNull String modname, @Nullable String modfilename,
-                                  @Nullable List<String> assemblyRefs) throws InvalidSdkException {
-    return mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, getExtraSyspath(), mySdk.getHomePath());
+  public void generateSkeleton(@NotNull String modname, @Nullable String modfilename,
+                               @Nullable List<String> assemblyRefs, Consumer<Boolean> resultConsumer) throws InvalidSdkException {
+    mySkeletonsGenerator.generateSkeleton(modname, modfilename, assemblyRefs, getExtraSyspath(), mySdk.getHomePath(), resultConsumer);
   }
 
 
