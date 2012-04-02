@@ -41,6 +41,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
@@ -82,7 +83,8 @@ public class AndroidCompileUtil {
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
 
-  @NonNls public static final String PROGUARD_CFG_FILE_NAME = "proguard.cfg";
+  @NonNls public static final String PROGUARD_CFG_FILE_NAME = "proguard-project.txt";
+  @NonNls public static final String OLD_PROGUARD_CFG_FILE_NAME = "proguard.cfg";
 
   @NonNls
   private static final String[] SCALA_TEST_CONFIGURATIONS =
@@ -115,9 +117,21 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  public static VirtualFile getDefaultProguardConfigFile(@NotNull AndroidFacet facet) {
-    final VirtualFile root = AndroidRootUtil.getMainContentRoot(facet);
-    return root != null ? root.findChild(PROGUARD_CFG_FILE_NAME) : null;
+  public static Pair<VirtualFile, Boolean> getDefaultProguardConfigFile(@NotNull AndroidFacet facet) {
+    VirtualFile root = AndroidRootUtil.getMainContentRoot(facet);
+    if (root == null) {
+      return null;
+    }
+    final VirtualFile proguardCfg = root.findChild(PROGUARD_CFG_FILE_NAME);
+    if (proguardCfg != null) {
+      return new Pair<VirtualFile, Boolean>(proguardCfg, true);
+    }
+
+    final VirtualFile oldProguardCfg = root.findChild(OLD_PROGUARD_CFG_FILE_NAME);
+    if (oldProguardCfg != null) {
+      return new Pair<VirtualFile, Boolean>(oldProguardCfg, false);
+    }
+    return null;
   }
 
   static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages) {
@@ -820,19 +834,19 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  public static String getProguardConfigFilePathIfShouldRun(@NotNull AndroidFacet facet, CompileContext context) {
-    final String path = context.getCompileScope().
-      getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY);
+  public static ProguardRunningOptions getProguardConfigFilePathIfShouldRun(@NotNull AndroidFacet facet, CompileContext context) {
+    final String path = context.getCompileScope().getUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY);
     if (path != null) {
-      return path;
+      final Boolean includeSystemProguardFile = context.getCompileScope().
+        getUserData(AndroidProguardCompiler.INCLUDE_SYSTEM_PROGUARD_FILE);
+      return new ProguardRunningOptions(path, Boolean.TRUE.equals(includeSystemProguardFile));
     }
 
     final AndroidFacetConfiguration configuration = facet.getConfiguration();
     if (configuration.RUN_PROGUARD) {
       final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
-      if (proguardCfgFile != null) {
-        return FileUtil.toSystemDependentName(proguardCfgFile.getPath());
-      }
+      final String proguardCfgPath = proguardCfgFile != null ? FileUtil.toSystemDependentName(proguardCfgFile.getPath()) : null;
+      return new ProguardRunningOptions(proguardCfgPath, configuration.isIncludeSystemProguardCfgPath());
     }
     return null;
   }

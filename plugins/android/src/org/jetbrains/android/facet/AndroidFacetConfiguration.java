@@ -49,6 +49,7 @@ import java.util.List;
 public class AndroidFacetConfiguration implements FacetConfiguration {
   @NonNls private static final String RES_OVERLAY_FOLDERS_ELEMENT_NAME = "resOverlayFolders";
   @NonNls private static final String PATH_ELEMENT_NAME = "path";
+  @NonNls private static final String INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME = "includeSystemProguardFile";
 
   public String GEN_FOLDER_RELATIVE_PATH_APT = "/" + SdkConstants.FD_GEN_SOURCES;
   public String GEN_FOLDER_RELATIVE_PATH_AIDL = "/" + SdkConstants.FD_GEN_SOURCES;
@@ -85,6 +86,8 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
 
   public boolean RUN_PROGUARD = false;
   public String PROGUARD_CFG_PATH = "/" + AndroidCompileUtil.PROGUARD_CFG_FILE_NAME;
+
+  private boolean myIncludeSystemProguardCfgPath = true;
 
   private AndroidFacet myFacet = null;
 
@@ -149,11 +152,26 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     readResOverlayFolders(element);
+
+    final Element includeSystemProguardFile = element.getChild(INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
+    if (includeSystemProguardFile != null) {
+      final String includeSystemProguardFileValue = includeSystemProguardFile.getValue();
+
+      if (includeSystemProguardFileValue != null) {
+        myIncludeSystemProguardCfgPath = Boolean.parseBoolean(includeSystemProguardFileValue);
+        return;
+      }
+    }
+    myIncludeSystemProguardCfgPath = false;
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     writeResOverlayFolders(element);
+
+    final Element includeSystemProguerdFile = new Element(INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME);
+    includeSystemProguerdFile.setText(Boolean.toString(myIncludeSystemProguardCfgPath));
+    element.addContent(includeSystemProguerdFile);
   }
 
   private void readResOverlayFolders(final Element element) throws InvalidDataException {
@@ -178,5 +196,13 @@ public class AndroidFacetConfiguration implements FacetConfiguration {
       resOverlayFoldersElement.addContent(pathElement);
     }
     element.addContent(resOverlayFoldersElement);
+  }
+
+  public boolean isIncludeSystemProguardCfgPath() {
+    return myIncludeSystemProguardCfgPath;
+  }
+
+  public void setIncludeSystemProguardCfgPath(boolean includeSystemProguardCfgPath) {
+    myIncludeSystemProguardCfgPath = includeSystemProguardCfgPath;
   }
 }

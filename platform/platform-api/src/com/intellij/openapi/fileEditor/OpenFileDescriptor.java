@@ -110,6 +110,7 @@ public class OpenFileDescriptor implements Navigatable {
     return myLogicalColumn;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (!canNavigate()) {
       throw new IllegalStateException("Navigation is not possible with null project");
@@ -157,21 +158,25 @@ public class OpenFileDescriptor implements Navigatable {
 
   private void navigateInProjectView() {
     SelectInContext context = new SelectInContext() {
+      @Override
       @NotNull
       public Project getProject() {
         return myProject;
       }
 
+      @Override
       @NotNull
       public VirtualFile getVirtualFile() {
         return myFile;
       }
 
+      @Override
       @Nullable
       public Object getSelectorInFile() {
         return null;
       }
 
+      @Override
       @Nullable
       public FileEditorProvider getFileEditorProvider() {
         return null;
@@ -217,6 +222,7 @@ public class OpenFileDescriptor implements Navigatable {
     int end = editor.getDocument().getLineEndOffset(line);
     final TextRange range = new TextRange(start, end);
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
       public void run() {
         for (FoldRegion region : allRegions) {
           if (!region.isExpanded() && range.intersects(TextRange.create(region))) /*region.getStartOffset() <= offset && offset <= region.getEndOffset()*/ {
@@ -231,10 +237,12 @@ public class OpenFileDescriptor implements Navigatable {
     e.getScrollingModel().scrollToCaret(ScrollType.CENTER);
   }
 
+  @Override
   public boolean canNavigate() {
     return myProject != null;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return myProject != null;
   }

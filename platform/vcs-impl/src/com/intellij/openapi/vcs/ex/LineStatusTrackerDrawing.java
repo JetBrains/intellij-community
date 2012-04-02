@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -59,17 +59,15 @@ public class LineStatusTrackerDrawing {
   }
 
   static TextAttributes getAttributesFor(final Range range) {
-    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final Color stripeColor = globalScheme.getAttributes(getDiffColor(range)).getErrorStripeColor();
+    final Color stripeColor = getDiffColor(range);
     final TextAttributes textAttributes = new TextAttributes(null, stripeColor, null, EffectType.BOXED, Font.PLAIN);
     textAttributes.setErrorStripeColor(stripeColor);
     return textAttributes;
   }
 
-  private static void paintGutterFragment(final Editor editor, final Graphics g, final Rectangle r, final TextAttributesKey diffAttributeKey) {
+  private static void paintGutterFragment(final Editor editor, final Graphics g, final Rectangle r, final Color stripeColor) {
     final EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-    final Color stripeColor = editor.getColorsScheme().getAttributes(diffAttributeKey).getErrorStripeColor();
-    g.setColor(brighter(stripeColor));
+    g.setColor(stripeColor);
 
     final int endX = gutter.getWhitespaceSeparatorOffset();
     final int x = r.x + r.width - 5;
@@ -260,14 +258,15 @@ public class LineStatusTrackerDrawing {
     });
   }
 
-  private static TextAttributesKey getDiffColor(Range range) {
+  private static Color getDiffColor(Range range) {
+    final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     switch (range.getType()) {
       case Range.INSERTED:
-        return DiffColors.DIFF_INSERTED;
+        return globalScheme.getColor(EditorColors.ADDED_LINES_COLOR);
       case Range.DELETED:
-        return DiffColors.DIFF_DELETED;
+        return globalScheme.getAttributes(DiffColors.DIFF_DELETED).getEffectColor();
       case Range.MODIFIED:
-        return DiffColors.DIFF_MODIFIED;
+        return globalScheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
       default:
         assert false;
         return null;

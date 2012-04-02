@@ -962,7 +962,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return closeProject(project, true, false, true);
   }
 
-  public boolean closeProject(final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
+  public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
     if (isLight(project)) {
       throw new AssertionError("must not close light project");
     }
