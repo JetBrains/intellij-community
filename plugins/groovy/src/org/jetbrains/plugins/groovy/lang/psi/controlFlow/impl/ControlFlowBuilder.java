@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -436,6 +437,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       else {
         boolean isWrite = !myAssertionsOnly && PsiUtil.isLValue(refExpr);
         addNodeAndCheckPending(new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, isWrite ? WRITE : READ));
+        if (refExpr.getParent() instanceof GrArgumentList) {
+          addNodeAndCheckPending(new ArgumentInstruction(refExpr, myInstructionNumber++));
+        }
       }
     }
     else if (!(refExpr.getParent() instanceof GrCall)) {

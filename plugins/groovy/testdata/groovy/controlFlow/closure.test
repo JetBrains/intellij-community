@@ -11,5 +11,6 @@ print x
 3(4) element: Closable block
 4(5) READ print
 5(6) READ x
-6(7) element: Call expression MAYBE_RETURN
-7() element: null
+6(7) ARGUMENT element: Reference expression
+7(8) element: Call expression MAYBE_RETURN
+8() element: null
