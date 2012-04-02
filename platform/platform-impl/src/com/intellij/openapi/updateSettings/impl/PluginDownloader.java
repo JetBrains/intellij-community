@@ -127,6 +127,7 @@ public class PluginDownloader {
 
     IdeaPluginDescriptorImpl descriptor = loadDescriptionFromJar(myFile);
     if (descriptor != null) {
+      if (InstalledPluginsTableModel.wasUpdated(descriptor.getPluginId())) return false; //already updated
       myPluginVersion = descriptor.getVersion();
       if (ideaPluginDescriptor != null && StringUtil.compareVersionNumbers(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);

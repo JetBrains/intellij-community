@@ -197,7 +197,7 @@ public class HectorComponent extends JPanel {
       slider.setOrientation(SwingConstants.HORIZONTAL);
       slider.setPreferredSize(new Dimension(200, 40));
       panel.add(slider, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                               new Insets(0, 0, 0, 0), 0, 0));
+                                               new Insets(5, 0, 5, 0), 0, 0));
     }
   }
 
@@ -205,11 +205,11 @@ public class HectorComponent extends JPanel {
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);
       JPanel borderPanel = new JPanel(new BorderLayout());
-      slider.setPreferredSize(new Dimension(80, 100));
+      slider.setPreferredSize(new Dimension(100, 100));
       borderPanel.add(new JLabel(language.getID()), BorderLayout.NORTH);
       borderPanel.add(slider, BorderLayout.CENTER);
       panel.add(borderPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL,
-                                                    new Insets(0, 0, 0, 0), 0, 0));
+                                                    new Insets(0, 5, 0, 5), 0, 0));
     }
   }
 

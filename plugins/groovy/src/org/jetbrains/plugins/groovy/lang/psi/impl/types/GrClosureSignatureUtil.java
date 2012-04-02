@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
@@ -494,7 +493,7 @@ public class GrClosureSignatureUtil {
       return null;
     }
 
-    final ArgInfo<PsiElement>[] argInfos = mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial, eraseArgs);
+    final ArgInfo<PsiElement>[] argInfos = mapParametersToArguments(signature, namedArgs, expressionArgs, closureArguments, context, partial, eraseArgs);
     if (argInfos == null) {
       return null;
     }
@@ -520,30 +519,18 @@ public class GrClosureSignatureUtil {
 
 
   @Nullable
-  public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
-                                                               @Nullable GrArgumentList list,
-                                                               @NotNull GroovyPsiElement context,
-                                                               @NotNull GrClosableBlock[] closureArguments) {
-    return mapParametersToArguments(signature, list, context, closureArguments, false, false);
-  }
-
-  @Nullable
-  public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
-                                                               @Nullable GrArgumentList list,
-                                                               @NotNull GroovyPsiElement context,
-                                                               @NotNull GrClosableBlock[] closureArguments, final boolean partial, final boolean eraseArgs) {
-    final GrNamedArgument[] namedArgs = list == null ? GrNamedArgument.EMPTY_ARRAY : list.getNamedArguments();
-    final GrExpression[] expressionArgs = list == null ? GrExpression.EMPTY_ARRAY : list.getExpressionArguments();
-    return mapParametersToArguments(signature, namedArgs, expressionArgs, context, closureArguments, partial, eraseArgs);
+  public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature, @NotNull GrCall call) {
+    return mapParametersToArguments(signature, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), call,
+                                    false, false);
   }
 
   @Nullable
   public static ArgInfo<PsiElement>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
                                                                @NotNull GrNamedArgument[] namedArgs,
                                                                @NotNull GrExpression[] expressionArgs,
-                                                               @NotNull GroovyPsiElement context,
                                                                @NotNull GrClosableBlock[] closureArguments,
-                                                               final boolean partial, boolean eraseArgs) {
+                                                               @NotNull GroovyPsiElement context,
+                                                               boolean partial, boolean eraseArgs) {
     List<InnerArg> innerArgs = new ArrayList<InnerArg>();
 
     boolean hasNamedArgs = namedArgs.length > 0;

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.*;
 import gnu.trove.TIntHashSet;
@@ -36,7 +37,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AssertionInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsDfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsSemilattice;
@@ -66,7 +69,7 @@ public class TypeInferenceHelper {
         final Instruction[] flow = scope.getControlFlow();
         ReadWriteVariableInstruction instruction = findInstruction(refExpr, flow);
         if (instruction == null) return null;
-        
+
         if (instruction.isWrite()) {
           return getInitializerType(refExpr);
         }
@@ -76,7 +79,7 @@ public class TypeInferenceHelper {
 
     });
   }
-  
+
   @Nullable
   public static PsiType getInferredType(@NotNull PsiElement place, String variableName) {
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(place);
@@ -134,17 +137,18 @@ public class TypeInferenceHelper {
   private static PsiType getInferredType(String varName, Instruction instruction, Instruction[] flow, GrControlFlowOwner scope) {
     final Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> pair = getDefUseMaps(scope);
 
-    final int varIndex = pair.first.getVarIndex(varName);
-    List<TIntObjectHashMap<TIntHashSet>> second = pair.second;
-    if (second == null) return null;
+    List<TIntObjectHashMap<TIntHashSet>> dfaResult = pair.second;
+    if (dfaResult == null) return null;
 
-    final TIntObjectHashMap<TIntHashSet> allDefs = second.get(instruction.num());
+    final int varIndex = pair.first.getVarIndex(varName);
+
+    final TIntObjectHashMap<TIntHashSet> allDefs = dfaResult.get(instruction.num());
     final TIntHashSet varDefs = allDefs.get(varIndex);
     if (varDefs == null) return null;
 
     PsiType result = null;
     for (int defIndex : varDefs.toArray()) {
-      PsiType defType = getDefinitionType(flow[defIndex]);
+      PsiType defType = getDefinitionType(flow[defIndex], flow, scope);
       if (defType != null) {
         defType = TypesUtil.boxPrimitiveType(defType, scope.getManager(), scope.getResolveScope());
         result = result == null ? defType : TypesUtil.getLeastUpperBound(result, defType, scope.getManager());
@@ -174,7 +178,12 @@ public class TypeInferenceHelper {
                   }
                 }
               }
-            } else {
+            }
+            else if (instruction instanceof ArgumentInstruction) {
+              final int varIndex = getVarIndex(((ArgumentInstruction)instruction).getVariableName());
+              registerDef(m, instruction, varIndex);
+            }
+            else {
               super.fun(m, instruction);
             }
           }
@@ -188,24 +197,33 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  private static PsiType getDefinitionType(Instruction instruction) {
+  private static PsiType getDefinitionType(Instruction instruction, Instruction[] flow, GrControlFlowOwner scope) {
     if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction) instruction).isWrite()) {
       final PsiElement element = instruction.getElement();
       if (element != null) {
         return getInitializerType(element);
       }
     }
-    if (instruction instanceof AssertionInstruction) {
-      final AssertionInstruction assertionInstruction = (AssertionInstruction)instruction;
-      final PsiElement element = assertionInstruction.getElement();
-      if (element instanceof GrInstanceOfExpression && !assertionInstruction.isNegate()) {
-        final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
-        if (typeElement != null) {
-          return typeElement.getType();
-        }
-      }
+    if (instruction instanceof MixinTypeInstruction) {
+      return mixinType((MixinTypeInstruction)instruction, flow, scope);
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiType mixinType(final MixinTypeInstruction instruction, final Instruction[] flow, final GrControlFlowOwner scope) {
+    return RecursionManager.doPreventingRecursion(instruction, false, new NullableComputable<PsiType>() {
+      @Override
+      @Nullable
+      public PsiType compute() {
+        final PsiType original = getInferredType(instruction.getVariableName(), instruction.getInstructionToMixin(flow), flow, scope);
+        final PsiType mixin = instruction.inferMixinType();
+        if (mixin == null) return original;
+        if (original == null) return mixin;
+        if (TypesUtil.isAssignableByMethodCallConversion(mixin, original, scope)) return original;
+        return PsiIntersectionType.createIntersection(mixin, original);
+      }
+    });
   }
 
 
@@ -218,7 +236,7 @@ public class TypeInferenceHelper {
     }
     return null;
   }
-  
+
   @Nullable
   public static PsiType getInitializerType(final PsiElement element) {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {

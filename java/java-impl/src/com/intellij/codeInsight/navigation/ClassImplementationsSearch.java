@@ -17,6 +17,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -33,6 +34,7 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Psi
   }
 
   public static boolean processImplementations(final PsiClass psiClass, final Processor<? super PsiClass> processor) {
+    final boolean showInterfaces = Registry.is("ide.goto.implementation.show.interfaces");
     return ClassInheritorsSearch.search(psiClass, ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
@@ -40,7 +42,10 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Psi
       }
     }), true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(@NotNull PsiClass element) {
-        return element.isInterface() || processor.process(element);
+        if (!showInterfaces && element.isInterface()) {
+          return true;
+        }
+        return processor.process(element);
       }
     }));
   }

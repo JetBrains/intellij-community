@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -489,7 +490,7 @@ class GitRepositoryReader {
   @Nullable
   private static Charset calcEncoding(File file) {
     VirtualFile vf = VcsUtil.getVirtualFile(file);
-    return EncodingManager.getInstance().getEncoding(vf, false);
+    return ApplicationManager.getApplication().isDisposed() ? null : EncodingManager.getInstance().getEncoding(vf, false);
   }
 
   /**

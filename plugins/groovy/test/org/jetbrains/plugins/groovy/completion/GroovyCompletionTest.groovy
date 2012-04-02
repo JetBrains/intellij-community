@@ -1142,16 +1142,13 @@ Util.foo()<caret>'''
   public void testPropertyChain() { doBasicTest() }
 
   public void testMethodPointer() {
-    myFixture.configureByText('_a.groovy', '''\
+    doBasicTest('''\
 class Base {
   def prefixMethod(){}
   def prefixField
 }
 
-new Base().&prefix<caret>''')
-    myFixture.completeBasic()
-    assertNull(myFixture.lookupElements)
-    myFixture.checkResult('''\
+new Base().&prefix<caret>''', '''\
 class Base {
   def prefixMethod(){}
   def prefixField
@@ -1160,23 +1157,27 @@ class Base {
 new Base().&prefixMethod<caret>''')
   }
 
-  public void testFieldPointer() {
-    myFixture.configureByText('_a.groovy', '''\
-class Base {
-  def prefixMethod(){}
-  def prefixField
-}
-
-new Base().@prefix<caret>''')
+  private void doBasicTest(String before, String after) {
+    myFixture.configureByText('_a.groovy', before)
     myFixture.completeBasic()
     assertNull(myFixture.lookupElements)
-    myFixture.checkResult('''\
+    myFixture.checkResult(after)
+  }
+
+  public void testFieldPointer() {
+    doBasicTest '''\
 class Base {
   def prefixMethod(){}
   def prefixField
 }
 
-new Base().@prefixField<caret>''')
+new Base().@prefix<caret>''', '''\
+class Base {
+  def prefixMethod(){}
+  def prefixField
+}
+
+new Base().@prefixField<caret>'''
   }
 
   public void testPrivateFieldOnSecondInvocation() {
@@ -1196,24 +1197,111 @@ new Base().fie<caret>x''')
   }
 
   public void testReturnInVoidMethod() {
-    myFixture.configureByText('''\
+    doBasicTest('''\
 void foo() {
   retur<caret>
 }
 ''', '''\
 void foo() {
   return<caret>
-}''')
+}
+''')
   }
 
   public void testReturnInNotVoidMethod() {
-    myFixture.configureByText('''\
-void foo() {
+    doBasicTest('''\
+String foo() {
   retur<caret>
 }
 ''', '''\
-void foo() {
+String foo() {
   return <caret>
-}''')
+}
+''')
   }
+
+  void testInferArgumentTypeFromMethod1() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    a.subSequen<caret>()
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    a.subSequence(<caret>)
+}
+''')
+  }
+
+  void testInferArgumentTypeFromMethod2() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.subSequen<caret>()
+  }
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.subSequence(<caret>)
+  }
+}
+''')
+  }
+
+  void testInferArgumentTypeFromMethod3() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    print a
+    a.subSequen<caret>()
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    print a
+    a.subSequence(<caret>)
+}
+''')
+  }
+
+  void testInferArgumentTypeFromMethod4() {
+    doBasicTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    print a
+    a.subSequen<caret>()
+  }
+}
+''', '''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    print a
+    a.subSequence(<caret>)
+  }
+}
+''')
+  }
+
 }
