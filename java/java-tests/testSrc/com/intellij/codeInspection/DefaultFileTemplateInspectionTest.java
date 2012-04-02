@@ -2,11 +2,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
 
+import java.util.Calendar;
+
+@Bombed(year = 2017, month = Calendar.NOVEMBER, day = 17, user = "kb")
 public class DefaultFileTemplateInspectionTest extends InspectionTestCase {
   @Override
   protected Sdk getTestProjectSdk() {
