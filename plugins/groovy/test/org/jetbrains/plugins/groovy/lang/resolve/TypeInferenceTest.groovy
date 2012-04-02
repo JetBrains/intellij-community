@@ -344,9 +344,77 @@ def found = arr.findAll({it==1})
 print fou<caret>nd''', 'java.util.Set<java.lang.String>')
   }
 
+  void testInferArgumentTypeFromMethod1() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    <caret>a.substring(2)
+  }
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+  void testInferArgumentTypeFromMethod2() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    <caret>a.substring(2)
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+  void testInferArgumentTypeFromMethod3() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+    print a
+    <caret>a.substring(2)
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+  void testInferArgumentTypeFromMethod4() {
+    doTest('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    print a
+    <caret>a.substring(2)
+  }
+}
+''', '[java.lang.String,java.lang.Integer]')
+  }
+
+
   private void doTest(String text, String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression
-    assertEquals(type, ref.type.canonicalText)
+    def actual = ref.type
+    if (actual instanceof PsiIntersectionType) {
+      assertEquals(type, genIntersectionTypeText(actual))
+    }
+    else {
+      assertEquals(type, actual.canonicalText)
+    }
+  }
+
+  private static String genIntersectionTypeText(PsiIntersectionType t) {
+    StringBuilder b = new StringBuilder('[')
+    for (PsiType c : t.conjuncts) {
+      b.append(c.canonicalText).append(',')
+    }
+    if (t.conjuncts) {
+      b.replace(b.length() - 1, b.length(), ']')
+    }
+    return b.toString()
   }
 }

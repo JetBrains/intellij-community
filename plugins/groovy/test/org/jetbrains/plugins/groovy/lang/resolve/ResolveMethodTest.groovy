@@ -939,5 +939,57 @@ class A {
     assertEquals 'A', resolved.containingClass.name
   }
 
+  public void testInferArgumentTypeFromMethod1() {
+    def ref = configureByText('''\
+def bar(String s) {}
 
+def foo(Integer a) {
+    bar(a)
+
+    a.subst<caret>ring(2)
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod2() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.subst<caret>ring(2)
+  }
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod3() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+    bar(a)
+
+    a.int<caret>Value()
+}
+''')
+    assertNotNull(ref.resolve())
+  }
+
+  public void testInferArgumentTypeFromMethod4() {
+    def ref = configureByText('''\
+def bar(String s) {}
+
+def foo(Integer a) {
+  while(true) {
+    bar(a)
+    a.intVal<caret>ue()
+  }
+}
+''')
+    assertNotNull(ref.resolve())
+  }
 }
