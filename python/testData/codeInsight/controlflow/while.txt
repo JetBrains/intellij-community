@@ -1,8 +1,33 @@
 0(1) element: null
 1(2) element: PyWhileStatement
-2(3) READ ACCESS: condition
-3(4) element: PyStatementList. Condition: condition:true
-4(1,5) element: PyPrintStatement
-5(6) element: PyStatementList. Condition: condition:false
-6(7) element: PyPrintStatement
-7() element: null
+2(3,6) READ ACCESS: c1
+3(4) element: PyStatementList. Condition: c1:true
+4(5) element: PyAssignmentStatement
+5(1) WRITE ACCESS: x
+6(7) element: PyAssignmentStatement
+7(8) WRITE ACCESS: y
+8(9) element: PyWhileStatement
+9(10,16) READ ACCESS: c2
+10(11) element: PyStatementList. Condition: c2:true
+11(12) element: PyAssignmentStatement
+12(13) WRITE ACCESS: a
+13(18) element: PyBreakStatement
+14(15) element: PyAssignmentStatement
+15(8) WRITE ACCESS: b
+16(17) element: PyAssignmentStatement
+17(18) WRITE ACCESS: c
+18(19) element: PyWhileStatement
+19(20,30) READ ACCESS: c3
+20(21) element: PyStatementList. Condition: c3:true
+21(22) element: PyAssignmentStatement
+22(23) WRITE ACCESS: m
+23(24) element: PyIfStatement
+24(25,28) READ ACCESS: m
+25(26) element: PyStatementList. Condition: m:true
+26(27) ASSERTTYPE ACCESS: m
+27(32) element: PyBreakStatement
+28(29) element: PyAssignmentStatement
+29(18) WRITE ACCESS: n
+30(31) element: PyAssignmentStatement
+31(32) WRITE ACCESS: o
+32() element: null
