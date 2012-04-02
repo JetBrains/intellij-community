@@ -87,8 +87,9 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
       getFinishButton().setEnabled(false);
     }
     else {
-      getFinishButton().setEnabled((getCurrentStep() + 1) == numberOfSteps);
-      getNextButton().setEnabled(true);
+      final boolean enableFinish = (getCurrentStep() + 1) == numberOfSteps;
+      getFinishButton().setEnabled(enableFinish);
+      getNextButton().setEnabled(!enableFinish);
     }
   }
 
