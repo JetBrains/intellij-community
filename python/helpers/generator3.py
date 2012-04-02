@@ -2294,6 +2294,7 @@ def list_sources(paths):
                 if name.endswith('.py'):
                     filePath = join(root, name)
                     say("%s\t%s\t%d", filePath, path, getsize(filePath))
+    say('END')
     sys.stdout.flush()
 
 
