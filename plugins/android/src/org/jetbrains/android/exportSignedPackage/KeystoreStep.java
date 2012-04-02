@@ -129,6 +129,12 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
 
   private void checkNewKeystoreOptions(File keystoreFile) throws CommitStepException {
     checkNewPassword(myKeystorePasswordField, myConfirmKeystorePasswordField);
+
+    if (keystoreFile.exists()) {
+      throw new CommitStepException(AndroidBundle.message(
+        "file.already.exists.error", keystoreFile.getPath()));
+    }
+
     File parentFile = keystoreFile.getParentFile();
     if (parentFile == null || !parentFile.isDirectory()) {
       String parentDir = keystoreFile.getParent();
