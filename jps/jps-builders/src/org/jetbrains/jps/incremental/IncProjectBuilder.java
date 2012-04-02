@@ -380,11 +380,9 @@ public class IncProjectBuilder {
   private static void createClasspathIndex(final ModuleChunk chunk, boolean forTests) {
     final Set<File> outputPaths = new LinkedHashSet<File>();
     for (Module module : chunk.getModules()) {
-      if (forTests) {
-        outputPaths.add(new File(module.getTestOutputPath()));
-      }
-      else {
-        outputPaths.add(new File(module.getOutputPath()));
+      final String out = forTests? module.getTestOutputPath() : module.getOutputPath();
+      if (out != null) {
+        outputPaths.add(new File(out));
       }
     }
     for (File outputRoot : outputPaths) {
