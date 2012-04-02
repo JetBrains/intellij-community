@@ -303,7 +303,7 @@ public abstract class AbstractVcsTestCase {
           throw new RuntimeException(e);
         }
       }
-    }.execute();
+    }.execute().throwException();
   }
 
   protected void renamePsiInCommand(final PsiNamedElement element, final String newName) {
