@@ -160,7 +160,7 @@ public final class UpdateChecker {
       public void run() {
         final CheckForUpdateResult checkForUpdateResult = checkForUpdates(updateSettings, false);
 
-        final List<PluginDownloader> updatedPlugins = updatePlugins(false, null);
+        final List<PluginDownloader> updatedPlugins = updatePlugins(false, null, null);
         app.invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -174,12 +174,16 @@ public final class UpdateChecker {
   }
 
   public static List<PluginDownloader> updatePlugins(final boolean showErrorDialog,
-                                                     final @Nullable PluginHostsConfigurable hostsConfigurable) {
+                                                     final @Nullable PluginHostsConfigurable hostsConfigurable, 
+                                                     @Nullable ProgressIndicator indicator) {
     final List<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
     final Set<String> failed = new HashSet<String>();
     for (String host : getPluginHosts(hostsConfigurable)) {
       try {
-        checkPluginsHost(host, downloaded);
+        checkPluginsHost(host, downloaded, true, indicator);
+      }
+      catch (ProcessCanceledException e) {
+        return null;
       }
       catch (Exception e) {
         LOG.info(e);
@@ -198,7 +202,7 @@ public final class UpdateChecker {
     updateSettings.myOutdatedPlugins.clear();
     if (!toUpdate.isEmpty()) {
       try {
-        final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(null);
+        final ArrayList<IdeaPluginDescriptor> process = RepositoryHelper.process(indicator);
         for (IdeaPluginDescriptor loadedPlugin : process) {
           final String idString = loadedPlugin.getPluginId().getIdString();
           final IdeaPluginDescriptor installedPlugin = toUpdate.get(idString);
@@ -214,6 +218,9 @@ public final class UpdateChecker {
             }
           }
         }
+      }
+      catch (ProcessCanceledException ignore) {
+        return null;
       }
       catch (Exception e) {
         showErrorMessage(showErrorDialog, e.getMessage());
@@ -256,12 +263,17 @@ public final class UpdateChecker {
   }
 
   public static boolean checkPluginsHost(final String host, final List<PluginDownloader> downloaded) throws Exception {
-    return checkPluginsHost(host, downloaded, true);
+    try {
+      return checkPluginsHost(host, downloaded, true, null);
+    }
+    catch (ProcessCanceledException e) {
+      return false;
+    }
   }
 
   public static boolean checkPluginsHost(final String host,
                                          final List<PluginDownloader> downloaded,
-                                         final boolean collectToUpdate) throws Exception {
+                                         final boolean collectToUpdate, @Nullable ProgressIndicator indicator) throws Exception {
     InputStream inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
     final Document document;
@@ -274,7 +286,7 @@ public final class UpdateChecker {
 
     inputStream = loadVersionInfo(host);
     if (inputStream == null) return false;
-    final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream);
+    final ArrayList<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPluginsFromDescription(inputStream, indicator);
     for (IdeaPluginDescriptor descriptor : descriptors) {
       ((PluginNode)descriptor).setRepositoryName(host);
       downloaded.add(PluginDownloader.createDownloader(descriptor));
