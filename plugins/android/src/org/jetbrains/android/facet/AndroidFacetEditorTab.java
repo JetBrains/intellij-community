@@ -233,6 +233,24 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         return file.isDirectory() || "apk".equals(file.getExtension());
       }
     });
+
+    myGenerateIdlWhenChanged.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean enabled = myGenerateIdlWhenChanged.isSelected();
+        myAidlGenPathLabel.setEnabled(enabled);
+        myAidlGenPathField.setEnabled(enabled);
+      }
+    });
+
+    myGenerateRJavaWhenChanged.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean enabled = myGenerateRJavaWhenChanged.isSelected();
+        myRGenPathLabel.setEnabled(enabled);
+        myRGenPathField.setEnabled(enabled);
+      }
+    });
   }
 
   private void updateAptPanel() {
@@ -579,7 +597,12 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myIncludeSystemProguardFileCheckBox.setVisible(AndroidCommonUtils.isIncludingInProguardSupported(sdkToolsRevision));
 
     myGenerateRJavaWhenChanged.setSelected(configuration.REGENERATE_R_JAVA);
+    myRGenPathLabel.setEnabled(configuration.REGENERATE_R_JAVA);
+    myRGenPathField.setEnabled(configuration.REGENERATE_R_JAVA);
+
     myGenerateIdlWhenChanged.setSelected(configuration.REGENERATE_JAVA_BY_AIDL);
+    myAidlGenPathLabel.setEnabled(configuration.REGENERATE_JAVA_BY_AIDL);
+    myAidlGenPathField.setEnabled(configuration.REGENERATE_JAVA_BY_AIDL);
 
     myUseCustomSourceDirectoryRadio.setSelected(configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
     myUseAptResDirectoryFromPathRadio.setSelected(!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
