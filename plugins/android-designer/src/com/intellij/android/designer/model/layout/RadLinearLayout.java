@@ -19,11 +19,13 @@ import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.componentTree.TreeEditOperation;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,6 +49,22 @@ public class RadLinearLayout extends RadViewLayoutWithData {
       return context.isTree() ? new TreeCreateOperation(myContainer, context) : new CreateOperation(context);
     }
     return null;
+  }
+
+  @Override
+  public void addContainerSelectionActions(DesignerEditorPanel designer,
+                                           DefaultActionGroup actionGroup,
+                                           JComponent shortcuts,
+                                           List<RadComponent> selection) {
+    super.addContainerSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+  }
+
+  @Override
+  public void addSelectionActions(DesignerEditorPanel designer,
+                                  DefaultActionGroup actionGroup,
+                                  JComponent shortcuts,
+                                  List<RadComponent> selection) {
+    super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
   }
 
   private void addNewComponent(RadViewComponent newComponent, @Nullable RadViewComponent insertBefore) throws Exception {
