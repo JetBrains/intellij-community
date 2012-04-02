@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Alexander Lobas
  */
-public class AttributePropertyWithDefault extends AttributeProperty {
+public final class AttributePropertyWithDefault extends AttributeProperty {
   private final String myDefaultValue;
 
   public AttributePropertyWithDefault(@NotNull String name, @NotNull AttributeDefinition definition, @NotNull String defaultValue) {
