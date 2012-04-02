@@ -19,6 +19,7 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.AttributeProperty;
+import com.intellij.android.designer.propertyTable.AttributePropertyWithDefault;
 import com.intellij.android.designer.propertyTable.CompoundProperty;
 import com.intellij.android.designer.propertyTable.FlagProperty;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
