@@ -41,3 +41,4 @@ public class PsiSearchHelperJavaComponent extends PsiSearchHelperImpl {
     return true;
   }
 }
+

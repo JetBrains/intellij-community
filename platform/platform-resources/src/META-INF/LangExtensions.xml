@@ -71,7 +71,10 @@
                   serviceImplementation="com.intellij.pom.references.PomServiceImpl"/>
 
   <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
-                  serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImplCoomponent"/>
+                  serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImplComponent"/>
+
+  <projectService serviceInterface="com.intellij.psi.search.InjectedLanguageUtilService"
+                  serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilServiceComponent"/>
 
   <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper"
                   serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>

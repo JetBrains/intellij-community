@@ -23,7 +23,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystemWithId;
-import com.intellij.psi.impl.search.PsiSearchHelperImpl;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilService;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.stubs.SerializationManagerImpl;
@@ -54,6 +56,8 @@ public class JavaCoreEnvironmentWithIndex extends JavaCoreEnvironment {
 //    <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
 //    <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
 
+    myApplication.registerService(PsiManager.class, PsiManagerImpl.class);
+    myApplication.registerService(InjectedLanguageUtilService.class, InjectedLanguageUtilServiceJavaComponent.class);
     myApplication.registerService(PsiSearchHelper.class, PsiSearchHelperJavaComponent.class);
 
     myApplication.registerService(SerializationManager.class, SerializationManagerImpl.class);

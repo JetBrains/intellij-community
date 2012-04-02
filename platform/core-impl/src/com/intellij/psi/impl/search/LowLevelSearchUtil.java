@@ -26,7 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilCore;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilService;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.StringSearcher;
@@ -48,7 +48,7 @@ public class LowLevelSearchUtil {
                                              final StringSearcher searcher,
                                              ProgressIndicator progress) {
     if (!(element instanceof PsiLanguageInjectionHost)) return null;
-    List<Pair<PsiElement,TextRange>> list = InjectedLanguageUtilCore.getInjectedPsiFiles(element);
+    List<Pair<PsiElement,TextRange>> list = InjectedLanguageUtilService.getInstance().getInjectedPsiFiles(element);
     if (list == null) return null;
     for (Pair<PsiElement, TextRange> pair : list) {
       final PsiElement injected = pair.getFirst();

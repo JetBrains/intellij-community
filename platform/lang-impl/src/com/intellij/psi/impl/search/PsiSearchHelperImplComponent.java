@@ -24,9 +24,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PsiSearchHelperImplCoomponent extends PsiSearchHelperImpl {
+public class PsiSearchHelperImplComponent extends PsiSearchHelperImpl {
 
-  public PsiSearchHelperImplCoomponent(PsiManagerEx manager) {
+  public PsiSearchHelperImplComponent(PsiManagerEx manager) {
     super(manager);
   }
 
