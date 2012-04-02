@@ -1552,7 +1552,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       markDirtyIfSource(event.getFile(), true);
     }
 
-    private void markDirtyIfSource(final VirtualFile file, boolean fromMove) {
+    private void markDirtyIfSource(final VirtualFile file, final boolean fromMove) {
       final Set<String> pathsToMark = new HashSet<String>();
       processRecursively(file, false, new FileProcessor() {
         public void execute(final VirtualFile file) {
@@ -1568,6 +1568,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
               }
               else {
                 addSourceForRecompilation(projectId, file, srcInfo);
+                // when the file is moved to a new location, we should 'forget' previous associations
+                if (fromMove) {
+                  if (srcInfo.clearPaths(projectId)) {
+                    saveSourceInfo(file, srcInfo);
+                  }
+                }
               }
             }
           }
