@@ -2299,7 +2299,10 @@ def list_sources(paths):
 
 
 def zip_sources(zip_filename):
-    zip = zipfile.ZipFile(zip_filename, 'w')
+    try:
+        zip = zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED)
+    except:
+        zip = zipfile.ZipFile(zip_filename, 'w')
 
     try:
         try:
