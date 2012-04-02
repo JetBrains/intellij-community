@@ -72,6 +72,24 @@ public class UIUtil {
 
   private static final String TABLE_DECORATION_KEY = "TABLE_DECORATION_KEY";
   private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
+  
+  private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      if (!SystemInfo.isLinux) {
+        return false;
+      }
+      try {
+        final Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
+        final Method method = clazz.getMethod("isXRenderAvailable");
+        return (Boolean)method.invoke(null);
+      }
+      catch (Throwable e) {
+        return false;
+      }
+    }
+  };
 
   public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
     if (!(comp instanceof JComponent)) return;
@@ -1262,6 +1280,14 @@ public class UIUtil {
     }
   }
 
+  /**
+   * @return  <code>true</code> if <a href="http://en.wikipedia.org/wiki/X_Rendering_Extension">XRender-based</a> pipeline is active;
+   *          <code>false</code> otherwise
+   */
+  public static boolean isXRenderActive() {
+    return X_RENDER_ACTIVE.getValue();
+  }
+  
   @TestOnly
   public static void dispatchAllInvocationEvents() {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
