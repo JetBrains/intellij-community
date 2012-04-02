@@ -23,6 +23,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystemWithId;
+import com.intellij.psi.impl.search.PsiSearchHelperImpl;
+import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.psi.stubs.SerializationManagerImpl;
 import com.intellij.util.indexing.*;
@@ -51,6 +53,8 @@ public class JavaCoreEnvironmentWithIndex extends JavaCoreEnvironment {
 //    <extensionPoint name="overridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
 //    <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
 //    <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
+
+    myApplication.registerService(PsiSearchHelper.class, PsiSearchHelperJavaComponent.class);
 
     myApplication.registerService(SerializationManager.class, SerializationManagerImpl.class);
     myApplication.registerService(AbstractVfsAdapter.class, new AbstractVfsAdapterJavaComponent((CoreLocalFileSystemWithId)getLocalFileSystem()));

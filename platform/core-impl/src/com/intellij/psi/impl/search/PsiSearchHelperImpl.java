@@ -17,7 +17,6 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.codeInsight.CommentUtil;
-import com.intellij.concurrency.JobUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -37,10 +36,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
+import com.intellij.psi.impl.cache.impl.id.IdIndexBase;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
 import com.intellij.psi.search.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -56,8 +55,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
-public class PsiSearchHelperImpl implements PsiSearchHelper  {
+public abstract class PsiSearchHelperImpl implements PsiSearchHelper  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.PsiSearchHelperImpl");
 
   private final PsiManagerEx myManager;
@@ -94,7 +92,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
       }
     });
     synchronized (results) {
-      return PsiUtilBase.toPsiElementArray(results);
+      return PsiUtilCore.toPsiElementArray(results);
     }
   }
 
@@ -139,7 +137,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
       PsiElement[] scopeElements = scope.getScope();
       final boolean ignoreInjectedPsi = scope.isIgnoreInjectedPsi();
 
-      return JobUtil.invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, false, new Processor<PsiElement>() {
+      return invokeConcurrentlyUnderProgress(Arrays.asList(scopeElements), progress, false, new Processor<PsiElement>() {
         @Override
         public boolean process(PsiElement scopeElement) {
           return processElementsWithWordInScopeElement(scopeElement, processor, text, caseSensitively, ignoreInjectedPsi, progress);
@@ -208,7 +206,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
       final AtomicBoolean pceThrown = new AtomicBoolean(false);
 
       final int size = files.size();
-      boolean completed = JobUtil.invokeConcurrentlyUnderProgress(files, progress, false, new Processor<VirtualFile>() {
+      boolean completed = invokeConcurrentlyUnderProgress(files, progress, false, new Processor<VirtualFile>() {
         @Override
         public boolean process(final VirtualFile vfile) {
           final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
@@ -229,7 +227,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
                   for (PsiElement psiRoot : psiRoots) {
                     if (progress != null) progress.checkCanceled();
                     if (!processed.add(psiRoot)) continue;
-                    assert psiRoot != null : "One of the roots of file "+file + " is null. All roots: "+Arrays.asList(psiRoots)+"; Viewprovider: "+file.getViewProvider()+"; Virtual file: "+file.getViewProvider().getVirtualFile();
+                    assert psiRoot != null : "One of the roots of file " +
+                                             file +
+                                             " is null. All roots: " +
+                                             Arrays.asList(psiRoots) +
+                                             "; Viewprovider: " +
+                                             file.getViewProvider() +
+                                             "; Virtual file: " +
+                                             file.getViewProvider().getVirtualFile();
                     if (!psiRootProcessor.process(psiRoot)) {
                       canceled.set(true);
                       return;
@@ -620,7 +625,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
             public void run() {
-              FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, file, new FileBasedIndex.ValueProcessor<Integer>() {
+              FileBasedIndex.getInstance().processValues(IdIndexBase.NAME, entry, file, new FileBasedIndex.ValueProcessor<Integer>() {
                 @Override
                 public boolean process(VirtualFile file, Integer value) {
                   if (IndexCacheManagerImpl.shouldBeFound(commonScope, file, index)) {
@@ -673,7 +678,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
       @Override
       public void run() {
         if (progress != null) progress.checkCanceled();
-        FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
+        FileBasedIndex.getInstance().processValues(IdIndexBase.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
             @Override
             public boolean process(VirtualFile file, Integer value) {
               if (progress != null) progress.checkCanceled();
@@ -777,7 +782,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
     return ApplicationManager.getApplication().runReadAction(new NullableComputable<Boolean>() {
       @Override
       public Boolean compute() {
-        return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
+        return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndexBase.NAME, keys, scope, checker, processor);
       }
     });
   }
@@ -790,4 +795,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper  {
     }
     return keys;
   }
+
+  protected abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
+                                                            ProgressIndicator progress,
+                                                            boolean failFastOnAcquireReadAction,
+                                                            @NotNull final Processor<T> thingProcessor) throws ProcessCanceledException;
 }
