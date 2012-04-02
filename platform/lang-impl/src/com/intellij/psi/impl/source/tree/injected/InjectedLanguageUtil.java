@@ -182,23 +182,26 @@ public class InjectedLanguageUtil {
 
   public static PsiFile findInjectedPsiNoCommit(@NotNull PsiFile host, int offset) {
     PsiElement injected = findInjectedElementNoCommit(host, offset);
-    if (injected != null) {
-      return injected.getContainingFile();
-    }
-    return null;
+    return injected == null ? null : injected.getContainingFile();
   }
 
   // consider injected elements
   public static PsiElement findElementAtNoCommit(@NotNull PsiFile file, int offset) {
-    if (!InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
-      PsiElement injected = findInjectedElementNoCommit(file, offset);
+    FileViewProvider viewProvider = file.getViewProvider();
+    Trinity<PsiElement, PsiElement, Language> result = null;
+    if (!(viewProvider instanceof InjectedFileViewProvider)) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
+      result = tryOffset(file, offset, documentManager);
+      PsiElement injected = result.first;
       if (injected != null) {
         return injected;
       }
     }
-    //PsiElement at = file.findElementAt(offset);
-    FileViewProvider viewProvider = file.getViewProvider();
-    return viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
+    Language baseLanguage = viewProvider.getBaseLanguage();
+    if (result != null && baseLanguage == result.third) {
+      return result.second; // already queried
+    }
+    return viewProvider.findElementAt(offset, baseLanguage);
   }
 
   private static final InjectedPsiCachedValueProvider INJECTED_PSI_PROVIDER = new InjectedPsiCachedValueProvider();
@@ -271,24 +274,39 @@ public class InjectedLanguageUtil {
     Project project = hostFile.getProject();
     if (InjectedLanguageManager.getInstance(project).isInjectedFragment(hostFile)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    Trinity<PsiElement, PsiElement, Language> result = tryOffset(hostFile, offset, documentManager);
+    PsiElement injected = result.first;
+    return injected;
+  }
 
+  // returns (injected psi, leaf element at the offset, language of the leaf element)
+  // since findElementAt() is expensive, we trying to reuse its result
+  @NotNull
+  private static Trinity<PsiElement,PsiElement,Language> tryOffset(@NotNull PsiFile hostFile, final int offset, @NotNull PsiDocumentManager documentManager) {
     FileViewProvider provider = hostFile.getViewProvider();
+    Language leafLanguage = null;
+    PsiElement leafElement = null;
     for (Language language : provider.getLanguages()) {
       PsiElement element = provider.findElementAt(offset, language);
       if (element != null) {
+        if (leafLanguage == null) {
+          leafLanguage = language;
+          leafElement = element;
+        }
         PsiElement injected = findInside(element, hostFile, offset, documentManager);
-        if (injected != null) return injected;
+        if (injected != null) return Trinity.create(injected,element, language);
       }
       // maybe we are at the border between two psi elements, then try to find injection at the end of the left element
-      if (offset != 0) {
-        element = provider.findElementAt(offset-1, language);
-        if (element != null && element.getTextRange().getEndOffset() == offset) {
-          PsiElement injected = findInside(element, hostFile, offset, documentManager);
-          if (injected != null) return injected;
+      if (offset != 0 && (element == null || element.getTextRange().getStartOffset() == offset)) {
+        PsiElement leftElement = provider.findElementAt(offset-1, language);
+        if (leftElement != null && leftElement.getTextRange().getEndOffset() == offset) {
+          PsiElement injected = findInside(leftElement, hostFile, offset, documentManager);
+          if (injected != null) return Trinity.create(injected, element, language);
         }
       }
     }
-    return null;
+
+    return Trinity.create(null, leafElement, leafLanguage);
   }
 
   private static PsiElement findInside(@NotNull PsiElement element, @NotNull PsiFile hostFile, final int hostOffset, @NotNull final PsiDocumentManager documentManager) {
