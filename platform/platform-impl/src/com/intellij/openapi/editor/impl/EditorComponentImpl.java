@@ -39,9 +39,7 @@ import java.awt.im.InputMethodRequests;
 import java.util.Map;
 
 public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, Queryable, TypingTarget {
-  
-  private static final Composite COMPOSITE_TO_USE = UIUtil.isXRenderActive() ? AlphaComposite.SrcOver : AlphaComposite.Src;
-  
+
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(EditorImpl editor) {
@@ -147,7 +145,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
     try {
-      ((Graphics2D)g).setComposite(COMPOSITE_TO_USE);
+      UIUtil.setupComposite((Graphics2D)g);
 
       UISettings.setupAntialiasing(g);
       myEditor.paint((Graphics2D)g);

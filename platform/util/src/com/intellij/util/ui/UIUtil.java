@@ -1281,13 +1281,17 @@ public class UIUtil {
   }
 
   /**
-   * @return  <code>true</code> if <a href="http://en.wikipedia.org/wiki/X_Rendering_Extension">XRender-based</a> pipeline is active;
-   *          <code>false</code> otherwise
+   * Configures composite to use for drawing text with the given graphics container.
+   * <p/>
+   * The whole idea is that <a href="http://en.wikipedia.org/wiki/X_Rendering_Extension">XRender-based</a> pipeline doesn't support
+   * {@link AlphaComposite#SRC} and we should use {@link AlphaComposite#SRC_OVER} instead.
+   * 
+   * @param g  target graphics container
    */
-  public static boolean isXRenderActive() {
-    return X_RENDER_ACTIVE.getValue();
+  public static void setupComposite(@NotNull Graphics2D g) {
+    g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
-  
+
   @TestOnly
   public static void dispatchAllInvocationEvents() {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
