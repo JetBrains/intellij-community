@@ -83,7 +83,7 @@ public class AndroidTestConfigurationProducer extends JavaRuntimeConfigurationPr
 
   @Nullable
   private RunnerAndConfigurationSettings createClassConfiguration(PsiElement element, ConfigurationContext context) {
-    PsiClass elementClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    PsiClass elementClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     while (elementClass != null) {
       if (JUnitUtil.isTestClass(elementClass)) {
         RunnerAndConfigurationSettings settings =
