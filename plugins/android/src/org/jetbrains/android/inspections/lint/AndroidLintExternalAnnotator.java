@@ -1,6 +1,5 @@
 package org.jetbrains.android.inspections.lint;
 
-import com.android.sdklib.SdkConstants;
 import com.android.tools.lint.checks.BuiltinIssueRegistry;
 import com.android.tools.lint.client.api.IssueRegistry;
 import com.android.tools.lint.client.api.LintDriver;
@@ -28,6 +27,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -71,7 +71,8 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
       }
     }
     else if (fileType == FileTypes.PLAIN_TEXT) {
-      if (!SdkConstants.FN_PROGUARD_CFG.equals(file.getName())) {
+      if (!AndroidCompileUtil.PROGUARD_CFG_FILE_NAME.equals(file.getName()) &&
+          !AndroidCompileUtil.OLD_PROGUARD_CFG_FILE_NAME.equals(file.getName())) {
         return null;
       }
     }

@@ -18,10 +18,7 @@ package org.jetbrains.android.util;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Abstract external tool for compiler.
@@ -34,8 +31,15 @@ public final class AndroidExecutionUtil {
   }
 
   @NotNull
-  public static Map<AndroidCompilerMessageKind, List<String>> doExecute(String... argv) throws IOException {
+    public static Map<AndroidCompilerMessageKind, List<String>> doExecute(String... argv) throws IOException {
+    return doExecute(argv, Collections.<String, String>emptyMap());
+  }
+
+  @NotNull
+  public static Map<AndroidCompilerMessageKind, List<String>> doExecute(String[] argv, Map<? extends String, ? extends String> enviroment)
+    throws IOException {
     ProcessBuilder builder = new ProcessBuilder(argv);
+    builder.environment().putAll(enviroment);
     ProcessResult result = readProcessOutput(builder.start());
     Map<AndroidCompilerMessageKind, List<String>> messages = result.getMessages();
     int code = result.getExitCode();
