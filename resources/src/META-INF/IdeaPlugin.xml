@@ -471,9 +471,9 @@
     <localInspection language="JAVA" shortName="AccessStaticViaInstance" bundle="messages.InspectionsBundle" key="access.static.via.instance" groupName=""
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance" />
-    <!--<localInspection shortName="DefaultFileTemplate" bundle="messages.InspectionsBundle" key="default.file.template.display.name"-->
-                     <!--groupName="General" enabledByDefault="true" level="WARNING"-->
-                     <!--implementationClass="com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection"/>-->
+    <localInspection shortName="DefaultFileTemplate" bundle="messages.InspectionsBundle" key="default.file.template.display.name"
+                     groupName="General" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection"/>
     <globalInspection shortName="UnnecessaryModuleDependencyInspection" bundle="messages.InspectionsBundle"
                       key="unnecessary.module.dependency.display.name" groupName="Declaration redundancy" enabledByDefault="true"
                       level="WARNING"
