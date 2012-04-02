@@ -279,7 +279,7 @@ class ServerState {
       }
       catch (Throwable ex) {
         ourCleanupFailed = true;
-        LOG.info(ex);
+        LOG.info("Method com.sun.tools.javac.zip.ZipFileIndex.clearCache() not found");
       }
     }
   }
