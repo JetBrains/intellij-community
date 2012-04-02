@@ -547,6 +547,8 @@ public final class UpdateChecker {
     for (PluginDownloader downloader : downloaders) {
       if (getDisabledToUpdatePlugins().contains(downloader.getPluginId())) continue;
       try {
+        final IdeaPluginDescriptor descriptor = downloader.getDescriptor();
+        InstalledPluginsTableModel.updateExistingPlugin(descriptor, PluginManager.getPlugin(descriptor.getPluginId()));
         downloader.install();
         installed = true;
       }

@@ -93,14 +93,18 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     final PluginId descrId = descriptor.getPluginId();
     final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
     if (existing != null) {
-      updateExistingPluginInfo(descriptor, existing);
-      updatedPlugins.add(existing.getPluginId());
+      updateExistingPlugin(descriptor, existing);
     } else {
       myInstalled.add(descriptor);
       view.add(descriptor);
       setEnabled(descriptor, true);
       fireTableDataChanged();
     }
+  }
+
+  public static void updateExistingPlugin(IdeaPluginDescriptor descriptor, IdeaPluginDescriptor existing) {
+    updateExistingPluginInfo(descriptor, existing);
+    updatedPlugins.add(existing.getPluginId());
   }
 
   public String getPluginHostUrl(String idString) {
