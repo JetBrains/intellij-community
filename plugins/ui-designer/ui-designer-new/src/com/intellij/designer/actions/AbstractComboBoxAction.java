@@ -35,7 +35,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class AbstractComboBoxAction<T> extends ComboBoxAction {
-  private static final Icon CHECKED = PlatformIcons.CHECK_ICON;
+  protected static final Icon CHECKED = PlatformIcons.CHECK_ICON;
 
   private List<T> myItems = Collections.emptyList();
   private T mySelection;
