@@ -41,7 +41,7 @@ public class TestDataProvider implements DataProvider {
   @Override
   public Object getData(@NonNls String dataId) {
     if (myProject.isDisposed()) {
-      throw new RuntimeException("TestDataProvider is already disposed.\n" +
+      throw new RuntimeException("TestDataProvider is already disposed for " + myProject + "\n" +
                                  "If you closed a project in test, please reset IdeaTestApplication.setDataProvider.");
     }
 

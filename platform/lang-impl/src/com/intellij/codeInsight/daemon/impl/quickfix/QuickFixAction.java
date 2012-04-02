@@ -117,7 +117,7 @@ public final class QuickFixAction {
   }
 
   private static void addAvailableActionsForGroups(@NotNull HighlightInfo info,
-                                                   Editor editor,
+                                                   @NotNull Editor editor,
                                                    @NotNull PsiFile file,
                                                    @NotNull List<HighlightInfo.IntentionActionDescriptor> outList,
                                                    int group,
