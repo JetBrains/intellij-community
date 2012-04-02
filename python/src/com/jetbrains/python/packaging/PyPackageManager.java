@@ -621,8 +621,14 @@ public class PyPackageManager {
       final String name = fields.get(0);
       final String version = fields.get(1);
       final String location = fields.get(2);
+      final List<PyRequirement> requirements = new ArrayList<PyRequirement>();
+      if (fields.size() >= 4) {
+        final String requiresLine = fields.get(3);
+        final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
+        requirements.addAll(PyRequirement.parse(requiresSpec));
+      }
       if (!"Python".equals(name)) {
-        packages.add(new PyPackage(name, version, location, new ArrayList<PyRequirement>()));
+        packages.add(new PyPackage(name, version, location, requirements));
       }
     }
     return packages;

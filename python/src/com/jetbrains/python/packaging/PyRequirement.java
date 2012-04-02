@@ -253,20 +253,21 @@ public class PyRequirement {
     return result;
   }
 
-  public boolean match(@NotNull List<PyPackage> packages) {
+  @Nullable
+  public PyPackage match(@NotNull List<PyPackage> packages) {
     for (PyPackage pkg : packages) {
       if (myName.equalsIgnoreCase(pkg.getName())) {
         for (VersionSpec spec : myVersionSpecs) {
           final int cmp = VERSION_COMPARATOR.compare(pkg.getVersion(), spec.getVersion());
           final Relation relation = spec.getRelation();
           if (!relation.isSuccessful(cmp)) {
-            return false;
+            return null;
           }
         }
-        return true;
+        return pkg;
       }
     }
-    return false;
+    return null;
   }
 
   @Nullable
