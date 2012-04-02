@@ -2294,6 +2294,8 @@ def list_sources(paths):
                 if name.endswith('.py'):
                     filePath = join(root, name)
                     say("%s\t%s\t%d", filePath, path, getsize(filePath))
+    sys.stdout.flush()
+
 
 def zip_sources(zip_filename):
     zip = zipfile.ZipFile(zip_filename, 'w')
@@ -2313,6 +2315,7 @@ def zip_sources(zip_filename):
                 else:
                     time.sleep(0.05)
             say('OK: ' + zip_filename)
+            sys.stdout.flush()
         except :
             import traceback
             traceback.print_exc()
