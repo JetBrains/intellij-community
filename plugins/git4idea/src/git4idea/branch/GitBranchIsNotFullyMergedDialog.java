@@ -54,7 +54,7 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   private final Project myProject;
   private final Map<GitRepository, List<GitCommit>> myCommits;
   private final String myBranchToDelete;
-  private final String myCurrentBranch;
+  private final String myBaseBranch;
   private final List<String> myMergedToBranches;
 
   private final GitCommitListWithDiffPanel myCommitListWithDiffPanel;
@@ -68,15 +68,15 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
    *                         grouped by repository.
    * @param branchToDelete   the name of the branch which user chose to delete.
    * @param mergedToBranches the list of branches which the branch is merged to (returned by {@code git branch --merged <branchToDelete>} command.
-   * @param currentBranch
+   * @param baseBranch       branch which branchToDelete is not merged to. It is either current branch, or the upstream branch.
    * @return true if user decided to delete the branch.
    */
   public static boolean showAndGetAnswer(@NotNull Project project,
                                          @NotNull Map<GitRepository, List<GitCommit>> commits,
                                          @NotNull String branchToDelete,
                                          @NotNull List<String> mergedToBranches, 
-                                         @Nullable String currentBranch) {
-    GitBranchIsNotFullyMergedDialog dialog = new GitBranchIsNotFullyMergedDialog(project, commits, branchToDelete, currentBranch, mergedToBranches);
+                                         @Nullable String baseBranch) {
+    GitBranchIsNotFullyMergedDialog dialog = new GitBranchIsNotFullyMergedDialog(project, commits, branchToDelete, baseBranch, mergedToBranches);
     ServiceManager.getService(project, PlatformFacade.class).showDialog(dialog);
     return dialog.isOK();
   }
@@ -84,13 +84,13 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
   private GitBranchIsNotFullyMergedDialog(@NotNull Project project,
                                           @NotNull Map<GitRepository, List<GitCommit>> commits,
                                           @NotNull String branchToDelete,
-                                          @Nullable String currentBranch,
+                                          @Nullable String baseBranch,
                                           @NotNull List<String> mergedToBranches) {
     super(project, false);
     myProject = project;
     myCommits = commits;
     myBranchToDelete = branchToDelete;
-    myCurrentBranch = currentBranch;
+    myBaseBranch = baseBranch;
     myMergedToBranches = mergedToBranches;
     myRepositories = commits.keySet();
 
@@ -118,8 +118,8 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     String currentBranchOrRev;
     boolean onBranch;
     if (myRepositories.size() > 1) {
-      LOG.assertTrue(myCurrentBranch != null, "Branches have unexpectedly diverged");
-      currentBranchOrRev = myCurrentBranch;
+      LOG.assertTrue(myBaseBranch != null, "Branches have unexpectedly diverged");
+      currentBranchOrRev = myBaseBranch;
       onBranch = true;
     } 
     else {
@@ -138,9 +138,10 @@ public class GitBranchIsNotFullyMergedDialog extends DialogWrapper {
     
     StringBuilder description = new StringBuilder();
     if (onBranch) {
-      description.append(GitBundle.message("branch.delete.not_fully_merged.description", myBranchToDelete, currentBranchOrRev));
+      description.append(GitBundle.message("branch.delete.not_fully_merged.description", myBranchToDelete, myBaseBranch));
     } else {
-      description.append(GitBundle.message("branch.delete.not_fully_merged.description.not_on_branch", myBranchToDelete, currentBranchOrRev));
+      description.append(GitBundle.message("branch.delete.not_fully_merged.description.not_on_branch", myBranchToDelete, currentBranchOrRev,
+                                           myBaseBranch));
     }
     if (!myMergedToBranches.isEmpty()) {
       String listOfMergedBranches = StringUtil.join(StringUtil.surround(ArrayUtil.toStringArray(myMergedToBranches), "<b>", "</b>"), ", ");
