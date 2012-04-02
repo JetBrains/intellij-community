@@ -18,10 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
-import git4idea.test.GitTestScenarioGenerator;
-import git4idea.test.GitTestUtil;
-import git4idea.test.TestMessageManager;
-import git4idea.test.TestNotificator;
+import git4idea.test.*;
 import git4idea.tests.TestDialogHandler;
 import git4idea.tests.TestDialogManager;
 import git4idea.util.UntrackedFilesNotifier;
@@ -41,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static git4idea.test.GitExec.*;
 import static git4idea.util.GitUIUtil.getShortRepositoryName;
+import static java.util.Collections.singletonList;
 import static org.testng.Assert.*;
 
 /**
@@ -90,16 +88,17 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     doActionSilently(VcsConfiguration.StandardConfirmation.ADD);
     doActionSilently(VcsConfiguration.StandardConfirmation.REMOVE);
 
-    myDialogManager = GitTestUtil.registerDialogManager(myProject);
     myNotificationManager = GitTestUtil.registerNotificationManager(myProject);
     myMessageManager = GitTestUtil.registerMessageManager(myProject);
-    GitTestUtil.registerPlatformFacade(myProject);
-    
+    GitTestPlatformFacade platformFacade = GitTestUtil.registerPlatformFacade(myProject);
+    myDialogManager = platformFacade.getDialogManager();
+
     createAddCommit(myUltimate, "a");
     createAddCommit(myCommunity, "a");
     createAddCommit(myContrib, "a");
 
     myUltimate.getRoot().refresh(false, true);
+    updateRepositories();
   }
   
   protected void doActionSilently(final VcsConfiguration.StandardConfirmation op) {
@@ -317,6 +316,13 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     });
 
     doCheckoutOrMerge(checkout, "feature");
+    updateRepositories();
+  }
+
+  private void updateRepositories() {
+    myUltimate.update(GitRepository.TrackedTopic.ALL);
+    myCommunity.update(GitRepository.TrackedTopic.ALL);
+    myContrib.update(GitRepository.TrackedTopic.ALL);
   }
 
   @Test
@@ -338,8 +344,6 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
     doCheckoutOrMerge(checkout, "feature");
     String operation = checkout ? "checkout" : "merge";
-    assertNotify(NotificationType.ERROR, "Couldn't " + operation + " feature",
-                 stripHtmlAndBreaks("Local changes would be overwritten by " + operation + "." + "You should stash or commit them."));
     assertBranch("master");
   }
 
@@ -365,7 +369,6 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
                               String.format(GitCheckoutOperation.ROLLBACK_PROPOSAL_FORMAT, "master") :
                               GitMergeOperation.ROLLBACK_PROPOSAL;
     assertMessage("Couldn't " + operationName + " feature",
-                  "Local changes would be overwritten by " + operationName + ".<br/>You should stash or commit them.<br/>" +
                   "However " + operationName + " has succeeded for the following repository:<br/>" +
                   myUltimate.getPresentableUrl() +
                   "<br/>" + rollbackProposal,
@@ -426,6 +429,43 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
     });
 
     doDeleteBranch("unmerged_branch");
+    assertTrue(dialogShown.get());
+  }
+
+  @Test
+  public void delete_branch_merged_to_head_but_unmerged_to_upstream_should_show_dialog() throws Exception {
+    // inspired by IDEA-83604
+    // dealing with a single myCommunity repository here
+
+    // prepare parent repository
+    final File parentDir = new File(myTempDirFixture.getTempDirPath(), "parent.git");
+    GitExec.clone(myProject, myCommunity.getRoot().getPath(), parentDir.getPath(), true);
+
+    // initialize feature branch and push to make origin/feature, set up tracking
+    checkout(myCommunity, "-b", "feature");
+    remoteAdd(myCommunity, "origin", parentDir.getPath());
+    push(myCommunity, "-u", "origin", "feature");
+
+    // create a commit and merge it to master, but not to feature's upstream
+    createAddCommit(myCommunity, "file");
+    checkout(myCommunity, "master");
+    merge(myCommunity, "feature");
+    refresh(myCommunity);
+
+    // delete feature fully merged to current HEAD, but not to the upstream
+    final AtomicBoolean dialogShown = new AtomicBoolean();
+    myDialogManager.registerDialogHandler(GitBranchIsNotFullyMergedDialog.class, new TestDialogHandler<GitBranchIsNotFullyMergedDialog>() {
+      @Override
+      public int handleDialog(GitBranchIsNotFullyMergedDialog dialog) {
+        dialogShown.set(true);
+        return DialogWrapper.CANCEL_EXIT_CODE;
+      }
+    });
+    GitBranchOperationsProcessor processor = new GitBranchOperationsProcessor(myProject, singletonList(myCommunity), myCommunity);
+    Method method = GitBranchOperationsProcessor.class.getDeclaredMethod("doDelete", String.class, ProgressIndicator.class);
+    method.setAccessible(true);
+    method.invoke(processor, "feature", new EmptyProgressIndicator());
+
     assertTrue(dialogShown.get());
   }
 

@@ -17,11 +17,8 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.utils.Cursors;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -60,6 +57,9 @@ public class SelectionTool extends InputTool {
         InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
         if (tracker != null) {
           setTracker(tracker);
+          if (tracker instanceof ResizeTracker) {
+            myArea.showSelection(false);
+          }
           return;
         }
       }
@@ -114,6 +114,7 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.deactivate();
       myTracker = null;
+      myArea.showSelection(true);
     }
   }
 

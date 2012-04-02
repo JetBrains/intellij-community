@@ -54,7 +54,7 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     myProject = new Project();
     myProject.setProjectName(getProjectName());
     final File serverRoot = FileUtil.createTempDirectory("compile-server", null);
-    Paths.getInstance().setSystemRoot(serverRoot);
+    Utils.setSystemRoot(serverRoot);
     myArtifactBuilderLogger = new TestArtifactBuilderLogger();
   }
 
@@ -153,7 +153,7 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
 
   private ProjectDescriptor createProjectDescriptor() {
     try {
-      final File dataStorageRoot = Paths.getDataStorageRoot(myProject);
+      final File dataStorageRoot = Utils.getDataStorageRoot(myProject);
       ProjectTimestamps timestamps = new ProjectTimestamps(dataStorageRoot);
       BuildDataManager dataManager = new BuildDataManager(dataStorageRoot, true);
       return new ProjectDescriptor(myProject, new FSState(true), timestamps, dataManager, new BuildLoggingManager(myArtifactBuilderLogger,

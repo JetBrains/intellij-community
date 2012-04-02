@@ -36,7 +36,7 @@ import java.util.Set;
  * @author Alexander Lobas
  */
 public class ResourceRenderer implements PropertyRenderer {
-  private static final String[] DIMENSIONS = {"dp", "sp", "pt", "px", "mm", "in"};
+  public static final String[] DIMENSIONS = {"dp", "sp", "pt", "px", "mm", "in"};
   private static final String ANDROID_PREFIX = "@android:";
 
   private final ColorIcon myColorIcon = new ColorIcon(10, 9);

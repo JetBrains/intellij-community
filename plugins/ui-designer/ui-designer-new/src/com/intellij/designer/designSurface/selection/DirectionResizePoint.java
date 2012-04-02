@@ -69,6 +69,21 @@ public class DirectionResizePoint extends ResizePoint {
     }
   }
 
+  public DirectionResizePoint move(double xSeparator, double ySeparator) {
+    myXSeparator = xSeparator;
+    myYSeparator = ySeparator;
+    return this;
+  }
+
+  public int getDirection() {
+    return myDirection;
+  }
+
+  @Override
+  public Object getType() {
+    return myType;
+  }
+
   @Override
   protected InputTool createTool(RadComponent component) {
     return new ResizeTracker(myDirection, myType);
@@ -78,8 +93,8 @@ public class DirectionResizePoint extends ResizePoint {
   protected Point getLocation(DecorationLayer layer, RadComponent component) {
     Rectangle bounds = component.getBounds(layer);
     int size = (getSize() + 1) / 2;
-    int x = bounds.x + (int) (bounds.width * myXSeparator) - size;
-    int y = bounds.y + (int) (bounds.height * myYSeparator) - size;
+    int x = bounds.x + (int)(bounds.width * myXSeparator) - size;
+    int y = bounds.y + (int)(bounds.height * myYSeparator) - size;
 
     return new Point(x, y);
   }

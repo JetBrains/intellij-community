@@ -130,7 +130,7 @@ public abstract class ToolProvider {
 
   public abstract void loadDefaultTool();
 
-  public abstract boolean execute(ThrowableRunnable<Exception> operation);
+  public abstract boolean execute(ThrowableRunnable<Exception> operation, String command, boolean updateProperties);
 
-  public abstract void execute(List<EditOperation> operations);
+  public abstract void execute(List<EditOperation> operations, String command);
 }

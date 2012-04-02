@@ -8,8 +8,8 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.ClassWriter;
 
 import java.io.File;
 import java.io.IOException;

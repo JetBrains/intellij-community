@@ -69,6 +69,8 @@ public interface EditableArea {
   @Nullable
   InputTool findTargetTool(int x, int y);
 
+  void showSelection(boolean value);
+
   ComponentDecorator getRootSelectionDecorator();
 
   @Nullable

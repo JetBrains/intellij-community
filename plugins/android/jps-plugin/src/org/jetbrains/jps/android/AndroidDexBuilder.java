@@ -128,7 +128,11 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       }
       final Set<String> externalLibraries = AndroidJpsUtil.getExternalLibraries(projectPaths, module);
 
+      // todo: read proguard options from Android facet settings if there is no settings in the context
+
       final String proguardCfgPath = context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION);
+      final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
+      final boolean includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
       final Set<String> fileSet;
 
       try {
@@ -137,7 +141,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
             FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
           if (!runProguardIfNecessary(facet, classesDir, androidSdk, target, externalLibraries, context,
-                                      outputJarPath, proguardCfgPath, proguardStateStorage)) {
+                                      outputJarPath, proguardCfgPath, includeSystemProguardCfg, proguardStateStorage)) {
             success = false;
             continue;
           }
@@ -271,6 +275,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                                 @NotNull CompileContext context,
                                                 @NotNull String outputJarPath,
                                                 @NotNull String proguardCfgPath,
+                                                boolean includeSystemProguardCfg,
                                                 @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     final Module module = facet.getModule();
 
@@ -333,8 +338,9 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.proguard", module.getName())));
 
+    // todo: pass sdk revision
     final Map<AndroidCompilerMessageKind, List<String>> messages =
-      AndroidCommonUtils.launchProguard(target, sdk.getSdkPath(), proguardCfgPath, inputJarOsPath,
+      AndroidCommonUtils.launchProguard(target, -1, sdk.getSdkPath(), proguardCfgPath, includeSystemProguardCfg, inputJarOsPath,
                                         externalJarOsPaths, outputJarPath, logsDirOsPath);
 
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME);

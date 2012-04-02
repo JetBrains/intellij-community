@@ -15,8 +15,21 @@
  */
 package com.intellij.designer.designSurface.feedbacks;
 
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+
 /**
  * @author Alexander Lobas
  */
-public class LineComponent {
+public class LineMarginBorder extends EmptyBorder {
+  public LineMarginBorder(int top, int left, int bottom, int right) {
+    super(top, left, bottom, right);
+  }
+
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    Color oldColor = g.getColor();
+    g.setColor(Color.darkGray);
+    g.drawRect(x, y, width - 1, height - 1);
+    g.setColor(oldColor);
+  }
 }

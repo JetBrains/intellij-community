@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
@@ -122,7 +123,7 @@ public class ResizeTracker extends InputTool {
           operations.add(operation);
         }
       }
-      myToolProvider.execute(operations);
+      myToolProvider.execute(operations, DesignerBundle.message("command.tool_operation", myContext.getType()));
     }
   }
 

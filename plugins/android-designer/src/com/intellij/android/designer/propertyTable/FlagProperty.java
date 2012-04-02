@@ -50,10 +50,7 @@ public class FlagProperty extends Property<RadViewComponent> {
 
     if (model != null) {
       for (Property option : myOptions) {
-        String optionName = name + "." + option.getName();
-        option.setImportant(model.isImportantProperty(optionName));
-        option.setExpert(model.isExpertProperty(optionName));
-        option.setDeprecated(model.isDeprecatedProperty(optionName));
+        model.decorate(option, name + "." + option.getName());
       }
     }
   }

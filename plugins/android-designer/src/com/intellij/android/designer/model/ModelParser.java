@@ -108,7 +108,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     }
   }
 
-  public static RadViewComponent createComponent(XmlTag tag, MetaModel metaModel) throws Exception {
+  public static RadViewComponent createComponent(@Nullable XmlTag tag, MetaModel metaModel) throws Exception {
     RadViewComponent component = (RadViewComponent)metaModel.getModel().newInstance();
     component.setMetaModel(metaModel);
     component.setTag(tag);

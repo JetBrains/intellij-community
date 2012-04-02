@@ -134,6 +134,11 @@ public class ClassRepr extends Proto {
       public int base() {
         return d;
       }
+
+      @Override
+      public boolean hadValue() {
+        return false;
+      }
     };
   }
 

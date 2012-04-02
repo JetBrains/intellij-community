@@ -400,7 +400,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         component.projectOpened();
       }
       catch (Throwable e) {
-        LOG.error(e);
+        LOG.error(component.toString(), e);
       }
     }
   }

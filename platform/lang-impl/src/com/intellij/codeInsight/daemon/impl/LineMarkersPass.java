@@ -121,7 +121,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     myMarkers = mergeLineMarkers(lineMarkers);
   }
 
-  private List<LineMarkerInfo> mergeLineMarkers(List<LineMarkerInfo> markers) {    
+  private List<LineMarkerInfo> mergeLineMarkers(@NotNull List<LineMarkerInfo> markers) {
     List<MergeableLineMarkerInfo> forMerge = new ArrayList<MergeableLineMarkerInfo>();
     final Iterator<LineMarkerInfo> iterator = markers.iterator();
     while (iterator.hasNext()) {
@@ -154,7 +154,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     return result;
   }
 
-  public static List<LineMarkerProvider> getMarkerProviders(Language language, Project project) {
+  public static List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
     return DumbService.getInstance(project).filterByDumbAwareness(LineMarkerProviders.INSTANCE.allForLanguage(language));
   }
 
@@ -239,6 +239,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     }
   }
 
+  @NotNull
   public Collection<LineMarkerInfo> queryLineMarkers() {
     if (myFile.getNode() == null) {
       // binary file? see IDEADEV-2809
@@ -255,7 +256,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
   }
 
   @NotNull
-  public static LineMarkerInfo createMethodSeparatorLineMarker(PsiElement startFrom, EditorColorsManager colorsManager) {
+  public static LineMarkerInfo createMethodSeparatorLineMarker(@NotNull PsiElement startFrom, @NotNull EditorColorsManager colorsManager) {
     LineMarkerInfo info = new LineMarkerInfo<PsiElement>(
       startFrom, 
       startFrom.getTextRange(), 

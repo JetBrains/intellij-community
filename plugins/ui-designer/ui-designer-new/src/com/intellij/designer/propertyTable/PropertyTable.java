@@ -21,7 +21,6 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -176,20 +175,16 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
         cellEditor.stopCellEditing();
       }
 
-      CommandProcessor.getInstance().executeCommand(myDesigner.getProject(), new Runnable() {
-        public void run() {
-          myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-            @Override
-            public void run() throws Exception {
-              for (RadComponent component : myComponents) {
-                if (!property.isDefaultValue(component)) {
-                  property.setDefaultValue(component);
-                }
-              }
+      myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+        @Override
+        public void run() throws Exception {
+          for (RadComponent component : myComponents) {
+            if (!property.isDefaultValue(component)) {
+              property.setDefaultValue(component);
             }
-          });
+          }
         }
-      }, DesignerBundle.message("designer.properties.restore_default"), null);
+      }, DesignerBundle.message("designer.properties.restore_default"), false);
 
       repaint();
     }
@@ -201,7 +196,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private void updateProperties() {
+  public void updateProperties() {
     if (mySkipUpdate) {
       return;
     }
@@ -358,6 +353,13 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     }
 
     return -1;
+  }
+
+  public static void top(List<Property> properties, String name) {
+    Property property = extractProperty(properties, name);
+    if (property != null) {
+      properties.add(0, property);
+    }
   }
 
   @Nullable
@@ -571,40 +573,29 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
       isNewValue = true;
     }
 
-    final boolean[] isSet = {true};
+    boolean isSetValue = true;
 
     if (isNewValue) {
-      CommandProcessor.getInstance().executeCommand(myDesigner.getProject(), new Runnable() {
-        public void run() {
-          isSet[0] = myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
-            @Override
-            public void run() throws Exception {
-              for (RadComponent component : myComponents) {
-                property.setValue(component, newValue);
-              }
-            }
-          });
+      isSetValue = myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+        @Override
+        public void run() throws Exception {
+          for (RadComponent component : myComponents) {
+            property.setValue(component, newValue);
+          }
         }
-      }, DesignerBundle.message("command.set.property.value"), null);
+      }, DesignerBundle.message("command.set.property.value"), false);
     }
 
-    if (property.needRefreshPropertyList() && isSet[0]) {
+    if (property.needRefreshPropertyList() && isSetValue) {
       updateProperties();
     }
 
-    return isSet[0];
+    return isSetValue;
   }
 
   private static void showInvalidInput(Exception e) {
     Throwable cause = e.getCause();
     String message = cause == null ? e.getMessage() : cause.getMessage();
-
-    if (cause == null) {
-      e.printStackTrace();
-    }
-    else {
-      cause.printStackTrace();
-    }
 
     if (message == null || message.length() == 0) {
       message = DesignerBundle.message("designer.properties.no_message.error");

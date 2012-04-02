@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface.tools;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.ComponentTargetFilter;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
@@ -78,7 +79,8 @@ public abstract class TargetingTool extends InputTool {
 
   protected void executeCommand() {
     if (myExecuteEnabled) {
-      myToolProvider.execute(Collections.singletonList(myTargetOperation));
+      myToolProvider
+        .execute(Collections.singletonList(myTargetOperation), DesignerBundle.message("command.tool_operation", myContext.getType()));
     }
   }
 

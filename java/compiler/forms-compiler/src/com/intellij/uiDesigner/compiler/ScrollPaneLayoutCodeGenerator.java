@@ -17,9 +17,9 @@
 package com.intellij.uiDesigner.compiler;
 
 import com.intellij.uiDesigner.lw.LwComponent;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
+import org.jetbrains.asm4.Type;
+import org.jetbrains.asm4.commons.GeneratorAdapter;
+import org.jetbrains.asm4.commons.Method;
 
 import javax.swing.*;
 

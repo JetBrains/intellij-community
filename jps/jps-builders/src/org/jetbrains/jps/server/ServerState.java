@@ -137,7 +137,7 @@ class ServerState {
         final FSState fsState = new FSState(false);
         ProjectTimestamps timestamps = null;
         BuildDataManager dataManager = null;
-        final File dataStorageRoot = Paths.getDataStorageRoot(project);
+        final File dataStorageRoot = Utils.getDataStorageRoot(project);
         try {
           timestamps = new ProjectTimestamps(dataStorageRoot);
           dataManager = new BuildDataManager(dataStorageRoot, myKeepTempCachesInMemory);

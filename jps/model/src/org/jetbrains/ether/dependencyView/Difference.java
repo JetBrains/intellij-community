@@ -112,4 +112,6 @@ abstract class Difference {
   public abstract int removedModifiers();
 
   public abstract boolean packageLocalOn();
+
+  public abstract boolean hadValue ();
 }

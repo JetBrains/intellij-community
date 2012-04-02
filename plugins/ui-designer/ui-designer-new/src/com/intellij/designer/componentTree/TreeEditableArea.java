@@ -191,6 +191,10 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   }
 
   @Override
+  public void showSelection(boolean value) {
+  }
+
+  @Override
   public ComponentDecorator getRootSelectionDecorator() {
     return null;
   }

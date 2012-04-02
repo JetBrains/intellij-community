@@ -38,8 +38,7 @@ import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.*;
-import org.objectweb.asm.commons.EmptyVisitor;
+import org.jetbrains.asm4.*;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
@@ -48,7 +47,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class StubBuildingVisitor<T> implements ClassVisitor {
+public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$])\\${1}(?=[^\\$])");
 
   public static final String DOUBLE_POSITIVE_INF = "1.0 / 0.0";
@@ -71,6 +70,7 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
   private JavaLexer myLexer;
 
   public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
+    super(Opcodes.ASM4);
     mySource = classSource;
     myInnersStrategy = innersStrategy;
     myParent = parent;
@@ -316,7 +316,7 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
     final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
     final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
-    return new AnnotationCollectingVisitor(stub, modList);
+    return new AnnotationCollectingVisitor(modList);
   }
 
   @NotNull
@@ -493,13 +493,14 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
   public void visitEnd() {
   }
 
-  private static class AnnotationTextCollector implements AnnotationVisitor {
+  private static class AnnotationTextCollector extends AnnotationVisitor {
     private final StringBuilder myBuilder = new StringBuilder();
     private final AnnotationResultCallback myCallback;
     private boolean hasParams = false;
     private final String myDesc;
 
     public AnnotationTextCollector(@Nullable String desc, AnnotationResultCallback callback) {
+      super(Opcodes.ASM4);
       myCallback = callback;
 
       myDesc = desc;
@@ -567,23 +568,12 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
     }
   }
 
-  private static class AnnotationCollectingVisitor extends EmptyVisitor {
-    private final StubElement myOwner;
+  private static class AnnotationCollectingVisitor extends FieldVisitor {
     private final PsiModifierListStub myModList;
 
-    private AnnotationCollectingVisitor(final StubElement owner, final PsiModifierListStub modList) {
-      myOwner = owner;
+    private AnnotationCollectingVisitor(final PsiModifierListStub modList) {
+      super(Opcodes.ASM4);
       myModList = modList;
-    }
-
-    @Override
-    public AnnotationVisitor visitAnnotationDefault() {
-      return new AnnotationTextCollector(null, new AnnotationResultCallback() {
-        @Override
-        public void callback(final String text) {
-          ((PsiMethodStubImpl)myOwner).setDefaultValueText(text);
-        }
-      });
     }
 
     @Override
@@ -595,20 +585,11 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
         }
       });
     }
-
-    @Override
-    @Nullable
-    public AnnotationVisitor visitParameterAnnotation(final int parameter, final String desc, final boolean visible) {
-      return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
-        @Override
-        public void callback(final String text) {
-          new PsiAnnotationStubImpl(((PsiMethodStub)myOwner).findParameter(parameter).getModList(), text);
-        }
-      });
-    }
   }
 
-  private static class AnnotationParamCollectingVisitor extends AnnotationCollectingVisitor {
+  private static class AnnotationParamCollectingVisitor extends MethodVisitor {
+    private final PsiMethodStub myOwner;
+    private final PsiModifierListStub myModList;
     private final int myIgnoreCount;
     private final int myParamIgnoreCount;
     private final int myParamCount;
@@ -622,11 +603,33 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
                                              int paramIgnoreCount,
                                              int paramCount,
                                              PsiParameterStubImpl[] paramStubs) {
-      super(owner, modList);
+      super(Opcodes.ASM4);
+      myOwner = owner;
+      myModList = modList;
       myIgnoreCount = ignoreCount;
       myParamIgnoreCount = paramIgnoreCount;
       myParamCount = paramCount;
       myParamStubs = paramStubs;
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
+      return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
+        @Override
+        public void callback(final String text) {
+          new PsiAnnotationStubImpl(myModList, text);
+        }
+      });
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotationDefault() {
+      return new AnnotationTextCollector(null, new AnnotationResultCallback() {
+        @Override
+        public void callback(final String text) {
+          ((PsiMethodStubImpl)myOwner).setDefaultValueText(text);
+        }
+      });
     }
 
     @Override
@@ -652,7 +655,15 @@ public class StubBuildingVisitor<T> implements ClassVisitor {
     @Override
     @Nullable
     public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
-      return (parameter < myParamIgnoreCount) ? null : super.visitParameterAnnotation(parameter - myParamIgnoreCount, desc, visible);
+      if (parameter < myParamIgnoreCount) {
+        return null;
+      }
+      return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
+        @Override
+        public void callback(final String text) {
+          new PsiAnnotationStubImpl(myOwner.findParameter(parameter - myParamIgnoreCount).getModList(), text);
+        }
+      });
     }
   }
 

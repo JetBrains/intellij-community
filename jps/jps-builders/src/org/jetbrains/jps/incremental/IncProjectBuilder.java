@@ -361,7 +361,7 @@ public class IncProjectBuilder {
           throw new ProjectBuildException(e);
         }
         finally {
-          Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
+          Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, null);
           if (doneSomething && GENERATE_CLASSPATH_INDEX) {
             final boolean forTests = context.isCompilingTests();
             final Future<?> future = SharedThreadPool.INSTANCE.submit(new Runnable() {
@@ -409,7 +409,8 @@ public class IncProjectBuilder {
     final File[] files = file.listFiles();
     if (files != null) {
       for (File child : files) {
-        writeIndex(writer, child, path + "/" + child.getName());
+        final String _path = path.isEmpty()? child.getName() : path + "/" + child.getName();
+        writeIndex(writer, child, _path);
       }
     }
   }
@@ -472,11 +473,11 @@ public class IncProjectBuilder {
         }
       }
       if (!allChunkRemovedSources.isEmpty()) {
-        final Set<String> currentData = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
+        final Set<String> currentData = Utils.CHUNK_REMOVED_SOURCES_KEY.get(context);
         if (currentData != null) {
           allChunkRemovedSources.addAll(currentData);
         }
-        Paths.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
+        Utils.CHUNK_REMOVED_SOURCES_KEY.set(context, allChunkRemovedSources);
         for (Module module : chunk.getModules()) {
           myProjectDescriptor.fsState.clearDeletedPaths(module, context.isCompilingTests());
         }

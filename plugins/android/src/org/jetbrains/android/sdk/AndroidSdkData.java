@@ -64,27 +64,32 @@ public class AndroidSdkData {
   private IAndroidTarget[] myTargets = null;
 
   private final int myPlatformToolsRevision;
+  private final int mySdkToolsRevision;
 
   public AndroidSdkData(@NotNull SdkManager sdkManager, @NotNull String sdkDirOsPath) {
     mySdkManager = sdkManager;
+    myPlatformToolsRevision = parsePackageRevision(sdkDirOsPath, SdkConstants.FD_PLATFORM_TOOLS);
+    mySdkToolsRevision = parsePackageRevision(sdkDirOsPath, SdkConstants.FD_TOOLS);
+  }
 
-    final File platformToolsPropFile =
-      new File(sdkDirOsPath + File.separatorChar + SdkConstants.FD_PLATFORM_TOOLS + File.separatorChar + SdkConstants.FN_SOURCE_PROP);
-    int platformToolsRevision = -1;
-    if (platformToolsPropFile.exists() && platformToolsPropFile.isFile()) {
+  private static int parsePackageRevision(@NotNull String sdkDirOsPath, @NotNull String packageDirName) {
+    final File propFile =
+      new File(sdkDirOsPath + File.separatorChar + packageDirName + File.separatorChar + SdkConstants.FN_SOURCE_PROP);
+    int revisionNumber = -1;
+    if (propFile.exists() && propFile.isFile()) {
       final Map<String, String> map =
-        ProjectProperties.parsePropertyFile(new BufferingFileWrapper(platformToolsPropFile), new MessageBuildingSdkLog());
+        ProjectProperties.parsePropertyFile(new BufferingFileWrapper(propFile), new MessageBuildingSdkLog());
       final String revision = map.get("Pkg.Revision");
       if (revision != null) {
         try {
-          platformToolsRevision = Integer.parseInt(revision);
+          revisionNumber = Integer.parseInt(revision);
         }
         catch (NumberFormatException e) {
           LOG.info(e);
         }
       }
     }
-    myPlatformToolsRevision = platformToolsRevision > 0 ? platformToolsRevision : -1;
+    return revisionNumber > 0 ? revisionNumber : -1;
   }
 
   @NotNull
@@ -149,6 +154,10 @@ public class AndroidSdkData {
 
   public int getPlatformToolsRevision() {
     return myPlatformToolsRevision;
+  }
+
+  public int getSdkToolsRevision() {
+    return mySdkToolsRevision;
   }
 
   @Nullable

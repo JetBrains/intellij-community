@@ -333,8 +333,12 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     // constructs binary evaluator handling unboxing and numeric promotion issues
-    private static BinaryExpressionEvaluator createBinaryEvaluator(
-      Evaluator lResult, final PsiType lType, Evaluator rResult, final PsiType rType, final IElementType operation, final @NotNull PsiType expressionExpectedType) {
+    private static BinaryExpressionEvaluator createBinaryEvaluator(Evaluator lResult,
+                                                                   PsiType lType,
+                                                                   Evaluator rResult,
+                                                                   @NotNull PsiType rType,
+                                                                   @NotNull IElementType operation,
+                                                                   @NotNull PsiType expressionExpectedType) {
       // handle unboxing if neccesary
       if (isUnboxingInBinaryExpressionApplicable(lType, rType, operation)) {
         if (rType instanceof PsiClassType && UnBoxingEvaluator.isTypeUnboxable(rType.getCanonicalText())) {
