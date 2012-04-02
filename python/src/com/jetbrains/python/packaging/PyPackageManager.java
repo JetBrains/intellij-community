@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -314,6 +315,11 @@ public class PyPackageManager {
     if (!extraArgs.contains(BUILD_DIR_OPTION)) {
       args.addAll(list(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
     }
+    final String proxyString = getProxyString();
+    if (proxyString != null) {
+      args.add("--proxy");
+      args.add(proxyString);
+    }
     args.addAll(extraArgs);
     for (PyRequirement req : requirements) {
       args.addAll(req.toOptions());
@@ -447,6 +453,22 @@ public class PyPackageManager {
 
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
+  }
+
+  @Nullable
+  private String getProxyString() {
+    final HttpConfigurable settings = HttpConfigurable.getInstance();
+    if (settings != null && settings.USE_HTTP_PROXY) {
+      final String credentials;
+      if (settings.PROXY_AUTHENTICATION) {
+        credentials = String.format("%s:%s@", settings.PROXY_LOGIN, settings.getPlainProxyPassword());
+      }
+      else {
+        credentials = "";
+      }
+      return credentials + String.format("%s:%d", settings.PROXY_HOST, settings.PROXY_PORT);
+    }
+    return null;
   }
 
   @NotNull
