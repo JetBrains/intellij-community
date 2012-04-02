@@ -93,29 +93,39 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
+    final PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
     if (string != null && string.getTextOffset() < offset) {
-      String stringText = element.getText();
-      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      final String stringText = element.getText();
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       if (string.getTextOffset() + prefixLength >= offset) {
         return Result.Continue;
       }
-      if ("\\".equals(doc.getText(TextRange.create(offset - 1, offset)))) return Result.Continue;
-      String pref = element.getText().substring(0, prefixLength);
-      String quote = element.getText().substring(prefixLength, prefixLength + 1);
-      PsiElement parent = string.getParent();
-      String replacementString;
+      final String pref = element.getText().substring(0, prefixLength);
+      final String quote = element.getText().substring(prefixLength, prefixLength + 1);
+      final boolean nextIsBackslash = "\\".equals(doc.getText(TextRange.create(offset - 1, offset)));
+      final boolean isEscapedQuote = quote.equals(doc.getText(TextRange.create(offset, offset + 1))) && nextIsBackslash;
+      final boolean isEscapedBackslash = "\\".equals(doc.getText(TextRange.create(offset-2, offset - 1))) && nextIsBackslash;
+      if (nextIsBackslash && !isEscapedQuote && !isEscapedBackslash) return Result.Continue;
+
+      final PsiElement parent = string.getParent();
+      final StringBuilder replacementString = new StringBuilder();
       if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
           parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression ||
           parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
-        replacementString = quote + pref + quote;
+        replacementString.append(quote + pref + quote);
         doc.insertString(offset, replacementString);
         caretOffset.set(caretOffset.get() + 1);
         return Result.Continue;
       }
       else {
-        replacementString = quote + " \\" + pref + quote;
-        doc.insertString(offset, replacementString);
+        if (isEscapedQuote) {
+          replacementString.append(quote);
+          caretOffset.set(caretOffset.get() + 1);
+        }
+        replacementString.append(quote + " \\" + pref);
+        if (!isEscapedQuote)
+          replacementString.append(quote);
+        doc.insertString(offset, replacementString.toString());
         caretOffset.set(caretOffset.get() + 3);
         return Result.Continue;
       }

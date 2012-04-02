@@ -213,6 +213,17 @@ public class PyEditingTest extends PyTestCase {
                 "     \"ing\")");
   }
 
+  public void testEnterEscapedQuote() {
+    doTestEnter("a = 'some \\<caret>' string'",
+                "a = 'some \\'' \\\n" +
+                "    ' string'");
+  }
+  public void testEnterEscapedBackslash() {
+    doTestEnter("a = 'some \\\\<caret> string'",
+                "a = 'some \\\\' \\\n" +
+                "    ' string'");
+  }
+
   public void testEnterAfterSlash() {
     doTestEnter("a = 'some \\<caret> string'",
                 "a = 'some \\\n" +
