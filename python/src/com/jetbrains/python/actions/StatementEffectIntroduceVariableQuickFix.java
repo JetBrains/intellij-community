@@ -35,9 +35,9 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (myExpression != null) {
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(myExpression), PyAssignmentStatement.class,
+    if (myExpression != null && myExpression.isValid()) {
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(myExpression), PyAssignmentStatement.class,
                                                          "var = " + myExpression.getText());
       
       myExpression = myExpression.replace(assignment);

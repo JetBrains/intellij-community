@@ -43,9 +43,9 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     @Override
     public void visitPyDictLiteralExpression(PyDictLiteralExpression node) {
       if (node.getElements().length != 0){
-        Map<String, PyElement> map = new HashMap<String, PyElement>();
+        final Map<String, PyElement> map = new HashMap<String, PyElement>();
         for (PyExpression exp : node.getElements()) {
-          PyExpression key = ((PyKeyValueExpression)exp).getKey();
+          final PyExpression key = ((PyKeyValueExpression)exp).getKey();
           if (key instanceof PyNumericLiteralExpression
                   || key instanceof PyStringLiteralExpression || key instanceof PyReferenceExpression) {
             if (map.keySet().contains(key.getText())) {
@@ -59,28 +59,30 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(final PyCallExpression node) {
       if (isDict(node)) {
-        Map<String, PsiElement> map = new HashMap<String, PsiElement>();
-        PyExpression[] argumentList = node.getArgumentList().getArguments();
-        for (PyExpression argument : argumentList) {
+        final Map<String, PsiElement> map = new HashMap<String, PsiElement>();
+        final PyArgumentList pyArgumentList = node.getArgumentList();
+        if (pyArgumentList == null) return;
+        final PyExpression[] arguments = pyArgumentList.getArguments();
+        for (PyExpression argument : arguments) {
           if (argument instanceof PyParenthesizedExpression)
             argument = ((PyParenthesizedExpression)argument).getContainedExpression();
           if (argument instanceof PySequenceExpression) {
             for (PyElement el : ((PySequenceExpression)argument).getElements()) {
-              PsiElement key = getKey(el);
+              final PsiElement key = getKey(el);
               checkKey(map, key);
             }
           }
           else {
-            PsiElement key = getKey(argument);
+            final PsiElement key = getKey(argument);
             checkKey(map, key);
           }
         }
       }
     }
 
-    private void checkKey(Map<String, PsiElement> map, PsiElement node) {
+    private void checkKey(final Map<String, PsiElement> map, final PsiElement node) {
       if (node == null) return;
       String key = node.getText();
       if (node instanceof PyStringLiteralExpression)
@@ -93,12 +95,11 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     }
 
     @Nullable
-    private PsiElement getKey(PyElement argument) {
+    private static PsiElement getKey(final PyElement argument) {
       if (argument instanceof PyParenthesizedExpression) {
-        PyExpression expr = ((PyParenthesizedExpression)argument).getContainedExpression();
+        final PyExpression expr = ((PyParenthesizedExpression)argument).getContainedExpression();
         if (expr instanceof PyTupleExpression) {
-          PyElement key = ((PyTupleExpression)expr).getElements()[0];
-          return key;
+          return ((PyTupleExpression)expr).getElements()[0];
         }
       }
       if (argument instanceof PyKeywordArgument) {
@@ -108,8 +109,10 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
       return null;
     }
 
-    private boolean isDict(PyCallExpression expression) {
-      String name = expression.getCallee().getText();
+    private static boolean isDict(final PyCallExpression expression) {
+      final PyExpression callee = expression.getCallee();
+      if (callee == null) return false;
+      final String name = callee.getText();
       if ("dict".equals(name)) {
         return true;
       }

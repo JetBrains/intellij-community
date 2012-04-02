@@ -217,8 +217,20 @@ public class PyPsiUtils {
         next = getPrevComma(child);
       }
       if (next != null) {
+        removeSlash(pyImportStatement, next);
         pyImportStatement.deleteChildInternal(next);
       }
+    }
+  }
+
+  private static void removeSlash(final ASTDelegatePsiElement statement, final ASTNode next) {
+    ASTNode slash = next.getTreePrev();
+    if (slash instanceof PsiWhiteSpace && slash.getText().contains("\\"))
+      statement.deleteChildInternal(slash);
+    else {
+      slash = next.getTreeNext();
+      if (slash instanceof PsiWhiteSpace && slash.getText().contains("\\"))
+        statement.deleteChildInternal(slash);
     }
   }
 
