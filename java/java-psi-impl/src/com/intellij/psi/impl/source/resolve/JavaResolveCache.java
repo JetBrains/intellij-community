@@ -24,16 +24,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,14 +69,21 @@ public class JavaResolveCache {
     myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
 
     if (messageBus != null) {
-      messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      final MessageBusConnection connection = messageBus.connect();
+      connection.subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
         @Override
         public void beforePsiChanged(boolean isPhysical) {
           clearCaches(isPhysical);
         }
-  
+
         @Override
         public void afterPsiChanged(boolean isPhysical) {
+        }
+      });
+      connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
+        @Override
+        public void modificationCountChanged() {
+          clearCaches(true);
         }
       });
     }
