@@ -136,7 +136,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     for (String host : pluginHosts) {
       try {
         final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
-        UpdateChecker.checkPluginsHost(host, downloaded, false);
+        UpdateChecker.checkPluginsHost(host, downloaded, false, null);
         for (PluginDownloader downloader : downloaded) {
           myPlugin2host.put(downloader.getPluginId(), host);
         }
