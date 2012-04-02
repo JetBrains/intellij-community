@@ -91,26 +91,60 @@ public class GitFetcher {
       fetchResult = fetchAll(root, repository, fetchResult);
     }
     else {
-      return fetchCurrentBranch(root, repository);
+      return fetchCurrentRemote(repository);
     }
 
     repository.update(GitRepository.TrackedTopic.BRANCHES);
     return fetchResult;
   }
 
+  private GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {
+    FetchParams fetchParams = getFetchParams(repository);
+    if (fetchParams.isError()) {
+      return fetchParams.getError();
+    }
+
+    GitRemote remote = fetchParams.getRemote();
+    String url = fetchParams.getUrl();
+
+    if (GitHttpAdapter.shouldUseJGit(url)) {
+      return GitHttpAdapter.fetch(repository, remote, url, null);
+    }
+    return fetchNatively(repository.getRoot(), remote, null);
+  }
+
+  // leaving this unused method, because the wanted behavior can change again
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  private GitFetchResult fetchCurrentBranch(@NotNull VirtualFile root, @NotNull GitRepository repository) {
+  private GitFetchResult fetchCurrentBranch(@NotNull GitRepository repository) {
+    FetchParams fetchParams = getFetchParams(repository);
+    if (fetchParams.isError()) {
+      return fetchParams.getError();
+    }
+
+    GitRemote remote = fetchParams.getRemote();
+    String remoteBranch = fetchParams.getRemoteBranch();
+    String url = fetchParams.getUrl();
+    if (GitHttpAdapter.shouldUseJGit(url)) {
+      return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
+    }
+    return fetchNatively(repository.getRoot(), remote, remoteBranch);
+  }
+
+  @NotNull
+  private static FetchParams getFetchParams(@NotNull GitRepository repository) {
     GitBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
+      // fetching current branch is called from Update Project and Push, where branch tracking is pre-checked
       String message = "Current branch can't be null here. \nRepository: " + repository;
       LOG.error(message);
-      return GitFetchResult.error(new Exception(message));
+      return new FetchParams(GitFetchResult.error(new Exception(message)));
     }
     GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
     if (trackInfo == null) {
       String message = "Tracked info is null for branch " + currentBranch + "\n Repository: " + repository;
       LOG.error(message);
-      return GitFetchResult.error(new Exception(message));
+      return new FetchParams(GitFetchResult.error(new Exception(message)));
     }
 
     GitRemote remote = trackInfo.getRemote();
@@ -118,14 +152,10 @@ public class GitFetcher {
     if (url == null) {
       String message = "URL is null for remote " + remote.getName();
       LOG.error(message);
-      return GitFetchResult.error(new Exception(message));
+      return new FetchParams(GitFetchResult.error(new Exception(message)));
     }
 
-    String remoteBranch = trackInfo.getRemoteBranch();
-    if (GitHttpAdapter.shouldUseJGit(url)) {
-      return GitHttpAdapter.fetch(repository, remote, url, remoteBranch);
-    }
-    return fetchNatively(root, remote, remoteBranch);
+    return new FetchParams(remote, trackInfo.getRemoteBranch(), url);
   }
 
   @NotNull
@@ -315,6 +345,43 @@ public class GitFetcher {
     @NotNull
     public Collection<String> getPrunedRefs() {
       return myPrunedRefs;
+    }
+  }
+
+  private static class FetchParams {
+    private GitRemote myRemote;
+    private String myRemoteBranch;
+    private GitFetchResult myError;
+    private String myUrl;
+
+    FetchParams(GitFetchResult error) {
+      myError = error;
+    }
+
+    FetchParams(GitRemote remote, String remoteBranch, String url) {
+      myRemote = remote;
+      myRemoteBranch = remoteBranch;
+      myUrl = url;
+    }
+
+    boolean isError() {
+      return myError != null;
+    }
+
+    public GitFetchResult getError() {
+      return myError;
+    }
+
+    public GitRemote getRemote() {
+      return myRemote;
+    }
+
+    public String getRemoteBranch() {
+      return myRemoteBranch;
+    }
+
+    public String getUrl() {
+      return myUrl;
     }
   }
 }

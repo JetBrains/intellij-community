@@ -56,10 +56,10 @@ class ArgumentListGenerator {
                        GrClosableBlock[] clArgs,
                        GroovyPsiElement context) {
     GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos =
-      signature == null ? null : GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, context, clArgs, false, false);
+      signature == null ? null : GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, clArgs, context, false, false);
 
     if (argInfos == null && signature != null) {
-      argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, context, clArgs, true, true);
+      argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, namedArgs, exprs, clArgs, context, true, true);
     }
 
     final PsiSubstitutor substitutor = signature == null ? PsiSubstitutor.EMPTY : signature.getSubstitutor();

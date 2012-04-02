@@ -72,6 +72,24 @@ import java.util.regex.Pattern;
 public class UIUtil {
   private static final String TABLE_DECORATION_KEY = "TABLE_DECORATION_KEY";
   private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
+  
+  private static final AtomicNotNullLazyValue<Boolean> X_RENDER_ACTIVE = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      if (!SystemInfo.isLinux) {
+        return false;
+      }
+      try {
+        final Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass("sun.awt.X11GraphicsEnvironment");
+        final Method method = clazz.getMethod("isXRenderAvailable");
+        return (Boolean)method.invoke(null);
+      }
+      catch (Throwable e) {
+        return false;
+      }
+    }
+  };
 
   public static void applyStyle(@NotNull ComponentStyle componentStyle, @NotNull Component comp) {
     if (!(comp instanceof JComponent)) return;
@@ -1226,6 +1244,18 @@ public class UIUtil {
     if (map != null) {
       ((Graphics2D)g).addRenderingHints(map);
     }
+  }
+
+  /**
+   * Configures composite to use for drawing text with the given graphics container.
+   * <p/>
+   * The whole idea is that <a href="http://en.wikipedia.org/wiki/X_Rendering_Extension">XRender-based</a> pipeline doesn't support
+   * {@link AlphaComposite#SRC} and we should use {@link AlphaComposite#SRC_OVER} instead.
+   * 
+   * @param g  target graphics container
+   */
+  public static void setupComposite(@NotNull Graphics2D g) {
+    g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
   @TestOnly

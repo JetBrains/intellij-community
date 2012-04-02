@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface.tools;
+package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import com.intellij.designer.model.RadComponent;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Alexander Lobas
+ * @author Max Medvedev
  */
-public interface ComponentPasteFactory {
-  @NotNull
-  List<RadComponent> create() throws Exception;
+public interface MixinTypeInstruction extends Instruction {
+  @Nullable
+  ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow);
+
+  @Nullable
+  PsiType inferMixinType();
+
+  @Nullable
+  String getVariableName();
 }

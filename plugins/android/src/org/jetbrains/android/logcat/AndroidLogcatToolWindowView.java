@@ -37,7 +37,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
-import org.jetbrains.android.actions.AndroidEnableAdbServiceAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -216,7 +215,6 @@ public abstract class AndroidLogcatToolWindowView implements Disposable {
 
     final DefaultActionGroup group1 = new DefaultActionGroup();
     group1.addAll(myLogConsole.getToolbarActions());
-    group1.add(new AndroidEnableAdbServiceAction(AndroidUtils.DDMS_ICON));
     group1.add(new MyRestartAction());
     final JComponent tbComp1 =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group1, false).getComponent();

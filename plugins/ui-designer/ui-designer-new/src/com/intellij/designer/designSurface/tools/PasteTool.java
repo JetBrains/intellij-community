@@ -32,7 +32,6 @@ public class PasteTool extends AbstractCreationTool {
   public void activate() {
     super.activate();
     myContext.setType(OperationContext.PASTE);
-    myContext.setPasteFactory(myFactory);
 
     try {
       myContext.setComponents(myFactory.create());

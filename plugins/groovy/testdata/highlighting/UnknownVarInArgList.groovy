@@ -9,4 +9,5 @@ foo<warning descr="'foo' in 'UnknownVarInArgList' cannot be applied to '(java.la
 def abc(Date d){}
 def abc(int i) {}
 
-abc<warning descr="'abc' in 'UnknownVarInArgList' cannot be applied to '(null)'">(a)</warning>
+def x = unknown2
+abc<warning descr="'abc' in 'UnknownVarInArgList' cannot be applied to '(null)'">(x)</warning>
