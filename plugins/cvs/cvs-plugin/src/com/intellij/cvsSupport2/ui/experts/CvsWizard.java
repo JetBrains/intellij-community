@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,13 +55,21 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
 
   @Override
   protected void doNextAction() {
-    if ((myCurrentStep + 1) < mySteps.size()) {
-      final WizardStep nextStep = mySteps.get(myCurrentStep + 1);
-      if (! nextStep.preNextCheck()) {
+    final boolean lastStep = isLastStep();
+    if (!lastStep) {
+      final WizardStep nextStep = mySteps.get(getNextStep());
+      if (!nextStep.preNextCheck()) {
         return;
       }
+      nextStep.focus();
     }
     super.doNextAction();
+  }
+
+  @Override
+  protected void doPreviousAction() {
+    mySteps.get(getPreviousStep()).focus();
+    super.doPreviousAction();
   }
 
   @Override
