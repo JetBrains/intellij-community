@@ -26,6 +26,4 @@ import java.util.List;
 public interface ComponentPasteFactory {
   @NotNull
   List<RadComponent> create() throws Exception;
-
-  void finish() throws Exception;
 }
