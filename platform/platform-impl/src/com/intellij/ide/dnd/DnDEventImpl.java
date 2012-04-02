@@ -52,14 +52,12 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   private boolean myShouldRemoveHighlighter = true;
   private Point myLocalPoint;
   private Cursor myCursor;
-  private DnDSource mySource;
 
-  public DnDEventImpl(DnDManagerImpl manager, DnDAction action, Object attachedObject, Point point, DnDSource source) {
+  public DnDEventImpl(DnDManagerImpl manager, DnDAction action, Object attachedObject, Point point) {
     myManager = manager;
     myAction = action;
     myAttachedObject = attachedObject;
     myPoint = point;
-    mySource = source;
   }
 
   public DnDAction getAction() {
@@ -249,7 +247,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   protected Object clone() {
-    final DnDEventImpl result = new DnDEventImpl(myManager, myAction, myAttachedObject, myPoint, mySource);
+    final DnDEventImpl result = new DnDEventImpl(myManager, myAction, myAttachedObject, myPoint);
     result.myDropHandler = myDropHandler;
     result.myDropPossible = myDropPossible;
     result.myExpectedDropResult = myExpectedDropResult;

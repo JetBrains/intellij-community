@@ -179,7 +179,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
           DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
           if (event == null) {
             DnDNativeTarget.EventInfo info = new DnDNativeTarget.EventInfo(flavors, transferable);
-            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint, null);
+            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint);
             jComp.putClientProperty(DnDNativeTarget.EVENT_KEY, event);
           }
 
@@ -556,7 +556,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
             LOG.debug("Starting dragging for " + action);
             hideCurrentHighlighter();
             final DnDDragStartBean dnDDragStartBean = source.startDragging(action, dge.getDragOrigin());
-            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint(), source);
+            myCurrentEvent = new DnDEventImpl(DnDManagerImpl.this, action, dnDDragStartBean.getAttachedObject(), dnDDragStartBean.getPoint());
             myCurrentEvent.setOrgPoint(dge.getDragOrigin());
 
             Pair<Image, Point> pair = source.createDraggedImage(action, dge.getDragOrigin());
