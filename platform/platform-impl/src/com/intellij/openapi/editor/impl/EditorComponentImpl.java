@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,9 @@ import java.awt.im.InputMethodRequests;
 import java.util.Map;
 
 public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, Queryable, TypingTarget {
+  
+  private static final Composite COMPOSITE_TO_USE = UIUtil.isXRenderActive() ? AlphaComposite.SrcOver : AlphaComposite.Src;
+  
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(EditorImpl editor) {
@@ -144,7 +147,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
     try {
-      ((Graphics2D)g).setComposite(AlphaComposite.Src);
+      ((Graphics2D)g).setComposite(COMPOSITE_TO_USE);
 
       UISettings.setupAntialiasing(g);
       myEditor.paint((Graphics2D)g);
