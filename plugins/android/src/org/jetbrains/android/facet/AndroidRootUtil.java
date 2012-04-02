@@ -160,6 +160,14 @@ public class AndroidRootUtil {
   }
 
   @Nullable
+  public static VirtualFile getAaptGenDir(@NotNull AndroidFacet facet) {
+    final String genPath = getAptGenSourceRootPath(facet);
+    return genPath != null
+           ? LocalFileSystem.getInstance().findFileByPath(genPath)
+           : null;
+  }
+
+  @Nullable
   public static VirtualFile getRenderscriptGenDir(@NotNull AndroidFacet facet) {
     final String path = getRenderscriptGenSourceRootPath(facet);
     return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
