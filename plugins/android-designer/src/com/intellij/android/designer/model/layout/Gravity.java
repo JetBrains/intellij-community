@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.designSurface.layout;
+package com.intellij.android.designer.model.layout;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;

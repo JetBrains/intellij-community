@@ -17,6 +17,7 @@ package com.intellij.android.designer.designSurface.layout;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
@@ -38,10 +39,11 @@ import java.util.Set;
  * @author Alexander Lobas
  */
 public class FrameLayoutOperation extends AbstractEditOperation {
+  private Set<Pair<Gravity, Gravity>> myExcludes = Collections.emptySet();
   private GravityFeedback myFeedback;
   private TextFeedback myTextFeedback;
+  private Rectangle myBounds;
   private String myGravity;
-  private Set<Pair<Gravity, Gravity>> myExcludes = Collections.emptySet();
 
   public FrameLayoutOperation(RadViewComponent container, OperationContext context) {
     super(container, context);
@@ -55,12 +57,14 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     }
   }
 
-  private void createFeedback(Rectangle bounds) {
+  private void createFeedback() {
     if (myFeedback == null) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
+      myBounds = myContainer.getBounds(layer);
+
       myFeedback = new GravityFeedback();
-      myFeedback.setBounds(bounds);
+      myFeedback.setBounds(myBounds);
       layer.add(myFeedback);
 
       myTextFeedback = new TextFeedback();
@@ -73,20 +77,18 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
   @Override
   public void showFeedback() {
-    Rectangle bounds = myContainer.getBounds(myContext.getArea().getFeedbackLayer());
-
-    createFeedback(bounds);
+    createFeedback();
 
     Point location = myContext.getLocation();
-    Gravity horizontal = calculateHorizontal(bounds, location);
-    Gravity vertical = calculateVertical(bounds, location);
+    Gravity horizontal = calculateHorizontal(myBounds, location);
+    Gravity vertical = calculateVertical(myBounds, location);
 
     if (myContext.isMove() && exclude(horizontal, vertical)) {
       horizontal = vertical = null;
     }
 
     myFeedback.setGravity(horizontal, vertical);
-    configureTextFeedback(bounds, horizontal, vertical);
+    configureTextFeedback(myBounds, horizontal, vertical);
 
     myGravity = Gravity.getValue(horizontal, vertical);
   }
@@ -193,8 +195,6 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
   private class GravityFeedback extends AlphaComponent {
 
-    private static final int SPACE = 5;
-
     private Gravity myHorizontal;
     private Gravity myVertical;
 
@@ -232,36 +232,47 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
     private boolean paintCell(Graphics2D g2d, Gravity horizontal, Gravity vertical, boolean selection) {
       int x = 0;
-      int y = 0;
-      int width = getWidth() / 3;
-      int height = getHeight() / 3;
-
+      int width = (getWidth() - 2) / 3;
       if (horizontal == Gravity.center) {
-        x = width;
+        x = width + 1;
       }
       else if (horizontal == Gravity.right) {
         x = getWidth() - width;
       }
 
+      int y = 0;
+      int height = (getHeight() - 2) / 3;
       if (vertical == Gravity.center) {
-        y = height;
+        y = height + 1;
       }
       else if (vertical == Gravity.bottom) {
         y = getHeight() - height;
+      }
+
+      int hSpace = Math.min(5, Math.max(1, getWidth() / 30));
+      if (hSpace > 1) {
+        x += hSpace;
+        width -= 2 * hSpace;
+      }
+
+      int vSpace = Math.min(5, Math.max(1, getHeight() / 30));
+      if (vSpace > 1) {
+        y += vSpace;
+        height -= 2 * vSpace;
       }
 
       if (selection) {
         if (myHorizontal == horizontal && myVertical == vertical) {
           Color oldColor = g2d.getColor();
           g2d.setColor(LightColors.YELLOW);
-          g2d.fillRect(x + SPACE, y + SPACE, width - 2 * SPACE, height - 2 * SPACE);
+          g2d.fillRect(x, y, width, height);
           g2d.setColor(oldColor);
 
           return true;
         }
       }
       else {
-        g2d.fillRect(x + SPACE, y + SPACE, width - 2 * SPACE, height - 2 * SPACE);
+        g2d.fillRect(x, y, width, height);
       }
 
       return false;
