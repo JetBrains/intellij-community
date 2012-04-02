@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 public class AndroidCommonUtils {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.util.AndroidCommonUtils");
 
-  @NonNls public static final Object MANIFEST_JAVA_FILE_NAME = "Manifest.java";
+  @NonNls public static final String MANIFEST_JAVA_FILE_NAME = "Manifest.java";
   @NonNls public static final String R_JAVA_FILENAME = "R.java";
   @NonNls public static final String CLASSES_JAR_FILE_NAME = "classes.jar";
   @NonNls public static final String CLASSES_FILE_NAME = "classes.dex";
