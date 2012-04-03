@@ -76,7 +76,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return valueTextRanges;
   }
 
-  private static TextRange getNodeTextRange(final String text) {
+  public static TextRange getNodeTextRange(final String text) {
     int startOffset = getPrefixLength(text);
     int delimiterLength = 1;
     final String afterPrefix = text.substring(startOffset);
@@ -154,7 +154,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   public String getStringValue() {
     //ASTNode child = getNode().getFirstChildNode();
     //assert child != null;
-    if (stringValue == null) {
+   if (stringValue == null) {
       final StringBuilder out = new StringBuilder();
       iterateCharacterRanges(new TextRangeConsumer() {
         public boolean process(int startOffset, int endOffset, String value) {
