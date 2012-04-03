@@ -35,6 +35,11 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     myFixture.checkResultByFile("/refactoring/extractmethod/" + result);
   }
 
+  private void doTest(String newName) {
+    final String testName = getTestName(false);
+    doTest(testName + ".before.py", newName, testName + ".after.py");
+  }
+
   public void testParameter() {
     doTest("outEmpty/parameter.before.py", "bar", "outEmpty/parameter.after.py");
   }
@@ -151,5 +156,10 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   // PY-5123
   public void testMethodInIf() {
     doTest("methodInIf.before.py", "baz", "methodInIf.after.py");
+  }
+
+  // PY-6081
+  public void testLocalVarDefinedBeforeModifiedInside() {
+    doTest("bar");
   }
 }
