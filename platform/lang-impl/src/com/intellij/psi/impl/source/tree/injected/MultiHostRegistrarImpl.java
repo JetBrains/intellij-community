@@ -272,7 +272,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         assert viewProvider.isValid();
 
         try {
-          List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, place, virtualFile, myProject);
+          List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = obtainHighlightTokensFromLexer(myLanguage, outChars, escapers, place, virtualFile, myProject);
           psiFile.putUserData(InjectedLanguageUtil.HIGHLIGHT_TOKENS, tokens);
         }
         catch (ProcessCanceledException e) {
@@ -440,20 +440,20 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   }
 
   // returns lexer element types with corresponding ranges in encoded (injection host based) PSI
-  private static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>
+  private static List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>
           obtainHighlightTokensFromLexer(Language language,
                                          StringBuilder outChars,
                                          List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
                                          Place shreds,
                                          VirtualFileWindow virtualFile,
                                          Project project) {
-    List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> tokens = new ArrayList<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>(10);
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars);
     int hostNum = -1;
     int prevHostEndOffset = 0;
-    PsiLanguageInjectionHost host = null;
+    SmartPsiElementPointer<PsiLanguageInjectionHost> host = null;
     LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = null;
     int prefixLength = 0;
     int suffixLength = 0;
@@ -467,7 +467,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
           PsiLanguageInjectionHost.Shred shred = shreds.get(hostNum);
           shredEndOffset = shred.getRange().getEndOffset();
           prevHostEndOffset = range.getStartOffset();
-          host = shred.getHost();
+          host = ((ShredImpl)shred).getSmartPointer();
           escaper = escapers.get(hostNum);
           rangeInsideHost = shred.getRangeInsideHost();
           prefixLength = shred.getPrefix().length();
