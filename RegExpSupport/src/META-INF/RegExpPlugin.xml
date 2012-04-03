@@ -13,5 +13,10 @@
     <lang.surroundDescriptor language="RegExp" implementationClass="org.intellij.lang.regexp.surroundWith.SimpleSurroundDescriptor"/>
     <colorSettingsPage implementation="org.intellij.lang.regexp.RegExpColorsPage"/>
     <basicWordSelectionFilter implementation="org.intellij.lang.regexp.RegExpWordSelectionFilter"/>
+
+    <intentionAction>
+      <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
+      <category>Declaration</category>
+    </intentionAction>
   </extensions>
 </idea-plugin>
