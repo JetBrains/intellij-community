@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public class ChooseCheckoutMode extends WizardStep {
   }
 
   @Override
-  public boolean setActive() {
+  public void activate() {
     final File selectedLocation = myWizard.getSelectedLocation();
     final Collection<File> cvsPaths = getSelectedFiles();
 
@@ -158,8 +158,6 @@ public class ChooseCheckoutMode extends WizardStep {
     else if (selectedLocation == null) {
       getWizard().disableNextAndFinish();
     }
-
-    return true;
   }
 
   private StringBuilder composeLocationsMessage() {
