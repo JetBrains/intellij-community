@@ -59,7 +59,7 @@ public abstract class SelectLocationStep extends WizardStep {
   private final JPanel myNorthPanel = new JPanel(new BorderLayout());
   private final JComponent myPathTextFieldWrapper;
 
-  private TextFieldAction myTextFieldAction;
+  private final TextFieldAction myTextFieldAction;
   private ActionToolbar myFileSystemToolBar;
   private VirtualFile mySelectedFile;
   private boolean myShowPath = CvsApplicationLevelConfiguration.getInstance().SHOW_PATH;
@@ -158,10 +158,6 @@ public abstract class SelectLocationStep extends WizardStep {
   public boolean nextIsEnabled() {
     final VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
     return selectedFiles.length == 1 && selectedFiles[0].isDirectory();
-  }
-
-  public boolean setActive() {
-    return true;
   }
 
   private DefaultActionGroup createFileSystemActionGroup() {
