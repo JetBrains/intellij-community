@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -87,14 +88,24 @@ public class ConvertConcatenationToGstringIntention extends Intention {
   }
 
   private static void getOperandText(@Nullable GrExpression operand, StringBuilder builder) {
-    if (operand instanceof GrString) {
+    if (operand instanceof GrRegex) {
+      StringBuilder b = new StringBuilder();
+      GrStringUtil.parseRegexCharacters(GrStringUtil.removeQuotes(operand.getText()), b, null, operand.getText().startsWith("/"));
+      GrStringUtil.escapeSymbolsForGString(b, false, false);
+    }
+    else if (operand instanceof GrString) {
       builder.append(GrStringUtil.removeQuotes(operand.getText()));
     }
     else if (operand instanceof GrLiteral) {
-      final String text = GrStringUtil.removeQuotes(operand.getText());
+      Object value = ((GrLiteral)operand).getValue();
+      if (value == null) {
+        value = GrStringUtil.removeQuotes(operand.getText());
+      }
+
+      String text = value.toString();
       StringBuilder buffer = new StringBuilder(text.length());
       boolean containsLineFeeds = text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0;
-      GrStringUtil.escapeStringCharacters(text.length(), text, "$", false, false, buffer);
+      GrStringUtil.escapeStringCharacters(text.length(), text, "$", false, true, buffer);
       GrStringUtil.unescapeCharacters(buffer, containsLineFeeds?"'\"":"'", containsLineFeeds);
       builder.append(buffer);
     }
@@ -164,8 +175,10 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
 
     public static boolean satisfiedBy(PsiElement element, boolean checkForParent) {
-      if (element instanceof GrLiteral && element.getText().startsWith("'")) return true;
+      if (element instanceof GrString || element instanceof GrLiteral && ((GrLiteral)element).getValue() instanceof String) return true;
+
       if (!(element instanceof GrBinaryExpression)) return false;
+
       GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
       if (!GroovyTokenTypes.mPLUS.equals(binaryExpression.getOperationTokenType())) return false;
 
@@ -180,9 +193,8 @@ public class ConvertConcatenationToGstringIntention extends Intention {
       final PsiType type = binaryExpression.getType();
       if (type == null) return false;
 
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
       final PsiClassType stringType = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, element);
-      final PsiClassType gstringType = factory.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_GSTRING, element.getResolveScope());
+      final PsiClassType gstringType = TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_GSTRING, element);
       if (!(TypeConversionUtil.isAssignable(stringType, type) || TypeConversionUtil.isAssignable(gstringType, type))) return false;
 
       return true;
