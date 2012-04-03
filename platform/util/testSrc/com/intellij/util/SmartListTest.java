@@ -79,7 +79,7 @@ public class SmartListTest extends TestCase {
 
     l.set(2, 3);
     assertEquals(3, l.size());
-    assertEquals(++modCount, l.getModificationCount());
+    assertEquals(modCount, l.getModificationCount());
     assertEquals("[1, 2, 3]", l.toString());
 
     l.clear();
