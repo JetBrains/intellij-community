@@ -21,24 +21,26 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.print.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
 class PrintManager {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PrintManager");
+
   public static void executePrint(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
@@ -131,10 +133,11 @@ class PrintManager {
       // for Windows only...
     }
 
-
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Runnable runnable = new Runnable() {
-      public void run() {
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, CodeEditorBundle.message("print.progress"), true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
         try {
           ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
           if (painter0 instanceof MultiFilePainter) {
@@ -147,16 +150,13 @@ class PrintManager {
           printerJob.print();
         }
         catch(PrinterException e) {
-          e.printStackTrace();
+          LOG.error(e);
         }
         catch(ProcessCanceledException e) {
           printerJob.cancel();
         }
       }
-    };
-    
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable,
-                                                                      CodeEditorBundle.message("print.progress"), true, project);
+    });
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, ArrayList<PsiFile> filesList, boolean isRecursive) {
