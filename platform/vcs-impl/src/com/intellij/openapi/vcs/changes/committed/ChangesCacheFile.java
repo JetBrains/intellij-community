@@ -41,7 +41,7 @@ import java.util.*;
  */
 public class ChangesCacheFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.ChangesCacheFile");
-  private static final int VERSION = 6;
+  private static final int VERSION = 7;
 
   private final File myPath;
   private final File myIndexPath;
