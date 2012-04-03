@@ -116,7 +116,7 @@ public class LayeredIcon implements Icon {
 
   @Override
   public int getIconWidth() {
-    if (myWidth == 1) {
+    if (myWidth == 0) {
       recalculateSize();
     }
     return myWidth;
@@ -124,7 +124,7 @@ public class LayeredIcon implements Icon {
 
   @Override
   public int getIconHeight() {
-    if (myHeight == 1) {
+    if (myHeight == 0) {
       recalculateSize();
     }
     return myHeight;
