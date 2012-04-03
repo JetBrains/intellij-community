@@ -22,6 +22,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
@@ -32,6 +33,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -284,7 +289,36 @@ public class AndroidRootUtil {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     OrderedSet<VirtualFile> libs = new OrderedSet<VirtualFile>();
     fillExternalLibrariesAndModules(module, files, libs, new HashSet<Module>(), false);
+
+    addAnnotationsJar(module, libs);
     return libs;
+  }
+
+  private static void addAnnotationsJar(Module module, OrderedSet<VirtualFile> libs) {
+    final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    if (sdk == null || !sdk.getSdkType().equals(AndroidSdkType.getInstance())) {
+      return;
+    }
+
+    final String sdkHomePath = sdk.getHomePath();
+    if (sdkHomePath == null) {
+      return;
+    }
+
+    final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+    if (data == null) {
+      return;
+    }
+    final AndroidPlatform platform = data.getAndroidPlatform();
+
+    if (platform != null && platform.needToAddAnnotationsJarToClasspath()) {
+      final String annotationsJarPath = FileUtil.toSystemIndependentName(sdkHomePath) + AndroidSdkUtils.ANNOTATIONS_JAR_RELATIVE_PATH;
+      final VirtualFile annotationsJar = LocalFileSystem.getInstance().findFileByPath(annotationsJarPath);
+
+      if (annotationsJar != null) {
+        libs.add(annotationsJar);
+      }
+    }
   }
 
   @NotNull

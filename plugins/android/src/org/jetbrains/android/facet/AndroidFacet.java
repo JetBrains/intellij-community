@@ -46,13 +46,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -520,20 +524,35 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     if (resFolderPath == null) {
       return;
     }
+    final List<VirtualFile> filesToAdd = new ArrayList<VirtualFile>();
 
     final VirtualFile resFolder = LocalFileSystem.getInstance().findFileByPath(resFolderPath);
-    if (resFolder == null) {
-      return;
+    if (resFolder != null) {
+      filesToAdd.add(resFolder);
     }
 
-    for (VirtualFile root : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-      if (root == resFolder) {
-        return;
-      }
+    if (platform.needToAddAnnotationsJarToClasspath()) {
+      final String sdkHomePath = FileUtil.toSystemIndependentName(platform.getSdkData().getLocation());
+      final VirtualFile annotationsJar = JarFileSystem.getInstance().findFileByPath(
+        sdkHomePath + AndroidSdkUtils.ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
+      filesToAdd.add(annotationsJar);
     }
-    final SdkModificator modificator = sdk.getSdkModificator();
-    modificator.addRoot(resFolder, OrderRootType.CLASSES);
-    modificator.commitChanges();
+
+    addFilesToSdkIfNecessary(sdk, filesToAdd);
+  }
+
+  private static void addFilesToSdkIfNecessary(@NotNull Sdk sdk, @NotNull Collection<VirtualFile> files) {
+    final List<VirtualFile> newFiles = new ArrayList<VirtualFile>(files);
+    newFiles.removeAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+
+    if (newFiles.size() > 0) {
+      final SdkModificator modificator = sdk.getSdkModificator();
+
+      for (VirtualFile file : newFiles) {
+        modificator.addRoot(file, OrderRootType.CLASSES);
+      }
+      modificator.commitChanges();
+    }
   }
 
   private static void updateDependenciesInPropertyFile(@NotNull final PropertiesFile projectProperties,
