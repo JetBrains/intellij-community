@@ -538,4 +538,8 @@ public class PythonCompletionTest extends PyTestCase {
   public void testExceptName() {
     doTest();
   }
+
+  public void testQualifiedAssignment() {  // PY-6121
+    doTest();
+  }
 }
