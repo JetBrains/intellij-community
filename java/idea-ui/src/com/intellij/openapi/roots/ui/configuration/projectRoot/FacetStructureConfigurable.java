@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -357,11 +357,11 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   public String getHelpTopic() {
-    final Component component = DataKeys.CONTEXT_COMPONENT.getData(DataManager.getInstance().getDataContext());
+    final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(DataManager.getInstance().getDataContext());
     if (myTree.equals(component)) {
-      final NamedConfigurable selectedConfugurable = getSelectedConfugurable();
-      if (selectedConfugurable instanceof FacetTypeConfigurable) {
-        final FacetType facetType = ((FacetTypeConfigurable)selectedConfugurable).getEditableObject();
+      final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
+      if (selectedConfigurable instanceof FacetTypeConfigurable) {
+        final FacetType facetType = ((FacetTypeConfigurable)selectedConfigurable).getEditableObject();
         final String topic = facetType.getHelpTopic();
         if (topic != null) {
           return topic;
@@ -413,12 +413,12 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
 
     public void update(final AnActionEvent e) {
-      NamedConfigurable selected = getSelectedConfugurable();
+      NamedConfigurable selected = getSelectedConfigurable();
       e.getPresentation().setEnabled(selected instanceof FacetConfigurable);
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      NamedConfigurable selected = getSelectedConfugurable();
+      NamedConfigurable selected = getSelectedConfigurable();
       if (selected instanceof FacetConfigurable) {
         ProjectStructureConfigurable.getInstance(myProject).select(((FacetConfigurable)selected).getEditableObject(), true);
       }

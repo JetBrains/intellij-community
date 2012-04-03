@@ -179,4 +179,8 @@ public class AndroidPlatform {
     result = 31 * result + myTarget.hashCode();
     return result;
   }
+
+  public boolean needToAddAnnotationsJarToClasspath() {
+    return myTarget.getVersion().getApiLevel() <= 15;
+  }
 }

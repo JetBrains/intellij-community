@@ -262,7 +262,7 @@ public class IdeaProjectLoader {
   }
 
   private File getFileByUrl(final String url) {
-    return new File(FileUtil.toSystemDependentName(projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))))
+    return new File(FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))))
   }
 
   private static boolean parseBoolean(Object value, boolean defaultValue) {

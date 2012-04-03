@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.components.JBList;
@@ -482,7 +483,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       result.closedPath = typed.endsWith(myFinder.getSeparator()) && typedText.length() > myFinder.getSeparator().length();
       final String currentParentText = result.current.getAbsolutePath();
 
-      if (!typedText.toUpperCase().startsWith(currentParentText.toUpperCase())) return;
+      if (!StringUtilRt.toUpperCase(typedText).startsWith(StringUtilRt.toUpperCase(currentParentText))) return;
 
       String prefix = typedText.substring(currentParentText.length());
       if (prefix.startsWith(myFinder.getSeparator())) {
@@ -492,18 +493,18 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         prefix = "";
       }
 
-      result.effectivePrefix = prefix.toUpperCase();
+      result.effectivePrefix = StringUtilRt.toUpperCase(prefix);
 
       result.currentGrandparent = result.current.getParent();
       if (result.currentGrandparent != null && result.currentParentMatch && !result.closedPath) {
         final String currentGrandparentText = result.currentGrandparent.getAbsolutePath();
         if (StringUtil.startsWithConcatenationOf(typedText, currentGrandparentText, myFinder.getSeparator())) {
-          result.grandparentPrefix =
-            currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length()).toUpperCase();
+          result.grandparentPrefix = StringUtilRt.toUpperCase(
+            currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length()));
         }
       }
     } else {
-      result.effectivePrefix = typedText.toUpperCase();
+      result.effectivePrefix = StringUtilRt.toUpperCase(typedText);
     }
 
 
@@ -512,7 +513,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         if (result.current != null) {
           result.myToComplete.addAll(result.current.getChildren(new LookupFilter() {
             public boolean isAccepted(final LookupFile file) {
-              return myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(result.effectivePrefix);
+              return myFilter.isAccepted(file) && StringUtilRt.toUpperCase(file.getName()).startsWith(result.effectivePrefix);
             }
           }));
 
@@ -523,7 +524,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           if (result.grandparentPrefix != null) {
             final List<LookupFile> siblings = result.currentGrandparent.getChildren(new LookupFilter() {
               public boolean isAccepted(final LookupFile file) {
-                return !file.equals(result.current) && myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(result.grandparentPrefix);
+                return !file.equals(result.current) && myFilter.isAccepted(file) && StringUtilRt.toUpperCase(file.getName()).startsWith(result.grandparentPrefix);
               }
             });
             result.myToComplete.addAll(0, siblings);
@@ -538,7 +539,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           boolean toPreselectFixed = false;
           if (result.effectivePrefix.length() > 0) {
             for (LookupFile each : result.myToComplete) {
-              String eachName = each.getName().toUpperCase();
+              String eachName = StringUtilRt.toUpperCase(each.getName());
               if (!eachName.startsWith(result.effectivePrefix)) continue;
               int diff = result.effectivePrefix.compareTo(eachName);
               currentDiff = Math.max(diff, currentDiff);
@@ -588,7 +589,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     final Iterator<String> macros = myMacroMap.keySet().iterator();
     while (macros.hasNext()) {
       String eachMacro = macros.next();
-      if (eachMacro.toUpperCase().startsWith(typedText.toUpperCase())) {
+      if (StringUtilRt.toUpperCase(eachMacro).startsWith(StringUtilRt.toUpperCase(typedText))) {
         final String eachPath = myMacroMap.get(eachMacro);
         if (eachPath != null) {
           final LookupFile macroFile = myFinder.find(eachPath);
@@ -715,7 +716,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       if (SystemInfo.isFileSystemCaseSensitive) {
         toRemoveExistingName = name.startsWith(prefix) && prefix.length() > 0;
       } else {
-        toRemoveExistingName = name.toUpperCase().startsWith(prefix.toUpperCase()) && prefix.length() > 0;
+        toRemoveExistingName = StringUtilRt.toUpperCase(name).startsWith(StringUtilRt.toUpperCase(prefix)) && prefix.length() > 0;
       }
     } else {
       toRemoveExistingName = true;

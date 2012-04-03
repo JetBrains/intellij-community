@@ -41,7 +41,6 @@ import org.jetbrains.idea.maven.utils.Url;
 import java.io.File;
 
 public class MavenRootModelAdapter {
-  private static final String MAVEN_LIB_PREFIX = "Maven: ";
 
   private final MavenProject myMavenProject;
   private final ModifiableModuleModel myModuleModel;
@@ -238,7 +237,7 @@ public class MavenRootModelAdapter {
                                    DependencyScope scope,
                                    MavenModifiableModelsProvider provider,
                                    MavenProject project) {
-    String libraryName = makeLibraryName(artifact);
+    String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
     if (library == null) {
@@ -256,12 +255,12 @@ public class MavenRootModelAdapter {
     e.setScope(scope);
   }
 
-  private void updateUrl(Library.ModifiableModel library,
-                         OrderRootType type,
-                         MavenArtifact artifact,
-                         MavenExtraArtifactType artifactType,
-                         MavenProject project,
-                         boolean clearAll) {
+  private static void updateUrl(Library.ModifiableModel library,
+                                OrderRootType type,
+                                MavenArtifact artifact,
+                                MavenExtraArtifactType artifactType,
+                                MavenProject project,
+                                boolean clearAll) {
     String classifier = null;
     String extension = null;
 
@@ -283,7 +282,7 @@ public class MavenRootModelAdapter {
     library.addRoot(newUrl, type);
   }
 
-  private boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier, String extension) {
+  private static boolean isRepositoryUrl(MavenArtifact artifact, String url, String classifier, String extension) {
     return url.endsWith(artifact.getRelativePathForExtraArtifact(classifier, extension) + JarFileSystem.JAR_SEPARATOR);
   }
 
@@ -314,7 +313,7 @@ public class MavenRootModelAdapter {
   }
 
   public Library findLibrary(@NotNull final MavenArtifact artifact) {
-    final String name = makeLibraryName(artifact);
+    final String name = artifact.getLibraryName();
     final Ref<Library> result = Ref.create(null);
     myRootModel.orderEntries().forEachLibrary(new Processor<Library>() {
       @Override
@@ -328,20 +327,18 @@ public class MavenRootModelAdapter {
     return result.get();
   }
 
+  @Deprecated // Use artifact.getLibraryName();
   public static String makeLibraryName(@NotNull MavenArtifact artifact) {
-    return MAVEN_LIB_PREFIX + artifact.getDisplayStringForLibraryName();
+    return artifact.getLibraryName();
   }
 
   public static boolean isMavenLibrary(@Nullable Library library) {
-    if (library == null) return false;
-
-    String name = library.getName();
-    return name != null && name.startsWith(MAVEN_LIB_PREFIX);
+    return library != null && MavenArtifact.isMavenLibrary(library.getName());
   }
 
   @Nullable
   public static OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
-    String name = makeLibraryName(artifact);
+    String name = artifact.getLibraryName();
     for (OrderEntry each : ModuleRootManager.getInstance(m).getOrderEntries()) {
       if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
         return each;
@@ -355,8 +352,11 @@ public class MavenRootModelAdapter {
     if (library == null) return null;
 
     String name = library.getName();
+
+    if (!MavenArtifact.isMavenLibrary(name)) return null;
+
     for (MavenArtifact each : project.getDependencies()) {
-      if (makeLibraryName(each).equals(name)) return each;
+      if (each.getLibraryName().equals(name)) return each;
     }
     return null;
   }

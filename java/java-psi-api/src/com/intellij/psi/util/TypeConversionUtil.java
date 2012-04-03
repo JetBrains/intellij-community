@@ -880,10 +880,10 @@ public class TypeConversionUtil {
       }
       else {
         if (leftWildcard.isExtends()) {
-          return isAssignable(leftBound, typeRight, allowUncheckedConversion);
+          return isAssignable(leftBound, typeRight, allowUncheckedConversion && !leftBound.accept(new WildcardDetector()));
         }
         else { // isSuper
-          return isAssignable(typeRight, leftBound, allowUncheckedConversion);
+          return isAssignable(typeRight, leftBound, allowUncheckedConversion && !leftBound.accept(new WildcardDetector()));
         }
       }
     }
@@ -1676,4 +1676,34 @@ public class TypeConversionUtil {
     return WRAPPER_TO_PRIMITIVE.get(o.getClass());
   }
 
+  private static class WildcardDetector extends PsiTypeVisitor<Boolean> {
+    @Override
+    public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      return true;
+    }
+
+    @Override
+    public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+      return true;
+    }
+
+    @Override
+    public Boolean visitClassType(PsiClassType classType) {
+      final PsiType[] parameters = classType.getParameters();
+      for (PsiType parameter : parameters) {
+        if (parameter.accept(this)) return true;
+      }
+      return super.visitClassType(classType);
+    }
+
+    @Override
+    public Boolean visitArrayType(PsiArrayType arrayType) {
+      return arrayType.getComponentType().accept(this);
+    }
+
+    @Override
+    public Boolean visitType(PsiType type) {
+      return false;
+    }
+  }
 }

@@ -236,6 +236,15 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     });
   }
 
+  protected List<String> rebuild() {
+    return runCompiler(new Consumer<ErrorReportingCallback>() {
+      @Override
+      public void consume(ErrorReportingCallback callback) {
+        CompilerManager.getInstance(getProject()).rebuild(callback);
+      }
+    });
+  }
+
   protected List<String> compileModule(final Module module) {
     return runCompiler(new Consumer<ErrorReportingCallback>() {
       @Override

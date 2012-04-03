@@ -299,7 +299,7 @@ public class TypesUtil {
       }
     }
 
-    if (isClassType(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING)) {
+    if (isClassType(rType, GROOVY_LANG_GSTRING)) {
       if (isAssignable(lType, GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, scope), manager, scope)) {
         return true;
       }
@@ -584,9 +584,9 @@ public class TypesUtil {
   public static PsiClassType createListType(@NotNull PsiClass elements) {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(elements.getProject());
     GlobalSearchScope resolveScope = elements.getResolveScope();
-    PsiClass listClass = facade.findClass(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
+    PsiClass listClass = facade.findClass(JAVA_UTIL_LIST, resolveScope);
     if (listClass == null) {
-      return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_LIST, resolveScope);
+      return facade.getElementFactory().createTypeByFQClassName(JAVA_UTIL_LIST, resolveScope);
     }
     return facade.getElementFactory().createType(listClass, facade.getElementFactory().createType(elements));
   }
@@ -596,12 +596,12 @@ public class TypesUtil {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getProject());
     GlobalSearchScope resolveScope = context.getResolveScope();
 
-    PsiClass setClass = facade.findClass(CommonClassNames.JAVA_UTIL_SET, resolveScope);
+    PsiClass setClass = facade.findClass(JAVA_UTIL_SET, resolveScope);
     if (setClass != null) {
       return facade.getElementFactory().createType(setClass, type);
     }
 
-    return facade.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_UTIL_SET, resolveScope);
+    return facade.getElementFactory().createTypeByFQClassName(JAVA_UTIL_SET, resolveScope);
   }
 
   public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {

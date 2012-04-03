@@ -89,7 +89,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         }
       });
 
-      if (handler.shouldRetry()) {
+      if (!context.isProjectRebuild() && handler.shouldRetry()) {
         if (CHUNK_REBUILD_ORDERED.get(context) != null) {
           CHUNK_REBUILD_ORDERED.set(context, null);
         } else {
@@ -207,7 +207,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       final String moduleName = module.getName().toLowerCase(Locale.US);
       final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
       for (String src : srcToOut.getKeys()) {
-        if (!toCompilePaths.contains(src) && isGroovyFile(src)) {
+        if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
+            !context.getProject().getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {
           final Collection<String> outs = srcToOut.getState(src);
           if (outs != null) {
             for (String out : outs) {

@@ -83,7 +83,7 @@ public class JavaCharFilter extends CharFilter {
       return false;
     }
     
-    return name.length() == 1 && Character.isLowerCase(name.charAt(0));
+    return name.length() <= 2 && Character.isLowerCase(name.charAt(0));
   }
 
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
