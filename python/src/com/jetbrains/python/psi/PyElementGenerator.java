@@ -46,10 +46,8 @@ public abstract class PyElementGenerator {
    * @param text the text to create an expression from
    * @return the expression
    */
-  @Nullable
   public abstract  PyExpression createExpressionFromText(String text);
 
-  @Nullable
   public abstract PyExpression createExpressionFromText(final LanguageLevel languageLevel, String text);
 
   public abstract PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)

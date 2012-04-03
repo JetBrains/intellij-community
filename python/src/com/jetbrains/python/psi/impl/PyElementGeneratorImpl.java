@@ -199,7 +199,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     if (element instanceof PyExpressionStatement) {
       return ((PyExpressionStatement)element).getExpression();
     }
-    return null;
+    throw new IncorrectOperationException("could not parse text as expression: " + text);
   }
 
   public PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName) {

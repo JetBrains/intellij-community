@@ -87,7 +87,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     }
 
     PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
-    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, refText, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
     // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
     // walk up collecting all such statements and analyzing
@@ -134,7 +134,8 @@ public class PythonReferenceImporter implements ReferenceImporter {
         if (isTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile() &&
-              (ImportFromExistingAction.isRoot(project, srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName())))) {
+              (ImportFromExistingAction.isRoot(project, srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName()))) &&
+               !isShadowedModule(srcfile)) {
             PyQualifiedName import_path = ResolveImportUtil.findCanonicalImportPath(srcfile, node);
             if (import_path != null && !seen_file_names.contains(import_path.toString())) {
               // a new, valid hit
@@ -153,6 +154,19 @@ public class PythonReferenceImporter implements ReferenceImporter {
       return fix;
     }
     return null;
+  }
+
+  private static boolean isShadowedModule(PsiFileSystemItem file) {
+    if (file.isDirectory() || file.getName().equals(PyNames.INIT_DOT_PY)) {
+      return false;
+    }
+    String name = FileUtil.getNameWithoutExtension(file.getName());
+    final PsiDirectory directory = ((PsiFile)file).getContainingDirectory();
+    if (directory == null) {
+      return false;
+    }
+    PsiDirectory packageDir = directory.findSubdirectory(name);
+    return packageDir != null && packageDir.findFile(PyNames.INIT_DOT_PY) != null;
   }
 
   private static boolean isQualifier(PyElement node) {

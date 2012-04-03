@@ -559,10 +559,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
               if (qname.matches(PyNames.PROPERTY)) {
                 getter = new Maybe<PyFunction>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, "setter")) {
+              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.SETTER)) {
                 setter = new Maybe<PyFunction>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, "deleter")) {
+              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.DELETER)) {
                 deleter = new Maybe<PyFunction>(method);
               }
             }

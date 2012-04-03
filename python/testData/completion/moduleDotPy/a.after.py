@@ -1,0 +1,3 @@
+from shazam import *
+
+xyzzy

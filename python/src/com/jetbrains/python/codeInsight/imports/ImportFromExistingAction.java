@@ -133,10 +133,10 @@ public class ImportFromExistingAction implements QuestionAction {
         String qual_name;
         if (item.getAsName() != null) qual_name = item.getAsName();
         else qual_name = qualifiedName;
-        myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
+        myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qual_name + "." + myName));
       }
       else {
-        AddImportHelper.addImportFrom(myTarget.getContainingFile(), qualifiedName, myName, null, priority);
+        AddImportHelper.addImportFrom(myTarget.getContainingFile(), myTarget, qualifiedName, myName, null, priority);
       }
     }
   }
@@ -152,7 +152,7 @@ public class ImportFromExistingAction implements QuestionAction {
     }
     else { // just 'import'
       // all we need is to qualify our target
-      myTarget.replace(gen.createExpressionFromText(src.getVisibleName() + "." + myName));
+      myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), src.getVisibleName() + "." + myName));
     }
   }
 

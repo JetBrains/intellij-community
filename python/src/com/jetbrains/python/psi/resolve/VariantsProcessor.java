@@ -77,7 +77,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
         final NameDefiner definer = (NameDefiner)element;
         for (PyElement expr : definer.iterateNames()) {
           if (expr != null && expr != myContext) { // NOTE: maybe rather have SingleIterables skip nulls outright?
-            String referencedName = expr.getName();
+            String referencedName = expr instanceof PyFile ? FileUtil.getNameWithoutExtension(((PyFile) expr).getName()) : expr.getName();
             if (referencedName != null && nameIsAcceptable(referencedName)) {
               addImportedElement(referencedName, definer, expr);
             }

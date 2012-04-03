@@ -47,7 +47,7 @@ public class PyTestGenerator {
 
               PsiFile psiFile = PyUtil.getOrCreateFile(
                 dialog.getTargetDir() + "/" + fileName, project);
-              AddImportHelper.addImportFrom(psiFile, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN);
+              AddImportHelper.addImportFrom(psiFile, null, "unittest", "TestCase", null, AddImportHelper.ImportPriority.BUILTIN);
 
               PyElement createdClass = PyElementGenerator.getInstance(project).createFromText(
                 LanguageLevel.forElement(psiFile), PyClass.class,

@@ -16,6 +16,10 @@ public class Py3CompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testPropertyAfterAccessor() {  // PY-5951
+    doTest();
+  }
+
   private void doTest() {
     final String testName = "completion/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");

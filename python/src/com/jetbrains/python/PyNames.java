@@ -42,6 +42,8 @@ public class PyNames {
   public static final String STATICMETHOD = "staticmethod";
 
   public static final String PROPERTY = "property";
+  public static final String SETTER = "setter";
+  public static final String DELETER = "deleter";
 
   public static final String ALL = "__all__";
   public static final String SLOTS = "__slots__";
