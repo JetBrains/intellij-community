@@ -42,7 +42,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
       if (file == null) {
         return null;
       }
-      if (isWindowsPath(file)) {  //TODO: add SystemInfo.isWindows condition and fix path lowercasing for remote win debugger and local unix host (PY-4244)
+      if (SystemInfo.isWindows && isWindowsPath(file)) {
         file = file.toLowerCase();
       }
       return super.normalize(file);

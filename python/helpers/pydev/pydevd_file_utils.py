@@ -263,3 +263,7 @@ def GetFilenameAndBase(frame):
     #This one is just internal (so, does not need any kind of client-server translation)
     f = frame.f_code.co_filename
     return GetFileNameAndBaseFromFile(f)
+
+def set_pycharm_os(pycharm_os):
+    if pycharm_os == 'UNIX':
+        normcase = lambda x: x
