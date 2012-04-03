@@ -248,7 +248,7 @@ public class PyEditingTest extends PyTestCase {
                 "    return (<caret>(a, a) for a in [])",
                 "def dbl():\n" +
                 "    return (\n" +
-                "    (a, a) for a in [])");
+                "        (a, a) for a in [])");
   }
 
   private void doTestEnter(String before, final String after) {
