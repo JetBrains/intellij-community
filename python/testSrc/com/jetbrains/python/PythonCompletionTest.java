@@ -387,6 +387,10 @@ public class PythonCompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  public void testModuleDotPy() {  // PY-5813
+    doMultiFileTest();
+  }
+
   public void testHasAttr() {  // PY-4423
     doTest();
   }
