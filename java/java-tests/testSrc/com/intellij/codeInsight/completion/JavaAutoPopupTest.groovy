@@ -531,7 +531,7 @@ public interface Test {
     }
     edt { myFixture.type '\t' }
     myFixture.checkResult 'public interface Test { RuntimeException<caret>x }'
- }
+  }
 
   private def registerContributor(final Class contributor, LoadingOrder order = LoadingOrder.LAST) {
     def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
@@ -737,7 +737,7 @@ class Foo {
     myFixture.checkResult(" class Foo { { int iteraaa; iteraaa<caret> } } ")
     assert !lookup
   }
-  
+
   public void testChoosingItemDuringCopyCommit() {
     registerContributor(LongReplacementOffsetContributor)
 
@@ -1091,7 +1091,7 @@ public class UTest {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     type 'Foo239 '
     assert myFixture.file.text.contains('Foo239 ')
-    
+
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     type 'Foo239'
     edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
@@ -1261,6 +1261,15 @@ class Foo {
 '''
     type 'File('
     assert myFixture.file.text.contains('new File()')
+  }
+
+  public void "test inaccessible class in another package shouldn't prevent choosing by space"() {
+    myFixture.addClass("package foo; class b {}")
+    myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
+    type 'b'
+    assert lookup?.currentItem?.lookupString == 'boolean'
+    type ' '
+    myFixture.checkResult 'class Foo {{ boolean <caret> }}'
   }
 
 }
