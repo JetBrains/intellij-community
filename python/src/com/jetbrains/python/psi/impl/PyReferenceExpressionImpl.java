@@ -216,12 +216,16 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     PyExpression qualifier = getQualifier();
     final String name = getName();
     if (name != null && qualifier != null) {
-      PyType qualifier_type = context.getType(qualifier);
-      if (qualifier_type instanceof PyClassType) {
-        PyClass pyClass = ((PyClassType)qualifier_type).getPyClass();
+      PyType qualifierType = context.getType(qualifier);
+      if (qualifierType instanceof PyClassType) {
+        final PyClassType classType = (PyClassType)qualifierType;
+        PyClass pyClass = classType.getPyClass();
         if (pyClass != null) {
           Property property = pyClass.findProperty(name);
           if (property != null) {
+            if (classType.isDefinition()) {
+              return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
+            }
             final Maybe<PyFunction> accessor = property.getByDirection(AccessDirection.of(this));
             if (!accessor.isDefined()) {
               return Ref.create(null);
