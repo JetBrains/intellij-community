@@ -10,6 +10,7 @@ def test_union_type():
     bar = (1,) if True else (1, 2)
     foo(*bar) #pass
 
+
 # PY-4890
 def test_old_style_iterable():
     class C:
@@ -23,3 +24,12 @@ def test_old_style_iterable():
     xs = C()
     foo(*xs) #pass
     foo(*'bar') #pass
+
+
+# PY-6108
+def test_unexpected_args_without_self():
+    class C:
+        def sm(*args, **kwargs):
+            return args, kwargs
+    x = C()
+    x.sm(1, 2, 3) #pass

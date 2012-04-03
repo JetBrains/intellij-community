@@ -3,12 +3,15 @@ package com.jetbrains.python.codeInsight.codeFragment;
 import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -136,11 +139,15 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
         }
         // If declaration is before we look for modifications inside
         if (pos == Position.BEFORE) {
+          if (!isTopLevel(element)) {
+            inElements.add(name);
+          }
           final List<PyElement> list = modifiedInsideMap.get(name);
           boolean modificationSeen = false;
           if (list != null) {
             for (PyElement modification : list) {
-              if (modification.getReference().isReferenceTo(declaration)) {
+              final PsiReference reference = modification.getReference();
+              if (reference != null && reference.isReferenceTo(declaration)) {
                 outElements.add(name);
                 modificationSeen = true;
                 break;
@@ -153,6 +160,10 @@ public class PyCodeFragmentBuilder extends PyRecursiveElementVisitor {
         }
       }
     }
+  }
+
+  private static boolean isTopLevel(@NotNull PyElement element) {
+    return ScopeUtil.getScopeOwner(element) instanceof PyFile;
   }
 
   private void processDeclaration(final PyElement element) {
