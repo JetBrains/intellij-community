@@ -34,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 
 public class JavaCharFilter extends CharFilter {
 
@@ -61,7 +62,7 @@ public class JavaCharFilter extends CharFilter {
       }
     }
     for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(prefix, file.getResolveScope())) {
-      if (!isObfuscated(aClass) && PsiResolveHelper.SERVICE.getInstance(file.getProject()).isAccessible(aClass, file, null)) {
+      if (!isObfuscated(aClass) && PsiUtil.isAccessible(aClass, file, null)) {
         return true;
       }
     }
