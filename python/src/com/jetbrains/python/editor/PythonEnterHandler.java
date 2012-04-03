@@ -83,6 +83,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
+    final PsiElement elementParent = element.getParent();
+    if (elementParent instanceof PyParenthesizedExpression) return Result.Continue;
+
     if (offset > 0 && !(PyTokenTypes.STRING_NODES.contains(element.getNode().getElementType()))) {
       final PsiElement prevElement = file.findElementAt(offset - 1);
       if (prevElement == element) return Result.Continue;
@@ -93,8 +96,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    final PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
-    if (string != null && string.getTextOffset() < offset) {
+    final PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset+1, PyStringLiteralExpression.class, false);
+    if (string != null && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
       final String stringText = element.getText();
       final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
       if (string.getTextOffset() + prefixLength >= offset) {
@@ -110,8 +113,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       final PsiElement parent = string.getParent();
       final StringBuilder replacementString = new StringBuilder();
       if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
-          parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression ||
-          parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
+          parent instanceof PyBinaryExpression || parent instanceof PySetLiteralExpression ||
+          parent instanceof PyKeyValueExpression || parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
         replacementString.append(quote + pref + quote);
         doc.insertString(offset, replacementString);
         caretOffset.set(caretOffset.get() + 1);

@@ -230,6 +230,27 @@ public class PyEditingTest extends PyTestCase {
                 " string'");
   }
 
+  public void testStringFormatting() {
+    doTestEnter("print (\"foo<caret> %s\" % 1)",
+                "print (\"foo\"\n" +
+                "       \" %s\" % 1)");
+  }
+
+  public void testEndOfStringInParenth() {
+    doTestEnter("print (\"foo\"<caret>\n" +
+                "    \"bar\")",
+                "print (\"foo\"\n\n" +
+                "    \"bar\")");
+  }
+
+  public void testComprehensionInReturn() {
+    doTestEnter("def dbl():\n" +
+                "    return (<caret>(a, a) for a in [])",
+                "def dbl():\n" +
+                "    return (\n" +
+                "    (a, a) for a in [])");
+  }
+
   private void doTestEnter(String before, final String after) {
     int pos = before.indexOf("<caret>");
     before = before.replace("<caret>", "");
