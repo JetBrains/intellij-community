@@ -2,6 +2,7 @@ class Test {
     static {
         Class<Test> testClass = get(Test.class);
         foo(testClass);
+        Test f = foo(testClass);
     }
 
     static <E> Class<E> get(Class<? super E> value) {
