@@ -183,7 +183,8 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
-    else if (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && hasLineBreaksBefore(child, 1)) {
+    else if ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION || parentType == PyElementTypes.GENERATOR_EXPRESSION) &&
+             hasLineBreaksBefore(child, 1)) {
       childIndent = Indent.getNormalIndent();
     }
 
