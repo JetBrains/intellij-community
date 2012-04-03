@@ -30,6 +30,25 @@ public class StringUtilRt {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
   }
 
+  public static String toUpperCase(String s) {
+    StringBuilder answer = null;
+
+    for (int i = 0; i < s.length(); i++) {
+      char c = s.charAt(i);
+      char upcased = toUpperCase(c);
+      if (answer == null && upcased != c) {
+        answer = new StringBuilder(s.length());
+        answer.append(s.substring(0, i));
+      }
+
+      if (answer != null) {
+        answer.append(upcased);
+      }
+    }
+
+    return answer == null ? s : answer.toString();
+  }
+
   public static char toUpperCase(char a) {
     if (a < 'a') {
       return a;

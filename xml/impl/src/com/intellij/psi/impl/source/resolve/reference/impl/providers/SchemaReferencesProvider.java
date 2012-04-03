@@ -227,9 +227,9 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
     }
 
-    private final ReferenceType myType;
+    private final @Nullable ReferenceType myType;
 
-    protected TypeOrElementOrAttributeReference(PsiElement element, TextRange range, ReferenceType type) {
+    protected TypeOrElementOrAttributeReference(PsiElement element, TextRange range,  @Nullable ReferenceType type) {
       myElement = element;
       myRange   = range;
 
@@ -245,6 +245,9 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     @Nullable
     private static ReferenceType determineReferenceType(PsiElement element) {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+      if (attribute == null) {
+        return null;
+      }
       final XmlTag tag = attribute.getParent();
       final String localName = tag.getLocalName();
       final String attributeLocalName = attribute.getLocalName();
@@ -463,7 +466,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     @NotNull
     public Object[] getVariants() {
       final XmlTag tag = PsiTreeUtil.getContextOfType(myElement, XmlTag.class, true);
-      if (tag == null) return null;
+      if (tag == null || myType == null) return ArrayUtil.EMPTY_OBJECT_ARRAY;
 
       String[] tagNames = null;
 
@@ -488,7 +491,14 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       CompletionProcessor processor = new CompletionProcessor();
       processor.tag = tag;
 
-      XmlDocument document = ((XmlFile)PsiTreeUtil.getContextOfType(myElement, XmlElement.class, false).getContainingFile()).getDocument();
+      final XmlElement context = PsiTreeUtil.getContextOfType(myElement, XmlElement.class, false);
+      if (context == null) {
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
+      final XmlDocument document = ((XmlFile)context.getContainingFile()).getDocument();
+      if (document == null) {
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
       final XmlTag rootTag = document.getRootTag();
       String ourNamespace = rootTag != null ? rootTag.getAttributeValue(TARGET_NAMESPACE) : "";
       if (ourNamespace == null) ourNamespace = "";

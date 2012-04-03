@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class CompositeCheckoutListener implements CheckoutProvider.Listener {
       myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (myFoundProject) break;
     }
-    if (!myFoundProject) {
+    if (!myFoundProject && !epName.equals(CheckoutListener.COMPLETED_EP_NAME)) {
       final VcsAwareCheckoutListener[] vcsAwareExtensions = Extensions.getExtensions(VcsAwareCheckoutListener.EP_NAME);
       for (VcsAwareCheckoutListener extension : vcsAwareExtensions) {
         myFoundProject = extension.processCheckedOutDirectory(myProject, directory, myVcsKey);

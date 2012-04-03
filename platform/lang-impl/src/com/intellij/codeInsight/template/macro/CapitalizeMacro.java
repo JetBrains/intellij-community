@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,7 +37,7 @@ public class CapitalizeMacro extends MacroBase {
     String text = getTextResult(params, context);
     if (text != null) {
       if (text.length() > 0) {
-        text = text.substring(0, 1).toUpperCase() + text.substring(1, text.length());
+        text = StringUtilRt.toUpperCase(text.substring(0, 1)) + text.substring(1, text.length());
       }
       return new TextResult(text);
     }

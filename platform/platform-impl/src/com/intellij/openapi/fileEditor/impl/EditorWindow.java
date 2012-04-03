@@ -993,13 +993,12 @@ public class EditorWindow {
   }
 
   void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {
-    if (myTabbedPane == null) {
-      return;
-    }
+    if (myTabbedPane == null) return;
 
     FileEditorManagerEx.getInstanceEx(getManager().getProject()).getReady(this).doWhenDone(new Runnable() {
       @Override
       public void run() {
+        if (myTabbedPane == null) return;
         final boolean closeNonModifiedFilesFirst = UISettings.getInstance().CLOSE_NON_MODIFIED_FILES_FIRST;
         final EditorComposite selectedComposite = getSelectedEditor();
         try {

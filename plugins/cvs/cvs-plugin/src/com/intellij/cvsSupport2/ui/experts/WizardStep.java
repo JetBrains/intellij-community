@@ -41,7 +41,7 @@ public abstract class WizardStep extends StepAdapter{
   }
 
   public abstract boolean nextIsEnabled();
-  public abstract boolean setActive();
+  public void activate() {}
   protected abstract JComponent createComponent();
   protected void dispose() {}
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMigration;
 import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -69,6 +70,11 @@ class MigrationProcessor extends BaseRefactoringProcessor {
         MigrationUtil.findOrCreateClass(project, migration, entry.getOldName());
       }
     }
+  }
+
+  @Override
+  protected void refreshElements(PsiElement[] elements) {
+    myPsiMigration = startMigration(myProject);
   }
 
   @NotNull

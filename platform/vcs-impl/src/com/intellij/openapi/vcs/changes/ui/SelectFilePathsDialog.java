@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
@@ -31,10 +32,11 @@ import java.util.List;
  */
 public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
 
-  private ChangesTreeList<FilePath> myFileList;
+  private final ChangesTreeList<FilePath> myFileList;
 
   public SelectFilePathsDialog(final Project project, List<FilePath> originalFiles, final String prompt,
-                           final VcsShowConfirmationOption confirmationOption) {
+                               final VcsShowConfirmationOption confirmationOption,
+                               @Nullable String okActionName, @Nullable String cancelActionName) {
     super(project, false, confirmationOption, prompt, true);
     myFileList = new ChangesTreeList<FilePath>(project, originalFiles, true, true, null, null) {
       protected DefaultTreeModel buildTreeModel(final List<FilePath> changes, ChangeNodeDecorator changeNodeDecorator) {
@@ -54,6 +56,12 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
         return null;
       }
     };
+    if (okActionName != null) {
+      getOKAction().putValue(Action.NAME, okActionName);
+    }
+    if (cancelActionName != null) {
+      getCancelAction().putValue(Action.NAME, cancelActionName);
+    }
     myFileList.setChangesToDisplay(originalFiles);
     init();
   }

@@ -32,10 +32,12 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.ui.Splash;
@@ -212,9 +214,14 @@ public class IdeaApplication {
             loadProject();
           }
 
-          if (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded()) {
-            UpdateChecker.setMyVeryFirstOpening(false);
-            UpdateChecker.updateAndShowResult();
+          final UpdateSettings settings = UpdateSettings.getInstance();
+          if (settings != null) {
+            final ApplicationInfo appInfo = ApplicationInfo.getInstance();
+            if (StringUtil.compareVersionNumbers(settings.LAST_BUILD_CHECKED, appInfo.getBuild().asString()) < 0 ||
+                (UpdateChecker.isMyVeryFirstOpening() && UpdateChecker.checkNeeded())) {
+              UpdateChecker.setMyVeryFirstOpening(false);
+              UpdateChecker.updateAndShowResult();
+            }
           }
 
           SwingUtilities.invokeLater(new Runnable() {

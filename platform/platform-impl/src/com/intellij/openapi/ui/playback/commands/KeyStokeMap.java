@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
@@ -72,7 +73,8 @@ public class KeyStokeMap {
       }
 
       if (symbol.length() > 1) {
-        final Integer code = (Integer)ReflectionUtil.getField(KeyEvent.class, null, int.class, "VK_" + symbol.toUpperCase());
+        final Integer code = (Integer)ReflectionUtil.getField(KeyEvent.class, null, int.class, "VK_" + StringUtilRt
+          .toUpperCase(symbol));
         if (code == null) {
           return throwUnrecognized(symbol);
         }

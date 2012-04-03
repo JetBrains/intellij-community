@@ -16,6 +16,7 @@
 
 package com.intellij.ide.highlighter.custom.tokens;
 
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.CustomHighlighterTokenType;
 
 /**
@@ -30,7 +31,7 @@ public final class NumberParser extends TokenParser {
     if (!myIgnoreCase) {
       mySuffices = suffices;
     } else {
-      mySuffices = suffices.toLowerCase().concat(suffices.toUpperCase());
+      mySuffices = suffices.toLowerCase().concat(StringUtilRt.toUpperCase(suffices));
     }
   }
 

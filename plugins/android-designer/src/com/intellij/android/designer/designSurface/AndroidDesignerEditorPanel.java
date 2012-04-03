@@ -320,9 +320,14 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           float xdpi = deviceConfiguration.getDevice().getXDpi();
           float ydpi = deviceConfiguration.getDevice().getYDpi();
 
-          mySession = RenderUtil
-            .createRenderSession(getProject(), layoutXmlText, myFile, manager.getSelectedTarget(), facet, config, xdpi, ydpi,
-                                 manager.getSelectedTheme());
+          while (true) {
+            mySession = RenderUtil
+              .createRenderSession(getProject(), layoutXmlText, myFile, manager.getSelectedTarget(), facet, config, xdpi, ydpi,
+                                   manager.getSelectedTheme(), 10000);
+            if (mySession.getResult().getStatus() != Result.Status.ERROR_TIMEOUT) {
+              break;
+            }
+          }
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
