@@ -62,8 +62,6 @@ public interface GitRepository {
 
   Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
 
-  String toLogString();
-
   /**
    * Current state of the repository.
    */
@@ -177,5 +175,7 @@ public interface GitRepository {
    * Synchronously updates the GitRepository by reading information from the specified topics.
    */
   void update(TrackedTopic... topics);
+
+  String toLogString();
 
 }
