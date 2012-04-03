@@ -4,9 +4,6 @@ import com.intellij.ant.InstrumentationUtil
 import com.intellij.ant.InstrumentationUtil.FormInstrumenter
 import com.intellij.ant.PrefixedPath
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder
-import org.apache.tools.ant.BuildListener
-import org.jetbrains.ether.ProjectWrapper
-import org.jetbrains.ether.dependencyView.AntListener
 import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 import org.jetbrains.jps.*
 
@@ -61,9 +58,6 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     params.debug = String.valueOf(debugInfo);
     params.nowarn = String.valueOf(nowarn);
     params.deprecation = String.valueOf(deprecation);
-    if (state.projectWrapper != null) {
-      params.verbose = "true"
-    }
 
     def javacExecutable = getJavacExecutable(module)
     if (javacExecutable != null) {
@@ -72,31 +66,9 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
     def ant = projectBuilder.binding.ant
 
-    if (state.projectWrapper != null) {
-      final BuildListener listener = new AntListener(state.targetFolder, state.sourceRoots, state.callback)
-      ant.project.addBuildListener(listener)
-    };
-
     ant.javac(params) {
       if (customArgs) {
         compilerarg(line: customArgs)
-      }
-
-      if (state.projectWrapper != null && state.sourceFiles != null) {
-        List patterns = []
-
-        state.sourceFiles.each {
-          for (String root: state.sourceRoots) {
-            if (it.startsWith(root) && it.endsWith(".java")) {
-              patterns << it.substring(root.length() + 1)
-              break;
-            }
-          }
-
-          patterns.each {
-            include(name: it)
-          }
-        }
       }
 
       state.sourceRoots.each {
@@ -116,14 +88,6 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
           pathelement(location: it)
         }
       }
-    }
-
-    if (state.projectWrapper != null) {
-      ant.project.removeBuildListener(listener)
-    };
-
-    if (state.sourceFiles != null) {
-      projectBuilder.listeners*.onJavaFilesCompiled(module, state.sourceFiles.size())
     }
   }
 
@@ -152,10 +116,6 @@ class ResourceCopier implements ModuleBuilder {
       }
       resourcePatternInitialized = true
     }
-
-    if (state.iterated) return;
-
-    state.iterated = true
 
     if (state.sourceRoots.isEmpty()) return;
 
@@ -266,15 +226,6 @@ class GroovyStubGenerator implements ModuleBuilder {
       }
     }
 
-    if (state.incremental) {
-      Set<File> excluded = state.excludes.collect { new File(it.toString()) }
-      List<File> filesToCompile = new LinkedList<File>()
-
-      JavaFileCollector.collectRecursively(new File(stubsRoot), filesToCompile, excluded)
-
-      filesToCompile.each {state.sourceFiles << it.getAbsolutePath()}
-    }
-
     state.sourceRoots << stubsRoot
     state.tempRootsToDelete << stubsRoot
   }
@@ -289,12 +240,6 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 
     @Override
     void associate(final String formFile, final String classFile) {
-      if (state.callback != null) {
-        final String formRelPath = state.projectWrapper.getRelativePath(formFile);
-        final String classRelPath = state.projectWrapper.getRelativePath(classFile);
-
-        state.callback.associateForm(formRelPath, classRelPath);
-      }
     }
 
     @Override
@@ -342,19 +287,6 @@ class JetBrainsInstrumentations implements ModuleBuilder {
       state.loader = new InstrumentationClassFinder((URL[])urls.toArray(new URL[urls.size()]))
 
       final List<File> formFiles = new ArrayList<File>();
-      final ProjectWrapper pw = state.projectWrapper;
-
-      if (pw != null) {
-        for (Module m: moduleChunk.elements) {
-          final Set<String> names = state.tests ? pw.getModule(m.getName()).getTests() : pw.getModule(m.getName()).getSources();
-          for (String name: names) {
-            if (name.endsWith(".form")) {
-              formFiles.add(new File(pw.getAbsolutePath(name)))
-            }
-          }
-        }
-      }
-
       final List<PrefixedPath> nestedFormDirs = new ArrayList<PrefixedPath>();
 
       state.sourceRootsFromModuleWithDependencies.each {
@@ -363,49 +295,30 @@ class JetBrainsInstrumentations implements ModuleBuilder {
 
       state.formInstrumenter = new CustomFormInstrumenter(new File(state.targetFolder), nestedFormDirs, formFiles, state);
 
-      if (!state.incremental) {
-        for (File formFile: formFiles) {
-          state.formInstrumenter.instrumentForm(formFile, state.loader);
-        }
-      }
-    }
-
-    if (state.incremental) {
-      for (String f: state.sourceFiles) {
-        if (f.endsWith(".form")) {
-          state.formInstrumenter.instrumentForm(new File(f), state.loader);
-        }
+      for (File formFile: formFiles) {
+        state.formInstrumenter.instrumentForm(formFile, state.loader);
       }
     }
 
     if (projectBuilder.useInProcessJavac)
       return;
 
-    if (!state.incremental) {
-      new Object() {
-        public void traverse(final File root) {
-          final File[] files = root.listFiles();
+    new Object() {
+      public void traverse(final File root) {
+        final File[] files = root.listFiles();
 
-          for (File f: files) {
-            final String name = f.getName();
+        for (File f: files) {
+          final String name = f.getName();
 
-            if (name.endsWith(".class")) {
-              InstrumentationUtil.instrumentNotNull(f, state.loader)
-            }
-            else if (f.isDirectory()) {
-              traverse(f)
-            }
+          if (name.endsWith(".class")) {
+            InstrumentationUtil.instrumentNotNull(f, state.loader)
+          }
+          else if (f.isDirectory()) {
+            traverse(f)
           }
         }
-      }.traverse(new File(state.targetFolder))
-    }
-    else {
-      final Collection<String> classes = state.callback.getClassFiles()
-
-      classes.each {
-        InstrumentationUtil.instrumentNotNull(new File(state.targetFolder + File.separator + it + ".class"), state.loader)
       }
-    }
+    }.traverse(new File(state.targetFolder))
     if (state.loader != null) {
       state.loader.releaseResources();
     }

@@ -2,12 +2,8 @@ package org.jetbrains.jps
 
 import org.apache.tools.ant.BuildException
 import org.codehaus.gant.GantBinding
-import org.jetbrains.ether.ProjectWrapper
-import org.jetbrains.ether.Reporter
-import org.jetbrains.ether.dependencyView.Callbacks.Backend
 import org.jetbrains.jps.artifacts.ArtifactBuilder
 import org.jetbrains.jps.idea.OwnServiceLoader
-
 import org.jetbrains.jps.listeners.BuildInfoPrinter
 import org.jetbrains.jps.listeners.BuildStatisticsListener
 import org.jetbrains.jps.listeners.DefaultBuildInfoPrinter
@@ -224,7 +220,7 @@ class ProjectBuilder {
   private def buildChunks(Collection<Module> modules, boolean tests) {
     getChunks(tests).getChunkList().each {
       if (!modules.intersect(it.modules).isEmpty()) {
-        buildChunk(it, tests, null, null, null)
+        buildChunk(it, tests)
       }
     }
   }
@@ -270,32 +266,16 @@ class ProjectBuilder {
     buildModules(dependencies, includeTests)
   }
 
-  def clearChunk(ModuleChunk chunk, Collection<String> files, ProjectWrapper pw) {
+  def clearChunk(ModuleChunk chunk) {
     if (!dryRun) {
-      if (files == null) {
-        stage("Cleaning module ${chunk.name}")
-        chunk.modules.each {cleanModule it}
-      }
-      else {
-        stage("Cleaning output files for module ${chunk.name}")
-
-        files.each {
-          binding.ant.delete(file: pw.getAbsolutePath(it))
-        }
-
-        chunk.modules.each {
-          binding.ant.delete(file: it.outputPath + File.separator + Reporter.myOkFlag)
-          binding.ant.delete(file: it.outputPath + File.separator + Reporter.myFailFlag)
-        }
-      }
+      stage("Cleaning module ${chunk.name}")
+      chunk.modules.each {cleanModule it}
     }
   }
 
-
-
-  def buildChunk(ModuleChunk chunk, boolean tests, Collection<String> files, Backend callback, ProjectWrapper pw) {
+  def buildChunk(ModuleChunk chunk, boolean tests) {
     Set<ModuleChunk> compiledSet = tests ? compiledTestChunks : compiledChunks
-    if (compiledSet.contains(chunk) && files == null) return
+    if (compiledSet.contains(chunk)) return
     compiledSet.add(chunk)
 
     stage("Making${tests ? ' tests for' : ''} module ${chunk.name}")
@@ -303,39 +283,26 @@ class ProjectBuilder {
       warning("Modules $chunk.modules with cyclic dependencies will be compiled to output of ${chunk.modules.toList().first()} module")
     }
 
-    compile(chunk, tests, files, callback, pw)
+    compile(chunk, tests)
   }
 
   private String getModuleOutputFolder(Module module, boolean tests) {
     return getProjectPaths().getModuleOutputDir(module, tests)?.absolutePath
   }
 
-  private def compile(ModuleChunk chunk, boolean tests, Collection<String> files, Backend callback, ProjectWrapper pw) {
+  private def compile(ModuleChunk chunk, boolean tests) {
     List<String> chunkSources = filterNonExistingFiles(tests ? chunk.testRoots : chunk.sourceRoots, true)
     if (chunkSources.isEmpty()) return
 
-    List<String> sourceFiles = []
-
-    if (files != null) {
-      files.each {
-        sourceFiles << pw.getAbsolutePath(it)
-      }
-    }
-
     if (!dryRun) {
-      List<String> chunkClasspath = ProjectPaths.getPathsList(getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(tests), files == null))
+      List<String> chunkClasspath = ProjectPaths.getPathsList(getProjectPaths().getClasspathFiles(chunk, ClasspathKind.compile(tests), true))
 
       List sourceRootsWithDependencies = ProjectPaths.getPathsList(getProjectPaths().getSourcePathsWithDependents(chunk, tests))
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()
       def chunkState = new ModuleBuildState(
-              iterated: false,
               loader: null,
               formInstrumenter: null,
               tests: tests,
-              projectWrapper: pw,
-              incremental: files != null,
-              callback: callback,
-              sourceFiles: sourceFiles,
               sourceRoots: chunkSources,
               excludes: computeExcludes(chunk.elements, chunkSources),
               classpath: chunkClasspath,
@@ -346,14 +313,9 @@ class ProjectBuilder {
           List<String> sourceRoots = filterNonExistingFiles(tests ? it.testRoots : it.sourceRoots, false)
           if (!sourceRoots.isEmpty()) {
             def state = new ModuleBuildState(
-                    iterated: false,
                     loader: null,
                     formInstrumenter: null,
                     tests: tests,
-                    projectWrapper: pw,
-                    incremental: chunkState.incremental,
-                    callback: callback,
-                    sourceFiles: sourceFiles,
                     sourceRoots: sourceRoots,
                     excludes: computeExcludes([it], sourceRoots),
                     classpath: chunkClasspath,
@@ -377,28 +339,15 @@ class ProjectBuilder {
 
       listeners*.onCompilationStarted(chunk)
 
-      try {
-        builders().each {ModuleBuilder builder ->
-          listeners*.onModuleBuilderStarted(builder, chunk)
-          if (arrangeModuleCyclesOutputs && chunk.modules.size() > 1 && builder instanceof ModuleCycleBuilder) {
-            ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, this)
-          }
-          states.keySet().each {
-            builder.processModule(it, states[it], this)
-          }
-          listeners*.onModuleBuilderFinished(builder, chunk)
+      builders().each {ModuleBuilder builder ->
+        listeners*.onModuleBuilderStarted(builder, chunk)
+        if (arrangeModuleCyclesOutputs && chunk.modules.size() > 1 && builder instanceof ModuleCycleBuilder) {
+          ((ModuleCycleBuilder) builder).preprocessModuleCycle(chunkState, chunk, this)
         }
-      }
-      catch (Exception e) {
-        final String reason = e.toString();
-
-        if (pw != null) {
-          chunk.modules.each {
-            Reporter.reportBuildFailure(it, tests, reason)
-          }
+        states.keySet().each {
+          builder.processModule(it, states[it], this)
         }
-
-        throw e;
+        listeners*.onModuleBuilderFinished(builder, chunk)
       }
 
       states.keySet().each {
@@ -413,9 +362,6 @@ class ProjectBuilder {
     }
 
     chunk.modules.each {
-      if (pw != null) {
-        Reporter.reportBuildSuccess(it, tests)
-      }
       exportProperty("module.${it.name}.output.${tests ? "test" : "main"}", getModuleOutputFolder(it, tests))
     }
   }
