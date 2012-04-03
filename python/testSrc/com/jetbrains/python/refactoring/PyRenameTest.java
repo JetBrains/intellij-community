@@ -4,6 +4,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author yole
@@ -84,6 +85,16 @@ public class PyRenameTest extends PyTestCase {
   
   public void testRenameTarget() {  // PY-5146
     doTest("bar");
+  }
+
+  public void testRenameProperty() {  // PY-5948
+    setLanguageLevel(LanguageLevel.PYTHON26);
+    try {
+      doTest("bar");
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
 
   public void testClassNameConflict() {  // PY-2390

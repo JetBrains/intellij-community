@@ -3,14 +3,15 @@ package com.jetbrains.python.refactoring.rename;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -89,5 +90,21 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
         return true;
       }
     });
+    final PyClass containingClass = function.getContainingClass();
+    if (containingClass != null) {
+      final Property property = containingClass.findPropertyByFunction(function);
+      if (property != null) {
+        addRename(allRenames, newName, property.getGetter());
+        addRename(allRenames, newName, property.getSetter());
+        addRename(allRenames, newName, property.getDeleter());
+      }
+    }
+  }
+
+  private static void addRename(Map<PsiElement, String> renames, String newName, Maybe<PyFunction> accessor) {
+    final PyFunction function = accessor.valueOrNull();
+    if (function != null) {
+      renames.put(function, newName);
+    }
   }
 }
