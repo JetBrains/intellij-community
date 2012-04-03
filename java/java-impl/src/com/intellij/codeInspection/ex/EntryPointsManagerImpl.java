@@ -241,7 +241,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
       }
     }
 
-    if (isPersistent) {
+    if (!isPersistent) {
       myTemporaryEntryPoints.add(newEntryPoint);
       ((RefElementImpl)newEntryPoint).setEntry(true);
     }
