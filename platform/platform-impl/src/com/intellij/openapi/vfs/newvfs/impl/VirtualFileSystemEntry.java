@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileTooBigException;
@@ -42,6 +43,7 @@ import java.nio.charset.Charset;
  * @author max
  */
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
+  private static final Key<String> SYMLINK_TARGET = Key.create("SYMLINK_TARGET");
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
   protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
@@ -56,7 +58,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   /** Either a String or byte[]. Possibly should be concatenated with one of the entries in the {@link #wellKnownSuffixes}. */
   private volatile Object myName;
   private volatile VirtualDirectoryImpl myParent;
-  private volatile String mySymlinkTarget;
   /** Also, high three bits are used as an index into the {@link #wellKnownSuffixes} array. */
   private volatile byte myFlags = 0;
   private volatile int myId;
@@ -86,7 +87,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private void calcLinkStatus() {
-    mySymlinkTarget = isSymLink() ? FileSystemUtil.resolveSymLink(getPath()) : null;
+    putUserData(SYMLINK_TARGET, isSymLink() ? FileSystemUtil.resolveSymLink(getPath()) : null);
     setFlagInt(HAS_SYMLINK_FLAG, isSymLink() || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
   }
 
@@ -486,7 +487,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public String getCanonicalPath() {
     if (getFlagInt(HAS_SYMLINK_FLAG)) {
       if (isSymLink()) {
-        return mySymlinkTarget;
+        return getUserData(SYMLINK_TARGET);
       }
       else if (myParent != null) {
         return myParent.getCanonicalPath() + "/" + getName();
