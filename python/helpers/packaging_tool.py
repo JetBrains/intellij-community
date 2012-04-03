@@ -31,7 +31,8 @@ def do_list():
     except ImportError:
         error("Python package management tools not found. <a href=\"installDistribute\">Install 'distribute'</a>.", ERROR_NO_PACKAGING_TOOLS)
     for pkg in pkg_resources.working_set:
-        print('\t'.join([pkg.project_name, pkg.version, pkg.location]))
+        requires = ':'.join([str(x) for x in pkg.requires()])
+        print('\t'.join([pkg.project_name, pkg.version, pkg.location, requires]))
 
 def do_install(pkgs):
     try:

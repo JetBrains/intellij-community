@@ -325,30 +325,25 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (condition != null) {
       condition.accept(this);
     }
-    myBuilder.prevInstruction = getPrevInstruction(condition);
-
-    // if condition was false
+    final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
     if (elsePart == null) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-
-    final PyStatementList statementList = whilePart.getStatementList();
-    if (statementList != null) {
-      myBuilder.startConditionalNode(statementList, condition, true);
-      statementList.accept(this);
+    final PyStatementList list = whilePart.getStatementList();
+    if (list != null) {
+      myBuilder.startConditionalNode(list,  condition, true);
+      list.accept(this);
+      if (myBuilder.prevInstruction != null) {
+        myBuilder.addEdge(myBuilder.prevInstruction, instruction); //loop
+      }
     }
-    if (myBuilder.prevInstruction != null) {
-      myBuilder.addEdge(myBuilder.prevInstruction, instruction); //loop
-    }
-    // else part
+    myBuilder.prevInstruction = head;
     if (elsePart != null) {
-      myBuilder.startConditionalNode(statementList, condition, false);
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     myBuilder.flowAbrupted();
-    myBuilder.checkPending(instruction); //check for breaks targeted here
   }
 
   @Override

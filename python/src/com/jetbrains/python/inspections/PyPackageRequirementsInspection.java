@@ -164,8 +164,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
           }
           final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
-            final List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
+            Collection<PyRequirement> requirements = PyPackageManager.getRequirements(module);
             if (requirements != null) {
+              final Sdk sdk = PythonSdkType.findPythonSdk(module);
+              if (sdk != null) {
+                requirements = getTransitiveRequirements(sdk, requirements, new HashSet<PyPackage>());
+              }
               for (PyRequirement req : requirements) {
                 if (packageName.equalsIgnoreCase(req.getName())) {
                   return;
@@ -183,7 +187,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 }
               }
               final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-              final Sdk sdk = findPythonSdk(importedExpression);
               if (sdk != null && PyPackageManager.getInstance(sdk).hasPip()) {
                 quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
               }
@@ -196,6 +199,25 @@ public class PyPackageRequirementsInspection extends PyInspection {
         }
       }
     }
+  }
+
+  @NotNull
+  private static Set<PyRequirement> getTransitiveRequirements(@NotNull Sdk sdk, @NotNull Collection<PyRequirement> requirements,
+                                                              @NotNull Set<PyPackage> visited) {
+    final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
+    try {
+      final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+      for (PyRequirement req : requirements) {
+        final PyPackage pkg = req.match(packages);
+        if (pkg != null) {
+          visited.add(pkg);
+          results.addAll(getTransitiveRequirements(sdk, pkg.getRequirements(), visited));
+        }
+      }
+    }
+    catch (PyExternalProcessException ignored) {
+    }
+    return results;
   }
 
   @NotNull
@@ -223,7 +245,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       }
       final List<PyRequirement> unsatisfied = new ArrayList<PyRequirement>();
       for (PyRequirement req : requirements) {
-        if (!ignoredPackages.contains(req.getName()) && !req.match(packages)) {
+        if (!ignoredPackages.contains(req.getName()) && req.match(packages) == null) {
           unsatisfied.add(req);
         }
       }

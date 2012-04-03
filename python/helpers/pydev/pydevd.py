@@ -57,6 +57,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          InternalSetNextStatementThread
 
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
+import pydevd_file_utils
 import pydevd_import_class
 import pydevd_vars
 import traceback
@@ -448,6 +449,10 @@ class PyDB:
 
                 elif cmd_id == CMD_VERSION:
                     # response is version number
+                    local_version, pycharm_os = text.split('\t', 1)
+
+                    pydevd_file_utils.set_pycharm_os(pycharm_os)
+
                     cmd = self.cmdFactory.makeVersionMessage(seq)
 
                 elif cmd_id == CMD_LIST_THREADS:

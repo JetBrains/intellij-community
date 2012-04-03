@@ -151,8 +151,14 @@ public class ResolveImportUtil {
     final List<PsiFileSystemItem> candidates = importStatement.resolveImportSourceCandidates();
     List<PsiElement> resultList = new ArrayList<PsiElement>();
     for (PsiElement candidate : candidates) {
+      if (!candidate.isValid()) {
+        throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates()");
+      }
       PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), name, file, null, sdk, false, true);
       if (result != null) {
+        if (!result.isValid()) {
+          throw new PsiInvalidElementAccessException(result, "Got an invalid candidate from resolveChild()");
+        }
         resultList.add(result);
       }
     }

@@ -10,7 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.django.lang.template.psi.impl.DjangoTemplateFileImpl;
 import com.jetbrains.django.model.TemplateManager;
 import com.jetbrains.django.ref.BaseReference;
-import com.jetbrains.django.util.DjangoStringUtil;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgSection;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -62,7 +62,7 @@ public class BuildoutPartReference extends BaseReference {
 
   @Override
   public PsiElement handleElementRename(@NotNull String newElementName) {
-    String fullName = DjangoStringUtil.replaceLastSuffix(getElement().getText(), "/", newElementName);
+    String fullName = PythonStringUtil.replaceLastSuffix(getElement().getText(), "/", newElementName);
     return myElement.replace(PyElementGenerator.getInstance(myElement.getProject()).createStringLiteralAlreadyEscaped(fullName));
   }
 
