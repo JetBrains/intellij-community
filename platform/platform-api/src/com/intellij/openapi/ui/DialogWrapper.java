@@ -20,10 +20,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.MacOtherAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -1416,17 +1413,29 @@ public abstract class DialogWrapper {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    getRootPane().registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doHelpAction();
+    if (ApplicationInfo.contextHelpAvailable()) {
+      ShortcutSet help = CommonShortcuts.getContextHelp();
+      for (Shortcut shortcut : help.getShortcuts()) {
+        if (shortcut instanceof KeyboardShortcut) {
+          KeyboardShortcut ks = (KeyboardShortcut)shortcut;
+          KeyStroke first = ks.getFirstKeyStroke();
+          KeyStroke second = ks.getSecondKeyStroke();
+          if (second == null) {
+            getRootPane().registerKeyboardAction(new ActionListener() {
+              public void actionPerformed(ActionEvent e) {
+                doHelpAction();
+              }
+            }, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
+          }
+        }
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    getRootPane().registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doHelpAction();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      getRootPane().registerKeyboardAction(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          doHelpAction();
+        }
+      }, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
 
     if (myButtons != null) {
       getRootPane().registerKeyboardAction(new AbstractAction() {

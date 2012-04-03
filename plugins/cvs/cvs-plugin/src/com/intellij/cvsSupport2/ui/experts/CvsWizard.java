@@ -78,19 +78,10 @@ public class CvsWizard extends AbstractWizard<WizardStep> {
     final int numberOfSteps = getNumberOfSteps();
     if (numberOfSteps == 0) return;
     final WizardStep currentStep = getCurrentStepObject();
-    if (!currentStep.setActive()){
-      doPreviousAction();
-      return;
-    }
-    if (!currentStep.nextIsEnabled()) {
-      getNextButton().setEnabled(false);
-      getFinishButton().setEnabled(false);
-    }
-    else {
-      final boolean enableFinish = (getCurrentStep() + 1) == numberOfSteps;
-      getFinishButton().setEnabled(enableFinish);
-      getNextButton().setEnabled(!enableFinish);
-    }
+    currentStep.activate();
+    final boolean enableNext = currentStep.nextIsEnabled();
+    getNextButton().setEnabled(enableNext && (!isLastStep() || SystemInfo.isMac));
+    getFinishButton().setEnabled(enableNext && isLastStep());
   }
 
   public void disableNextAndFinish() {

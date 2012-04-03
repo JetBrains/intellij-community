@@ -528,7 +528,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
     myModificationCount++;
 
-    ((PsiModificationTrackerImpl)PsiManager.getInstance(myProject).getModificationTracker()).incCounter();
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    psiManager.dropResolveCaches();
+    ((PsiModificationTrackerImpl)psiManager.getModificationTracker()).incCounter();
 
     isFiringEvent = true;
     try {

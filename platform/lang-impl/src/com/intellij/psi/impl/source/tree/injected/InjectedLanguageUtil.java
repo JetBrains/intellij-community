@@ -46,7 +46,7 @@ import java.util.List;
  * @author cdr
  */
 public class InjectedLanguageUtil {
-  static final Key<List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
+  static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
 
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
     enumerate(host, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
@@ -56,7 +56,8 @@ public class InjectedLanguageUtil {
     });
   }
 
-  private static PsiElement loadTree(PsiElement host, PsiFile containingFile) {
+  @NotNull
+  private static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
     if (containingFile instanceof DummyHolder) {
       PsiElement context = containingFile.getContext();
       if (context != null) {
@@ -94,7 +95,7 @@ public class InjectedLanguageUtil {
     return result.isEmpty() ? null : result;
   }
 
-  public static List<Trinity<IElementType, PsiLanguageInjectionHost, TextRange>> getHighlightTokens(PsiFile file) {
+  public static List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> getHighlightTokens(@NotNull PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
   }
 
@@ -160,7 +161,7 @@ public class InjectedLanguageUtil {
   }
 
   @NotNull
-  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, final PsiFile injectedFile) {
+  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, @Nullable final PsiFile injectedFile) {
     if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
@@ -374,7 +375,7 @@ public class InjectedLanguageUtil {
   }
 
 
-  public static Editor openEditorFor(PsiFile file, Project project) {
+  public static Editor openEditorFor(@NotNull PsiFile file, @NotNull Project project) {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     // may return editor injected in current selection in the host editor, not for the file passed as argument
     VirtualFile virtualFile = file.getVirtualFile();
@@ -392,7 +393,7 @@ public class InjectedLanguageUtil {
     return editor;
   }
 
-  public static PsiFile getTopLevelFile(PsiElement element) {
+  public static PsiFile getTopLevelFile(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(containingFile);
     if (document instanceof DocumentWindow) {
@@ -401,10 +402,11 @@ public class InjectedLanguageUtil {
     }
     return containingFile;
   }
-  public static Editor getTopLevelEditor(Editor editor) {
+  @NotNull
+  public static Editor getTopLevelEditor(@NotNull Editor editor) {
     return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
   }
-  public static boolean isInInjectedLanguagePrefixSuffix(final PsiElement element) {
+  public static boolean isInInjectedLanguagePrefixSuffix(@NotNull final PsiElement element) {
     PsiFile injectedFile = element.getContainingFile();
     if (injectedFile == null) return false;
     Project project = injectedFile.getProject();
@@ -420,7 +422,7 @@ public class InjectedLanguageUtil {
     return combinedEdiablesLength != elementRange.getLength();
   }
 
-  public static boolean isSelectionIsAboutToOverflowInjectedFragment(EditorWindow injectedEditor) {
+  public static boolean isSelectionIsAboutToOverflowInjectedFragment(@NotNull EditorWindow injectedEditor) {
     int selStart = injectedEditor.getSelectionModel().getSelectionStart();
     int selEnd = injectedEditor.getSelectionModel().getSelectionEnd();
 

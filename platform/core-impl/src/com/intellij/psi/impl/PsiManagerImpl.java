@@ -107,7 +107,10 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void dropResolveCaches() {
-    ((FileManagerImpl)myFileManager).processQueue();
+    FileManager fileManager = myFileManager;
+    if (fileManager instanceof FileManagerImpl) { // mock tests
+      ((FileManagerImpl)fileManager).processQueue();
+    }
     beforeChange(true);
     beforeChange(false);
   }

@@ -187,7 +187,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     if (synchronously) {
       if (Thread.holdsLock(PsiLock.LOCK)) {
         // hack for the case when docCommit was called from within PSI modification, e.g. in formatter.
-        // we can't spawn threads to do injections there or deadlock is imminent
+        // we can't spawn threads to do injections there, otherwise a deadlock is imminent
         ContainerUtil.process(injected, commitProcessor);
       }
       else {

@@ -31,14 +31,12 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,18 +57,14 @@ public class JavaResolveCache {
 
   private final ConcurrentMap<PsiExpression, Reference<PsiType>> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, Reference<PsiType>>();
 
-  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical;
-  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical;
+  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
+  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
 
   private static final Object NULL = Key.create("NULL");
 
-  public JavaResolveCache(MessageBus messageBus) {
-    myVarToConstValueMapPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
-    myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
-
+  public JavaResolveCache(@Nullable("can be null in com.intellij.core.JavaCoreEnvironment.JavaCoreEnvironment") MessageBus messageBus) {
     if (messageBus != null) {
-      final MessageBusConnection connection = messageBus.connect();
-      connection.subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
         @Override
         public void beforePsiChanged(boolean isPhysical) {
           clearCaches(isPhysical);
@@ -78,12 +72,6 @@ public class JavaResolveCache {
 
         @Override
         public void afterPsiChanged(boolean isPhysical) {
-        }
-      });
-      connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-        @Override
-        public void modificationCountChanged() {
-          clearCaches(true);
         }
       });
     }
@@ -141,9 +129,7 @@ public class JavaResolveCache {
     if (cached != null) return cached;
 
     Object result = computer.execute(variable, visitedVars);
-
-    map.put(variable, result != null ? result : NULL);
-
+    map.put(variable, result == null ? NULL : result);
     return result;
   }
 
