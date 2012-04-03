@@ -41,4 +41,9 @@ public class RedundantThrowTest extends InspectionTestCase {
   public void testimplicitSuper() throws Exception {
     doTest();
   }
+
+  public void testselfCall() throws Exception {
+    doTest();
+  }
+
 }
