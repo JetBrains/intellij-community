@@ -15,16 +15,12 @@ public abstract class PySourcePosition {
   }
 
   @Nullable
-  private static String normalize(@Nullable String file) {
+  protected String normalize(@Nullable String file) {
     if (file == null) {
       return file;
     }
-    String res =  FileUtil.toSystemIndependentName(file);
 
-    if (isWindowsPath(file)) {
-      res = res.toLowerCase();
-    }
-    return res;
+    return FileUtil.toSystemIndependentName(file);
   }
 
   public String getFile() {
@@ -61,6 +57,6 @@ public abstract class PySourcePosition {
   }
 
   public static boolean isWindowsPath(@NotNull String path) {
-    return path.contains("\\");
+    return path.contains("\\") || (path.length() > 1 && path.charAt(1) == ':');
   }
 }

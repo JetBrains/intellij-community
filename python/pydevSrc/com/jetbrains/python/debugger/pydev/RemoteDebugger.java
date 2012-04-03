@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -86,8 +87,6 @@ public class RemoteDebugger implements ProcessDebugger {
       }
       throw e;
     }
-
-
   }
 
   @Override
@@ -109,7 +108,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public String handshake() throws PyDebuggerException {
-    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION);
+    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
     command.execute();
     return command.getRemoteVersion();
   }

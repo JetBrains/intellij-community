@@ -1,4 +1,5 @@
 def func(bar):
-    """ @param bar: The parameter value.
+    """ \\some comment
+        @param bar: The parameter value.
         @type bar: Its type."""
     pass

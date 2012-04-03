@@ -9,6 +9,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeParser;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     if (docStringOwner != null && element == docStringOwner.getDocStringExpression()) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       final List<TextRange> ranges = expr.getStringValueTextRanges();
-      final String text = expr.getStringValue();
+
+      final String exprText = expr.getText();
+      final TextRange textRange = PyStringLiteralExpressionImpl.getNodeTextRange(exprText);
+      final String text = textRange.substring(exprText);
+
       if (!ranges.isEmpty()) {
         final List<PsiReference> result = new ArrayList<PsiReference>();
         final int offset = ranges.get(0).getStartOffset();
