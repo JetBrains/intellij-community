@@ -69,7 +69,7 @@ class RenderService {
 
   @Nullable
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public RenderSession createRenderSession(@NotNull String layoutXmlText, @NotNull String appLabel)
+  public RenderSession createRenderSession(@NotNull String layoutXmlText, @NotNull String appLabel, long timeout)
     throws FileNotFoundException, XmlPullParserException {
 
     final ILayoutPullParser parser = new XmlParser();
@@ -102,6 +102,7 @@ class RenderService {
 
     params.setExtendedViewInfoMode(false);
     params.setAppLabel(appLabel);
+    params.setTimeout(timeout);
 
     final ScreenSizeQualifier screenSizeQualifier = myConfig.getScreenSizeQualifier();
     params.setConfigScreenSize(screenSizeQualifier != null ? screenSizeQualifier.getValue() : ScreenSize.NORMAL);

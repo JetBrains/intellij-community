@@ -264,7 +264,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       final PsiElement constructor = constructorResolveResult.getElement();
 
       if (constructor != null) {
-        checkConstructorApplicability(constructorResolveResult, refElement);
+        if (!checkConstructorApplicability(constructorResolveResult, refElement)) return;
+        if (!checkUnknownParams(refElement)) return;
       }
       else {
         final GroovyResolveResult[] results = constructorCall.multiResolveConstructor();
@@ -275,7 +276,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
               if (!checkConstructorApplicability(result, refElement)) return;
             }
           }
-
+          if (!checkUnknownParams(refElement)) return;
           registerError(getElementToHighlight(refElement, argList), GroovyBundle.message("constructor.call.is.ambiguous"));
         }
         else {
@@ -419,12 +420,12 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         final PsiType type = referenceExpression.getType();
         if (resolved != null ) {
           if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-            checkMethodApplicability(resolveResult, referenceExpression);
+            if (!checkMethodApplicability(resolveResult, referenceExpression)) return;
           }
           else {
-            checkCallApplicability(type, referenceExpression);
+            if (!checkCallApplicability(type, referenceExpression)) return;
           }
-
+          if (!checkUnknownParams(referenceExpression)) return;
         }
         else if (results.length > 0) {
           for (GroovyResolveResult result : results) {
@@ -436,11 +437,26 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
               if (!checkCallApplicability(type, referenceExpression)) return;
             }
           }
+          if (!checkUnknownParams(referenceExpression)) return;
 
           registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
                         GroovyBundle.message("method.call.is.ambiguous"));
         }
       }
+    }
+
+    private boolean checkUnknownParams(PsiElement place) {
+      PsiType[] args = PsiUtil.getArgumentTypes(place, true);
+      if (args == null) return true;
+
+      for (PsiType arg : args) {
+        if (arg == null) {
+          registerError(getElementToHighlight(place, PsiUtil.getArgumentsList(place)), GroovyBundle.message("cannot.infer.argument.types"),
+                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
+          return false;
+        }
+      }
+      return true;
     }
 
     private boolean checkCannotInferArgumentTypes(PsiElement referenceExpression) {
@@ -553,10 +569,12 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           PsiElement resolved = result.getElement();
           if (resolved instanceof PsiMethod && !result.isInvokedOnProperty()) {
             if (!checkMethodApplicability(result, invokedExpr)) return false;
+            if (!checkUnknownParams(invokedExpr)) return false;
           }
           else if (resolved instanceof PsiField) {
             if (!checkCallApplicability(((PsiField)resolved).getType(), invokedExpr)) return false;
           }
+          if (!checkUnknownParams(invokedExpr)) return false;
         }
         if (calls.length == 0 && !(invokedExpr instanceof GrString)) {
           registerCannotApplyError(invokedExpr, argumentTypes, invokedExpr.getText());

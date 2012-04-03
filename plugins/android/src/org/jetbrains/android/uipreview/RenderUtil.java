@@ -1,8 +1,6 @@
 package org.jetbrains.android.uipreview;
 
-import com.android.ide.common.rendering.api.RenderResources;
-import com.android.ide.common.rendering.api.RenderSession;
-import com.android.ide.common.rendering.api.Result;
+import com.android.ide.common.rendering.api.*;
 import com.android.ide.common.resources.ResourceDeltaKind;
 import com.android.ide.common.resources.ResourceFolder;
 import com.android.ide.common.resources.ResourceRepository;
@@ -73,7 +71,8 @@ public class RenderUtil {
                                                   @NotNull FolderConfiguration config,
                                                   float xdpi,
                                                   float ydpi,
-                                                  @NotNull ThemeData theme)
+                                                  @NotNull ThemeData theme,
+                                                  long timeout)
     throws RenderingException, IOException, AndroidSdkNotConfiguredException {
     final Sdk sdk = ModuleRootManager.getInstance(facet.getModule()).getSdk();
     if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
@@ -121,7 +120,7 @@ public class RenderUtil {
     final RenderService renderService = factory.createService(pair.getFirst(), pair.getSecond(), config, xdpi, ydpi, callback, minSdkVersion);
 
     try {
-      return renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet));
+      return renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet), timeout);
     }
     catch (XmlPullParserException e) {
       throw new RenderingException(e);
@@ -198,7 +197,7 @@ public class RenderUtil {
 
     final RenderSession session;
     try {
-      session = renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet));
+      session = renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet), RenderParams.DEFAULT_TIMEOUT);
     }
     catch (XmlPullParserException e) {
       throw new RenderingException(e);

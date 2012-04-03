@@ -437,7 +437,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       else {
         boolean isWrite = !myAssertionsOnly && PsiUtil.isLValue(refExpr);
         addNodeAndCheckPending(new ReadWriteVariableInstruction(name, refExpr, myInstructionNumber++, isWrite ? WRITE : READ));
-        if (refExpr.getParent() instanceof GrArgumentList) {
+        if (refExpr.getParent() instanceof GrArgumentList && refExpr.getParent().getParent() instanceof GrCall) {
           addNodeAndCheckPending(new ArgumentInstruction(refExpr, myInstructionNumber++));
         }
       }
