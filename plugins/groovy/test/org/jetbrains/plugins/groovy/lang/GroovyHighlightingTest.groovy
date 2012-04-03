@@ -84,7 +84,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   private void doTest(InspectionProfileEntry... tools) {
     myFixture.enableInspections(tools);
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".groovy");
   }
 
   public void testCircularInheritance() throws Throwable {
@@ -477,11 +477,11 @@ class A {
     doTest(new GroovyUnresolvedAccessInspection());
   }
 
-  public void testUnknownVarInArgList() {
+  public void testImplicitEnumCoercion() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
-  
-  public void testImplicitEnumCoercion() {
+
+  public void testUnknownVarInArgList() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 

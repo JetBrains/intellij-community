@@ -251,7 +251,7 @@ public class PsiUtil {
       }
       else {
         if (type == null) {
-          result.add(nullAsBottom ? PsiType.NULL : TypesUtil.getJavaLangObject(expression));
+          result.add(nullAsBottom ? null : TypesUtil.getJavaLangObject(expression));
         }
         else {
           if (stopAt == expression) {

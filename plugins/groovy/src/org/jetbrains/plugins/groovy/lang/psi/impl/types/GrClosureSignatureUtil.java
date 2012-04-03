@@ -52,6 +52,7 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
+@SuppressWarnings("unchecked")
 public class GrClosureSignatureUtil {
   private GrClosureSignatureUtil() {
   }
@@ -549,7 +550,7 @@ public class GrClosureSignatureUtil {
 
     for (GrExpression expression : expressionArgs) {
       PsiType type = expression.getType();
-      if (expression instanceof GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
+      if (partial && expression instanceof GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
         type = null;
       }
       if (eraseArgs) {
@@ -647,24 +648,6 @@ public class GrClosureSignatureUtil {
   public static List<MethodSignature> generateAllMethodSignaturesByClosureSignature(@NotNull String name,
                                                                                      @NotNull GrClosureSignature signature) {
     return generateAllMethodSignaturesByClosureSignature(name, signature, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
-  }
-
-  @Nullable
-  public static PsiType getTypeByTypeArg(ArgInfo<PsiType> arg, PsiManager manager, GlobalSearchScope resolveScope) {
-    if (arg.isMultiArg) {
-      if (arg.args.size() == 0) return PsiType.getJavaLangObject(manager, resolveScope).createArrayType();
-      PsiType leastUpperBound = null;
-
-      for (PsiType type : arg.args) {
-        leastUpperBound = TypesUtil.getLeastUpperBoundNullable(leastUpperBound, type, manager);
-      }
-      if (leastUpperBound == null) return null;
-      return leastUpperBound.createArrayType();
-    }
-    else {
-      if (arg.args.size() > 0) return arg.args.get(0);
-      return null;
-    }
   }
 
   @Nullable
