@@ -24,6 +24,9 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -565,6 +568,11 @@ public abstract class InplaceRefactoring {
 
   public void setElementToRename(PsiNamedElement elementToRename) {
     myElementToRename = elementToRename;
+  }
+
+  protected boolean isIdentifier(final String newName, final Language language) {
+    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
+    return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
   }
 
   protected static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {
