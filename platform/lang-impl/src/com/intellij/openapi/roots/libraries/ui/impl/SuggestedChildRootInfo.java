@@ -15,32 +15,58 @@
  */
 package com.intellij.openapi.roots.libraries.ui.impl;
 
-import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.roots.libraries.LibraryRootType;
+import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
+
+import java.util.Arrays;
+import java.util.Map;
 
 /**
  * @author nik
  */
 class SuggestedChildRootInfo {
   private final VirtualFile myRootCandidate;
-  private final OrderRoot mySuggestedRoot;
-  private final String myRootTypeName;
+  private final DetectedLibraryRoot myDetectedRoot;
+  private final Map<LibraryRootType, String> myRootTypeNames;
+  private LibraryRootType mySelectedRootType;
 
-  SuggestedChildRootInfo(VirtualFile rootCandidate, OrderRoot suggestedRoot, String rootTypeName) {
+  SuggestedChildRootInfo(VirtualFile rootCandidate, DetectedLibraryRoot detectedRoot, Map<LibraryRootType, String> rootTypeNames) {
     myRootCandidate = rootCandidate;
-    mySuggestedRoot = suggestedRoot;
-    myRootTypeName = rootTypeName;
+    myDetectedRoot = detectedRoot;
+    myRootTypeNames = rootTypeNames;
+    mySelectedRootType = detectedRoot.getTypes().get(0);
   }
 
   public VirtualFile getRootCandidate() {
     return myRootCandidate;
   }
 
-  public OrderRoot getSuggestedRoot() {
-    return mySuggestedRoot;
+  public DetectedLibraryRoot getDetectedRoot() {
+    return myDetectedRoot;
   }
 
-  public String getRootTypeName() {
-    return myRootTypeName;
+  public String getRootTypeName(LibraryRootType type) {
+    return myRootTypeNames.get(type);
+  }
+
+  public LibraryRootType getSelectedRootType() {
+    return mySelectedRootType;
+  }
+
+  public void setSelectedRootType(String selectedRootType) {
+    for (LibraryRootType type : myDetectedRoot.getTypes()) {
+      if (getRootTypeName(type).equals(selectedRootType)) {
+        mySelectedRootType = type;
+        break;
+      }
+    }
+  }
+
+  public String[] getRootTypeNames() {
+    final String[] types = ArrayUtil.toStringArray(myRootTypeNames.values());
+    Arrays.sort(types, String.CASE_INSENSITIVE_ORDER);
+    return types;
   }
 }

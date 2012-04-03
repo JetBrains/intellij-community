@@ -21,6 +21,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.LibraryRootType;
+import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsDetector;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -64,15 +66,22 @@ public class RootDetectionUtil {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           for (VirtualFile rootCandidate : rootCandidates) {
-            final Collection<OrderRoot> roots = detector.detectRoots(rootCandidate, indicator);
-            if (!roots.isEmpty() && allRootsEqualTo(roots, rootCandidate)) {
-              result.addAll(roots);
+            final Collection<DetectedLibraryRoot> roots = detector.detectRoots(rootCandidate, indicator);
+            if (!roots.isEmpty() && allRootsHaveOneTypeAndEqualTo(roots, rootCandidate)) {
+              for (DetectedLibraryRoot root : roots) {
+                final LibraryRootType libraryRootType = root.getTypes().get(0);
+                result.add(new OrderRoot(root.getFile(), libraryRootType.getType(), libraryRootType.isJarDirectory()));
+              }
             }
             else {
-              for (OrderRoot root : roots) {
-                final String typeName = detector.getRootTypeName(root.getType(), root.isJarDirectory());
-                LOG.assertTrue(typeName != null, "Unexpected root type " + root.getType().name() + (root.isJarDirectory() ? " (jar directory)" : "") + ", detectors: " + detector);
-                suggestedRoots.add(new SuggestedChildRootInfo(rootCandidate, root, typeName));
+              for (DetectedLibraryRoot root : roots) {
+                final HashMap<LibraryRootType, String> names = new HashMap<LibraryRootType, String>();
+                for (LibraryRootType type : root.getTypes()) {
+                  final String typeName = detector.getRootTypeName(type);
+                  LOG.assertTrue(typeName != null, "Unexpected root type " + type.getType().name() + (type.isJarDirectory() ? " (jar directory)" : "") + ", detectors: " + detector);
+                  names.put(type, typeName);
+                }
+                suggestedRoots.add(new SuggestedChildRootInfo(rootCandidate, root, names));
               }
             }
           }
@@ -91,17 +100,18 @@ public class RootDetectionUtil {
         return Collections.emptyList();
       }
       for (SuggestedChildRootInfo rootInfo : dialog.getChosenRoots()) {
-        result.add(rootInfo.getSuggestedRoot());
+        final LibraryRootType selectedRootType = rootInfo.getSelectedRootType();
+        result.add(new OrderRoot(rootInfo.getDetectedRoot().getFile(), selectedRootType.getType(), selectedRootType.isJarDirectory()));
       }
     }
 
     if (result.isEmpty() && rootTypesAllowedToBeSelectedByUserIfNothingIsDetected.length > 0) {
       Map<String, Pair<OrderRootType, Boolean>> types = new HashMap<String, Pair<OrderRootType, Boolean>>();
       for (OrderRootType type : rootTypesAllowedToBeSelectedByUserIfNothingIsDetected) {
-        for (boolean isDirectory : new boolean[]{false, true}) {
-          final String typeName = detector.getRootTypeName(type, isDirectory);
+        for (boolean isJarDirectory : new boolean[]{false, true}) {
+          final String typeName = detector.getRootTypeName(new LibraryRootType(type, isJarDirectory));
           if (typeName != null) {
-            types.put(typeName, Pair.create(type, isDirectory));
+            types.put(typeName, Pair.create(type, isJarDirectory));
           }
         }
       }
@@ -121,9 +131,9 @@ public class RootDetectionUtil {
     return result;
   }
 
-  private static boolean allRootsEqualTo(Collection<OrderRoot> roots, VirtualFile candidate) {
-    for (OrderRoot root : roots) {
-      if (!root.getFile().equals(candidate)) {
+  private static boolean allRootsHaveOneTypeAndEqualTo(Collection<DetectedLibraryRoot> roots, VirtualFile candidate) {
+    for (DetectedLibraryRoot root : roots) {
+      if (root.getTypes().size() > 1 || !root.getFile().equals(candidate)) {
         return false;
       }
     }
