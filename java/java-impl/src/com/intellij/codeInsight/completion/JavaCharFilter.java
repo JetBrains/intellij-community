@@ -61,7 +61,7 @@ public class JavaCharFilter extends CharFilter {
       }
     }
     for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(prefix, file.getResolveScope())) {
-      if (!isObfuscated(aClass)) {
+      if (!isObfuscated(aClass) && PsiResolveHelper.SERVICE.getInstance(file.getProject()).isAccessible(aClass, file, null)) {
         return true;
       }
     }
