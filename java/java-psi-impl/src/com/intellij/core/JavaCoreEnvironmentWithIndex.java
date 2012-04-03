@@ -21,10 +21,9 @@ import com.intellij.core.indexing.FileBasedIndexJavaComponent;
 import com.intellij.core.indexing.FileBasedIndexUnsavedDocumentsManagerJavaComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystemWithId;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilService;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.stubs.SerializationManager;
@@ -43,8 +42,6 @@ public class JavaCoreEnvironmentWithIndex extends JavaCoreEnvironment {
     registerExtensionPoint(Extensions.getRootArea(), "com.intellij.referencesSearch", com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher.class);
     registerExtensionPoint(Extensions.getRootArea(), "com.intellij.referencesSearch", com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher.class);
 
-
-
 //    <extensionPoint name="allOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
 //    <extensionPoint name="annotatedElementsSearch" interface="com.intellij.util.QueryExecutor"/>
 //    <extensionPoint name="annotatedPackagesSearch" interface="com.intellij.util.QueryExecutor"/>
@@ -56,9 +53,10 @@ public class JavaCoreEnvironmentWithIndex extends JavaCoreEnvironment {
 //    <extensionPoint name="superMethodsSearch" interface="com.intellij.util.QueryExecutor"/>
 //    <extensionPoint name="allClassesSearch" interface="com.intellij.util.QueryExecutor"/>
 
-    myApplication.registerService(PsiManager.class, PsiManagerImpl.class);
-    myApplication.registerService(InjectedLanguageUtilService.class, InjectedLanguageUtilServiceJavaComponent.class);
-    myApplication.registerService(PsiSearchHelper.class, PsiSearchHelperJavaComponent.class);
+    myApplication.registerService(ProgressManager.class, ProgressManagerJavaComponent.class);
+
+    myProject.registerService(InjectedLanguageUtilService.class, InjectedLanguageUtilServiceJavaComponent.class);
+    myProject.registerService(PsiSearchHelper.class, PsiSearchHelperJavaComponent.class);
 
     myApplication.registerService(SerializationManager.class, SerializationManagerImpl.class);
     myApplication.registerService(AbstractVfsAdapter.class, new AbstractVfsAdapterJavaComponent((CoreLocalFileSystemWithId)getLocalFileSystem()));
