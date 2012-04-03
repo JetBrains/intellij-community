@@ -53,7 +53,7 @@ public class JavaAnalysisScope extends AnalysisScope {
 
   @Override
   @NotNull
-  public AnalysisScope getNarrowedComplementaryScope(Project defaultProject) {
+  public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     final HashSet<Module> modules = new HashSet<Module>();
     if (myType == FILE) {
@@ -123,7 +123,7 @@ public class JavaAnalysisScope extends AnalysisScope {
   }
 
   @Override
-  protected void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
+  protected void accept(@NotNull final PsiElementVisitor visitor, final boolean needReadAction) {
     if (myElement instanceof PsiPackage) {
       final PsiPackage pack = (PsiPackage)myElement;
       final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();

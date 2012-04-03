@@ -126,35 +126,37 @@ class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public Comparator<IdeaPluginDescriptor> getComparator() {
     final Comparator<IdeaPluginDescriptor> comparator = getColumnComparator();
     if (isSortByStatus()) {
+      final RowSorter.SortKey defaultSortKey = myModel.getDefaultSortKey();
+      final int up = defaultSortKey != null && defaultSortKey.getSortOrder() == SortOrder.ASCENDING ? -1 : 1;
       return new Comparator<IdeaPluginDescriptor>() {
         public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
           if (o1 instanceof PluginNode && o2 instanceof PluginNode) {
             final int status1 = ((PluginNode)o1).getStatus();
             final int status2 = ((PluginNode)o2).getStatus();
             if (isDownloaded((PluginNode)o1)){
-              if (!isDownloaded((PluginNode)o2)) return -1;
+              if (!isDownloaded((PluginNode)o2)) return up;
               return comparator.compare(o1, o2);
             }
-            if (isDownloaded((PluginNode)o2)) return 1;
+            if (isDownloaded((PluginNode)o2)) return -up;
 
             if (status1 == PluginNode.STATUS_DELETED) {
-              if (status2 != PluginNode.STATUS_DELETED) return -1;
+              if (status2 != PluginNode.STATUS_DELETED) return up;
               return comparator.compare(o1, o2);
             }
-            if (status2 == PluginNode.STATUS_DELETED) return 1;
+            if (status2 == PluginNode.STATUS_DELETED) return -up;
 
             if (status1 == PluginNode.STATUS_INSTALLED) {
-              if (status2 !=PluginNode.STATUS_INSTALLED) return -1;
+              if (status2 !=PluginNode.STATUS_INSTALLED) return up;
               final boolean hasNewerVersion1 = InstalledPluginsTableModel.hasNewerVersion(o1.getPluginId());
               final boolean hasNewerVersion2 = InstalledPluginsTableModel.hasNewerVersion(o2.getPluginId());
               if (hasNewerVersion1 != hasNewerVersion2) {
-                if (hasNewerVersion1) return -1;
-                return 1;
+                if (hasNewerVersion1) return up;
+                return -up;
               }
               return comparator.compare(o1, o2);
             }
             if (status2 == PluginNode.STATUS_INSTALLED) {
-              return 1;
+              return -up;
             }
           }
           return comparator.compare(o1, o2);

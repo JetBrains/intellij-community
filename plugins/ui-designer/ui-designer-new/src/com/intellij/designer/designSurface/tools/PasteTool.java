@@ -17,8 +17,6 @@ package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.OperationContext;
 
-import java.util.Collections;
-
 /**
  * @author Alexander Lobas
  */

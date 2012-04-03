@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,20 +71,21 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
             final String str = value.toString();
             append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
-          else if (value instanceof ProjectJdkComboBoxItem){
+          else if (value instanceof ProjectJdkComboBoxItem) {
             final Sdk jdk = jdkModel.getProjectSdk();
-            if (jdk != null){
+            if (jdk != null) {
               setIcon(jdk.getSdkType().getIcon());
               append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
               append(" (" + jdk.getName() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-            } else {
+            }
+            else {
               final String str = value.toString();
               append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
             }
           }
           else {
-            super.doCustomize(list, value != null ? ((JdkComboBoxItem)value).getJdk() : new NoneJdkComboBoxItem(), index, selected,
-                              hasFocus);
+            super.doCustomize(list, value != null ? ((JdkComboBoxItem)value).getJdk()
+                                                  : new NoneJdkComboBoxItem(), index, selected, hasFocus);
           }
         }
       }

@@ -25,10 +25,10 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Javac;
 import org.apache.tools.ant.types.Path;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.EmptyVisitor;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.ClassVisitor;
+import org.jetbrains.asm4.ClassWriter;
+import org.jetbrains.asm4.Opcodes;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -440,7 +440,7 @@ public class Javac2 extends Javac {
 
     private static int getClassFileVersion(ClassReader reader) {
         final int[] classfileVersion = new int[1];
-        reader.accept(new EmptyVisitor() {
+        reader.accept(new ClassVisitor(Opcodes.ASM4) {
             public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
                 classfileVersion[0] = version;
             }

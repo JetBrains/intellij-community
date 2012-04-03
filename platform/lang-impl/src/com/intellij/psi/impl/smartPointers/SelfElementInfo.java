@@ -278,7 +278,8 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   @Override
   public int elementHashCode() {
-    return myVirtualFile == null ? 0 : myVirtualFile.hashCode();
+    VirtualFile virtualFile = myVirtualFile;
+    return virtualFile == null ? 0 : virtualFile.hashCode();
   }
 
   @Override

@@ -983,7 +983,7 @@
 
   <!-- ================= Layouts ================= -->
 
-  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
         layout="com.intellij.android.designer.model.layout.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
@@ -1004,7 +1004,7 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
         layout="com.intellij.android.designer.model.layout.RadFrameLayout"
         class="android.widget.FrameLayout"
         tag="FrameLayout">
@@ -1012,7 +1012,9 @@
     <palette title="FrameLayout" icon="/com/intellij/android/designer/icons/FrameLayout.png"
              tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
 
-    <properties important="foreground foregroundGravity"/>
+    <properties important="foreground foregroundGravity"
+                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal layout:margin.marginStart layout:margin.marginEnd"
+        />
 
     <creation>
       <![CDATA[

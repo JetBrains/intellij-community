@@ -327,7 +327,7 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
     GridBag gb = new GridBag()
       .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultWeightX(1)
-      .setDefaultWeightY(0.1)
+      .setDefaultWeightY(0)
       .setDefaultFill(GridBagConstraints.BOTH);
 
     panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1));

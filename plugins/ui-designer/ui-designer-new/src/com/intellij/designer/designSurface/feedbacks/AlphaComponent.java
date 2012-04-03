@@ -38,8 +38,9 @@ public class AlphaComponent extends JComponent {
   }
 
   protected void paintComponent(Graphics g) {
-    Graphics2D g2d = (Graphics2D)g;
     super.paintComponent(g);
+
+    Graphics2D g2d = (Graphics2D)g;
     Composite oldComposite = g2d.getComposite();
     Color oldColor = g2d.getColor();
 

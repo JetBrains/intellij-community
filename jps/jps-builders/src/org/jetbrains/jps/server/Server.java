@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.JpsRemoteProto;
-import org.jetbrains.jps.incremental.Paths;
+import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -50,7 +50,7 @@ public class Server {
   private final ServerMessageHandler myMessageHandler;
 
   public Server(File systemDir) {
-    Paths.getInstance().setSystemRoot(systemDir);
+    Utils.setSystemRoot(systemDir);
     final ExecutorService threadPool = Executors.newCachedThreadPool();
     myScheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Client activity checker", Thread.MIN_PRIORITY);
     myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);

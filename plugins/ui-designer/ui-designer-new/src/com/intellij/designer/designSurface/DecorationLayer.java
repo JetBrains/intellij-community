@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
 
 /**
@@ -29,9 +28,17 @@ import java.util.List;
  */
 public class DecorationLayer extends JComponent {
   private final EditableArea myArea;
+  private boolean myShowSelection = true;
 
   public DecorationLayer(EditableArea area) {
     myArea = area;
+  }
+
+  public void showSelection(boolean value) {
+    if (myShowSelection != value) {
+      myShowSelection = value;
+      repaint();
+    }
   }
 
   @Nullable
@@ -49,7 +56,9 @@ public class DecorationLayer extends JComponent {
 
   @Override
   public void paint(Graphics g) {
-    painSelection((Graphics2D)g);
+    if (myShowSelection) {
+      painSelection((Graphics2D)g);
+    }
   }
 
   private void painSelection(Graphics2D g) {

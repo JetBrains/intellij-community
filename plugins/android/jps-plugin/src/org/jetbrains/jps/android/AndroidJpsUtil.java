@@ -19,8 +19,8 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.idea.Facet;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
-import org.jetbrains.jps.incremental.Paths;
 import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
@@ -510,7 +510,7 @@ class AndroidJpsUtil {
 
   @NotNull
   public static File getGeneratedSourcesStorage(@NotNull Module module) {
-    final File dataStorageRoot = Paths.getDataStorageRoot(module.getProject());
+    final File dataStorageRoot = Utils.getDataStorageRoot(module.getProject());
     final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
     final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_SOURCES_FOLDER_NAME);
     return new File(generatedSourcesRoot, module.getName());
@@ -518,7 +518,7 @@ class AndroidJpsUtil {
 
   @NotNull
   public static File getGeneratedResourcesStorage(@NotNull Module module) {
-    final File dataStorageRoot = Paths.getDataStorageRoot(module.getProject());
+    final File dataStorageRoot = Utils.getDataStorageRoot(module.getProject());
     final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
     final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_RESOURCES_DIR_NAME);
     return new File(generatedSourcesRoot, module.getName());

@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -60,7 +57,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistoryProvider.MyHistorySession> {
+public class SvnHistoryProvider
+  implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, SvnHistoryProvider.MyHistorySession> {
   private final SvnVcs myVcs;
 
   public SvnHistoryProvider(SvnVcs vcs) {
@@ -75,9 +73,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final ColumnInfo[] columns;
     final Consumer<VcsFileRevision> listener;
     final JComponent addComp;
-    if (((MyHistorySession) session).isSupports15()) {
+    if (((MyHistorySession)session).isSupports15()) {
       final MergeSourceColumnInfo mergeSourceColumn = new MergeSourceColumnInfo((MyHistorySession)session);
-      columns = new ColumnInfo[] {new CopyFromColumnInfo(), mergeSourceColumn};
+      columns = new ColumnInfo[]{new CopyFromColumnInfo(), mergeSourceColumn};
+
+      final JPanel panel = new JPanel(new BorderLayout());
 
       final JTextArea field = new JTextArea();
       field.setEditable(false);
@@ -88,35 +88,30 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           field.setText(mergeSourceColumn.getText(vcsFileRevision));
         }
       };
-      final JPanel panel = new JPanel(new GridBagLayout());
-      final GridBagConstraints gb =
-        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
 
-      final JLabel mergeLabel = new JLabel("Merge Sources:");
       final MergeSourceDetailsAction sourceAction = new MergeSourceDetailsAction();
       sourceAction.registerSelf(forShortcutRegistration);
-      final DefaultActionGroup group = new DefaultActionGroup();
-      group.add(sourceAction);
-      final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
 
-      panel.add(mergeLabel, gb);
-      ++ gb.gridx;
-      gb.insets.left = 10;
-      gb.anchor = GridBagConstraints.NORTHWEST;
-      panel.add(toolbar, gb);
+      JPanel fieldPanel = new ToolbarDecorator() {
+        @Override
+        protected JComponent getComponent() {
+          return field;
+        }
 
-      ++ gb.gridy;
-      gb.insets.left = 0;
-      gb.gridx = 0;
-      gb.gridwidth = 2;
-      gb.weightx = gb.weighty = 1;
-      gb.fill = GridBagConstraints.BOTH;
-      JScrollPane pane = ScrollPaneFactory.createScrollPane(field);
-      pane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP));
-      panel.add(pane, gb);
+        @Override
+        protected void updateButtons() {
+        }
+      }.initPositionAndBorder()
+        .addExtraAction(AnActionButton.fromAction(sourceAction))
+        .createPanel();
+      fieldPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP));
+
+      panel.add(fieldPanel, BorderLayout.CENTER);
+      panel.add(new JLabel("Merge Sources:"), BorderLayout.NORTH);
       addComp = panel;
-    } else {
-      columns = new ColumnInfo[] {new CopyFromColumnInfo()};
+    }
+    else {
+      columns = new ColumnInfo[]{new CopyFromColumnInfo()};
       addComp = null;
       listener = null;
     }
@@ -150,7 +145,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       super(revisions, currentRevision);
       myCommittedPath = committedPath;
       mySupports15 = supports15;
-      if (! skipRefreshOnStart) {
+      if (!skipRefreshOnStart) {
         shouldBeRefreshed();
       }
     }
@@ -174,7 +169,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         SVNInfo info = wcClient.doInfo(new File(myCommittedPath.getPath()), SVNRevision.UNDEFINED);
         if (info != null) {
           return new SvnRevisionNumber(info.getCommittedRevision());
-        } else {
+        }
+        else {
           return null;
         }
       }
@@ -189,7 +185,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     @Override
     public boolean isContentAvailable(final VcsFileRevision revision) {
-      return ! myCommittedPath.isDirectory();
+      return !myCommittedPath.isDirectory();
     }
 
     public boolean isSupports15() {
@@ -217,21 +213,25 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final LogLoader logLoader;
     if (path.isNonLocal()) {
       logLoader = new RepositoryLoader(myVcs, path);
-    } else {
+    }
+    else {
       logLoader = new LocalLoader(myVcs, path);
     }
 
     try {
       logLoader.preliminary();
-    } catch (SVNCancelException e) {
+    }
+    catch (SVNCancelException e) {
       return;
-    } catch (SVNException e) {
+    }
+    catch (SVNException e) {
       throw new VcsException(e);
     }
     logLoader.initSupports15();
 
     final MyHistorySession historySession =
-      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null, false);
+      new MyHistorySession(Collections.<VcsFileRevision>emptyList(), committedPath, Boolean.TRUE.equals(logLoader.mySupport15), null,
+                           false);
 
     final Ref<Boolean> sessionReported = new Ref<Boolean>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -255,7 +255,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
   @Nullable
   private void getRevisionsList(final FilePath file, final Ref<Boolean> supports15Ref,
-                                                 final Consumer<VcsFileRevision> consumer) throws VcsException {
+                                final Consumer<VcsFileRevision> consumer) throws VcsException {
     final VcsException[] exception = new VcsException[1];
 
     Runnable command = new Runnable() {
@@ -265,13 +265,14 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           indicator.setText(SvnBundle.message("progress.text2.collecting.history", file.getName()));
         }
         try {
-          if (! file.isNonLocal()) {
+          if (!file.isNonLocal()) {
             collectLogEntries(indicator, file, exception, consumer, supports15Ref);
-          } else {
+          }
+          else {
             collectLogEntriesForRepository(indicator, file, consumer, supports15Ref);
           }
         }
-        catch(SVNCancelException ex) {
+        catch (SVNCancelException ex) {
           throw new ProcessCanceledException(ex);
         }
         catch (SVNException e) {
@@ -319,6 +320,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     protected abstract void preliminary() throws SVNException;
+
     protected abstract void load();
   }
 
@@ -342,8 +344,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         }
       });
       if (myInfo == null || myInfo.getRepositoryRootURL() == null) {
-          myException = new VcsException("File ''{0}'' is not under version control" + myFile.getIOFile());
-          return;
+        myException = new VcsException("File ''{0}'' is not under version control" + myFile.getIOFile());
+        return;
       }
       if (myInfo.getURL() == null) {
         myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
@@ -367,12 +369,15 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       final SVNRevision pegRevision = myInfo.getRevision();
       SVNLogClient client = myVcs.createLogClient();
       try {
-        client.doLog(new File[]{new File(myFile.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), SVNRevision.UNDEFINED,
-                     false, true, mySupport15, 0, null,
-                     new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, myConsumer, repoRootURL, myFile.getCharset()));
-      } catch (SVNCancelException e) {
+        client
+          .doLog(new File[]{new File(myFile.getIOFile().getAbsolutePath())}, SVNRevision.HEAD, SVNRevision.create(1), SVNRevision.UNDEFINED,
+                 false, true, mySupport15, 0, null,
+                 new MyLogEntryHandler(myVcs, myUrl, pegRevision, relativeUrl, myConsumer, repoRootURL, myFile.getCharset()));
+      }
+      catch (SVNCancelException e) {
         //
-      } catch (SVNException e) {
+      }
+      catch (SVNException e) {
         myException = new VcsException(e);
       }
       catch (VcsException e) {
@@ -395,8 +400,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       }
     });
     if (info == null || info.getRepositoryRootURL() == null) {
-        exception[0] = new VcsException("File ''{0}'' is not under version control" + file.getIOFile());
-        return;
+      exception[0] = new VcsException("File ''{0}'' is not under version control" + file.getIOFile());
+      return;
     }
     final String url = info.getURL() == null ? null : info.getURL().toString();
     String relativeUrl = url;
@@ -436,20 +441,23 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       }
       SVNWCClient wcClient = myVcs.createWCClient();
       try {
-      final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
-      SVNInfo info = null;
+        final SVNURL svnurl = SVNURL.parseURIEncoded(myUrl);
+        SVNInfo info = null;
         info = wcClient.doInfo(svnurl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-      final String root = info.getRepositoryRootURL().toString();
-      String relativeUrl = myUrl;
-      if (myUrl.startsWith(root)) {
-        relativeUrl = myUrl.substring(root.length());
+        final String root = info.getRepositoryRootURL().toString();
+        String relativeUrl = myUrl;
+        if (myUrl.startsWith(root)) {
+          relativeUrl = myUrl.substring(root.length());
+        }
+        SVNLogClient client = myVcs.createLogClient();
+        client
+          .doLog(svnurl, new String[]{}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, true, mySupport15, 0, null,
+                 new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, myConsumer, info.getRepositoryRootURL()));
       }
-      SVNLogClient client = myVcs.createLogClient();
-      client.doLog(svnurl, new String[] {}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, true, mySupport15, 0, null,
-                   new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, myConsumer, info.getRepositoryRootURL()));
-      } catch (SVNCancelException e) {
+      catch (SVNCancelException e) {
         //
-      } catch (SVNException e) {
+      }
+      catch (SVNException e) {
         myException = new VcsException(e);
       }
       catch (VcsException e) {
@@ -476,7 +484,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     final boolean supports15 = SvnUtil.checkRepositoryVersion15(myVcs, root);
     supports15Ref.set(supports15);
     // todo log in history provider
-    client.doLog(svnurl, new String[] {}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, true, supports15, 0, null,
+    client.doLog(svnurl, new String[]{}, SVNRevision.UNDEFINED, SVNRevision.HEAD, SVNRevision.create(1), false, true, supports15, 0, null,
                  new RepositoryLogEntryHandler(myVcs, url, SVNRevision.UNDEFINED, relativeUrl, result, info.getRepositoryRootURL()));
   }
 
@@ -496,7 +504,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       SVNInfo info = wcClient.doInfo(new File(file.getPath()).getAbsoluteFile(), SVNRevision.UNDEFINED);
       if (info != null) {
         return new SvnRevisionNumber(info.getRevision());
-      } else {
+      }
+      else {
         return null;
       }
     }
@@ -542,7 +551,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       myTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<SVNLogEntry, Integer>, SVNException>() {
         public void consume(final Pair<SVNLogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
           final SVNLogEntry logEntry = svnLogEntryIntegerPair.getFirst();
-          
+
           if (myIndicator != null) {
             if (myIndicator.isCanceled()) {
               SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
@@ -556,8 +565,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           }
           else {
             String path = SVNPathUtil.removeTail(myLastPath);
-            while(path.length() > 0) {
-              entryPath = (SVNLogEntryPath) logEntry.getChangedPaths().get(path);
+            while (path.length() > 0) {
+              entryPath = (SVNLogEntryPath)logEntry.getChangedPaths().get(path);
               if (entryPath != null) {
                 String relativePath = myLastPath.substring(entryPath.getPath().length());
                 copyPath = entryPath.getCopyPath() + relativePath;
@@ -575,8 +584,9 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
             myLastPath = correctLastPathAccordingToFolderRenames(myLastPath, logEntry);
           }
           if (mergeLevel >= 0) {
-            addToListByLevel((SvnFileRevision) myPrevious, revision, mergeLevel);
-          } else {
+            addToListByLevel((SvnFileRevision)myPrevious, revision, mergeLevel);
+          }
+          else {
             myResult.consume(revision);
             myPrevious = revision;
           }
@@ -614,7 +624,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         return;
       }
       final List<SvnFileRevision> sources = revision.getMergeSources();
-      if (! sources.isEmpty()) {
+      if (!sources.isEmpty()) {
         addToListByLevel(sources.get(sources.size() - 1), revisionToAdd, level - 1);
       }
     }
@@ -712,13 +722,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
       final Object value = table.getModel().getValueAt(row, column);
       if (value instanceof SvnFileRevision) {
-        return (SvnFileRevision) value;
+        return (SvnFileRevision)value;
       }
       return null;
     }
 
     public void mouseMoved(MouseEvent e) {
-      JTable table = (JTable) e.getSource();
+      JTable table = (JTable)e.getSource();
       Object tag = getTagAt(e);
       if (tag == myTag) {
         table.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -738,8 +748,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     public String getText(final VcsFileRevision value) {
-      if (! (value instanceof SvnFileRevision)) return "";
-      final SvnFileRevision revision = (SvnFileRevision) value;
+      if (!(value instanceof SvnFileRevision)) return "";
+      final SvnFileRevision revision = (SvnFileRevision)value;
       final List<SvnFileRevision> mergeSources = revision.getMergeSources();
       if (mergeSources.isEmpty()) {
         return "";
@@ -750,7 +760,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           sb.append(", ");
         }
         sb.append(source.getRevisionNumber().asString());
-        if (! source.getMergeSources().isEmpty()) {
+        if (!source.getMergeSources().isEmpty()) {
           sb.append("*");
         }
       }
@@ -767,11 +777,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         myListener = new MergeSourceDetailsLinkListener(MERGE_SOURCE_DETAILS_TAG, myFile);
         myListener.install(table);
       }
-      if (! (value instanceof SvnFileRevision)) {
+      if (!(value instanceof SvnFileRevision)) {
         append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         return;
       }
-      final SvnFileRevision revision = (SvnFileRevision) value;
+      final SvnFileRevision revision = (SvnFileRevision)value;
       final String text = getText(revision);
       if (text.length() == 0) {
         append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -806,8 +816,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   private static class CopyFromColumnInfo extends ColumnInfo<VcsFileRevision, String> {
     private final Icon myIcon = IconLoader.getIcon("/actions/menu-copy.png");
     private final ColoredTableCellRenderer myRenderer = new ColoredTableCellRenderer() {
-      protected void customizeCellRenderer(final JTable table, final Object value, final boolean selected, final boolean hasFocus, final int row, final int column) {
-        if (value instanceof String && ((String) value).length() > 0) {
+      protected void customizeCellRenderer(final JTable table,
+                                           final Object value,
+                                           final boolean selected,
+                                           final boolean hasFocus,
+                                           final int row,
+                                           final int column) {
+        if (value instanceof String && ((String)value).length() > 0) {
           setIcon(myIcon);
           setToolTipText(SvnBundle.message("copy.column.tooltip", value));
         }
@@ -822,7 +837,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
 
     public String valueOf(final VcsFileRevision o) {
-      return o instanceof SvnFileRevision ? ((SvnFileRevision) o).getCopyFromPath() : "";
+      return o instanceof SvnFileRevision ? ((SvnFileRevision)o).getCopyFromPath() : "";
     }
 
     @Override

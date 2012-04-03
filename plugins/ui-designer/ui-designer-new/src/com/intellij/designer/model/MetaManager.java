@@ -18,7 +18,6 @@ package com.intellij.designer.model;
 import com.intellij.designer.palette.Group;
 import com.intellij.designer.palette.Item;
 import com.intellij.ide.palette.PaletteGroup;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;

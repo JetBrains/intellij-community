@@ -106,7 +106,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
   private static final int MAX_LEAKY_PROJECTS = 42;
   private final ProgressManager myProgressManager;
-  private boolean myDefaultProjectWasDisposed = false;
+  private volatile boolean myDefaultProjectWasDisposed = false;
 
   @NotNull
   private static List<ProjectManagerListener> getListeners(Project project) {
@@ -331,7 +331,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   @NotNull
-  private static String canonicalize(final @NotNull String filePath) {
+  private static String canonicalize(@NotNull final String filePath) {
     try {
       return FileUtil.resolveShortWindowsName(filePath);
     }
@@ -374,19 +374,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @Override
   @NotNull
   public Project[] getOpenProjects() {
-    if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
-      LOG.error("Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
-    }
-    if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
-      LOG.error("Open projects cache corrupted. Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
-    }
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      Project currentTestProject = myCurrentTestProject;
-      if (currentTestProject != null && !currentTestProject.isDisposed()) {
-        return ArrayUtil.append(myOpenProjectsArrayCache, currentTestProject);
+    synchronized (myOpenProjects) {
+      if (myOpenProjectsArrayCache.length != myOpenProjects.size()) {
+        LOG.error("Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
       }
+      if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
+        LOG.error("Open projects cache corrupted. Open projects: "+myOpenProjects+"; cache: "+Arrays.asList(myOpenProjectsArrayCache));
+      }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        Project currentTestProject = myCurrentTestProject;
+        if (currentTestProject != null && !currentTestProject.isDisposed()) {
+          return ArrayUtil.append(myOpenProjectsArrayCache, currentTestProject);
+        }
+      }
+      return myOpenProjectsArrayCache;
     }
-    return myOpenProjectsArrayCache;
   }
 
   @Override
@@ -399,22 +401,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public boolean openProject(final Project project) {
-    final Application application = ApplicationManager.getApplication();
-
-    if (application.isUnitTestMode() && project.toString().contains("lighttemp")) {
+    if (isLight(project)) {
       throw new AssertionError("must not open light project");
     }
-
-    if (myOpenProjects.contains(project)) {
-      return false;
-    }
+    final Application application = ApplicationManager.getApplication();
 
     if (!application.isUnitTestMode() && !((ProjectEx)project).getStateStore().checkVersion()) {
       return false;
     }
 
-    myOpenProjects.add(project);
-    cacheOpenProjects();
+    synchronized (myOpenProjects) {
+      if (myOpenProjects.contains(project)) {
+        return false;
+      }
+      myOpenProjects.add(project);
+      cacheOpenProjects();
+    }
     fireProjectOpened(project);
 
     final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(project);
@@ -537,7 +539,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
    * @return the project, or null if the user has cancelled opening the project.
    */
   @Nullable
-  private Project loadProjectWithProgress(final @NotNull String filePath) throws IOException {
+  private Project loadProjectWithProgress(@NotNull final String filePath) throws IOException {
 
     refreshProjectFiles(filePath);
     final ProjectImpl project = createProject(null, canonicalize(filePath), false, false);
@@ -960,8 +962,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return closeProject(project, true, false, true);
   }
 
-  public boolean closeProject(final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("lighttemp")) {
+  public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
+    if (isLight(project)) {
       throw new AssertionError("must not close light project");
     }
     if (!isProjectOpened(project)) return true;
@@ -983,8 +985,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
-          myOpenProjects.remove(project);
-          cacheOpenProjects();
+          synchronized (myOpenProjects) {
+            myOpenProjects.remove(project);
+            cacheOpenProjects();
+          }
           myCurrentTestProject = null;
 
           myChangedProjectFiles.remove(project);
@@ -1002,6 +1006,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     }
 
     return true;
+  }
+
+  public static boolean isLight(@NotNull Project project) {
+    return ApplicationManager.getApplication().isUnitTestMode() && project.toString().contains("lighttemp");
   }
 
   @Override

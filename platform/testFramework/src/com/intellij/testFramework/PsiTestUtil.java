@@ -20,7 +20,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -296,5 +299,36 @@ import java.util.Collection;
         model.commit();
       }
     });
+  }
+
+  public static Module addModule(final Project project, final ModuleType type, final String name, final VirtualFile root) {
+    return new WriteCommandAction<Module>(project) {
+      @Override
+      protected void run(Result<Module> result) throws Throwable {
+        final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+        String moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type).getName();
+        moduleModel.commit();
+
+        final Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
+        final ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
+        final ContentEntry entry = model.addContentEntry(root);
+        entry.addSourceFolder(root, false);
+
+        model.commit();
+        result.setResult(dep);
+      }
+    }.execute().getResultObject();
+  }
+
+  public static void addDependency(final Module from, final Module to) {
+    new WriteCommandAction(from.getProject()) {
+      @Override
+      protected void run(Result result) throws Throwable {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(from).getModifiableModel();
+        model.addModuleOrderEntry(to);
+        model.commit();
+      }
+    }.execute().getResultObject();
+
   }
 }

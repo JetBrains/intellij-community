@@ -15,6 +15,9 @@
  */
 package com.intellij.lang.ant.config.execution;
 
+import com.intellij.execution.junit2.segments.OutputPacketProcessor;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
@@ -28,6 +31,7 @@ import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.actions.*;
 import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.HelpID;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,30 +41,27 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.content.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.AntBuildMessageView");
@@ -88,22 +89,24 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private int myPriorityThreshold = PRIORITY_BRIEF;
   private int myErrorCount;
   private int myWarningCount;
-  private boolean myIsOutputPaused = false;
+  private volatile boolean myIsOutputPaused = false;
 
   private AntOutputView myCurrentView;
 
   private final PlainTextView myPlainTextView;
   private final TreeView myTreeView;
 
-  private final ArrayList<LogCommand> myLog = new ArrayList<LogCommand>(1024);
-  private int myCommandsProcessedCount = 0;
+  private final java.util.List<LogCommand> myLog = Collections.synchronizedList(new ArrayList<LogCommand>(1024));
+  private volatile int myCommandsProcessedCount = 0;
 
   private JPanel myProgressPanel;
 
   private final AntMessageCustomizer[] myMessageCustomizers = AntMessageCustomizer.EP_NAME.getExtensions();
 
-  private final Timer myScrollerTimer = UIUtil.createNamedTimer("Ant message view timer", 1000, new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final Runnable myFlushLogRunnable = new Runnable() {
+    @Override
+    public void run() {
       if (myTreeView != null && myCommandsProcessedCount < myLog.size()) {
         if (!myIsOutputPaused) {
           new OutputFlusher().doFlush();
@@ -111,7 +114,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
         }
       }
     }
-  });
+  };
+
   private boolean myIsAborted;
   private ActionToolbar myLeftToolbar;
   private ActionToolbar myRightToolbar;
@@ -185,7 +189,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     new OutputFlusher() {
       public void doFlush() {
-        for (int i = 0; i < /*myLog.size()*/ myCommandsProcessedCount; i++) {
+        final int processedCount = myCommandsProcessedCount;
+        for (int i = 0; i < processedCount; i++) {
           LogCommand command = myLog.get(i);
           proceedOneCommand(command);
         }
@@ -274,7 +279,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     content.putUserData(KEY, messageView);
     ijMessageView.getContentManager().addContent(content);
     ijMessageView.getContentManager().setSelectedContent(content);
-
+    content.setDisposer(new Disposable() {
+      @Override
+      public void dispose() {
+        Disposer.dispose(messageView.myAlarm);
+      }
+    });
     new CloseListener(content, ijMessageView.getContentManager(), project);
     // Do not inline next two variabled. Seeking for NPE.
     ToolWindow messageToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
@@ -366,6 +376,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   private synchronized void addCommand(LogCommand command) {
     myLog.add(command);
+    myAlarm.cancelAllRequests();
+    myAlarm.addRequest(myFlushLogRunnable, 100L);
   }
 
   public void startBuild(String buildName) {
@@ -543,11 +555,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     public void contentRemoved(ContentManagerEvent event) {
       if (event.getContent() == myContent) {
+        myContentManager.removeContentManagerListener(this);
         AntBuildMessageView buildMessageView = myContent.getUserData(KEY);
         if (!myCloseAllowed) {
           buildMessageView.stopProcess();
         }
-        myContentManager.removeContentManagerListener(this);
         ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
         myContent.release();
         myContent = null;
@@ -769,19 +781,25 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     return myWarningCount;
   }
 
-  void startScrollerThread() {
-    myScrollerTimer.start();
-  }
-
-  void stopScrollerThread() {
-    myScrollerTimer.stop();
-  }
-
-  void buildFinished(boolean isProgressAborted, long buildTimeInMilliseconds, @NotNull final AntBuildListener antBuildListener) {
+  void buildFinished(boolean isProgressAborted,
+                     long buildTimeInMilliseconds,
+                     @NotNull final AntBuildListener antBuildListener,
+                     OutputPacketProcessor dispatcher) {
     final boolean aborted = isProgressAborted || myIsAborted;
-    String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
-    WindowManager.getInstance().getStatusBar(myProject).setInfo(message);
-    addCommand(new FinishBuildCommand(message));
+    final String message = getFinishStatusText(aborted, buildTimeInMilliseconds);
+
+    dispatcher.processOutput(new Printable() {
+      @Override
+      public void printOn(Printer printer) {
+        if (!myProject.isDisposed()) { // if not disposed
+          addCommand(new FinishBuildCommand(message));
+          final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+          if (statusBar != null) {
+            statusBar.setInfo(message);
+          }
+        }
+      }
+    });
     if (!myIsOutputPaused) {
       new OutputFlusher().doFlush();
       myTreeView.scrollToLastMessage();
@@ -810,7 +828,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     });
   }
 
-  private String getFinishStatusText(boolean isAborted, long buildTimeInMilliseconds) {
+  public String getFinishStatusText(boolean isAborted, long buildTimeInMilliseconds) {
     int errors = getErrorCount();
     int warnings = getWarningCount();
     final String theDateAsString = DateFormatUtil.formatDateTime(Clock.getTime());
@@ -832,10 +850,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  private String formatBuildTime(long seconds) {
-    if (seconds == 0) return "0s";
-
-    StringBuilder sb = new StringBuilder();
+  private static String formatBuildTime(long seconds) {
+    if (seconds == 0) {
+      return "0s";
+    }
+    final StringBuilder sb = new StringBuilder();
     if (seconds >= 3600) {
       sb.append(seconds / 3600).append("h ");
       seconds %= 3600;
@@ -866,10 +885,12 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     private final ArrayList<AntMessage> myDelayedMessages = new ArrayList<AntMessage>();
 
     public void doFlush() {
-      for (; myCommandsProcessedCount < myLog.size(); myCommandsProcessedCount++) {
-        LogCommand command = myLog.get(myCommandsProcessedCount);
+      int currentProcessedCount = myCommandsProcessedCount;
+      while (currentProcessedCount < myLog.size()) {
+        final LogCommand command = myLog.get(currentProcessedCount++);
         proceedOneCommand(command);
       }
+      myCommandsProcessedCount = currentProcessedCount;
       flushDelayedMessages();
     }
 

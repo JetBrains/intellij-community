@@ -492,7 +492,7 @@ public class MavenIndex {
   }
 
   @TestOnly
-  public void printInfo() {
+  public synchronized void printInfo() {
     doIndexTask(new IndexTask<Set<String>>() {
       public Set<String> doTask() throws Exception {
         System.out.println("BaseFile: " + myData.groupToArtifactMap.getBaseFile());

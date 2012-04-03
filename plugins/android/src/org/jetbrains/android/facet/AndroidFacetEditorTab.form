@@ -115,7 +115,7 @@
               </vspacer>
             </children>
           </grid>
-          <grid id="84519" layout-manager="GridLayoutManager" row-count="7" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="84519" layout-manager="GridLayoutManager" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="4" right="0"/>
             <constraints>
               <tabbedpane title="Compiler"/>
@@ -198,7 +198,7 @@
               </grid>
               <vspacer id="e716a">
                 <constraints>
-                  <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="7" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <grid id="4c810" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -212,26 +212,26 @@
                 </clientProperties>
                 <border type="etched" title-resource-bundle="messages/AndroidBundle" title-key="android.aidl.settings.title"/>
                 <children>
-                  <component id="1d0b4" class="javax.swing.JLabel" binding="myAidlGenPathLabel">
+                  <component id="28c2e" class="javax.swing.JCheckBox" binding="myGenerateIdlWhenChanged">
                     <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="&amp;Destination directory:"/>
+                      <text resource-bundle="messages/AndroidBundle" key="android.regenerate.idl.when.changed.checkbox"/>
                     </properties>
                   </component>
                   <component id="d9360" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myAidlGenPathField">
                     <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                   </component>
-                  <component id="28c2e" class="javax.swing.JCheckBox" binding="myGenerateIdlWhenChanged">
+                  <component id="1d0b4" class="javax.swing.JLabel" binding="myAidlGenPathLabel">
                     <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text resource-bundle="messages/AndroidBundle" key="android.regenerate.idl.when.changed.checkbox"/>
+                      <text value="&amp;Destination directory:"/>
                     </properties>
                   </component>
                 </children>
@@ -250,14 +250,14 @@
                   <grid id="1f282" binding="myAaptCompilerPanel" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="2" use-parent-layout="false"/>
                     </constraints>
                     <properties/>
                     <border type="none"/>
                     <children>
                       <component id="2b9e0" class="javax.swing.JLabel" binding="myRGenPathLabel">
                         <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text resource-bundle="messages/AndroidBundle" key="android.dest.directory.title"/>
@@ -265,13 +265,13 @@
                       </component>
                       <component id="f229f" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myRGenPathField">
                         <constraints>
-                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties/>
                       </component>
                       <component id="c99af" class="javax.swing.JCheckBox" binding="myGenerateRJavaWhenChanged">
                         <constraints>
-                          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text resource-bundle="messages/AndroidBundle" key="android.generate.r.java.checkbox"/>
@@ -325,6 +325,14 @@
                 </constraints>
                 <properties>
                   <text resource-bundle="messages/AndroidBundle" key="android.facet.settings.proguard.cfg.label"/>
+                </properties>
+              </component>
+              <component id="6630f" class="javax.swing.JCheckBox" binding="myIncludeSystemProguardFileCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/AndroidBundle" key="android.facet.settings.include.system.proguard"/>
                 </properties>
               </component>
             </children>

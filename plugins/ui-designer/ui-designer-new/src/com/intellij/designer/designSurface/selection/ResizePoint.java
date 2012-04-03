@@ -62,6 +62,8 @@ public abstract class ResizePoint extends ComponentDecorator {
     g.drawRect(location.x, location.y, getSize(), getSize());
   }
 
+  public abstract Object getType();
+
   protected abstract InputTool createTool(RadComponent component);
 
   protected abstract Point getLocation(DecorationLayer layer, RadComponent component);

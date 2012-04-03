@@ -38,9 +38,14 @@ public abstract class AbstractEditOperation extends com.intellij.designer.design
         ModelParser.moveComponent(myContainer, (RadViewComponent)component, null);
       }
     }
-    else {
+    else if (myContext.isCreate()) {
       for (RadComponent component : myComponents) {
         ModelParser.addComponent(myContainer, (RadViewComponent)component, null);
+      }
+    }
+    else if (myContext.isPaste()) {
+      for (RadComponent component : myComponents) {
+        ModelParser.pasteComponent(myContainer, (RadViewComponent)component, null);
       }
     }
   }

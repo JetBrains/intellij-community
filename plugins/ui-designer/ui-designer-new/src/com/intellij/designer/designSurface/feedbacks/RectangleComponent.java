@@ -13,11 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.designSurface.layout;
+package com.intellij.designer.designSurface.feedbacks;
+
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public enum Gravity {
-  Left, Right, Center, Top, Bottom
+public class RectangleComponent extends JComponent {
+  private final Color myColor;
+  private final int myLine;
+
+  public RectangleComponent(Color color, int line) {
+    myColor = color;
+    myLine = line;
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    g.setColor(myColor);
+
+    Dimension size = getSize();
+    for (int i = 0; i < myLine; i++) {
+      g.drawRect(i, i, size.width - i - i - 1, size.height - i - i - 1);
+    }
+  }
 }

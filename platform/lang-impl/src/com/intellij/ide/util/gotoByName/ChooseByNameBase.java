@@ -151,6 +151,9 @@ public abstract class ChooseByNameBase {
 
   public void setDisposed(boolean disposedFlag) {
     myDisposedFlag = disposedFlag;
+    if (disposedFlag) {
+      myNames[0] = myNames[1] = null;
+    }
   }
 
   /**

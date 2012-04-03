@@ -103,7 +103,9 @@ public abstract class ModuleLevelBuilder extends Builder {
           newlyAffectedFiles.removeAll(affectedBeforeDif);
           newlyAffectedFiles.removeAll(allCompiledFiles); // the diff operation may have affected the class already compiled in thic compilation round
 
-          context.processMessage(new ProgressMessage("Found " + newlyAffectedFiles.size() + " affected files"));
+          final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
+          LOG.info(infoMessage);
+          context.processMessage(new ProgressMessage(infoMessage));
 
           if (!newlyAffectedFiles.isEmpty()) {
 
@@ -196,7 +198,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   private static Set<String> getRemovedPaths(CompileContext context) {
-    final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(context);
+    final Set<String> removed = Utils.CHUNK_REMOVED_SOURCES_KEY.get(context);
     return removed != null? removed : Collections.<String>emptySet();
   }
 
@@ -225,15 +227,8 @@ public abstract class ModuleLevelBuilder extends Builder {
         moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
         myCache.put(moduleOfFile, moduleOfFileWithDependencies);
       }
-      return intersects(moduleOfFileWithDependencies, myChunkModules);
+      return Utils.intersects(moduleOfFileWithDependencies, myChunkModules);
     }
 
-    private static boolean intersects(Set<Module> set1, Set<Module> set2) {
-      if (set1.size() < set2.size()) {
-        return new HashSet<Module>(set1).removeAll(set2);
-      }
-      return new HashSet<Module>(set2).removeAll(set1);
-    }
   }
-
 }

@@ -16,6 +16,7 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
@@ -39,18 +40,24 @@ public class FlagProperty extends Property<RadViewComponent> {
   private final AttributeDefinition myDefinition;
   private final List<Property> myOptions = new ArrayList<Property>();
 
-  public FlagProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
+  public FlagProperty(@NotNull String name, @NotNull AttributeDefinition definition, @Nullable MetaModel model) {
     super(null, name);
     myDefinition = definition;
 
     for (String option : definition.getValues()) {
       myOptions.add(new OptionProperty(this, option, option));
     }
+
+    if (model != null) {
+      for (Property option : myOptions) {
+        model.decorate(option, name + "." + option.getName());
+      }
+    }
   }
 
   @Override
   public Property createForNewPresentation() {
-    return new FlagProperty(getName(), myDefinition);
+    return new FlagProperty(getName(), myDefinition, null);
   }
 
   @Override

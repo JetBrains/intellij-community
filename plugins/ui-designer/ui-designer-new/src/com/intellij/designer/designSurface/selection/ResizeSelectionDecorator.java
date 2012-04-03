@@ -15,30 +15,36 @@
  */
 package com.intellij.designer.designSurface.selection;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public class ResizeSelectionDecorator extends NonResizeSelectionDecorator {
-  private final ResizePoint[] myPoints;
+  private final List<ResizePoint> myPoints = new ArrayList<ResizePoint>();
 
-  public ResizeSelectionDecorator(Color color, int lineWidth, ResizePoint... points) {
+  public ResizeSelectionDecorator(Color color, int lineWidth) {
     super(color, lineWidth);
-    myPoints = points;
+  }
+
+  public void addPoint(ResizePoint point) {
+    myPoints.add(point);
   }
 
   @Override
   public InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
     for (ResizePoint point : myPoints) {
-      InputTool tracker = point.findTargetTool(layer, component, x, y);
-      if (tracker != null) {
-        return tracker;
+      if (visible(component, point)) {
+        InputTool tracker = point.findTargetTool(layer, component, x, y);
+        if (tracker != null) {
+          return tracker;
+        }
       }
     }
 
@@ -50,7 +56,13 @@ public class ResizeSelectionDecorator extends NonResizeSelectionDecorator {
     super.decorate(layer, g, component);
 
     for (ResizePoint point : myPoints) {
-      point.decorate(layer, g, component);
+      if (visible(component, point)) {
+        point.decorate(layer, g, component);
+      }
     }
+  }
+
+  protected boolean visible(RadComponent component, ResizePoint point) {
+    return true;
   }
 }

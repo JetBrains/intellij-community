@@ -32,7 +32,7 @@ import org.intellij.plugins.intelliLang.pattern.compiler.AnnotationBasedInstrume
 import org.intellij.plugins.intelliLang.pattern.compiler.Instrumenter;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassWriter;
+import org.jetbrains.asm4.ClassWriter;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -24,7 +24,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -54,22 +57,19 @@ public class JavaResolveCache {
 
   private final ConcurrentMap<PsiExpression, Reference<PsiType>> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, Reference<PsiType>>();
 
-  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical;
-  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical;
+  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
+  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
 
   private static final Object NULL = Key.create("NULL");
 
-  public JavaResolveCache(MessageBus messageBus) {
-    myVarToConstValueMapPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
-    myVarToConstValueMapNonPhysical = new ConcurrentWeakHashMap<PsiVariable, Object>();
-
+  public JavaResolveCache(@Nullable("can be null in com.intellij.core.JavaCoreEnvironment.JavaCoreEnvironment") MessageBus messageBus) {
     if (messageBus != null) {
       messageBus.connect().subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
         @Override
         public void beforePsiChanged(boolean isPhysical) {
           clearCaches(isPhysical);
         }
-  
+
         @Override
         public void afterPsiChanged(boolean isPhysical) {
         }
@@ -129,9 +129,7 @@ public class JavaResolveCache {
     if (cached != null) return cached;
 
     Object result = computer.execute(variable, visitedVars);
-
-    map.put(variable, result != null ? result : NULL);
-
+    map.put(variable, result == null ? NULL : result);
     return result;
   }
 

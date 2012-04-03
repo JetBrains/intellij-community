@@ -24,6 +24,9 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -50,6 +53,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -407,7 +411,10 @@ public abstract class InplaceRefactoring {
 
   @Nullable
   protected PsiNamedElement getVariable() {
-    if (myElementToRename != null && myElementToRename.isValid()) return myElementToRename;
+    if (myElementToRename != null && myElementToRename.isValid()) {
+      if (Comparing.strEqual(myOldName, myElementToRename.getName())) return myElementToRename;
+      return PsiTreeUtil.getParentOfType(myElementToRename.getContainingFile().findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
+    }
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (psiFile != null) {
       return PsiTreeUtil.getParentOfType(psiFile.findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
@@ -561,6 +568,11 @@ public abstract class InplaceRefactoring {
 
   public void setElementToRename(PsiNamedElement elementToRename) {
     myElementToRename = elementToRename;
+  }
+
+  protected boolean isIdentifier(final String newName, final Language language) {
+    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
+    return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
   }
 
   protected static VirtualFile getTopLevelVirtualFile(final FileViewProvider fileViewProvider) {

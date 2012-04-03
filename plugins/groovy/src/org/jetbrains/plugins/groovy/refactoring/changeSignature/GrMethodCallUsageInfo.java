@@ -81,9 +81,8 @@ public class GrMethodCallUsageInfo extends UsageInfo implements PossiblyIncorrec
       myMapToArguments = GrClosureSignatureUtil.ArgInfo.empty_array();
     }
     else {
-      myMapToArguments = GrClosureSignatureUtil
-        .mapParametersToArguments(signature, call.getNamedArguments(), call.getExpressionArguments(), call, call.getClosureArguments(),
-                                  false, false);
+      myMapToArguments = GrClosureSignatureUtil.mapParametersToArguments(signature, call.getNamedArguments(), call.getExpressionArguments(),
+                                                                         call.getClosureArguments(), call, false, false);
     }
   }
 

@@ -26,6 +26,7 @@ import com.intellij.designer.palette.Item;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -156,6 +157,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
 
       @Override
+      public void showSelection(boolean value) {
+        myDecorationLayer.showSelection(value);
+      }
+
+      @Override
       public ComponentDecorator getRootSelectionDecorator() {
         return DesignerEditorPanel.this.getRootSelectionDecorator();
       }
@@ -206,13 +212,23 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
 
       @Override
-      public boolean execute(ThrowableRunnable<Exception> operation) {
-        return DesignerEditorPanel.this.execute(operation);
+      public boolean execute(final ThrowableRunnable<Exception> operation, String command, final boolean updateProperties) {
+        final boolean[] is = {true};
+        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+          public void run() {
+            is[0] = DesignerEditorPanel.this.execute(operation, updateProperties);
+          }
+        }, command, null);
+        return is[0];
       }
 
       @Override
-      public void execute(List<EditOperation> operations) {
-        DesignerEditorPanel.this.execute(operations);
+      public void execute(final List<EditOperation> operations, String command) {
+        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+          public void run() {
+            DesignerEditorPanel.this.execute(operations);
+          }
+        }, command, null);
       }
 
       @Override
@@ -338,7 +354,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myLayout.show(this, ERROR_CARD);
 
-    DesignerToolWindowManager.getInstance(getProject()).refresh();
+    DesignerToolWindowManager.getInstance(getProject()).refresh(true);
     repaint();
   }
 
@@ -378,7 +394,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Nullable
   protected abstract EditOperation processRootOperation(OperationContext context);
 
-  protected abstract boolean execute(ThrowableRunnable<Exception> operation);
+  protected abstract boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties);
 
   protected abstract void execute(List<EditOperation> operations);
 

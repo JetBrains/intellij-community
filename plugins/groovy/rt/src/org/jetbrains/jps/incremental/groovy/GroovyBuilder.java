@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import groovy.util.CharsetToolkit;
+import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
@@ -19,7 +20,6 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.server.ClasspathBootstrap;
-import org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;

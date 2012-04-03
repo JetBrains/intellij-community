@@ -135,12 +135,11 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
         }
       }
       else {
-        MODULES_LOOP: for (final Module module : moduleChunk.getModules()) {
-          for (ClasspathItem dependency : module.getClasspath(classpathKind)) {
-            if (dependency instanceof Module && dirtyModules.contains((Module)dependency)) {
-              dirtyModules.addAll(moduleChunk.getModules());
-              break MODULES_LOOP;
-            }
+        for (final Module module : moduleChunk.getModules()) {
+          final Set<Module> deps = getDependentModulesRecursively(module, classpathKind);
+          if (Utils.intersects(deps, modules)) {
+            dirtyModules.addAll(moduleChunk.getModules());
+            break;
           }
         }
       }
@@ -148,13 +147,41 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
 
     for (Module module : dirtyModules) {
       markDirtyFiles(module, myTsStorage, true, isCompilingTests()? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
-      if (isMake()) {
+    }
+
+    if (isMake()) {
+      // mark as non-incremental only the module that triggered non-incremental change
+      for (Module module : modules) {
         if (!isCompilingTests()) {
           myNonIncrementalModules.add(new Pair<Module, DirtyMarkScope>(module, DirtyMarkScope.PRODUCTION));
         }
         myNonIncrementalModules.add(new Pair<Module, DirtyMarkScope>(module, DirtyMarkScope.TESTS));
       }
     }
+  }
+
+  private static Set<Module> getDependentModulesRecursively(final Module module, final ClasspathKind kind) {
+    final Set<Module> result = new HashSet<Module>();
+
+    new Object() {
+      final Set<Module> processed = new HashSet<Module>();
+
+      void traverse(Module module, ClasspathKind kind, Collection<Module> result, boolean exportedOnly) {
+        if (processed.add(module)) {
+          for (ClasspathItem item : module.getClasspath(kind, exportedOnly)) {
+            if (item instanceof ModuleSourceEntry) {
+              result.add(((ModuleSourceEntry)item).getModule());
+            }
+            else if (item instanceof Module) {
+              traverse((Module)item, kind, result, true);
+            }
+          }
+        }
+      }
+
+    }.traverse(module, kind, result, false);
+
+    return result;
   }
 
   boolean shouldDifferentiate(ModuleChunk chunk, boolean forTests) {
@@ -306,7 +333,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
   }
 
   public boolean hasRemovedSources() {
-    final Set<String> removed = Paths.CHUNK_REMOVED_SOURCES_KEY.get(this);
+    final Set<String> removed = Utils.CHUNK_REMOVED_SOURCES_KEY.get(this);
     return removed != null && !removed.isEmpty();
   }
 

@@ -46,13 +46,14 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
                                      final boolean enableLink,
                                      final @Nullable PluginHostsConfigurable hostsConfigurable,
                                      final UpdateSettings instance) {
-    ProgressManager.getInstance().run(new Task.Modal(project, "Checking for updates", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Checking for updates", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         final CheckForUpdateResult result = UpdateChecker.checkForUpdates(instance, true);
 
-        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, hostsConfigurable);
+        final List<PluginDownloader> updatedPlugins = UpdateChecker.updatePlugins(true, hostsConfigurable, indicator);
+        if (updatedPlugins == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {

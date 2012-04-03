@@ -52,10 +52,13 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -524,6 +527,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     clearScopesCaches();
 
     myModificationCount++;
+
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    psiManager.dropResolveCaches();
+    ((PsiModificationTrackerImpl)psiManager.getModificationTracker()).incCounter();
 
     isFiringEvent = true;
     try {

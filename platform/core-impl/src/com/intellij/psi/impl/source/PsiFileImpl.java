@@ -220,7 +220,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         stubs.next(); // Skip file stub;
         switchFromStubToAST(treeElement, stubs);
 
-        myStub = null;
+        clearStub();
       }
 
       setTreeElement(treeElement);
@@ -247,17 +247,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (root == stub) return ast;
 
     return findTreeForStub(ast, stubs, stub);
-  }
-
-  public boolean isStubBasedChildValid(@NotNull StubBasedPsiElementBase child) {
-    synchronized (myStubLock) {
-      StubTree fileStub = derefStub();
-      StubElement childStub = child.getStub();
-      if (childStub != null && (fileStub == null || fileStub.getRoot() != childStub.getParentStub())) {
-        return false;
-      }
-    }
-    return isValid();
   }
 
   @Nullable
@@ -352,8 +341,16 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     myViewProvider.beforeContentsSynchronized();
     setTreeElement(null);
     synchronized (myStubLock) {
-      myStub = null;
+      clearStub();
     }
+  }
+
+  private void clearStub() {
+    StubTree stubHolder = myStub == null ? null : myStub.get();
+    if (stubHolder != null) {
+      ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
+    }
+    myStub = null;
   }
 
   public void clearCaches() {}
@@ -404,7 +401,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
 
     synchronized (myStubLock) {
-      myStub = null;
+      clearStub();
       if (tree != null) {
         tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
       }
@@ -684,7 +681,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       myStub = new SoftReference<StubTree>(stubHolder);
       StubBase<PsiFile> base = (StubBase)stubHolder.getRoot();
       base.setPsi(this);
-      base.putUserData(STUB_TREE_IN_PARSED_TREE, stubHolder); // This will prevent soft reference myStub to be collected before all of the stubs are collected.
       return stubHolder;
     }
   }

@@ -97,7 +97,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         }
         final IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginNode.getPluginId());
         if (isDownloaded(pluginNode) || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))) {
-          if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_ADDED);
+          if (!isSelected) myNameLabel.setForeground(FileStatus.ADDED.getColor());
           myStatusLabel.setText("[Downloaded]");
           myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
           myStatusLabel.setBorder(BorderFactory.createEmptyBorder(0, LEFT_MARGIN, 0, 0));
@@ -105,7 +105,7 @@ class AvailablePluginColumnInfo extends PluginManagerColumnInfo {
         else if (pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
           PluginId pluginId = pluginNode.getPluginId();
           final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
-          if (!isSelected) myNameLabel.setForeground(FileStatus.COLOR_MODIFIED);
+          if (!isSelected) myNameLabel.setForeground(FileStatus.MODIFIED.getColor());
           if (hasNewerVersion) {
             if (!isSelected){
               myNameLabel.setForeground(Color.RED);

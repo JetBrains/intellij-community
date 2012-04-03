@@ -4,8 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
+import org.jetbrains.asm4.ClassReader;
+import org.jetbrains.asm4.Opcodes;
 
 import java.io.File;
 import java.io.IOException;
@@ -1432,7 +1432,7 @@ public class Mappings {
             debug("Field: ", it.name);
 
             if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
-              if ((d.base() & Difference.ACCESS) > 0 || (d.base() & Difference.VALUE) > 0) {
+              if ((d.base() & Difference.ACCESS) > 0 || ((d.base() & Difference.VALUE) > 0 && d.hadValue())) {
                 debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
                 if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
                   debug("End of Differentiate, returning false");

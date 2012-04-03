@@ -93,14 +93,18 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     final PluginId descrId = descriptor.getPluginId();
     final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
     if (existing != null) {
-      updateExistingPluginInfo(descriptor, existing);
-      updatedPlugins.add(existing.getPluginId());
+      updateExistingPlugin(descriptor, existing);
     } else {
       myInstalled.add(descriptor);
       view.add(descriptor);
       setEnabled(descriptor, true);
       fireTableDataChanged();
     }
+  }
+
+  public static void updateExistingPlugin(IdeaPluginDescriptor descriptor, IdeaPluginDescriptor existing) {
+    updateExistingPluginInfo(descriptor, existing);
+    updatedPlugins.add(existing.getPluginId());
   }
 
   public String getPluginHostUrl(String idString) {
@@ -136,7 +140,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     for (String host : pluginHosts) {
       try {
         final ArrayList<PluginDownloader> downloaded = new ArrayList<PluginDownloader>();
-        UpdateChecker.checkPluginsHost(host, downloaded, false);
+        UpdateChecker.checkPluginsHost(host, downloaded, false, null);
         for (PluginDownloader downloader : downloaded) {
           myPlugin2host.put(downloader.getPluginId(), host);
         }
@@ -637,6 +641,14 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         @Override
         public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
           if (isSortByStatus()) {
+            final boolean incompatible1 = PluginManager.isIncompatible(o1);
+            final boolean incompatible2 = PluginManager.isIncompatible(o2);
+            if (incompatible1) {
+              if (incompatible2) return comparator.compare(o1, o2);
+              return -1;
+            }
+            if (incompatible2) return 1;
+
             final boolean hasNewerVersion1 = hasNewerVersion(o1.getPluginId());
             final boolean hasNewerVersion2 = hasNewerVersion(o2.getPluginId());
             if (hasNewerVersion1) {
@@ -669,6 +681,11 @@ public class InstalledPluginsTableModel extends PluginTableModel {
               return -1;
             }
             if (deleted2) return 1;
+
+            final boolean enabled1 = isEnabled(o1.getPluginId());
+            final boolean enabled2 = isEnabled(o2.getPluginId());
+            if (enabled1 && !enabled2) return -1;
+            if (enabled2 && !enabled1) return 1;
           }
           return comparator.compare(o1, o2);
         }

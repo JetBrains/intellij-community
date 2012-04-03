@@ -17,30 +17,33 @@ package com.intellij.android.designer.designSurface.layout;
 
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.layout.Gravity;
+import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
+import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightColors;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Set;
 
 /**
  * @author Alexander Lobas
  */
 public class FrameLayoutOperation extends AbstractEditOperation {
+  private Set<Pair<Gravity, Gravity>> myExcludes = Collections.emptySet();
   private GravityFeedback myFeedback;
-  private JLabel myTextFeedback;
+  private TextFeedback myTextFeedback;
+  private Rectangle myBounds;
   private String myGravity;
-  private Set<Pair<Gravity, Gravity>> myExcludes;
 
   public FrameLayoutOperation(RadViewComponent container, OperationContext context) {
     super(container, context);
@@ -49,30 +52,23 @@ public class FrameLayoutOperation extends AbstractEditOperation {
       myExcludes = new HashSet<Pair<Gravity, Gravity>>();
 
       for (RadComponent component : context.getComponents()) {
-        String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
-        if (StringUtil.isEmpty(value)) {
-          myExcludes.add(new Pair<Gravity, Gravity>(Gravity.Left, Gravity.Top));
-        }
-        else {
-          for (String option : StringUtil.split(value, "|")) {
-            // TODO
-          }
-        }
+        myExcludes.add(RadFrameLayout.gravity(component));
       }
     }
   }
 
-  private void createFeedback(FeedbackLayer layer, Rectangle bounds) {
+  private void createFeedback() {
     if (myFeedback == null) {
-      myFeedback = new GravityFeedback();
-      layer.add(myFeedback);
-      myFeedback.setBounds(bounds);
+      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
-      myTextFeedback = new JLabel();
-      myTextFeedback.setFont(myTextFeedback.getFont().deriveFont(Font.BOLD));
-      myTextFeedback.setBackground(LightColors.YELLOW);
+      myBounds = myContainer.getBounds(layer);
+
+      myFeedback = new GravityFeedback();
+      myFeedback.setBounds(myBounds);
+      layer.add(myFeedback);
+
+      myTextFeedback = new TextFeedback();
       myTextFeedback.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 2, 0));
-      myTextFeedback.setOpaque(true);
       layer.add(myTextFeedback);
 
       layer.repaint();
@@ -81,36 +77,33 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
   @Override
   public void showFeedback() {
-    FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-    Rectangle bounds = myContainer.getBounds(layer);
-
-    createFeedback(layer, bounds);
+    createFeedback();
 
     Point location = myContext.getLocation();
-    Gravity horizontal = calculateHorizontal(bounds, location);
-    Gravity vertical = calculateVertical(bounds, location);
+    Gravity horizontal = calculateHorizontal(myBounds, location);
+    Gravity vertical = calculateVertical(myBounds, location);
 
-    if (myContext.isMove() && myExcludes.contains(new Pair<Gravity, Gravity>(horizontal, vertical))) {
+    if (myContext.isMove() && exclude(horizontal, vertical)) {
       horizontal = vertical = null;
     }
 
     myFeedback.setGravity(horizontal, vertical);
-    configureTextFeedback(bounds, horizontal, vertical);
+    configureTextFeedback(myBounds, horizontal, vertical);
 
-    configureGravity(horizontal, vertical);
+    myGravity = Gravity.getValue(horizontal, vertical);
   }
 
   private void configureTextFeedback(Rectangle bounds, Gravity horizontal, Gravity vertical) {
+    myTextFeedback.clear();
+
     if (horizontal == null || vertical == null) {
-      myTextFeedback.setText("None");
+      myTextFeedback.bold("None");
     }
     else {
-      myTextFeedback.setText("[" + vertical.name() + ", " + horizontal.name() + "]");
+      myTextFeedback.bold("[" + vertical.name() + ", " + horizontal.name() + "]");
     }
 
-    Dimension textSize = myTextFeedback.getPreferredSize();
-    myTextFeedback
-      .setBounds(bounds.x + bounds.width / 2 - textSize.width / 2, bounds.y - textSize.height - 10, textSize.width, textSize.height);
+    myTextFeedback.centerTop(bounds);
   }
 
   @Nullable
@@ -120,13 +113,13 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     double right = bounds.x + 2 * bounds.width / 3.0;
 
     if (location.x < left) {
-      horizontal = Gravity.Left;
+      horizontal = Gravity.left;
     }
     else if (left < location.x && location.x < right) {
-      horizontal = Gravity.Center;
+      horizontal = Gravity.center;
     }
     else if (location.x > right) {
-      horizontal = Gravity.Right;
+      horizontal = Gravity.right;
     }
 
     return horizontal;
@@ -139,56 +132,26 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     double bottom = bounds.y + 2 * bounds.height / 3.0;
 
     if (location.y < top) {
-      vertical = Gravity.Top;
+      vertical = Gravity.top;
     }
     else if (top < location.y && location.y < bottom) {
-      vertical = Gravity.Center;
+      vertical = Gravity.center;
     }
     else if (location.y > bottom) {
-      vertical = Gravity.Bottom;
+      vertical = Gravity.bottom;
     }
 
     return vertical;
   }
 
-  private void configureGravity(Gravity horizontal, Gravity vertical) {
-    StringBuffer gravity = new StringBuffer();
-
-    if (horizontal == Gravity.Center && vertical == Gravity.Center) {
-      gravity.append("center");
-    }
-    else {
-      if (horizontal == Gravity.Left) {
-        gravity.append("left");
-      }
-      else if (horizontal == Gravity.Center) {
-        gravity.append("center_horizontal");
-      }
-      else if (horizontal == Gravity.Right) {
-        gravity.append("right");
-      }
-
-      if (vertical == Gravity.Top) {
-        if (gravity.length() > 0) {
-          gravity.append("|");
-        }
-        gravity.append("top");
-      }
-      else if (vertical == Gravity.Center) {
-        if (gravity.length() > 0) {
-          gravity.append("|");
-        }
-        gravity.append("center_vertical");
-      }
-      else if (vertical == Gravity.Bottom) {
-        if (gravity.length() > 0) {
-          gravity.append("|");
-        }
-        gravity.append("bottom");
+  private boolean exclude(Gravity horizontal, Gravity vertical) {
+    for (Pair<Gravity, Gravity> p : myExcludes) {
+      if (p.first == horizontal && p.second == vertical) {
+        return true;
       }
     }
 
-    myGravity = gravity.length() == 0 ? null : gravity.toString();
+    return false;
   }
 
   @Override
@@ -227,12 +190,10 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   // Feedback
   //
   //////////////////////////////////////////////////////////////////////////////////////////
+  private static final Gravity[] HORIZONTAL = {Gravity.left, Gravity.center, Gravity.right};
+  private static final Gravity[] VERTICAL = {Gravity.top, Gravity.center, Gravity.bottom};
 
-  private static class GravityFeedback extends AlphaComponent {
-    private static final Gravity[] HORIZONTAL = {Gravity.Left, Gravity.Center, Gravity.Right};
-    private static final Gravity[] VERTICAL = {Gravity.Top, Gravity.Center, Gravity.Bottom};
-
-    private static final int SPACE = 5;
+  private class GravityFeedback extends AlphaComponent {
 
     private Gravity myHorizontal;
     private Gravity myVertical;
@@ -251,7 +212,9 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     protected void paintOther1(Graphics2D g2d) {
       for (Gravity h : HORIZONTAL) {
         for (Gravity v : VERTICAL) {
-          paintCell(g2d, h, v, false);
+          if (!exclude(h, v)) {
+            paintCell(g2d, h, v, false);
+          }
         }
       }
     }
@@ -269,36 +232,47 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
     private boolean paintCell(Graphics2D g2d, Gravity horizontal, Gravity vertical, boolean selection) {
       int x = 0;
-      int y = 0;
-      int width = getWidth() / 3;
-      int height = getHeight() / 3;
-
-      if (horizontal == Gravity.Center) {
-        x = width;
+      int width = (getWidth() - 2) / 3;
+      if (horizontal == Gravity.center) {
+        x = width + 1;
       }
-      else if (horizontal == Gravity.Right) {
+      else if (horizontal == Gravity.right) {
         x = getWidth() - width;
       }
 
-      if (vertical == Gravity.Center) {
-        y = height;
+      int y = 0;
+      int height = (getHeight() - 2) / 3;
+      if (vertical == Gravity.center) {
+        y = height + 1;
       }
-      else if (vertical == Gravity.Bottom) {
+      else if (vertical == Gravity.bottom) {
         y = getHeight() - height;
+      }
+
+      int hSpace = Math.min(5, Math.max(1, getWidth() / 30));
+      if (hSpace > 1) {
+        x += hSpace;
+        width -= 2 * hSpace;
+      }
+
+      int vSpace = Math.min(5, Math.max(1, getHeight() / 30));
+      if (vSpace > 1) {
+        y += vSpace;
+        height -= 2 * vSpace;
       }
 
       if (selection) {
         if (myHorizontal == horizontal && myVertical == vertical) {
           Color oldColor = g2d.getColor();
           g2d.setColor(LightColors.YELLOW);
-          g2d.fillRect(x + SPACE, y + SPACE, width - 2 * SPACE, height - 2 * SPACE);
+          g2d.fillRect(x, y, width, height);
           g2d.setColor(oldColor);
 
           return true;
         }
       }
       else {
-        g2d.fillRect(x + SPACE, y + SPACE, width - 2 * SPACE, height - 2 * SPACE);
+        g2d.fillRect(x, y, width, height);
       }
 
       return false;

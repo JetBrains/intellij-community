@@ -98,10 +98,6 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
                          rangeMarkers.toArray(new RangeMarker[rangeMarkers.size()]));
     }
     myExpression = expression;
-    if (declarationStatement != null) {
-      final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(declarationStatement.getLanguage());
-      myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(declarationStatement) : null;
-    }
     final PsiType defaultType = elementToRename.getType();
     myDefaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(defaultType);
     setAdvertisementText(getAdvertisementText(declarationStatement, defaultType, hasTypeSuggestion));
@@ -109,6 +105,13 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
 
   public void initInitialText(String text) {
     myExpressionText = text;
+  }
+
+  @Override
+  protected void beforeTemplateStart() {
+    super.beforeTemplateStart();
+    final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
+    myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
   }
 
   @Nullable
@@ -151,16 +154,16 @@ public class JavaVariableInplaceIntroducer extends InplaceVariableIntroducer<Psi
         }
         myEditor.getCaretModel().moveToOffset(startOffset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        if (psiVariable.getInitializer() != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            if (psiVariable.getInitializer() != null) {
               appendTypeCasts(getOccurrenceMarkers(), file, myProject, psiVariable);
-              if (myConflictResolver != null) {
-                myConflictResolver.apply(psiVariable.getName());
-              }
             }
-          });
-        }
+            if (myConflictResolver != null && isIdentifier(myInsertedName, psiVariable.getLanguage())) {
+              myConflictResolver.apply(psiVariable.getName());
+            }
+          }
+        });
       }
       else {
         RangeMarker exprMarker = getExprMarker();

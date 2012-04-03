@@ -89,6 +89,7 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
   @Override
   public boolean isVetoed(NamedScope scope, ScopePlace place) {
     if (place == ScopePlace.SETTING) {
+      if (myProject.isDefault()) return false;
       final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
       return changeListManager.findChangeList(scope.getName()) != null;
     }

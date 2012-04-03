@@ -16,9 +16,11 @@
 package git4idea.test;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.AbstractVcsTestCase;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,30 @@ public class GitExec {
     new GitTestRunEnv(new File(root.getPath())).run("init");
     root.refresh(false, true);
     return GitRepository.getLightInstance(root, project, project);
+  }
+
+  /**
+   * Returns null in case of bare repository, because GitRepository instance for a bare repository can't be created.
+   */
+  @Nullable
+  public static GitRepository clone(@NotNull Project project, @NotNull String sourcePath, @NotNull String destinationPath, boolean bare)
+    throws IOException
+  {
+
+    String[] args = bare ? new String[]{"--bare", sourcePath, destinationPath} : new String[]{sourcePath, destinationPath};
+    new GitTestRunEnv(new File(sourcePath)).run("clone", args);
+    VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(destinationPath));
+    assert root != null;
+    root.refresh(false, true);
+    return bare ? null : GitRepository.getLightInstance(root, project, project);
+  }
+
+  public static String push(@NotNull GitRepository repository, String... args) throws IOException {
+    return run(repository, "push", args);
+  }
+
+  public static String remoteAdd(@NotNull GitRepository repository, String... args) throws IOException {
+    return run(repository, "remote", ArrayUtil.mergeArrays(new String[]{"add"}, args));
   }
 
   public static void create(@NotNull GitRepository repository, @NotNull String filePath) {

@@ -144,9 +144,15 @@ public abstract class RadComponent {
     return (T)myClientProperties.get(key);
   }
 
+  @SuppressWarnings("unchecked")
+  public final <T> T extractClientProperty(@NotNull String key) {
+    return (T)myClientProperties.remove(key);
+  }
+
   public final void setClientProperty(@NotNull Object key, Object value) {
     myClientProperties.put(key, value);
   }
+
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //

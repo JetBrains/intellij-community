@@ -747,6 +747,7 @@ public class JavaCompletionUtil {
               final String qName = psiClass.getQualifiedName();
               if (qName != null) {
                 document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);
+                newEndOffset = newElement.getTextRange().getStartOffset() + qName.length();
               }
             }
           }

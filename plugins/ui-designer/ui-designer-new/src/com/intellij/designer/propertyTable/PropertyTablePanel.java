@@ -74,7 +74,7 @@ public final class PropertyTablePanel extends JPanel {
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        myPropertyTable.setShowExpert(state);
+        myPropertyTable.showExpert(state);
       }
     });
   }

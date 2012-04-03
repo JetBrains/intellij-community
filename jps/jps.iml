@@ -20,7 +20,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="library" name="asm4" level="project" />
     <orderEntry type="module" module-name="jps-model" exported="" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="util" />

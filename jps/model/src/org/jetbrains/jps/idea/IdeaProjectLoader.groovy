@@ -1,9 +1,9 @@
 package org.jetbrains.jps.idea
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.*
-import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author max
@@ -193,7 +193,10 @@ public class IdeaProjectLoader {
 
     def root = new XmlParser(false, false).parse(workspaceFile)
     def options = loadOptions(getComponent(root, "CompilerWorkspaceConfiguration"))
-    project.compilerConfiguration.addNotNullAssertions = parseBoolean(options["ASSERT_NOT_NULL"], true);
+    // compatibility: in older projects this setting was stored in workspace
+    if (project.compilerConfiguration.addNotNullAssertions == true) { // if is the same as default value
+      project.compilerConfiguration.addNotNullAssertions = parseBoolean(options["ASSERT_NOT_NULL"], true);
+    }
     project.compilerConfiguration.clearOutputDirectoryOnRebuild = parseBoolean(options["CLEAR_OUTPUT_DIRECTORY"], true);
   }
 
@@ -250,6 +253,12 @@ public class IdeaProjectLoader {
         configuration.annotationProcessing.processModule[it."@name"] = it."@generatedDirName"
       }
     }
+
+    def addNotNullTag = componentTag?.addNotNullAssertions
+    if (addNotNullTag != null) {
+      project.compilerConfiguration.addNotNullAssertions = parseBoolean(addNotNullTag."@enabled", true);
+    }
+
   }
 
   private File getFileByUrl(final String url) {

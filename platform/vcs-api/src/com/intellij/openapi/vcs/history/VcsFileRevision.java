@@ -56,10 +56,6 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
     public byte[] getContent() throws IOException, VcsException {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
-
-    public int compareTo(VcsFileRevision vcsFileRevision) {
-      return 0;
-    }
   };
 
   String getBranchName();

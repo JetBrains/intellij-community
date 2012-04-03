@@ -53,9 +53,6 @@ public class SvnConfigurable implements Configurable {
   private JPanel myComponent;
 
   private JLabel myConfigurationDirectoryLabel;
-  private JLabel myClearCacheLabel;
-  private JLabel myUseCommonProxyLabel;
-  private JLabel myEditProxyLabel;
   private JCheckBox myLockOnDemand;
   private JCheckBox myCheckNestedInQuickMerge;
   private JCheckBox myDetectNestedWorkingCopiesCheckBox;

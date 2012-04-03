@@ -2,10 +2,9 @@ package org.jetbrains.jps.javac;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.Paths;
+import org.jetbrains.jps.incremental.Utils;
 
-import javax.tools.JavaFileObject;
-import javax.tools.SimpleJavaFileObject;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 import java.util.Arrays;
@@ -32,7 +31,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   }
 
   public OutputFileObject(@Nullable JavacFileManager.Context context, @Nullable File outputRoot, String relativePath, @NotNull File file, @NotNull Kind kind, @Nullable String className, @Nullable final URI srcUri, @Nullable Content content) {
-    super(Paths.toURI(file.getPath()), kind);
+    super(Utils.toURI(file.getPath()), kind);
     myContext = context;
     mySourceUri = srcUri;
     myContent = content;
@@ -40,7 +39,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     myRelativePath = relativePath;
     myFile = file;
     myClassName = className;
-    mySourceFile = srcUri != null? Paths.convertToFile(srcUri) : null;
+    mySourceFile = srcUri != null? Utils.convertToFile(srcUri) : null;
   }
 
   @Nullable

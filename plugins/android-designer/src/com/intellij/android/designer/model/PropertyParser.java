@@ -19,6 +19,7 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.AttributeProperty;
+import com.intellij.android.designer.propertyTable.AttributePropertyWithDefault;
 import com.intellij.android.designer.propertyTable.CompoundProperty;
 import com.intellij.android.designer.propertyTable.FlagProperty;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
@@ -115,7 +116,7 @@ public class PropertyParser {
       }
 
       if (layoutParams != null) {
-        List<Property> properties = loadLayoutProperties(layoutParams, 0);
+        List<Property> properties = loadLayoutProperties(layoutParams, 0, parent.getMetaModel());
 
         if (!properties.isEmpty()) {
           properties = new ArrayList<Property>(properties);
@@ -148,23 +149,22 @@ public class PropertyParser {
             property = padding = new CompoundProperty(name, definition);
           }
           else if (formats.contains(AttributeFormat.Flag)) {
-            property = new FlagProperty(name, definition);
+            property = new FlagProperty(name, definition, model);
           }
           else {
             property = new AttributeProperty(name, definition);
           }
 
           if (model != null) {
-            property.setImportant(model.isImportantProperty(name));
-            property.setExpert(model.isExpertProperty(name));
-            property.setDeprecated(model.isDeprecatedProperty(name));
+            model.decorate(property, name);
           }
 
           properties.add(property);
         }
 
         if (padding != null) {
-          List children = padding.getChildren(null);
+          List<Property> children = padding.getChildren(null);
+
           children.add(PropertyTable.extractProperty(properties, "paddingLeft"));
           children.add(PropertyTable.extractProperty(properties, "paddingTop"));
           children.add(PropertyTable.extractProperty(properties, "paddingRight"));
@@ -225,7 +225,7 @@ public class PropertyParser {
     return properties;
   }
 
-  private List<Property> loadLayoutProperties(String[] components, int index) throws Exception {
+  private List<Property> loadLayoutProperties(String[] components, int index, MetaModel model) throws Exception {
     String component = components[index];
 
     List<Property> properties = myCachedProperties.get(component);
@@ -255,8 +255,11 @@ public class PropertyParser {
           if ("layout:margin".equals(name) && "ViewGroup_MarginLayout".equals(component)) {
             property = margin = new CompoundProperty(name, definition);
           }
+          else if ("layout:width".equals(name) || "layout:height".equals(name)) {
+            property = new AttributePropertyWithDefault(name, definition, "wrap_content");
+          }
           else if (formats.contains(AttributeFormat.Flag)) {
-            property = new FlagProperty(name, definition);
+            property = new FlagProperty(name, definition, model);
           }
           else {
             property = new AttributeProperty(name, definition);
@@ -267,18 +270,25 @@ public class PropertyParser {
         }
 
         if (margin != null) {
-          List children = margin.getChildren(null);
+          List<Property> children = margin.getChildren(null);
+
           children.add(PropertyTable.extractProperty(properties, "marginLeft"));
           children.add(PropertyTable.extractProperty(properties, "marginTop"));
           children.add(PropertyTable.extractProperty(properties, "marginRight"));
           children.add(PropertyTable.extractProperty(properties, "marginBottom"));
           children.add(PropertyTable.extractProperty(properties, "marginStart"));
           children.add(PropertyTable.extractProperty(properties, "marginEnd"));
+
+          if (model != null) {
+            for (Property child : children) {
+              model.decorate(child, "layout:margin." + child.getName());
+            }
+          }
         }
       }
 
       if (++index < components.length) {
-        for (Property property : loadLayoutProperties(components, index)) {
+        for (Property property : loadLayoutProperties(components, index, model)) {
           if (PropertyTable.findProperty(properties, property) == -1) {
             properties.add(property);
           }
@@ -292,6 +302,11 @@ public class PropertyParser {
             return p1.getName().compareTo(p2.getName());
           }
         });
+
+        PropertyTable.top(properties, "layout:margin");
+        PropertyTable.top(properties, "layout:gravity");
+        PropertyTable.top(properties, "layout:height");
+        PropertyTable.top(properties, "layout:width");
       }
     }
 

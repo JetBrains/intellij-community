@@ -163,12 +163,13 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
       context.getProgressIndicator().setText(AndroidBundle.message("android.compile.messages.copying.sources.from.libraries"));
     }
     List<GenerationItem> result = new ArrayList<GenerationItem>();
+    boolean toRefresh = false;
     for (GenerationItem item : items) {
 
       if (!AndroidCompileUtil.isModuleAffected(context, ((MyItem)item).myModule)) {
         continue;
       }
-
+      toRefresh = true;
       String fromPath = ((MyItem)item).mySourceFile.getPath();
       File from = new File(fromPath);
       File to = new File(outputRootDirectory.getPath() + '/' + item.getPath());
@@ -182,6 +183,10 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
                          (e.getMessage() != null ? ": " + e.getMessage() : "");
         context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
       }
+    }
+
+    if (toRefresh) {
+      outputRootDirectory.refresh(false, true);
     }
     return result.toArray(new GenerationItem[result.size()]);
   }

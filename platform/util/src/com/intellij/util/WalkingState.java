@@ -57,8 +57,8 @@ public class WalkingState<T> {
     }
   }
 
-  private void walkChildren(T root) {
-    for (T element = next(root,root,isDown); element != null && !stopped; element = next(element, root, isDown)) {
+  private void walkChildren(@NotNull T root) {
+    for (T element = next(root, root, isDown); element != null && !stopped; element = next(element, root, isDown)) {
       isDown = false; // if client visitor did not call default visitElement it means skip subtree
       T parent = myWalker.getParent(element);
       T next = myWalker.getNextSibling(element);
@@ -68,7 +68,7 @@ public class WalkingState<T> {
     }
   }
 
-  public T next(T element, T root, boolean isDown) {
+  public T next(T element, @NotNull T root, boolean isDown) {
     if (isDown) {
       T child = myWalker.getFirstChild(element);
       if (child != null) return child;

@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.notNullVerification;
 
-import org.objectweb.asm.*;
+import org.jetbrains.asm4.*;
 
 import java.util.ArrayList;
 
@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * @author ven
  * @noinspection HardCodedStringLiteral
  */
-public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcodes {
+public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
   private boolean myIsModification = false;
   private String myClassName;
   public static final String NOT_NULL = "org/jetbrains/annotations/NotNull";
@@ -33,7 +33,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
   private static final String CONSTRUCTOR_NAME = "<init>";
 
   public NotNullVerifyingInstrumenter(final ClassVisitor classVisitor) {
-    super(classVisitor);
+    super(Opcodes.ASM4, classVisitor);
   }
 
   public boolean isModification() {
@@ -63,7 +63,7 @@ public class NotNullVerifyingInstrumenter extends ClassAdapter implements Opcode
                                      desc,
                                      signature,
                                      exceptions);
-    return new MethodAdapter(v) {
+    return new MethodVisitor(Opcodes.ASM4, v) {
 
       private final ArrayList myNotNullParams = new ArrayList();
       private int mySyntheticCount = 0;

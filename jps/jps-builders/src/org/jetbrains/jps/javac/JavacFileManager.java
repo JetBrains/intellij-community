@@ -3,7 +3,7 @@ package org.jetbrains.jps.javac;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.Paths;
+import org.jetbrains.jps.incremental.Utils;
 
 import javax.tools.*;
 import java.io.File;
@@ -131,7 +131,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (loc == StandardLocation.CLASS_OUTPUT) {
       if (myOutputsMap.size() > 1 && sourceFile != null) {
         // multiple outputs case
-        final File outputDir = findOutputDir(Paths.convertToFile(sourceFile.toUri()));
+        final File outputDir = findOutputDir(Utils.convertToFile(sourceFile.toUri()));
         if (outputDir != null) {
           return outputDir;
         }
@@ -210,12 +210,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     final int counter = (myChecksCounter + 1) % 10;
     myChecksCounter = counter;
     if (counter == 0 && myContext.isCanceled()) {
-      throw new RuntimeException("Compilation canceled") {
-        @Override
-        public Throwable fillInStackTrace() {
-          return this;
-        }
-      };
+      throw new CompilationCanceledException();
     }
   }
 }

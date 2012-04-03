@@ -122,15 +122,20 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
   @Override
   public boolean containsWhiteSpaceSymbolsOnly(int startOffset, int endOffset) {
     WhiteSpaceFormattingStrategy strategy = myWhiteSpaceStrategy;
+    if (strategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
+      return true;
+    }
     PsiElement injectedElement = myFile != null ? InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset) : null;
     if (injectedElement != null) {
       Language injectedLanguage = injectedElement.getLanguage();
       if (!injectedLanguage.equals(myFile.getLanguage())) {
         WhiteSpaceFormattingStrategy localStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(injectedLanguage);
-        if (localStrategy != null) strategy = localStrategy;
+        if (localStrategy != null) {
+          return localStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
+        }
       }
     }
-    return strategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset;
+    return false;
   }
 
   @NotNull

@@ -20,12 +20,12 @@ import com.intellij.uiDesigner.core.SupportCode;
 import com.intellij.uiDesigner.lw.LwComponent;
 import com.intellij.uiDesigner.lw.LwIntrospectedProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
+import org.jetbrains.asm4.Label;
+import org.jetbrains.asm4.MethodVisitor;
+import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.asm4.Type;
+import org.jetbrains.asm4.commons.GeneratorAdapter;
+import org.jetbrains.asm4.commons.Method;
 
 import javax.swing.*;
 import java.io.IOException;

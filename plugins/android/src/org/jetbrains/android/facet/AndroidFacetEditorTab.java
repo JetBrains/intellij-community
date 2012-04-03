@@ -42,7 +42,9 @@ import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.maven.AndroidMavenProvider;
 import org.jetbrains.android.maven.AndroidMavenUtil;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +99,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JBCheckBox myRunProguardCheckBox;
   private JBLabel myProguardConfigFileLabel;
   private TextFieldWithBrowseButton myProguardConfigFileTextField;
+  private JCheckBox myIncludeSystemProguardFileCheckBox;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -162,6 +165,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         final boolean enabled = myRunProguardCheckBox.isSelected();
         myProguardConfigFileLabel.setEnabled(enabled);
         myProguardConfigFileTextField.setEnabled(enabled);
+        myIncludeSystemProguardFileCheckBox.setEnabled(enabled);
       }
     });
     
@@ -227,6 +231,24 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           return false;
         }
         return file.isDirectory() || "apk".equals(file.getExtension());
+      }
+    });
+
+    myGenerateIdlWhenChanged.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean enabled = myGenerateIdlWhenChanged.isSelected();
+        myAidlGenPathLabel.setEnabled(enabled);
+        myAidlGenPathField.setEnabled(enabled);
+      }
+    });
+
+    myGenerateRJavaWhenChanged.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean enabled = myGenerateRJavaWhenChanged.isSelected();
+        myRGenPathLabel.setEnabled(enabled);
+        myRGenPathField.setEnabled(enabled);
       }
     });
   }
@@ -326,6 +348,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
 
     if (myConfiguration.RUN_PROGUARD != myRunProguardCheckBox.isSelected()) {
+      return true;
+    }
+    if (myConfiguration.isIncludeSystemProguardCfgPath() != myIncludeSystemProguardFileCheckBox.isSelected()) {
       return true;
     }
     return false;
@@ -459,6 +484,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     }
 
     myConfiguration.RUN_PROGUARD = myRunProguardCheckBox.isSelected();
+    myConfiguration.setIncludeSystemProguardCfgPath(myIncludeSystemProguardFileCheckBox.isSelected());
 
     boolean useCustomAptSrc = myUseCustomSourceDirectoryRadio.isSelected();
 
@@ -563,9 +589,20 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myRunProguardCheckBox.setSelected(runProguard);
     myProguardConfigFileLabel.setEnabled(runProguard);
     myProguardConfigFileTextField.setEnabled(runProguard);
+    myIncludeSystemProguardFileCheckBox.setEnabled(runProguard);
+
+    myIncludeSystemProguardFileCheckBox.setSelected(configuration.isIncludeSystemProguardCfgPath());
+    final AndroidPlatform platform = configuration.getAndroidPlatform();
+    final int sdkToolsRevision = platform != null ? platform.getSdkData().getSdkToolsRevision() : -1;
+    myIncludeSystemProguardFileCheckBox.setVisible(AndroidCommonUtils.isIncludingInProguardSupported(sdkToolsRevision));
 
     myGenerateRJavaWhenChanged.setSelected(configuration.REGENERATE_R_JAVA);
+    myRGenPathLabel.setEnabled(configuration.REGENERATE_R_JAVA);
+    myRGenPathField.setEnabled(configuration.REGENERATE_R_JAVA);
+
     myGenerateIdlWhenChanged.setSelected(configuration.REGENERATE_JAVA_BY_AIDL);
+    myAidlGenPathLabel.setEnabled(configuration.REGENERATE_JAVA_BY_AIDL);
+    myAidlGenPathField.setEnabled(configuration.REGENERATE_JAVA_BY_AIDL);
 
     myUseCustomSourceDirectoryRadio.setSelected(configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
     myUseAptResDirectoryFromPathRadio.setSelected(!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
