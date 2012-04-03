@@ -16,9 +16,9 @@
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.libraries.LibraryRootType;
+import com.intellij.openapi.roots.libraries.ui.DetectedLibraryRoot;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsDetector;
-import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,21 +38,21 @@ public class LibraryRootsDetectorImpl extends LibraryRootsDetector {
   }
 
   @Override
-  public Collection<OrderRoot> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
-    List<OrderRoot> result = new ArrayList<OrderRoot>();
+  public Collection<DetectedLibraryRoot> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
+    List<DetectedLibraryRoot> result = new ArrayList<DetectedLibraryRoot>();
     for (RootDetector detector : myDetectors) {
       final Collection<VirtualFile> files = detector.detectRoots(rootCandidate, progressIndicator);
       for (VirtualFile file : files) {
-        result.add(new OrderRoot(file, detector.getRootType(), detector.isJarDirectory()));
+        result.add(new DetectedLibraryRoot(file, detector.getRootType(), detector.isJarDirectory()));
       }
     }
     return result;
   }
 
   @Override
-  public String getRootTypeName(@NotNull OrderRootType rootType, boolean isJarDirectory) {
+  public String getRootTypeName(@NotNull LibraryRootType rootType) {
     for (RootDetector detector : myDetectors) {
-      if (detector.getRootType().equals(rootType) && detector.isJarDirectory() == isJarDirectory) {
+      if (detector.getRootType().equals(rootType.getType()) && detector.isJarDirectory() == rootType.isJarDirectory()) {
         return detector.getPresentableRootTypeName();
       }
     }
