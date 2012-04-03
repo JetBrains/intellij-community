@@ -58,7 +58,7 @@ public class CheckForUpdateAction extends AnAction implements DumbAware {
               return;
             }
 
-            UpdateSettings.getInstance().LAST_TIME_CHECKED = System.currentTimeMillis();
+            UpdateSettings.getInstance().saveLastCheckedInfo();
             UpdateChecker.showUpdateResult(result, updatedPlugins, true, enableLink, true);
           }
         });
