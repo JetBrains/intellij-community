@@ -154,4 +154,8 @@ public class ProfileAction {
       updateActions();
     }
   }
+
+  public int getVersion() {
+    return myVersion;
+  }
 }

@@ -16,14 +16,12 @@
 package com.intellij.android.designer;
 
 import com.intellij.android.designer.designSurface.AndroidDesignerEditorPanel;
-import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.designer.DesignerEditor;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.designer.DesignerEditor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -35,6 +33,7 @@ public final class AndroidDesignerEditor extends DesignerEditor {
   }
 
   @Override
+  @NotNull
   protected DesignerEditorPanel createDesignerPanel(Module module, VirtualFile file) {
     return new AndroidDesignerEditorPanel(module, file);
   }
@@ -46,29 +45,7 @@ public final class AndroidDesignerEditor extends DesignerEditor {
   }
 
   @Override
-  public boolean isValid() {
-    return true;  // TODO: Auto-generated method stub
-  }
-
-  @NotNull
-  @Override
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    // TODO: Auto-generated method stub
-    return new FileEditorState() {
-      @Override
-      public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
-        return false;
-      }
-    };
-  }
-
-  @Override
-  public void setState(@NotNull FileEditorState state) {
-    // TODO: Auto-generated method stub
-  }
-
-  @Override
-  public boolean isModified() {
-    return false;
+  public BackgroundEditorHighlighter getBackgroundHighlighter() {
+    return null;  // TODO: Auto-generated method stub
   }
 }

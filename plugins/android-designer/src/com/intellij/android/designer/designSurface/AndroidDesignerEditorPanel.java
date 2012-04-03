@@ -64,6 +64,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final XmlFile myXmlFile;
   private final ExternalPSIChangeListener myPSIChangeListener;
   private final ProfileAction myProfileAction;
+  private int myProfileLastVersion;
   private volatile RenderSession mySession;
   private boolean myParseTime;
 
@@ -79,6 +80,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myPSIChangeListener = new ExternalPSIChangeListener(this, myXmlFile, 100, new Runnable() {
       @Override
       public void run() {
+        System.out.println("=== Full update ===");
         reparseFile();
       }
     });
@@ -92,10 +94,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           myPSIChangeListener.start();
           myPSIChangeListener.addRequest();
         }
-        else {
+        else if (myProfileLastVersion != myProfileAction.getVersion()) {
           myPSIChangeListener.addRequest(new Runnable() {
             @Override
             public void run() {
+              System.out.println("=== Light update ===");
               updateRenderer(true);
             }
           });
@@ -168,16 +171,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   private void reparseFile() {
-    myToolProvider.loadDefaultTool();
-    mySurfaceArea.deselectAll();
-
+    storeState();
     parseFile(new Runnable() {
       @Override
       public void run() {
         showDesignerCard();
         myLayeredPane.repaint();
-
-        DesignerToolWindowManager.getInstance(getProject()).refresh(true);
+        restoreState();
       }
     });
   }
@@ -292,6 +292,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       @Override
       public void run() {
         try {
+          myProfileLastVersion = myProfileAction.getVersion();
+
           AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
           if (platform == null) {
             throw new AndroidSdkNotConfiguredException();
@@ -388,6 +390,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   public void activate() {
     myProfileAction.externalUpdate();
+  }
+
+  @Override
+  public void deactivate() {
+    // TODO: Auto-generated method stub
   }
 
   @Override
