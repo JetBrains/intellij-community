@@ -313,9 +313,15 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (target instanceof PyFunction) {
       final PyDecoratorList decoratorList = ((PyFunction)target).getDecoratorList();
       if (decoratorList != null) {
-        final PyDecorator decorator = decoratorList.findDecorator(PyNames.PROPERTY);
-        if (decorator != null) {
+        final PyDecorator propertyDecorator = decoratorList.findDecorator(PyNames.PROPERTY);
+        if (propertyDecorator != null) {
           return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
+        }
+        for (PyDecorator decorator: decoratorList.getDecorators()) {
+          final PyQualifiedName qName = decorator.getQualifiedName();
+          if (qName != null && (qName.endsWith(PyNames.SETTER) || qName.endsWith(PyNames.DELETER))) {
+            return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
+          }
         }
       }
     }

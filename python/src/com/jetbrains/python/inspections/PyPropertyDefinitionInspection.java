@@ -44,7 +44,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     return PyBundle.message("INSP.NAME.property.definition");
   }
 
-  private static final ImmutableList<String> SUFFIXES = ImmutableList.of("setter", "deleter");
+  private static final ImmutableList<String> SUFFIXES = ImmutableList.of(PyNames.SETTER, PyNames.DELETER);
 
   @NotNull
   @Override
