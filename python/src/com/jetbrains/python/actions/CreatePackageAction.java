@@ -28,6 +28,9 @@ public class CreatePackageAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
+    if (view == null) {
+      return;
+    }
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
@@ -43,7 +46,7 @@ public class CreatePackageAction extends DumbAwareAction {
                                       IdeBundle.message("title.new.package"),
                                       Messages.getQuestionIcon(), "", validator);
     final PsiDirectory result = validator.getCreatedElement();
-    if (result != null && view != null) {
+    if (result != null) {
       view.selectElement(result);
     }
   }
@@ -92,11 +95,6 @@ public class CreatePackageAction extends DumbAwareAction {
     if (directories.length == 0) {
       return false;
     }
-    for (PsiDirectory directory : directories) {
-      if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
-        return true;
-      }
-    }
-    return false;
+    return true;
   }
 }
