@@ -153,6 +153,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     });
     if (!FileUtil.delete(myDir)) {
       System.out.println("Cannot delete " + myDir);
+      printDirectoryContent(myDir);
       myDir.deleteOnExit();
     }
 
@@ -160,6 +161,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     super.tearDown();
     resetClassFields(getClass());
+  }
+
+  private static void printDirectoryContent(File dir) {
+    File[] files = dir.listFiles();
+    if (files == null) return;
+
+    for (File file : files) {
+      System.out.println(file.getAbsolutePath());
+
+      if (file.isDirectory()) {
+        printDirectoryContent(file);
+      }
+    }
   }
 
   protected void tearDownFixtures() throws Exception {
