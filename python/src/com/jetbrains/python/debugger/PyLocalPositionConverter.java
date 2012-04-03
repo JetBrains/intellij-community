@@ -2,6 +2,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -18,11 +19,33 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     public PyLocalSourcePosition(final String file, final int line) {
       super(file, line);
     }
+
+    @Override
+    protected String normalize(@Nullable String file) {
+      if (file == null) {
+        return null;
+      }
+      if (SystemInfo.isWindows) {
+        file = file.toLowerCase();
+      }
+      return super.normalize(file);
+    }
   }
 
   protected static class PyRemoteSourcePosition extends PySourcePosition {
     PyRemoteSourcePosition(final String file, final int line) {
       super(file, line);
+    }
+
+    @Override
+    protected String normalize(@Nullable String file) {
+      if (file == null) {
+        return null;
+      }
+      if (isWindowsPath(file)) {  //TODO: add SystemInfo.isWindows condition and fix path lowercasing for remote win debugger and local unix host (PY-4244)
+        file = file.toLowerCase();
+      }
+      return super.normalize(file);
     }
   }
 
@@ -43,7 +66,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     return new PyLocalSourcePosition(position.getFile().getPath(), convertLocalLineToRemote(position.getFile(), position.getLine()));
   }
 
-  protected int convertLocalLineToRemote(VirtualFile file, int line) {
+  protected static int convertLocalLineToRemote(VirtualFile file, int line) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       while (PyDebugSupportUtils.isContinuationLine(document, line)) {

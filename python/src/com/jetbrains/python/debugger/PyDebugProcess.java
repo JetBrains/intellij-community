@@ -80,7 +80,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     super(session);
     session.setPauseActionSupported(true);
     if (multiProcess) {
-      myDebugger = createMultiprocessDebugger(serverSocket, processHandler);
+      myDebugger = createMultiprocessDebugger(serverSocket);
     }
     else {
       myDebugger = new RemoteDebugger(this, serverSocket, 10000);
@@ -118,7 +118,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     });
   }
 
-  private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket, ProcessHandler processHandler) {
+  private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
     MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, 10000);
     debugger.setOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
       @Override
@@ -341,7 +341,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private void resumeOrStep(final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     if (isConnected()) {
-      for (PyThreadInfo suspendedThread : mySuspendedThreads) {
+      for (PyThreadInfo suspendedThread : mySuspendedThreads) {    //TODO: we should step only one thread
         myDebugger.resumeOrStep(suspendedThread.getId(), mode);
       }
     }
