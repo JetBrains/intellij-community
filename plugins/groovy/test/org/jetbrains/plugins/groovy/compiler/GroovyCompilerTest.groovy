@@ -23,6 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import junit.framework.AssertionFailedError
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration
+import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription
+import com.intellij.compiler.CompileServerManager
 
 /**
  * @author peter
@@ -66,16 +70,16 @@ public abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Foo", "239");
 
     setFileText(file, "class Bar {}");
-    makeShouldFail()
+    shouldFail { make() }
 
     setFileText(file, barText);
     make();
     assertOutput("Foo", "239");
   }
 
-  private void makeShouldFail() {
+  private void shouldFail(Closure action) {
     try {
-      make();
+      action()
       fail("Make should fail");
     }
     catch (RuntimeException e) {
@@ -513,7 +517,7 @@ class Indirect {
     assertEmpty compileModule(myModule)
     
     setFileText(used, 'class Used2 {}')
-    makeShouldFail()
+    shouldFail { make() }
     assert findClassFile('Used') == null
 
     setFileText(used, 'class Used3 {}')
@@ -579,6 +583,35 @@ public class Main {
 '''
     make()
     assertOutput 'Main', 'Hello, truetrue239'
+  }
+
+  public void "test reporting rebuild errors caused by missing files excluded from compilation"() {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
+    myFixture.addFileToProject 'Bar.groovy', 'class Bar extends Foo {}'
+
+    make()
+
+    excludeFromCompilation(foo)
+
+    shouldFail { rebuild() }
+  }
+
+  private void excludeFromCompilation(PsiFile foo) {
+    final ExcludedEntriesConfiguration configuration =
+      ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration()
+    configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, testRootDisposable))
+    CompileServerManager.instance.shutdownServer()
+  }
+
+  public void "_test reporting module compile errors caused by missing files excluded from compilation"() {
+    def foo = myFixture.addFileToProject('Foo.groovy', 'class Foo {}')
+    myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo {}')
+
+    make()
+
+    excludeFromCompilation(foo)
+
+    shouldFail { compileModule(myModule) }
   }
 
   public static class IdeaModeTest extends GroovyCompilerTest {
