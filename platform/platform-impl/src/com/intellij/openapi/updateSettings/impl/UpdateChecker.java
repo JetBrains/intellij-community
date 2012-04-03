@@ -428,7 +428,7 @@ public final class UpdateChecker {
     final CheckForUpdateResult result = doCheckForUpdates(updateSettings);
 
     if (result.getState() == UpdateStrategy.State.LOADED) {
-      updateSettings.LAST_TIME_CHECKED = System.currentTimeMillis();
+      updateSettings.saveLastCheckedInfo();
       settings.setKnownChannelIds(result.getAllChannelsIds());
     }
 
