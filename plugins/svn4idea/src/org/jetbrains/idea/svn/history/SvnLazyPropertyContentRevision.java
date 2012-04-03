@@ -15,12 +15,17 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
@@ -59,18 +64,30 @@ public class SvnLazyPropertyContentRevision implements ContentRevision {
   private String loadContent() {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final SVNWCClient client = vcs.createWCClient();
-    String list;
-    try {
-      list = AbstractShowPropertiesDiffAction.getPropertyList(myUrl, ((SvnRevisionNumber) myNumber).getRevision(), client);
+    final Ref<String> ref = new Ref<String>();
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          ref.set(AbstractShowPropertiesDiffAction.getPropertyList(myUrl, ((SvnRevisionNumber) myNumber).getRevision(), client));
+        }
+        catch (SVNException e) {
+          // unknown node kind (node deleted)
+          /*if (e.getErrorMessage().getErrorCode().getCode() == 145000) {
+            return "";
+          }*/
+          ref.set("Can not get properties: " + e.getMessage());
+        }
+      }
+    };
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"),
+                                                                        false, myProject);
     }
-    catch (SVNException e) {
-      // unknown node kind (node deleted)
-      /*if (e.getErrorMessage().getErrorCode().getCode() == 145000) {
-        return "";
-      }*/
-      list = "Can not get properties: " + e.getMessage();
+    else {
+      runnable.run();
     }
-    return list;
+    return ref.get();
   }
 
   @NotNull

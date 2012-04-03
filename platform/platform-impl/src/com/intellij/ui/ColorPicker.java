@@ -22,6 +22,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -658,7 +659,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
           Toolkit.getDefaultToolkit().beep();
         }
       }
-      final String toInsert = new String(result, 0, j).toUpperCase();
+      final String toInsert = StringUtilRt.toUpperCase(new String(result, 0, j));
       final String res = new StringBuilder(mySrc.getText()).insert(offs, toInsert).toString();
       try {
         if (!myHex) {

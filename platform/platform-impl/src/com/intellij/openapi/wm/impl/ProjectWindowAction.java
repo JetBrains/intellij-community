@@ -41,7 +41,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   @NotNull private final String myProjectLocation;
 
   public ProjectWindowAction(@NotNull String projectName, @NotNull String projectLocation, ProjectWindowAction previous) {
-    super(projectName);
+    super();
     myProjectName = projectName;
     myProjectLocation = projectLocation;
     if (previous != null) {
@@ -53,6 +53,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
       myPrevious = this;
       myNext = this;
     }
+    getTemplatePresentation().setText(projectName, false);
   }
 
   public void dispose() {

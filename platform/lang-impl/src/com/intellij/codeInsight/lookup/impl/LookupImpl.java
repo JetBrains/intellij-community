@@ -46,6 +46,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -875,7 +876,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     if (sameCase) return lookupString;
     if (isAllLower) return lookupString.toLowerCase();
-    if (isAllUpper) return lookupString.toUpperCase();
+    if (isAllUpper) return StringUtilRt.toUpperCase(lookupString);
     return lookupString;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,27 +38,23 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 final class GitRepositoryUpdater implements Disposable, BulkFileListener {
-
-  private final GitRepository myRepository;
   private final GitRepositoryFiles myRepositoryFiles;
   private final MessageBusConnection myMessageBusConnection;
   private final QueueProcessor<GitRepository.TrackedTopic> myUpdateQueue;
   private final VirtualFile myRemotesDir;
   private final VirtualFile myHeadsDir;
+  private final LocalFileSystem.WatchRequest myWatchRequest;
 
   GitRepositoryUpdater(GitRepository repository) {
-    myRepository = repository;
-    VirtualFile root = repository.getRoot();
-
     VirtualFile gitDir = repository.getGitDir();
-    LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
-    
+    myWatchRequest = LocalFileSystem.getInstance().addRootToWatch(gitDir.getPath(), true);
+
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
     visitGitDirVfs(gitDir);
     myHeadsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsHeadsPath());
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesPath());
 
-    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(myRepository), myRepository.getProject().getDisposed());
+    myUpdateQueue = new QueueProcessor<GitRepository.TrackedTopic>(new Updater(repository), repository.getProject().getDisposed());
     myMessageBusConnection = repository.getProject().getMessageBus().connect();
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
   }
@@ -86,6 +82,9 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   @Override
   public void dispose() {
+    if (myWatchRequest != null) {
+      LocalFileSystem.getInstance().removeWatchedRoot(myWatchRequest);
+    }
     myMessageBusConnection.disconnect();
   }
 

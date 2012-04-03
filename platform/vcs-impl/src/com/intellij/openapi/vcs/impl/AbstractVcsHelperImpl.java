@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,28 +170,41 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Nullable
-  public Collection<FilePath> selectFilePathsToProcess(final List<FilePath> files,
-                                                       final String title,
-                                                       @Nullable final String prompt,
-                                                       final String singleFileTitle,
-                                                       final String singleFilePromptTemplate,
-                                                       final VcsShowConfirmationOption confirmationOption) {
+  public Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
+                                                       String title,
+                                                       @Nullable String prompt,
+                                                       String singleFileTitle,
+                                                       String singleFilePromptTemplate,
+                                                       VcsShowConfirmationOption confirmationOption,
+                                                       @Nullable String okActionName,
+                                                       @Nullable String cancelActionName) {
     if (files.size() == 1 && singleFilePromptTemplate != null) {
-      String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
-      if (ConfirmationDialog
-        .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
+      final String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
+      if (ConfirmationDialog.requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle,
+                                                    Messages.getQuestionIcon(), okActionName, cancelActionName)) {
         return files;
       }
       return null;
     }
 
-    SelectFilePathsDialog dlg = new SelectFilePathsDialog(myProject, files, prompt, confirmationOption);
+    final SelectFilePathsDialog dlg =
+      new SelectFilePathsDialog(myProject, files, prompt, confirmationOption, okActionName, cancelActionName);
     dlg.setTitle(title);
     if (! confirmationOption.isPersistent()) {
       dlg.setDoNotAskOption(null);
     }
     dlg.show();
     return dlg.isOK() ? dlg.getSelectedFiles() : null;
+  }
+
+  @Nullable
+  public Collection<FilePath> selectFilePathsToProcess(final List<FilePath> files,
+                                                       final String title,
+                                                       @Nullable final String prompt,
+                                                       final String singleFileTitle,
+                                                       final String singleFilePromptTemplate,
+                                                       final VcsShowConfirmationOption confirmationOption) {
+    return selectFilePathsToProcess(files, title, prompt, singleFileTitle, singleFilePromptTemplate, confirmationOption, null, null);
   }
 
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {

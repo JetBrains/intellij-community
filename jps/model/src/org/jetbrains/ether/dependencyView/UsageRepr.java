@@ -32,8 +32,7 @@ class UsageRepr {
   }
 
   public static class Cluster implements RW.Savable {
-    final Set<Usage> usages = new HashSet<Usage>();
-    final Map<Usage, Set<DependencyContext.S>> residentialMap = new HashMap<Usage, Set<DependencyContext.S>>();
+    private final Map<Usage, Set<DependencyContext.S>> myUsageToDependenciesMap = new HashMap<Usage, Set<DependencyContext.S>>();
 
     public Cluster() {
     }
@@ -44,11 +43,8 @@ class UsageRepr {
 
         for (int i = 0; i < size; i++) {
           final Usage u = externalizer(context).read(in);
-          final Set<DependencyContext.S> s =
-            (Set<DependencyContext.S>)RW.read(DependencyContext.descriptorS, new HashSet<DependencyContext.S>(), in);
-
-          usages.add(u);
-          residentialMap.put(u, s);
+          final Set<DependencyContext.S> s = (Set<DependencyContext.S>)RW.read(DependencyContext.descriptorS, new HashSet<DependencyContext.S>(), in);
+          myUsageToDependenciesMap.put(u, s);
         }
       }
       catch (IOException e) {
@@ -59,10 +55,12 @@ class UsageRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(usages.size());
-        for (Usage u : usages) {
+        out.writeInt(myUsageToDependenciesMap.size());
+        for (Map.Entry<Usage, Set<DependencyContext.S>> entry : myUsageToDependenciesMap.entrySet()) {
+          final Usage u = entry.getKey();
           u.save(out);
-          RW.save(residentialMap.get(u), DependencyContext.descriptorS, out);
+          final Set<DependencyContext.S> deps = entry.getValue();
+          RW.save(deps, DependencyContext.descriptorS, out);
         }
       }
       catch (IOException e) {
@@ -71,27 +69,26 @@ class UsageRepr {
     }
 
     public void addUsage(final DependencyContext.S residence, final Usage usage) {
-      Set<DependencyContext.S> s = residentialMap.get(usage);
+      Set<DependencyContext.S> s = myUsageToDependenciesMap.get(usage);
 
       if (s == null) {
         s = new HashSet<DependencyContext.S>();
-        residentialMap.put(usage, s);
+        myUsageToDependenciesMap.put(usage, s);
       }
 
       s.add(residence);
-      usages.add(usage);
     }
 
     public Set<Usage> getUsages() {
-      return usages;
+      return Collections.unmodifiableSet(myUsageToDependenciesMap.keySet());
     }
 
     public Set<DependencyContext.S> getResidence(final Usage usage) {
-      return residentialMap.get(usage);
+      return myUsageToDependenciesMap.get(usage);
     }
 
     public boolean isEmpty() {
-      return usages.isEmpty();
+      return myUsageToDependenciesMap.isEmpty();
     }
 
     public static DataExternalizer<Cluster> clusterExternalizer(final DependencyContext context) {
@@ -115,17 +112,14 @@ class UsageRepr {
 
       Cluster cluster = (Cluster)o;
 
-      if (!residentialMap.equals(cluster.residentialMap)) return false;
-      if (!usages.equals(cluster.usages)) return false;
+      if (!myUsageToDependenciesMap.equals(cluster.myUsageToDependenciesMap)) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = usages.hashCode();
-      result = 31 * result + residentialMap.hashCode();
-      return result;
+      return myUsageToDependenciesMap.hashCode();
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -55,6 +56,7 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public boolean CHECK_NEEDED = true;
   public long LAST_TIME_CHECKED = 0;
+  public String LAST_BUILD_CHECKED = "";
   public String UPDATE_CHANNEL_TYPE = ChannelStatus.RELEASE_CODE;
 
   public static UpdateSettings getInstance() {
@@ -63,6 +65,12 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public UpdateSettings() {
     updateDefaultChannel();
+  }
+
+  public void saveLastCheckedInfo() {
+    LAST_TIME_CHECKED = System.currentTimeMillis();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    LAST_BUILD_CHECKED = appInfo.getBuild().asString();
   }
 
   private void updateDefaultChannel() {

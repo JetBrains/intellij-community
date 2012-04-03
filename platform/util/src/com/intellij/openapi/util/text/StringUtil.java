@@ -151,7 +151,7 @@ public class StringUtil extends StringUtilRt {
         i = i1 + oldS.length();
       }
     }
-    return newText!= null ? newText.toString():"";
+    return newText != null ? newText.toString() : "";
   }
 
   /**
@@ -479,7 +479,7 @@ public class StringUtil extends StringUtilRt {
             buffer.append("\\").append(ch);
           }
           else if (Character.isISOControl(ch)) {
-            String hexCode = Integer.toHexString(ch).toUpperCase();
+            String hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
             while (paddingCount-- > 0) {
@@ -691,7 +691,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   public static String capitalize(@NotNull String s) {
     if (s.length() == 0) return s;
-    if (s.length() == 1) return s.toUpperCase();
+    if (s.length() == 1) return StringUtilRt.toUpperCase(s);
 
     // Optimization
     if (Character.isUpperCase(s.charAt(0))) return s;
@@ -1917,13 +1917,14 @@ public class StringUtil extends StringUtilRt {
     int slashRIndex = -1;
 
     if (chars != null) {
-      for(int i = 0, len = s.length(); i < len; ++i) {
+      for (int i = 0, len = s.length(); i < len; ++i) {
         if (chars[i] == '\r') {
           slashRIndex = i;
           break;
         }
       }
-    } else {
+    }
+    else {
       for (int i = 0, len = s.length(); i < len; i++) {
         if (s.charAt(i) == '\r') {
           slashRIndex = i;
@@ -1933,7 +1934,8 @@ public class StringUtil extends StringUtilRt {
     }
 
     if (slashRIndex != -1) {
-      String context = String.valueOf(last(s.subSequence(0, slashRIndex), 10, true)) + first(s.subSequence(slashRIndex, s.length()), 10, true);
+      String context =
+        String.valueOf(last(s.subSequence(0, slashRIndex), 10, true)) + first(s.subSequence(slashRIndex, s.length()), 10, true);
       context = escapeStringCharacters(context);
       LOG.error("Wrong line separators: '" + context + "' at offset " + slashRIndex);
     }

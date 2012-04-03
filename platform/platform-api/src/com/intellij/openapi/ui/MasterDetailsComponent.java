@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -52,17 +51,17 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-
 /**
- * User: anna
- * Date: 29-May-2006
+ * @author anna
+ * @since 29-May-2006
  */
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
+
   protected static final Icon COPY_ICON = PlatformIcons.COPY_ICON;
+
   protected NamedConfigurable myCurrentConfigurable;
   private final Splitter mySplitter = new Splitter(false, .2f);
-
 
   @NonNls public static final String TREE_OBJECT = "treeObject";
   @NonNls public static final String TREE_NAME = "treeName";
@@ -72,6 +71,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       myHistory = history;
     }
 
+    @Nullable
     public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
       return null;
     }
@@ -113,14 +113,14 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected JPanel myWholePanel;
   public JPanel myNorthPanel = new JPanel(new BorderLayout());
 
-  private final ArrayList<ItemsChangeListener> myListners = new ArrayList<ItemsChangeListener>();
+  private final ArrayList<ItemsChangeListener> myListeners = new ArrayList<ItemsChangeListener>();
 
   private final Set<NamedConfigurable> myInitializedConfigurables = new HashSet<NamedConfigurable>();
 
   private boolean myHasDeletedItems;
   protected AutoScrollToSourceHandler myAutoScrollHandler;
 
-  private boolean myToReinitWholePanel = true;
+  private boolean myToReInitWholePanel = true;
 
   protected MasterDetailsComponent() {
     this(new MasterDetailsState());
@@ -129,11 +129,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
     installAutoScroll();
-    reinintWholePanelIfNeeded();
+    reInitWholePanelIfNeeded();
   }
 
-  private void reinintWholePanelIfNeeded() {
-    if (!myToReinitWholePanel) return;
+  private void reInitWholePanelIfNeeded() {
+    if (!myToReInitWholePanel) return;
 
     myWholePanel = new JPanel(new BorderLayout()) {
       public void addNotify() {
@@ -175,7 +175,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myWholePanel);
 
-    myToReinitWholePanel = false;
+    myToReInitWholePanel = false;
   }
 
   private void installAutoScroll() {
@@ -242,7 +242,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected boolean isAutoScrollEnabled() {
-    return myHistory != null ? !myHistory.isNavigatingNow() : true;
+    return myHistory == null || !myHistory.isNavigatingNow();
   }
 
   private void initToolbar() {
@@ -263,21 +263,27 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   public void addItemsChangeListener(ItemsChangeListener l) {
-    myListners.add(l);
+    myListeners.add(l);
   }
 
+  /** @deprecated use {@linkplain #getPanelPreferredSize()} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   protected Dimension getPanelPrefferedSize() {
+    return getPanelPreferredSize();
+  }
+
+  protected Dimension getPanelPreferredSize() {
     return new Dimension(800, 600);
   }
 
   public JComponent createComponent() {
-    reinintWholePanelIfNeeded();
+    reInitWholePanelIfNeeded();
 
     updateSelectionFromTree();
 
     final JPanel panel = new JPanel(new BorderLayout()) {
       public Dimension getPreferredSize() {
-        return getPanelPrefferedSize();
+        return getPanelPreferredSize();
       }
     };
     panel.add(myWholePanel, BorderLayout.CENTER);
@@ -500,13 +506,13 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   public void fireItemsChangeListener(final Object editableObject) {
-    for (ItemsChangeListener listener : myListners) {
+    for (ItemsChangeListener listener : myListeners) {
       listener.itemChanged(editableObject);
     }
   }
 
   private void fireItemsChangedExternally() {
-    for (ItemsChangeListener listener : myListners) {
+    for (ItemsChangeListener listener : myListeners) {
       listener.itemsExternallyChanged();
     }
   }
@@ -578,8 +584,15 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
+  /** @deprecated use {@linkplain #getSelectedConfigurable()} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public NamedConfigurable getSelectedConfugurable() {
+    return getSelectedConfigurable();
+  }
+
+  @Nullable
+  public NamedConfigurable getSelectedConfigurable() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
       MyNode node = (MyNode)selectionPath.getLastPathComponent();
@@ -699,7 +712,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           throw new ConfigurationException("Name should contain non-space characters");
         }
         if (names.contains(name)) {
-          final NamedConfigurable selectedConfigurable = getSelectedConfugurable();
+          final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
           if (selectedConfigurable == null || !Comparing.strEqual(selectedConfigurable.getDisplayName(), name)) {
             selectNodeInTree(node);
           }
@@ -938,17 +951,17 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   public JComponent getToolbar() {
-    myToReinitWholePanel = true;
+    myToReInitWholePanel = true;
     return myNorthPanel;
   }
 
   public JComponent getMaster() {
-    myToReinitWholePanel = true;
+    myToReInitWholePanel = true;
     return myMaster;
   }
 
   public DetailsComponent getDetails() {
-    myToReinitWholePanel = true;
+    myToReInitWholePanel = true;
     return myDetails;
   }
 
