@@ -19,8 +19,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.impl.light.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -73,7 +72,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       setMethodReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
       addModifier(PsiModifier.PUBLIC);
 
-    myModifierList = new LightModifierList(myManager, Collections.singleton(PsiModifier.PUBLIC));
+    myModifierList = new LightModifierList(myManager, GroovyFileType.GROOVY_LANGUAGE, PsiModifier.PUBLIC);
   }
 
 
