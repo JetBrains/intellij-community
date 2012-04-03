@@ -39,7 +39,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   private final PsiReference myReference;
 
   private final List<ImportCandidateHolder> myImports; // from where and what to import
-  private final String myName;
+  private final String myInitialName;
 
   boolean myUseQualifiedImport;
   private boolean myExpended;
@@ -47,14 +47,13 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   /**
    * Creates a new, empty fix object.
    * @param node to which the fix applies.
-   * @param name the unresolved identifier portion of node's text
-   * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name" 
+   * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name"
    */
-  public AutoImportQuickFix(PyElement node, PsiReference reference, String name, boolean qualify) {
+  public AutoImportQuickFix(PyElement node, PsiReference reference, boolean qualify) {
     myNode = node;
     myReference = reference;
     myImports = new ArrayList<ImportCandidateHolder>();
-    myName = name;
+    myInitialName = getNameToImport();
     myUseQualifiedImport = qualify;
     myExpended = false;
   }
@@ -110,11 +109,15 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
       return false;
     }
     if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified
+    String name = getNameToImport();
+    if (!name.equals(myInitialName)) {
+      return false;
+    }
     final String message = ShowAutoImportPass.getMessage(
       myImports.size() > 1,
-      ImportCandidateHolder.getQualifiedName(myName, myImports.get(0).getPath(), myImports.get(0).getImportElement())
+      ImportCandidateHolder.getQualifiedName(name, myImports.get(0).getPath(), myImports.get(0).getImportElement())
     );
-    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, myUseQualifiedImport);
+    final ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, name, myUseQualifiedImport);
     action.onDone(new Runnable() {
       public void run() {
         myExpended = true;
@@ -142,7 +145,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     if (ImportFromExistingAction.isResolved(myReference)) return;
     // act
-    ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, myUseQualifiedImport);
+    ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, getNameToImport(), myUseQualifiedImport);
     action.execute(); // assume that action runs in WriteAction on its own behalf
     myExpended = true;
   }
@@ -165,6 +168,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   }
 
   public String getNameToImport() {
-    return myName;
+    final String text = myReference.getElement().getText();
+    return myReference.getRangeInElement().substring(text); // text of the part we're working with
   }
 }

@@ -87,7 +87,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     }
 
     PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
-    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, refText, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
     // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
     // walk up collecting all such statements and analyzing
