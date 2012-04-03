@@ -2,6 +2,10 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.util.containers.SortedList;
+
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Provides a way to sort results of multi-resolve.
@@ -59,4 +63,17 @@ public class RatedResolveResult implements ResolveResult {
    * For additional, less important results.
    */
   public static final int RATE_LOW = -1000;
+
+  public static List<RatedResolveResult> sorted(List<RatedResolveResult> targets) {
+    if (targets.size() == 1) {
+      return targets;
+    }
+    List<RatedResolveResult> ret = new SortedList<RatedResolveResult>(new Comparator<RatedResolveResult>() {
+      public int compare(final RatedResolveResult one, final RatedResolveResult another) {
+        return another.getRate() - one.getRate();
+      }
+    });
+    ret.addAll(targets);
+    return ret;
+  }
 }

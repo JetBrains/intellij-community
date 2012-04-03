@@ -22,6 +22,7 @@ import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.inspections.PythonVisitorFilter;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.stubs.PyFileStub;
@@ -573,9 +574,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     final PyQualifiedName qName = importElement.getImportedQName();
     // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
     if (qName != null && qName.getComponentCount() > 1 && name.equals(qName.getLastComponent()) && PyNames.INIT_DOT_PY.equals(getName())) {
-      final List<PsiElement> elements = ResolveImportUtil.resolveNameInImportStatement(importElement, qName.removeLastComponent());
-      for (PsiElement element : elements) {
-        if (PyUtil.turnDirIntoInit(element) == this) {
+      final List<? extends RatedResolveResult> elements = ResolveImportUtil.resolveNameInImportStatement(importElement, qName.removeLastComponent());
+      for (RatedResolveResult element: elements) {
+        if (PyUtil.turnDirIntoInit(element.getElement()) == this) {
           return importElement;
         }
       }
