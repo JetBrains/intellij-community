@@ -217,21 +217,27 @@ public class PyPsiUtils {
         next = getPrevComma(child);
       }
       if (next != null) {
-        removeSlash(pyImportStatement, next);
+        final ASTNode prev = next.getTreePrev();
         pyImportStatement.deleteChildInternal(next);
+        removeSlash(pyImportStatement, prev);
       }
     }
   }
 
-  private static void removeSlash(final ASTDelegatePsiElement statement, final ASTNode next) {
-    ASTNode slash = next.getTreePrev();
-    if (slash instanceof PsiWhiteSpace && slash.getText().contains("\\"))
-      statement.deleteChildInternal(slash);
-    else {
-      slash = next.getTreeNext();
-      if (slash instanceof PsiWhiteSpace && slash.getText().contains("\\"))
-        statement.deleteChildInternal(slash);
+  private static void removeSlash(final ASTDelegatePsiElement statement, ASTNode prev) {
+    final List<ASTNode> toDelete = new ArrayList<ASTNode>();
+
+    while (prev instanceof PsiWhiteSpace) {
+      toDelete.add(0, prev);
+      prev = prev.getTreePrev();
     }
+    prev = prev.getTreeNext();
+
+    while (prev instanceof PsiWhiteSpace) {
+      toDelete.add(prev);
+      prev = prev.getTreeNext();
+    }
+    statement.deleteChildRange(toDelete.get(0).getPsi(), toDelete.get(toDelete.size()-1).getPsi());
   }
 
   static <T, U extends PsiElement> List<T> collectStubChildren(U e,

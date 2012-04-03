@@ -70,6 +70,11 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("function_2", "file2.py");
   }
 
+  // PY-5489
+  public void testImportFirstWithSlash() {
+    doMoveSymbolTest("function_1", "file2.py");
+  }
+
   // PY-4545
   public void testBaseClass() {
     doMoveSymbolTest("B", "b.py");
