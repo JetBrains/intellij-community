@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 
 import java.awt.*;
@@ -55,13 +56,21 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                 if (component == null || !component.isShowing()) {
                   return;
                 }
-                final AnActionEvent event = new AnActionEvent(e.getInputEvent(), DataManager.getInstance().getDataContext(component),
-                                                              e.getPlace(), (Presentation)action.getTemplatePresentation().clone(),
+                final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+                final DataContext context = DataManager.getInstance().getDataContext(component);
+                final AnActionEvent event = new AnActionEvent(e.getInputEvent(), context,
+                                                              e.getPlace(), presentation,
                                                               ActionManager.getInstance(),
                                                               e.getModifiers());
 
                 if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-                  action.actionPerformed(event);
+                  if (action instanceof ActionGroup) {
+                    JBPopupFactory.getInstance()
+                      .createActionGroupPopup(presentation.getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+                      .showInBestPositionFor(context);
+                  } else {
+                    action.actionPerformed(event);
+                  }
                 }
               }
             }, ModalityState.NON_MODAL);
