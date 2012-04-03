@@ -21,7 +21,6 @@ import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakHashMap;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +45,7 @@ public final class IconLoader {
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = new WeakHashMap<Icon, Icon>(200);
 
-  private static final Icon EMPTY_ICON = new EmptyIcon(0,0) {
+  private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
     @NonNls
     public String toString() {
       return "Empty icon " + super.toString();

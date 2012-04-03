@@ -145,6 +145,7 @@ public class SvnChangeList implements CommittedChangeList {
                        final boolean supportsReplaced) throws IOException {
     myVcs = vcs;
     myLocation = location;
+    myKnownAsDirectories = new HashSet<String>();
     readFromStream(stream, supportsCopyFromInfo, supportsReplaced);
     myCommonPathSearcher = new CommonPathSearcher();
     for (String path : myAddedPaths) {
@@ -156,7 +157,6 @@ public class SvnChangeList implements CommittedChangeList {
     for (String path : myChangedPaths) {
       myCommonPathSearcher.next(path);
     }
-    myKnownAsDirectories = new HashSet<String>(0);
   }
 
   public Change getByPath(final String path) {
@@ -632,6 +632,11 @@ public class SvnChangeList implements CommittedChangeList {
     writeFiles(stream, myDeletedPaths);
     writeMap(stream, myCopiedAddedPaths);
     writeFiles(stream, myReplacedPaths);
+
+    stream.writeInt(myKnownAsDirectories.size());
+    for (String directory : myKnownAsDirectories) {
+      stream.writeUTF(directory);
+    }
   }
 
   // to be able to update plugin only
@@ -669,6 +674,11 @@ public class SvnChangeList implements CommittedChangeList {
 
     if (supportsReplaced) {
       readFiles(stream, myReplacedPaths);
+    }
+
+    final int size = stream.readInt();
+    for (int i = 0; i < size; i++) {
+      myKnownAsDirectories.add(stream.readUTF());
     }
   }
 
