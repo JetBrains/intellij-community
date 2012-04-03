@@ -480,11 +480,7 @@ public class PyPackageManager {
       throw new PyExternalProcessException(ERROR_TIMEOUT, helper, args, "Timed out");
     }
     else if (retcode != 0) {
-      final String stdout = output.getStdout();
-      String message = output.getStderr();
-      if (message.trim().isEmpty()) {
-        message = stdout;
-      }
+      final String message = output.getStderr() + "\n" + output.getStdout();
       throw new PyExternalProcessException(retcode, helper, args, message);
     }
     return output.getStdout();
