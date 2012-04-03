@@ -78,7 +78,7 @@ public class DocStringTypeReference extends PsiReferenceBase<PsiElement> {
     }
     if (myType instanceof PyImportedModuleType) {
       final PyImportedModule module = ((PyImportedModuleType)myType).getImportedModule();
-      return PyUtil.turnDirIntoInit(ResolveImportUtil.resolveModuleInRoots(module.getImportedPrefix(), module.getContainingFile()));
+      return module.resolve();
     }
     return null;
   }
