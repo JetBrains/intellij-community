@@ -10,6 +10,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,15 +186,30 @@ public class PyTypeParser {
     if (CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.is('.')).or(CharMatcher.is('_')).matchesAllOf(type)) {
       final List<TextRange> ranges = splitRanges(type, ".");
       final TextRange classRange = !ranges.isEmpty() ? ranges.remove(ranges.size() - 1) : new TextRange(0, type.length());
+      PyType moduleType = null;
       if (!ranges.isEmpty()) {
         final TextRange first = ranges.get(0);
         for (TextRange range : ranges) {
           final PyQualifiedName moduleName = PyQualifiedName.fromDottedString(first.union(range).substring(type));
-          final PyType t = new PyImportedModuleType(new PyImportedModule(null, anchor.getContainingFile(), moduleName));
-          types.put(range.shiftRight(offset), t);
+          moduleType = new PyImportedModuleType(new PyImportedModule(null, anchor.getContainingFile(), moduleName));
+          types.put(range.shiftRight(offset), moduleType);
         }
       }
       final String shortName = classRange.substring(type);
+      if (moduleType != null) {
+        final PyResolveContext context = PyResolveContext.defaultContext();
+        final List<? extends RatedResolveResult> results = moduleType.resolveMember(shortName, null, AccessDirection.READ, context);
+        if (results != null && !results.isEmpty()) {
+          final RatedResolveResult result = results.get(0);
+          final PsiElement resolved = result.getElement();
+          if (resolved instanceof PyTypedElement) {
+            final PyType t = ((PyTypedElement)resolved).getType(context.getTypeEvalContext());
+            types.put(classRange.shiftRight(offset), t);
+            fullRanges.put(t, whole);
+            return t;
+          }
+        }
+      }
       final Collection<PyClass> classes = PyClassNameIndex.find(shortName, anchor.getProject(), true);
       for (PyClass aClass : classes) {
         if (type.equals(aClass.getQualifiedName())) {
