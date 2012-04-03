@@ -15,23 +15,14 @@
  */
 package git4idea.repo;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.QueueProcessor;
-import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import git4idea.GitBranch;
-import git4idea.GitUtil;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Collection;
 
 /**
@@ -67,30 +58,16 @@ import java.util.Collection;
  *
  * @author Kirill Likhodedov
  */
-public final class GitRepository implements Disposable {
+public interface GitRepository {
 
-  public static final Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
+  Topic<GitRepositoryChangeListener> GIT_REPO_CHANGE = Topic.create("GitRepository change", GitRepositoryChangeListener.class);
 
-  private static final Object STUB_OBJECT = new Object();
-
-  private final Project myProject;
-  private final VirtualFile myRootDir;
-  private final GitRepositoryReader myReader;
-  private final VirtualFile myGitDir;
-  private final MessageBus myMessageBus;
-  private final GitUntrackedFilesHolder myUntrackedFilesHolder;
-  private final QueueProcessor<Object> myNotifier;
-
-  private volatile State myState;
-  private volatile String myCurrentRevision;
-  private volatile GitBranch myCurrentBranch;
-  private volatile GitBranchesCollection myBranches = GitBranchesCollection.EMPTY;
-  private volatile GitConfig myConfig;
+  String toLogString();
 
   /**
    * Current state of the repository.
    */
-  public enum State {
+  enum State {
     /**
      * HEAD is on branch, no merge process is in progress (and no rebase as well).
      */
@@ -121,141 +98,40 @@ public final class GitRepository implements Disposable {
    * GitRepository tracks the updates of some information about Git repository, caches this information and provides methods to access to
    * it. The pieces of this information are called Topics. They can be used to update the repository.
    */
-  public enum TrackedTopic {
-    STATE {
-      @Override void update(GitRepository repository) {
-        repository.updateState();
-      }
-    },
-    CURRENT_REVISION {
-      @Override void update(GitRepository repository) {
-        repository.updateCurrentRevision();
-      }
-    },
-    CURRENT_BRANCH {
-      @Override void update(GitRepository repository) {
-        repository.updateCurrentBranch();
-      }
-    },
-    BRANCHES {
-      @Override void update(GitRepository repository) {
-        repository.updateBranchList();        
-      }
-    },
-    CONFIG {
-      @Override void update(GitRepository repository) {
-        repository.updateConfig();
-      }
-    },
-    ALL_CURRENT {
-      @Override void update(GitRepository repository) {
-        STATE.update(repository);
-        CURRENT_REVISION.update(repository);
-        CURRENT_BRANCH.update(repository);
-      }
-    },
-    ALL {
-      @Override void update(GitRepository repository) {
-        ALL_CURRENT.update(repository);
-        BRANCHES.update(repository);
-        CONFIG.update(repository);
-      }
-    };
-
-    abstract void update(GitRepository repository);
-  }
-
-  /**
-   * Get the GitRepository instance from the {@link GitRepositoryManager}.
-   * If you need to have an instance of GitRepository for a repository outside the project, use
-   * {@link #getLightInstance(com.intellij.openapi.vfs.VirtualFile, com.intellij.openapi.project.Project, com.intellij.openapi.Disposable)}.
-   */
-  private GitRepository(@NotNull VirtualFile rootDir, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    myRootDir = rootDir;
-    myProject = project;
-    Disposer.register(parentDisposable, this);
-    
-    myGitDir = GitUtil.findGitDir(myRootDir);
-    assert myGitDir != null : ".git directory wasn't found under " + rootDir.getPresentableUrl();
-    
-    myReader = new GitRepositoryReader(VfsUtil.virtualToIoFile(myGitDir));
-    
-    myUntrackedFilesHolder = new GitUntrackedFilesHolder(this);
-    Disposer.register(this, myUntrackedFilesHolder);
-
-    myMessageBus = project.getMessageBus();
-    myNotifier = new QueueProcessor<Object>(new NotificationConsumer(myProject, myMessageBus), myProject.getDisposed());
-    update(TrackedTopic.ALL);
-  }
-
-  /**
-   * Returns the temporary light instance of GitRepository.
-   * It lacks functionality of auto-updating GitRepository on Git internal files change, and also stored a stub instance of 
-   * {@link GitUntrackedFilesHolder}.
-   */
-  @NotNull
-  public static GitRepository getLightInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    return new GitRepository(root, project, parentDisposable);
-  }
-
-  /**
-   * Returns the full-functional instance of GitRepository - with UntrackedFilesHolder and GitRepositoryUpdater.
-   * This is used for repositories registered in project, and should be optained via {@link GitRepositoryManager}.
-   */
-  public static GitRepository getFullInstance(@NotNull VirtualFile root, @NotNull Project project, @NotNull Disposable parentDisposable) {
-    GitRepository repository = new GitRepository(root, project, parentDisposable);
-    repository.myUntrackedFilesHolder.setupVfsListener(project);
-    repository.setupUpdater();
-    return repository;
-  }
-
-  private void setupUpdater() {
-    GitRepositoryUpdater updater = new GitRepositoryUpdater(this);
-    Disposer.register(this, updater);
-  }
-
-  @Override
-  public void dispose() {
+  enum TrackedTopic {
+    STATE,
+    CURRENT_REVISION,
+    CURRENT_BRANCH,
+    BRANCHES,
+    CONFIG,
+    ALL_CURRENT,
+    ALL
   }
 
   @NotNull
-  public VirtualFile getRoot() {
-    return myRootDir;
-  }
+  VirtualFile getRoot();
 
   @NotNull
-  public VirtualFile getGitDir() {
-    return myGitDir;
-  }
+  VirtualFile getGitDir();
 
   @NotNull
-  public String getPresentableUrl() {
-    return getRoot().getPresentableUrl();
-  }
+  String getPresentableUrl();
 
   @NotNull
-  public Project getProject() {
-    return myProject;
-  }
+  Project getProject();
 
   @NotNull
-  public GitUntrackedFilesHolder getUntrackedFilesHolder() {
-    return myUntrackedFilesHolder;
-  }
+  GitUntrackedFilesHolder getUntrackedFilesHolder();
 
   @NotNull
-  public State getState() {
-    return myState;
-  }
+  State getState();
 
   /**
    * Returns the hash of the revision, which HEAD currently points to.
    * Returns null only in the case of a fresh repository, when no commit have been made.
    */
   @Nullable
-  public String getCurrentRevision() {
-    return myCurrentRevision;
-  }
+  String getCurrentRevision();
 
   /**
    * Returns the current branch of this Git repository.
@@ -264,22 +140,13 @@ public final class GitRepository implements Disposable {
    * Returns null, if the repository is not on a branch and not in the REBASING state.
    */
   @Nullable
-  public GitBranch getCurrentBranch() {
-    return myCurrentBranch;
-  }
-
-  /**
-   * @return local and remote branches in this repository.
-   */
-  @NotNull
-  public GitBranchesCollection getBranches() {
-    return new GitBranchesCollection(myBranches);
-  }
+  GitBranch getCurrentBranch();
 
   @NotNull
-  public GitConfig getConfig() {
-    return myConfig;
-  }
+  GitBranchesCollection getBranches();
+
+  @NotNull
+  GitConfig getConfig();
 
   /**
    * Returns remotes defined in this Git repository.
@@ -291,125 +158,24 @@ public final class GitRepository implements Disposable {
    * @return GitRemotes defined for this repository.
    */
   @NotNull
-  public Collection<GitRemote> getRemotes() {
-    return myConfig.getRemotes();
-  }
+  Collection<GitRemote> getRemotes();
 
-  public boolean isMergeInProgress() {
-    return getState() == State.MERGING;
-  }
+  boolean isMergeInProgress();
 
-  public boolean isRebaseInProgress() {
-    return getState() == State.REBASING;
-  }
+  boolean isRebaseInProgress();
 
-  public boolean isOnBranch() {
-    return getState() != State.DETACHED && getState() != State.REBASING;
-  }
+  boolean isOnBranch();
 
   /**
    * @return true if current repository is "fresh", i.e. if no commits have been made yet.
    */
-  public boolean isFresh() {
-    return getCurrentRevision() == null;
-  }
+  boolean isFresh();
 
-  public void addListener(GitRepositoryChangeListener listener) {
-    MessageBusConnection connection = myMessageBus.connect();
-    Disposer.register(this, connection);
-    connection.subscribe(GIT_REPO_CHANGE, listener);
-  }
+  void addListener(@NotNull GitRepositoryChangeListener listener);
 
   /**
    * Synchronously updates the GitRepository by reading information from the specified topics.
    */
-  public void update(TrackedTopic... topics) {
-    for (TrackedTopic topic : topics) {
-      topic.update(this);
-    }
-    notifyListeners();
-  }
-  
-  private void updateConfig() {
-    File configFile = new File(VfsUtil.virtualToIoFile(myGitDir), "config");
-    myConfig = GitConfig.read(configFile);
-  }
-
-  /**
-   * Reads current state and notifies listeners about the change.
-   */
-  private void updateState() {
-    myState = myReader.readState();
-  }
-
-  /**
-   * Reads current revision and notifies listeners about the change.
-   */
-  private void updateCurrentRevision() {
-    myCurrentRevision = myReader.readCurrentRevision();
-  }
-
-  /**
-   * Reads current branch and notifies listeners about the change.
-   */
-  private void updateCurrentBranch() {
-    myCurrentBranch = myReader.readCurrentBranch();
-  }
-  
-  private void updateBranchList() {
-    myBranches = myReader.readBranches();
-  }
-
-  private void notifyListeners() {
-    myNotifier.add(STUB_OBJECT);     // we don't have parameters for listeners
-  }
-
-  private static class NotificationConsumer implements Consumer<Object> {
-
-    private final Project myProject;
-    private final MessageBus myMessageBus;
-
-    NotificationConsumer(Project project, MessageBus messageBus) {
-      myProject = project;
-      myMessageBus = messageBus;
-    }
-
-    @Override
-    public void consume(Object o) {
-      if (!Disposer.isDisposed(myProject)) {
-        myMessageBus.syncPublisher(GIT_REPO_CHANGE).repositoryChanged();
-      }
-    }
-  }
-
-  public String toLogString() {
-    return String.format("GitRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",
-                         myCurrentBranch, myCurrentRevision, myState, myRootDir);
-  }
-  
-  @Override
-  public String toString() {
-    return getPresentableUrl();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    GitRepository that = (GitRepository)o;
-
-    if (myProject != null ? !myProject.equals(that.myProject) : that.myProject != null) return false;
-    if (myRootDir != null ? !myRootDir.equals(that.myRootDir) : that.myRootDir != null) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myProject != null ? myProject.hashCode() : 0;
-    result = 31 * result + (myRootDir != null ? myRootDir.hashCode() : 0);
-    return result;
-  }
+  void update(TrackedTopic... topics);
 
 }
