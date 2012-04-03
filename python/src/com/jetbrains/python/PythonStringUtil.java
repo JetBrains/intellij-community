@@ -291,35 +291,25 @@ public class PythonStringUtil {
   }
 
   @Nullable
-  public static String getStringValue(@Nullable PsiElement element) {
-    if (element == null) {
+  public static String getStringValue(@Nullable Object o) {
+    if (o == null) {
       return null;
     }
-    if (element instanceof PyExpression) {
-      return getStringValue(element);
-    }
-    else {
-      return getStringValue(element.getText());
-    }
-  }
-
-  public static String getStringValue(PyExpression o) {
     if (o instanceof PyStringLiteralExpression) {
       PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)o;
       return literalExpression.getStringValue();
     }
-    return o.getText();
-  }
-
-  public static String getStringValue(Object o) {
-    if (o instanceof PyExpression) {
-      return getStringValue((PyExpression)o);
+    else if (o instanceof PyExpression) {
+      return ((PyExpression)o).getText();
     }
     else if (o instanceof LookupElement) {
       return ((LookupElement)o).getLookupString();
     }
     else if (o instanceof PsiElement) {
       return ((PsiElement)o).getText();
+    }
+    else if (o instanceof String) {
+      return getStringValue((String)o);
     }
     else {
       return o.toString();
