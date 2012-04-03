@@ -20,6 +20,7 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.Function;
 
 import javax.swing.*;
@@ -48,8 +49,8 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     super.addToFiltered(elt);
 
     if (myNamer != null) {
-      String filterString = mySpeedSearch.getFilter().toUpperCase();
-      String candidateString = myNamer.fun(elt).toUpperCase();
+      String filterString = StringUtilRt.toUpperCase(mySpeedSearch.getFilter());
+      String candidateString = StringUtilRt.toUpperCase(myNamer.fun(elt));
       int index = getSize() - 1;
 
       if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {
