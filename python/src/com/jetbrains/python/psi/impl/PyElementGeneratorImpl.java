@@ -10,7 +10,6 @@ import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.django.util.DjangoStringUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
