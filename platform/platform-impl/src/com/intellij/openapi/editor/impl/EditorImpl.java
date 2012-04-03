@@ -3317,7 +3317,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertIsDispatchThread();
+    assertReadAccess();
     if (myDocument.getLineCount() == 0) return 0;
 
     if (pos.line < 0) throw new IndexOutOfBoundsException("Wrong line: " + pos.line);
