@@ -65,7 +65,7 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
         if (range == null) return null;
         int textLength = editor.getDocument().getTextLength();
         if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
-          LOG.error("invalid range: " + range + ", text length = " + textLength);
+          LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
           return null;
         }
 
