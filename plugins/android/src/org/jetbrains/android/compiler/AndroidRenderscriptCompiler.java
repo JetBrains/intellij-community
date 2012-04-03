@@ -216,6 +216,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
         }
       }
     }
+    outputRootDirectory.refresh(false, true);
     return results.toArray(new GenerationItem[results.size()]);
   }
 
