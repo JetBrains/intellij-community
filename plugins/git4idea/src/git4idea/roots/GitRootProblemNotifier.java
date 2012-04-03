@@ -17,7 +17,9 @@ package git4idea.roots;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -37,8 +39,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import static com.intellij.notification.NotificationType.ERROR;
+import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static git4idea.GitVcs.IMPORTANT_ERROR_NOTIFICATION;
+import static git4idea.GitVcs.MINOR_NOTIFICATION;
 import static git4idea.Notificator.createNotification;
 
 /**
@@ -88,7 +92,9 @@ public class GitRootProblemNotifier {
 
     synchronized (NOTIFICATION_LOCK) {
       expireNotification();
-      myNotification = createNotification(IMPORTANT_ERROR_NOTIFICATION, title, description, ERROR,
+      NotificationGroup notificationGroup = invalidRoots.isEmpty() ? MINOR_NOTIFICATION : IMPORTANT_ERROR_NOTIFICATION;
+      NotificationType notificationType = invalidRoots.isEmpty() ? INFORMATION : ERROR;
+      myNotification = createNotification(notificationGroup, title, description, notificationType,
                                           new MyNotificationListener(myProject, mySettings));
       myPlatformFacade.getNotificator(myProject).notify(myNotification);
     }

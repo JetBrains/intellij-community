@@ -210,12 +210,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     final int counter = (myChecksCounter + 1) % 10;
     myChecksCounter = counter;
     if (counter == 0 && myContext.isCanceled()) {
-      throw new RuntimeException("Compilation canceled") {
-        @Override
-        public Throwable fillInStackTrace() {
-          return this;
-        }
-      };
+      throw new CompilationCanceledException();
     }
   }
 }

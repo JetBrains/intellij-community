@@ -17,6 +17,7 @@ package com.intellij.android.designer.designSurface.layout;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.EditOperation;

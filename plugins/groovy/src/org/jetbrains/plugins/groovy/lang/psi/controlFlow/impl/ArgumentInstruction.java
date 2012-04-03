@@ -52,8 +52,8 @@ public class ArgumentInstruction extends InstructionImpl implements MixinTypeIns
 
     PsiElement parent = element.getParent().getParent();
     LOG.assertTrue(parent instanceof GrCall, "elemText: " + element.getText() +
-                                             "\n elemParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
-                                             "\n elemPParent" + (parent == null ? "null" : parent.getClass()));
+                                             "\nParent = " + (element.getParent() == null ? "null" : element.getParent().getClass()) +
+                                             "\nPParent" + (parent == null ? "null" : parent.getClass()));
 
     GrCall call = (GrCall)parent;
 

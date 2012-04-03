@@ -1409,7 +1409,7 @@ public class Mappings {
 
           debug("Processing removed fields:");
           for (FieldRepr f : diff.fields().removed()) {
-            debug("Field: ", it.name);
+            debug("Field: ", f.name);
 
             if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
               debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");

@@ -983,7 +983,7 @@
 
   <!-- ================= Layouts ================= -->
 
-  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
         layout="com.intellij.android.designer.model.layout.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
@@ -1004,7 +1004,7 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadViewGroupComponent"
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
         layout="com.intellij.android.designer.model.layout.RadFrameLayout"
         class="android.widget.FrameLayout"
         tag="FrameLayout">

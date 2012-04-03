@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -205,9 +206,17 @@ public class SvnRecursiveStatusWalker {
       if ((vFile != null) && myPartner.isExcluded(vFile)) return;
 
       if ((vFile != null) && (SvnVcs.svnStatusIsUnversioned(status))) {
-        myReceiver.processUnversioned(vFile);
         if (vFile.isDirectory()) {
-          processRecursively(vFile, myCurrentItem.getDepth());
+          if (myCurrentItem.getPath().getIOFile().equals(ioFile)) {
+            myReceiver.processUnversioned(vFile);
+            processRecursively(vFile, myCurrentItem.getDepth());
+          } else {
+            final MyItem childItem = new MyItem(myProject, new FilePathImpl(vFile), SVNDepth.INFINITY,
+                                                myPartner.createStatusClient(), true);
+            myQueue.add(childItem);
+          }
+        } else {
+          myReceiver.processUnversioned(vFile);
         }
       } else {
         final FilePath path = VcsUtil.getFilePath(ioFile, status.getKind().equals(SVNNodeKind.DIR));

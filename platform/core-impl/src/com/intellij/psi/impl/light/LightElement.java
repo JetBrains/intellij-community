@@ -195,4 +195,15 @@ public abstract class LightElement extends PsiElementBase {
     }
     myNavigationElement = navigationElement;
   }
+
+  @Override
+  public PsiElement getPrevSibling() {
+    return null;
+  }
+
+  @Override
+  public PsiElement getNextSibling() {
+    return null;
+  }
+
 }

@@ -229,16 +229,12 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   public String[] getNames(boolean checkBoxState) {
     final ArrayList<String> result = new ArrayList<String>();
     for (AnAction action : myActionsMap.keySet()) {
-      if (action instanceof ActionGroup) continue;
       result.add(getActionId(action));
     }
     if (checkBoxState) {
       final Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
       for (String id : ids) {
-        final AnAction anAction = myActionManager.getAction(id);
-        if (!(anAction instanceof ActionGroup)) {
-          result.add(id);
-        }
+        result.add(id);
       }
     }
     result.add(SETTINGS_KEY);
@@ -257,9 +253,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         }
         if (ids.contains(id)) {
           final AnAction anAction = myActionManager.getAction(id);
-          if (!(anAction instanceof ActionGroup)) {
-            map.put(anAction, null);
-          }
+          map.put(anAction, null);
         }
       }
     }
@@ -301,8 +295,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return objects;
   }
 
-  private static void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName){
+  private void collectActions(Map<AnAction, String> result, ActionGroup group, final String containingGroupName){
     final AnAction[] actions = group.getChildren(null);
+    includeGroup(result, group, actions, containingGroupName);
     for (AnAction action : actions) {
       if (action != null) {
         if (action instanceof ActionGroup) {
@@ -314,6 +309,22 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           result.put(action, groupName != null && groupName.length() > 0 ? groupName : containingGroupName);
         }
       }
+    }
+  }
+
+  private void includeGroup(Map<AnAction, String> result,
+                            ActionGroup group,
+                            AnAction[] actions,
+                            String containingGroupName) {
+    boolean showGroup = true;
+    for (AnAction action : actions) {
+      if (myActionManager.getId(action) != null) {
+        showGroup = false;
+        break;
+      }
+    }
+    if (showGroup) {
+      result.put(group, containingGroupName);
     }
   }
 
@@ -341,18 +352,16 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     final AnAction anAction = myActionManager.getAction(name);
     final Pattern compiledPattern = getPattern(pattern);
     if (anAction != null) {
-      if (!(anAction instanceof ActionGroup)) {
-        final Presentation presentation = anAction.getTemplatePresentation();
-        final String text = presentation.getText();
-        final String description = presentation.getDescription();
-        if ((text != null && myMatcher.matches(text, compiledPattern)) ||
-            (description != null && myMatcher.matches(description, compiledPattern))) {
-          return true;
-        }
-        final String groupName = myActionsMap.get(anAction);
-        if (groupName != null && text != null && myMatcher.matches(groupName + " " + text, compiledPattern)) {
-          return true;
-        }
+      final Presentation presentation = anAction.getTemplatePresentation();
+      final String text = presentation.getText();
+      final String description = presentation.getDescription();
+      if ((text != null && myMatcher.matches(text, compiledPattern)) ||
+          (description != null && myMatcher.matches(description, compiledPattern))) {
+        return true;
+      }
+      final String groupName = myActionsMap.get(anAction);
+      if (groupName != null && text != null && myMatcher.matches(groupName + " " + text, compiledPattern)) {
+        return true;
       }
       return false;
     }

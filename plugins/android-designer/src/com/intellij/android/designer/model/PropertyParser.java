@@ -19,6 +19,7 @@ import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.AttributeProperty;
+import com.intellij.android.designer.propertyTable.AttributePropertyWithDefault;
 import com.intellij.android.designer.propertyTable.CompoundProperty;
 import com.intellij.android.designer.propertyTable.FlagProperty;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
@@ -253,6 +254,9 @@ public class PropertyParser {
 
           if ("layout:margin".equals(name) && "ViewGroup_MarginLayout".equals(component)) {
             property = margin = new CompoundProperty(name, definition);
+          }
+          else if ("layout:width".equals(name) || "layout:height".equals(name)) {
+            property = new AttributePropertyWithDefault(name, definition, "wrap_content");
           }
           else if (formats.contains(AttributeFormat.Flag)) {
             property = new FlagProperty(name, definition, model);

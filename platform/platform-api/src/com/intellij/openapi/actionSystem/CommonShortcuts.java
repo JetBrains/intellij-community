@@ -101,4 +101,8 @@ public class CommonShortcuts {
   public static ShortcutSet getFind() {
     return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_FIND));
   }
+
+  public static ShortcutSet getContextHelp() {
+    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CONTEXT_HELP));
+  }
 }

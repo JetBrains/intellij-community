@@ -17,8 +17,6 @@ package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.LanguageNamesValidation;
-import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -191,7 +189,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected void performRefactoringRename(final String newName,
                                           final StartMarkAction markAction) {
     try {
-      if (!isIdentifier(newName)) {
+      if (!isIdentifier(newName, myLanguage)) {
         return;
       }
       PsiNamedElement elementToRename = getVariable();
@@ -271,12 +269,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     boolean bind = false;
     if (myInsertedName != null) {
       bind = true;
-      if (!isIdentifier(myInsertedName)) {
+      if (!isIdentifier(myInsertedName, myLanguage)) {
         performOnInvalidIdentifier(myInsertedName, myNameSuggestions);
       }
       else {
         if (mySnapshot != null) {
-          if (isIdentifier(myInsertedName)) {
+          if (isIdentifier(myInsertedName, myLanguage)) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 mySnapshot.apply(myInsertedName);
@@ -302,14 +300,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   protected void revertStateOnFinish() {
-    if (!isIdentifier(myInsertedName)) {
+    if (!isIdentifier(myInsertedName, myLanguage)) {
       revertState();
     }
-  }
-
-  private boolean isIdentifier(final String newName) {
-
-    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(myLanguage);
-    return namesValidator == null || namesValidator.isIdentifier(newName, myProject);
   }
 }

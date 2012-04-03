@@ -183,6 +183,8 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       return EMPTY_GENERATION_ITEM_ARRAY;
     }
     List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
+    boolean toRefresh = false;
+
     for (GenerationItem item : items) {
       if (item instanceof IdlGenerationItem) {
         final IdlGenerationItem idlItem = (IdlGenerationItem)item;
@@ -209,6 +211,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
             }
           });
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
+            toRefresh = true;
             results.add(idlItem);
           }
         }
@@ -221,6 +224,10 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
           });
         }
       }
+    }
+
+    if (toRefresh) {
+      outputRootDirectory.refresh(false, true);
     }
     return results.toArray(new GenerationItem[results.size()]);
   }
