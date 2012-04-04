@@ -388,7 +388,7 @@ public class PropertyUtil {
     return ArrayUtil.toStringArray(result);
   }
 
-  public static PsiMethod generateGetterPrototype(PsiField field) {
+  public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
     Project project = field.getProject();
     String name = field.getName();
