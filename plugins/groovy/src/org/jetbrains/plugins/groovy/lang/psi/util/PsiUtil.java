@@ -81,7 +81,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
 
@@ -612,7 +611,7 @@ public class PsiUtil {
   }
 
   private static boolean isRawIndexPropertyAccess(GrIndexProperty expr) {
-    final GrExpression qualifier = expr.getSelectedExpression();
+    final GrExpression qualifier = expr.getInvokedExpression();
     final PsiType qualifierType = qualifier.getType();
     if (qualifierType instanceof PsiClassType) {
 
@@ -824,24 +823,13 @@ public class PsiUtil {
     return false;
   }
 
-  public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place, GroovyResolveResult[] classCandidates, PsiType[] argTypes) {
+  public static GroovyResolveResult[] getConstructorCandidates(GroovyPsiElement place, GroovyResolveResult[] classCandidates, @Nullable PsiType[] argTypes) {
     for (GroovyResolveResult classResult : classCandidates) {
       final PsiElement element = classResult.getElement();
       if (element instanceof PsiClass) {
-        final GroovyPsiElement context = classResult.getCurrentFileResolveContext();
         PsiClass clazz = (PsiClass)element;
-        String className = clazz.getName();
-        PsiType thisType = JavaPsiFacade.getElementFactory(place.getProject()).createType(clazz, classResult.getSubstitutor());
-        final MethodResolverProcessor processor = new MethodResolverProcessor(className, place, true, thisType, argTypes, PsiType.EMPTY_ARRAY);
         PsiSubstitutor substitutor = classResult.getSubstitutor();
-        final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor).put(ResolverProcessor.RESOLVE_CONTEXT, context);
-        List<GroovyResolveResult> constructors = ResolveUtil.getAllClassConstructors(clazz, place, substitutor);
-        if (!constructors.isEmpty()) {
-          for (GroovyResolveResult result : constructors) {
-            processor.execute(result.getElement(), state.put(PsiSubstitutor.KEY, result.getSubstitutor()));
-          }
-          return processor.getCandidates();
-        }
+        return ResolveUtil.getAllClassConstructors(clazz, place, substitutor, argTypes);
       }
     }
 

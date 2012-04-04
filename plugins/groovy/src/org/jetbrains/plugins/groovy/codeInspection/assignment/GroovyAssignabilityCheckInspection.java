@@ -259,8 +259,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     private void checkConstructorCall(GrConstructorCall constructorCall, GroovyPsiElement refElement) {
       final GrArgumentList argList = constructorCall.getArgumentList();
-      if (checkCannotInferArgumentTypes(refElement)) return;
-      final GroovyResolveResult constructorResolveResult = constructorCall.resolveConstructorGenerics();
+      if (!checkCannotInferArgumentTypes(refElement)) return;
+      final GroovyResolveResult constructorResolveResult = constructorCall.advancedResolve();
       final PsiElement constructor = constructorResolveResult.getElement();
 
       if (constructor != null) {
@@ -268,7 +268,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         if (!checkUnknownParams(refElement)) return;
       }
       else {
-        final GroovyResolveResult[] results = constructorCall.multiResolveConstructor();
+        final GroovyResolveResult[] results = constructorCall.multiResolve(false);
         if (results.length > 0) {
           for (GroovyResolveResult result : results) {
             PsiElement resolved = result.getElement();
@@ -404,27 +404,30 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     @Override
     public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
       super.visitReferenceExpression(referenceExpression);
-      GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
-      GroovyResolveResult[] results = referenceExpression.multiResolve(false); //cached
 
-      PsiElement resolved = resolveResult.getElement();
       final PsiElement parent = referenceExpression.getParent();
-      if (resolved == null) {
-        GrExpression qualifier = referenceExpression.getQualifierExpression();
-        if (qualifier == null && GroovyAnnotator.isDeclarationAssignment(referenceExpression)) return;
-      }
-
       if (parent instanceof GrCall) {
-        if (checkCannotInferArgumentTypes(referenceExpression)) return;
+        GrCall call = (GrCall)parent;
+        GroovyResolveResult resolveResult = call.advancedResolve();
+        GroovyResolveResult[] results = call.multiResolve(false); //cached
+
+        PsiElement resolved = resolveResult.getElement();
+        if (resolved == null) {
+          GrExpression qualifier = referenceExpression.getQualifierExpression();
+          if (qualifier == null && GroovyAnnotator.isDeclarationAssignment(referenceExpression)) return;
+        }
+
+        if (!checkCannotInferArgumentTypes(referenceExpression)) return;
 
         final PsiType type = referenceExpression.getType();
-        if (resolved != null ) {
+        if (resolved != null) {
           if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
             if (!checkMethodApplicability(resolveResult, referenceExpression)) return;
           }
           else {
             if (!checkCallApplicability(type, referenceExpression)) return;
           }
+
           if (!checkUnknownParams(referenceExpression)) return;
         }
         else if (results.length > 0) {
@@ -460,11 +463,11 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     private boolean checkCannotInferArgumentTypes(PsiElement referenceExpression) {
-      if (PsiUtil.getArgumentTypes(referenceExpression, true) != null) return false;
+      if (PsiUtil.getArgumentTypes(referenceExpression, true) != null) return true;
 
       registerError(getElementToHighlight(referenceExpression, PsiUtil.getArgumentsList(referenceExpression)),
                     GroovyBundle.message("cannot.infer.argument.types"), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.WEAK_WARNING);
-      return true;
+      return false;
     }
 
     @Override

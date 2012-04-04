@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.ide.fileStructure;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import junit.framework.TestSuite;
 
 /**
- * @author ilyas
+ * @author Konstantin Bulenkov
  */
-public interface GrIndexProperty extends GrExpression, GrCallExpression {
-  @NotNull
-  GrExpression getInvokedExpression();
+public class JavaFileStructureTestSuite {
+  public static TestSuite suite() {
+    return new TestSuite(
+      JavaFileStructureSelectionTest.class,
+      JavaFileStructureFilteringTest.class,
+      JavaFileStructureHierarchyTest.class
+    );
+  }
 }

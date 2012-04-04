@@ -165,7 +165,7 @@ public class CodeBlockGenerator extends Generator {
       public void writeStatement(StringBuilder builder, ExpressionContext context) {
         final GrThisSuperReferenceExpression thisOrSuperKeyword = invocation.getThisOrSuperKeyword();
         final GrArgumentList argumentList = invocation.getArgumentList();
-        final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
+        final GroovyResolveResult resolveResult = invocation.advancedResolve();
         if (thisOrSuperKeyword.getQualifier() == null) {
           builder.append(thisOrSuperKeyword.getReferenceName());
         }

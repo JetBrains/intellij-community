@@ -37,6 +37,8 @@
 
     <compiler implementation="org.jetbrains.idea.maven.compiler.MavenResourceCompiler" order="last"/>
 
+    <languageInjector implementation="org.jetbrains.idea.maven.plugins.sql.MavenSqlInjector"/>
+
     <selectInTarget implementation="org.jetbrains.idea.maven.navigator.SelectInMavenNavigatorTarget"/>
 
     <iconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>

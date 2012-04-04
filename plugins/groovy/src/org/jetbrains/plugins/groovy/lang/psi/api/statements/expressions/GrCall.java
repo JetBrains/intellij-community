@@ -32,21 +32,27 @@ public interface GrCall extends GroovyPsiElement {
   @Nullable
   GrArgumentList getArgumentList();
 
+  @NotNull
   GrNamedArgument[] getNamedArguments();
 
+  @NotNull
   GrExpression[] getExpressionArguments();
 
+  @NotNull
+  GrClosableBlock[] getClosureArguments();
+
+  @Nullable
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException;
 
   @NotNull
   GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument);
-
-  @NotNull
-  GrClosableBlock[] getClosureArguments();
 
   @Nullable
   PsiMethod resolveMethod();
 
   @NotNull
   GroovyResolveResult advancedResolve();
+
+  @NotNull
+  GroovyResolveResult[] multiResolve(boolean incompleteCode);
 }

@@ -83,7 +83,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
       GrCodeReferenceElement refElement = newExpression.getReferenceElement();
       if (refElement == null) return;
 
-      final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
+      final GroovyResolveResult constructorResolveResult = newExpression.advancedResolve();
       final PsiElement constructor = constructorResolveResult.getElement();
       if (constructor != null) {
         final GrArgumentList argList = newExpression.getArgumentList();
@@ -94,7 +94,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
         }
       }
       else {
-        final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
+        final GroovyResolveResult[] results = newExpression.multiResolve(false);
         final GrArgumentList argList = newExpression.getArgumentList();
         final PsiElement element = refElement.resolve();
 

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -69,11 +68,8 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return (GrThisSuperReferenceExpression)findNotNullChildByType(THIS_OR_SUPER_SET);
   }
 
-  public GroovyResolveResult[] multiResolveConstructor() {
-    return multiResolveImpl(false);
-  }
-
-  private GroovyResolveResult[] multiResolveImpl(boolean allVariants) {
+  @NotNull
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
     PsiClass clazz = getDelegatedClass();
     if (clazz != null) {
       PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
@@ -88,7 +84,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
       }
       PsiType thisType = factory.createType(clazz, substitutor);
       MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY,
-                                                                      allVariants, false);
+                                                                      incompleteCode, false);
       final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
       clazz.processDeclarations(processor, state, null, this);
       ResolveUtil.processNonCodeMembers(thisType, processor, this, state);
@@ -103,18 +99,13 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   public PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
-  }
-
-  @NotNull
-  public GroovyResolveResult resolveConstructorGenerics() {
-    return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
+    return PsiImplUtil.extractUniqueElement(multiResolve(false));
   }
 
   @NotNull
   @Override
   public GroovyResolveResult advancedResolve() {
-    return resolveConstructorGenerics();
+    return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
   @Nullable
@@ -130,19 +121,6 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class);
   }
 
-  public PsiElement getElement() {
-    return this;
-  }
-
-  public TextRange getRangeInElement() {
-    return new TextRange(0, getThisOrSuperKeyword().getTextLength());
-  }
-
-  @Nullable
-  public PsiElement resolve() {
-    return resolveMethod();
-  }
-
   @NotNull
   public String getCanonicalText() {
     return getText(); //TODO
@@ -151,6 +129,6 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   @NotNull
   @Override
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    return multiResolveImpl(true);
+    return multiResolve(true);
   }
 }

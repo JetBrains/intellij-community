@@ -100,7 +100,7 @@ public abstract class GrThisSuperReferenceExpressionBase extends GrExpressionImp
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     final PsiElement parent = getParent();
     if (parent instanceof GrConstructorInvocation) {
-      return ((GrConstructorInvocation)parent).multiResolveConstructor();
+      return ((GrConstructorInvocation)parent).multiResolve(incompleteCode);
     }
     return ResolveResult.EMPTY_ARRAY;
   }

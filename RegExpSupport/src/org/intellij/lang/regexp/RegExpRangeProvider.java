@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.intellij.lang.regexp;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
 
 /**
- * @author ilyas
+ * @author Anna Bulenkova
  */
-public interface GrIndexProperty extends GrExpression, GrCallExpression {
-  @NotNull
-  GrExpression getInvokedExpression();
+public interface RegExpRangeProvider {
+  ExtensionPointName<RegExpRangeProvider> EP_NAME = new ExtensionPointName<RegExpRangeProvider>("com.intellij.regExpRangeProvider");
+
+  TextRange getTextRange(PsiElement element);
 }

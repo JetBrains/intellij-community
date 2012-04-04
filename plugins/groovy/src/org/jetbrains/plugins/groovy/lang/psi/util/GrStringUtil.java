@@ -242,13 +242,17 @@ public class GrStringUtil {
     buffer.append(hexCode);
   }
 
-  public static String escapeSymbolsForGString(String s, boolean isSingleLine, boolean forInjection) {
+  public static String escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection) {
     StringBuilder b = new StringBuilder();
+    escapeSymbolsForGString(s, isSingleLine, forInjection, b);
+    return b.toString();
+  }
+
+  private static void escapeSymbolsForGString(CharSequence s, boolean isSingleLine, boolean forInjection, StringBuilder b) {
     escapeStringCharacters(s.length(), s, isSingleLine ? "$\"" : "$", isSingleLine, true, b);
     if (!forInjection) {
       unescapeCharacters(b, isSingleLine ? "'" : "'\"", true);
     }
-    return b.toString();
   }
 
   public static String escapeSymbolsForString(String s, boolean isSingleLine, boolean forInjection) {
@@ -262,7 +266,7 @@ public class GrStringUtil {
 
   @NotNull
   public static StringBuilder escapeStringCharacters(int length,
-                                                     @NotNull String str,
+                                                     @NotNull CharSequence str,
                                                      @Nullable String additionalChars,
                                                      boolean escapeLineFeeds,
                                                      boolean escapeBackSlash,

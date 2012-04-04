@@ -82,16 +82,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public byte[] physicalContentsToByteArray(@NotNull final VirtualFile virtualFile) throws IOException {
-    throw new UnsupportedOperationException("'physicalContentsToByteArray' not implemented in " + getClass().getName());
-  }
-
-  @Override
-  public long physicalLength(@NotNull final VirtualFile virtualFile) throws IOException {
-    throw new UnsupportedOperationException("'physicalLength' not implemented in " + getClass().getName());
-  }
-
-  @Override
   @Nullable
   public WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively) {
     throw new UnsupportedOperationException("'addRootToWatch' not implemented in " + getClass().getName());

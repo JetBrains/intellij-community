@@ -64,12 +64,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return false;
   }
 
-  /** @deprecated use {@linkplain com.intellij.openapi.vfs.VirtualFile#getCanonicalFile()} (to remove in IDEA 12) */
-  @Nullable
-  public VirtualFile getRealFile(@NotNull final VirtualFile file) {
-    return file;
-  }
-
   @Nullable
   public abstract VirtualFile findFileByIoFile(@NotNull File file);
 
@@ -102,29 +96,34 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
 
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
 
-  public abstract byte[] physicalContentsToByteArray(@NotNull VirtualFile virtualFile) throws IOException;
+  /** @deprecated use {@linkplain com.intellij.openapi.vfs.VirtualFile#contentsToByteArray()} (to remove in IDEA 13) */
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  public byte[] physicalContentsToByteArray(@NotNull VirtualFile virtualFile) throws IOException{
+    return virtualFile.contentsToByteArray();
+  }
 
-  public abstract long physicalLength(@NotNull VirtualFile virtualFile) throws IOException;
+  /** @deprecated use {@linkplain VirtualFile#getLength()} (to remove in IDEA 13) */
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  public long physicalLength(@NotNull VirtualFile virtualFile) throws IOException{
+    return virtualFile.getLength();
+  }
 
   public interface WatchRequest {
     @NotNull
     String getRootPath();
 
+    boolean isToWatchRecursively();
+
+    /** @deprecated implementation details (to remove in IDEA 13) */
+    @SuppressWarnings({"UnusedDeclaration"})
     @NotNull
     String getFileSystemRootPath();
 
-    boolean isToWatchRecursively();
-
+    /** @deprecated implementation details (to remove in IDEA 13) */
+    @SuppressWarnings({"UnusedDeclaration"})
     boolean dominates(@NotNull WatchRequest other);
   }
 
-  /**
-   * Adds this rootFile as the watch root for file system.
-   *
-   * @param rootPath           path to watch.
-   * @param toWatchRecursively whether the whole subtree should be monitored.
-   * @return request handle or null if rootFile does not belong to this file system.
-   */
   @Nullable
   public abstract WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively);
 

@@ -254,12 +254,12 @@ public class StubGenerator implements ClassItemGenerator {
       return null;
     }
 
-    GroovyResolveResult resolveResult = constructorInvocation.resolveConstructorGenerics();
+    GroovyResolveResult resolveResult = constructorInvocation.advancedResolve();
     if (resolveResult.getElement() != null) {
       return resolveResult;
     }
 
-    final GroovyResolveResult[] results = constructorInvocation.multiResolveConstructor();
+    final GroovyResolveResult[] results = constructorInvocation.multiResolve(false);
     if (results.length > 0) {
       int i = 0;
       while (results.length > i + 1) {
