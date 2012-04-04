@@ -704,7 +704,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
   }
 
 
-  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode node) {
+  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode<T> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
