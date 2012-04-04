@@ -154,6 +154,7 @@ public class CodeEditUtil {
       if (child == last) break;
       child = child.getTreeNext();
     }
+    assert child == last : last + " is not a successor of " + first +" in the .getTreeNext() chain";
 
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
     final ASTNode nextLeaf = TreeUtil.nextLeaf(first);

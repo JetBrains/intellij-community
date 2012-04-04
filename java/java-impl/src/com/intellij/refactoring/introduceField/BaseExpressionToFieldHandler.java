@@ -755,8 +755,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (parent instanceof PsiClass) break;
             endElement = parent;
           }
-          myElement.getParent().deleteChildRange(myElement, PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class));
-        } else if (myDeleteSelf) {
+          PsiElement last = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+          if (last.getTextRange().getStartOffset() < myElement.getTextRange().getStartOffset()) {
+            last = myElement;
+          }
+          myElement.getParent().deleteChildRange(myElement, last);
+        }
+        else if (myDeleteSelf) {
           myElement.getParent().delete();
         }
 
