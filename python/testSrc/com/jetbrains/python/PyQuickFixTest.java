@@ -236,6 +236,11 @@ public class PyQuickFixTest extends PyTestCase {
                           PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
+  public void testChainedComparison4() {  // PY-5623
+    doInspectionTest("ChainedComparison4.py", PyChainedComparisonsInspection.class,
+                          PyBundle.message("QFIX.chained.comparison"), true, true);
+  }
+
   public void testStatementEffect() {  // PY-1362, PY-2585
     doInspectionTest("StatementEffect.py", PyStatementEffectInspection.class,
                           PyBundle.message("QFIX.statement.effect"), true, true);
