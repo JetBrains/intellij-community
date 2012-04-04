@@ -152,6 +152,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     findSubmemberHidesMemberCollisions(methodToRename, newName, result);
     findMemberHidesOuterMemberCollisions((PsiMethod) element, newName, result);
     findCollisionsAgainstNewName(methodToRename, newName, result);
+    findHidingMethodWithOtherSignature(methodToRename, newName, result);
     final PsiClass containingClass = methodToRename.getContainingClass();
     if (containingClass != null) {
       final PsiMethod patternMethod = (PsiMethod)methodToRename.copy();
@@ -175,18 +176,59 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement, String> conflicts) {
-    if (element instanceof PsiCompiledElement) return;
-    PsiMethod refactoredMethod = (PsiMethod)element;
-    if (newName.equals(refactoredMethod.getName())) return;
-    final PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
+  private static void findHidingMethodWithOtherSignature(final PsiMethod methodToRename, final String newName, final List<UsageInfo> result) {
+    final PsiClass containingClass = methodToRename.getContainingClass();
+    if (containingClass != null) {
+      final PsiMethod prototype = getPrototypeWithNewName(methodToRename, newName);
+      if (prototype == null || containingClass.findMethodBySignature(prototype, true) != null) return;
+
+      final PsiMethod[] methodsByName = containingClass.findMethodsByName(newName, true);
+      if (methodsByName.length > 0) {
+        
+        for (UsageInfo info : result) {
+          final PsiElement element = info.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            if (((PsiReferenceExpression)element).resolve() == methodToRename) {
+              final PsiMethodCallExpression copy = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(element.getProject())
+                .createExpressionFromText(element.getParent().getText(), element);
+              final PsiReferenceExpression expression = (PsiReferenceExpression)copy.getMethodExpression().handleElementRename(newName);
+              final JavaResolveResult resolveResult = expression.advancedResolve(true);
+              final PsiMember resolveResultElement = (PsiMember)resolveResult.getElement();
+              if (resolveResult.isValidResult() && resolveResultElement != null) {
+                result.add(new UnresolvableCollisionUsageInfo(element, methodToRename) {
+                  @Override
+                  public String getDescription() {
+                    return "Method call would be linked to \"" + RefactoringUIUtil.getDescription(resolveResultElement, true)  + 
+                           "\" after rename";
+                  }
+                });
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static PsiMethod getPrototypeWithNewName(PsiMethod methodToRename, String newName) {
+    final PsiMethod prototype = (PsiMethod)methodToRename.copy();
     try {
       prototype.setName(newName);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
-      return;
+      return null;
     }
+    return prototype;
+  }
+
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement, String> conflicts) {
+    if (element instanceof PsiCompiledElement) return;
+    final PsiMethod refactoredMethod = (PsiMethod)element;
+    if (newName.equals(refactoredMethod.getName())) return;
+    final PsiMethod prototype = getPrototypeWithNewName(refactoredMethod, newName);
+    if (prototype == null) return;
 
     ConflictsUtil.checkMethodConflicts(
       refactoredMethod.getContainingClass(),

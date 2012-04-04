@@ -154,6 +154,21 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     fail("Conflicts were not found");
   }
 
+  public void testRenameMethodCollisionWithOtherSignature() throws Exception {
+    try {
+      doTest("foo2");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      Assert.assertEquals("Method call would be linked to \"method <b><code>RenameTest.foo2(Long)</code></b>\" after rename", e.getMessage());
+      return;
+    }
+    fail("Conflicts were not found");
+  }
+
+  public void testRenameMethodNoCollisionWithOtherSignature() throws Exception {
+    doTest("foo2");
+  }
+
   public void testRenameTypeParameterToExistingClassName() throws Exception {
     doTest("P");
   }
