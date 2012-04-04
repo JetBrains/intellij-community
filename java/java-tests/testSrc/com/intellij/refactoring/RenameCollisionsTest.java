@@ -184,6 +184,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   public void testRenameStaticMethodTypeParameter() throws Exception {
     doTest("E");
   }
+  
+  public void testRenameFieldInSuper() throws Exception {
+    doTest("gg");
+  }
 
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
