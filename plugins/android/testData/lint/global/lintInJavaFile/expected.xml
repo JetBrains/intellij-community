@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>MyActivity.java</file>
+    <line>15</line>
+    <description>Use Integer.valueOf(3) instead</description>
+  </problem>
+</problems>
