@@ -72,7 +72,6 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (srcModule == null) return false;
 
     if (psiClass.isAnnotationType() ||
-        psiClass.isInterface() ||
         psiClass instanceof PsiAnonymousClass ||
         PsiTreeUtil.getParentOfType(psiClass, PsiClass.class) != null || // inner
         isUnderTestSources(psiClass)) {
