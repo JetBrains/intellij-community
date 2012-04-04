@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -77,7 +76,7 @@ public class DebugUtil {
   }
 
   public static /*final*/ boolean CHECK = false;
-  public static final boolean DO_EXPENSIVE_CHECKS = ApplicationManager.getApplication().isInternal() || ApplicationManager.getApplication().isUnitTestMode();
+  public static final boolean DO_EXPENSIVE_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = DO_EXPENSIVE_CHECKS;
 
   public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {
@@ -333,9 +332,7 @@ public class DebugUtil {
       root = root.getTreeParent();
     }
     if (root instanceof CompositeElement) {
-      synchronized (PsiLock.LOCK) {
-        checkSubtree((CompositeElement)root);
-      }
+      checkSubtree((CompositeElement)root);
     }
   }
 
