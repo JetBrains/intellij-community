@@ -11,20 +11,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Kirill Likhodedov
  */
 public class MockChangeListManager extends ChangeListManager {
 
-  private Collection<Change> myChanges = new HashSet<Change>();
+  public static final String DEFAULT_CHANGE_LIST_NAME = "Default";
+
+  private final Map<String, MockChangeList> myChangeLists = new HashMap<String, MockChangeList>();
+
+  public MockChangeListManager() {
+    myChangeLists.put(DEFAULT_CHANGE_LIST_NAME, new MockChangeList(DEFAULT_CHANGE_LIST_NAME));
+  }
 
   public void addChanges(Change... changes) {
-    myChanges.addAll(Arrays.asList(changes));
+    MockChangeList changeList = myChangeLists.get(DEFAULT_CHANGE_LIST_NAME);
+    for (Change change : changes) {
+      changeList.add(change);
+    }
   }
 
   @Override
@@ -61,13 +67,13 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public List<LocalChangeList> getChangeListsCopy() {
-    throw new UnsupportedOperationException();
+    return new ArrayList<LocalChangeList>(myChangeLists.values());
   }
 
   @NotNull
   @Override
   public List<LocalChangeList> getChangeLists() {
-    throw new UnsupportedOperationException();
+    return getChangeListsCopy();
   }
 
   @Override
@@ -89,7 +95,11 @@ public class MockChangeListManager extends ChangeListManager {
   @NotNull
   @Override
   public Collection<Change> getAllChanges() {
-    return myChanges;
+    Collection<Change> changes = new ArrayList<Change>();
+    for (MockChangeList list : myChangeLists.values()) {
+      changes.addAll(list.getChanges());
+    }
+    return changes;
   }
 
   @Override
