@@ -73,9 +73,6 @@ public class SmartFMap<K,V> implements Map<K,V> {
 
   public SmartFMap<K, V> minus(@NotNull K key) {
     if (myMap instanceof Map) {
-      if (size() == 1) {
-        return EMPTY;
-      }
       THashMap<K, V> newMap = new THashMap<K, V>((Map<K, V>)myMap);
       newMap.remove(key);
       if (newMap.size() <= ARRAY_THRESHOLD) {
