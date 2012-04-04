@@ -297,7 +297,7 @@ abstract class GitBranchOperation {
                 setMergeDescription("The following files have unresolved conflicts. You need to resolve them before " +
                                     getOperationName() + ".").
                 setErrorNotificationTitle("Unresolved files remain.");
-          new GitConflictResolver(myProject, myGit, GitUtil.getRoots(getRepositories()), params).merge();
+          new GitConflictResolver(myProject, myGit, ServiceManager.getService(PlatformFacade.class), GitUtil.getRoots(getRepositories()), params).merge();
         }
       }
     });

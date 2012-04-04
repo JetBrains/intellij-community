@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -23,10 +24,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
-import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.util.GitUIUtil;
@@ -157,7 +158,7 @@ public class GitRebaseUpdater extends GitUpdater {
     private final VirtualFile myRoot;
 
     public MyConflictResolver(Project project, @NotNull Git git, VirtualFile root, GitRebaser rebaser) {
-      super(project, git, Collections.singleton(root), makeParams());
+      super(project, git, ServiceManager.getService(PlatformFacade.class), Collections.singleton(root), makeParams());
       myRebaser = rebaser;
       myRoot = root;
     }

@@ -18,6 +18,7 @@ package git4idea.stash;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
@@ -195,7 +197,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     private final Set<VirtualFile> myStashedRoots;
 
     public UnstashConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, git, stashedRoots, makeParamsOrUse(params));
+      super(project, git, ServiceManager.getService(PlatformFacade.class), stashedRoots, makeParamsOrUse(params));
       myStashedRoots = stashedRoots;
     }
 

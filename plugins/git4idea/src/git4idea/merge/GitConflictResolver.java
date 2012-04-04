@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
@@ -51,8 +52,9 @@ public class GitConflictResolver {
 
   private static final Logger LOG = Logger.getInstance(GitConflictResolver.class);
 
-  protected final Project myProject;
+  @NotNull protected final Project myProject;
   @NotNull private final Git myGit;
+  @NotNull private final PlatformFacade myPlatformFacade;
   private final Collection<VirtualFile> myRoots;
   private final Params myParams;
 
@@ -104,9 +106,11 @@ public class GitConflictResolver {
     
   }
 
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
+  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade platformFacade,
+                             @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
     myProject = project;
     myGit = git;
+    myPlatformFacade = platformFacade;
     myRoots = roots;
     myParams = params;
     myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
@@ -295,7 +299,7 @@ public class GitConflictResolver {
 
     String output = StringUtil.join(result.getOutput(), "\n");
 
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    LocalFileSystem lfs = myPlatformFacade.getLocalFileSystem();
     for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
       if (s.isEol()) {
         s.nextLine();

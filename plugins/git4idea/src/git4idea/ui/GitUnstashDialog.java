@@ -36,6 +36,7 @@ import com.intellij.util.Consumer;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
@@ -450,7 +451,8 @@ public class GitUnstashDialog extends DialogWrapper {
     private final StashInfo myStashInfo;
 
     public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
-      super(project, ServiceManager.getService(Git.class), Collections.singleton(root), makeParams(stashInfo));
+      super(project, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class),
+            Collections.singleton(root), makeParams(stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;
     }

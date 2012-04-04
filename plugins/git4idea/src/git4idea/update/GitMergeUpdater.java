@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,6 @@ import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
-import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.util.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -279,7 +279,7 @@ public class GitMergeUpdater extends GitUpdater {
     private final VirtualFile myRoot;
 
     public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
-      super(project, git, Collections.singleton(root), makeParams());
+      super(project, git, ServiceManager.getService(git4idea.PlatformFacade.class), Collections.singleton(root), makeParams());
       myMerger = merger;
       myRoot = root;
     }
