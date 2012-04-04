@@ -18,18 +18,23 @@ package com.intellij.mock;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.IdeaPicoContainer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoContainer;
+import org.picocontainer.*;
+import org.picocontainer.defaults.CachingComponentAdapter;
+import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -42,26 +47,18 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   private final MessageBus myMessageBus = MessageBusFactory.newMessageBus(this);
   private final MutablePicoContainer myPicoContainer;
-  private final Map<Object, Object> myInitializedComponents = new HashMap<Object, Object>(4096);
 
   private final Map<Class, Object> myComponents = new HashMap<Class, Object>();
+  private Collection<Object> myInitializedComponents = new HashSet<Object>();
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new IdeaPicoContainer(parent) {
       @Override
       @Nullable
       public Object getComponentInstance(final Object componentKey) {
-        final Object initializedComponent = myInitializedComponents.get(componentKey);
-        if (initializedComponent != null) return initializedComponent;
-
         final Object o = super.getComponentInstance(componentKey);
         if (o instanceof Disposable && o != MockComponentManager.this) {
           Disposer.register(MockComponentManager.this, (Disposable)o);
-        }
-
-        myInitializedComponents.put(componentKey, o);
-        if (o instanceof BaseComponent && o != MockComponentManager.this) {
-           ((BaseComponent)o).initComponent();
         }
 
         return o;
@@ -71,6 +68,12 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     Disposer.register(parentDisposable, this);
   }
 
+  private void initComponent(Object componentInstance) {
+    if (componentInstance instanceof BaseComponent && componentInstance != MockComponentManager.this) {
+      ((BaseComponent)componentInstance).initComponent();
+    }
+  }
+
   @Override
   public BaseComponent getComponent(String name) {
     return null;
@@ -78,7 +81,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   public <T> void registerService(Class<T> serviceInterface, Class<? extends T> serviceImplementation) {
     myPicoContainer.unregisterComponent(serviceInterface.getName());
-    myPicoContainer.registerComponentImplementation(serviceInterface.getName(), serviceImplementation);
+    myPicoContainer.registerComponent(new ComponentInitializingAdapter(serviceInterface.getName(), serviceImplementation));
   }
 
   public <T> void registerService(Class<T> serviceImplementation) {
@@ -138,8 +141,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   protected void disposeComponents() {
-    Collection<Object> components = myInitializedComponents.values();
-
+    Collection<Object> components = myInitializedComponents;
     for(Object component: components)    {
       if (component instanceof BaseComponent) {
         try {
@@ -161,5 +163,109 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public Condition getDisposed() {
     return Condition.FALSE;
+  }
+
+  private class ComponentInitializingAdapter implements ComponentAdapter {
+    private ComponentAdapter myDelegate;
+    private boolean myInitialized = false;
+    private boolean myInitializing = false;
+    private boolean logSlowComponents = false;
+    private final String myComponentKey;
+    private final Class<? extends Object> myComponentImplementation;
+
+
+    public <T> ComponentInitializingAdapter(String componentKey, Class<? extends T> componentImplementation) {
+
+      myComponentKey = componentKey;
+      myComponentImplementation = componentImplementation;
+    }
+
+    @Override
+    public Object getComponentKey() {
+      return myComponentKey;
+    }
+
+    @Override
+    public Class getComponentImplementation() {
+      return getDelegate().getComponentImplementation();
+    }
+
+    @Override
+    public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
+      return getDelegate().getComponentInstance(container);
+    }
+
+    @Override
+    public void verify(final PicoContainer container) throws PicoIntrospectionException {
+      getDelegate().verify(container);
+    }
+
+    @Override
+    public void accept(final PicoVisitor visitor) {
+      visitor.visitComponentAdapter(this);
+      getDelegate().accept(visitor);
+    }
+
+    private ComponentAdapter getDelegate() {
+      if (myDelegate == null) {
+        final Object componentKey = getComponentKey();
+
+        Class<?> implementationClass = null;
+
+        try {
+          implementationClass = myComponentImplementation;
+        }
+        catch (Exception e) {
+          @NonNls final String message = "Error while registering component: " + myComponentKey;
+        }
+
+        assert implementationClass != null;
+
+        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(componentKey, implementationClass, null, true)) {
+          @Override
+          public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException {
+            Object componentInstance = null;
+            try {
+              long startTime = myInitialized ? 0 : System.nanoTime();
+              componentInstance = super.getComponentInstance(picoContainer);
+
+              if (!myInitialized) {
+                if (myInitializing) {
+                }
+
+                myInitializing = true;
+                initComponent(componentInstance);
+                long endTime = System.nanoTime();
+                long ms = (endTime - startTime) / 1000000;
+                if (ms > 10) {
+                  if (logSlowComponents) {
+                    LOG.info(componentInstance.getClass().getName() + " initialized in " + ms + " ms");
+                  }
+                }
+                myInitializing = false;
+                myInitialized = true;
+                myInitializedComponents.add(componentInstance);
+              }
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (StateStorageException e) {
+              throw e;
+            }
+            catch (Throwable t) {
+              handleInitComponentError(t, componentInstance == null, componentKey.toString());
+            }
+            return componentInstance;
+          }
+        };
+      }
+
+      return myDelegate;
+    }
+  }
+
+  protected void handleInitComponentError(final Throwable ex, final boolean fatal, final String componentClassName) {
+    LOG.error(ex);
   }
 }
