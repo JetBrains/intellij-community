@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,14 +35,24 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       if (rootDir != null)
         candidates.addAll(findInDirectory(rootDir));
     }
-    String path = System.getenv().get("WORKON_HOME");
-    if (path != null) {
-      VirtualFile workonHome = LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
-      if (workonHome != null) {
-        candidates.addAll(findInDirectory(workonHome));
-      }
-    }
+    
+    final VirtualFile path = getDefaultLocation();
+    if (path != null)
+      candidates.addAll(findInDirectory(path));
+
     return candidates;
+  }
+
+  @Nullable
+  public static VirtualFile getDefaultLocation() {
+    final String path = System.getenv().get("WORKON_HOME");
+    if (path != null) return LocalFileSystem.getInstance().findFileByPath(path.replace('\\','/'));
+
+    final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
+    if (userHome != null) {
+      return userHome.findChild(".virtualenvs");
+    }
+    return null;
   }
 
   public static Collection<String> findInDirectory(VirtualFile rootDir) {
