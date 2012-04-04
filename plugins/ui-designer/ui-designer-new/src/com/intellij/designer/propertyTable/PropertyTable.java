@@ -371,10 +371,15 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     return -1;
   }
 
-  public static void top(List<Property> properties, String name) {
-    Property property = extractProperty(properties, name);
+  public static void moveProperty(List<Property> source, String name, List<Property> destination, int index) {
+    Property property = extractProperty(source, name);
     if (property != null) {
-      properties.add(0, property);
+      if (index == -1) {
+        destination.add(property);
+      }
+      else {
+        destination.add(index, property);
+      }
     }
   }
 
