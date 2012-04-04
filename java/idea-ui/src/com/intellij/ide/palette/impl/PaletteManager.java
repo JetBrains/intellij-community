@@ -72,7 +72,7 @@ public class PaletteManager implements ProjectComponent {
                                myProject,
                                true);
           myPaletteToolWindow.setIcon(IconLoader.getIcon("/general/toolWindowPalette.png"));
-          myPaletteToolWindow.setAvailable(false, null);
+          setContent();
           final MyFileEditorManagerListener myListener = new MyFileEditorManagerListener();
           myFileEditorManager.addFileEditorManagerListener(myListener, myProject);
         }
@@ -159,15 +159,19 @@ public class PaletteManager implements ProjectComponent {
       public void run() {
         if (myPaletteWindow == null) return;
         myPaletteWindow.refreshPaletteIfChanged(selectedFile);
-        if (myPaletteWindow.getActiveGroupCount() == 0) {
-          myPaletteToolWindow.setAvailable(false, null);
-        }
-        else {
-          myPaletteToolWindow.setAvailable(true, null);
-          myPaletteToolWindow.show(null);
-        }
+        setContent();
       }
     });
+  }
+
+  private void setContent() {
+    if (myPaletteWindow.getActiveGroupCount() == 0) {
+      myPaletteToolWindow.setAvailable(false, null);
+    }
+    else {
+      myPaletteToolWindow.setAvailable(true, null);
+      myPaletteToolWindow.show(null);
+    }
   }
 
   void notifyKeyEvent(final KeyEvent e) {
