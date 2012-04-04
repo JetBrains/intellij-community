@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.104" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.105" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 VERSION_CONTROL_HEADER_FORMAT = '# from %s by generator %s'
@@ -911,6 +911,7 @@ class ModuleRedeclarator(object):
     }
 
     if version[0] < 3:
+        PREDEFINED_MOD_CLASS_SIGS[("exceptions", "BaseException", "__unicode__")] = ("(self)", UNICODE_LIT)
         PREDEFINED_MOD_CLASS_SIGS[("itertools", "product", "__init__")] = ("(self, *iterables, **kwargs)", LIST_LIT)
     else:
         PREDEFINED_MOD_CLASS_SIGS[("itertools", "product", "__init__")] = ("(self, *iterables, repeat=1)", LIST_LIT)
@@ -936,36 +937,20 @@ class ModuleRedeclarator(object):
     KNOWN_PROPS = {
         BUILTIN_MOD_NAME: {
             ("object", '__class__'): ('r', G_TYPE),
-            ("BaseException", '__dict__'): ('r', G_DICT),
-            ("BaseException", 'message'): ('rwd', G_STR),
-            ("BaseException", 'args'): ('r', G_TUPLE),
             ('complex', 'real'): ('r', G_FLOAT),
             ('complex', 'imag'): ('r', G_FLOAT),
-            ("EnvironmentError", 'errno'): ('rwd', G_INT),
-            ("EnvironmentError", 'message'): ('rwd', G_STR),
-            ("EnvironmentError", 'strerror'): ('rwd', G_INT),
-            ("EnvironmentError", 'filename'): ('rwd', G_STR),
             ("file", 'softspace'): ('r', G_BOOL),
             ("file", 'name'): ('r', G_STR),
             ("file", 'encoding'): ('r', G_STR),
             ("file", 'mode'): ('r', G_STR),
             ("file", 'closed'): ('r', G_BOOL),
             ("file", 'newlines'): ('r', G_STR),
-            ("SyntaxError", 'text'): ('rwd', G_STR),
-            ("SyntaxError", 'print_file_and_line'): ('rwd', G_BOOL),
-            ("SyntaxError", 'filename'): ('rwd', G_STR),
-            ("SyntaxError", 'lineno'): ('rwd', G_INT),
-            ("SyntaxError", 'offset'): ('rwd', G_INT),
-            ("SyntaxError", 'msg'): ('rwd', G_STR),
-            ("SyntaxError", 'message'): ('rwd', G_STR),
             ("slice", 'start'): ('r', G_INT),
             ("slice", 'step'): ('r', G_INT),
             ("slice", 'stop'): ('r', G_INT),
             ("super", '__thisclass__'): ('r', G_TYPE),
             ("super", '__self__'): ('r', G_TYPE),
             ("super", '__self_class__'): ('r', G_TYPE),
-            ("SystemExit", 'message'): ('rwd', G_STR),
-            ("SystemExit", 'code'): ('rwd', G_OBJECT),
             ("type", '__basicsize__'): ('r', G_INT),
             ("type", '__itemsize__'): ('r', G_INT),
             ("type", '__base__'): ('r', G_TYPE),
@@ -976,6 +961,24 @@ class ModuleRedeclarator(object):
             ("type", '__dict__'): ('r', G_DICT),
             ("type", '__name__'): ('r', G_STR),
             ("type", '__weakrefoffset__'): ('r', G_INT),
+        },
+        "exceptions": {
+            ("BaseException", '__dict__'): ('r', G_DICT),
+            ("BaseException", 'message'): ('rwd', G_STR),
+            ("BaseException", 'args'): ('r', G_TUPLE),
+            ("EnvironmentError", 'errno'): ('rwd', G_INT),
+            ("EnvironmentError", 'message'): ('rwd', G_STR),
+            ("EnvironmentError", 'strerror'): ('rwd', G_INT),
+            ("EnvironmentError", 'filename'): ('rwd', G_STR),
+            ("SyntaxError", 'text'): ('rwd', G_STR),
+            ("SyntaxError", 'print_file_and_line'): ('rwd', G_BOOL),
+            ("SyntaxError", 'filename'): ('rwd', G_STR),
+            ("SyntaxError", 'lineno'): ('rwd', G_INT),
+            ("SyntaxError", 'offset'): ('rwd', G_INT),
+            ("SyntaxError", 'msg'): ('rwd', G_STR),
+            ("SyntaxError", 'message'): ('rwd', G_STR),
+            ("SystemExit", 'message'): ('rwd', G_STR),
+            ("SystemExit", 'code'): ('rwd', G_OBJECT),
             ("UnicodeDecodeError", '__basicsize__'): None,
             ("UnicodeDecodeError", '__itemsize__'): None,
             ("UnicodeDecodeError", '__base__'): None,
