@@ -110,11 +110,16 @@ public class PyImportedModule extends LightElement implements NameDefiner {
 
   @Nullable
   public PyFile resolve() {
+    final PsiElement element;
     if (myImportElement != null) {
-      final PsiElement result = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(myImportElement, myImportedPrefix));
-      if (result instanceof PyFile) {
-        return (PyFile)result;
-      }
+      element = ResolveImportUtil.resolveImportElement(myImportElement, myImportedPrefix);
+    }
+    else {
+      element = ResolveImportUtil.resolveModuleInRoots(getImportedPrefix(), getContainingFile());
+    }
+    final PsiElement result = PyUtil.turnDirIntoInit(element);
+    if (result instanceof PyFile) {
+      return (PyFile)result;
     }
     return null;
   }

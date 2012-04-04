@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +17,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
-import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -73,26 +71,7 @@ public class PyImportReference extends PyReferenceImpl {
 
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final PyQualifiedName qname = myElement.asQualifiedName();
-    List<PsiElement> targets = ResolveImportUtil.resolveNameInImportStatement(parent, qname);
-    return rateResults(targets);
-  }
-
-  protected static ResolveResultList rateResults(List<PsiElement> targets) {
-    ResolveResultList ret = new ResolveResultList();
-    for (PsiElement target : targets) {
-      target = PyUtil.turnDirIntoInit(target);
-      if (target != null) {   // ignore dirs without __init__.py, worthless
-        int rate = RatedResolveResult.RATE_HIGH;
-        if (target instanceof PyFile) {
-          VirtualFile vFile = ((PyFile)target).getVirtualFile();
-          if (vFile != null && vFile.getLength() == 0) {
-            rate -= 100;
-          }
-        }
-        ret.poke(target, rate);
-      }
-    }
-    return ret;
+    return ResolveImportUtil.resolveNameInImportStatement(parent, qname);
   }
 
   @NotNull

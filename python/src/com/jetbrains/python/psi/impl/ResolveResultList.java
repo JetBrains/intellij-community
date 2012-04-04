@@ -12,7 +12,7 @@ import java.util.List;
 * @author yole
 */
 public class ResolveResultList extends ArrayList<RatedResolveResult> {
-  public static List<? extends RatedResolveResult> to(PsiElement element) {
+  public static List<RatedResolveResult> to(PsiElement element) {
     if (element== null) {
       return Collections.emptyList();
     }

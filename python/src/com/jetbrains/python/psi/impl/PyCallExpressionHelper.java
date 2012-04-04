@@ -235,7 +235,18 @@ public class PyCallExpressionHelper {
     boolean isByClass
   ) {
     int implicit_offset = 0;
-    if (isByInstance || isConstructorCall) implicit_offset += 1;
+    boolean firstIsArgsOrKwargs = false;
+    final PyParameter[] parameters = callable.getParameterList().getParameters();
+    if (parameters.length > 0) {
+      final PyParameter first = parameters[0];
+      final PyNamedParameter named = first.getAsNamed();
+      if (named != null && (named.isPositionalContainer() || named.isKeywordContainer())) {
+        firstIsArgsOrKwargs = true;
+      }
+    }
+    if (!firstIsArgsOrKwargs && (isByInstance || isConstructorCall)) {
+      implicit_offset += 1;
+    }
     PyFunction method = callable.asMethod();
     if (method == null) return implicit_offset;
 

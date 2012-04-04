@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl.references;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
@@ -33,7 +32,6 @@ public class PyFromImportNameReference extends PyImportReference {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    List<PsiElement> targets = ResolveImportUtil.resolveNameInFromImport(myImportElement, myElement.asQualifiedName(), myStatement);
-    return rateResults(targets);
+    return ResolveImportUtil.resolveNameInFromImport(myImportElement, myElement.asQualifiedName(), myStatement);
   }
 }

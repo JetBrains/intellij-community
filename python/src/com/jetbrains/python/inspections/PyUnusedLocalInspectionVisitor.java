@@ -226,15 +226,22 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       }
       if (ignoreUnused) continue;
 
-      // Local function
-      if (element instanceof PyFunction){
+      if (element instanceof PyFunction) {
+        // Local function
         final PsiElement nameIdentifier = ((PyFunction)element).getNameIdentifier();
         registerWarning(nameIdentifier == null ? element : nameIdentifier,
                         PyBundle.message("INSP.unused.locals.local.function.isnot.used",
                         ((PyFunction)element).getName()));
       }
-      // Local variable or parameter
+      else if (element instanceof PyClass) {
+        // Local class
+        final PyClass cls = (PyClass)element;
+        final PsiElement name = cls.getNameIdentifier();
+        registerWarning(name != null ? name : element,
+                        PyBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()));
+      }
       else {
+        // Local variable or parameter
         String name = element.getText();
         if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
           PyNamedParameter namedParameter = element instanceof PyNamedParameter

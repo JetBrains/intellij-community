@@ -253,3 +253,11 @@ def test_same_named_variable_inside_class():
         def a(self):
             print(a)
     return C
+
+
+# PY-5086
+def test_only_name_in_local_class():
+    x = 1
+    class <warning descr="Local class 'C' is not used">C</warning>:
+        pass
+    return x

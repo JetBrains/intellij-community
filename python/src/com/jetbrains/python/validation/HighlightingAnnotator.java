@@ -35,14 +35,19 @@ public class HighlightingAnnotator extends PyAnnotator {
   }
 
   private static boolean isSelf(PyParameter node, PyFunction function) {
-    boolean isSelf = false;
+    final PyNamedParameter named = node.getAsNamed();
+    if (named != null) {
+      if (named.isPositionalContainer() || named.isKeywordContainer()) {
+        return false;
+      }
+    }
     final int index = ArrayUtil.find(function.getParameterList().getParameters(), node);
     if (function.getContainingClass() != null && index == 0) {
       final PyFunction.Modifier modifier = function.getModifier();
       if (modifier != PyFunction.Modifier.CLASSMETHOD && modifier != PyFunction.Modifier.STATICMETHOD) {
-        isSelf = true;
+        return true;
       }
     }
-    return isSelf;
+    return false;
   }
 }

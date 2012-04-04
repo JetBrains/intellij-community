@@ -13,10 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.impl.PyImportResolver;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,30 +87,13 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PsiElement resolveImportElement(PyImportElement import_element, final PyQualifiedName qName) {
-    final List<PsiElement> psiElements = multiResolveImportElement(import_element, qName);
-    return findPreferredElement(psiElements);
-  }
-
-  @Nullable
-  public static PsiElement findPreferredElement(List<PsiElement> psiElements) {
-    if (psiElements.size() > 1) {
-      // prefer the directory which has a non-empty __init__.py
-      for (PsiElement element : psiElements) {
-        final PsiElement init = PyUtil.turnDirIntoInit(element);
-        if (init instanceof PsiFile) {
-          VirtualFile vFile = ((PsiFile)init).getVirtualFile();
-          if (vFile != null && vFile.getLength() > 0) {
-            return element;
-          }
-        }
-      }
-    }
-    return psiElements.isEmpty() ? null : psiElements.get(0);
+  public static PsiElement resolveImportElement(PyImportElement importElement, final PyQualifiedName qName) {
+    final List<RatedResolveResult> resultList = RatedResolveResult.sorted(multiResolveImportElement(importElement, qName));
+    return resultList.size() > 0 ? resultList.get(0).getElement() : null;
   }
 
   @NotNull
-  public static List<PsiElement> multiResolveImportElement(PyImportElement importElement, final PyQualifiedName qName) {
+  private static List<RatedResolveResult> multiResolveImportElement(PyImportElement importElement, final PyQualifiedName qName) {
     final PyStatement importStatement = importElement.getContainingImportStatement();
     if (importStatement instanceof PyFromImportStatement) {
       return resolveNameInFromImport(importElement, qName, (PyFromImportStatement)importStatement);
@@ -123,7 +103,7 @@ public class ResolveImportUtil {
     }
   }
 
-  public static List<PsiElement> resolveNameInImportStatement(PyImportElement importElement, PyQualifiedName qName) {
+  public static List<RatedResolveResult> resolveNameInImportStatement(PyImportElement importElement, PyQualifiedName qName) {
     if (qName == null) {
       return Collections.emptyList();
     }
@@ -131,16 +111,16 @@ public class ResolveImportUtil {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(importElement);
     final List<PsiFileSystemItem> modules = resolveModule(qName, file, absolute_import_enabled, 0);
     if (modules.size() > 0) {
-      return new ArrayList<PsiElement>(modules);
+      return rateResults(modules);
     }
 
     // in-python resolution failed
     final PsiElement result = resolveForeignImport(importElement, qName, null);
-    return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
+    return ResolveResultList.to(result);
   }
 
-  public static List<PsiElement> resolveNameInFromImport(PyImportElement importElement, PyQualifiedName qName,
-                                                         PyFromImportStatement importStatement) {
+  public static List<RatedResolveResult> resolveNameInFromImport(PyImportElement importElement, PyQualifiedName qName,
+                                                                 PyFromImportStatement importStatement) {
     if (qName == null) {
       return Collections.emptyList();
     }
@@ -163,11 +143,11 @@ public class ResolveImportUtil {
       }
     }
     if (!resultList.isEmpty()) {
-      return resultList;
+      return rateResults(resultList);
 
     }
     final PsiElement result = resolveForeignImport(importElement, qName, importStatement.getImportSourceQName());
-    return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
+    return ResolveResultList.to(result);
   }
 
   public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
@@ -391,6 +371,24 @@ public class ResolveImportUtil {
       }
     }
     return null;
+  }
+
+  public static ResolveResultList rateResults(List<? extends PsiElement> targets) {
+    ResolveResultList ret = new ResolveResultList();
+    for (PsiElement target : targets) {
+      target = PyUtil.turnDirIntoInit(target);
+      if (target != null) {   // ignore dirs without __init__.py, worthless
+        int rate = RatedResolveResult.RATE_HIGH;
+        if (target instanceof PyFile) {
+          VirtualFile vFile = ((PyFile)target).getVirtualFile();
+          if (vFile != null && vFile.getLength() > 0) {
+            rate += 100;
+          }
+        }
+        ret.poke(target, rate);
+      }
+    }
+    return ret;
   }
 
   /**

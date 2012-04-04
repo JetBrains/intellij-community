@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.SortedList;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonResolveUtil;
 import com.jetbrains.cython.psi.*;
@@ -136,13 +135,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     // put everything in a sorting container
-    List<RatedResolveResult> ret = new SortedList<RatedResolveResult>(new Comparator<RatedResolveResult>() {
-      public int compare(final RatedResolveResult one, final RatedResolveResult another) {
-        return another.getRate() - one.getRate();
-      }
-    });
-    ret.addAll(targets);
-
+    List<RatedResolveResult> ret = RatedResolveResult.sorted(targets);
     return ret.toArray(new ResolveResult[ret.size()]);
   }
 
