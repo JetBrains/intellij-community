@@ -377,14 +377,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       info.log = true;
     }
 
-    StringBuilder builder = new StringBuilder(info.message);
+    StringBuilder builder = new StringBuilder("SDK: ");
 
     try {
       AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
       IAndroidTarget target = platform.getTarget();
-      builder.append("\nSDK: ").append(target.getFullName()).append(" - ").append(target.getVersion()).append("\n");
+      builder.append(target.getFullName()).append(" - ").append(target.getVersion());
     }
     catch (Throwable e) {
+      builder.append("<none>");
     }
 
     info.message = builder.toString();

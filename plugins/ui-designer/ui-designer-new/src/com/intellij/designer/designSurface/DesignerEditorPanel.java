@@ -25,6 +25,8 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.palette.Item;
 import com.intellij.designer.propertyTable.Property;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -38,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -338,7 +341,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       showErrorPage(info);
     }
     if (info.log || ApplicationManagerEx.getApplicationEx().isInternal()) {
-      LOG.error(info.message, e);
+      LOG.error(LogMessageEx.createEvent(info.displayMessage,
+                                         info.message + "\n" + ExceptionUtil.getThrowableText(info.throwable),
+                                         new Attachment(myFile)));
     }
   }
 
