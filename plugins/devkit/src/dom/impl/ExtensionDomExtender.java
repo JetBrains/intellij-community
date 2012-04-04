@@ -184,11 +184,13 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   @Nullable
   private static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
     for (PsiMember member : members) {
-      final PsiModifierList modifierList = member.getModifierList();
-      if (modifierList != null) {
-        final PsiAnnotation annotation = modifierList.findAnnotation(annotationClass.getName());
-        if (annotation != null) {
-          return annotation;
+      if (member != null) {
+        final PsiModifierList modifierList = member.getModifierList();
+        if (modifierList != null) {
+          final PsiAnnotation annotation = modifierList.findAnnotation(annotationClass.getName());
+          if (annotation != null) {
+            return annotation;
+          }
         }
       }
     }
