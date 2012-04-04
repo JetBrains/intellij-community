@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -38,7 +40,28 @@ public class ComplementaryFontsRegistry {
   private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0);
   private static FontInfo ourSharedDefaultFont;
   private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
+  private static boolean ourOldUseAntialiasing;
+  
+  static {
+    final UISettings settings = UISettings.getInstance();
+    ourOldUseAntialiasing = settings.ANTIALIASING_IN_EDITOR;
 
+    // Reset font info on 'use antialiasing' setting change.
+    // Assuming that the listener is notified from the EDT only.
+    settings.addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        if (ourOldUseAntialiasing ^ source.ANTIALIASING_IN_EDITOR) {
+          ourOldUseAntialiasing = source.ANTIALIASING_IN_EDITOR;
+          for (FontInfo fontInfo : ourUsedFonts.values()) {
+            fontInfo.reset();
+          }
+          ourUsedFonts.clear();
+        }
+      }
+    }, ApplicationManager.getApplication());
+  }
+  
   private ComplementaryFontsRegistry() {
   }
 

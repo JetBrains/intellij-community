@@ -314,7 +314,7 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
     FontInfo fontInfo = EditorUtil.fontForChar(placeholder.charAt(0), myContext.fontType, myEditor);
     int placeholderWidthInPixels = 0;
     for (int i = 0; i < placeholder.length(); i++) {
-      placeholderWidthInPixels += fontInfo.charWidth(placeholder.charAt(i), myContext.contentComponent);
+      placeholderWidthInPixels += fontInfo.charWidth(placeholder.charAt(i));
     }
     int newX = myContext.currentPosition.x + placeholderWidthInPixels;
     

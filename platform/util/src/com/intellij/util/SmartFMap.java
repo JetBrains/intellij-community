@@ -27,9 +27,9 @@ import java.util.*;
  * @author peter
  */
 @SuppressWarnings("unchecked")
-public class SmartFMap<K,V> extends AbstractMap<K,V> {
+public class SmartFMap<K,V> implements Map<K,V> {
   private static final SmartFMap EMPTY = new SmartFMap(ArrayUtil.EMPTY_OBJECT_ARRAY);
-  private static final int ARRAY_THRESHOLD = 5;
+  private static final int ARRAY_THRESHOLD = 8;
   private final Object myMap;
 
   private SmartFMap(Object map) {
@@ -75,12 +75,26 @@ public class SmartFMap<K,V> extends AbstractMap<K,V> {
     if (myMap instanceof Map) {
       THashMap<K, V> newMap = new THashMap<K, V>((Map<K, V>)myMap);
       newMap.remove(key);
+      if (newMap.size() <= ARRAY_THRESHOLD) {
+        Object[] newArray = new Object[newMap.size() * 2];
+        int i = 0;
+        for (K k : newMap.keySet()) {
+          newArray[i++] = k;
+          newArray[i++] = newMap.get(k);
+        }
+        return new SmartFMap<K, V>(newArray);
+      }
+
       return new SmartFMap<K, V>(newMap);
     }
 
     Object[] array = (Object[])myMap;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
+        if (size() == 1) {
+          return EMPTY;
+        }
+
         Object[] newArray = new Object[array.length - 2];
         System.arraycopy(array, 0, newArray, 0, i);
         System.arraycopy(array, i + 2, newArray, i, array.length - i - 2);
@@ -107,6 +121,16 @@ public class SmartFMap<K,V> extends AbstractMap<K,V> {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    return obj instanceof Map && entrySet().equals(((Map)obj).entrySet());
+  }
+
+  @Override
+  public int hashCode() {
+    return entrySet().hashCode();
+  }
+
+  @Override
   public boolean containsKey(Object key) {
     if (key == null) {
       return false;
@@ -120,6 +144,11 @@ public class SmartFMap<K,V> extends AbstractMap<K,V> {
         return true;
       }
     }
+    return false;
+  }
+
+  @Override
+  public boolean containsValue(Object value) {
     return false;
   }
 
@@ -160,6 +189,24 @@ public class SmartFMap<K,V> extends AbstractMap<K,V> {
   }
 
   @Override
+  public Set<K> keySet() {
+    LinkedHashSet<K> result = new LinkedHashSet<K>();
+    for (Entry<K, V> entry : entrySet()) {
+      result.add(entry.getKey());
+    }
+    return Collections.unmodifiableSet(result);
+  }
+
+  @Override
+  public Collection<V> values() {
+    ArrayList<V> result = new ArrayList<V>();
+    for (Entry<K, V> entry : entrySet()) {
+      result.add(entry.getValue());
+    }
+    return Collections.unmodifiableCollection(result);
+  }
+
+  @Override
   @Deprecated
   public V remove(Object key) {
     throw new UnsupportedOperationException();
@@ -174,19 +221,46 @@ public class SmartFMap<K,V> extends AbstractMap<K,V> {
   }
 
   @Override
+  public boolean isEmpty() {
+    return size() == 0;
+  }
+
+  @Override
   public Set<Entry<K, V>> entrySet() {
     LinkedHashSet<Entry<K, V>> set = new LinkedHashSet<Entry<K, V>>();
     if (myMap instanceof Map) {
       for (Entry<K, V> entry : ((Map<K, V>)myMap).entrySet()) {
-        set.add(new SimpleImmutableEntry<K, V>(entry));
+        set.add(new AbstractMap.SimpleImmutableEntry<K, V>(entry));
       }
     } else {
       Object[] array = (Object[])myMap;
       for (int i = 0; i < array.length; i += 2) {
-        set.add(new SimpleImmutableEntry<K, V>((K)array[i], (V)array[i + 1]));
+        set.add(new AbstractMap.SimpleImmutableEntry<K, V>((K)array[i], (V)array[i + 1]));
       }
     }
     return Collections.unmodifiableSet(set);
+  }
+
+  // copied from AbstractMap
+  public String toString() {
+    Iterator<Entry<K,V>> i = entrySet().iterator();
+    if (! i.hasNext())
+      return "{}";
+
+    StringBuilder sb = new StringBuilder();
+    sb.append('{');
+    while (true) {
+      Entry<K, V> e = i.next();
+      K key = e.getKey();
+      V value = e.getValue();
+      sb.append(key == this ? "(this Map)" : key);
+      sb.append('=');
+      sb.append(value == this ? "(this Map)" : value);
+      if (!i.hasNext()) {
+        return sb.append('}').toString();
+      }
+      sb.append(", ");
+    }
   }
 
 }

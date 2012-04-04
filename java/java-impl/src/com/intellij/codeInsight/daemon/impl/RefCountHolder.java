@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
@@ -29,7 +30,6 @@ import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Iterator;
 import java.util.List;
@@ -54,16 +54,36 @@ public class RefCountHolder {
     BEING_USED_BY_PHP,            // post highlighting pass is retrieving info
   }
 
-  private static final Key<Reference<RefCountHolder>> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
+  private static class HolderReference extends SoftReference<RefCountHolder> {
+    @SuppressWarnings("UnusedDeclaration")
+    private volatile RefCountHolder myHardRef; // to prevent gc
+
+    public HolderReference(@NotNull RefCountHolder holder) {
+      super(holder);
+      myHardRef = holder;
+    }
+    
+    private void makeHardReachable(boolean isHard) {
+      RefCountHolder holder = get();
+      assert holder  != null;
+      myHardRef = isHard ? holder : null;
+    }
+  }
+  
+  private static final Key<HolderReference> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
   @NotNull
-  public static RefCountHolder getInstance(@NotNull PsiFile file) {
-    Reference<RefCountHolder> ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
+  private static Pair<RefCountHolder, HolderReference> getInstance(@NotNull PsiFile file) {
+    HolderReference ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
     RefCountHolder holder = ref == null ? null : ref.get();
     if (holder == null) {
       holder = new RefCountHolder(file);
+      HolderReference newRef = new HolderReference(holder);
       while (true) {
-        boolean replaced = ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, new SoftReference<RefCountHolder>(holder));
-        if (replaced) break;
+        boolean replaced = ((UserDataHolderEx)file).replace(REF_COUNT_HOLDER_IN_FILE_KEY, ref, newRef);
+        if (replaced) {
+          ref = newRef;
+          break;
+        }
         ref = file.getUserData(REF_COUNT_HOLDER_IN_FILE_KEY);
         RefCountHolder newHolder = ref == null ? null : ref.get();
         if (newHolder != null) {
@@ -72,9 +92,24 @@ public class RefCountHolder {
         }
       }
     }
-    return holder;
+    return Pair.create(holder, ref);
   }
 
+  @NotNull
+  public static RefCountHolder startUsing(@NotNull PsiFile file) {
+    Pair<RefCountHolder, HolderReference> pair = getInstance(file);
+    HolderReference reference = pair.second;
+    reference.makeHardReachable(true);
+    return pair.first;
+  }
+  @NotNull
+  public static RefCountHolder endUsing(@NotNull PsiFile file) {
+    Pair<RefCountHolder, HolderReference> pair = getInstance(file);
+    HolderReference reference = pair.second;
+    reference.makeHardReachable(false); // no longer needed, can be cleared
+    return pair.first;
+  }
+  
   private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
   }
@@ -276,4 +311,5 @@ public class RefCountHolder {
   private void assertIsRetrieving() {
     assert myState.get() == State.BEING_USED_BY_PHP : myState.get();
   }
+
 }
