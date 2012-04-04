@@ -15,11 +15,16 @@
  */
 package com.intellij.android.designer.designSurface;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeAdapter;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ComparatorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -33,6 +38,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   private final int myDelayMillis;
   private final Runnable myRunnable;
   private volatile boolean myRunState;
+  private String myContent;
 
   public ExternalPSIChangeListener(JComponent component, PsiFile file, int delayMillis, Runnable runnable) {
     myComponent = component;
@@ -54,6 +60,32 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
       PsiManager.getInstance(myFile.getProject()).removePsiTreeChangeListener(this);
       myAlarm.cancelAllRequests();
     }
+  }
+
+  public void activate() {
+    if (!myRunState) {
+      start();
+      if (!ComparatorUtil.equalsNullable(myContent, getContent())) {
+        addRequest();
+      }
+      myContent = null;
+    }
+  }
+
+  public void deactivate() {
+    if (myRunState) {
+      stop();
+      myContent = getContent();
+    }
+  }
+
+  private String getContent() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return myFile.getText();
+      }
+    });
   }
 
   private void updatePsi(PsiTreeChangeEvent event) {

@@ -55,6 +55,7 @@ public class ProfileAction {
       @Override
       public void run() {
         myProfileList.addVersion();
+        myVersion = myProfileList.getVersion();
       }
     });
 
@@ -78,6 +79,8 @@ public class ProfileAction {
           editProfiles();
         }
         else {
+          myProfileList.addVersion();
+          myVersion = myProfileList.getVersion();
           updateActions(item);
         }
         return item != EDIT_PROFILE;

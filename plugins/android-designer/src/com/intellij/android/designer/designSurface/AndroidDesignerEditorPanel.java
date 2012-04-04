@@ -81,7 +81,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myPSIChangeListener = new ExternalPSIChangeListener(this, myXmlFile, 100, new Runnable() {
       @Override
       public void run() {
-        System.out.println("=== Full update ===");
         reparseFile();
       }
     });
@@ -92,14 +91,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       public void run() {
         myActionPanel.update();
         if (myRootComponent == null) {
-          myPSIChangeListener.start();
+          myPSIChangeListener.activate();
           myPSIChangeListener.addRequest();
         }
         else if (myProfileLastVersion != myProfileAction.getVersion()) {
           myPSIChangeListener.addRequest(new Runnable() {
             @Override
             public void run() {
-              System.out.println("=== Light update ===");
               updateRenderer(true);
             }
           });
@@ -403,11 +401,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   public void activate() {
     myProfileAction.externalUpdate();
+    myPSIChangeListener.activate();
   }
 
   @Override
   public void deactivate() {
-    // TODO: Auto-generated method stub
+    myPSIChangeListener.deactivate();
   }
 
   @Override
