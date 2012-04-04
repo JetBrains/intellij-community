@@ -54,8 +54,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
   private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
 
-  public GitStashChangesSaver(Project project, ProgressIndicator progressIndicator, String stashMessage) {
-    super(project, progressIndicator, stashMessage);
+  public GitStashChangesSaver(Project project, @NotNull Git git, ProgressIndicator progressIndicator, String stashMessage) {
+    super(project, git, progressIndicator, stashMessage);
   }
 
   @Override
@@ -85,7 +85,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       }
     }
 
-    boolean conflictsResolved = new UnstashConflictResolver(myProject, myStashedRoots, myParams).merge();
+    boolean conflictsResolved = new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams).merge();
     if (conflictsResolved) {
       LOG.info("load: all conflicts resolved, dropping stash in " + myStashedRoots);
       for (VirtualFile root : conflictedRoots) {
@@ -194,8 +194,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, stashedRoots, makeParamsOrUse(params));
+    public UnstashConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
+      super(project, git, stashedRoots, makeParamsOrUse(params));
       myStashedRoots = stashedRoots;
     }
 

@@ -31,6 +31,7 @@ import git4idea.rebase.GitRebaseProblemDetector;
 import git4idea.rebase.GitRebaser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
@@ -44,13 +45,12 @@ public class GitRebaseUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitRebaseUpdater.class.getName());
   private final GitRebaser myRebaser;
 
-  public GitRebaseUpdater(Project project,
-                          VirtualFile root,
-                          final Map<VirtualFile, GitBranchPair> trackedBranches,
+  public GitRebaseUpdater(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root,
+                          @NotNull final Map<VirtualFile, GitBranchPair> trackedBranches,
                           ProgressIndicator progressIndicator,
                           UpdatedFiles updatedFiles) {
-    super(project, root, trackedBranches, progressIndicator, updatedFiles);
-    myRebaser = new GitRebaser(myProject, myProgressIndicator);
+    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+    myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
   }
 
   @Override public boolean isSaveNeeded() {
@@ -103,7 +103,7 @@ public class GitRebaseUpdater extends GitUpdater {
                                               final GitMessageWithFilesDetector untrackedWouldBeOverwrittenDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      final boolean allMerged = new MyConflictResolver(myProject, myRoot, myRebaser).merge();
+      final boolean allMerged = new MyConflictResolver(myProject, myGit, myRoot, myRebaser).merge();
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
@@ -156,8 +156,8 @@ public class GitRebaseUpdater extends GitUpdater {
     private final GitRebaser myRebaser;
     private final VirtualFile myRoot;
 
-    public MyConflictResolver(Project project, VirtualFile root, GitRebaser rebaser) {
-      super(project, Collections.singleton(root), makeParams());
+    public MyConflictResolver(Project project, @NotNull Git git, VirtualFile root, GitRebaser rebaser) {
+      super(project, git, Collections.singleton(root), makeParams());
       myRebaser = rebaser;
       myRoot = root;
     }

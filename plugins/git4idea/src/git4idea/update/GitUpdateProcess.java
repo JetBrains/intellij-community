@@ -16,6 +16,7 @@
 package git4idea.update;
 
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
+import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
@@ -52,6 +54,7 @@ public class GitUpdateProcess {
 
   private final Project myProject;
   private final GitVcs myVcs;
+  @NotNull private final Git myGit;
   private final Set<VirtualFile> myRoots;
   private final UpdatedFiles myUpdatedFiles;
   private final ProgressIndicator myProgressIndicator;
@@ -62,7 +65,7 @@ public class GitUpdateProcess {
   private boolean myResult;
   private final Map<VirtualFile, GitUpdater> myUpdaters;
   private final Collection<VirtualFile> myRootsToSave;
-  
+
   public enum UpdateMethod {
     MERGE,
     REBASE,
@@ -75,10 +78,11 @@ public class GitUpdateProcess {
     myProject = project;
     myRoots = roots;
     myVcs = GitVcs.getInstance(project);
+    myGit = ServiceManager.getService(Git.class);
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator;
     myMerger = new GitMerger(myProject);
-    mySaver = GitChangesSaver.getSaver(myProject, myProgressIndicator,
+    mySaver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator,
       "Uncommitted changes before update operation at " + DateFormatUtil.formatDateTime(Clock.getTime()));
     myUpdaters = new HashMap<VirtualFile, GitUpdater>();
     myRootsToSave = new HashSet<VirtualFile>(1);
@@ -134,11 +138,11 @@ public class GitUpdateProcess {
       for (VirtualFile root : myRoots) {
         final GitUpdater updater;
         if (updateMethod == UpdateMethod.MERGE) {
-          updater = new GitMergeUpdater(myProject, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
+          updater = new GitMergeUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
         } else if (updateMethod == UpdateMethod.REBASE) {
-          updater = new GitRebaseUpdater(myProject, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
+          updater = new GitRebaseUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
         } else {
-          updater = GitUpdater.getUpdater(myProject, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
+          updater = GitUpdater.getUpdater(myProject, myGit, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
         }
 
         if (updater.isUpdateNeeded()) {
@@ -301,7 +305,7 @@ public class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
-    return !new GitMergeCommittingConflictResolver(myProject, myMerger, mergingRoots, params, false).merge();
+    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, mergingRoots, params, false).merge();
   }
 
   /**
@@ -312,7 +316,7 @@ public class GitUpdateProcess {
     GitConflictResolver.Params params = new GitConflictResolver.Params();
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
-    return !new GitMergeCommittingConflictResolver(myProject, myMerger, myRoots, params, false).merge();
+    return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, myRoots, params, false).merge();
   }
 
   /**
@@ -320,7 +324,7 @@ public class GitUpdateProcess {
    * @return true if rebase is in progress, which means that update can't continue.
    */
   private boolean checkRebaseInProgress() {
-    final GitRebaser rebaser = new GitRebaser(myProject, myProgressIndicator);
+    final GitRebaser rebaser = new GitRebaser(myProject, myGit, myProgressIndicator);
     final Collection<VirtualFile> rebasingRoots = rebaser.getRebasingRoots();
     if (rebasingRoots.isEmpty()) {
       return false;
@@ -332,7 +336,7 @@ public class GitUpdateProcess {
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");
     params.setReverse(true);
-    return !new GitConflictResolver(myProject, rebasingRoots, params) {
+    return !new GitConflictResolver(myProject, myGit, rebasingRoots, params) {
       @Override protected boolean proceedIfNothingToMerge() {
         return rebaser.continueRebase(rebasingRoots);
       }

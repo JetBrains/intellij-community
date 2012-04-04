@@ -51,12 +51,12 @@ public class GitMergeUpdater extends GitUpdater {
 
   private final ChangeListManager myChangeListManager;
 
-  public GitMergeUpdater(Project project,
+  public GitMergeUpdater(Project project, @NotNull Git git,
                          VirtualFile root,
                          final Map<VirtualFile, GitBranchPair> trackedBranches,
                          ProgressIndicator progressIndicator,
                          UpdatedFiles updatedFiles) {
-    super(project, root, trackedBranches, progressIndicator, updatedFiles);
+    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -111,7 +111,7 @@ public class GitMergeUpdater extends GitUpdater {
     if (error == MergeError.CONFLICT) {
       LOG.info("Conflict detected");
       final boolean allMerged =
-        new MyConflictResolver(myProject, merger, myRoot).merge();
+        new MyConflictResolver(myProject, myGit, merger, myRoot).merge();
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
@@ -278,8 +278,8 @@ public class GitMergeUpdater extends GitUpdater {
     private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    public MyConflictResolver(Project project, GitMerger merger, VirtualFile root) {
-      super(project, Collections.singleton(root), makeParams());
+    public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
+      super(project, git, Collections.singleton(root), makeParams());
       myMerger = merger;
       myRoot = root;
     }

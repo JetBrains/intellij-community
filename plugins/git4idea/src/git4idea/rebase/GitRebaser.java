@@ -47,10 +47,12 @@ public class GitRebaser {
   private GitVcs myVcs;
   private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
   private static final Logger LOG = Logger.getInstance(GitRebaser.class);
+  @NotNull private final Git myGit;
   private final @Nullable ProgressIndicator myProgressIndicator;
 
-  public GitRebaser(Project project, ProgressIndicator progressIndicator) {
+  public GitRebaser(Project project, @NotNull Git git, ProgressIndicator progressIndicator) {
     myProject = project;
+    myGit = git;
     myProgressIndicator = progressIndicator;
     myVcs = GitVcs.getInstance(project);
     mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
@@ -172,7 +174,7 @@ public class GitRebaser {
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitConflictResolver(myProject, Collections.singleton(root), makeParamsForRebaseConflict()) {
+      return new GitConflictResolver(myProject, myGit, Collections.singleton(root), makeParamsForRebaseConflict()) {
         @Override protected boolean proceedIfNothingToMerge() {
           return continueRebase(root, "--continue");
         }

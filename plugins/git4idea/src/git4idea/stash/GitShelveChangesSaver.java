@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
+import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.rollback.GitRollbackEnvironment;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +42,8 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   private final ShelvedChangesViewManager myShelveViewManager;
   private ShelvedChangeList myShelvedChangeList;
 
-  public GitShelveChangesSaver(Project project, ProgressIndicator indicator, String stashMessage) {
-    super(project, indicator, stashMessage);
+  public GitShelveChangesSaver(Project project, Git git, ProgressIndicator indicator, String stashMessage) {
+    super(project, git, indicator, stashMessage);
     myShelveManager = ShelveChangesManager.getInstance(myProject);
     myShelveViewManager = ShelvedChangesViewManager.getInstance(myProject);
   }

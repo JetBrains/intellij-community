@@ -18,6 +18,7 @@ package git4idea.ui;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -449,7 +450,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private final StashInfo myStashInfo;
 
     public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
-      super(project, Collections.singleton(root), makeParams(stashInfo));
+      super(project, ServiceManager.getService(Git.class), Collections.singleton(root), makeParams(stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;
     }

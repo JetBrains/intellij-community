@@ -209,7 +209,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   private boolean doSmartMerge(@NotNull final Collection<GitRepository> repositories) {
     final AtomicBoolean success = new AtomicBoolean();
-    myPreservingProcess = new GitPreservingProcess(myProject, repositories, "merge", myBranchToMerge, getIndicator(),
+    myPreservingProcess = new GitPreservingProcess(myProject, myGit, repositories, "merge", myBranchToMerge, getIndicator(),
       new Runnable() {
         @Override
         public void run() {
@@ -303,7 +303,8 @@ class GitMergeOperation extends GitBranchOperation {
   private GitCompoundResult smartRollback(@NotNull final Collection<GitRepository> repositories) {
     LOG.info("Starting smart rollback...");
     final GitCompoundResult result = new GitCompoundResult(myProject);
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, repositories, "merge", myBranchToMerge, getIndicator(),
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myGit, repositories, "merge", myBranchToMerge,
+                                                                      getIndicator(),
       new Runnable() {
         @Override public void run() {
           for (GitRepository repository : repositories) {
@@ -361,7 +362,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
     public MyMergeConflictResolver() {
-      super(GitMergeOperation.this.myProject, new GitMerger(GitMergeOperation.this.myProject),
+      super(GitMergeOperation.this.myProject, myGit, new GitMerger(GitMergeOperation.this.myProject),
             GitUtil.getRoots(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(), true);
     }
 

@@ -18,6 +18,8 @@ package git4idea.merge;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.Git;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -31,9 +33,9 @@ public class GitMergeCommittingConflictResolver extends GitConflictResolver {
   private final boolean myRefreshAfterCommit;
   private final GitMerger myMerger;
 
-  public GitMergeCommittingConflictResolver(Project project, GitMerger merger, Collection<VirtualFile> mergingRoots, Params params,
-                                            boolean refreshAfterCommit) {
-    super(project, mergingRoots, params);
+  public GitMergeCommittingConflictResolver(Project project, @NotNull Git git, GitMerger merger, Collection<VirtualFile> mergingRoots,
+                                            Params params, boolean refreshAfterCommit) {
+    super(project, git, mergingRoots, params);
     myMerger = merger;
     myMergingRoots = mergingRoots;
     myRefreshAfterCommit = refreshAfterCommit;
