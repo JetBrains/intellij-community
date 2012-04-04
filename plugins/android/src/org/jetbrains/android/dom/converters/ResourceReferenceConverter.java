@@ -314,6 +314,10 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
 
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<ResourceValue> value, PsiElement element, ConvertContext context) {
+    if ("@null".equals(value.getStringValue())) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
     Module module = context.getModule();
     if (module != null) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
