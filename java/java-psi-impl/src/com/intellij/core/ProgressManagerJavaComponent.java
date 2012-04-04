@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.progress.impl;
+package com.intellij.core;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -32,7 +29,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.psi.PsiLock;
-import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -41,7 +37,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ProgressManagerImpl extends ProgressManager implements Disposable{
+public class ProgressManagerJavaComponent extends ProgressManager implements Disposable {
   @NonNls private static final String PROCESS_CANCELED_EXCEPTION = "idea.ProcessCanceledException";
 
   private static final ThreadLocal<ProgressIndicator> myThreadIndicator = new ThreadLocal<ProgressIndicator>();
@@ -54,7 +50,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   private volatile boolean enabled = true;
 
-  public ProgressManagerImpl(Application application) {
+  public ProgressManagerJavaComponent(Application application) {
     if (/*!application.isUnitTestMode() && */!DISABLED) {
       final Thread thread = new Thread(NAME) {
         public void run() {
@@ -145,15 +141,14 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   public void setCancelButtonText(String cancelButtonText) {
     ProgressIndicator progressIndicator = getProgressIndicator();
-    if (progressIndicator != null) {
-      if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
-        ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginal();
-        if (original instanceof ProgressWindow) {
-          ((ProgressWindow)original).setCancelButtonText(cancelButtonText);
-        }
-      }
-    }
-
+    //if (progressIndicator != null) {
+    //  if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
+    //    ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginal();
+    //    if (original instanceof ProgressWindow) {
+    //      ((ProgressWindow)original).setCancelButtonText(cancelButtonText);
+    //    }
+    //  }
+    //}
   }
 
   public boolean hasProgressIndicator() {
@@ -203,7 +198,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
     final boolean modal = progress != null && progress.isModal();
     if (modal) myCurrentModalProgressCount.incrementAndGet();
-    if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
+    //if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
     try {
       process.run();
@@ -212,7 +207,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
       myThreadIndicator.set(oldIndicator);
 
       if (modal) myCurrentModalProgressCount.decrementAndGet();
-      if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
+      //if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
 
       if (progress != null) {
         synchronized (progress) {
@@ -235,9 +230,9 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   @Override
   public <T, E extends Exception> T runProcessWithProgressSynchronously(@NotNull final ThrowableComputable<T, E> process,
-                                                   @NotNull @Nls String progressTitle,
-                                                   boolean canBeCanceled,
-                                                   @Nullable Project project) throws E {
+                                                                        @NotNull @Nls String progressTitle,
+                                                                        boolean canBeCanceled,
+                                                                        @Nullable Project project) throws E {
 
     final Ref<T> result = new Ref<T>();
     final Ref<E> exceptionRef = new Ref<E>();
@@ -273,12 +268,11 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   private static boolean runProcessWithProgressSynchronously(final Task task, @Nullable final JComponent parentComponent) {
     final long start = System.currentTimeMillis();
     long time = 0;
-    final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
-        .runProcessWithProgressSynchronously(new TaskContainer(task) {
-          public void run() {
-            new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
-          }
-        }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent, task.getCancelText());
+    final boolean result = runProcessWithProgressSynchronously(new TaskContainer(task) {
+        public void run() {
+          new TaskRunnable(task, ProgressManager.getInstance().getProgressIndicator()).run();
+        }
+      }, task.getTitle(), task.isCancellable(), task.getProject(), parentComponent, task.getCancelText());
     if (result) {
       final long end = System.currentTimeMillis();
       final Task.NotificationInfo notificationInfo = task.notifyFinished();
@@ -297,10 +291,28 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     return result;
   }
 
+  private static boolean runProcessWithProgressSynchronously(@NotNull final Runnable process,
+                                                     @NotNull String progressTitle,
+                                                     boolean canBeCanceled,
+                                                     Project project,
+                                                     JComponent parentComponent,
+                                                     final String cancelText)
+  {
+
+    try {
+      ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
+    }
+    catch (ProcessCanceledException e) {
+      // ok to ignore.
+      return false;
+    }
+    return true;
+  }
+
   private static void systemNotify(final Task.NotificationInfo notificationInfo) {
-    SystemNotifications.getInstance().notify(notificationInfo.getNotificationName(),
-                                             notificationInfo.getNotificationTitle(),
-                                             notificationInfo.getNotificationText());
+    //SystemNotifications.getInstance().notify(notificationInfo.getNotificationName(),
+    //                                         notificationInfo.getNotificationTitle(),
+    //                                         notificationInfo.getNotificationText());
   }
 
   public void runProcessWithProgressAsynchronously(@NotNull Project project,
@@ -340,12 +352,14 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
 
   public static void runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
     final ProgressIndicator progressIndicator;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      progressIndicator = new EmptyProgressIndicator();
-    }
-    else {
-      progressIndicator = new BackgroundableProcessIndicator(task);
-    }
+    //if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    //  progressIndicator = new EmptyProgressIndicator();
+    //}
+    //else {
+    //  progressIndicator = new BackgroundableProcessIndicator(task);
+    //}
+
+    progressIndicator = new EmptyProgressIndicator();
     runProcessWithProgressAsynchronously(task, progressIndicator);
   }
 
@@ -448,7 +462,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     private TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator) {
       this(task, indicator, null);
     }
-    
+
     private TaskRunnable(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
       super(task);
       myIndicator = indicator;
@@ -483,7 +497,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   @TestOnly
   @SuppressWarnings({"UnusedDeclaration"})
   private static void stopCheckCanceled() {
-    ((ProgressManagerImpl)getInstance()).dispose();
+    ((ProgressManagerJavaComponent)getInstance()).dispose();
   }
 
   @TestOnly
