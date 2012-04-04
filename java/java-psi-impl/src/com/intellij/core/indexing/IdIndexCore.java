@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package com.intellij.psi.impl.cache.impl.id;
+package com.intellij.core.indexing;
 
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.cache.impl.id.IdIndexBase;
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 
-public class IdIndex extends IdIndexBase {
-  public IdIndex(IdTableBuilding idTableBuilding) {
+public class IdIndexCore extends IdIndexBase {
+  public IdIndexCore(IdTableBuilding idTableBuilding) {
     super(idTableBuilding);
   }
 
   protected boolean isIndexable(VirtualFile file, FileType fileType) {
     return (fileType instanceof LanguageFileType ||
-            fileType instanceof AbstractFileType ||
             getIdTableBuilding().isIdIndexerRegistered(fileType) ||
             CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null) &&
            !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
   }
-
 }
-
