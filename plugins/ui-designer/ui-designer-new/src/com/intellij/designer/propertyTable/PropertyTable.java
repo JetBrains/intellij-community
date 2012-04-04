@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
@@ -67,8 +69,9 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
   private final TableCellRenderer myCellRenderer = new PropertyCellRenderer();
 
   private boolean mySkipUpdate;
-  @Nullable private EditableArea myArea;
-  @Nullable private DesignerEditorPanel myDesigner;
+  private EditableArea myArea;
+  private DesignerEditorPanel myDesigner;
+  private Property myInitialSelection;
 
   private boolean myShowExpert;
 
@@ -77,6 +80,14 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     addMouseListener(new MouseTableListener());
+    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        if (myDesigner != null) {
+          myDesigner.setSelectionProperty(getSelectionProperty());
+        }
+      }
+    });
 
     // TODO: ShowJavadocAction
 
@@ -138,6 +149,7 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
 
   public void setArea(@Nullable DesignerEditorPanel designer, @Nullable EditableArea area) {
     myDesigner = designer;
+    myInitialSelection = designer == null ? null : designer.getSelectionProperty();
 
     finishEditing();
 
@@ -214,10 +226,14 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
       }
       else {
         Property selection = getSelectionProperty();
-
         myComponents = new ArrayList<RadComponent>(myArea.getSelection());
         fillProperties();
         myModel.fireTableDataChanged();
+
+        if (myInitialSelection != null && !myComponents.isEmpty()) {
+          selection = myInitialSelection;
+          myInitialSelection = null;
+        }
 
         restoreSelection(selection);
       }
@@ -355,10 +371,15 @@ public final class PropertyTable extends JBTable implements ComponentSelectionLi
     return -1;
   }
 
-  public static void top(List<Property> properties, String name) {
-    Property property = extractProperty(properties, name);
+  public static void moveProperty(List<Property> source, String name, List<Property> destination, int index) {
+    Property property = extractProperty(source, name);
     if (property != null) {
-      properties.add(0, property);
+      if (index == -1) {
+        destination.add(property);
+      }
+      else {
+        destination.add(index, property);
+      }
     }
   }
 

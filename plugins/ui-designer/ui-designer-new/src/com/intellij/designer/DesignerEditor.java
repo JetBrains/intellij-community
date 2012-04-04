@@ -15,17 +15,18 @@
  */
 package com.intellij.designer;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,6 +49,7 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
     myDesignerPanel = createDesignerPanel(module, file);
   }
 
+  @NotNull
   protected abstract DesignerEditorPanel createDesignerPanel(Module module, VirtualFile file);
 
   public final DesignerEditorPanel getDesignerPanel() {
@@ -81,16 +83,31 @@ public abstract class DesignerEditor extends UserDataHolderBase implements FileE
   }
 
   @Override
+  public boolean isValid() {
+    return myDesignerPanel.isEditorValid();
+  }
+
+  @Override
+  public boolean isModified() {
+    return false;
+  }
+
+  @Override
+  @NotNull
+  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    return myDesignerPanel.createState();
+  }
+
+  @Override
+  public void setState(@NotNull FileEditorState state) {
+  }
+
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
   @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-  }
-
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
   }
 
   @Override

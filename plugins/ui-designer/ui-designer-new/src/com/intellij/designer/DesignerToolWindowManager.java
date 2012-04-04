@@ -118,6 +118,12 @@ public final class DesignerToolWindowManager implements ProjectComponent {
     return project.getComponent(DesignerToolWindowManager.class);
   }
 
+  public void expandFromState() {
+    if (myTreeBuilder != null) {
+      myTreeBuilder.expandFromState();
+    }
+  }
+
   public void refresh(final boolean updateProperties) {
     if (myTreeBuilder != null) {
       myTreeBuilder.queueUpdate().doWhenDone(new Runnable() {

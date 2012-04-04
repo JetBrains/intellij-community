@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.plugins.intelliLang.inject.quickedit.CheckRegExpForm">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.lang.regexp.intention.CheckRegExpForm">
   <grid id="a29f0" binding="myRootPanel" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="0">
     <constraints>
       <xy x="20" y="20" width="376" height="134"/>

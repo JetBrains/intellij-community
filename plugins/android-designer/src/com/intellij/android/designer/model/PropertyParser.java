@@ -272,12 +272,12 @@ public class PropertyParser {
         if (margin != null) {
           List<Property> children = margin.getChildren(null);
 
-          children.add(PropertyTable.extractProperty(properties, "marginLeft"));
-          children.add(PropertyTable.extractProperty(properties, "marginTop"));
-          children.add(PropertyTable.extractProperty(properties, "marginRight"));
-          children.add(PropertyTable.extractProperty(properties, "marginBottom"));
-          children.add(PropertyTable.extractProperty(properties, "marginStart"));
-          children.add(PropertyTable.extractProperty(properties, "marginEnd"));
+          PropertyTable.moveProperty(properties, "marginLeft", children, -1);
+          PropertyTable.moveProperty(properties, "marginTop", children, -1);
+          PropertyTable.moveProperty(properties, "marginRight", children, -1);
+          PropertyTable.moveProperty(properties, "marginBottom", children, -1);
+          PropertyTable.moveProperty(properties, "marginStart", children, -1);
+          PropertyTable.moveProperty(properties, "marginEnd", children, -1);
 
           if (model != null) {
             for (Property child : children) {
@@ -303,10 +303,10 @@ public class PropertyParser {
           }
         });
 
-        PropertyTable.top(properties, "layout:margin");
-        PropertyTable.top(properties, "layout:gravity");
-        PropertyTable.top(properties, "layout:height");
-        PropertyTable.top(properties, "layout:width");
+        PropertyTable.moveProperty(properties, "layout:margin", properties, 0);
+        PropertyTable.moveProperty(properties, "layout:gravity", properties, 0);
+        PropertyTable.moveProperty(properties, "layout:height", properties, 0);
+        PropertyTable.moveProperty(properties, "layout:width", properties, 0);
       }
     }
 

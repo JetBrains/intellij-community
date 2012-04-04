@@ -87,7 +87,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
   private static final MultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>> filesInProcessing =
     new ConcurrentMultiMap<String, LinkedBlockingQueue<Pair<VirtualFile, GroovyDslExecutor>>>();
 
-  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(1, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+  private static final ThreadPoolExecutor ourPool = new ThreadPoolExecutor(0, 1, 10, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
     @Override
     public Thread newThread(Runnable r) {
       return new Thread(r, "Groovy DSL File Index Executor");

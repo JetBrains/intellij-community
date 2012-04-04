@@ -509,7 +509,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>();
     
     for (MavenArtifact depArtifact : projectForExternalApklib.getDependencies()) {
-      final String depArtifactLibraryName = MavenRootModelAdapter.makeLibraryName(depArtifact);
+      final String depArtifactLibraryName = depArtifact.getLibraryName();
 
       dependencies.add(new AndroidExternalApklibDependenciesManager.MavenDependencyInfo(
         depArtifact.getMavenId(), depArtifact.getType(), depArtifactLibraryName));

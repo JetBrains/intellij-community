@@ -52,18 +52,9 @@ class Java16ApiCompiler {
 
         List<File> filesToCompile = []
 
-        if (state.incremental) {
-            for (String src: state.sourceFiles) {
-                if (src.endsWith(".java")) {
-                    filesToCompile << new File(src)
-                }
-            }
-        }
-        else {
-            Set<File> excluded = state.excludes.collect { new File(it.toString()) }
-            state.sourceRoots.each {
-                JavaFileCollector.collectRecursively(new File(it.toString()), filesToCompile, excluded)
-            }
+        Set<File> excluded = state.excludes.collect { new File(it.toString()) }
+        state.sourceRoots.each {
+            JavaFileCollector.collectRecursively(new File(it.toString()), filesToCompile, excluded)
         }
 
         if (filesToCompile.size() > 0) {

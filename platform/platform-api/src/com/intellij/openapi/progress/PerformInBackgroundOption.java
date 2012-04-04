@@ -25,6 +25,11 @@ public interface PerformInBackgroundOption {
     public void processSentToBackground() {}
   };
 
+  PerformInBackgroundOption ALWAYS_BACKGROUND = new PerformInBackgroundOption() {
+    public boolean shouldStartInBackground() { return true; }
+    public void processSentToBackground() {}
+  };
+
   boolean shouldStartInBackground();
   void processSentToBackground();
 }

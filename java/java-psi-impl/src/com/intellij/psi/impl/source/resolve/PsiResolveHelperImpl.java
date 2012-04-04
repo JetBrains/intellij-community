@@ -462,10 +462,11 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     JavaResolveResult paramResult = ((PsiClassType)param).resolveGenerics();
     PsiClass paramClass = (PsiClass)paramResult.getElement();
     if (typeParam == paramClass) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(arg);
       if (arg == null ||
           arg.getDeepComponentType() instanceof PsiPrimitiveType ||
           arg instanceof PsiIntersectionType ||
-          PsiUtil.resolveClassInType(arg) != null) {
+          (psiClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName()))) {
         PsiType bound = intersectAllExtends(typeParam, arg);
         return new Pair<PsiType, ConstraintType>(bound, ConstraintType.SUPERTYPE);
       }

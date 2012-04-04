@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.DesignerEditorState;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -23,6 +24,7 @@ import com.intellij.designer.designSurface.tools.*;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.palette.Item;
+import com.intellij.designer.propertyTable.Property;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -37,6 +39,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +52,7 @@ import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -66,11 +70,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected static final Integer LAYER_INPLACE_EDITING = LAYER_BUTTONS + 100;
   private static final Integer LAYER_PROGRESS = LAYER_INPLACE_EDITING + 100;
 
-  @NonNls private final static String DESIGNER_CARD = "designer";
-  @NonNls private final static String ERROR_CARD = "error";
+  private final static String DESIGNER_CARD = "designer";
+  private final static String ERROR_CARD = "error";
 
-  @NotNull protected final Module myModule;
-  @NotNull protected final VirtualFile myFile;
+  protected final Module myModule;
+  protected final VirtualFile myFile;
 
   private final CardLayout myLayout = new CardLayout();
   private JPanel myDesignerCard;
@@ -90,6 +94,13 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected ToolProvider myToolProvider;
   protected EditableArea mySurfaceArea;
 
+  protected RadComponent myRootComponent;
+
+  private List<?> myExpandedComponents;
+  private Property mySelectionProperty;
+  private int[][] myExpandedState;
+  private int[][] mySelectionState;
+
   private JPanel myErrorPanel;
   private JLabel myErrorMessage;
   private JTextArea myErrorStack;
@@ -97,8 +108,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private JPanel myProgressPanel;
   private AsyncProcessIcon myProgressIcon;
   private JLabel myProgressMessage;
-
-  protected RadComponent myRootComponent;
 
   public DesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     myModule = module;
@@ -321,7 +330,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
 
     ErrorInfo info = new ErrorInfo();
-    info.message = message;
+    info.message = info.displayMessage = message;
     info.throwable = e;
     configureError(info);
 
@@ -329,17 +338,18 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       showErrorPage(info);
     }
     if (info.log || ApplicationManagerEx.getApplicationEx().isInternal()) {
-      LOG.error(message, e);
+      LOG.error(info.message, e);
     }
   }
 
   protected abstract void configureError(ErrorInfo info);
 
   protected void showErrorPage(ErrorInfo info) {
+    storeState();
     hideProgress();
     myRootComponent = null;
 
-    myErrorMessage.setText(info.message);
+    myErrorMessage.setText(info.displayMessage);
 
     if (info.stack) {
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -381,6 +391,93 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   public void updateTreeArea(EditableArea area) {
   }
 
+  @Nullable
+  public List<?> getExpandedComponents() {
+    return myExpandedComponents;
+  }
+
+  public void setExpandedComponents(@Nullable List<?> expandedComponents) {
+    myExpandedComponents = expandedComponents;
+  }
+
+  public Property getSelectionProperty() {
+    return mySelectionProperty;
+  }
+
+  public void setSelectionProperty(Property selectionProperty) {
+    mySelectionProperty = selectionProperty;
+  }
+
+  protected void storeState() {
+    if (myRootComponent != null && myExpandedState == null && mySelectionState == null) {
+      myExpandedState = new int[myExpandedComponents == null ? 0 : myExpandedComponents.size()][];
+      for (int i = 0; i < myExpandedState.length; i++) {
+        IntArrayList path = new IntArrayList();
+        componentToPath((RadComponent)myExpandedComponents.get(i), path);
+        myExpandedState[i] = path.toArray();
+      }
+
+      List<RadComponent> selection = mySurfaceArea.getSelection();
+      mySelectionState = new int[selection.size()][];
+      for (int i = 0; i < mySelectionState.length; i++) {
+        IntArrayList path = new IntArrayList();
+        componentToPath(selection.get(i), path);
+        mySelectionState[i] = path.toArray();
+      }
+
+      myExpandedComponents = null;
+      myToolProvider.loadDefaultTool();
+      mySurfaceArea.deselectAll();
+    }
+  }
+
+  private static void componentToPath(RadComponent component, IntArrayList path) {
+    RadComponent parent = component.getParent();
+
+    if (parent != null) {
+      path.add(0, parent.getChildren().indexOf(component));
+      componentToPath(parent, path);
+    }
+  }
+
+  protected void restoreState() {
+    DesignerToolWindowManager toolManager = DesignerToolWindowManager.getInstance(getProject());
+
+    if (myExpandedState == null || mySelectionProperty == null || myRootComponent == null) {
+      toolManager.refresh(true);
+    }
+    else {
+      List<RadComponent> expanded = new ArrayList<RadComponent>();
+      for (int[] path : myExpandedState) {
+        pathToComponent(expanded, myRootComponent, path, 0);
+      }
+      myExpandedComponents = expanded;
+      toolManager.expandFromState();
+
+      List<RadComponent> selection = new ArrayList<RadComponent>();
+      for (int[] path : mySelectionState) {
+        pathToComponent(selection, myRootComponent, path, 0);
+      }
+      mySurfaceArea.setSelection(selection);
+    }
+
+    myExpandedState = null;
+    mySelectionState = null;
+  }
+
+  private static void pathToComponent(List<RadComponent> components, RadComponent component, int[] path, int index) {
+    if (index == path.length) {
+      components.add(component);
+    }
+    else {
+      List<RadComponent> children = component.getChildren();
+      int componentIndex = path[index];
+      if (0 <= componentIndex && componentIndex < children.size()) {
+        pathToComponent(components, children.get(componentIndex), path, index + 1);
+      }
+    }
+  }
+
   public ToolProvider getToolProvider() {
     return myToolProvider;
   }
@@ -408,6 +505,15 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public void deactivate() {
+  }
+
+  @NotNull
+  public DesignerEditorState createState() {
+    return new DesignerEditorState(myFile);
+  }
+
+  public boolean isEditorValid() {
+    return myFile.isValid();
   }
 
   @Override
@@ -585,6 +691,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public static final class ErrorInfo {
     public String message;
+    public String displayMessage;
     public Throwable throwable;
     public boolean show = true;
     public boolean stack = true;

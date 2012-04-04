@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,7 +426,7 @@ public class EditorUtil {
   }
 
   public static int charWidth(char c, @JdkConstants.FontStyle int fontType, Editor editor) {
-    return fontForChar(c, fontType, editor).charWidth(c, editor.getContentComponent());
+    return fontForChar(c, fontType, editor).charWidth(c);
   }
 
   public static int getSpaceWidth(@JdkConstants.FontStyle int fontType, Editor editor) {
@@ -566,7 +566,7 @@ public class EditorUtil {
       char c = text.charAt(i);
       if (c != '\t') {
         FontInfo font = fontForChar(c, fontType, editor);
-        result += font.charWidth(c, editor.getContentComponent());
+        result += font.charWidth(c);
         continue;
       }
 

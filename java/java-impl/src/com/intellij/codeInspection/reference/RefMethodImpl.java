@@ -305,7 +305,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     final PsiCodeBlock body = method.getBody();
     if (body == null) return;
 
-    final Collection<PsiClassType> exceptionTypes = ExceptionUtil.collectUnhandledExceptions(body, method);
+    final Collection<PsiClassType> exceptionTypes = ExceptionUtil.collectUnhandledExceptions(body, method, false);
     for (final PsiClassType exceptionType : exceptionTypes) {
       updateThrowsList(exceptionType);
     }

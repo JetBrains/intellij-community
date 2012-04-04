@@ -142,7 +142,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     myInLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
 
-    myRefCountHolder = RefCountHolder.getInstance(myFile);
+    myRefCountHolder = RefCountHolder.endUsing(myFile);
     if (!myRefCountHolder.retrieveUnusedReferencesInfo(new Runnable() {
       @Override
       public void run() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,12 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
         element.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitAnonymousClass(PsiAnonymousClass aClass) {
+            final PsiExpressionList arguments = aClass.getArgumentList();
+            if (arguments != null) {
+              for (PsiExpression expression : arguments.getExpressions()) {
+                visitExpression(expression);
+              }
+            }
             elements.add(aClass);
           }
 

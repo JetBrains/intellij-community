@@ -29,6 +29,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
   private final EditableArea mySurfaceArea;
   private final TreeEditableArea myTreeArea;
   private final TreeGlassLayer myGlassLayer;
+  private final ExpandStateHandler myExpandStateHandler;
 
   public ComponentTreeBuilder(ComponentTree tree, DesignerEditorPanel designer) {
     super(tree, (DefaultTreeModel)tree.getModel(), new TreeContentProvider(designer), null);
@@ -38,13 +39,15 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     mySurfaceArea = designer.getSurfaceArea();
     myTreeArea = new TreeEditableArea(tree, this);
     myGlassLayer = new TreeGlassLayer(tree, designer.getToolProvider(), myTreeArea);
+    myExpandStateHandler = new ExpandStateHandler(tree, designer, this);
 
     designer.updateTreeArea(myTreeArea);
 
-    // TODO: restore expanded state
     select(mySurfaceArea.getSelection().toArray(), null);
+    expandFromState();
 
     addListeners();
+    myExpandStateHandler.hookListener();
   }
 
   public TreeEditableArea getTreeArea() {
@@ -56,6 +59,7 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     removeListeners();
     myTreeArea.unhookSelection();
     myGlassLayer.dispose();
+    myExpandStateHandler.unhookListener();
     super.dispose();
   }
 
@@ -83,5 +87,9 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder implements C
     finally {
       addListeners();
     }
+  }
+
+  public void expandFromState() {
+    expand(myExpandStateHandler.getExpanded(), null);
   }
 }

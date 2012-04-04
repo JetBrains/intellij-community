@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -830,7 +831,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         if (i > 0) {
           buffer.append("_");
         }
-        buffer.append(word.toUpperCase());
+        buffer.append(StringUtilRt.toUpperCase(word));
       }
       return buffer.toString();
     }

@@ -136,14 +136,16 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     final ID pool = invoke("NSAutoreleasePool", "new");
 
     int v = UNIQUE_COUNTER.incrementAndGet();
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowDeiconified(WindowEvent e) {
-        if (e.getWindow() == frame && frame.getState() == Frame.ICONIFIED) {
-          frame.setState(Frame.NORMAL);
+    if (Patches.APPLE_BUG_ID_10514018) {
+      frame.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowDeiconified(WindowEvent e) {
+          if (e.getWindow() == frame && frame.getState() == Frame.ICONIFIED) {
+            frame.setState(Frame.NORMAL);
+          }
         }
-      }
-    });
+      });
+    }
     try {
       if (SystemInfo.isMacOSLion) {
         if (!FULL_SCREEN_AVAILABLE) return;

@@ -28,7 +28,7 @@ class AntPrePostStepsInArtifactsTest extends JpsBuildTestCase {
   public void test_broken_artifact() throws Exception {
     Project project = loadProject("testData/artifactWithAntPrePostTasks/.idea", [:])
     assertEquals(2, project.artifacts.size());
-    for (Artifact a: project.artifacts) {
+    for (Artifact a: project.artifacts.values()) {
       assertNull(project.artifacts.properties);
     }
   }

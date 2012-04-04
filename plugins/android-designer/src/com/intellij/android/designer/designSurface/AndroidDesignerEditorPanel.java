@@ -18,12 +18,13 @@ package com.intellij.android.designer.designSurface;
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.Result;
 import com.android.ide.common.resources.configuration.*;
+import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
 import com.intellij.android.designer.componentTree.AndroidTreeDecorator;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.PropertyParser;
-import com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.viewAnimator.RadViewAnimatorLayout;
 import com.intellij.android.designer.profile.ProfileManager;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -64,6 +65,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final XmlFile myXmlFile;
   private final ExternalPSIChangeListener myPSIChangeListener;
   private final ProfileAction myProfileAction;
+  private int myProfileLastVersion;
   private volatile RenderSession mySession;
   private boolean myParseTime;
 
@@ -79,6 +81,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myPSIChangeListener = new ExternalPSIChangeListener(this, myXmlFile, 100, new Runnable() {
       @Override
       public void run() {
+        System.out.println("=== Full update ===");
         reparseFile();
       }
     });
@@ -92,10 +95,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           myPSIChangeListener.start();
           myPSIChangeListener.addRequest();
         }
-        else {
+        else if (myProfileLastVersion != myProfileAction.getVersion()) {
           myPSIChangeListener.addRequest(new Runnable() {
             @Override
             public void run() {
+              System.out.println("=== Light update ===");
               updateRenderer(true);
             }
           });
@@ -168,16 +172,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   private void reparseFile() {
-    myToolProvider.loadDefaultTool();
-    mySurfaceArea.deselectAll();
-
+    storeState();
     parseFile(new Runnable() {
       @Override
       public void run() {
         showDesignerCard();
         myLayeredPane.repaint();
-
-        DesignerToolWindowManager.getInstance(getProject()).refresh(true);
+        restoreState();
       }
     });
   }
@@ -292,6 +293,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       @Override
       public void run() {
         try {
+          myProfileLastVersion = myProfileAction.getVersion();
+
           AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
           if (platform == null) {
             throw new AndroidSdkNotConfiguredException();
@@ -366,13 +369,25 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   protected void configureError(ErrorInfo info) {
     if (info.throwable instanceof AndroidSdkNotConfiguredException) {
-      info.message = "Please configure Android SDK";
+      info.displayMessage = "Please configure Android SDK";
       info.stack = false;
     }
     else if (!(info.throwable instanceof RenderingException)) {
       info.show = myParseTime;
       info.log = true;
     }
+
+    StringBuilder builder = new StringBuilder(info.message);
+
+    try {
+      AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
+      IAndroidTarget target = platform.getTarget();
+      builder.append("\nSDK: ").append(target.getFullName()).append(" - ").append(target.getVersion()).append("\n");
+    }
+    catch (Throwable e) {
+    }
+
+    info.message = builder.toString();
   }
 
   @Override
@@ -388,6 +403,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   public void activate() {
     myProfileAction.externalUpdate();
+  }
+
+  @Override
+  public void deactivate() {
+    // TODO: Auto-generated method stub
   }
 
   @Override

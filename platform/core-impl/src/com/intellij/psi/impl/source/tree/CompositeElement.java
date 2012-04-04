@@ -281,7 +281,7 @@ public class CompositeElement extends TreeElement {
     }
     if (endOffset != len) {
       @NonNls String msg = "len=" + len + ";\n endOffset=" + endOffset;
-      msg += diagnoseTextInconsistency(new String(buffer, 0, endOffset), startStamp);
+      msg += diagnoseTextInconsistency(new String(buffer, 0, Math.min(len, endOffset)), startStamp);
       throw new AssertionError(msg);
     }
     return buffer;

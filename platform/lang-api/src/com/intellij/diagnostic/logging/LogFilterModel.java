@@ -17,11 +17,13 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -67,7 +69,7 @@ public abstract class LogFilterModel {
   public boolean isApplicable(String line) {
     if (getCustomFilter() != null) {
       final Pattern pattern = getCustomPattern();
-      if (pattern != null && !pattern.matcher(line.toUpperCase()).matches()) return false;
+      if (pattern != null && !pattern.matcher(StringUtilRt.toUpperCase(line)).matches()) return false;
     }
     return true;
   }

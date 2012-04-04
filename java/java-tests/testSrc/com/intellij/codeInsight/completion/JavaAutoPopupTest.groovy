@@ -1263,4 +1263,13 @@ class Foo {
     assert myFixture.file.text.contains('new File()')
   }
 
+  public void "test inaccessible class in another package shouldn't prevent choosing by space"() {
+    myFixture.addClass("package foo; class b {}")
+    myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
+    type 'b'
+    assert lookup?.currentItem?.lookupString == 'boolean'
+    type ' '
+    myFixture.checkResult 'class Foo {{ boolean <caret> }}'
+  }
+
 }
