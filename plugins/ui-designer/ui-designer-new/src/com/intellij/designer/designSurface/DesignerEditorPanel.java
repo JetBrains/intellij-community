@@ -330,7 +330,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
 
     ErrorInfo info = new ErrorInfo();
-    info.message = message;
+    info.message = info.displayMessage = message;
     info.throwable = e;
     configureError(info);
 
@@ -338,7 +338,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       showErrorPage(info);
     }
     if (info.log || ApplicationManagerEx.getApplicationEx().isInternal()) {
-      LOG.error(message, e);
+      LOG.error(info.message, e);
     }
   }
 
@@ -349,7 +349,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     hideProgress();
     myRootComponent = null;
 
-    myErrorMessage.setText(info.message);
+    myErrorMessage.setText(info.displayMessage);
 
     if (info.stack) {
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -691,6 +691,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public static final class ErrorInfo {
     public String message;
+    public String displayMessage;
     public Throwable throwable;
     public boolean show = true;
     public boolean stack = true;
