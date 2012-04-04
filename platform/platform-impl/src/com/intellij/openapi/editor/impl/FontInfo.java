@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
@@ -118,15 +118,20 @@ public class FontInfo {
     return myFont;
   }
 
-  public int charWidth(char c, JComponent anyComponent) {
-    final FontMetrics metrics = fontMetrics(anyComponent);
+  public int charWidth(char c) {
+    final FontMetrics metrics = fontMetrics();
     if (c < 128) return charWidth[c];
     return metrics.charWidth(c);
   }
 
-  private FontMetrics fontMetrics(JComponent anyComponent) {
+  private FontMetrics fontMetrics() {
     if (myFontMetrics == null) {
-      myFontMetrics = anyComponent.getFontMetrics(myFont);
+      // We need to use antialising-aware font metrics because we've alrady encountered a situation when non-antialiased symbol
+      // width is not equal to the antialiased one (IDEA-81539).
+      final Graphics graphics = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
+      UISettings.setupAntialiasing(graphics);
+      graphics.setFont(myFont);
+      myFontMetrics = graphics.getFontMetrics();
       for (int i = 0; i < 128; i++) {
         charWidth[i] = myFontMetrics.charWidth(i);
       }
@@ -134,6 +139,10 @@ public class FontInfo {
     return myFontMetrics;
   }
 
+  void reset() {
+    myFontMetrics = null;
+  }
+  
   public int getSize() {
     return mySize;
   }

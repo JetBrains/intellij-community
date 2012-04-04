@@ -2635,7 +2635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private CachedFontContent(@NotNull FontInfo fontInfo) {
       myFontType = fontInfo;
-      spaceWidth = fontInfo.charWidth(' ', myEditorComponent);
+      spaceWidth = fontInfo.charWidth(' ');
       myHasBreakSymbols = fontInfo.hasGlyphsToBreakDrawingIteration();
     }
 
@@ -2668,8 +2668,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         final int lastCount = count - 1;
         final Color lastColor = color[lastCount];
         if (_data == myLastData && _start == ends[lastCount] && (_color == null || lastColor == null || _color.equals(lastColor))
-          && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */
-          && (!myHasBreakSymbols || !myFontType.getSymbolsToBreakDrawingIteration().contains(_data[ends[lastCount] - 1])))
+            && _y == y[lastCount] /* there is a possible case that vertical position is adjusted because of soft wrap */
+            && (!myHasBreakSymbols || !myFontType.getSymbolsToBreakDrawingIteration().contains(_data[ends[lastCount] - 1])))
         {
           ends[lastCount] = _end;
           if (lastColor == null) color[lastCount] = _color;
@@ -3048,7 +3048,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         //   * the fonts mentioned above have different space width;
         // So, the problem was when white space followed russian word - the white space width was calculated using the english font
         // but drawn using the russian font, so, there was a visual inconsistency at the editor.
-        final int charWidth = font.charWidth(c, myEditorComponent);
+        final int charWidth = font.charWidth(c);
         if (c == ' '
             && myCommonSpaceWidth > 0
             && myLastCache != null
@@ -6142,7 +6142,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 }
               }
               else {
-                x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);
+                x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c);
                 offset++;
               }
             }
