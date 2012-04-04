@@ -117,6 +117,11 @@ public class GeneratorTest extends LightGroovyTestCase {
     doTest();
   }
 
+  public void testErasedOverloadedMethodInDelegate() {
+    myFixture.addClass("package groovy.lang; public @interface Delegate {}");
+    doTest();
+  }
+
   public void doTest() {
     final String relTestPath = getTestName(true) + ".test";
     final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + relTestPath);
