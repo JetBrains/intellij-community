@@ -73,6 +73,9 @@ public class SmartFMap<K,V> extends AbstractMap<K,V> {
 
   public SmartFMap<K, V> minus(@NotNull K key) {
     if (myMap instanceof Map) {
+      if (size() == 1) {
+        return EMPTY;
+      }
       THashMap<K, V> newMap = new THashMap<K, V>((Map<K, V>)myMap);
       newMap.remove(key);
       return new SmartFMap<K, V>(newMap);
@@ -81,6 +84,10 @@ public class SmartFMap<K,V> extends AbstractMap<K,V> {
     Object[] array = (Object[])myMap;
     for (int i = 0; i < array.length; i += 2) {
       if (key.equals(array[i])) {
+        if (size() == 1) {
+          return EMPTY;
+        }
+
         Object[] newArray = new Object[array.length - 2];
         System.arraycopy(array, 0, newArray, 0, i);
         System.arraycopy(array, i + 2, newArray, i, array.length - i - 2);
