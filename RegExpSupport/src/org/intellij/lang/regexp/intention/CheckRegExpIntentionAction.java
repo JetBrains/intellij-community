@@ -27,18 +27,37 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.lang.regexp.RegExpRangeProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
+ * @author Anna Bulenkova
  */
 public class CheckRegExpIntentionAction extends QuickEditAction implements Iconable {
+
+  @Override
+  protected Pair<PsiElement, TextRange> getRangePair(PsiFile file, Editor editor) {
+    Pair<PsiElement, TextRange> pair = super.getRangePair(file, editor);
+    if (pair != null) return pair;
+    RegExpRangeProvider[] rangeProviders = RegExpRangeProvider.EP_NAME.getExtensions();
+    PsiElement element = PsiUtilBase.getElementAtCaret(editor);
+    for (RegExpRangeProvider provider : rangeProviders) {
+      TextRange range = provider.getTextRange(element);
+      if (range != null) {
+        return Pair.create(element, range);
+      }
+    }
+    return null;
+  }
+
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final Pair<PsiElement,TextRange> pair = getRangePair(file, editor);
+    final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
     /*super.isAvailable(project, editor, file) && */
     return pair != null && pair.first != null && pair.first.getLanguage() == RegExpLanguage.INSTANCE;
   }
@@ -57,7 +76,6 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
     }
     return null;
   }
-
 
   @NotNull
   @Override
