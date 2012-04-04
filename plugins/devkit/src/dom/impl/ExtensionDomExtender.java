@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -127,18 +128,20 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     if (beanClass == null) return;
 
     for (PsiField field : beanClass.getAllFields()) {
-      if (field.hasModifierProperty(PsiModifier.PUBLIC)) {
-        registerField(registrar, field);
-      }
+      registerField(registrar, field);
     }
   }
 
   private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field) {
-    final PsiModifierList modifierList = field.getModifierList();
-    if (modifierList == null) return;
+    final PsiMethod getter = PropertyUtils.findGetterForField(field);
+    final PsiMethod setter = PropertyUtils.findSetterForField(field);
+    if (!field.hasModifierProperty(PsiModifier.PUBLIC) && (getter == null || setter == null)) {
+      return;
+    }
+
     final String fieldName = field.getName();
     final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
-    final PsiAnnotation attrAnno = modifierList.findAnnotation(Attribute.class.getName());
+    final PsiAnnotation attrAnno = findAnnotation(Attribute.class, field, getter, setter);
     if (attrAnno != null) {
       final String attrName = getStringAttribute(attrAnno, "value", evalHelper);
       if (attrName != null) {
@@ -150,9 +153,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       }
       return;
     }
-    final PsiAnnotation tagAnno = modifierList.findAnnotation(Tag.class.getName());
-    final PsiAnnotation propAnno = modifierList.findAnnotation(Property.class.getName());
-    final PsiAnnotation absColAnno = modifierList.findAnnotation(AbstractCollection.class.getName());
+    final PsiAnnotation tagAnno = findAnnotation(Tag.class, field, getter, setter);
+    final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
+    final PsiAnnotation absColAnno = findAnnotation(AbstractCollection.class, field, getter, setter);
     //final PsiAnnotation colAnno = modifierList.findAnnotation(Collection.class.getName()); // todo
     final String tagName = tagAnno != null? getStringAttribute(tagAnno, "value", evalHelper) :
                            propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper)? Constants.OPTION : null;
@@ -176,6 +179,20 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     else if (absColAnno != null) {
       registerCollectionBinding(field.getType(), registrar, absColAnno, evalHelper);
     }
+  }
+
+  @Nullable
+  private static PsiAnnotation findAnnotation(final Class<?> annotationClass, PsiMember... members) {
+    for (PsiMember member : members) {
+      final PsiModifierList modifierList = member.getModifierList();
+      if (modifierList != null) {
+        final PsiAnnotation annotation = modifierList.findAnnotation(annotationClass.getName());
+        if (annotation != null) {
+          return annotation;
+        }
+      }
+    }
+    return null;
   }
 
   private static void registerCollectionBinding(PsiType type,
