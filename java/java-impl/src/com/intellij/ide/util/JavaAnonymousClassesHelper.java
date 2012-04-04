@@ -16,9 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -49,6 +47,19 @@ public class JavaAnonymousClassesHelper {
 
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          final PsiExpressionList arguments = aClass.getArgumentList();
+          if (arguments != null) {
+            for (PsiExpression expression : arguments.getExpressions()) {
+              expression.acceptChildren(new JavaRecursiveElementVisitor() {
+                @Override
+                public void visitAnonymousClass(PsiAnonymousClass aClass) {
+                  index++;
+                  map.put(aClass, "$" + String.valueOf(index));
+                }
+              });
+            }
+          }
+
           index++;
           map.put(aClass, "$" + String.valueOf(index));
         }
