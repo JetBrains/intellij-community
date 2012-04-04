@@ -110,4 +110,12 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
 
     return ((GrReferenceExpression)expression).getDotToken() == null;
   }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    GrExpression expression = getInvokedExpression();
+    if (!(expression instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
+    return ((GrReferenceExpression)expression).multiResolve(incompleteCode);
+  }
 }

@@ -621,7 +621,7 @@ public class PsiImplUtil {
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull GrExpression expression) {
     GrExpression toplevel = expression;
     while (toplevel.getParent() instanceof GrIndexProperty &&
-           ((GrIndexProperty)toplevel.getParent()).getSelectedExpression() == toplevel) {
+           ((GrIndexProperty)toplevel.getParent()).getInvokedExpression() == toplevel) {
       toplevel = (GrExpression)toplevel.getParent();
     }
 

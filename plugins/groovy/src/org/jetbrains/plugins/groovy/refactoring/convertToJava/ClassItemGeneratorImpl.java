@@ -69,7 +69,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     final GrArgumentList argumentList = constant.getArgumentList();
     if (argumentList != null) {
-      final GroovyResolveResult resolveResult = constant.resolveConstructorGenerics();
+      final GroovyResolveResult resolveResult = constant.advancedResolve();
       GrClosureSignature signature = GrClosureSignatureUtil.createSignature(resolveResult);
       new ArgumentListGenerator(builder, context.extend()).generate(
         signature,

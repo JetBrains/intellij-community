@@ -540,8 +540,8 @@ public class EquivalenceChecker {
 
   private static boolean indexExpressionsAreEquivalent(GrIndexProperty expression1,
                                                        GrIndexProperty expression2) {
-    final GrExpression operand1 = expression1.getSelectedExpression();
-    final GrExpression operand2 = expression2.getSelectedExpression();
+    final GrExpression operand1 = expression1.getInvokedExpression();
+    final GrExpression operand2 = expression2.getInvokedExpression();
     return expressionsAreEquivalent(operand1, operand2);
   }
 

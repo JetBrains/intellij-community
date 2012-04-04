@@ -101,26 +101,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return false;
   }
 
-  @NotNull
-  public GroovyResolveResult resolveConstructorGenerics() {
-    return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
-  }
-
-  public GroovyResolveResult[] multiResolveConstructor() {
-    return multiResolveConstructorImpl(false);
-  }
-
-  private GroovyResolveResult[] multiResolveConstructorImpl(boolean allVariants) {
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
-    PsiClass clazz = getContainingClass();
-    assert clazz != null;
-    PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
-    MethodResolverProcessor processor =
-      new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY, allVariants, false);
-    clazz.processDeclarations(processor, ResolveState.initial(), null, this);
-    return processor.getCandidates();
-  }
-
   public GroovyResolveResult[] multiResolveClass() {
     final PsiClass psiClass = getContainingClass();
     GroovyResolveResult result = new GroovyResolveResultImpl(psiClass, this, PsiSubstitutor.EMPTY, true, true);
@@ -143,12 +123,14 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return list.addNamedArgument(namedArgument);
   }
 
+  @NotNull
   @Override
   public GrNamedArgument[] getNamedArguments() {
     final GrArgumentList argumentList = getArgumentList();
     return argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
   }
 
+  @NotNull
   @Override
   public GrExpression[] getExpressionArguments() {
     final GrArgumentList argumentList = getArgumentList();
@@ -159,7 +141,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @NotNull
   @Override
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    return multiResolveConstructorImpl(true);
+    return multiResolve(true);
   }
 
   @NotNull
@@ -170,7 +152,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   @Override
   public PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
+    return PsiImplUtil.extractUniqueElement(multiResolve(false));
   }
 
   @NotNull
@@ -210,7 +192,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @NotNull
   @Override
   public GroovyResolveResult advancedResolve() {
-    return resolveConstructorGenerics();
+    return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
   @Override
@@ -218,10 +200,23 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return resolveMethod();
   }
 
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
+    PsiClass clazz = getContainingClass();
+    assert clazz != null;
+    PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
+    MethodResolverProcessor processor =
+      new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY, incompleteCode, false);
+    clazz.processDeclarations(processor, ResolveState.initial(), null, this);
+    return processor.getCandidates();
+  }
+
   private class MyReference implements PsiPolyVariantReference {
     @NotNull
     public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return multiResolveConstructor();
+      return GrEnumConstantImpl.this.multiResolve(false);
     }
 
     public PsiElement getElement() {
@@ -238,7 +233,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
     @NotNull
     public GroovyResolveResult advancedResolve() {
-      return resolveConstructorGenerics();
+      return GrEnumConstantImpl.this.advancedResolve();
     }
 
     @NotNull
