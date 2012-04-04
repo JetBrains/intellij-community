@@ -281,6 +281,10 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     if (newSelectedIndex >= 0) {
       myDirectoriesList.setSelectedIndex(newSelectedIndex);
     }
+
+    if (checkBoxList.size() == 1) {
+      checkBoxList.get(0).setSelected(true);
+    }
   }
 
   @Override
