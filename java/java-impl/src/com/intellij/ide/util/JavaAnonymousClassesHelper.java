@@ -47,6 +47,10 @@ public class JavaAnonymousClassesHelper {
 
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          if (upper == aClass) {
+            super.visitAnonymousClass(aClass);
+            return;
+          }
           final PsiExpressionList arguments = aClass.getArgumentList();
           if (arguments != null) {
             for (PsiExpression expression : arguments.getExpressions()) {
