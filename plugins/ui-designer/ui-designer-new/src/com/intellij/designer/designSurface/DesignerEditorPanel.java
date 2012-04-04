@@ -316,6 +316,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected final void showProgress(String message) {
     myProgressMessage.setText(message);
     if (myProgressPanel.getParent() == null) {
+      myGlassLayer.setEnabled(false);
       myProgressIcon.resume();
       myLayeredPane.add(myProgressPanel, LAYER_PROGRESS);
       myLayeredPane.repaint();
@@ -323,6 +324,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected final void hideProgress() {
+    myGlassLayer.setEnabled(true);
     myProgressIcon.suspend();
     myLayeredPane.remove(myProgressPanel);
   }

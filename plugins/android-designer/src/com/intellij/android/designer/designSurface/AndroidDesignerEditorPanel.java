@@ -35,6 +35,7 @@ import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -43,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.Alarm;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -63,9 +65,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final XmlFile myXmlFile;
   private final ExternalPSIChangeListener myPSIChangeListener;
   private final ProfileAction myProfileAction;
-  private int myProfileLastVersion;
+  private final Alarm mySessionAlarm = new Alarm();
   private volatile RenderSession mySession;
   private boolean myParseTime;
+  private int myProfileLastVersion;
 
   public AndroidDesignerEditorPanel(@NotNull Module module, @NotNull VirtualFile file) {
     super(module, file);
@@ -264,31 +267,24 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
-    if (mySession == null) {
-      ApplicationManager.getApplication().invokeLater(
-        new Runnable() {
-          @Override
-          public void run() {
-            if (mySession == null) {
-              showProgress("Create RenderLib");
-            }
-          }
-        }, new Condition() {
-          @Override
-          public boolean value(Object o) {
-            return mySession != null;
-          }
-        }
-      );
-    }
-    else {
+    if (mySession != null) {
       disposeSession();
     }
+    mySessionAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (mySession == null) {
+          showProgress("Create RenderLib");
+        }
+      }
+    }, 500);
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         try {
+          long time = System.currentTimeMillis();
+
           myProfileLastVersion = myProfileAction.getVersion();
 
           AndroidPlatform platform = AndroidPlatform.getInstance(myModule);
@@ -332,6 +328,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             }
           }
 
+          if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+            System.out.println("Render time: " + (System.currentTimeMillis() - time));
+          }
+          mySessionAlarm.cancelAllRequests();
+
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -354,6 +355,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               myParseTime = false;
             }
           });
+        }
+        finally {
+          mySessionAlarm.cancelAllRequests();
         }
       }
     });

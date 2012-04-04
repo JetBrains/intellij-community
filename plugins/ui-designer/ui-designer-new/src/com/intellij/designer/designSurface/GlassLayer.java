@@ -29,13 +29,26 @@ import java.awt.event.MouseEvent;
  * @author Alexander Lobas
  */
 public final class GlassLayer extends JComponent implements PopupOwner, DataProvider {
+  private static final long EVENT_FLAGS = AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK;
+
   private final ToolProvider myToolProvider;
   private final EditableArea myArea;
 
   public GlassLayer(ToolProvider provider, EditableArea area) {
     myToolProvider = provider;
     myArea = area;
-    enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    enableEvents(EVENT_FLAGS);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if (enabled) {
+      enableEvents(EVENT_FLAGS);
+    }
+    else {
+      disableEvents(EVENT_FLAGS);
+    }
   }
 
   @Override
