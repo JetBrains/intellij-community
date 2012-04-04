@@ -15,8 +15,8 @@
  */
 package org.jetbrains.ether.dependencyView;
 
-import java.util.Collection;
-import java.util.Map;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectProcedure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,20 +25,18 @@ import java.util.Map;
  * Time: 21:01
  * To change this template use File | Settings | File Templates.
  */
-interface MultiMaplet<K, V> {
-  boolean containsKey(final K key);
-  Collection<V> get(final K key);
-  void put(final K key, final V value);
-  void put(final K key, final Collection<V> value);
-  void replace(final K key, final Collection<V> value);
-  void putAll(MultiMaplet<K,V> m);
-  void replaceAll(MultiMaplet<K, V> m);
-  void remove(final K key);
-  void removeFrom(final K key, final V value);
-  void removeAll(final K key, final Collection<V> value);
+interface IntIntMultiMaplet {
+  boolean containsKey(final int key);
+  TIntHashSet get(final int key);
+  void put(final int key, final int value);
+  void put(final int key, final TIntHashSet value);
+  void replace(final int key, final TIntHashSet value);
+  void putAll(IntIntMultiMaplet m);
+  void replaceAll(IntIntMultiMaplet m);
+  void remove(final int key);
+  void removeFrom(final int key, final int value);
+  void removeAll(final int key, final TIntHashSet values);
   void close();
-  Collection<K> keyCollection();
-  Collection<Map.Entry<K, Collection<V>>> entrySet();
-
+  void forEachEntry(TIntObjectProcedure<TIntHashSet> proc);
   void flush(boolean memoryCachesOnly);
 }

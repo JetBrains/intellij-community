@@ -87,9 +87,14 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
         ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + name, context);
         return ref;
       }
+
+      while (contextClass != null && !InheritanceUtil.isInheritorOrSelf(contextClass, containingClass, true)) {
+        contextClass = PsiTreeUtil.getParentOfType(contextClass, PsiClass.class, true);
+      }
+
       ref = (PsiReferenceExpression) factory.createExpressionFromText("A.this." + name, null);
       qualifier = ((PsiThisExpression)ref.getQualifierExpression()).getQualifier();
-      final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(containingClass);
+      final PsiJavaCodeReferenceElement classReference = factory.createClassReferenceElement(contextClass != null ? contextClass : containingClass);
       qualifier.replace(classReference);
     }
     return ref;

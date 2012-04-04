@@ -2,7 +2,13 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.IntInlineKeyDescriptor;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntIntProcedure;
+import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.Opcodes;
@@ -29,20 +35,21 @@ public class Mappings {
   private final static String SOURCE_TO_ANNOTATIONS = "sourceToAnnotations.tab";
   private final static String SOURCE_TO_USAGES = "sourceToUsages.tab";
   private final static String CLASS_TO_SOURCE = "classToSource.tab";
+  private static final IntInlineKeyDescriptor INT_KEY_DESCRIPTOR = new IntInlineKeyDescriptor();
 
   private final boolean myIsDelta;
   private final boolean myDeltaIsTransient;
   private boolean myIsDifferentiated = false;
 
-  private final Set<DependencyContext.S> myChangedClasses;
-  private final Set<DependencyContext.S> myChangedFiles;
+  private final TIntHashSet myChangedClasses;
+  private final TIntHashSet myChangedFiles;
   private final Object myLock;
 
-  private void addChangedClass(final DependencyContext.S it) {
+  private void addChangedClass(final int it) {
     assert (myChangedClasses != null && myChangedFiles != null);
     myChangedClasses.add(it);
 
-    final DependencyContext.S file = myClassToSourceFile.get(it);
+    final Integer file = myClassToSourceFile.get(it);
 
     if (file != null) {
       myChangedFiles.add(file);
@@ -51,11 +58,11 @@ public class Mappings {
     myIsDifferentiated = true;
   }
 
-  private Collection<DependencyContext.S> getChangedClasses() {
+  private TIntHashSet getChangedClasses() {
     return myChangedClasses;
   }
 
-  private Collection<DependencyContext.S> getChangedFiles() {
+  private TIntHashSet getChangedFiles() {
     return myChangedFiles;
   }
 
@@ -65,14 +72,14 @@ public class Mappings {
 
   private final File myRootDir;
   private DependencyContext myContext;
-  private final DependencyContext.S myInitName;
-  private org.jetbrains.ether.dependencyView.Logger<DependencyContext.S> myDebugS;
+  private final int myInitName;
+  private org.jetbrains.ether.dependencyView.Logger<Integer> myDebugS;
 
   private static void debug(final String s) {
     LOG.debug(s);
   }
 
-  private void debug(final String comment, final DependencyContext.S s) {
+  private void debug(final String comment, final int s) {
     myDebugS.debug(comment, s);
   }
 
@@ -84,40 +91,35 @@ public class Mappings {
     myDebugS.debug(comment, s);
   }
 
-  private MultiMaplet<DependencyContext.S, DependencyContext.S> myClassToSubclasses;
-  private MultiMaplet<DependencyContext.S, DependencyContext.S> myClassToClassDependency;
+  private IntIntMultiMaplet myClassToSubclasses;
+  private IntIntMultiMaplet myClassToClassDependency;
 
-  private MultiMaplet<DependencyContext.S, ClassRepr> mySourceFileToClasses;
-  private MultiMaplet<DependencyContext.S, UsageRepr.Usage> mySourceFileToAnnotationUsages;
+  private IntObjectMultiMaplet<ClassRepr> mySourceFileToClasses;
+  private IntObjectMultiMaplet<UsageRepr.Usage> mySourceFileToAnnotationUsages;
 
-  private MultiMaplet<DependencyContext.S, UsageRepr.Cluster> mySourceFileToUsages;
-  private Maplet<DependencyContext.S, DependencyContext.S> myClassToSourceFile;
+  private IntObjectMultiMaplet<UsageRepr.Cluster> mySourceFileToUsages;
+  private IntIntMaplet myClassToSourceFile;
 
-  private static final TransientMultiMaplet.CollectionConstructor<ClassRepr> ourClassSetConstructor =
-    new TransientMultiMaplet.CollectionConstructor<ClassRepr>() {
+  private static final int DEFAULT_SET_CAPACITY = 32;
+  private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
+  private static final CollectionFactory<ClassRepr> ourClassSetConstructor =
+    new CollectionFactory<ClassRepr>() {
       public Set<ClassRepr> create() {
-        return new HashSet<ClassRepr>();
+        return new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
       }
     };
 
-  private static final TransientMultiMaplet.CollectionConstructor<UsageRepr.Cluster> ourUsageClusterSetConstructor =
-    new TransientMultiMaplet.CollectionConstructor<UsageRepr.Cluster>() {
+  private static final CollectionFactory<UsageRepr.Cluster> ourUsageClusterSetConstructor =
+    new CollectionFactory<UsageRepr.Cluster>() {
       public Set<UsageRepr.Cluster> create() {
-        return new HashSet<UsageRepr.Cluster>();
+        return new HashSet<UsageRepr.Cluster>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
       }
     };
 
-  private static final TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage> ourUsageSetConstructor =
-    new TransientMultiMaplet.CollectionConstructor<UsageRepr.Usage>() {
+  private static final CollectionFactory<UsageRepr.Usage> ourUsageSetConstructor =
+    new CollectionFactory<UsageRepr.Usage>() {
       public Set<UsageRepr.Usage> create() {
-        return new HashSet<UsageRepr.Usage>();
-      }
-    };
-
-  private static final TransientMultiMaplet.CollectionConstructor<DependencyContext.S> ourStringSetConstructor =
-    new TransientMultiMaplet.CollectionConstructor<DependencyContext.S>() {
-      public Set<DependencyContext.S> create() {
-        return new HashSet<DependencyContext.S>();
+        return new HashSet<UsageRepr.Usage>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
       }
     };
 
@@ -125,8 +127,8 @@ public class Mappings {
     myLock = base.myLock;
     myIsDelta = true;
     myPostPasses = new LinkedList<PostPass>();
-    myChangedClasses = new HashSet<DependencyContext.S>();
-    myChangedFiles = new HashSet<DependencyContext.S>();
+    myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+    myChangedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
@@ -155,43 +157,26 @@ public class Mappings {
     }
 
     if (myIsDelta && myDeltaIsTransient) {
-      myClassToSubclasses = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
-      myClassToClassDependency = new TransientMultiMaplet<DependencyContext.S, DependencyContext.S>(ourStringSetConstructor);
-      mySourceFileToClasses = new TransientMultiMaplet<DependencyContext.S, ClassRepr>(ourClassSetConstructor);
-      mySourceFileToAnnotationUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Usage>(ourUsageSetConstructor);
-      mySourceFileToUsages = new TransientMultiMaplet<DependencyContext.S, UsageRepr.Cluster>(ourUsageClusterSetConstructor);
-      myClassToSourceFile = new TransientMaplet<DependencyContext.S, DependencyContext.S>();
+      myClassToSubclasses = new IntIntTransientMultiMaplet();
+      myClassToClassDependency = new IntIntTransientMultiMaplet();
+      mySourceFileToClasses = new IntObjectTransientMultiMaplet<ClassRepr>(ourClassSetConstructor);
+      mySourceFileToAnnotationUsages = new IntObjectTransientMultiMaplet<UsageRepr.Usage>(ourUsageSetConstructor);
+      mySourceFileToUsages = new IntObjectTransientMultiMaplet<UsageRepr.Cluster>(ourUsageClusterSetConstructor);
+      myClassToSourceFile = new IntIntTransientMaplet();
     }
     else {
-      myClassToSubclasses =
-        new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES),
-                                                                            DependencyContext.descriptorS, DependencyContext.descriptorS,
-                                                                            ourStringSetConstructor);
-
-      myClassToClassDependency =
-        new PersistentMultiMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS),
-                                                                            DependencyContext.descriptorS, DependencyContext.descriptorS,
-                                                                            ourStringSetConstructor);
-
-      mySourceFileToClasses =
-        new PersistentMultiMaplet<DependencyContext.S, ClassRepr>(DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS),
-                                                                  DependencyContext.descriptorS, ClassRepr.externalizer(myContext),
-                                                                  ourClassSetConstructor);
-
-      mySourceFileToAnnotationUsages =
-        new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Usage>(DependencyContext.getTableFile(myRootDir, SOURCE_TO_ANNOTATIONS),
-                                                                        DependencyContext.descriptorS, UsageRepr.externalizer(myContext),
-                                                                        ourUsageSetConstructor);
-
-      mySourceFileToUsages =
-        new PersistentMultiMaplet<DependencyContext.S, UsageRepr.Cluster>(DependencyContext.getTableFile(myRootDir, SOURCE_TO_USAGES),
-                                                                          DependencyContext.descriptorS,
-                                                                          UsageRepr.Cluster.clusterExternalizer(myContext),
-                                                                          ourUsageClusterSetConstructor);
-
-      myClassToSourceFile =
-        new PersistentMaplet<DependencyContext.S, DependencyContext.S>(DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE),
-                                                                       DependencyContext.descriptorS, DependencyContext.descriptorS);
+      myClassToSubclasses = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SUBCLASSES), INT_KEY_DESCRIPTOR);
+      myClassToClassDependency = new IntIntPersistentMultiMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_CLASS), INT_KEY_DESCRIPTOR);
+      mySourceFileToClasses = new IntObjectPersistentMultiMaplet<ClassRepr>(
+        DependencyContext.getTableFile(myRootDir, SOURCE_TO_CLASS), INT_KEY_DESCRIPTOR, ClassRepr.externalizer(myContext), ourClassSetConstructor
+      );
+      mySourceFileToAnnotationUsages = new IntObjectPersistentMultiMaplet<UsageRepr.Usage>(
+        DependencyContext.getTableFile(myRootDir, SOURCE_TO_ANNOTATIONS), INT_KEY_DESCRIPTOR, UsageRepr.externalizer(myContext), ourUsageSetConstructor
+      );
+      mySourceFileToUsages = new IntObjectPersistentMultiMaplet<UsageRepr.Cluster>(
+        DependencyContext.getTableFile(myRootDir, SOURCE_TO_USAGES), INT_KEY_DESCRIPTOR, UsageRepr.Cluster.clusterExternalizer(myContext), ourUsageClusterSetConstructor
+      );
+      myClassToSourceFile = new IntIntPersistentMaplet(DependencyContext.getTableFile(myRootDir, CLASS_TO_SOURCE), INT_KEY_DESCRIPTOR);
     }
   }
 
@@ -208,23 +193,23 @@ public class Mappings {
 
   private void compensateRemovedContent(final Collection<File> compiled) {
     for (File file : compiled) {
-      final DependencyContext.S key = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
-      if (!mySourceFileToClasses.containsKey(key)) {
-        mySourceFileToClasses.put(key, new HashSet<ClassRepr>());
+      final int fileName = myContext.get(FileUtil.toSystemIndependentName(file.getAbsolutePath()));
+      if (!mySourceFileToClasses.containsKey(fileName)) {
+        mySourceFileToClasses.put(fileName, new HashSet<ClassRepr>());
       }
     }
   }
 
   @Nullable
-  private ClassRepr getReprByName(final DependencyContext.S name) {
-    final DependencyContext.S source = myClassToSourceFile.get(name);
+  private ClassRepr getReprByName(final int name) {
+    final int source = myClassToSourceFile.get(name);
 
-    if (source != null) {
+    if (source > 0) {
       final Collection<ClassRepr> reprs = mySourceFileToClasses.get(source);
 
       if (reprs != null) {
         for (ClassRepr repr : reprs) {
-          if (repr.name.equals(name)) {
+          if (repr.name == name) {
             return repr;
           }
         }
@@ -308,21 +293,15 @@ public class Mappings {
       this.myDelta = delta;
     }
 
-    void appendDependents(final ClassRepr c, final Set<DependencyContext.S> result) {
-      final Collection<DependencyContext.S> depClasses = myDelta.myClassToClassDependency.get(c.name);
+    void appendDependents(final ClassRepr c, final TIntHashSet result) {
+      final TIntHashSet depClasses = myDelta.myClassToClassDependency.get(c.name);
 
       if (depClasses != null) {
-        for (DependencyContext.S className : depClasses) {
-          result.add(className);
-        }
+        addAll(result, depClasses);
       }
     }
 
-    void propagateMemberAccessRec(final Collection<DependencyContext.S> acc,
-                                  final boolean isField,
-                                  final boolean root,
-                                  final DependencyContext.S name,
-                                  final DependencyContext.S reflcass) {
+    void propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final int name, final int reflcass) {
       final ClassRepr repr = reprByName(reflcass);
 
       if (repr != null) {
@@ -332,7 +311,7 @@ public class Mappings {
           for (Object o : members) {
             final ProtoMember m = (ProtoMember)o;
 
-            if (m.name.equals(name)) {
+            if (m.name == name) {
               return;
             }
           }
@@ -340,31 +319,33 @@ public class Mappings {
           acc.add(reflcass);
         }
 
-        final Collection<DependencyContext.S> subclasses = myClassToSubclasses.get(reflcass);
+        final TIntHashSet subclasses = myClassToSubclasses.get(reflcass);
 
         if (subclasses != null) {
-          for (DependencyContext.S subclass : subclasses) {
-            propagateMemberAccessRec(acc, isField, false, name, subclass);
-          }
+          subclasses.forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int subclass) {
+              propagateMemberAccessRec(acc, isField, false, name, subclass);
+              return true;
+            }
+          });
         }
       }
     }
 
-    Collection<DependencyContext.S> propagateMemberAccess(final boolean isField,
-                                                          final DependencyContext.S name,
-                                                          final DependencyContext.S className) {
-      final Set<DependencyContext.S> acc = new HashSet<DependencyContext.S>();
+    TIntHashSet propagateMemberAccess(final boolean isField, final int name, final int className) {
+      final TIntHashSet acc = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
 
       propagateMemberAccessRec(acc, isField, true, name, className);
 
       return acc;
     }
 
-    Collection<DependencyContext.S> propagateFieldAccess(final DependencyContext.S name, final DependencyContext.S className) {
+    TIntHashSet propagateFieldAccess(final int name, final int className) {
       return propagateMemberAccess(true, name, className);
     }
 
-    Collection<DependencyContext.S> propagateMethodAccess(final DependencyContext.S name, final DependencyContext.S className) {
+    TIntHashSet propagateMethodAccess(final int name, final int className) {
       return propagateMemberAccess(false, name, className);
     }
 
@@ -372,7 +353,7 @@ public class Mappings {
       return new MethodRepr.Predicate() {
         @Override
         public boolean satisfy(final MethodRepr m) {
-          if (m.name.equals(myInitName) || !m.name.equals(than.name) || m.argumentTypes.length != than.argumentTypes.length) {
+          if (m.name == myInitName || m.name != than.name || m.argumentTypes.length != than.argumentTypes.length) {
             return false;
           }
 
@@ -394,29 +375,33 @@ public class Mappings {
 
       new Object() {
         public void run(final ClassRepr c) {
-          final Collection<DependencyContext.S> subClasses = myClassToSubclasses.get(c.name);
+          final TIntHashSet subClasses = myClassToSubclasses.get(c.name);
 
           if (subClasses != null) {
-            for (DependencyContext.S subClassName : subClasses) {
-              final ClassRepr r = reprByName(subClassName);
+            subClasses.forEach(new TIntProcedure() {
+              @Override
+              public boolean execute(int subClassName) {
+                final ClassRepr r = reprByName(subClassName);
 
-              if (r != null) {
-                boolean cont = true;
+                if (r != null) {
+                  boolean cont = true;
 
-                final Collection<MethodRepr> methods = r.findMethods(predicate);
+                  final Collection<MethodRepr> methods = r.findMethods(predicate);
 
-                for (MethodRepr mm : methods) {
-                  if (isVisibleIn(c, m, r)) {
-                    result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
-                    cont = false;
+                  for (MethodRepr mm : methods) {
+                    if (isVisibleIn(c, m, r)) {
+                      result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
+                      cont = false;
+                    }
+                  }
+
+                  if (cont) {
+                    run(r);
                   }
                 }
-
-                if (cont) {
-                  run(r);
-                }
+                return true;
               }
-            }
+            });
           }
         }
       }.run(c);
@@ -434,9 +419,9 @@ public class Mappings {
 
       new Object() {
         public void run(final ClassRepr c) {
-          final DependencyContext.S[] supers = c.getSupers();
+          final int[] supers = c.getSupers();
 
-          for (DependencyContext.S succName : supers) {
+          for (int succName : supers) {
             final ClassRepr r = reprByName(succName);
 
             if (r != null) {
@@ -478,9 +463,9 @@ public class Mappings {
 
       new Object() {
         public void run(final ClassRepr c) {
-          final DependencyContext.S[] supers = c.getSupers();
+          final int[] supers = c.getSupers();
 
-          for (DependencyContext.S succName : supers) {
+          for (int succName : supers) {
             final ClassRepr r = reprByName(succName);
 
             if (r != null) {
@@ -508,7 +493,7 @@ public class Mappings {
       return result;
     }
 
-    ClassRepr reprByName(final DependencyContext.S name) {
+    ClassRepr reprByName(final int name) {
       if (myDelta != null) {
         final ClassRepr r = myDelta.getReprByName(name);
 
@@ -520,15 +505,15 @@ public class Mappings {
       return getReprByName(name);
     }
 
-    Option<Boolean> isInheritorOf(final DependencyContext.S who, final DependencyContext.S whom) {
-      if (who.equals(whom)) {
+    Option<Boolean> isInheritorOf(final int who, final int whom) {
+      if (who == whom) {
         return new Option<Boolean>(true);
       }
 
       final ClassRepr repr = reprByName(who);
 
       if (repr != null) {
-        for (DependencyContext.S s : repr.getSupers()) {
+        for (int s : repr.getSupers()) {
           final Option<Boolean> inheritorOf = isInheritorOf(s, whom);
           if (inheritorOf.isValue() && inheritorOf.value()) {
             return inheritorOf;
@@ -569,7 +554,7 @@ public class Mappings {
       return new Option<Boolean>(false);
     }
 
-    boolean methodVisible(final DependencyContext.S className, final MethodRepr m) {
+    boolean methodVisible(final int className, final MethodRepr m) {
       final ClassRepr r = reprByName(className);
 
       if (r != null) {
@@ -583,7 +568,7 @@ public class Mappings {
       return false;
     }
 
-    boolean fieldVisible(final DependencyContext.S className, final FieldRepr field) {
+    boolean fieldVisible(final int className, final FieldRepr field) {
       final ClassRepr r = reprByName(className);
 
       if (r != null) {
@@ -597,16 +582,16 @@ public class Mappings {
       return true;
     }
 
-    void affectSubclasses(final DependencyContext.S className,
+    void affectSubclasses(final int className,
                           final Collection<File> affectedFiles,
                           final Collection<UsageRepr.Usage> affectedUsages,
-                          final Collection<DependencyContext.S> dependants,
+                          final TIntHashSet dependants,
                           final boolean usages) {
       debug("Affecting subclasses of class: ", className);
 
-      final DependencyContext.S fileName = myClassToSourceFile.get(className);
+      final int fileName = myClassToSourceFile.get(className);
 
-      if (fileName == null) {
+      if (fileName < 0) {
         debug("No source file detected for class ", className);
         debug("End of affectSubclasses");
         return;
@@ -625,83 +610,100 @@ public class Mappings {
         }
       }
 
-      final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(className);
+      final TIntHashSet depClasses = myClassToClassDependency.get(className);
 
       if (depClasses != null) {
-        dependants.addAll(depClasses);
+        addAll(dependants, depClasses);
       }
 
       affectedFiles.add(new File(myContext.getValue(fileName)));
 
-      final Collection<DependencyContext.S> directSubclasses = myClassToSubclasses.get(className);
+      final TIntHashSet directSubclasses = myClassToSubclasses.get(className);
 
       if (directSubclasses != null) {
-        for (DependencyContext.S subClass : directSubclasses) {
-          affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages);
-        }
+        directSubclasses.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(int subClass) {
+            affectSubclasses(subClass, affectedFiles, affectedUsages, dependants, usages);
+            return true;
+          }
+        });
       }
     }
 
     void affectFieldUsages(final FieldRepr field,
-                           final Collection<DependencyContext.S> subclasses,
+                           final TIntHashSet subclasses,
                            final UsageRepr.Usage rootUsage,
                            final Set<UsageRepr.Usage> affectedUsages,
-                           final Set<DependencyContext.S> dependents) {
+                           final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
 
-      for (DependencyContext.S p : subclasses) {
-        final Collection<DependencyContext.S> deps = myClassToClassDependency.get(p);
+      subclasses.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int p) {
+          final TIntHashSet deps = myClassToClassDependency.get(p);
 
-        if (deps != null) {
-          dependents.addAll(deps);
+          if (deps != null) {
+            addAll(dependents, deps);
+          }
+
+          debug("Affect field usage referenced of class ", p);
+          affectedUsages
+            .add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
+          return true;
         }
-
-        debug("Affect field usage referenced of class ", p);
-        affectedUsages
-          .add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
-      }
+      });
     }
 
     void affectMethodUsages(final MethodRepr method,
-                            final Collection<DependencyContext.S> subclasses,
+                            final TIntHashSet subclasses,
                             final UsageRepr.Usage rootUsage,
                             final Set<UsageRepr.Usage> affectedUsages,
-                            final Set<DependencyContext.S> dependents) {
+                            final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
 
       if (subclasses != null) {
-        for (DependencyContext.S p : subclasses) {
-          final Collection<DependencyContext.S> deps = myClassToClassDependency.get(p);
+        subclasses.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(int p) {
+            final TIntHashSet deps = myClassToClassDependency.get(p);
 
-          if (deps != null) {
-            dependents.addAll(deps);
+            if (deps != null) {
+              addAll(dependents, deps);
+            }
+
+            debug("Affect method usage referenced of class ", p);
+
+            final UsageRepr.Usage usage = rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p);
+            affectedUsages.add(usage);
+            return true;
           }
-
-          debug("Affect method usage referenced of class ", p);
-
-          affectedUsages
-            .add(rootUsage instanceof UsageRepr.MetaMethodUsage ? method.createMetaUsage(myContext, p) : method.createUsage(myContext, p));
-        }
+        });
       }
     }
 
-    void affectAll(final DependencyContext.S className, final Collection<File> affectedFiles) {
-      final Set<DependencyContext.S> dependants = (Set<DependencyContext.S>)myClassToClassDependency.get(className);
-      final DependencyContext.S sourceFile = myClassToSourceFile.get(className);
+    void affectAll(final int className, final Collection<File> affectedFiles) {
+      final TIntHashSet dependants = myClassToClassDependency.get(className);
 
       if (dependants != null) {
-        for (DependencyContext.S depClass : dependants) {
-          final DependencyContext.S depFile = myClassToSourceFile.get(depClass);
-
-          if (depFile != null && sourceFile != null && !depFile.equals(sourceFile)) {
-            affectedFiles.add(new File(myContext.getValue(depFile)));
-          }
+        final int sourceFile = myClassToSourceFile.get(className);
+        if (sourceFile > 0) {
+          dependants.forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int depClass) {
+              final int depFile = myClassToSourceFile.get(depClass);
+              if (depFile > 0 && depFile != sourceFile) {
+                affectedFiles.add(new File(myContext.getValue(depFile)));
+              }
+              return true;
+            }
+          });
         }
       }
     }
 
     public abstract class UsageConstraint {
-      public abstract boolean checkResidence(final DependencyContext.S residence);
+      public abstract boolean checkResidence(final int residence);
     }
 
     public class PackageConstraint extends UsageConstraint {
@@ -712,21 +714,21 @@ public class Mappings {
       }
 
       @Override
-      public boolean checkResidence(final DependencyContext.S residence) {
+      public boolean checkResidence(final int residence) {
         return !ClassRepr.getPackageName(myContext.getValue(residence)).equals(packageName);
       }
     }
 
     public class InheritanceConstraint extends PackageConstraint {
-      public final DependencyContext.S rootClass;
+      public final int rootClass;
 
-      public InheritanceConstraint(final DependencyContext.S rootClass) {
+      public InheritanceConstraint(final int rootClass) {
         super(ClassRepr.getPackageName(myContext.getValue(rootClass)));
         this.rootClass = rootClass;
       }
 
       @Override
-      public boolean checkResidence(final DependencyContext.S residence) {
+      public boolean checkResidence(final int residence) {
         final Option<Boolean> inheritorOf = isInheritorOf(residence, rootClass);
         return inheritorOf.isNone() || !inheritorOf.value() || super.checkResidence(residence);
       }
@@ -740,7 +742,7 @@ public class Mappings {
       }
 
       @Override
-      public boolean checkResidence(final DependencyContext.S residence) {
+      public boolean checkResidence(final int residence) {
         return !x.checkResidence(residence);
       }
     }
@@ -755,7 +757,7 @@ public class Mappings {
       }
 
       @Override
-      public boolean checkResidence(final DependencyContext.S residence) {
+      public boolean checkResidence(final int residence) {
         return x.checkResidence(residence) && y.checkResidence(residence);
       }
     }
@@ -772,44 +774,46 @@ public class Mappings {
   }
 
   private static boolean isVisibleIn(final ClassRepr c, final ProtoMember m, final ClassRepr scope) {
-    final boolean privacy = ((m.access & Opcodes.ACC_PRIVATE) > 0) && !c.name.equals(scope.name);
+    final boolean privacy = ((m.access & Opcodes.ACC_PRIVATE) > 0) && c.name != scope.name;
     final boolean packageLocality = isPackageLocal(m.access) && !c.getPackageName().equals(scope.getPackageName());
 
     return !privacy && !packageLocality;
   }
 
-  private boolean empty(final DependencyContext.S s) {
-    return s.equals(myContext.get(""));
+  private boolean empty(final int s) {
+    return s == myContext.get("");
   }
 
-  private Collection<DependencyContext.S> getAllSubclasses(final DependencyContext.S root) {
-    final Collection<DependencyContext.S> result = new HashSet<DependencyContext.S>();
+  private TIntHashSet getAllSubclasses(final int root) {
+    final TIntHashSet result = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
 
     addAllSubclasses(root, result);
 
     return result;
   }
 
-  private void addAllSubclasses(final DependencyContext.S root, final Collection<DependencyContext.S> acc) {
-    final Collection<DependencyContext.S> directSubclasses = myClassToSubclasses.get(root);
+  private void addAllSubclasses(final int root, final TIntHashSet acc) {
+    final TIntHashSet directSubclasses = myClassToSubclasses.get(root);
 
     acc.add(root);
 
     if (directSubclasses != null) {
-      for (final DependencyContext.S s : directSubclasses) {
-        if (acc.contains(s)) {
-          continue;
+      directSubclasses.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int s) {
+          if (!acc.contains(s)) {
+            addAllSubclasses(s, acc);
+          }
+          return true;
         }
-
-        addAllSubclasses(s, acc);
-      }
+      });
     }
   }
 
-  private boolean incrementalDecision(final DependencyContext.S owner,
+  private boolean incrementalDecision(final int owner,
                                       final Proto member,
                                       final Collection<File> affectedFiles,
-                                      DependentFilesFilter filter) {
+                                      final DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
     final Util self = new Util(this);
 
@@ -824,13 +828,17 @@ public class Mappings {
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
       debug("Root class: ", owner);
 
-      final Collection<DependencyContext.S> propagated = self.propagateFieldAccess(isField ? member.name : myContext.get(""), owner);
+      final TIntHashSet propagated = self.propagateFieldAccess(isField ? member.name : myContext.get(""), owner);
 
-      for (DependencyContext.S className : propagated) {
-        final String fileName = myContext.getValue(myClassToSourceFile.get(className));
-        debug("Adding ", fileName);
-        affectedFiles.add(new File(fileName));
-      }
+      propagated.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int className) {
+          final String fileName = myContext.getValue(myClassToSourceFile.get(className));
+          debug("Adding ", fileName);
+          affectedFiles.add(new File(fileName));
+          return true;
+        }
+      });
     }
 
     final String packageName = ClassRepr.getPackageName(myContext.getValue(isField ? owner : member.name));
@@ -838,20 +846,21 @@ public class Mappings {
     debug("Softening non-incremental decision: adding all package classes for a recompilation");
     debug("Package name: ", packageName);
 
-    // Package-local branch    
-    for (Map.Entry<DependencyContext.S, DependencyContext.S> e : myClassToSourceFile.entrySet()) {
-      final DependencyContext.S className = e.getKey();
-      final DependencyContext.S fileName = e.getValue();
-
-      if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
-        final String f = myContext.getValue(fileName);
-        final File file = new File(f);
-        if (filter.accept(file)) {
-          debug("Adding: ", f);
-          affectedFiles.add(file);
+    // Package-local branch
+    myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int className, int fileName) {
+        if (ClassRepr.getPackageName(myContext.getValue(className)).equals(packageName)) {
+          final String f = myContext.getValue(fileName);
+          final File file = new File(f);
+          if (filter.accept(file)) {
+            debug("Adding: ", f);
+            affectedFiles.add(file);
+          }
         }
+        return true;
       }
-    }
+    });
 
     return true;
   }
@@ -867,11 +876,7 @@ public class Mappings {
     boolean accept(File file);
   }
 
-  public boolean differentiate(final Mappings delta,
-                               final Collection<String> removed,
-                               final Collection<File> filesToCompile,
-                               final Collection<File> compiledFiles,
-                               final Collection<File> affectedFiles, DependentFilesFilter filter) {
+  public boolean differentiate(final Mappings delta, final Collection<String> removed, final Collection<File> filesToCompile, final Collection<File> compiledFiles, final Collection<File> affectedFiles, DependentFilesFilter filter) {
     synchronized (myLock) {
       debug("Begin of Differentiate:");
 
@@ -894,10 +899,30 @@ public class Mappings {
         }
       }
 
-      for (DependencyContext.S fileName : delta.mySourceFileToClasses.keyCollection()) {
-        final Set<ClassRepr> classes = (Set<ClassRepr>)delta.mySourceFileToClasses.get(fileName);
+      class FileClasses {
+        final int fileName;
+        final Set<ClassRepr> fileClasses;
+
+        FileClasses(int fileName, Collection<ClassRepr> fileClasses) {
+          this.fileName = fileName;
+          this.fileClasses = new HashSet<ClassRepr>(fileClasses);
+        }
+      }
+
+      final List<FileClasses> newClasses = new ArrayList<FileClasses>();
+      delta.mySourceFileToClasses.forEachEntry(new TIntObjectProcedure<Collection<ClassRepr>>() {
+        @Override
+        public boolean execute(int fileName, Collection<ClassRepr> classes) {
+          newClasses.add(new FileClasses(fileName, classes));
+          return true;
+        }
+      });
+
+      for (FileClasses compiledFile : newClasses) {
+        final int fileName = compiledFile.fileName;
+        final Set<ClassRepr> classes = compiledFile.fileClasses;
         final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
-        final Set<DependencyContext.S> dependants = new HashSet<DependencyContext.S>();
+        final TIntHashSet dependants = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
 
         final Set<UsageRepr.Usage> affectedUsages = new HashSet<UsageRepr.Usage>();
         final Set<UsageRepr.AnnotationUsage> annotationQuery = new HashSet<UsageRepr.AnnotationUsage>();
@@ -1012,7 +1037,7 @@ public class Mappings {
           }
 
           debug("Processing added methods: ");
-          for (MethodRepr m : diff.methods().added()) {
+          for (final MethodRepr m : diff.methods().added()) {
             debug("Method: ", m.name);
 
             if (it.isAnnotation()) {
@@ -1027,9 +1052,9 @@ public class Mappings {
               u.affectSubclasses(it.name, affectedFiles, affectedUsages, dependants, false);
             }
 
-            Collection<DependencyContext.S> propagated = null;
+            TIntHashSet propagated = null;
 
-            if ((m.access & Opcodes.ACC_PRIVATE) == 0 && !m.name.equals(myInitName)) {
+            if ((m.access & Opcodes.ACC_PRIVATE) == 0 && m.name != myInitName) {
               final ClassRepr oldIt = getReprByName(it.name);
 
               if (oldIt != null && self.findOverridenMethods(m, oldIt).size() > 0) {
@@ -1087,9 +1112,9 @@ public class Mappings {
                         !m.exceptions.equals(mm.exceptions) ||
                         (subtypeOf.isNone() || !subtypeOf.value()) ||
                         !empty(mm.signature) || !empty(m.signature)) {
-                      final DependencyContext.S file = myClassToSourceFile.get(cc.name);
+                      final int file = myClassToSourceFile.get(cc.name);
 
-                      if (file != null) {
+                      if (file > 0) {
                         final String f = myContext.getValue(file);
                         debug("Complex condition is satisfied, affecting file ", f);
                         affectedFiles.add(new File(f));
@@ -1099,13 +1124,13 @@ public class Mappings {
                   else {
                     debug("Current method does not override that found");
 
-                    final Collection<DependencyContext.S> yetPropagated = self.propagateMethodAccess(mm.name, it.name);
+                    final TIntHashSet yetPropagated = self.propagateMethodAccess(mm.name, it.name);
 
                     if (inheritorOf.isValue() && inheritorOf.value()) {
-                      final Collection<DependencyContext.S> deps = myClassToClassDependency.get(cc.name);
+                      final TIntHashSet deps = myClassToClassDependency.get(cc.name);
 
                       if (deps != null) {
-                        dependants.addAll(deps);
+                        addAll(dependants, deps);
                       }
 
                       u.affectMethodUsages(mm, yetPropagated, mm.createUsage(myContext, cc.name), affectedUsages, dependants);
@@ -1117,34 +1142,38 @@ public class Mappings {
                 }
               }
 
-              final Collection<DependencyContext.S> subClasses = getAllSubclasses(it.name);
+              final TIntHashSet subClasses = getAllSubclasses(it.name);
 
               if (subClasses != null) {
-                for (final DependencyContext.S subClass : subClasses) {
-                  final ClassRepr r = u.reprByName(subClass);
-                  final DependencyContext.S sourceFileName = myClassToSourceFile.get(subClass);
+                subClasses.forEach(new TIntProcedure() {
+                  @Override
+                  public boolean execute(int subClass) {
+                    final ClassRepr r = u.reprByName(subClass);
+                    final int sourceFileName = myClassToSourceFile.get(subClass);
 
-                  if (r != null && sourceFileName != null) {
-                    final DependencyContext.S outerClass = r.outerClassName;
+                    if (r != null && sourceFileName > 0) {
+                      final int outerClass = r.outerClassName;
 
-                    if (u.methodVisible(outerClass, m)) {
-                      final String f = myContext.getValue(sourceFileName);
-                      debug("Affecting file due to local overriding: ", f);
-                      affectedFiles.add(new File(f));
+                      if (u.methodVisible(outerClass, m)) {
+                        final String f = myContext.getValue(sourceFileName);
+                        debug("Affecting file due to local overriding: ", f);
+                        affectedFiles.add(new File(f));
+                      }
                     }
+                    return true;
                   }
-                }
+                });
               }
             }
           }
           debug("End of added methods processing");
 
           debug("Processing removed methods:");
-          for (MethodRepr m : diff.methods().removed()) {
+          for (final MethodRepr m : diff.methods().removed()) {
             debug("Method ", m.name);
 
             final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = u.findOverridenMethods(m, it);
-            final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
+            final TIntHashSet propagated = u.propagateMethodAccess(m.name, it.name);
 
             if (overridenMethods.size() == 0) {
               debug("No overridden methods found, affecting method usages");
@@ -1171,58 +1200,60 @@ public class Mappings {
 
             final Collection<Pair<MethodRepr, ClassRepr>> overriding = u.findOverridingMethods(m, it, false);
             for (final Pair<MethodRepr, ClassRepr> p : overriding) {
-              final DependencyContext.S fName = myClassToSourceFile.get(p.second.name);
+              final int fName = myClassToSourceFile.get(p.second.name);
               affectedFiles.add(new File(myContext.getValue(fName)));
             }
 
             if ((m.access & Opcodes.ACC_ABSTRACT) == 0) {
-              for (DependencyContext.S p : propagated) {
-                if (!p.equals(it.name)) {
-                  final ClassRepr s = u.reprByName(p);
+              propagated.forEach(new TIntProcedure() {
+                @Override
+                public boolean execute(int p) {
+                  if (p != it.name) {
+                    final ClassRepr s = u.reprByName(p);
 
-                  if (s != null) {
-                    final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = u.findOverridenMethods(m, s);
+                    if (s != null) {
+                      final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = u.findOverridenMethods(m, s);
 
-                    overridenInS.addAll(overridenMethods);
+                      overridenInS.addAll(overridenMethods);
 
-                    boolean allAbstract = true;
-                    boolean visited = false;
+                      boolean allAbstract = true;
+                      boolean visited = false;
 
-                    for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
-                      final ClassRepr cc = pp.second;
+                      for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
+                        final ClassRepr cc = pp.second;
 
-                      if (cc == myMockClass) {
+                        if (cc == myMockClass) {
+                          visited = true;
+                          continue;
+                        }
+
+                        if (cc.name == it.name) {
+                          continue;
+                        }
+
                         visited = true;
-                        continue;
+                        allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((cc.access & Opcodes.ACC_INTERFACE) > 0);
+
+                        if (!allAbstract) {
+                          break;
+                        }
                       }
 
-                      if (cc.name.equals(it.name)) {
-                        continue;
-                      }
+                      if (allAbstract && visited) {
+                        final int source = myClassToSourceFile.get(p);
 
-                      visited = true;
-                      allAbstract = ((pp.first.access & Opcodes.ACC_ABSTRACT) > 0) || ((cc.access & Opcodes.ACC_INTERFACE) > 0);
-
-                      if (!allAbstract) {
-                        break;
-                      }
-                    }
-
-                    if (allAbstract && visited) {
-                      final DependencyContext.S source = myClassToSourceFile.get(p);
-
-                      if (source != null) {
-                        final String f = myContext.getValue(source);
-                        debug(
-                          "Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ",
-                          p);
-                        debug("Affecting subclass source file ", f);
-                        affectedFiles.add(new File(f));
+                        if (source > 0) {
+                          final String f = myContext.getValue(source);
+                          debug( "Removed method is not abstract & overrides some abstract method which is not then over-overriden in subclass ", p);
+                          debug("Affecting subclass source file ", f);
+                          affectedFiles.add(new File(f));
+                        }
                       }
                     }
                   }
+                  return true;
                 }
-              }
+              });
             }
           }
           debug("End of removed methods processing");
@@ -1238,14 +1269,13 @@ public class Mappings {
             if (it.isAnnotation()) {
               if (d.defaultRemoved()) {
                 debug("Class is annotation, default value is removed => adding annotation query");
-                final List<DependencyContext.S> l = new LinkedList<DependencyContext.S>();
+                final TIntHashSet l = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
                 l.add(m.name);
-                annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr
-                  .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), l, null));
+                annotationQuery.add((UsageRepr.AnnotationUsage)UsageRepr.createAnnotationUsage(myContext, TypeRepr.createClassType( myContext, it.name), l, null));
               }
             }
             else if (d.base() != Difference.NONE || throwsChanged) {
-              final Collection<DependencyContext.S> propagated = u.propagateMethodAccess(m.name, it.name);
+              final TIntHashSet propagated = u.propagateMethodAccess(m.name, it.name);
 
               boolean affected = false;
               boolean constrained = false;
@@ -1317,7 +1347,7 @@ public class Mappings {
           final int mask = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
           debug("Processing added fields");
-          for (FieldRepr f : diff.fields().added()) {
+          for (final FieldRepr f : diff.fields().added()) {
             debug("Field: ", f.name);
 
             final boolean fPrivate = (f.access & Opcodes.ACC_PRIVATE) > 0;
@@ -1326,39 +1356,42 @@ public class Mappings {
             final boolean fPLocal = !fPrivate && !fProtected && !fPublic;
 
             if (!fPrivate) {
-              final Collection<DependencyContext.S> subClasses = getAllSubclasses(it.name);
+              final TIntHashSet subClasses = getAllSubclasses(it.name);
+              subClasses.forEach(new TIntProcedure() {
+                @Override
+                public boolean execute(int subClass) {
+                  final ClassRepr r = u.reprByName(subClass);
+                  final int sourceFileName = myClassToSourceFile.get(subClass);
 
-              for (final DependencyContext.S subClass : subClasses) {
-                final ClassRepr r = u.reprByName(subClass);
-                final DependencyContext.S sourceFileName = myClassToSourceFile.get(subClass);
-
-                if (r != null && sourceFileName != null) {
-                  if (r.isLocal) {
-                    debug(
-                      "Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ",
-                      sourceFileName);
-                    affectedFiles.add(new File(myContext.getValue(sourceFileName)));
-                  }
-                  else {
-                    final DependencyContext.S outerClass = r.outerClassName;
-
-                    if (!empty(outerClass) && u.fieldVisible(outerClass, f)) {
-                      debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
+                  if (r != null && sourceFileName > 0) {
+                    if (r.isLocal) {
+                      debug(
+                        "Affecting local subclass (introduced field can potentially hide surrounding method parameters/local variables): ",
+                        sourceFileName);
                       affectedFiles.add(new File(myContext.getValue(sourceFileName)));
                     }
+                    else {
+                      final int outerClass = r.outerClassName;
+
+                      if (!empty(outerClass) && u.fieldVisible(outerClass, f)) {
+                        debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
+                        affectedFiles.add(new File(myContext.getValue(sourceFileName)));
+                      }
+                    }
                   }
+
+                  debug("Affecting field usages referenced from subclass ", subClass);
+                  final TIntHashSet propagated = u.propagateFieldAccess(f.name, subClass);
+                  u.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), affectedUsages, dependants);
+
+                  final TIntHashSet deps = myClassToClassDependency.get(subClass);
+
+                  if (deps != null) {
+                    addAll(dependants, deps);
+                  }
+                  return true;
                 }
-
-                debug("Affecting field usages referenced from subclass ", subClass);
-                final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, subClass);
-                u.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), affectedUsages, dependants);
-
-                final Collection<DependencyContext.S> deps = myClassToClassDependency.get(subClass);
-
-                if (deps != null) {
-                  dependants.addAll(deps);
-                }
-              }
+              });
             }
 
             final Collection<Pair<FieldRepr, ClassRepr>> overridden = u.findOverridenFields(f, it);
@@ -1373,7 +1406,7 @@ public class Mappings {
               final boolean ffPLocal = isPackageLocal(ff.access);
 
               if (!ffPrivate) {
-                final Collection<DependencyContext.S> propagated = o.propagateFieldAccess(ff.name, cc.name);
+                final TIntHashSet propagated = o.propagateFieldAccess(ff.name, cc.name);
                 final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
 
                 debug("Affecting usages of overridden field in class ", cc.name);
@@ -1419,7 +1452,7 @@ public class Mappings {
               }
             }
 
-            final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(f.name, it.name);
+            final TIntHashSet propagated = u.propagateFieldAccess(f.name, it.name);
             u.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), affectedUsages, dependants);
           }
           debug("End of removed fields processing");
@@ -1442,7 +1475,7 @@ public class Mappings {
             }
 
             if (d.base() != Difference.NONE) {
-              final Collection<DependencyContext.S> propagated = u.propagateFieldAccess(field.name, it.name);
+              final TIntHashSet propagated = u.propagateFieldAccess(field.name, it.name);
 
               if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
                 debug("Type or signature changed --- affecting field usages");
@@ -1504,35 +1537,43 @@ public class Mappings {
         for (ClassRepr c : classDiff.added()) {
           delta.addChangedClass(c.name);
 
-          final Collection<DependencyContext.S> depClasses = myClassToClassDependency.get(c.name);
+          final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
 
           if (depClasses != null) {
-            for (DependencyContext.S depClass : depClasses) {
-              final DependencyContext.S fName = myClassToSourceFile.get(depClass);
+            depClasses.forEach(new TIntProcedure() {
+              @Override
+              public boolean execute(int depClass) {
+                final int fName = myClassToSourceFile.get(depClass);
 
-              if (fName != null) {
-                final String f = myContext.getValue(fName);
-                debug("Adding dependent file ", f);
-                affectedFiles.add(new File(f));
+                if (fName > 0) {
+                  final String f = myContext.getValue(fName);
+                  debug("Adding dependent file ", f);
+                  affectedFiles.add(new File(f));
+                }
+                return true;
               }
-            }
+            });
           }
         }
         debug("End of added classes processing.");
 
         debug("Checking dependent files:");
-        final Set<DependencyContext.S> dependentFiles = new HashSet<DependencyContext.S>();
+        final TIntHashSet dependentFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
 
-        for (DependencyContext.S depClass : dependants) {
-          final DependencyContext.S file = myClassToSourceFile.get(depClass);
-
-          if (file != null) {
-            dependentFiles.add(file);
+        dependants.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(int depClass) {
+            final int file = myClassToSourceFile.get(depClass);
+            if (file > 0) {
+              dependentFiles.add(file);
+            }
+            return true;
           }
-        }
+        });
+
 
         filewise:
-        for (DependencyContext.S depFile : dependentFiles) {
+        for (int depFile : dependentFiles.toArray()) {  // todo: avoid toArray()?
           final File theFile = new File(myContext.getValue(depFile));
 
           if (affectedFiles.contains(theFile) || compiledFiles.contains(theFile)) {
@@ -1561,8 +1602,8 @@ public class Mappings {
                     continue filewise;
                   }
                   else {
-                    final Set<DependencyContext.S> residenceClasses = depCluster.getResidence(usage);
-                    for (DependencyContext.S residentName : residenceClasses) {
+                    final TIntHashSet residenceClasses = depCluster.getResidence(usage);
+                    for (int residentName : residenceClasses.toArray()) {
                       if (constraint.checkResidence(residentName)) {
                         debug("Added file with satisfied constraint");
                         affectedFiles.add(theFile);
@@ -1609,7 +1650,7 @@ public class Mappings {
 
         if (removed != null) {
           for (String file : removed) {
-            final DependencyContext.S key = myContext.get(file);
+            final int key = myContext.get(file);
             final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(key);
             final Collection<UsageRepr.Cluster> clusters = mySourceFileToUsages.get(key);
 
@@ -1619,7 +1660,7 @@ public class Mappings {
                 myClassToSourceFile.remove(cr.name);
                 myClassToClassDependency.remove(cr.name);
 
-                for (DependencyContext.S superSomething : cr.getSupers()) {
+                for (int superSomething : cr.getSupers()) {
                   myClassToSubclasses.removeFrom(superSomething, cr.name);
                 }
 
@@ -1629,7 +1670,7 @@ public class Mappings {
                     if (usages != null) {
                       for (UsageRepr.Usage u : usages) {
                         if (u instanceof UsageRepr.ClassUsage) {
-                          final Set<DependencyContext.S> residents = cluster.getResidence(u);
+                          final TIntHashSet residents = cluster.getResidence(u);
 
                           if (residents != null && residents.contains(cr.name)) {
                             myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
@@ -1649,49 +1690,57 @@ public class Mappings {
         }
 
         if (delta.isDifferentiated()) {
-          for (DependencyContext.S c : delta.getChangedClasses()) {
-            final Collection<DependencyContext.S> subClasses = delta.myClassToSubclasses.get(c);
-            if (subClasses != null) {
-              myClassToSubclasses.replace(c, subClasses);
-            }
-            else {
-              myClassToSubclasses.remove(c);
-            }
+          delta.getChangedClasses().forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int c) {
+              final TIntHashSet subClasses = delta.myClassToSubclasses.get(c);
+              if (subClasses != null) {
+                myClassToSubclasses.replace(c, subClasses);
+              }
+              else {
+                myClassToSubclasses.remove(c);
+              }
 
-            final DependencyContext.S sourceFile = delta.myClassToSourceFile.get(c);
-            if (sourceFile != null) {
-              myClassToSourceFile.put(c, sourceFile);
+              final int sourceFile = delta.myClassToSourceFile.get(c);
+              if (sourceFile > 0) {
+                myClassToSourceFile.put(c, sourceFile);
+              }
+              else {
+                myClassToSourceFile.remove(c);
+              }
+              return true;
             }
-            else {
-              myClassToSourceFile.remove(c);
-            }
-          }
+          });
 
-          for (DependencyContext.S f : delta.getChangedFiles()) {
-            final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
-            if (classes != null) {
-              mySourceFileToClasses.replace(f, classes);
-            }
-            else {
-              mySourceFileToClasses.remove(f);
-            }
+          delta.getChangedFiles().forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int f) {
+              final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
+              if (classes != null) {
+                mySourceFileToClasses.replace(f, classes);
+              }
+              else {
+                mySourceFileToClasses.remove(f);
+              }
 
-            final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
-            if (clusters != null) {
-              mySourceFileToUsages.replace(f, clusters);
-            }
-            else {
-              mySourceFileToUsages.remove(f);
-            }
+              final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
+              if (clusters != null) {
+                mySourceFileToUsages.replace(f, clusters);
+              }
+              else {
+                mySourceFileToUsages.remove(f);
+              }
 
-            final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
-            if (usages != null) {
-              mySourceFileToAnnotationUsages.replace(f, usages);
+              final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
+              if (usages != null) {
+                mySourceFileToAnnotationUsages.replace(f, usages);
+              }
+              else {
+                mySourceFileToAnnotationUsages.remove(f);
+              }
+              return true;
             }
-            else {
-              mySourceFileToAnnotationUsages.remove(f);
-            }
-          }
+          });
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
@@ -1702,42 +1751,41 @@ public class Mappings {
           mySourceFileToAnnotationUsages.replaceAll(delta.mySourceFileToAnnotationUsages);
         }
 
-        final Collection<DependencyContext.S> compiledSet = new HashSet<DependencyContext.S>(compiled.size());
+        final int[] compiledClasses = getClassNames(compiled);
+        final int[] changedClassesArray = delta.getChangedClasses().toArray();
 
-        for (File c : compiled) {
-          compiledSet.add(myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath())));
-        }
+        delta.myClassToClassDependency.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+          @Override
+          public boolean execute(int aClass, TIntHashSet now) {
+            if (delta.isDifferentiated()) {
+              final boolean classChanged = delta.getChangedClasses().contains(aClass);
+              final TIntHashSet depClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+              addAll(depClasses, now);
 
-        final Collection<DependencyContext.S> changedClasses = delta.getChangedClasses();
+              depClasses.retainAll(changedClassesArray);
 
-        for (DependencyContext.S aClass : delta.myClassToClassDependency.keyCollection()) {
-          final Collection<DependencyContext.S> now = delta.myClassToClassDependency.get(aClass);
-
-          if (delta.isDifferentiated()) {
-            final boolean classChanged = changedClasses.contains(aClass);
-            final HashSet<DependencyContext.S> depClasses = new HashSet<DependencyContext.S>(now);
-
-            depClasses.retainAll(changedClasses);
-
-            if (!classChanged && depClasses.isEmpty()) {
-              continue;
+              if (!classChanged && depClasses.isEmpty()) {
+                return true;
+              }
             }
-          }
 
-          final Collection<DependencyContext.S> past = myClassToClassDependency.get(aClass);
+            final TIntHashSet past = myClassToClassDependency.get(aClass);
 
-          if (past == null) {
-            myClassToClassDependency.put(aClass, now);
-          }
-          else {
-            boolean changed = past.removeAll(compiledSet);
-            changed |= past.addAll(now);
-
-            if (changed) {
-              myClassToClassDependency.replace(aClass, past);
+            if (past == null) {
+              myClassToClassDependency.put(aClass, now);
             }
+            else {
+              boolean changed = past.removeAll(compiledClasses);
+              changed |= addAll(past, now);
+
+              if (changed) {
+                myClassToClassDependency.replace(aClass, past);
+              }
+            }
+
+            return true;
           }
-        }
+        });
       }
       finally {
         delta.close();
@@ -1745,15 +1793,33 @@ public class Mappings {
     }
   }
 
+  private int[] getClassNames(Collection<File> compiled) {
+    final TIntHashSet classnames = new TIntHashSet(compiled.size());
+    for (File c : compiled) {
+      final int fileName = myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath()));
+      final Collection<ClassRepr> reprs = mySourceFileToClasses.get(fileName);
+      if (reprs != null) {
+        for (ClassRepr repr : reprs) {
+          classnames.add(repr.name);
+        }
+      }
+    }
+    return classnames.toArray();
+  }
+
   public Callbacks.Backend getCallback() {
     return new Callbacks.Backend() {
       public Collection<String> getClassFiles() {
-        final HashSet<String> result = new HashSet<String>();
+        final Set<String> result = new HashSet<String>();
 
         synchronized (myLock) {
-          for (DependencyContext.S s : myClassToSourceFile.keyCollection()) {
-            result.add(myContext.getValue(s));
-          }
+          myClassToSourceFile.forEachEntry(new TIntIntProcedure() {
+            @Override
+            public boolean execute(int s, int b) {
+              result.add(myContext.getValue(s));
+              return true;
+            }
+          });
         }
 
         return result;
@@ -1761,7 +1827,7 @@ public class Mappings {
 
       public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
         synchronized (myLock) {
-          final DependencyContext.S classFileNameS = myContext.get(classFileName);
+          final int classFileNameS = myContext.get(classFileName);
           final Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> result =
             new ClassfileAnalyzer(myContext).analyze(classFileNameS, cr);
           final ClassRepr repr = result.first;
@@ -1769,27 +1835,27 @@ public class Mappings {
           final Set<UsageRepr.Usage> localAnnotationUsages = result.second.second;
 
           final String srcFileName = sourceFileName.get(repr == null ? null : myContext.getValue(repr.getSourceFileName()));
-          final DependencyContext.S sourceFileNameS = myContext.get(srcFileName);
+          final int sourceFileNameS = myContext.get(srcFileName);
 
           if (repr != null) {
-            final DependencyContext.S className = repr.name;
+            final int className = repr.name;
 
             myClassToSourceFile.put(repr.name, sourceFileNameS);
             mySourceFileToClasses.put(sourceFileNameS, repr);
 
-            for (DependencyContext.S s : repr.getSupers()) {
+            for (int s : repr.getSupers()) {
               myClassToSubclasses.put(s, repr.name);
             }
 
             for (UsageRepr.Usage u : localUsages.getUsages()) {
-              final DependencyContext.S owner = u.getOwner();
+              final int owner = u.getOwner();
 
-              if (!owner.equals(className)) {
-                final DependencyContext.S sourceFile = repr.getSourceFileName();
-                final DependencyContext.S ownerSourceFile = myClassToSourceFile.get(owner);
+              if (owner != className) {
+                final int sourceFile = repr.getSourceFileName();
+                final int ownerSourceFile = myClassToSourceFile.get(owner);
 
-                if (ownerSourceFile != null) {
-                  if (!ownerSourceFile.equals(sourceFile)) {
+                if (ownerSourceFile > 0) {
+                  if (ownerSourceFile != sourceFile) {
                     myClassToClassDependency.put(owner, className);
                   }
                 }
@@ -1825,18 +1891,18 @@ public class Mappings {
 
         addPostPass(new PostPass() {
           public void perform() {
-            final DependencyContext.S rootClassName = myContext.get(className.replace(".", "/"));
-            final DependencyContext.S fileName = myClassToSourceFile.get(rootClassName);
+            final int rootClassName = myContext.get(className.replace(".", "/"));
+            final int fileName = myClassToSourceFile.get(rootClassName);
 
             for (final String i : imports) {
               if (i.endsWith("*")) {
                 continue; // filter out wildcard imports
               }
-              final DependencyContext.S iname = myContext.get(i.replace(".", "/"));
+              final int iname = myContext.get(i.replace(".", "/"));
 
               myClassToClassDependency.put(iname, rootClassName);
 
-              if (fileName != null) {
+              if (fileName > 0) {
                 final UsageRepr.Cluster cluster = new UsageRepr.Cluster();
                 cluster.addUsage(rootClassName, UsageRepr.createClassUsage(myContext, iname));
                 mySourceFileToUsages.put(fileName, cluster);
@@ -1899,4 +1965,23 @@ public class Mappings {
       }
     }
   }
+
+  private static boolean addAll(final TIntHashSet whereToAdd, TIntHashSet whatToAdd) {
+    if (whatToAdd.isEmpty()) {
+      return false;
+    }
+    final Ref<Boolean> changed = new Ref<Boolean>(Boolean.FALSE);
+    whatToAdd.forEach(new TIntProcedure() {
+      @Override
+      public boolean execute(int value) {
+        if (whereToAdd.add(value)) {
+          changed.set(Boolean.TRUE);
+        }
+        return true;
+      }
+    });
+    return changed.get();
+  }
+
+
 }
