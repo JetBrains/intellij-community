@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.plugins.groovy;
+package org.jetbrains.idea.maven.plugins.sql;
 
+import com.intellij.lang.Language;
 import org.jetbrains.idea.maven.utils.MavenPluginConfigurationLanguageInjector;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author Sergey Evdokimov
  */
-public class MavenGroovyInjector extends MavenPluginConfigurationLanguageInjector {
-  public MavenGroovyInjector() {
-    super("source", "org.codehaus.groovy.maven", "gmaven-plugin", GroovyFileType.GROOVY_LANGUAGE);
+public class MavenSqlInjector extends MavenPluginConfigurationLanguageInjector {
+  public MavenSqlInjector() {
+    super("sqlCommand", "org.codehaus.mojo", "sql-maven-plugin", Language.findLanguageByID("SQL"));
   }
 
 }
