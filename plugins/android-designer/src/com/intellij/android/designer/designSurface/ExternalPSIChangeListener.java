@@ -45,6 +45,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     myFile = file;
     myDelayMillis = delayMillis;
     myRunnable = runnable;
+    myContent = getContent();
   }
 
   public void start() {

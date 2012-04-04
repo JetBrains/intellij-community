@@ -36,6 +36,7 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.Item;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,10 +46,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.uipreview.LayoutDeviceConfiguration;
-import org.jetbrains.android.uipreview.LocaleData;
-import org.jetbrains.android.uipreview.RenderUtil;
-import org.jetbrains.android.uipreview.RenderingException;
+import org.jetbrains.android.uipreview.*;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NotNull;
 
@@ -321,10 +319,14 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           float xdpi = deviceConfiguration.getDevice().getXDpi();
           float ydpi = deviceConfiguration.getDevice().getYDpi();
 
+          Project project = getProject();
+          IAndroidTarget target = manager.getSelectedTarget();
+          ThemeData theme = manager.getSelectedTheme();
+
           while (true) {
             mySession = RenderUtil
-              .createRenderSession(getProject(), layoutXmlText, myFile, manager.getSelectedTarget(), facet, config, xdpi, ydpi,
-                                   manager.getSelectedTheme(), 10000);
+              .createRenderSession(project, layoutXmlText, myFile, target, facet, config, xdpi, ydpi,
+                                   theme, 10000);
             if (mySession.getResult().getStatus() != Result.Status.ERROR_TIMEOUT) {
               break;
             }
