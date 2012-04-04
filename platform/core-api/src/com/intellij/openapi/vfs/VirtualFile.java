@@ -229,12 +229,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return false;
   }
 
-  /** @deprecated use {@linkplain #getCanonicalFile()} (to remove in IDEA 12) */
-  @Nullable
-  public VirtualFile getRealFile() {
-    return isSymLink() ? getCanonicalFile() : this;
-  }
-
   /**
    * Resolves all symbolic links containing in a path to this file and returns a path to a link target.
    *

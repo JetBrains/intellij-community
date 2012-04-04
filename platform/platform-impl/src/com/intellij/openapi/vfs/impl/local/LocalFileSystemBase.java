@@ -238,10 +238,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   protected static boolean isInvalidSymLink(@NotNull final VirtualFile file) {
     if (!file.isSymLink()) return false;
-    final VirtualFile realFile = file.getRealFile();
-    return realFile == null ||
-           realFile == file ||
-           FileUtil.isAncestor(convertToIOFile(realFile), convertToIOFile(file), true);
+    final VirtualFile target = file.getCanonicalFile();
+    return target == null ||
+           target == file ||
+           FileUtil.isAncestor(convertToIOFile(target), convertToIOFile(file), true);
   }
 
   @Override
@@ -314,16 +314,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtil.toVirtualFileArray(list));
-  }
-
-  @Override
-  public byte[] physicalContentsToByteArray(@NotNull final VirtualFile virtualFile) throws IOException {
-    return virtualFile.contentsToByteArray();
-  }
-
-  @Override
-  public long physicalLength(@NotNull final VirtualFile virtualFile) {
-    return virtualFile.getLength();
   }
 
   @Override

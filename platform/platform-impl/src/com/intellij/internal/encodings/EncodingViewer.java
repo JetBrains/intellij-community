@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -35,8 +34,9 @@ import java.util.Arrays;
 
 public class EncodingViewer extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.encodings.EncodingViewer");
+
   private JPanel myPanel;
-  private JTextField myText;
+  private JTextArea myText;
   private JComboBox myEncoding;
   private JButton myLoadFile;
   private byte[] myBytes;
@@ -61,8 +61,9 @@ public class EncodingViewer extends DialogWrapper {
 
   private void loadFrom(VirtualFile virtualFile) {
     try {
-      myBytes = LocalFileSystem.getInstance().physicalContentsToByteArray(virtualFile);
-    } catch (IOException e) {
+      myBytes = virtualFile.contentsToByteArray();
+    }
+    catch (IOException e) {
       LOG.error(e);
       return;
     }
@@ -74,7 +75,8 @@ public class EncodingViewer extends DialogWrapper {
     if (myBytes == null || selectedCharset == null) return;
     try {
       myText.setText(new String(myBytes, selectedCharset));
-    } catch (UnsupportedEncodingException e) {
+    }
+    catch (UnsupportedEncodingException e) {
       LOG.error(e);
     }
   }
@@ -90,8 +92,9 @@ public class EncodingViewer extends DialogWrapper {
     myEncoding.setSelectedIndex(defaultIndex);
     myEncoding.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() != ItemEvent.SELECTED) return;
-        refreshText();
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          refreshText();
+        }
       }
     });
   }
@@ -99,5 +102,4 @@ public class EncodingViewer extends DialogWrapper {
   protected JComponent createCenterPanel() {
     return myPanel;
   }
-
 }
