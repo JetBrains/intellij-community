@@ -287,9 +287,7 @@ public class GitImpl implements Git {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
                                                                                         GitCommand.PUSH);
     h.setSilent(false);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     h.addParameters(remote);
     h.addParameters(spec);
     return run(h, true);
@@ -303,6 +301,36 @@ public class GitImpl implements Git {
     GitBranch remoteBranch = pushSpec.getDest();
     String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
     return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination, listeners);
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
+                                     @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHERRY_PICK);
+    handler.addParameters("-x");
+    if (!autoCommit) {
+      handler.addParameters("-n");
+    }
+    handler.addParameters(hash);
+    addListeners(handler, listeners);
+    handler.setSilent(false);
+    return run(handler);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
+    h.addParameters("--unmerged");
+    h.setSilent(true);
+    return run(h);
+  }
+
+  private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
+    for (GitLineHandlerListener listener : listeners) {
+      handler.addLineListener(listener);
+    }
   }
 
   private GitCommandResult run(@NotNull GitLineHandler handler) {

@@ -92,4 +92,12 @@ public interface Git {
   @NotNull
   GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec,
                         @NotNull GitLineHandlerListener... listeners);
+
+  @NotNull
+  GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
+                              @NotNull GitLineHandlerListener... listeners);
+
+
+  @NotNull
+  GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);
 }
