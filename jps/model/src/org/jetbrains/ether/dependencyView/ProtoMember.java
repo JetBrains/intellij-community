@@ -29,11 +29,7 @@ abstract class ProtoMember extends Proto {
     return value != null;
   }
 
-  protected ProtoMember(final int access,
-                        final DependencyContext.S signature,
-                        final DependencyContext.S name,
-                        final TypeRepr.AbstractType t,
-                        final Object value) {
+  protected ProtoMember(final int access, final int signature, final int name, final TypeRepr.AbstractType t, final Object value) {
     super(access, signature, name);
     this.type = t;
     this.value = value;

@@ -4,13 +4,15 @@ import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
-import javax.sql.rowset.Predicate;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,8 +23,8 @@ import java.util.*;
  */
 public class ClassRepr extends Proto {
   private final DependencyContext context;
-  public final DependencyContext.S sourceFileName;
-  public final DependencyContext.S fileName;
+  public final int sourceFileName;
+  public final int fileName;
   public final TypeRepr.AbstractType superClass;
   public final Set<TypeRepr.AbstractType> interfaces;
   public final Set<TypeRepr.AbstractType> nestedClasses;
@@ -32,7 +34,7 @@ public class ClassRepr extends Proto {
   public final Set<FieldRepr> fields;
   public final Set<MethodRepr> methods;
 
-  public final DependencyContext.S outerClassName;
+  public final int outerClassName;
   public final boolean isLocal;
 
   public String getFileName() {
@@ -142,8 +144,8 @@ public class ClassRepr extends Proto {
     };
   }
 
-  public DependencyContext.S[] getSupers() {
-    final DependencyContext.S[] result = new DependencyContext.S[interfaces.size() + 1];
+  public int[] getSupers() {
+    final int[] result = new int[interfaces.size() + 1];
 
     result[0] = ((TypeRepr.ClassType)superClass).className;
 
@@ -171,20 +173,15 @@ public class ClassRepr extends Proto {
     }
   }
 
-  public ClassRepr(final DependencyContext context,
-                   final int a,
-                   final DependencyContext.S sn,
-                   final DependencyContext.S fn,
-                   final DependencyContext.S n,
-                   final DependencyContext.S sig,
-                   final DependencyContext.S sup,
+  public ClassRepr(final DependencyContext context, final int a, final int sn, final int fn, final int n, final int sig,
+                   final int sup,
                    final String[] i,
                    final Collection<String> ns,
                    final Set<FieldRepr> f,
                    final Set<MethodRepr> m,
                    final Set<ElementType> targets,
                    final RetentionPolicy policy,
-                   final DependencyContext.S outerClassName,
+                   final int outerClassName,
                    final boolean localClassFlag) {
     super(a, sig, n);
     this.context = context;
@@ -205,8 +202,8 @@ public class ClassRepr extends Proto {
     super(in);
     try {
       this.context = context;
-      fileName = new DependencyContext.S(in);
-      sourceFileName = new DependencyContext.S(in);
+      fileName = in.readInt();
+      sourceFileName = in.readInt();
       superClass = TypeRepr.externalizer(context).read(in);
       interfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
       nestedClasses = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
@@ -218,7 +215,7 @@ public class ClassRepr extends Proto {
 
       policy = s.length() == 0 ? null : RetentionPolicy.valueOf(s);
 
-      outerClassName = new DependencyContext.S(in);
+      outerClassName = in.readInt();
       isLocal = in.readBoolean();
     }
     catch (IOException e) {
@@ -230,8 +227,8 @@ public class ClassRepr extends Proto {
   public void save(final DataOutput out) {
     try {
       super.save(out);
-      fileName.save(out);
-      sourceFileName.save(out);
+      out.writeInt(fileName);
+      out.writeInt(sourceFileName);
       superClass.save(out);
       RW.save(interfaces, out);
       RW.save(nestedClasses, out);
@@ -239,7 +236,7 @@ public class ClassRepr extends Proto {
       RW.save(methods, out);
       RW.save(targets, UsageRepr.AnnotationUsage.elementTypeExternalizer, out);
       out.writeUTF(policy == null ? "" : policy.toString());
-      outerClassName.save(out);
+      out.writeInt(outerClassName);
       out.writeBoolean(isLocal);
     }
     catch (IOException e) {
@@ -258,24 +255,22 @@ public class ClassRepr extends Proto {
 
     ClassRepr classRepr = (ClassRepr)o;
 
-    if (fileName != null ? !fileName.equals(classRepr.fileName) : classRepr.fileName != null) return false;
-    if (name != null ? !name.equals(classRepr.name) : classRepr.name != null) return false;
+    if (fileName != classRepr.fileName) return false;
+    if (name != classRepr.name) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = fileName != null ? fileName.hashCode() : 0;
-    result = 31 * result + (name != null ? name.hashCode() : 0);
-    return result;
+    return 31 * fileName + name;
   }
 
   public UsageRepr.Usage createUsage() {
     return UsageRepr.createClassUsage(context, name);
   }
 
-  public DependencyContext.S getSourceFileName() {
+  public int getSourceFileName() {
     return sourceFileName;
   }
 
@@ -283,7 +278,7 @@ public class ClassRepr extends Proto {
     return getPackageName(name);
   }
 
-  public String getPackageName(final DependencyContext.S s) {
+  public String getPackageName(final int s) {
     return getPackageName(context.getValue(s));
 
   }
@@ -298,9 +293,9 @@ public class ClassRepr extends Proto {
     return raw.substring(0, index);
   }
 
-  public FieldRepr findField(final DependencyContext.S name) {
+  public FieldRepr findField(final int name) {
     for (FieldRepr f : fields) {
-      if (f.name.equals(name)) {
+      if (f.name == name) {
         return f;
       }
     }

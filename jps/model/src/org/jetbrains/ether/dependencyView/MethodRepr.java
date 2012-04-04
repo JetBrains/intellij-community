@@ -88,7 +88,7 @@ class MethodRepr extends ProtoMember {
     };
   }
 
-  public void updateClassUsages(final DependencyContext context, final DependencyContext.S owner, final UsageRepr.Cluster s) {
+  public void updateClassUsages(final DependencyContext context, final int owner, final UsageRepr.Cluster s) {
     type.updateClassUsages(context, owner, s);
 
     for (int i = 0; i < argumentTypes.length; i++) {
@@ -102,13 +102,7 @@ class MethodRepr extends ProtoMember {
     }
   }
 
-  public MethodRepr(final DependencyContext context,
-                    final int a,
-                    final DependencyContext.S n,
-                    final DependencyContext.S s,
-                    final String d,
-                    final String[] e,
-                    final Object value) {
+  public MethodRepr(final DependencyContext context, final int a, final int n, final int s, final String d, final String[] e, final Object value) {
     super(a, s, n, TypeRepr.getType(context, Type.getReturnType(d)), value);
     exceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, e, new HashSet<TypeRepr.AbstractType>());
     argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
@@ -152,7 +146,7 @@ class MethodRepr extends ProtoMember {
       @Override
       public boolean satisfy(MethodRepr that) {
         if (me == that) return true;
-        return me.name.equals(that.name) && Arrays.equals(me.argumentTypes, that.argumentTypes);
+        return me.name == that.name && Arrays.equals(me.argumentTypes, that.argumentTypes);
       }
     };
   }
@@ -164,12 +158,12 @@ class MethodRepr extends ProtoMember {
 
     final MethodRepr that = (MethodRepr)o;
 
-    return name.equals(that.name) && type.equals(that.type) && Arrays.equals(argumentTypes, that.argumentTypes);
+    return name == that.name && type.equals(that.type) && Arrays.equals(argumentTypes, that.argumentTypes);
   }
 
   @Override
   public int hashCode() {
-    return 31 * (31 * Arrays.hashCode(argumentTypes) + type.hashCode()) + name.hashCode();
+    return 31 * (31 * Arrays.hashCode(argumentTypes) + type.hashCode()) + name;
   }
 
   private String getDescr(final DependencyContext context) {
@@ -187,11 +181,11 @@ class MethodRepr extends ProtoMember {
     return buf.toString();
   }
 
-  public UsageRepr.Usage createUsage(final DependencyContext context, final DependencyContext.S owner) {
+  public UsageRepr.Usage createUsage(final DependencyContext context, final int owner) {
     return UsageRepr.createMethodUsage(context, name, owner, getDescr(context));
   }
 
-  public UsageRepr.Usage createMetaUsage(final DependencyContext context, final DependencyContext.S owner) {
+  public UsageRepr.Usage createMetaUsage(final DependencyContext context, final int owner) {
     return UsageRepr.createMetaMethodUsage(context, name, owner, getDescr(context));
   }
 }

@@ -15,8 +15,7 @@
  */
 package org.jetbrains.ether.dependencyView;
 
-import java.util.Collection;
-import java.util.Map;
+import gnu.trove.TIntIntProcedure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -25,15 +24,13 @@ import java.util.Map;
  * Time: 23:48
  * To change this template use File | Settings | File Templates.
  */
-interface Maplet<K, V> {
-  boolean containsKey(final Object key);
-  V get(final Object key);
-  void put(final K key, final V value);
-  void putAll(Maplet<K, V> m);
-  void remove(final Object key);
+interface IntIntMaplet {
+  boolean containsKey(final int key);
+  int get(final int key);
+  void put(final int key, final int value);
+  void putAll(IntIntMaplet m);
+  void remove(final int key);
   void close();
-  Collection<K> keyCollection();
-  Collection<Map.Entry<K, V>> entrySet();
-
+  void forEachEntry(TIntIntProcedure proc);
   void flush(boolean memoryCachesOnly);
 }

@@ -15,17 +15,18 @@
  */
 package org.jetbrains.ether.dependencyView;
 
+import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import gnu.trove.TIntIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,21 +35,31 @@ import java.util.Map;
  * Time: 0:05
  * To change this template use File | Settings | File Templates.
  */
-public class PersistentMaplet<K, V> implements Maplet<K, V> {
+public class IntIntPersistentMaplet implements IntIntMaplet {
   private static final Object NULL_OBJ = new Object();
   private static final int CACHE_SIZE = 512;
-  private final PersistentHashMap<K, V> myMap;
-  private final SLRUCache<K, Object> myCache;
+  private final PersistentHashMap<Integer, Integer> myMap;
+  private final SLRUCache<Integer, Object> myCache;
 
-  public PersistentMaplet(final File file, final KeyDescriptor<K> k, final DataExternalizer<V> v) {
+  public IntIntPersistentMaplet(final File file, final KeyDescriptor<Integer> k) {
     try {
-      myMap = new PersistentHashMap<K, V>(file, k, v);
-      myCache = new SLRUCache<K, Object>(CACHE_SIZE, CACHE_SIZE) {
+      myMap = new PersistentHashMap<Integer, Integer>(file, k, new DataExternalizer<Integer>() {
+        @Override
+        public void save(DataOutput out, Integer value) throws IOException {
+          out.writeInt(value);
+        }
+
+        @Override
+        public Integer read(DataInput in) throws IOException {
+          return in.readInt();
+        }
+      });
+      myCache = new SLRUCache<Integer, Object>(CACHE_SIZE, CACHE_SIZE) {
         @NotNull
         @Override
-        public Object createValue(K key) {
+        public Object createValue(Integer key) {
           try {
-            final V v1 = myMap.get(key);
+            final Integer v1 = myMap.get(key);
             return v1 == null? NULL_OBJ : v1;
           }
           catch (IOException e) {
@@ -63,9 +74,9 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public boolean containsKey(final Object key) {
+  public boolean containsKey(final int key) {
     try {
-      return myMap.containsMapping((K)key);
+      return myMap.containsMapping(key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -73,13 +84,13 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public V get(final Object key) {
-    final Object obj = myCache.get((K)key);
-    return obj == NULL_OBJ? null : (V)obj;
+  public int get(final int key) {
+    final Object obj = myCache.get(key);
+    return obj == NULL_OBJ? -1 : (Integer)obj;
   }
 
   @Override
-  public void put(final K key, final V value) {
+  public void put(final int key, final int value) {
     try {
       myCache.remove(key);
       myMap.put(key, value);
@@ -90,18 +101,21 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public void putAll(final Maplet<K, V> m) {
-    for (Map.Entry<K, V> e : m.entrySet()) {
-      put(e.getKey(), e.getValue());
-    }
+  public void putAll(final IntIntMaplet m) {
+    m.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int key, int value) {
+        put(key, value);
+        return true;
+      }
+    });
   }
 
   @Override
-  public void remove(final Object key) {
+  public void remove(final int key) {
     try {
-      final K _key = (K)key;
-      myCache.remove(_key);
-      myMap.remove(_key);
+      myCache.remove(key);
+      myMap.remove(key);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -131,44 +145,20 @@ public class PersistentMaplet<K, V> implements Maplet<K, V> {
   }
 
   @Override
-  public Collection<K> keyCollection() {
+  public void forEachEntry(final TIntIntProcedure proc) {
     try {
-      return myMap.getAllKeysWithExistingMapping();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public Collection<Map.Entry<K, V>> entrySet() {
-    final Collection<Map.Entry<K, V>> result = new LinkedList<Map.Entry<K, V>>();
-
-    try {
-      for (final K key : myMap.getAllKeysWithExistingMapping()) {
-        final V value = get(key);
-
-        final Map.Entry<K, V> entry = new Map.Entry<K, V>() {
-          @Override
-          public K getKey() {
-            return key;
+      myMap.processKeysWithExistingMapping(new Processor<Integer>() {
+        @Override
+        public boolean process(Integer key) {
+          try {
+            final Integer value = myMap.get(key);
+            return value == null? proc.execute(key, -1) : proc.execute(key, value);
           }
-
-          @Override
-          public V getValue() {
-            return value;
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
-
-          @Override
-          public V setValue(V value) {
-            return null;
-          }
-        };
-
-        result.add(entry);
-      }
-
-      return result;
+        }
+      });
     }
     catch (IOException e) {
       throw new RuntimeException(e);

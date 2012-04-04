@@ -1,11 +1,11 @@
 package org.jetbrains.ether;
 
 import com.intellij.util.io.DataExternalizer;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 
 import java.io.*;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,6 +32,27 @@ public class RW {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  public static <X> void save(final TIntHashSet x, final DataOutput out) {
+    try {
+      out.writeInt(x.size());
+      x.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int value) {
+          try {
+            out.writeInt(value);
+            return true;
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+    }
+    catch (IOException c) {
+      throw new RuntimeException(c);
     }
   }
 
@@ -70,6 +91,21 @@ public class RW {
       }
 
       return result;
+    }
+    catch (IOException x) {
+      throw new RuntimeException(x);
+    }
+  }
+
+  public static TIntHashSet read(final TIntHashSet acc, final DataInput in) {
+    try {
+      final int size = in.readInt();
+
+      for (int i = 0; i<size; i++) {
+        acc.add(in.readInt());
+      }
+
+      return acc;
     }
     catch (IOException x) {
       throw new RuntimeException(x);

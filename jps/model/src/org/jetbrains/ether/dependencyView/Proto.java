@@ -3,7 +3,9 @@ package org.jetbrains.ether.dependencyView;
 import groovyjarjarasm.asm.Opcodes;
 import org.jetbrains.ether.RW;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,10 +16,10 @@ import java.io.*;
  */
 class Proto implements RW.Savable {
   public final int access;
-  public final DependencyContext.S signature;
-  public final DependencyContext.S name;
+  public final int signature;
+  public final int name;
 
-  protected Proto(final int access, final DependencyContext.S signature, final DependencyContext.S name) {
+  protected Proto(final int access, final int signature, final int name) {
     this.access = access;
     this.signature = signature;
     this.name = name;
@@ -26,8 +28,8 @@ class Proto implements RW.Savable {
   protected Proto(final DataInput in) {
     try {
       access = in.readInt();
-      signature = new DependencyContext.S(in);
-      name = new DependencyContext.S(in);
+      signature = in.readInt();
+      name = in.readInt();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -38,8 +40,8 @@ class Proto implements RW.Savable {
   public void save(final DataOutput out) {
     try {
       out.writeInt(access);
-      signature.save(out);
-      name.save(out);
+      out.writeInt(signature);
+      out.writeInt(name);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -53,7 +55,7 @@ class Proto implements RW.Savable {
       diff |= Difference.ACCESS;
     }
 
-    if (!past.signature.equals(signature)) {
+    if (past.signature != signature) {
       diff |= Difference.SIGNATURE;
     }
 

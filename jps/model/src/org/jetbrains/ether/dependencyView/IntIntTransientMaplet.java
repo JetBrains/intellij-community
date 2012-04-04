@@ -15,10 +15,8 @@
  */
 package org.jetbrains.ether.dependencyView;
 
-import com.intellij.util.containers.hash.HashMap;
-
-import java.util.Collection;
-import java.util.Map;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntIntProcedure;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,33 +25,37 @@ import java.util.Map;
  * Time: 0:00
  * To change this template use File | Settings | File Templates.
  */
-public class TransientMaplet<K, V> implements Maplet<K, V>{
-  private final Map<K, V> myMap = new HashMap<K, V>();
+public class IntIntTransientMaplet implements IntIntMaplet {
+  private final TIntIntHashMap myMap = new TIntIntHashMap();
   
   @Override
-  public boolean containsKey(final Object key) {
+  public boolean containsKey(final int key) {
     return myMap.containsKey(key);
   }
 
   @Override
-  public V get(final Object key) {
+  public int get(final int key) {
     return myMap.get(key);
   }
 
   @Override
-  public void put(final K key, final V value) {
+  public void put(final int key, final int value) {
     myMap.put(key, value);
   }
 
   @Override
-  public void putAll(final Maplet<K, V> m) {
-    for (Map.Entry<K, V> e : m.entrySet()) {
-      myMap.put(e.getKey(), e.getValue());
-    }
+  public void putAll(final IntIntMaplet m) {
+    m.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int key, int value) {
+        myMap.put(key, value);
+        return true;
+      }
+    });
   }
 
   @Override
-  public void remove(final Object key) {
+  public void remove(final int key) {
     myMap.remove(key);
   }
 
@@ -66,12 +68,7 @@ public class TransientMaplet<K, V> implements Maplet<K, V>{
   }
 
   @Override
-  public Collection<K> keyCollection() {
-    return myMap.keySet();
-  }
-
-  @Override
-  public Collection<Map.Entry<K, V>> entrySet() {
-    return myMap.entrySet();
+  public void forEachEntry(TIntIntProcedure proc) {
+    myMap.forEachEntry(proc);
   }
 }

@@ -1,6 +1,7 @@
 package org.jetbrains.ether.dependencyView;
 
 import com.intellij.openapi.util.Pair;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.asm4.*;
 import org.jetbrains.asm4.signature.SignatureReader;
 import org.jetbrains.asm4.signature.SignatureVisitor;
@@ -89,13 +90,19 @@ class ClassfileAnalyzer {
       private final TypeRepr.ClassType type;
       private final ElementType target;
 
-      private final Set<DependencyContext.S> usedArguments = new HashSet<DependencyContext.S>();
+      private final TIntHashSet myUsedArguments = new TIntHashSet();
 
       private AnnotationCrawler(final TypeRepr.ClassType type, final ElementType target) {
         super(Opcodes.ASM4);
         this.type = type;
         this.target = target;
-        annotationTargets.put(type, target);
+        final Set<ElementType> targets = myAnnotationTargets.get(type);
+        if (targets == null) {
+          myAnnotationTargets.put(type, EnumSet.of(target));
+        }
+        else {
+          targets.add(target);
+        }
         usages.addUsage(context.get(classNameHolder.get()), UsageRepr.createClassUsage(context, type.className));
       }
 
@@ -144,25 +151,25 @@ class ClassfileAnalyzer {
       }
 
       public void visit(String name, Object value) {
-        final DependencyContext.S residence = context.get(classNameHolder.get());
+        final int residence = context.get(classNameHolder.get());
         final String methodDescr = getMethodDescr(value);
-        final DependencyContext.S methodName = context.get(name);
+        final int methodName = context.get(name);
 
         usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, type.className, methodDescr));
         usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, type.className, methodDescr));
 
-        usedArguments.add(methodName);
+        myUsedArguments.add(methodName);
       }
 
       public void visitEnum(String name, String desc, String value) {
-        final DependencyContext.S residence = context.get(classNameHolder.get());
-        final DependencyContext.S methodName = context.get(name);
+        final int residence = context.get(classNameHolder.get());
+        final int methodName = context.get(name);
         final String methodDescr = "()" + desc;
 
         usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, type.className, methodDescr));
         usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, type.className, methodDescr));
 
-        usedArguments.add(methodName);
+        myUsedArguments.add(methodName);
       }
 
       public AnnotationVisitor visitAnnotation(String name, String desc) {
@@ -170,18 +177,18 @@ class ClassfileAnalyzer {
       }
 
       public AnnotationVisitor visitArray(String name) {
-        usedArguments.add(context.get(name));
+        myUsedArguments.add(context.get(name));
         return this;
       }
 
       public void visitEnd() {
-        final Set<DependencyContext.S> s = annotationArguments.get(type);
+        final TIntHashSet s = myAnnotationArguments.get(type);
 
         if (s == null) {
-          annotationArguments.put(type, usedArguments);
+          myAnnotationArguments.put(type, myUsedArguments);
         }
         else {
-          s.retainAll(usedArguments);
+          s.retainAll(myUsedArguments.toArray());
         }
       }
     }
@@ -257,13 +264,13 @@ class ClassfileAnalyzer {
 
     Boolean takeIntoAccount = false;
 
-    final DependencyContext.S fileName;
+    final int fileName;
     int access;
-    DependencyContext.S name;
+    int name;
     String superClass;
     String[] interfaces;
     String signature;
-    DependencyContext.S sourceFile;
+    int sourceFile;
 
     final Holder<String> classNameHolder = new Holder<String>();
     final Holder<String> outerClassName = new Holder<String>();
@@ -281,17 +288,10 @@ class ClassfileAnalyzer {
     final Set<ElementType> targets = new HashSet<ElementType>();
     RetentionPolicy policy = null;
 
-    private TransientMultiMaplet.CollectionConstructor<ElementType> elementTypeSetConstructor = new TransientMultiMaplet.CollectionConstructor<ElementType>() {
-      public Set<ElementType> create() {
-        return new HashSet<ElementType>();
-      }
-    };
+    final Map<TypeRepr.ClassType, TIntHashSet> myAnnotationArguments = new HashMap<TypeRepr.ClassType, TIntHashSet>();
+    final Map<TypeRepr.ClassType, Set<ElementType>> myAnnotationTargets = new HashMap<TypeRepr.ClassType, Set<ElementType>>();
 
-    final Map<TypeRepr.ClassType, Set<DependencyContext.S>> annotationArguments = new HashMap<TypeRepr.ClassType, Set<DependencyContext.S>>();
-    final TransientMultiMaplet<TypeRepr.ClassType, ElementType> annotationTargets =
-      new TransientMultiMaplet<TypeRepr.ClassType, ElementType>(elementTypeSetConstructor);
-
-    public ClassCrawler(final DependencyContext.S fn) {
+    public ClassCrawler(final int fn) {
       super(Opcodes.ASM4);
       fileName = fn;
     }
@@ -302,8 +302,8 @@ class ClassfileAnalyzer {
 
     public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> getResult() {
       final ClassRepr repr =
-        takeIntoAccount ? new ClassRepr(context, access, sourceFile, fileName, name, context.get(signature), context.get(superClass), interfaces, nestedClasses, fields,
-                                        methods, targets, policy, context.get(outerClassName.get()), localClassFlag.get()) : null;
+        takeIntoAccount ? new ClassRepr(
+          context, access, sourceFile, fileName, name, context.get(signature), context.get(superClass), interfaces, nestedClasses, fields, methods, targets, policy, context.get(outerClassName.get()), localClassFlag.get()) : null;
 
       if (repr != null) {
         repr.updateClassUsages(context, usages);
@@ -343,9 +343,10 @@ class ClassfileAnalyzer {
 
     @Override
     public void visitEnd() {
-      for (TypeRepr.ClassType type : annotationTargets.keyCollection()) {
-        final Collection<ElementType> targets = annotationTargets.get(type);
-        final Set<DependencyContext.S> usedArguments = annotationArguments.get(type);
+      for (Map.Entry<TypeRepr.ClassType, Set<ElementType>> entry : myAnnotationTargets.entrySet()) {
+        final TypeRepr.ClassType type = entry.getKey();
+        final Collection<ElementType> targets = entry.getValue();
+        final TIntHashSet usedArguments = myAnnotationArguments.get(type);
 
         annotationUsages.add(UsageRepr.createAnnotationUsage(context, type, usedArguments, targets));
       }
@@ -495,9 +496,9 @@ class ClassfileAnalyzer {
 
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String desc) {
-          final DependencyContext.S residence = context.get(classNameHolder.get());
-          final DependencyContext.S methodName = context.get(name);
-          final DependencyContext.S methodOwner = context.get(owner);
+          final int residence = context.get(classNameHolder.get());
+          final int methodName = context.get(name);
+          final int methodOwner = context.get(owner);
 
           usages.addUsage(residence, UsageRepr.createMethodUsage(context, methodName, methodOwner, desc));
           usages.addUsage(residence, UsageRepr.createMetaMethodUsage(context, methodName, methodOwner, desc));
@@ -524,7 +525,7 @@ class ClassfileAnalyzer {
     }
   }
 
-  public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> analyze(final DependencyContext.S fileName, final ClassReader cr) {
+  public Pair<ClassRepr, Pair<UsageRepr.Cluster, Set<UsageRepr.Usage>>> analyze(final int fileName, final ClassReader cr) {
     final ClassCrawler visitor = new ClassCrawler(fileName);
 
     cr.accept(visitor, 0);
