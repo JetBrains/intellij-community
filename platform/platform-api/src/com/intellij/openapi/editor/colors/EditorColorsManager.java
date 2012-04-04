@@ -35,6 +35,7 @@ public abstract class EditorColorsManager {
 
   public abstract void setGlobalScheme(EditorColorsScheme scheme);
 
+  @NotNull
   public abstract EditorColorsScheme getGlobalScheme();
 
   public abstract EditorColorsScheme getScheme(@NonNls String schemeName);
