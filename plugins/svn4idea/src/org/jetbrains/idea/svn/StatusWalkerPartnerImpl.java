@@ -16,8 +16,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -68,8 +70,13 @@ public class StatusWalkerPartnerImpl implements StatusWalkerPartner {
     }
   }
 
-  public boolean isExcluded(VirtualFile vFile) {
-    return myExcludedFileIndex.isExcludedFile(vFile);
+  public boolean isExcluded(final VirtualFile vFile) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return myExcludedFileIndex.isExcludedFile(vFile);
+      }
+    });
   }
 
   public boolean isIgnoredIdeaLevel(VirtualFile vFile) {

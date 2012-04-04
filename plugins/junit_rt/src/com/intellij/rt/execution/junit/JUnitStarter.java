@@ -32,6 +32,7 @@ import java.util.Vector;
 public class JUnitStarter {
   public static final int VERSION = 5;
   public static final String IDE_VERSION = "-ideVersion";
+  public static final String JUNIT3_PARAMETER = "-junit3";
   private static final String SOCKET = "-socket";
   private static String ourForkMode;
   private static String ourCommandFileName;
@@ -64,11 +65,15 @@ public class JUnitStarter {
   }
 
   private static boolean processParameters(Vector args, final List listeners) {
+    boolean isJunit4 = true;
     Vector result = new Vector(args.size());
     for (int i = 0; i < args.size(); i++) {
       String arg = (String)args.get(i);
       if (arg.startsWith(IDE_VERSION)) {
         //ignore
+      }
+      else if (arg.equals(JUNIT3_PARAMETER)){
+        isJunit4 = false;
       }
       else {
         if (arg.startsWith("@@@")) {
@@ -115,6 +120,14 @@ public class JUnitStarter {
     for (int i = 0; i < result.size(); i++) {
       String arg = (String)result.get(i);
       args.addElement(arg);
+    }
+    if (!isJunit4) {
+      try {
+        Class.forName("org.junit.runner.Computer");
+      }
+      catch (ClassNotFoundException e) {
+        return false;
+      }
     }
     final String forceJUnit3 = System.getProperty("idea.force.junit3");
     if (forceJUnit3 != null && Boolean.valueOf(forceJUnit3).booleanValue()) return false;

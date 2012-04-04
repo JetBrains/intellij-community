@@ -46,11 +46,7 @@ public class VcsGuess {
     if (!file.isInLocalFileSystem()) {
       return null;
     }
-    if (myExcludedFileIndex.isInContent(file) || isFileInBaseDir(file) ||
-        myVcsManager.hasExplicitMapping(file) || file.equals(myProject.getBaseDir())) {
-      if (myExcludedFileIndex.isExcludedFile(file)) {
-        return null;
-      }
+    if (isFileInIndex(null, file)) {
       return myVcsManager.getVcsFor(file);
     }
     return null;
@@ -69,35 +65,28 @@ public class VcsGuess {
     if (validParent == null) {
       return null;
     }
-    if (myExcludedFileIndex.isInContent(validParent) || isFileInBaseDir(filePath) ||
-        myVcsManager.hasExplicitMapping(validParent) || isInDirectoryBasedRoot(validParent)) {
-      if (myExcludedFileIndex.isExcludedFile(validParent)) {
-        return null;
-      }
+    final boolean take = isFileInIndex(filePath, validParent);
+    if (take) {
       return myVcsManager.getVcsFor(validParent);
     }
     return null;
   }
 
-  private boolean isInDirectoryBasedRoot(final VirtualFile file) {
-    if (file == null) return false;
-    final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
-    if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-      final VirtualFile baseDir = myProject.getBaseDir();
-      if (baseDir == null) return false;
-      final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      return (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtil.isAncestor(ideaDir, file, false));
-    }
-    return false;
+  private Boolean isFileInIndex(@Nullable final FilePath filePath, final VirtualFile validParent) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        final boolean inContent = myVcsManager.isFileInContent(validParent);
+        if (inContent) return true;
+        if (filePath != null) {
+          return isFileInBaseDir(filePath, myProject.getBaseDir()) && ! ! myExcludedFileIndex.isExcludedFile(validParent);
+        }
+        return false;
+      }
+    });
   }
 
-  private boolean isFileInBaseDir(final VirtualFile file) {
-    VirtualFile parent = file.getParent();
-    return !file.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
-  }
-
-  private boolean isFileInBaseDir(final FilePath filePath) {
+  private boolean isFileInBaseDir(final FilePath filePath, final VirtualFile baseDir) {
     final VirtualFile parent = filePath.getVirtualFileParent();
-    return !filePath.isDirectory() && parent != null && parent.equals(myProject.getBaseDir());
+    return !filePath.isDirectory() && parent != null && parent.equals(baseDir);
   }
 }

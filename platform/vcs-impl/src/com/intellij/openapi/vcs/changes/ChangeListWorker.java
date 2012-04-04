@@ -214,7 +214,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap.put(name, newList);
     if (inUpdate) {
       // scope is not important: nothing had been added jet, nothing to move to "old state" members
-      newList.startProcessingChanges(myProject, null);
+      newList.startProcessingChanges(myProject, null);      // this is executed only when use through GATE
     }
     if (ChangeListManagerImpl.DEBUG) {
       System.out.println("ChangeListWorker.addChangeList: " + newList);

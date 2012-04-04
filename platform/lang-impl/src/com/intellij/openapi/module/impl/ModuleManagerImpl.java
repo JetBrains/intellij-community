@@ -40,6 +40,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -765,6 +766,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
+        final VirtualFile moduleVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath));
+        if (moduleVFile != null) {
+          moduleVFile.refresh(false, false);
+        }
         module = new ModuleImpl(filePath, myProject);
         module.getStateStore().load();
         module.loadModuleComponents();

@@ -103,6 +103,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private JBLabel myTestLabel;
   private JComboBox myTypeChooser;
   private JBLabel mySearchForTestsLabel;
+  private JPanel myScopesPanel;
   @NonNls private static final String NONE = "none";
   @NonNls private static final String METHOD = "method";
   @NonNls private static final String KLASS = "class";
@@ -268,6 +269,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
     if (selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE) {
       myPackagePanel.setVisible(true);
+      myScopesPanel.setVisible(true);
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
@@ -277,6 +279,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setSelectedItem(selectedItem);
     } else if (selectedType == JUnitConfigurationModel.DIR) {
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
       myDir.setVisible(true);
       myPattern.setVisible(false);
       myClass.setVisible(false);
@@ -287,6 +290,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }
     else if (selectedType == JUnitConfigurationModel.CLASS) {
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
       myPattern.setVisible(false);
       myDir.setVisible(false);
       myClass.setVisible(true);
@@ -297,6 +301,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }
     else if (selectedType == JUnitConfigurationModel.METHOD){
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(false);
       myPattern.setVisible(false);
       myDir.setVisible(false);
       myClass.setVisible(true);
@@ -305,6 +310,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myForkCb.setSelectedItem(NONE);
     } else {
       myPackagePanel.setVisible(false);
+      myScopesPanel.setVisible(true);
       myPattern.setVisible(true);
       myDir.setVisible(false);
       myClass.setVisible(false);
@@ -429,7 +435,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       getTestLocation(i).setEnabled(enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE) {
+    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE && newType != JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(true);
     }
     else {
