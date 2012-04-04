@@ -2423,14 +2423,15 @@ def processOne(name, mod_file_name, doing_builtins):
                             subfile.close()
         except:
             exctype, value = sys.exc_info()[:2]
-            msg = "Failed to process %r while %s: %s" % (name, _current_action, str(value))
-            report(msg)
+            msg = "Failed to process %r while %s: %s"
+            args = name, _current_action, str(value)
+            report(msg, *args)
             if outfile is not None and not outfile.closed:
                 outfile.write("# encoding: %s\n" % OUT_ENCODING)
                 outfile.write("# module %s\n" % name)
                 outfile.write(VERSION_CONTROL_HEADER_FORMAT % (mod_file_name, VERSION))
                 outfile.write("\n\n")
-                outfile.write("# Skeleton generation error:\n#\n#     " + msg + "\n")
+                outfile.write("# Skeleton generation error:\n#\n#     " + (msg % args) + "\n")
             if debug_mode:
                 if sys.platform == 'cli':
                     traceback.print_exc(file=sys.stderr)
