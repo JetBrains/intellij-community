@@ -124,6 +124,16 @@ public class SmartFMap<K,V> implements Map<K,V> {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    return obj instanceof Map && entrySet().equals(((Map)obj).entrySet());
+  }
+
+  @Override
+  public int hashCode() {
+    return entrySet().hashCode();
+  }
+
+  @Override
   public boolean containsKey(Object key) {
     if (key == null) {
       return false;
