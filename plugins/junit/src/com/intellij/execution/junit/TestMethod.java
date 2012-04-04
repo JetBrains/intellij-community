@@ -25,9 +25,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 
 class TestMethod extends TestObject {
@@ -43,11 +45,28 @@ class TestMethod extends TestObject {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     configureModule(getJavaParameters(), module, data.getMainClassName());
+    addJUnit3Parameter(data, module.getProject());
     getJavaParameters().getProgramParametersList().add(data.getMainClassName() + "," + data.getMethodName());
   }
 
   protected void defaultInitialize() throws ExecutionException {
     super.initialize();
+  }
+
+  protected void addJUnit3Parameter(final JUnitConfiguration.Data data, Project project) {
+    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), GlobalSearchScope.allScope(project));
+    LOG.assertTrue(psiClass != null);
+    if (JUnitUtil.isJUnit4TestClass(psiClass)) {
+      return;
+    }
+    final String methodName = data.getMethodName();
+    final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
+    for (PsiMethod method : methods) {
+      if (JUnitUtil.isTestAnnotated(method)) {
+        return;
+      }
+    }
+    myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT3_PARAMETER);
   }
 
   public String suggestActionName() {
