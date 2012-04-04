@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,8 @@ public class CodeEditUtil {
       return Boolean.TRUE;
     }
   };
+  private static final ThreadLocal<NotNullFunction<ASTNode, Boolean>> NODE_REFORMAT_STRATEGY
+    = new ThreadLocal<NotNullFunction<ASTNode, Boolean>>();
   
   public static final Key<Boolean> OUTER_OK = new Key<Boolean>("OUTER_OK");
 
@@ -360,7 +363,11 @@ public class CodeEditUtil {
    * @return        <code>true</code> if given node is configured to be reformatted; <code>false</code> otherwise
    */
   public static boolean isMarkedToReformat(final ASTNode node) {
-    return node.getCopyableUserData(REFORMAT_KEY) != null && isSuspendedNodesReformattingAllowed();
+    if (node.getCopyableUserData(REFORMAT_KEY) == null || !isSuspendedNodesReformattingAllowed()) {
+      return false;
+    }
+    final NotNullFunction<ASTNode, Boolean> strategy = NODE_REFORMAT_STRATEGY.get();
+    return strategy == null || strategy.fun(node);
   }
 
   /**
@@ -448,5 +455,15 @@ public class CodeEditUtil {
    */
   public static void setAllowSuspendNodesReformatting(boolean allow) {
     ALLOW_NODES_REFORMATTING.set(allow);
+  }
+
+  /**
+   * Allows to control the same process as {@link #setAllowSuspendNodesReformatting(boolean)} but on a node level. I.e. it allows
+   * to answer if particular node can be reformatted if {@link #isSuspendedNodesReformattingAllowed() global reformatting is allowed}.
+   * 
+   * @param strategy  strategy to use; <code>null</code> as an indication that no fine-grained checking should be performed
+   */
+  public static void setNodeReformatStrategy(@Nullable NotNullFunction<ASTNode, Boolean> strategy) {
+    NODE_REFORMAT_STRATEGY.set(strategy);
   }
 }
