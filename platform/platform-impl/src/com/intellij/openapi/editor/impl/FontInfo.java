@@ -32,26 +32,23 @@ public class FontInfo {
 
   private final TIntHashSet mySymbolsToBreakDrawingIteration = new TIntHashSet();
 
-  private final String myFamilyName;
   private final Font myFont;
   private final int mySize;
   @JdkConstants.FontStyle private final int myStyle;
   private final TIntHashSet mySafeCharacters = new TIntHashSet();
   private FontMetrics myFontMetrics = null;
   private final int[] charWidth = new int[128];
-  private final boolean myHasGlyphsToBreakDrawingIteration;
+  private boolean myHasGlyphsToBreakDrawingIteration;
+  private boolean myCheckedForProblemGlyphs;
 
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
-    myFamilyName = familyName;
     mySize = size;
     myStyle = style;
     myFont = new Font(familyName, style, size);
-    
-    parseProblemGlyphs();
-    myHasGlyphsToBreakDrawingIteration = !mySymbolsToBreakDrawingIteration.isEmpty();
   }
   
   private void parseProblemGlyphs() {
+    myCheckedForProblemGlyphs = true;
     BufferedImage buffer = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB);
     final Graphics graphics = buffer.getGraphics();
     if (!(graphics instanceof Graphics2D)) {
@@ -70,6 +67,7 @@ public class FontInfo {
         mySymbolsToBreakDrawingIteration.add(c);
       }
     }
+    myHasGlyphsToBreakDrawingIteration = !mySymbolsToBreakDrawingIteration.isEmpty();
   }
 
   /**
@@ -86,6 +84,9 @@ public class FontInfo {
    * @return    true if the {@link #getFont() target font} has problem glyphs; <code>false</code> otherwise
    */
   public boolean hasGlyphsToBreakDrawingIteration() {
+    if (!myCheckedForProblemGlyphs) {
+      parseProblemGlyphs();
+    }
     return myHasGlyphsToBreakDrawingIteration;
   }
 
@@ -95,6 +96,9 @@ public class FontInfo {
    */
   @NotNull
   public TIntHashSet getSymbolsToBreakDrawingIteration() {
+    if (!myCheckedForProblemGlyphs) {
+      parseProblemGlyphs();
+    }
     return mySymbolsToBreakDrawingIteration;
   }
 
