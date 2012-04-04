@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import git4idea.GitContentRevision;
@@ -32,9 +31,9 @@ import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.util.StringScanner;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,49 +54,6 @@ public class GitChangeUtils {
    * A private constructor for utility class
    */
   private GitChangeUtils() {
-  }
-
-  /**
-   * Parse changes from lines
-   *
-   * @param project the context project
-   * @param root    the git root
-   * @return a set of unmerged files
-   * @throws VcsException if the input format does not matches expected format
-   */
-  public static List<VirtualFile> unmergedFiles(Project project, VirtualFile root) throws VcsException {
-    HashSet<VirtualFile> unmerged = new HashSet<VirtualFile>();
-    String rootPath = root.getPath();
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
-    h.setNoSSH(true);
-    h.setSilent(true);
-    h.addParameters("--unmerged");
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
-      if (s.isEol()) {
-        s.nextLine();
-        continue;
-      }
-      s.boundedToken('\t');
-      final String relative = s.line();
-      String path = rootPath + "/" + GitUtil.unescapePath(relative);
-      VirtualFile file = lfs.refreshAndFindFileByPath(path);
-      if (file != null) {
-      // the file name is in the delete- or rename- conflict, so it is shown in the list of unmerged files,
-      // but the file itself doesn't exist. In that case we just ignore the file.
-        file.refresh(false, false);
-        unmerged.add(file);
-      }
-    }
-    if (unmerged.size() == 0) {
-      return Collections.emptyList();
-    }
-    else {
-      ArrayList<VirtualFile> rc = new ArrayList<VirtualFile>(unmerged.size());
-      rc.addAll(unmerged);
-      Collections.sort(rc, GitUtil.VIRTUAL_FILE_COMPARATOR);
-      return rc;
-    }
   }
 
   /**
