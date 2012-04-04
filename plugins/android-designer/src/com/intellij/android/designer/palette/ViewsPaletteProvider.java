@@ -17,11 +17,11 @@ package com.intellij.android.designer.palette;
 
 import com.intellij.android.designer.AndroidDesignerEditorProvider;
 import com.intellij.android.designer.model.ViewsMetaManager;
+import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.palette.AbstractPaletteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
@@ -35,7 +35,8 @@ public class ViewsPaletteProvider extends AbstractPaletteProvider {
 
   @Override
   protected boolean accept(VirtualFile virtualFile) {
-    return AndroidDesignerEditorProvider.acceptLayout(myProject, virtualFile);
+    return AndroidDesignerEditorProvider.acceptLayout(myProject, virtualFile) &&
+           DesignerToolWindowManager.getInstance(myProject).getActiveDesigner() != null;
   }
 
   @Override
