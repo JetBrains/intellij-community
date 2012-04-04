@@ -195,6 +195,34 @@ public class AndroidLintTest extends AndroidTestCase {
     doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintIconDuplicatesInspection());
   }
 
+  public void testSuppressingInXml1() throws Exception {
+    doTestNoFix(new AndroidLintInspectionToolProvider.AndroidLintHardcodedTextInspection(),
+                "/res/layout/layout.xml", "xml");
+  }
+
+  public void testSuppressingInXml2() throws Exception {
+    doTestNoFix(new AndroidLintInspectionToolProvider.AndroidLintHardcodedTextInspection(),
+                "/res/layout/layout.xml", "xml");
+  }
+
+  public void testSuppressingInXml3() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/layout.xml", "res/layout/layout.xml");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintHardcodedTextInspection());
+  }
+
+  public void testSuppressingInJava() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/MyActivity.java", "src/p1/p2/MyActivity.java");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintUseValueOfInspection());
+  }
+
+  public void testLintInJavaFile() throws Exception {
+    createManifest();
+    myFixture.copyFileToProject(getGlobalTestDir() + "/MyActivity.java", "src/p1/p2/MyActivity.java");
+    doGlobalInspectionTest(new AndroidLintInspectionToolProvider.AndroidLintUseValueOfInspection());
+  }
+
   private void doGlobalInspectionTest(@NotNull AndroidLintInspectionBase inspection) {
     final GlobalInspectionToolWrapper wrapper = new GlobalInspectionToolWrapper(inspection);
     myFixture.enableInspections(wrapper);

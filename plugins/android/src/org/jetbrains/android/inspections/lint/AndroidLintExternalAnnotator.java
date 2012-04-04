@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.lang.annotation.Annotation;
@@ -155,8 +156,6 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
       final AndroidLintInspectionBase inspection = pair.getFirst();
       final HighlightDisplayLevel displayLevel = pair.getSecond();
 
-      final Annotation annotation = createAnnotation(holder, message, range, displayLevel);
-
       if (inspection != null) {
         final HighlightDisplayKey key = HighlightDisplayKey.find(inspection.getShortName());
 
@@ -164,7 +163,9 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
           final PsiElement startElement = file.findElementAt(range.getStartOffset());
           final PsiElement endElement = file.findElementAt(range.getEndOffset() - 1);
 
-          if (startElement != null && endElement != null) {
+          if (startElement != null && endElement != null && !inspection.isSuppressedFor(startElement)) {
+            final Annotation annotation = createAnnotation(holder, message, range, displayLevel);
+
             for (AndroidLintQuickFix fix : inspection.getQuickFixes(message)) {
               if (fix.isApplicable(startElement, endElement, false)) {
                 annotation.registerFix(new MyFixingIntention(fix, startElement, endElement));
@@ -174,10 +175,16 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
             for (IntentionAction intention : inspection.getIntentions(startElement, endElement)) {
               annotation.registerFix(intention);
             }
-          }
+            annotation.registerFix(new MyDisableInspectionFix(key));
+            annotation.registerFix(new MyEditInspectionToolsSettingsAction(key, inspection));
 
-          annotation.registerFix(new MyDisableInspectionFix(key));
-          annotation.registerFix(new MyEditInspectionToolsSettingsAction(key, inspection));
+            final SuppressIntentionAction[] suppressActions = inspection.getSuppressActions(startElement);
+            if (suppressActions != null) {
+              for (SuppressIntentionAction action : suppressActions) {
+                annotation.registerFix(action);
+              }
+            }
+          }
         }
       }
     }
