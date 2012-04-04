@@ -91,17 +91,17 @@ public class GitVcsPanel {
     try {
       version = GitVersion.identifyVersion(executable);
     } catch (Exception e) {
-      Messages.showErrorDialog(myProject, e.getMessage(), GitBundle.getString("find.git.error.title"));
+      Messages.showErrorDialog(myRootPanel, e.getMessage(), GitBundle.getString("find.git.error.title"));
       return;
     }
 
     if (version.isSupported()) {
-      Messages.showInfoMessage(myProject,
+      Messages.showInfoMessage(myRootPanel,
                                String.format("<html>%s<br>Git version is %s</html>", GitBundle.getString("find.git.success.title"),
                                              version.toString()),
                                GitBundle.getString("find.git.success.title"));
     } else {
-      Messages.showWarningDialog(myProject, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
+      Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
                                  GitBundle.getString("find.git.success.title"));
     }
   }
