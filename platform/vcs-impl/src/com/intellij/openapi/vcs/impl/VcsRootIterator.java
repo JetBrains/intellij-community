@@ -16,9 +16,11 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
@@ -53,8 +55,18 @@ public class VcsRootIterator {
     if ((rootFilter != null) && (! rootFilter.accept(file))) {
       return false;
     }
-    if (myExcludedFileIndex.isExcludedFile(file)) return false;
+    final Boolean excluded = isExcluded(myExcludedFileIndex, file);
+    if (excluded) return false;
     return true;
+  }
+
+  private static boolean isExcluded(final FileIndexFacade indexFacade, final VirtualFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return indexFacade.isExcludedFile(file);
+      }
+    });
   }
 
   public static boolean iterateVfUnderVcsRoot(Project project, VirtualFile file, Processor<VirtualFile> processor) {
@@ -145,7 +157,7 @@ public class VcsRootIterator {
 
           for (VirtualFile child : files) {
             if (myRootPresentFilter != null && (! myRootPresentFilter.accept(child))) continue;
-            if (myExcludedFileIndex.isExcludedFile(child)) continue;
+            if (isExcluded(myExcludedFileIndex, child)) continue;
             myQueue.add(child);
           }
         }

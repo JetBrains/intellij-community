@@ -16,8 +16,10 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -54,7 +56,7 @@ public class SvnExcludingIgnoredOperation {
 
     public boolean accept(final VirtualFile file) {
       if (! myProject.isDefault()) {
-        if (myIndex.isExcludedFile(file)) {
+        if (isExcluded(file)) {
           return false;
         }
         if (myClManager.isIgnoredFile(file)) {
@@ -62,6 +64,15 @@ public class SvnExcludingIgnoredOperation {
         }
       }
       return true;
+    }
+
+    private boolean isExcluded(final VirtualFile file) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          return myIndex.isExcludedFile(file);
+        }
+      });
     }
   }
 

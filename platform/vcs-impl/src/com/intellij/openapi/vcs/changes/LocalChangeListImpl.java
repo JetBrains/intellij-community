@@ -2,10 +2,12 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.OpenTHashSet;
@@ -160,8 +162,13 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   private static boolean isIgnoredRevision(final ContentRevision revision, final FileIndexFacade fileIndex) {
-    VirtualFile vFile = revision.getFile().getVirtualFile();
-    return vFile != null && fileIndex.isExcludedFile(vFile);
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        VirtualFile vFile = revision.getFile().getVirtualFile();
+        return vFile != null && fileIndex.isExcludedFile(vFile);
+      }
+    });
   }
 
   synchronized boolean processChange(Change change) {

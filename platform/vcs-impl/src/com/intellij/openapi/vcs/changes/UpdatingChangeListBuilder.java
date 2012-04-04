@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
@@ -114,7 +115,12 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   private boolean isExcluded(final VirtualFile file) {
-    return myIndex.isExcludedFile(file);
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return myIndex.isExcludedFile(file);
+      }
+    });
   }
 
   public void processUnversionedFile(final VirtualFile file) {

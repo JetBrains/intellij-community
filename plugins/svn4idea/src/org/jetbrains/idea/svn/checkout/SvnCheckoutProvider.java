@@ -16,12 +16,14 @@
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -226,6 +228,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       public void run() {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
           public void run() {
+            final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
             client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), true, progressIndicator));
             try {
@@ -234,13 +237,20 @@ public class SvnCheckoutProvider implements CheckoutProvider {
               final VirtualFile targetVf = SvnUtil.getVirtualFile(targetPath);
               if (targetVf == null) {
                 errorMessage.set("Can not find file: " + targetPath);
-              } else if (project.isDefault() || !PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class)
-                .isInContent(targetVf)) {
-                // do not pay attention to ignored/excluded settings
-                client.doImport(target, url, message, null, !includeIgnored, false, depth);
               } else {
-                client.setCommitHandler(new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)));
-                client.doImport(target, url, message, null, !includeIgnored, false, depth);
+                final boolean isInContent = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+                  @Override
+                  public Boolean compute() {
+                    return facade.isInContent(targetVf);
+                  }
+                });
+                if (project.isDefault() || !isInContent) {
+                  // do not pay attention to ignored/excluded settings
+                  client.doImport(target, url, message, null, !includeIgnored, false, depth);
+                } else {
+                  client.setCommitHandler(new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)));
+                  client.doImport(target, url, message, null, !includeIgnored, false, depth);
+                }
               }
             }
             catch (SVNException e) {
