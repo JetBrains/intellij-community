@@ -32,20 +32,18 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Utilities for merge
@@ -188,68 +186,5 @@ public class GitMergeUtil {
   @Deprecated
   public static boolean isMergeInProgress(@NotNull VirtualFile root) {
     return getMergeHead(root) != null;
-  }
-
-  /**
-   * @return unmerged files in the given Git roots, all in a single collection.
-   * @see #getUnmergedFiles(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
-   */
-  public static Collection<VirtualFile> getUnmergedFiles(@NotNull Project project, @NotNull Collection<VirtualFile> roots) throws VcsException {
-    final Collection<VirtualFile> unmergedFiles = new HashSet<VirtualFile>();
-    for (VirtualFile root : roots) {
-      unmergedFiles.addAll(getUnmergedFiles(project, root));
-    }
-    return unmergedFiles;
-  }
-
-  /**
-   * @return unmerged files in the given Git root.
-   * @see #getUnmergedFiles(com.intellij.openapi.project.Project, java.util.Collection)
-   */
-  public static Collection<VirtualFile> getUnmergedFiles(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    return unmergedFiles(project, root);
-  }
-
-  /**
-   * Parse changes from lines
-   *
-   * @param project the context project
-   * @param root    the git root
-   * @return a set of unmerged files
-   * @throws com.intellij.openapi.vcs.VcsException if the input format does not matches expected format
-   */
-  public static List<VirtualFile> unmergedFiles(Project project, VirtualFile root) throws VcsException {
-    HashSet<VirtualFile> unmerged = new HashSet<VirtualFile>();
-    String rootPath = root.getPath();
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LS_FILES);
-    h.setNoSSH(true);
-    h.setSilent(true);
-    h.addParameters("--unmerged");
-    LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
-      if (s.isEol()) {
-        s.nextLine();
-        continue;
-      }
-      s.boundedToken('\t');
-      final String relative = s.line();
-      String path = rootPath + "/" + GitUtil.unescapePath(relative);
-      VirtualFile file = lfs.refreshAndFindFileByPath(path);
-      if (file != null) {
-      // the file name is in the delete- or rename- conflict, so it is shown in the list of unmerged files,
-      // but the file itself doesn't exist. In that case we just ignore the file.
-        file.refresh(false, false);
-        unmerged.add(file);
-      }
-    }
-    if (unmerged.size() == 0) {
-      return Collections.emptyList();
-    }
-    else {
-      ArrayList<VirtualFile> rc = new ArrayList<VirtualFile>(unmerged.size());
-      rc.addAll(unmerged);
-      Collections.sort(rc, GitUtil.VIRTUAL_FILE_COMPARATOR);
-      return rc;
-    }
   }
 }
