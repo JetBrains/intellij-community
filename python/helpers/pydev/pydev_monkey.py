@@ -63,7 +63,7 @@ def patch_args(args):
     return new_args
 
 def args_to_str(args):
-    return ' '.join('"%s"' % x for x in args)
+    return ' '.join(x if x.startswith('"') and x.endswith('"') else '"%s"' % x  for x in args)
 
 def remove_quotes(str):
     if str.startswith('"') and str.endswith('"'):
@@ -75,9 +75,8 @@ def str_to_args(str):
     return [remove_quotes(x) for x in shlex.split(str)]
 
 def patch_arg_str_win(arg_str):
-    print(arg_str)
+    arg_str = arg_str.replace('\\', '/')
     art = args_to_str(patch_args(str_to_args(arg_str)))
-    print(art)
     return art
 
 def monkey_patch_module(module, funcname, create_func):
