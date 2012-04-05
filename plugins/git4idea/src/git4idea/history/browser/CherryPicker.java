@@ -29,6 +29,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
+import git4idea.commands.Git;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -39,17 +43,17 @@ public class CherryPicker {
 
   private static final Logger LOG = Logger.getInstance(CherryPicker.class);
 
-  private final GitVcs myVcs;
-  private final List<GitCommit> myCommits;
-  @NotNull private final CheckinEnvironment myCheckinEnvironment;
-  private final LowLevelAccess myAccess;
+  private GitVcs myVcs;
+  private List<GitCommit> myCommits;
+  @NotNull private CheckinEnvironment myCheckinEnvironment;
+  private LowLevelAccess myAccess;
 
-  private final List<VcsException> myExceptions;
-  private final List<VcsException> myWarnings;
+  private List<VcsException> myExceptions;
+  private List<VcsException> myWarnings;
   private boolean myConflictsExist;
-  private final ChangeListManager myChangeListManager;
+  private ChangeListManager myChangeListManager;
 
-  private final List<CherryPickedData> myCherryPickedData;
+  private List<CherryPickedData> myCherryPickedData;
 
   public CherryPicker(GitVcs vcs, final List<GitCommit> commits, LowLevelAccess access) {
     myVcs = vcs;
@@ -64,6 +68,13 @@ public class CherryPicker {
     myExceptions = new ArrayList<VcsException>();
     myWarnings = new ArrayList<VcsException>();
     myCherryPickedData = new ArrayList<CherryPickedData>();
+  }
+
+  public CherryPicker(Project project, Git git, PlatformFacade platformFacade, GitRepositoryManager repositoryManager, boolean autoCommit) {
+  }
+
+  public void cherryPick(Map<GitRepository, List<GitCommit>> commitsInRoots) {
+
   }
 
   public void execute() {

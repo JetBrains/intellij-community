@@ -16,14 +16,16 @@
 package git4idea.test
 
 import com.intellij.notification.Notification
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
+import git4idea.repo.GitFakeRepositoryManager
+import git4idea.tests.TestDialogManager
+import org.junit.Before
 
 import static git4idea.test.GitGTestUtil.stripLineBreaksAndHtml
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertNotNull
-import com.intellij.openapi.project.Project
-import git4idea.tests.TestDialogManager
-import org.junit.Before
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.notification.NotificationType
 
 /**
  * 
@@ -31,11 +33,15 @@ import com.intellij.openapi.util.io.FileUtil
  */
 class GitFastTest {
 
+  public static final String TEST_NOTIFICATION_GROUP = "Test"
+
   Project myProject
   GitTestPlatformFacade myPlatformFacade
+  GitFakeRepositoryManager myRepositoryManager
   MockGit myGit
   String myProjectDir
   TestDialogManager myDialogManager
+  MockVcsHelper myVcsHelper
 
   @Before
   void setUp() {
@@ -48,6 +54,8 @@ class GitFastTest {
     myPlatformFacade = new GitTestPlatformFacade()
     myGit = new MockGit()
     myDialogManager = myPlatformFacade.getDialogManager()
+    myRepositoryManager = new GitFakeRepositoryManager()
+    myVcsHelper = (MockVcsHelper) myPlatformFacade.getVcsHelper(myProject)
   }
 
   void assertNotificationShown(Notification expected) {
@@ -56,6 +64,10 @@ class GitFastTest {
       assertNotNull "No notification was shown", actualNotification
       assertEquals(stripLineBreaksAndHtml(expected.content), stripLineBreaksAndHtml(actualNotification.content))
     }
+  }
+
+  void assertNotificationShown(String title, String message, NotificationType type) {
+    assertNotificationShown(new Notification(TEST_NOTIFICATION_GROUP, title, message, type))
   }
 
 }

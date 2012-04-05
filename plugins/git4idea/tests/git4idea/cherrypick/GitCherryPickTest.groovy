@@ -1,0 +1,145 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package git4idea.cherrypick
+
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
+import com.intellij.testFramework.vcs.MockChangeListManager
+import git4idea.history.browser.CherryPicker
+import git4idea.history.browser.GitCommit
+import git4idea.history.browser.SHAHash
+import git4idea.history.wholeTree.AbstractHash
+import git4idea.repo.GitRepository
+import git4idea.test.GitFastTest
+import git4idea.test.GitLightRepository
+import git4idea.test.MockGit
+import sun.security.provider.SHA
+
+import static git4idea.test.MockGit.OperationName.CHERRY_PICK
+import static junit.framework.Assert.assertEquals
+import static junit.framework.Assert.assertTrue
+
+/**
+ * Common parent for all tests on cherry-pick
+ *
+ * @author Kirill Likhodedov
+ */
+class GitCherryPickTest extends GitFastTest {
+  
+  public static final String DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME;
+  CherryPicker myCherryPicker
+  GitLightRepository myRepository
+  GitLightRepository.Commit myInitialCommit
+
+  static final LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK =
+    """
+    error: Your local changes to the following files would be overwritten by merge:
+    \ttest.txt
+    Please, commit your changes or stash them before you can merge.
+    Aborting
+    """;
+
+  void setUp() {
+    super.setUp()
+
+    myRepository = new GitLightRepository()
+    myInitialCommit = myRepository.commit("initial")
+  }
+
+  GitCommit commit(String commitMessage = "plain commit") {
+    AbstractHash hash = AbstractHash.create(new SHA().toString())
+    new GitCommit(hash, SHAHash.emulate(hash), null, null, null, commitMessage, null, null, null, null, null, null, null, null, null, 0)
+  }
+
+  void assertOnlyDefaultChangelist() {
+    assertChangeLists( [DEFAULT], DEFAULT)
+  }
+
+  void invokeCherryPick(GitCommit commit) {
+    invokeCherryPick([commit])
+  }
+
+  void invokeCherryPick(List<GitCommit> commits) {
+    myCherryPicker.cherryPick(Collections.<GitRepository, List<GitCommit>> singletonMap(myRepository, commits))
+  }
+
+  void assertCommitDialogShown() {
+    assertEquals "Commit dialog was not shown", CommitChangeListDialog, myDialogManager.lastShownDialog.class
+  }
+
+  void assertHeadCommit(GitCommit commit) {
+    assertEquals "Wrong commit at the HEAD", commit.subject, myRepository.head.commitMessage
+  }
+
+  void assertLastCommits(GitCommit... commits) {
+    GitLightRepository.Commit current = myRepository.head
+    int level = 0;
+    for (GitCommit commit : commits) {
+      assertEquals "Wrong commit at level $level", commit.subject, current.commitMessage
+      current = current.parent
+      level++;
+    }
+  }
+
+  void assertChangeLists(Collection<String> changeLists, String activeChangelist) {
+    ChangeListManager changeListManager = myPlatformFacade.getChangeListManager(myProject)
+    List<LocalChangeList> lists = changeListManager.changeLists
+    Collection<String> listNames = lists.collect { it.name }
+    assertEquals changeLists.toSet(), listNames.toSet()
+    assertEquals activeChangelist, changeListManager.defaultChangeList.name
+  }
+
+  String notificationContent(GitCommit commit) {
+    "${commit.shortHash.toString()} ${commit.subject}"
+  }
+
+  String notificationContent(GitCommit... commits) {
+    commits.collect { notificationContent(it) }.join("<br/>")
+  }
+
+  void assertNotCherryPicked() {
+    // 1. assert not committed (i.e. git cherry-pick was not performed)
+    assertNothingCommitted()
+    // 2. assert working tree not changed (i.e. git cherry-pick -n was not performed either)
+    assertTrue myPlatformFacade.getChangeListManager(myProject).getAllChanges().isEmpty()
+  }
+
+  void assertNothingCommitted() {
+    assertEquals(myInitialCommit, myRepository.head)
+  }
+
+  void prepareConflict() {
+    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK,
+                                                                      """
+error: could not apply ec15d8e... message
+hint: after resolving the conflicts, mark the corrected paths
+hint: with 'git add <paths>' or 'git rm <paths>'
+hint: and commit the result with 'git commit'
+"""), new MockGit.SimpleErrorOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES,
+"""
+100644 d87b28d6fd6e97620603e64ce70fc2f24535ec28 1\ttest.txt
+100644 7b50450f5deb7cce3b5ce92ba866f1af6e58c3c6 2\ttest.txt
+100644 a784477cdd0437a84751c52f72b971503deb48cb 3\ttest.txt
+"""
+    ))
+  }
+
+  void assertMergeDialogShown() {
+    assertTrue "Merge dialog was not shown", myVcsHelper.mergeDialogWasShown()
+  }
+
+}
