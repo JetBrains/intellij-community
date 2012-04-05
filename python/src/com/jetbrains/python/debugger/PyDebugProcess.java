@@ -365,7 +365,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       String threadId = threadIdBeforeResumeOrStep();
 
       for (PyThreadInfo suspendedThread : mySuspendedThreads) {
-        if (StringUtil.isEmpty(threadId) || threadId.equals(suspendedThread.getId())) {
+        if (threadId == null || threadId.equals(suspendedThread.getId())) {
           myDebugger.resumeOrStep(suspendedThread.getId(), mode);
           break;
         }
