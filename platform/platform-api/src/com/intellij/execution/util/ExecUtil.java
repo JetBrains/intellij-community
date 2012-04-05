@@ -15,18 +15,15 @@
  */
 package com.intellij.execution.util;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.script.ScriptException;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
@@ -90,13 +87,12 @@ public class ExecUtil {
     return "/usr/bin/open";
   }
 
-  public static ProcessOutput execAndGetOutput(@NotNull final List<String> command, @Nullable final String workDir) throws ExecutionException, InterruptedException {
-    assert command.size() > 0;
+  public static ProcessOutput execAndGetOutput(@NotNull final List<String> command, @Nullable final String workDir) throws ExecutionException {
+    assert command.size() > 0 : command;
     final GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    if (workDir != null)
-      commandLine.setWorkDirectory(workDir);
+    commandLine.setWorkDirectory(workDir);
     final Process process = commandLine.createProcess();
-    CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+    final CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
     return processHandler.runProcess();
   }
 
@@ -117,27 +113,22 @@ public class ExecUtil {
   }
 
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
-                                               @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
+                                               @NotNull final String prompt) throws IOException, ExecutionException {
     return sudoAndGetOutput(scriptPath, prompt, null);
   }
 
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
-                                               @NotNull final String prompt, @Nullable String workDir) throws IOException, ExecutionException, ScriptException, InterruptedException {
+                                               @NotNull final String prompt,
+                                               @Nullable String workDir) throws IOException, ExecutionException {
     if (SystemInfo.isMac) {
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
-      Runtime runtime = Runtime.getRuntime();
-      String[] args = {getOsascriptPath(), "-e", script};
-      if (workDir != null)
-        runtime.exec(args, ArrayUtil.EMPTY_STRING_ARRAY, new File(workDir));
-      else
-        runtime.exec(args);
-      return new ProcessOutput(0);
+      return execAndGetOutput(Arrays.asList(getOsascriptPath(), "-e", script), workDir);
     }
     else if (SystemInfo.isKDE) {
-      return execAndGetOutput(Lists.<String>newArrayList("kdesudo", "--comment", prompt, scriptPath), workDir);
+      return execAndGetOutput(Arrays.asList("kdesudo", "--comment", prompt, scriptPath), workDir);
     }
     else if (SystemInfo.isGnome) {
-      return execAndGetOutput(Lists.<String>newArrayList("gksudo", "--message", prompt, scriptPath), workDir);
+      return execAndGetOutput(Arrays.asList("gksudo", "--message", prompt, scriptPath), workDir);
     }
     else if (SystemInfo.isUnix) {
       final File sudo = createTempExecutableScript("sudo", ".sh",
@@ -149,7 +140,7 @@ public class ExecUtil {
                                                    "echo\n" +
                                                    "read -p \"Press Enter to close this window...\" TEMP\n" +
                                                    "exit $STATUS\n");
-      return execAndGetOutput(Lists.<String>newArrayList("xterm", "-T", "Install", "-e", sudo.getAbsolutePath()), workDir);
+      return execAndGetOutput(Arrays.asList("xterm", "-T", "Install", "-e", sudo.getAbsolutePath()), workDir);
     }
     else {
       throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
@@ -157,7 +148,7 @@ public class ExecUtil {
   }
 
   public static int sudoAndGetResult(@NotNull final String scriptPath,
-                                     @NotNull final String prompt) throws IOException, ExecutionException, ScriptException, InterruptedException {
+                                     @NotNull final String prompt) throws IOException, ExecutionException {
     return sudoAndGetOutput(scriptPath, prompt).getExitCode();
   }
 }
