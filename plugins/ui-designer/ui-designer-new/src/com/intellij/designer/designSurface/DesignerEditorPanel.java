@@ -297,38 +297,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     add(myErrorPanel, ERROR_CARD);
   }
 
-  private void createProgressPanel() {
-    myProgressIcon = new AsyncProcessIcon("Designer progress");
-    myProgressMessage = new JLabel();
-
-    JPanel progressBlock = new JPanel();
-    progressBlock.add(myProgressIcon);
-    progressBlock.add(myProgressMessage);
-    progressBlock.setBorder(IdeBorderFactory.createRoundedBorder());
-
-    myProgressPanel = new JPanel(new GridBagLayout());
-    myProgressPanel.add(progressBlock,
-                        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
-                                               0, 0));
-    myProgressPanel.setOpaque(false);
-  }
-
-  protected final void showProgress(String message) {
-    myProgressMessage.setText(message);
-    if (myProgressPanel.getParent() == null) {
-      myGlassLayer.setEnabled(false);
-      myProgressIcon.resume();
-      myLayeredPane.add(myProgressPanel, LAYER_PROGRESS);
-      myLayeredPane.repaint();
-    }
-  }
-
-  protected final void hideProgress() {
-    myGlassLayer.setEnabled(true);
-    myProgressIcon.suspend();
-    myLayeredPane.remove(myProgressPanel);
-  }
-
   public final void showError(@NonNls String message, Throwable e) {
     while (e instanceof InvocationTargetException) {
       e = e.getCause();
@@ -375,7 +343,43 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     repaint();
   }
 
-  public abstract String getPlatformTarget();
+  private void createProgressPanel() {
+    myProgressIcon = new AsyncProcessIcon("Designer progress");
+    myProgressMessage = new JLabel();
+
+    JPanel progressBlock = new JPanel();
+    progressBlock.add(myProgressIcon);
+    progressBlock.add(myProgressMessage);
+    progressBlock.setBorder(IdeBorderFactory.createRoundedBorder());
+
+    myProgressPanel = new JPanel(new GridBagLayout());
+    myProgressPanel.add(progressBlock,
+                        new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0),
+                                               0, 0));
+    myProgressPanel.setOpaque(false);
+  }
+
+  protected final void showProgress(String message) {
+    myProgressMessage.setText(message);
+    if (myProgressPanel.getParent() == null) {
+      myGlassLayer.setEnabled(false);
+      myProgressIcon.resume();
+      myLayeredPane.add(myProgressPanel, LAYER_PROGRESS);
+      myLayeredPane.repaint();
+    }
+  }
+
+  protected final void hideProgress() {
+    myGlassLayer.setEnabled(true);
+    myProgressIcon.suspend();
+    myLayeredPane.remove(myProgressPanel);
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   @NotNull
   public Module getModule() {
@@ -395,8 +399,23 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return treeArea == null ? mySurfaceArea : treeArea;
   }
 
-  public void updateTreeArea(EditableArea area) {
+  public ToolProvider getToolProvider() {
+    return myToolProvider;
   }
+
+  public DesignerActionPanel getActionPanel() {
+    return myActionPanel;
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myDesignerCard.isVisible() ? myGlassLayer : myErrorPanel;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // State
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   @Nullable
   public List<?> getExpandedComponents() {
@@ -485,12 +504,15 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
   }
 
-  public ToolProvider getToolProvider() {
-    return myToolProvider;
-  }
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
-  public DesignerActionPanel getActionPanel() {
-    return myActionPanel;
+  public abstract String getPlatformTarget();
+
+  public void updateTreeArea(EditableArea area) {
   }
 
   protected abstract ComponentDecorator getRootSelectionDecorator();
@@ -534,10 +556,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     Disposer.dispose(myProgressIcon);
   }
 
-  public JComponent getPreferredFocusedComponent() {
-    return myDesignerCard.isVisible() ? myGlassLayer : myErrorPanel;
-  }
-
   public RadComponent getRootComponent() {
     return myRootComponent;
   }
@@ -547,6 +565,12 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public abstract TreeComponentDecorator getTreeDecorator();
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
   private static final class FillLayout implements LayoutManager2 {
     @Override
