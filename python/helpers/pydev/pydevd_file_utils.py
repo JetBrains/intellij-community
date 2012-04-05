@@ -47,7 +47,7 @@ import sys
 import traceback
 
 
-normcase = os.path.normcase
+
 basename = os.path.basename
 exists = os.path.exists
 join = os.path.join
@@ -77,6 +77,17 @@ NORM_FILENAME_CONTAINER = {}
 NORM_FILENAME_AND_BASE_CONTAINER = {}
 NORM_FILENAME_TO_SERVER_CONTAINER = {}
 NORM_FILENAME_TO_CLIENT_CONTAINER = {}
+
+
+pycharm_os = None
+
+def normcase(file):
+    global pycharm_os
+    if pycharm_os == 'UNIX':
+        return file
+    else:
+        return os.path.normcase(file)
+
 
 def _NormFile(filename):
     try:
@@ -264,6 +275,6 @@ def GetFilenameAndBase(frame):
     f = frame.f_code.co_filename
     return GetFileNameAndBaseFromFile(f)
 
-def set_pycharm_os(pycharm_os):
-    if pycharm_os == 'UNIX':
-        normcase = lambda x: x
+def set_pycharm_os(os):
+    global pycharm_os
+    pycharm_os = os
