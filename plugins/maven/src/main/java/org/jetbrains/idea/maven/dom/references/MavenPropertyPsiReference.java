@@ -23,7 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -63,12 +62,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   protected final MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;
-  private Boolean mySoft;
+  private final boolean mySoft;
 
   public MavenPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range, boolean isSoft) {
     super(element, text, range);
     myMavenProject = mavenProject;
-    mySoft = isSoft ? true : null;
+    mySoft = isSoft;
     myProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
   }
 
@@ -431,34 +430,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @Override
   public boolean isSoft() {
-    Boolean res = mySoft;
-    if (res == null) {
-      XmlTag xmlTag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
-      while (xmlTag != null) {
-        if (xmlTag.getName().equals("profile")) {
-          XmlTag activation = xmlTag.findFirstSubTag("activation");
-          if (activation != null) {
-            for (XmlTag propertyTag : activation.findSubTags("property")) {
-              XmlTag nameTag = propertyTag.findFirstSubTag("name");
-              if (nameTag != null) {
-                if (nameTag.getValue().getTrimmedText().equals(myText)) {
-                  res = true;
-                  break;
-                }
-              }
-            }
-          }
-          break;
-        }
-
-        xmlTag = xmlTag.getParentTag();
-      }
-
-      if (res == null) res = false;
-      mySoft = res;
-    }
-
-    return res;
+    return mySoft;
   }
 
   private interface SchemaProcessor<T> {
