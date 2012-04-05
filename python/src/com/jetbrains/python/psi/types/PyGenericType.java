@@ -46,6 +46,10 @@ public class PyGenericType implements PyType {
   }
 
   @Override
+  public void assertValid() {
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

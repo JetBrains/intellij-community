@@ -79,9 +79,12 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
         rightExpression.delete();
       }
       else {
+        PyExpression expression = rightExpression.getLeftExpression();
+        if (expression instanceof PyBinaryExpression)
+          expression = invertExpression((PyBinaryExpression)expression, elementGenerator);
         final String operator = invertOperator(rightExpression.getPsiOperator());
         final PyBinaryExpression binaryExpression = elementGenerator.createBinaryExpression(
-                    operator, leftExpression, rightExpression.getLeftExpression());
+                    operator, leftExpression, expression);
         leftExpression.replace(binaryExpression);
         rightExpression.delete();
       }

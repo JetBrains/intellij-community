@@ -71,6 +71,15 @@ public class PyUnionType implements PyType {
     return true;
   }
 
+  @Override
+  public void assertValid() {
+    for (PyType member : myMembers) {
+      if (member != null) {
+        member.assertValid();
+      }
+    }
+  }
+
   @Nullable
   public static PyType union(@Nullable PyType type1, @Nullable PyType type2) {
     if (type1 instanceof PyTupleType && type2 instanceof PyTupleType) {

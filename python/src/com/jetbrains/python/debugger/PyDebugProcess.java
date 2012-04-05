@@ -205,6 +205,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           myDebugger.run();
         }
         catch (final Exception e) {
+          myWaitingForConnection = false;
           myProcessHandler.destroyProcess();
           if (!myClosing) {
             invokeLater(new Runnable() {

@@ -66,6 +66,10 @@ public class PyImportedModuleType implements PyType {
     return false;  // no module can be imported from builtins
   }
 
+  @Override
+  public void assertValid() {
+  }
+
   @NotNull
   public PyImportedModule getImportedModule() {
     return myImportedModule;

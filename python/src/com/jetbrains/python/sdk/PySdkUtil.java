@@ -156,9 +156,21 @@ public class PySdkUtil {
       }
       return processHandler.runProcess(timeout);
     }
-    catch (IOException ex) {
+    catch (final IOException ex) {
       LOG.warn(ex);
-      return failure_output;
+      return new ProcessOutput() {
+        @Override
+        public String getStderr() {
+          String err = super.getStderr();
+          if (!StringUtil.isEmpty(err)) {
+            err += "\n" + ex.getMessage();
+          }
+          else {
+            err = ex.getMessage();
+          }
+          return err;
+        }
+      };
     }
   }
 

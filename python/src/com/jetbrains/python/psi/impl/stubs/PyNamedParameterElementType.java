@@ -67,6 +67,18 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
                                         getStubElementType());
   }
 
+  @Override
+  public boolean shouldCreateStub(ASTNode node) {
+    final ASTNode paramList = node.getTreeParent();
+    if (paramList != null) {
+      final ASTNode container = paramList.getTreeParent();
+      if (container != null && container.getElementType() == PyElementTypes.LAMBDA_EXPRESSION) {
+        return false;
+      }
+    }
+    return super.shouldCreateStub(node);
+  }
+
   protected IStubElementType getStubElementType() {
     return PyElementTypes.NAMED_PARAMETER;
   }

@@ -77,15 +77,17 @@ public class RemoteDebugger implements ProcessDebugger {
       //it is closed in close() method on process termination
     }
 
-    try {
-      final DebuggerReader reader = new DebuggerReader();
-      ApplicationManager.getApplication().executeOnPooledThread(reader);
-    }
-    catch (Exception e) {
-      synchronized (mySocketObject) {
-        mySocket.close();
+    if (myConnected) {
+      try {
+        final DebuggerReader reader = new DebuggerReader();
+        ApplicationManager.getApplication().executeOnPooledThread(reader);
       }
-      throw e;
+      catch (Exception e) {
+        synchronized (mySocketObject) {
+          mySocket.close();
+        }
+        throw e;
+      }
     }
   }
 
@@ -350,7 +352,7 @@ public class RemoteDebugger implements ProcessDebugger {
         myServerSocket.close();
       }
       catch (IOException e) {
-        //skip
+        LOG.warn("Error closing socket", e);
       }
     }
     disconnect();

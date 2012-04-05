@@ -59,4 +59,6 @@ public interface PyType {
    * @param context
    */
   boolean isBuiltin(TypeEvalContext context);
+
+  void assertValid();
 }

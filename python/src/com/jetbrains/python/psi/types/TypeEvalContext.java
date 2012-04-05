@@ -114,7 +114,11 @@ public class TypeEvalContext {
   public PyType getType(@NotNull PyTypedElement element) {
     synchronized (myEvaluated) {
       if (myEvaluated.containsKey(element)) {
-        return myEvaluated.get(element);
+        final PyType pyType = myEvaluated.get(element);
+        if (pyType != null) {
+          pyType.assertValid();
+        }
+        return pyType;
       }
     }
     final Set<PyTypedElement> evaluating = myEvaluating.get();
@@ -124,6 +128,9 @@ public class TypeEvalContext {
     evaluating.add(element);
     try {
       PyType result = element.getType(this);
+      if (result != null) {
+        result.assertValid();
+      }
       synchronized (myEvaluated) {
         myEvaluated.put(element, result);
       }

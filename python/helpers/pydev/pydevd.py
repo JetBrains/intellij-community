@@ -1226,9 +1226,7 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
             except:
                 pass
 
-        #sys.exitfunc = exit_hook
-        import atexit
-        atexit.register(exit_hook)
+        sys.exitfunc = exit_hook
 
         PyDBCommandThread(debugger).start()
 
