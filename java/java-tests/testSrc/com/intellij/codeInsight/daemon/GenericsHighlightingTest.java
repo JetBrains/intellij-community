@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -142,11 +143,11 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   private void doTest17Incompatibility() throws Exception {
     final JavaVersionServiceImpl javaVersionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
     try {
-      javaVersionService.setTestVersion(true);
+      javaVersionService.setTestVersion(JavaSdkVersion.JDK_1_7);
       doTest(false);
     }
     finally {
-      javaVersionService.setTestVersion(false);
+      javaVersionService.setTestVersion(null);
     }
   }
 }
