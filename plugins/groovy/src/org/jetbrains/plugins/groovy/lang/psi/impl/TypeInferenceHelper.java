@@ -134,7 +134,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  private static PsiType getInferredType(String varName, Instruction instruction, Instruction[] flow, GrControlFlowOwner scope) {
+  private static PsiType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope) {
     final Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> pair = getDefUseMaps(scope);
 
     List<TIntObjectHashMap<TIntHashSet>> dfaResult = pair.second;
@@ -216,7 +216,11 @@ public class TypeInferenceHelper {
       @Override
       @Nullable
       public PsiType compute() {
-        final PsiType original = getInferredType(instruction.getVariableName(), instruction.getInstructionToMixin(flow), flow, scope);
+        String varName = instruction.getVariableName();
+        LOG.assertTrue(varName != null, scope.getText());
+        ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
+        LOG.assertTrue(originalInstr != null, scope.getText());
+        final PsiType original = getInferredType(varName, originalInstr, flow, scope);
         final PsiType mixin = instruction.inferMixinType();
         if (mixin == null) return original;
         if (original == null) return mixin;
