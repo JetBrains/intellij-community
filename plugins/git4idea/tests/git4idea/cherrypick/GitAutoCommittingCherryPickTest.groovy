@@ -15,18 +15,18 @@
  */
 package git4idea.cherrypick
 
-import org.junit.Before
-import git4idea.history.browser.CherryPicker
-import org.junit.Test
-import git4idea.history.browser.GitCommit
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
+import git4idea.history.browser.CherryPicker
+import git4idea.history.browser.GitCommit
 import git4idea.test.MockGit
+import git4idea.tests.TestDialogHandler
+import org.junit.Before
+import org.junit.Test
 
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
-import com.intellij.notification.Notification
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
-import git4idea.tests.TestDialogHandler
-import com.intellij.openapi.ui.DialogWrapper
 
 /**
  * Cherry-pick of one or multiple commits with "commit at once" option enabled.
@@ -34,6 +34,25 @@ import com.intellij.openapi.ui.DialogWrapper
  * @author Kirill Likhodedov
  */
 class GitAutoCommittingCherryPickTest extends GitCherryPickTest {
+
+  public static final String EMPTY_CHERRY_PICK = """
+# On branch master
+# Your branch is ahead of 'origin/master' by 11 commits.
+#
+# Untracked files:
+#   (use "git add <file>..." to include in what will be committed)
+#
+#\t.idea/
+#\tlocal_staged.patch
+#\tout/
+nothing added to commit but untracked files present (use "git add" to track)
+The previous cherry-pick is now empty, possibly due to conflict resolution.
+If you wish to commit it anyway, use:
+
+    git commit --allow-empty
+
+Otherwise, please use 'git reset'
+"""
 
   @Before
   void setUp() {
@@ -172,6 +191,35 @@ Didn't cherry-pick others""", NotificationType.ERROR)
     assertMergeDialogShown()
     assertCommitDialogShown()
     assertLastCommits commit3, commit2, commit1
+  }
+
+  @Test
+  void "Notify if changes have already been applied"() {
+    // Inspired by IDEA-73548
+    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
+
+    GitCommit commit = commit()
+    invokeCherryPick(commit)
+
+    assertNotCherryPicked()
+    assertNotificationShown("Nothing to cherry-pick", "All changes from ${notificationContent(commit)} have already been applied",
+                            NotificationType.WARNING)
+  }
+
+  @Test
+  void "1st successful, 2nd empty (all applied), then compound notification"() {
+    // Inspired by IDEA-73548
+    myGit.registerOperationExecutors(new MockGit.SuccessfulOperationExecutor(CHERRY_PICK),
+                                     new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
+    GitCommit commit1 = commit()
+    GitCommit commit2 = commit()
+
+    invokeCherryPick([ commit1, commit2 ])
+
+    assertHeadCommit(commit1)
+    assertNotificationShown("Cherry-picked with problems",
+"""Successfully cherry-picked ${notificationContent(commit1)}<br/>
+Not cherry-picked ${notificationContent(commit2)} - all changes have already been applied""", NotificationType.WARNING)
   }
 
 }
