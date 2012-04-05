@@ -32,6 +32,7 @@ import sun.security.provider.SHA
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
+import static junit.framework.Assert.assertNotNull
 
 /**
  * Common parent for all tests on cherry-pick
@@ -78,6 +79,7 @@ class GitCherryPickTest extends GitFastTest {
   }
 
   void assertCommitDialogShown() {
+    assertNotNull "No dialog was shown", myDialogManager.lastShownDialog
     assertEquals "Commit dialog was not shown", CommitChangeListDialog, myDialogManager.lastShownDialog.class
   }
 
