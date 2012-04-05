@@ -10,7 +10,9 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.refactoring.rename.inplace.GrVariableInplaceRenameHandler
@@ -520,5 +522,55 @@ class J {
 
     myFixture.renameElementAtCaret('getAbc')
     assertEquals('''print new J().abc''', groovyFile.text)
+  }
+
+  void testMethodWithSpacesRename() {
+    def file = myFixture.configureByText('_A.groovy', '''\
+class X {
+  def foo(){}
+}
+
+new X().foo()
+''') as GroovyFile
+
+    def method = (file.classes[0] as GrTypeDefinition).groovyMethods[0]
+
+    myFixture.renameElement(method, 'f oo');
+
+    myFixture.checkResult('''\
+class X {
+  def 'f oo'(){}
+}
+
+new X().'f oo'()
+''')
+  }
+
+  void testMethodWithSpacesRenameInJava() {
+    def file = myFixture.addFileToProject('_A.groovy', '''\
+class X {
+  def foo(){}
+}
+
+new X().foo()
+''') as GroovyFile
+
+    def method = (file.classes[0] as GrTypeDefinition).groovyMethods[0]
+
+    myFixture.configureByText('Java.java', '''\
+class Java {
+  void ab() {
+    new X().foo()
+  }
+}''')
+
+    try {
+      myFixture.renameElement(method, 'f oo');
+      assert false
+    }
+    catch (ConflictsInTestsException ignored) {
+      assert true
+    }
+
   }
 }

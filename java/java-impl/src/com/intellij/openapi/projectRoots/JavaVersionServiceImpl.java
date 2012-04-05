@@ -23,15 +23,15 @@ import com.intellij.psi.PsiElement;
  * Date: 3/28/12
  */
 public class JavaVersionServiceImpl extends JavaVersionService {
-  private boolean myTestVersion = false;
+  private JavaSdkVersion myTestVersion = null;
 
-  public void setTestVersion(boolean testVersion) {
+  public void setTestVersion(JavaSdkVersion testVersion) {
     myTestVersion = testVersion;
   }
 
   @Override
   public boolean isAtLeast(PsiElement element, JavaSdkVersion version) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return myTestVersion;
+    if (ApplicationManager.getApplication().isUnitTestMode()) return myTestVersion != null && myTestVersion.isAtLeast(version);
     return JavaSdkVersionUtil.isAtLeast(element, version);
   }
 }

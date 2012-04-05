@@ -30,6 +30,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -67,13 +68,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       return false;
     }
     PsiManager manager = file.getManager();
-    if (!manager.isInProject(file)) {
-      return false;
-    }
-    if (getClassesToImport().isEmpty()) {
-      return false;
-    }
-    return true;
+    return manager.isInProject(file) && !getClassesToImport().isEmpty();
   }
 
   @Nullable
@@ -188,6 +183,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
             CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
         && (ApplicationManager.getApplication().isUnitTestMode() || codeAnalyzer.canChangeFileSilently(psiFile))
         && !autoImportWillInsertUnexpectedCharacters(classes[0])
+        && !LaterInvocator.isInModalContext()
       ) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         @Override

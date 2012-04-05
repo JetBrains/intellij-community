@@ -403,7 +403,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getUrl();
   }
 
-  public void setName(@NotNull final String newName) {
+  public void setNewName(@NotNull final String newName) {
     if (newName.length() == 0) {
       throw new IllegalArgumentException("Name of the virtual file cannot be set to empty string");
     }
