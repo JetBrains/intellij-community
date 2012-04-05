@@ -61,6 +61,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
       for (int i = 0; i < array.length; i += 2) {
         map.put((K)array[i], (V)array[i + 1]);
       }
+      map.put(key, value);
       return new SmartFMap<K, V>(map);
     }
 

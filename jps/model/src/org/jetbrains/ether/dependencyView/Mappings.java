@@ -1675,20 +1675,12 @@ public class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(final int className, ClassRepr cr) {
-    if (cr == null) {
-    cr = new Util().reprByName(className);
-    }
-
-    if (cr != null) {
-      for (final int superSomething : cr.getSupers()) {
-        myClassToSubclasses.removeFrom(superSomething, cr.name);
-      }
-
+  private void cleanupBackDependency(final int className, Collection<UsageRepr.Cluster> clusters) {
+    if (clusters == null) {
       final int sourceFile = myClassToSourceFile.get(className);
 
       if (sourceFile > 0) {
-        final Collection<UsageRepr.Cluster> clusters = mySourceFileToUsages.get(sourceFile);
+        clusters = mySourceFileToUsages.get(sourceFile);
 
         if (clusters != null) {
           for (final UsageRepr.Cluster cluster : clusters) {
@@ -1698,8 +1690,8 @@ public class Mappings {
                 if (u instanceof UsageRepr.ClassUsage) {
                   final TIntHashSet residents = cluster.getResidence(u);
 
-                  if (residents != null && residents.contains(cr.name)) {
-                    myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, cr.name);
+                  if (residents != null && residents.contains(className)) {
+                    myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, className);
                   }
                 }
               }
@@ -1708,6 +1700,20 @@ public class Mappings {
         }
       }
     }
+  }
+
+  private void cleanupRemovedClass(final int className, ClassRepr cr, Collection<UsageRepr.Cluster> clusters) {
+    if (cr == null) {
+      cr = new Util().reprByName(className);
+    }
+
+    if (cr != null) {
+      for (final int superSomething : cr.getSupers()) {
+        myClassToSubclasses.removeFrom(superSomething, cr.name);
+      }
+    }
+
+    cleanupBackDependency(className, clusters);
 
     myClassToClassDependency.remove(className);
     myClassToSubclasses.remove(className);
@@ -1727,7 +1733,7 @@ public class Mappings {
 
             if (classes != null) {
               for (final ClassRepr cr : classes) {
-                cleanupRemovedClass(cr.name, cr);
+                cleanupRemovedClass(cr.name, cr, clusters);
               }
             }
 
@@ -1741,7 +1747,7 @@ public class Mappings {
           delta.getDeletedClasses().forEach(new TIntProcedure() {
             @Override
             public boolean execute(int value) {
-              cleanupRemovedClass(value, null);
+              cleanupRemovedClass(value, null, null);
               return true;
             }
           });
@@ -1764,6 +1770,9 @@ public class Mappings {
               else {
                 myClassToSourceFile.remove(c);
               }
+
+              cleanupBackDependency(c, null);
+
               return true;
             }
           });

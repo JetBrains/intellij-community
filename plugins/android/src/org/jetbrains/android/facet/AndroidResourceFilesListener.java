@@ -166,7 +166,8 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
         AndroidCompileUtil.collectAllResources(myFacet, resourceSet);
 
         synchronized (RESOURCES_SET_LOCK) {
-          if (resourceSet.equals(myResourceSet)) {
+          if (resourceSet.equals(myResourceSet) &&
+              !myFacet.areSourcesGeneratedWithErrors(AndroidAutogeneratorMode.AAPT)) {
             return;
           }
           myResourceSet = resourceSet;

@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.cvsoperations.cvsContent;
-
-import com.intellij.util.Consumer;
+package com.intellij.cvsSupport2.cvsExecution;
 
 /**
- * author: lesya
- */
-public interface DirectoryContentProvider {
-  DirectoryContent getDirectoryContent();
+* @author Bas Leijdekkers
+*/
+public class DefaultCvsOperationExecutorCallback implements CvsOperationExecutorCallback {
 
-  void setStreamingListener(final Consumer<DirectoryContent> streamingListener);
+  public void executionFinished(boolean successfully) {
+  }
+
+  public void executionFinishedSuccessfully() {
+  }
+
+  public void executeInProgressAfterAction(ModalityContext modaityContext) {
+  }
 }

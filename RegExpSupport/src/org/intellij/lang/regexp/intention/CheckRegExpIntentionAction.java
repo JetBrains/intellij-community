@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -43,23 +44,28 @@ public class CheckRegExpIntentionAction extends QuickEditAction implements Icona
   @Override
   protected Pair<PsiElement, TextRange> getRangePair(PsiFile file, Editor editor) {
     Pair<PsiElement, TextRange> pair = super.getRangePair(file, editor);
-    if (pair != null) return pair;
-    RegExpRangeProvider[] rangeProviders = RegExpRangeProvider.EP_NAME.getExtensions();
-    PsiElement element = PsiUtilBase.getElementAtCaret(editor);
-    for (RegExpRangeProvider provider : rangeProviders) {
-      TextRange range = provider.getTextRange(element);
-      if (range != null) {
-        return Pair.create(element, range);
+
+    if (pair == null) {
+      RegExpRangeProvider[] rangeProviders = RegExpRangeProvider.EP_NAME.getExtensions();
+      PsiElement element = PsiUtilBase.getElementAtCaret(editor);
+      for (RegExpRangeProvider provider : rangeProviders) {
+        pair = provider.getRangePair(element);
+        if (pair != null) break;
       }
     }
-    return null;
+    return pair;
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
     /*super.isAvailable(project, editor, file) && */
-    return pair != null && pair.first != null && pair.first.getLanguage() == RegExpLanguage.INSTANCE;
+    if (pair != null && pair.first != null) {
+      Language language = pair.first.getLanguage();
+      Language baseLanguage = language.getBaseLanguage();
+      return language == RegExpLanguage.INSTANCE || baseLanguage == RegExpLanguage.INSTANCE;
+    }
+    return false;
   }
 
   @Override

@@ -21,18 +21,9 @@ package com.intellij.cvsSupport2.cvsExecution;
  */
 public interface CvsOperationExecutorCallback {
 
-  CvsOperationExecutorCallback EMPTY = new CvsOperationExecutorCallback(){
-    public void executionFinished(boolean successfully) {
-    }
-
-    public void executionFinishedSuccessfully() {
-    }
-
-    public void executeInProgressAfterAction(ModalityContext modaityContext) {
-    }
-  };
+  CvsOperationExecutorCallback EMPTY = new DefaultCvsOperationExecutorCallback();
 
   void executionFinished(boolean successfully);
   void executionFinishedSuccessfully();
-  void executeInProgressAfterAction(ModalityContext modaityContext);
+  void executeInProgressAfterAction(ModalityContext modalityContext);
 }

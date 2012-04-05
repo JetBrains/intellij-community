@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,63 +29,80 @@ import org.netbeans.lib.cvsclient.command.update.UpdateCommand;
 
 public class GetDirectoriesListViaUpdateOperation extends LocalPathIndifferentOperation implements DirectoryContentProvider {
   private final DirectoryContentListener myDirectoryContentListener = new DirectoryContentListener();
-  private Consumer<DirectoryContent> myStepByStepListener;
+
+  private DirectoryContentListener myStreamingDirectoryContentListener = null;
+  private long timeStamp = System.currentTimeMillis();
+  private Consumer<DirectoryContent> myStreamingListener;
 
   public GetDirectoriesListViaUpdateOperation(CvsEnvironment env, final String parentDirectoryName) {
     super(new AdminReaderOnStoredRepositoryPath(createRepositoryPathProvider(parentDirectoryName)), env);
+    addFinishAction(new Runnable() {
+      @Override
+      public void run() {
+        if (myStreamingListener != null) {
+          myStreamingListener.consume(myStreamingDirectoryContentListener.getDirectoryContent());
+        }
+      }
+    });
   }
 
   public static RepositoryPathProvider createRepositoryPathProvider(final String parentDirName) {
     return new RepositoryPathProvider() {
+      @Override
       public String getRepositoryPath(String repository) {
         String result = repository;
         if (!StringUtil.endsWithChar(result, '/')) result += "/";
         return result + parentDirName;
       }
     };
-
   }
 
+  @Override
   public void modifyOptions(GlobalOptions options) {
     super.modifyOptions(options);
     options.setDoNoChanges(true);
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
-    UpdateCommand command = new UpdateCommand();
+    final UpdateCommand command = new UpdateCommand();
     command.setBuildDirectories(true);
-
-    root.getRevisionOrDate().setForCommand(command);
     command.setRecursive(true);
-
+    root.getRevisionOrDate().setForCommand(command);
     return command;
   }
 
+  @Override
   public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
-    final DirectoryContentListener tmp = new DirectoryContentListener();
-    tmp.messageSent(message);
-    final DirectoryContent tmpContent = tmp.getDirectoryContent();
-    final DirectoryContent mainContent = myDirectoryContentListener.getDirectoryContent();
-    if (mainContent.getFilesRaw().containsAll(tmpContent.getFilesRaw()) &&
-        mainContent.getSubDirectoriesRaw().containsAll(tmpContent.getSubDirectoriesRaw()) &&
-        mainContent.getSubModulesRaw().containsAll(tmpContent.getSubModulesRaw())) {
-    } else {
-      myDirectoryContentListener.getDirectoryContent().copyDataFrom(tmpContent);
-      if (myStepByStepListener != null) {
-        myStepByStepListener.consume(tmpContent);
+    if (myStreamingListener != null) {
+      myStreamingDirectoryContentListener.messageSent(message);
+      final long timePassed = System.currentTimeMillis() - timeStamp;
+      final DirectoryContent streamingContent = myStreamingDirectoryContentListener.getDirectoryContent();
+      final int size = streamingContent.getTotalSize();
+      if (timePassed > 25L && size > 0) {
+        myStreamingListener.consume(streamingContent);
+        myStreamingDirectoryContentListener = new DirectoryContentListener();
+        timeStamp = System.currentTimeMillis();
       }
+    }
+    else {
+      myDirectoryContentListener.messageSent(message);
     }
   }
 
+  @Override
   public DirectoryContent getDirectoryContent() {
     return myDirectoryContentListener.getDirectoryContent();
   }
 
+  @Override
   protected String getOperationName() {
     return "update";
   }
 
-  public void setStepByStepListener(final Consumer<DirectoryContent> stepByStepListener) {
-    myStepByStepListener = stepByStepListener;
+  @Override
+  public void setStreamingListener(final Consumer<DirectoryContent> streamingListener) {
+    myStreamingListener = streamingListener;
+    myStreamingDirectoryContentListener = new DirectoryContentListener();
   }
 }
