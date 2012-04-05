@@ -21,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -56,12 +58,30 @@ public class DecorationLayer extends JComponent {
 
   @Override
   public void paint(Graphics g) {
+    Graphics2D g2d = (Graphics2D)g;
+    paintStatic(g2d);
     if (myShowSelection) {
-      painSelection((Graphics2D)g);
+      paintSelection(g2d);
     }
   }
 
-  private void painSelection(Graphics2D g) {
+  private void paintStatic(Graphics2D g) {
+    List<StaticDecorator> decorators = new ArrayList<StaticDecorator>();
+    List<RadComponent> selection = myArea.getSelection();
+    Set<RadComponent> parents = RadComponent.getParents(selection);
+
+    for (RadComponent parent : parents) {
+      parent.getLayout().addStaticDecorators(decorators, selection);
+    }
+    for (RadComponent component : selection) {
+      component.addStaticDecorators(decorators, selection);
+    }
+    for (StaticDecorator decorator : decorators) {
+      decorator.decorate(this, g);
+    }
+  }
+
+  private void paintSelection(Graphics2D g) {
     List<RadComponent> selection = myArea.getSelection();
     for (RadComponent component : selection) {
       ComponentDecorator decorator = getDecorator(component, selection);

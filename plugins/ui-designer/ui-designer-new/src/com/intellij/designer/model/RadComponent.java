@@ -17,6 +17,7 @@ package com.intellij.designer.model;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.propertyTable.Property;
@@ -102,6 +103,9 @@ public abstract class RadComponent {
   }
 
   public void processDropOperation(OperationContext context) {
+  }
+
+  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
   }
 
   public void addSelectionActions(DesignerEditorPanel designer,
@@ -199,6 +203,17 @@ public abstract class RadComponent {
   // Utils
   //
   //////////////////////////////////////////////////////////////////////////////////////////
+
+  public static Set<RadComponent> getParents(List<RadComponent> components) {
+    Set<RadComponent> parents = new HashSet<RadComponent>();
+    for (RadComponent component : components) {
+      RadComponent parent = component.getParent();
+      if (parent != null) {
+        parents.add(parent);
+      }
+    }
+    return parents;
+  }
 
   public static boolean isParentsContainedIn(List<RadComponent> components, RadComponent component) {
     RadComponent parent = component.getParent();

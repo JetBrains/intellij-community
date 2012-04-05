@@ -50,6 +50,7 @@ public class RadFrameLayout extends RadViewLayoutWithData {
   private static final String[] LAYOUT_PARAMS = {"FrameLayout_Layout", "ViewGroup_MarginLayout"};
 
   @Override
+  @NotNull
   public String[] getLayoutParams() {
     return LAYOUT_PARAMS;
   }
