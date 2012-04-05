@@ -47,9 +47,10 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSolaris = _OS_NAME.startsWith("sunos");
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
-  private static final String _SUN_DESKTOP = SUN_DESKTOP.toLowerCase();
-  public static final boolean isKDE = _SUN_DESKTOP.contains("kde");
-  public static final boolean isGnome = _SUN_DESKTOP.contains("gnome");
+  /** @deprecated inaccurate (to remove in IDEA 13) */
+  public static final boolean isKDE = SUN_DESKTOP.toLowerCase().contains("kde");
+  /** @deprecated inaccurate (to remove in IDEA 13) */
+  public static final boolean isGnome = SUN_DESKTOP.toLowerCase().contains("gnome");
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -63,7 +64,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
   /** @deprecated use {@linkplain #hasXdgOpen()} (to remove in IDEA 13) */
-  public static final boolean hasXdgOpen = false;
+  public static final boolean hasXdgOpen = isLinux;
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
     @Override

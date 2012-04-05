@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     boolean hasOneSupportedModule = false;
     for (Module module : ModuleManager.getInstance(myModule.getProject()).getModules()) {
       if (module == myModule || myFramework.hasSupport(module)) {
-        if (myFramework.isInteractiveConsoleSupport(module)) {
+        if (myFramework.isInteractiveConsoleSupported(module)) {
           hasOneSupportedModule = true;
           break;
         }
@@ -89,7 +89,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
         }
       };
 
-      myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupport(myModule));
+      myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupported(myModule));
 
       return new Action[]{myInteractiveRunAction};
     }
@@ -120,7 +120,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         myModule = (Module)myModuleBox.getSelectedItem();
         if (myInteractiveRunAction != null) {
-          myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupport(myModule));
+          myInteractiveRunAction.setEnabled(myFramework.isInteractiveConsoleSupported(myModule));
         }
       }
     });

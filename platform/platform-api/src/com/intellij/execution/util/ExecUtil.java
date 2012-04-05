@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,46 @@ import java.util.List;
 import java.util.Map;
 
 public class ExecUtil {
+  private static final NotNullLazyValue<Boolean> hasGkSudo = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/usr/bin/gksudo").canExecute();
+    }
+  };
+
+  private static final NotNullLazyValue<Boolean> hasKdeSudo = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/usr/bin/kdesudo").canExecute();
+    }
+  };
+
+  private static final NotNullLazyValue<Boolean> hasGnomeTerminal = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/usr/bin/gnome-terminal").canExecute();
+    }
+  };
+
+  private static final NotNullLazyValue<Boolean> hasKdeTerminal = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/usr/bin/konsole").canExecute();
+    }
+  };
+
+  private static final NotNullLazyValue<Boolean> hasXTerm = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/usr/bin/xterm").canExecute();
+    }
+  };
+
   private ExecUtil() { }
 
   public static int execAndGetResult(final String... command) throws ExecutionException, InterruptedException {
@@ -87,8 +128,9 @@ public class ExecUtil {
     return "/usr/bin/open";
   }
 
-  public static ProcessOutput execAndGetOutput(@NotNull final List<String> command, @Nullable final String workDir) throws ExecutionException {
-    assert command.size() > 0 : command;
+  public static ProcessOutput execAndGetOutput(@NotNull final List<String> command,
+                                               @Nullable final String workDir) throws ExecutionException {
+    assert command.size() > 0;
     final GeneralCommandLine commandLine = new GeneralCommandLine(command);
     commandLine.setWorkDirectory(workDir);
     final Process process = commandLine.createProcess();
@@ -124,13 +166,13 @@ public class ExecUtil {
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
       return execAndGetOutput(Arrays.asList(getOsascriptPath(), "-e", script), workDir);
     }
-    else if (SystemInfo.isKDE) {
+    else if (hasKdeSudo.getValue()) {
       return execAndGetOutput(Arrays.asList("kdesudo", "--comment", prompt, scriptPath), workDir);
     }
-    else if (SystemInfo.isGnome) {
+    else if (hasGkSudo.getValue()) {
       return execAndGetOutput(Arrays.asList("gksudo", "--message", prompt, scriptPath), workDir);
     }
-    else if (SystemInfo.isUnix) {
+    else if (SystemInfo.isUnix && hasTerminalApp()) {
       final File sudo = createTempExecutableScript("sudo", ".sh",
                                                    "#!/bin/sh\n" +
                                                    "echo \"" + prompt + "\"\n" +
@@ -140,15 +182,54 @@ public class ExecUtil {
                                                    "echo\n" +
                                                    "read -p \"Press Enter to close this window...\" TEMP\n" +
                                                    "exit $STATUS\n");
-      return execAndGetOutput(Arrays.asList("xterm", "-T", "Install", "-e", sudo.getAbsolutePath()), workDir);
+      return execAndGetOutput(getTerminalCommand("Install", sudo.getAbsolutePath()), workDir);
     }
-    else {
-      throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
-    }
+
+    throw new UnsupportedSystemException();
   }
 
   public static int sudoAndGetResult(@NotNull final String scriptPath,
                                      @NotNull final String prompt) throws IOException, ExecutionException {
     return sudoAndGetOutput(scriptPath, prompt).getExitCode();
+  }
+
+  public static boolean hasTerminalApp() {
+    return SystemInfo.isWindows || SystemInfo.isMac || hasKdeTerminal.getValue() || hasGnomeTerminal.getValue() || hasXTerm.getValue();
+  }
+
+  public static List<String> getTerminalCommand(@Nullable final String title, @NotNull final String command) {
+    if (SystemInfo.isWindows) {
+      return Arrays.asList("cmd.exe", "/c", "start", '"' + (title != null ? title : "") + '"', command);
+    }
+    else if (SystemInfo.isMac) {
+      return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command); // todo: title?
+    }
+    else if (hasKdeTerminal.getValue()) {
+      return Arrays.asList("/usr/bin/konsole", "-e", command); // todo: title?
+    }
+    else if (hasGnomeTerminal.getValue()) {
+      if (title != null) {
+        return Arrays.asList("/usr/bin/gnome-terminal", "-t", title, "-x", command);
+      }
+      else {
+        return Arrays.asList("/usr/bin/gnome-terminal", "-x", command);
+      }
+    }
+    else if (hasXTerm.getValue()) {
+      if (title != null) {
+        return Arrays.asList("/usr/bin/xterm", "-T", title, "-e", command);
+      }
+      else {
+        return Arrays.asList("/usr/bin/xterm", "-e", command);
+      }
+    }
+
+    throw new UnsupportedSystemException();
+  }
+
+  public static class UnsupportedSystemException extends UnsupportedOperationException {
+    public UnsupportedSystemException() {
+      super("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
+    }
   }
 }
