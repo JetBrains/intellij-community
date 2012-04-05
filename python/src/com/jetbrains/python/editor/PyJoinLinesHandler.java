@@ -37,8 +37,9 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     if (!(file instanceof PyFile)) return CANNOT_JOIN;
 
     // step back the probable "\" and space before it.
-    int i = start -1;
+    int i = start;
     CharSequence text = document.getCharsSequence();
+    if (i>= 0 && text.charAt(i) == '\n') i -=1;
     if (i>= 0 && text.charAt(i) == '\\') i -=1;
     while (i>=0 && text.charAt(i) == ' ' || text.charAt(i) == '\t') i -=1;
     if (i < 0) return CANNOT_JOIN; // TODO: join with empty BOF, too
