@@ -89,10 +89,7 @@ public class PropertyParser {
         component.setProperties(Collections.<Property>emptyList());
       }
       else {
-        Class<?> componentClass = myClassLoader.loadClass(info.getClassName());
-        if (componentClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
-          componentClass = myClassLoader.loadClass("android.view.View");
-        }
+        Class<?> componentClass = configureClass(myClassLoader.loadClass(info.getClassName()));
         component.setProperties(loadWidgetProperties(componentClass, model));
       }
     }
@@ -113,8 +110,26 @@ public class PropertyParser {
       }
 
       if (layoutParams != null) {
-        List<Property> properties = loadLayoutProperties(layoutParams, 0, parent.getMetaModel());
+        MetaModel[] models = new MetaModel[layoutParams.length];
+        models[0] = parent.getMetaModel();
 
+        for (int i = 1; i < layoutParams.length; i++) {
+          if (models[i - 1] == null) {
+            break;
+          }
+          String extendTarget = models[i - 1].getTarget();
+          if (extendTarget == null) {
+            break;
+          }
+
+          Class<?> superClass = myClassLoader.loadClass(extendTarget).getSuperclass();
+          if (superClass != null) {
+            superClass = configureClass(superClass);
+            models[i] = myMetaManager.getModelByTarget(superClass.getName());
+          }
+        }
+
+        List<Property> properties = loadLayoutProperties(layoutParams, 0, models);
         if (!properties.isEmpty()) {
           properties = new ArrayList<Property>(properties);
           properties.addAll(component.getProperties());
@@ -168,16 +183,16 @@ public class PropertyParser {
                          "paddingBottom", "bottom",
                          "paddingStart", "start",
                          "paddingEnd", "end");
-          paddingProperty.decorate(model);
+          if (model != null) {
+            paddingProperty.decorate(model);
+          }
           properties.add(paddingProperty);
         }
       }
 
       Class<?> superComponentClass = componentClass.getSuperclass();
       if (superComponentClass != null) {
-        if (superComponentClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
-          superComponentClass = myClassLoader.loadClass("android.view.View");
-        }
+        superComponentClass = configureClass(superComponentClass);
 
         List<Property> superProperties = loadWidgetProperties(superComponentClass,
                                                               myMetaManager.getModelByTarget(superComponentClass.getName()));
@@ -206,8 +221,16 @@ public class PropertyParser {
     return properties;
   }
 
-  private List<Property> loadLayoutProperties(String[] components, int index, MetaModel model) throws Exception {
+  private Class<?> configureClass(Class<?> viewClass) throws Exception {
+    if (viewClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
+      return myClassLoader.loadClass("android.view.View");
+    }
+    return viewClass;
+  }
+
+  private List<Property> loadLayoutProperties(String[] components, int index, MetaModel[] models) throws Exception {
     String component = components[index];
+    MetaModel model = models[index];
 
     List<Property> properties = myCachedProperties.get(component);
 
@@ -272,7 +295,7 @@ public class PropertyParser {
       }
 
       if (++index < components.length) {
-        for (Property property : loadLayoutProperties(components, index, model)) {
+        for (Property property : loadLayoutProperties(components, index, models)) {
           if (PropertyTable.findProperty(properties, property) == -1) {
             if (model == null) {
               properties.add(property);

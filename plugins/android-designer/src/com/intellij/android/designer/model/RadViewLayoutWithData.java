@@ -15,9 +15,12 @@
  */
 package com.intellij.android.designer.model;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Alexander Lobas
  */
 public abstract class RadViewLayoutWithData extends RadViewLayout {
+  @NotNull
   public abstract String[] getLayoutParams();
 }

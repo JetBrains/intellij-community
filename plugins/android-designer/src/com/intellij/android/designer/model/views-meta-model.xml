@@ -32,9 +32,9 @@
         />
   </meta>
 
-  <meta class="class android.view.ViewGroup">
+  <meta class="android.view.ViewGroup">
     <properties
-        expert="animateLayoutChanges clipChildren clipToPadding layoutAnimation animationCache persistentDrawingCache alwaysDrawnWithCache addStatesFromChildren descendantFocusability splitMotionEvents"
+        expert="layout:margin.start layout:margin.end animateLayoutChanges clipChildren clipToPadding layoutAnimation animationCache persistentDrawingCache alwaysDrawnWithCache addStatesFromChildren descendantFocusability splitMotionEvents"
         />
   </meta>
 
@@ -991,7 +991,7 @@
     <palette title="LinearLayout" icon="/com/intellij/android/designer/icons/LinearLayout.png"
              tooltip="A Layout that arranges its children in a single column or a single row."/>
 
-    <properties important="orientation gravity"/>
+    <properties important="orientation gravity baselineAligned measureWithLargestChild showDividers"/>
 
     <creation>
       <![CDATA[
@@ -1012,8 +1012,8 @@
     <palette title="FrameLayout" icon="/com/intellij/android/designer/icons/FrameLayout.png"
              tooltip="FrameLayout is designed to block out an area on the screen to display a single item."/>
 
-    <properties important="foreground foregroundGravity layout:margin"
-                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal layout:margin.start layout:margin.end"
+    <properties important="foreground foregroundGravity"
+                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal"
         />
 
     <creation>
