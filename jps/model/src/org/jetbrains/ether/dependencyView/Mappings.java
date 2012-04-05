@@ -9,6 +9,7 @@ import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntProcedure;
 import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.Opcodes;
@@ -43,15 +44,15 @@ public class Mappings {
 
   private final TIntHashSet myChangedClasses;
   private final TIntHashSet myChangedFiles;
-  private final TIntHashSet myDeletedClasses;
+  private final Set<ClassRepr> myDeletedClasses;
   private final Object myLock;
 
-  private void addDeletedClass(final int it) {
+  private void addDeletedClass(final ClassRepr cr) {
     assert (myDeletedClasses != null);
 
-    myDeletedClasses.add(it);
+    myDeletedClasses.add(cr);
 
-    addChangedClass(it);
+    addChangedClass(cr.name);
   }
 
   private void addChangedClass(final int it) {
@@ -67,8 +68,9 @@ public class Mappings {
     myIsDifferentiated = true;
   }
 
-  private TIntHashSet getDeletedClasses() {
-    return myDeletedClasses;
+  @NotNull
+  private Set<ClassRepr> getDeletedClasses() {
+    return myDeletedClasses != null? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
   }
 
   private TIntHashSet getChangedClasses() {
@@ -142,7 +144,7 @@ public class Mappings {
     myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-    myDeletedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+    myDeletedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
@@ -294,7 +296,12 @@ public class Mappings {
   }
 
   private void runPostPasses() {
-    myChangedClasses.removeAll(myDeletedClasses.toArray());
+    final Set<ClassRepr> deleted = myDeletedClasses;
+    if (deleted != null) {
+      for (ClassRepr repr : deleted) {
+        myChangedClasses.remove(repr.name);
+      }
+    }
 
     for (final PostPass p : myPostPasses) {
       p.run();
@@ -1558,7 +1565,7 @@ public class Mappings {
 
         debug("Processing removed classes:");
         for (final ClassRepr c : classDiff.removed()) {
-          delta.addDeletedClass(c.name);
+          delta.addDeletedClass(c);
           self.appendDependents(c, dependants);
           debug("Adding usages of class ", c.name);
           affectedUsages.add(c.createUsage());
@@ -1675,25 +1682,23 @@ public class Mappings {
     }
   }
 
-  private void cleanupBackDependency(final int className, Collection<UsageRepr.Cluster> clusters) {
+  private void cleanupBackDependency(final int className, @Nullable Collection<UsageRepr.Cluster> clusters) {
     if (clusters == null) {
       final int sourceFile = myClassToSourceFile.get(className);
-
       if (sourceFile > 0) {
         clusters = mySourceFileToUsages.get(sourceFile);
+      }
+    }
 
-        if (clusters != null) {
-          for (final UsageRepr.Cluster cluster : clusters) {
-            final Set<UsageRepr.Usage> usages = cluster.getUsages();
-            if (usages != null) {
-              for (final UsageRepr.Usage u : usages) {
-                if (u instanceof UsageRepr.ClassUsage) {
-                  final TIntHashSet residents = cluster.getResidence(u);
-
-                  if (residents != null && residents.contains(className)) {
-                    myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, className);
-                  }
-                }
+    if (clusters != null) {
+      for (final UsageRepr.Cluster cluster : clusters) {
+        final Set<UsageRepr.Usage> usages = cluster.getUsages();
+        if (usages != null) {
+          for (final UsageRepr.Usage u : usages) {
+            if (u instanceof UsageRepr.ClassUsage) {
+              final TIntHashSet residents = cluster.getResidence(u);
+              if (residents != null && residents.contains(className)) {
+                myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, className);
               }
             }
           }
@@ -1702,15 +1707,11 @@ public class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(final int className, ClassRepr cr, Collection<UsageRepr.Cluster> clusters) {
-    if (cr == null) {
-      cr = new Util().reprByName(className);
-    }
+  private void cleanupRemovedClass(@NotNull ClassRepr cr, Collection<UsageRepr.Cluster> clusters) {
+    final int className = cr.name;
 
-    if (cr != null) {
-      for (final int superSomething : cr.getSupers()) {
-        myClassToSubclasses.removeFrom(superSomething, cr.name);
-      }
+    for (final int superSomething : cr.getSupers()) {
+      myClassToSubclasses.removeFrom(superSomething, className);
     }
 
     cleanupBackDependency(className, clusters);
@@ -1727,30 +1728,26 @@ public class Mappings {
 
         if (removed != null) {
           for (final String file : removed) {
-            final int key = myContext.get(file);
-            final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(key);
-            final Collection<UsageRepr.Cluster> clusters = mySourceFileToUsages.get(key);
+            final int fileName = myContext.get(file);
+            final Set<ClassRepr> fileClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
+            final Collection<UsageRepr.Cluster> fileUsages = mySourceFileToUsages.get(fileName);
 
-            if (classes != null) {
-              for (final ClassRepr cr : classes) {
-                cleanupRemovedClass(cr.name, cr, clusters);
+            if (fileClasses != null) {
+              for (final ClassRepr aClass : fileClasses) {
+                cleanupRemovedClass(aClass, fileUsages);
               }
             }
 
-            mySourceFileToClasses.remove(key);
-            mySourceFileToUsages.remove(key);
-            mySourceFileToAnnotationUsages.remove(key);
+            mySourceFileToClasses.remove(fileName);
+            mySourceFileToUsages.remove(fileName);
+            mySourceFileToAnnotationUsages.remove(fileName);
           }
         }
 
         if (delta.isDifferentiated()) {
-          delta.getDeletedClasses().forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int value) {
-              cleanupRemovedClass(value, null, null);
-              return true;
-            }
-          });
+          for (ClassRepr repr : delta.getDeletedClasses()) {
+            cleanupRemovedClass(repr, null);
+          }
 
           delta.getChangedClasses().forEach(new TIntProcedure() {
             @Override
