@@ -1,11 +1,13 @@
 package org.netbeans.lib.cvsclient.command.checkout;
 
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.command.AbstractMessageParser;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.CommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
@@ -14,7 +16,6 @@ import org.netbeans.lib.cvsclient.progress.IProgressViewer;
 import org.netbeans.lib.cvsclient.progress.sending.DummyRequestsProgressHandler;
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +29,7 @@ public class ListModulesCommand extends Command {
 
   private final Set<Module> modules = new HashSet<Module>();
   private Module lastModule;
+  private Consumer<Module> myModuleConsumer;
 
   // Setup ==================================================================
 
@@ -37,6 +39,7 @@ public class ListModulesCommand extends Command {
 
   // Implemented ============================================================
 
+  @Override
   public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager,
                          ICvsListenerRegistry listenerRegistry,
                          IClientEnvironment clientEnvironment,
@@ -58,6 +61,7 @@ public class ListModulesCommand extends Command {
     }
   }
 
+  @Override
   public String getCvsCommandLine() {
     return null;
   }
@@ -76,7 +80,7 @@ public class ListModulesCommand extends Command {
       return null;
     }
     string = string.trim();
-    if (string.length() == 0) {
+    if (string.isEmpty()) {
       return null;
     }
     return string;
@@ -87,6 +91,7 @@ public class ListModulesCommand extends Command {
   private final class GetModulesParser extends AbstractMessageParser {
     private static final String MUTILINE_MODULE_PREFIX = " ";
 
+    @Override
     public void parseLine(String line, boolean errorMessage) {
       if (errorMessage) {
         return;
@@ -116,18 +121,24 @@ public class ListModulesCommand extends Command {
       else {
         addNewModule(new Module(moduleName));
       }
-      return;
     }
 
     private void addNewModule(Module module) {
+      if (myModuleConsumer != null) {
+        myModuleConsumer.consume(module);
+      }
       modules.add(module);
       lastModule = module;
     }
 
-    public void binaryMessageSent(final byte[] bytes) {
-    }
+    @Override
+    public void binaryMessageSent(final byte[] bytes) {}
 
-    public void outputDone() {
-    }
+    @Override
+    public void outputDone() {}
+  }
+
+  public void setModuleConsumer(Consumer<Module> moduleConsumer) {
+    myModuleConsumer = moduleConsumer;
   }
 }
