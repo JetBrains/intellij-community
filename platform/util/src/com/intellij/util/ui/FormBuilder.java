@@ -122,7 +122,7 @@ public class FormBuilder {
       c.weightx = 0;
       c.weighty = 0;
       c.fill = NONE;
-      c.anchor = WEST;
+      c.anchor = getLabelAnchor(component, false);
       c.insets = new Insets(topInset, myIndent, DEFAULT_VGAP, 0);
 
       if (label != null) myPanel.add(label, c);
@@ -146,7 +146,7 @@ public class FormBuilder {
       c.weightx = 0;
       c.weighty = 0;
       c.fill = NONE;
-      c.anchor = myAlignLabelOnRight ? EAST : WEST;
+      c.anchor = getLabelAnchor(component, true);
       c.insets = new Insets(topInset, myIndent, 0, myHorizontalGap);
 
       myPanel.add(label, c);
@@ -166,16 +166,21 @@ public class FormBuilder {
     return this;
   }
 
-  private static int getFill(JComponent value) {
-    if (value instanceof JComboBox) {
+  private  int getLabelAnchor(JComponent component, boolean honorAlignment) {
+    if (component instanceof JScrollPane) return honorAlignment && myAlignLabelOnRight ? NORTHEAST : NORTHWEST;
+    return honorAlignment && myAlignLabelOnRight ? EAST : WEST;
+  }
+
+  private static int getFill(JComponent component) {
+    if (component instanceof JComboBox) {
       return NONE;
     }
-    else if (value instanceof JScrollPane) return BOTH;
+    else if (component instanceof JScrollPane) return BOTH;
     return HORIZONTAL;
   }
 
-  private static int getWeightY(JComponent value) {
-    if (value instanceof JScrollPane) return 1;
+  private static int getWeightY(JComponent component) {
+    if (component instanceof JScrollPane) return 1;
     return 0;
   }
 
