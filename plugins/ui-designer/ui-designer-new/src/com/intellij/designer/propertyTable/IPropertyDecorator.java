@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.cvsSupport2.cvsExecution;
+package com.intellij.designer.propertyTable;
 
+import com.intellij.designer.model.MetaModel;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * author: lesya
+ * @author Alexander Lobas
  */
-public interface CvsOperationExecutorCallback {
-
-  CvsOperationExecutorCallback EMPTY = new DefaultCvsOperationExecutorCallback();
-
-  void executionFinished(boolean successfully);
-  void executionFinishedSuccessfully();
-  void executeInProgressAfterAction(ModalityContext modalityContext);
+public interface IPropertyDecorator {
+  void decorate(@NotNull MetaModel model);
 }

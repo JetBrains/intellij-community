@@ -17,6 +17,7 @@ package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.MetaModel;
+import com.intellij.designer.propertyTable.IPropertyDecorator;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
@@ -35,39 +36,41 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
-public class FlagProperty extends Property<RadViewComponent> {
+public class FlagProperty extends Property<RadViewComponent> implements IPropertyDecorator {
   private final PropertyRenderer myRenderer = new LabelPropertyRenderer(null);
   private final AttributeDefinition myDefinition;
-  private final List<Property> myOptions = new ArrayList<Property>();
+  private final List<Property<RadViewComponent>> myOptions = new ArrayList<Property<RadViewComponent>>();
 
-  public FlagProperty(@NotNull String name, @NotNull AttributeDefinition definition, @Nullable MetaModel model) {
+  public FlagProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
     super(null, name);
     myDefinition = definition;
 
     for (String option : definition.getValues()) {
       myOptions.add(new OptionProperty(this, option, option));
     }
+  }
 
-    if (model != null) {
-      for (Property option : myOptions) {
-        model.decorate(option, name + "." + option.getName());
-      }
+  @Override
+  public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
+    return new FlagProperty(name, myDefinition);
+  }
+
+  @Override
+  public void decorate(@NotNull MetaModel model) {
+    String name = getName();
+    for (Property option : myOptions) {
+      model.decorate(option, name + "." + option.getName());
     }
   }
 
   @Override
-  public Property createForNewPresentation() {
-    return new FlagProperty(getName(), myDefinition, null);
-  }
-
-  @Override
-  public List<Property> getChildren(@Nullable RadViewComponent component) {
+  public List<Property<RadViewComponent>> getChildren(@Nullable RadViewComponent component) {
     return myOptions;
   }
 
   @Override
   public Object getValue(RadViewComponent component) throws Exception {
-    StringBuffer value = new StringBuffer("[");
+    StringBuilder value = new StringBuilder("[");
     Set<String> options = getOptions(component);
     int index = 0;
     for (Property option : myOptions) {
@@ -158,6 +161,12 @@ public class FlagProperty extends Property<RadViewComponent> {
     });
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Option
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   private class OptionProperty extends Property<RadViewComponent> {
     private PropertyRenderer myRenderer = new BooleanRenderer();
     private PropertyEditor myEditor = new BooleanEditor();
@@ -173,7 +182,7 @@ public class FlagProperty extends Property<RadViewComponent> {
     }
 
     @Override
-    public Property createForNewPresentation() {
+    public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
       return null;
     }
 

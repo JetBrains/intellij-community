@@ -16,8 +16,11 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.model.MetaModel;
+import com.intellij.designer.propertyTable.IPropertyDecorator;
 import com.intellij.designer.propertyTable.Property;
-import org.jetbrains.android.dom.attrs.AttributeDefinition;
+import com.intellij.designer.propertyTable.PropertyEditor;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,25 +30,81 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class CompoundProperty extends AttributeProperty {
-  private List<Property> myChildren = new ArrayList<Property>();
+public abstract class CompoundProperty extends Property<RadViewComponent> implements IPropertyDecorator {
+  private List<Property<RadViewComponent>> myChildren = new ArrayList<Property<RadViewComponent>>();
 
-  public CompoundProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
-    super(name, definition);
+  public CompoundProperty(@NotNull String name) {
+    super(null, name);
   }
 
   @Override
-  public List<Property> getChildren(@Nullable RadViewComponent component) {
+  public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
+    CompoundProperty property = createForNewPresentation(name);
+    List<Property<RadViewComponent>> children = property.getChildren(null);
+    for (Property<RadViewComponent> childProperty : myChildren) {
+      children.add(childProperty.createForNewPresentation(property, childProperty.getName()));
+    }
+    return property;
+  }
+
+  public void decorate(@NotNull MetaModel model) {
+    String name = getName();
+    model.decorate0(this, name);
+    for (Property<RadViewComponent> childProperty : myChildren) {
+      model.decorate(childProperty, name + "." + childProperty.getName());
+    }
+  }
+
+  @Override
+  public List<Property<RadViewComponent>> getChildren(@Nullable RadViewComponent component) {
     return myChildren;
   }
 
+  protected abstract CompoundProperty createForNewPresentation(@NotNull String name);
+
   @Override
-  public Property createForNewPresentation() {
-    CompoundProperty property = new CompoundProperty(getName(), myDefinition);
-    List<Property> children = property.getChildren(null);
-    for (Property childProperty : myChildren) {
-      children.add(childProperty.createForNewPresentation());
+  public Object getValue(RadViewComponent component) throws Exception {
+    StringBuilder value = new StringBuilder();
+    int index = 0;
+    int empty = 0;
+    for (Property<RadViewComponent> childProperty : myChildren) {
+      if (index++ > 0) {
+        value.append(", ");
+      }
+      String childValue = (String)childProperty.getValue(component);
+      if (StringUtil.isEmpty(childValue)) {
+        empty++;
+        value.append("?");
+      }
+      else {
+        value.append(childValue);
+      }
     }
-    return property;
+    if (empty == myChildren.size()) {
+      return "";
+    }
+    return value.toString();
+  }
+
+  @Override
+  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+    for (Property<RadViewComponent> childProperty : myChildren) {
+      if (!childProperty.isDefaultValue(component)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void setDefaultValue(RadViewComponent component) throws Exception {
+    for (Property<RadViewComponent> childProperty : myChildren) {
+      childProperty.setDefaultValue(component);
+    }
+  }
+
+  @Override
+  public PropertyEditor getEditor() {
+    return null;
   }
 }

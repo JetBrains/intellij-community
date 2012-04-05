@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import java.io.File;
 import java.util.*;
 
 public class CvsElement extends DefaultMutableTreeNode implements Comparable<CvsElement>{
+
+  public static final CvsElement[] EMPTY_ARRAY = {};
 
   protected RemoteResourceDataProvider myDataProvider;
   protected String myPath;
@@ -70,18 +72,22 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
     }
   }
 
+  @Override
   public TreeNode getChildAt(int childIndex) {
     return (TreeNode)getMyChildren().get(childIndex);
   }
 
+  @Override
   public int getChildCount() {
     return getMyChildren().size();
   }
 
+  @Override
   public int getIndex(TreeNode node) {
     return getMyChildren().indexOf(node);
   }
 
+  @Override
   public boolean getAllowsChildren() {
     if (children != null) {
       return getChildCount() > 0;
@@ -91,6 +97,7 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
     }
   }
 
+  @Override
   public Enumeration children() {
     return getMyChildren().elements();
   }

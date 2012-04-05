@@ -16,9 +16,11 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -27,8 +29,20 @@ public class AttributePropertyWithDefault extends AttributeProperty {
   private final String myDefaultValue;
 
   public AttributePropertyWithDefault(@NotNull String name, @NotNull AttributeDefinition definition, @NotNull String defaultValue) {
-    super(name, definition);
+    this(null, name, definition, defaultValue);
+  }
+
+  public AttributePropertyWithDefault(@Nullable Property parent,
+                                      @NotNull String name,
+                                      @NotNull AttributeDefinition definition,
+                                      @NotNull String defaultValue) {
+    super(parent, name, definition);
     myDefaultValue = defaultValue;
+  }
+
+  @Override
+  public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
+    return new AttributePropertyWithDefault(parent, name, myDefinition, myDefaultValue);
   }
 
   @Override

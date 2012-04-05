@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 
@@ -25,5 +26,5 @@ import com.intellij.psi.PsiElement;
 public interface RegExpRangeProvider {
   ExtensionPointName<RegExpRangeProvider> EP_NAME = new ExtensionPointName<RegExpRangeProvider>("com.intellij.regExpRangeProvider");
 
-  TextRange getTextRange(PsiElement element);
+  Pair<PsiElement, TextRange> getRangePair(PsiElement element);
 }

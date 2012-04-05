@@ -16,6 +16,7 @@
 package com.intellij.designer.model;
 
 import com.intellij.designer.palette.Item;
+import com.intellij.designer.propertyTable.IPropertyDecorator;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
@@ -114,10 +115,6 @@ public class MetaModel {
     myPaletteItem.setMetaModel(this);
   }
 
-  public boolean isNormalProperty(String name) {
-    return myNormalProperties.contains(name);
-  }
-
   public void setNormalProperties(List<String> normalProperties) {
     myNormalProperties = normalProperties;
   }
@@ -146,9 +143,31 @@ public class MetaModel {
     myDeprecatedProperties = deprecatedProperties;
   }
 
-  public void decorate(Property property, String name) {
+  public void decorate0(Property property, String name) {
     property.setImportant(isImportantProperty(name));
     property.setExpert(isExpertProperty(name));
     property.setDeprecated(isDeprecatedProperty(name));
+  }
+
+  public void decorate(Property property, String name) {
+    decorate0(property, name);
+
+    if (property instanceof IPropertyDecorator) {
+      ((IPropertyDecorator)property).decorate(this);
+    }
+  }
+
+  public Property decorateWithOverride(Property property) {
+    String name = property.getName();
+
+    if (myNormalProperties.contains(name) ||
+        myImportantProperties.contains(name) ||
+        myExpertProperties.contains(name) ||
+        myDeprecatedProperties.contains(name)) {
+      property = property.createForNewPresentation();
+      decorate(property, name);
+    }
+
+    return property;
   }
 }

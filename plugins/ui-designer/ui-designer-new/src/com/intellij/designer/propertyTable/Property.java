@@ -37,7 +37,11 @@ public abstract class Property<T extends RadComponent> {
     myName = name;
   }
 
-  public abstract Property createForNewPresentation();
+  public Property<T> createForNewPresentation() {
+    return createForNewPresentation(myParent, myName);
+  }
+
+  public abstract Property<T> createForNewPresentation(@Nullable Property parent, @NotNull String name);
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Hierarchy
@@ -48,7 +52,7 @@ public abstract class Property<T extends RadComponent> {
     return myParent;
   }
 
-  public List<Property> getChildren(@Nullable T component) {
+  public List<Property<T>> getChildren(@Nullable T component) {
     return Collections.emptyList();
   }
 

@@ -41,7 +41,7 @@ public class ResourceRenderer implements PropertyRenderer {
 
   private final ColorIcon myColorIcon = new ColorIcon(10, 9);
   private BooleanRenderer myBooleanRenderer;
-  private final SimpleColoredComponent myColoredComponent;
+  protected final SimpleColoredComponent myColoredComponent;
   private final Set<AttributeFormat> myFormats;
 
   public ResourceRenderer(Set<AttributeFormat> formats) {
@@ -75,6 +75,12 @@ public class ResourceRenderer implements PropertyRenderer {
       myColoredComponent.setBackground(UIUtil.getTableBackground());
     }
 
+    formatValue(value);
+
+    return myColoredComponent;
+  }
+
+  protected void formatValue(String value) {
     if (!StringUtil.isEmpty(value)) {
       int prefix = -1;
       if (value.startsWith("#")) {
@@ -113,8 +119,6 @@ public class ResourceRenderer implements PropertyRenderer {
         }
       }
     }
-
-    return myColoredComponent;
   }
 
   @Override
