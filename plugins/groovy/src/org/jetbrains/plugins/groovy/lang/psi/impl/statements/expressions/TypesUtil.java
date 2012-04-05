@@ -445,6 +445,10 @@ public class TypesUtil {
       GrTupleType tuple2 = (GrTupleType)type2;
       PsiType[] components1 = tuple1.getComponentTypes();
       PsiType[] components2 = tuple2.getComponentTypes();
+
+      if (components1.length == 0) return genNewListBy(type2, manager);
+      if (components2.length == 0) return genNewListBy(type1, manager);
+
       PsiType[] components3 = new PsiType[Math.min(components1.length, components2.length)];
       for (int i = 0; i < components3.length; i++) {
         PsiType c1 = components1[i];
@@ -458,8 +462,20 @@ public class TypesUtil {
       }
       return new GrTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
     }
+    else if (checkEmptyListAndList(type1, type2)) {
+      return genNewListBy(type2,manager);
+    }
+    else if (checkEmptyListAndList(type2, type1)) {
+      return genNewListBy(type1, manager);
+    }
     else if (type1 instanceof GrMapType && type2 instanceof GrMapType) {
       return GrMapType.merge(((GrMapType)type1), ((GrMapType)type2));
+    }
+    else if (checkEmptyMapAndMap(type1, type2)) {
+      return genNewMapBy(type2, manager);
+    }
+    else if (checkEmptyMapAndMap(type2, type1)) {
+      return genNewMapBy(type1, manager);
     }
     else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType)type1;
@@ -487,6 +503,41 @@ public class TypesUtil {
     final PsiType result = getLeastUpperBoundForNumericType(type1, type2);
     if (result != null) return result;
     return GenericsUtil.getLeastUpperBound(type1, type2, manager);
+  }
+
+  private static boolean checkEmptyListAndList(PsiType type1, PsiType type2) {
+    if (type1 instanceof GrTupleType) {
+      PsiType[] types = ((GrTupleType)type1).getComponentTypes();
+      if (types.length == 0 && InheritanceUtil.isInheritor(type2, JAVA_UTIL_LIST)) return true;
+    }
+
+    return false;
+  }
+
+  private static PsiType genNewListBy(PsiType genericOwner, PsiManager manager) {
+    PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_UTIL_LIST, genericOwner.getResolveScope());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    if (list == null) return factory.createTypeFromText(JAVA_UTIL_LIST, null);
+    return factory.createType(list, PsiUtil.extractIterableTypeParameter(genericOwner, false));
+  }
+
+  private static boolean checkEmptyMapAndMap(PsiType type1, PsiType type2) {
+    if (type1 instanceof GrMapType) {
+      PsiType[] types = ((GrMapType)type1).getAllKeyTypes();
+      if (types.length == 0 && InheritanceUtil.isInheritor(type2, JAVA_UTIL_MAP)) return true;
+    }
+
+    return false;
+  }
+
+  private static PsiType genNewMapBy(PsiType genericOwner, PsiManager manager) {
+    PsiClass map = JavaPsiFacade.getInstance(manager.getProject()).findClass(JAVA_UTIL_MAP, genericOwner.getResolveScope());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+    if (map == null) return factory.createTypeFromText(JAVA_UTIL_MAP, null);
+
+    final PsiType key = PsiUtil.substituteTypeParameter(genericOwner, JAVA_UTIL_MAP, 0, false);
+    final PsiType value = PsiUtil.substituteTypeParameter(genericOwner, JAVA_UTIL_MAP, 1, false);
+    return factory.createType(map, key, value);
   }
 
   @Nullable
