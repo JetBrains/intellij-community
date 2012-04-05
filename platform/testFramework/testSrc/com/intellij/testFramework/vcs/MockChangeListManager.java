@@ -21,9 +21,12 @@ public class MockChangeListManager extends ChangeListManager {
   public static final String DEFAULT_CHANGE_LIST_NAME = "Default";
 
   private final Map<String, MockChangeList> myChangeLists = new HashMap<String, MockChangeList>();
+  private LocalChangeList myActiveChangeList;
 
   public MockChangeListManager() {
-    myChangeLists.put(DEFAULT_CHANGE_LIST_NAME, new MockChangeList(DEFAULT_CHANGE_LIST_NAME));
+    MockChangeList defaultChangeList = new MockChangeList(DEFAULT_CHANGE_LIST_NAME);
+    myChangeLists.put(DEFAULT_CHANGE_LIST_NAME, defaultChangeList);
+    myActiveChangeList = defaultChangeList;
   }
 
   public void addChanges(Change... changes) {
@@ -114,7 +117,7 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public LocalChangeList getDefaultChangeList() {
-    throw new UnsupportedOperationException();
+    return myActiveChangeList;
   }
 
   @Override
@@ -278,7 +281,7 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public void setDefaultChangeList(@NotNull LocalChangeList list) {
-    throw new UnsupportedOperationException();
+    myActiveChangeList = list;
   }
 
   @Override
