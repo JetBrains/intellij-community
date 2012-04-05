@@ -1675,9 +1675,9 @@ public class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(final int className, ClassRepr cr) {
+  private void cleanupRemovedClass(final int className, ClassRepr cr, Collection<UsageRepr.Cluster> clusters) {
     if (cr == null) {
-    cr = new Util().reprByName(className);
+      cr = new Util().reprByName(className);
     }
 
     if (cr != null) {
@@ -1688,7 +1688,9 @@ public class Mappings {
       final int sourceFile = myClassToSourceFile.get(className);
 
       if (sourceFile > 0) {
-        final Collection<UsageRepr.Cluster> clusters = mySourceFileToUsages.get(sourceFile);
+        if (clusters == null) {
+          clusters = mySourceFileToUsages.get(sourceFile);
+        }
 
         if (clusters != null) {
           for (final UsageRepr.Cluster cluster : clusters) {
@@ -1727,7 +1729,7 @@ public class Mappings {
 
             if (classes != null) {
               for (final ClassRepr cr : classes) {
-                cleanupRemovedClass(cr.name, cr);
+                cleanupRemovedClass(cr.name, cr, clusters);
               }
             }
 
@@ -1741,7 +1743,7 @@ public class Mappings {
           delta.getDeletedClasses().forEach(new TIntProcedure() {
             @Override
             public boolean execute(int value) {
-              cleanupRemovedClass(value, null);
+              cleanupRemovedClass(value, null, null);
               return true;
             }
           });
