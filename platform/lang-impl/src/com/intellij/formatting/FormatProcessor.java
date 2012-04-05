@@ -85,6 +85,14 @@ class FormatProcessor {
   private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings 
     = new HashMap<AbstractBlockWrapper, Set<AbstractBlockWrapper>>();
 
+  /**
+   * There is a possible case that we detect a 'cycled alignment' rules (see {@link #myBackwardShiftedAlignedBlocks}). We want
+   * just to skip processing for such alignments then.
+   * <p/>
+   * This container holds 'bad alignment' objects that should not be processed.
+   */
+  private final Set<Alignment> myAlignmentsToSkip = new HashSet<Alignment>();
+
   private LeafBlockWrapper myWrapCandidate           = null;
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
 
@@ -617,7 +625,7 @@ class FormatProcessor {
     AlignmentImpl alignment = CoreFormatterUtil.getAlignment(myCurrentBlock);
     WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
-    if (alignment == null) {
+    if (alignment == null || myAlignmentsToSkip.contains(alignment)) {
       if (whiteSpace.containsLineFeeds()) {
         adjustSpacingByIndentOffset();
       }
@@ -637,11 +645,11 @@ class FormatProcessor {
       myDocument, alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks, myIndentOption
     );
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
+    final LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
     switch (result) {
       case TARGET_BLOCK_PROCESSED_NOT_ALIGNED: return true;
       case TARGET_BLOCK_ALIGNED: storeAlignmentMapping(); return true;
       case BACKWARD_BLOCK_ALIGNED:
-        LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
         if (offsetResponsibleBlock == null) {
           return true;
         }
@@ -654,13 +662,8 @@ class FormatProcessor {
         onCurrentLineChanged();
         return false;
       case UNABLE_TO_ALIGN_BACKWARD_BLOCK:
-        if (whiteSpace.containsLineFeeds()) {
-          adjustSpacingByIndentOffset();
-        }
-        else {
-          whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
-        }
-        return true;
+        myAlignmentsToSkip.add(alignment);
+        return false;
       default: return true;
     }
   }
