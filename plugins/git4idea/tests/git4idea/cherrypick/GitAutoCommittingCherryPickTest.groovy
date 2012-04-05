@@ -86,13 +86,7 @@ Otherwise, please use 'git reset'
   @Test
   void "conflict, merge dialog, not all merged, then new & active changelist"() {
     prepareConflict()
-    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES,
-"""
-100644 d87b28d6fd6e97620603e64ce70fc2f24535ec28 1\ttest.txt
-100644 7b50450f5deb7cce3b5ce92ba866f1af6e58c3c6 2\ttest.txt
-100644 a784477cdd0437a84751c52f72b971503deb48cb 3\ttest.txt
-"""
-    ))
+    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES, UNMERGED_FILE))
 
     GitCommit commit = commit()
     invokeCherryPick(commit)

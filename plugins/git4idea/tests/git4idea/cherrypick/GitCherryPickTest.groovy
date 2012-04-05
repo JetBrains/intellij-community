@@ -42,6 +42,17 @@ import static junit.framework.Assert.assertNotNull
 class GitCherryPickTest extends GitFastTest {
   
   public static final String DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME;
+  public static final String UNMERGED_FILE = """
+100644 d87b28d6fd6e97620603e64ce70fc2f24535ec28 1\ttest.txt
+100644 7b50450f5deb7cce3b5ce92ba866f1af6e58c3c6 2\ttest.txt
+100644 a784477cdd0437a84751c52f72b971503deb48cb 3\ttest.txt
+"""
+  public static final String CHERRY_PICK_CONFLICT = """
+error: could not apply ec15d8e... message
+hint: after resolving the conflicts, mark the corrected paths
+hint: with 'git add <paths>' or 'git rm <paths>'
+hint: and commit the result with 'git commit'
+"""
   CherryPicker myCherryPicker
   GitLightRepository myRepository
   GitLightRepository.Commit myInitialCommit
@@ -125,19 +136,8 @@ class GitCherryPickTest extends GitFastTest {
   }
 
   void prepareConflict() {
-    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK,
-                                                                      """
-error: could not apply ec15d8e... message
-hint: after resolving the conflicts, mark the corrected paths
-hint: with 'git add <paths>' or 'git rm <paths>'
-hint: and commit the result with 'git commit'
-"""), new MockGit.SimpleErrorOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES,
-"""
-100644 d87b28d6fd6e97620603e64ce70fc2f24535ec28 1\ttest.txt
-100644 7b50450f5deb7cce3b5ce92ba866f1af6e58c3c6 2\ttest.txt
-100644 a784477cdd0437a84751c52f72b971503deb48cb 3\ttest.txt
-"""
-    ))
+    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, CHERRY_PICK_CONFLICT),
+                                     new MockGit.SimpleErrorOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES, UNMERGED_FILE))
   }
 
   void assertMergeDialogShown() {
