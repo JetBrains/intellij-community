@@ -457,7 +457,7 @@ public class FindInProjectUtil {
       return (GlobalSearchScope)scope;
     }
     if (scope == null) {
-      return GlobalSearchScope.projectScope(project);
+      return projectContentScope(project);
     }
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
@@ -554,6 +554,15 @@ public class FindInProjectUtil {
     return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
   }
 
+  private static GlobalSearchScope projectContentScope(final Project project) {
+    GlobalSearchScope result = null;
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      GlobalSearchScope moduleContent = moduleContentScope(module);
+      result = result == null ? moduleContent : result.uniteWith(moduleContent);
+    }
+    return result == null ? GlobalSearchScope.EMPTY_SCOPE : result;
+  }
+
   @Nullable
   private static GlobalSearchScope moduleContentScope(@NotNull final Module module) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -566,10 +575,7 @@ public class FindInProjectUtil {
         result = result == null ? moduleContent : result.uniteWith(moduleContent);
       }
     }
-    if (result == null) {
-      result = GlobalSearchScope.EMPTY_SCOPE;
-    }
-    return result;
+    return result == null ? GlobalSearchScope.EMPTY_SCOPE : result;
   }
 
   private static void filterMaskedFiles(@NotNull final Set<PsiFile> resultFiles, @Nullable final Pattern fileMaskRegExp) {

@@ -741,6 +741,15 @@ public class TypeConversionUtil {
   }
 
   private static boolean isAssignableFromWildcard(PsiType left, PsiWildcardType rightWildcardType) {
+    if (rightWildcardType.isSuper()) {
+      final PsiClass aClass = PsiUtil.resolveClassInType(rightWildcardType.getSuperBound());
+      if (aClass instanceof PsiTypeParameter) {
+        final PsiClassType[] types = aClass.getExtendsListTypes();
+        for (PsiClassType type : types) {
+          if (isAssignable(left, type)) return true;
+        }
+      }
+    }
     return isAssignable(left, rightWildcardType.getExtendsBound());
   }
 

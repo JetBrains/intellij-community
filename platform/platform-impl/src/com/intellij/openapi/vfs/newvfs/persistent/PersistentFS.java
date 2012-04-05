@@ -1066,7 +1066,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   private static void executeRename(@NotNull VirtualFile file, @NotNull final String newName) {
-    ((VirtualFileSystemEntry)file).setName(newName);
+    ((VirtualFileSystemEntry)file).setNewName(newName);
     final int id = getFileId(file);
     FSRecords.setName(id, newName);
   }

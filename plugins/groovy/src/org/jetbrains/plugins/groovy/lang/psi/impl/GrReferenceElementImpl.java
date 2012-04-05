@@ -82,7 +82,14 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       ASTNode node = nameElement.getNode();
-      ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(newElementName).getNode();
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
+      ASTNode newNameNode;
+      try {
+        newNameNode = factory.createReferenceNameFromText(newElementName).getNode();
+      }
+      catch (IncorrectOperationException e) {
+        newNameNode = factory.createLiteralFromValue(newElementName).getFirstChild().getNode();
+      }
       assert newNameNode != null && node != null;
       node.getTreeParent().replaceChild(node, newNameNode);
     }

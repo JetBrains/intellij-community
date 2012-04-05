@@ -15,8 +15,8 @@
  */
 package com.intellij.lang;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 
 /**
  * Defines the standard languages supported by IDEA.

@@ -349,7 +349,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
-  protected void commitForNext() throws CommitStepException {
+  public void _commit(boolean finishChosen) throws CommitStepException {
     final String apkPath = myApkPathField.getText().trim();
     if (apkPath.length() == 0) {
       throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.apk.path.error"));
@@ -378,7 +378,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     AndroidCompileUtil.setReleaseBuild(compileScope);
 
     properties.setValue(RUN_PROGUARD_PROPERTY, Boolean.toString(myProguardCheckBox.isSelected()));
-    
+
     if (myProguardCheckBox.isSelected()) {
       final String proguardCfgPath = myProguardConfigFilePathField.getText().trim();
       if (proguardCfgPath.length() == 0) {
@@ -386,11 +386,11 @@ class ApkStep extends ExportSignedPackageWizardStep {
       }
       properties.setValue(PROGUARD_CFG_PATH_PROPERTY, proguardCfgPath);
       properties.setValue(INCLUDE_SYSTEM_PROGUARD_FILE_PROPERTY, Boolean.toString(myIncludeSystemProguardFileCheckBox.isSelected()));
-      
+
       if (!new File(proguardCfgPath).isFile()) {
         throw new CommitStepException("Cannot find file " + proguardCfgPath);
       }
-      
+
       compileScope.putUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY, proguardCfgPath);
       compileScope.putUserData(AndroidProguardCompiler.INCLUDE_SYSTEM_PROGUARD_FILE, myIncludeSystemProguardFileCheckBox.isSelected());
     }
@@ -409,5 +409,9 @@ class ApkStep extends ExportSignedPackageWizardStep {
         });
       }
     });
+  }
+
+  @Override
+  protected void commitForNext() throws CommitStepException {
   }
 }

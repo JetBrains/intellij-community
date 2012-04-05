@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -22,8 +23,15 @@ import com.intellij.psi.PsiElement;
  * Date: 3/28/12
  */
 public class JavaVersionServiceImpl extends JavaVersionService {
+  private JavaSdkVersion myTestVersion = null;
+
+  public void setTestVersion(JavaSdkVersion testVersion) {
+    myTestVersion = testVersion;
+  }
+
   @Override
   public boolean isAtLeast(PsiElement element, JavaSdkVersion version) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return myTestVersion != null && myTestVersion.isAtLeast(version);
     return JavaSdkVersionUtil.isAtLeast(element, version);
   }
 }

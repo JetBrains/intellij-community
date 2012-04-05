@@ -194,10 +194,24 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     String text = VfsUtilCore.loadText(file);
     int index = text.indexOf(referenceText);
     assert index >= 0;
-    
+
     assert text.indexOf(referenceText, index + referenceText.length()) == -1 : "Reference text '" + referenceText + "' occurs more than one times";
-    
+
     return getReferenceAt(file, index);
+  }
+
+  @Nullable
+  protected PsiReference getReference(VirtualFile file, @NotNull String referenceText, int index) throws IOException {
+    String text = VfsUtilCore.loadText(file);
+    int k = -1;
+
+    do {
+      k = text.indexOf(referenceText, k + 1);
+      assert k >= 0 : index;
+    }
+    while (--index >= 0);
+
+    return getReferenceAt(file, k);
   }
   
   @Nullable
