@@ -48,10 +48,7 @@ public class StatementMover extends LineMover {
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
     if (!(file instanceof PyFile)) return false;
     init(editor, info, down);
-    // Do not move in case of selection
-    if (editor.getSelectionModel().hasSelection()){
-      return false;
-    }
+
     Document document = editor.getDocument();
     String lineToMove = document.getText(new TextRange(getLineStartSafeOffset(document, info.toMove.startLine), getLineStartSafeOffset(document, info.toMove.endLine)));
     if (StringUtil.isEmptyOrSpaces(lineToMove)) {
