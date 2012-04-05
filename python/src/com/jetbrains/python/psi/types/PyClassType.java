@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -361,6 +362,13 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   @Override
   public boolean isBuiltin(TypeEvalContext context) {
     return PyBuiltinCache.getInstance(myClass).hasInBuiltins(myClass);
+  }
+
+  @Override
+  public void assertValid() {
+    if (!myClass.isValid()) {
+      throw new PsiInvalidElementAccessException(myClass);
+    }
   }
 
   @NotNull

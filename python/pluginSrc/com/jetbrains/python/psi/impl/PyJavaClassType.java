@@ -63,4 +63,8 @@ public class PyJavaClassType implements PyType {
   public boolean isBuiltin(TypeEvalContext context) {
     return false;  // TODO: JSDK's types could be considered built-in.
   }
+
+  @Override
+  public void assertValid() {
+  }
 }

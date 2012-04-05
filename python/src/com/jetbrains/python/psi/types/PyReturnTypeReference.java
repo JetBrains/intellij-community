@@ -64,4 +64,8 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
   public int hashCode() {
     return myCallable != null ? myCallable.hashCode() : 0;
   }
+
+  @Override
+  public void assertValid() {
+  }
 }

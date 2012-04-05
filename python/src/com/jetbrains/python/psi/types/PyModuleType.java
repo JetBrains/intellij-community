@@ -295,6 +295,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return true;
   }
 
+  @Override
+  public void assertValid() {
+  }
+
   @NotNull
   public static Set<String> getPossibleInstanceMembers() {
     return ourPossibleFields;
