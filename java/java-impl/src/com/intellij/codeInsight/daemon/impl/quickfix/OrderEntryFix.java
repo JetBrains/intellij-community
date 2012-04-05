@@ -88,7 +88,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return null;
 
-    VirtualFile classVFile = containingFile.getVirtualFile();
+    final VirtualFile classVFile = containingFile.getVirtualFile();
     if (classVFile == null) return null;
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -213,7 +213,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
               @Override
               public void run() {
                 ModifiableRootModel model = ModuleRootManager.getInstance(currentModule).getModifiableModel();
-                model.addModuleOrderEntry(classModule);
+                final ModuleOrderEntry entry = model.addModuleOrderEntry(classModule);
+                if (ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(classVFile)) {
+                  entry.setScope(DependencyScope.TEST);
+                }
                 model.commit();
                 if (editor != null) {
                   final List<PsiClass> targetClasses = new ArrayList<PsiClass>();
