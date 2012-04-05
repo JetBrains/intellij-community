@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,17 @@
  */
 package com.intellij.cvsSupport2.cvsExecution;
 
-
 /**
- * author: lesya
- */
-public interface CvsOperationExecutorCallback {
+* @author Bas Leijdekkers
+*/
+public class DefaultCvsOperationExecutorCallback implements CvsOperationExecutorCallback {
 
-  CvsOperationExecutorCallback EMPTY = new DefaultCvsOperationExecutorCallback();
+  public void executionFinished(boolean successfully) {
+  }
 
-  void executionFinished(boolean successfully);
-  void executionFinishedSuccessfully();
-  void executeInProgressAfterAction(ModalityContext modalityContext);
+  public void executionFinishedSuccessfully() {
+  }
+
+  public void executeInProgressAfterAction(ModalityContext modaityContext) {
+  }
 }
