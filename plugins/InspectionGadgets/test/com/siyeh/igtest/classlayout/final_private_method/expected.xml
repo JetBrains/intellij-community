@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>FinalPrivateMethod.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'private' method declared 'final'</problem_class>
+    <description>'private' method declared &lt;code&gt;final&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>FinalPrivateMethod.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'private' method declared 'final'</problem_class>
+    <description>'private' method declared &lt;code&gt;final&lt;/code&gt; #loc</description>
+  </problem>
+</problems>
