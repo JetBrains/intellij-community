@@ -18,11 +18,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -73,6 +70,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private PyPositionConverter myPositionConverter;
   private XSmartStepIntoHandler<?> mySmartStepIntoHandler;
   private boolean myWaitingForConnection = false;
+  private PyStackFrame myStackFrameBeforeResume;
 
   public PyDebugProcess(final @NotNull XDebugSession session,
                         @NotNull final ServerSocket serverSocket,
@@ -115,6 +113,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       @Override
       public void exitEvent() {
         handleCommunicationError();
+      }
+    });
+
+    session.addSessionListener(new XDebugSessionAdapter() {
+      @Override
+      public void beforeSessionResume() {
+        if (session.getCurrentStackFrame() instanceof PyStackFrame) {
+          myStackFrameBeforeResume = (PyStackFrame)session.getCurrentStackFrame();
+        }
+        else {
+          myStackFrameBeforeResume = null;
+        }
       }
     });
   }
@@ -301,17 +311,17 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void startStepOver() {
-    resumeOrStep(ResumeOrStepCommand.Mode.STEP_OVER);
+    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_OVER);
   }
 
   @Override
   public void startStepInto() {
-    resumeOrStep(ResumeOrStepCommand.Mode.STEP_INTO);
+    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_INTO);
   }
 
   @Override
   public void startStepOut() {
-    resumeOrStep(ResumeOrStepCommand.Mode.STEP_OUT);
+    passToCurrentThread(ResumeOrStepCommand.Mode.STEP_OUT);
   }
 
   public void startSmartStepInto(String functionName) {
@@ -330,7 +340,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void resume() {
-    resumeOrStep(ResumeOrStepCommand.Mode.RESUME);
+    passToAllThreads(ResumeOrStepCommand.Mode.RESUME);
   }
 
   @Override
@@ -340,13 +350,37 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
-  private void resumeOrStep(final ResumeOrStepCommand.Mode mode) {
+  private void passToAllThreads(final ResumeOrStepCommand.Mode mode) {
     dropFrameCaches();
     if (isConnected()) {
-      for (PyThreadInfo suspendedThread : mySuspendedThreads) {    //TODO: we should step only one thread
+      for (PyThreadInfo suspendedThread : mySuspendedThreads) {
         myDebugger.resumeOrStep(suspendedThread.getId(), mode);
       }
     }
+  }
+
+  private void passToCurrentThread(final ResumeOrStepCommand.Mode mode) {
+    dropFrameCaches();
+    if (isConnected()) {
+      String threadId = threadIdBeforeResumeOrStep();
+
+      for (PyThreadInfo suspendedThread : mySuspendedThreads) {
+        if (StringUtil.isEmpty(threadId) || threadId.equals(suspendedThread.getId())) {
+          myDebugger.resumeOrStep(suspendedThread.getId(), mode);
+          break;
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private String threadIdBeforeResumeOrStep() {
+    String threadId = null;
+    if (myStackFrameBeforeResume != null) {
+      threadId = myStackFrameBeforeResume.getThreadId();
+    }
+
+    return threadId;
   }
 
   protected boolean isConnected() {
@@ -376,7 +410,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       }
       myDebugger.setTempBreakpoint(type, pyPosition.getFile(), pyPosition.getLine());
 
-      resumeOrStep(ResumeOrStepCommand.Mode.RESUME);
+      passToCurrentThread(ResumeOrStepCommand.Mode.RESUME);
     }
   }
 
