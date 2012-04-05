@@ -18,6 +18,7 @@ package git4idea.history.browser;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
@@ -29,11 +30,9 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
-import git4idea.GitBranch;
-import git4idea.GitTag;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
@@ -250,7 +249,8 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     private String myCommitMessage;
 
     public CherryPickConflictResolver(Project project, VirtualFile root, String commitHash, String commitAuthor, String commitMessage) {
-      super(project, Collections.singleton(root), makeParams(commitHash, commitAuthor, commitMessage));
+      super(project, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), Collections.singleton(root),
+            makeParams(commitHash, commitAuthor, commitMessage));
       myRoot = root;
       myCommitHash = commitHash;
       myCommitAuthor = commitAuthor;
