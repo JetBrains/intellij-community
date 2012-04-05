@@ -91,7 +91,10 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
           ref = element.getReference();
         }
         if (ref != null) {
-          renamedReferences.add(ref.handleElementRename(newName));
+          PsiElement e = processRef(ref, newName);
+          if (e != null) {
+            renamedReferences.add(e);
+          }
         }
       }
       else {
@@ -117,6 +120,17 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
     qualifyOuterMemberReferences(outerHides);
     qualifyStaticImportReferences(staticImportHides);
+  }
+
+  /**
+   * handles rename of refs
+   * @param ref
+   * @param newName
+   * @return
+   */
+  @Nullable
+  protected PsiElement processRef(PsiReference ref, String newName) {
+    return ref.handleElementRename(newName);
   }
 
   private static void fixNameCollisionsWithInnerClassMethod(final PsiElement element, final String newName,
@@ -176,7 +190,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     }
   }
 
-  private static void findHidingMethodWithOtherSignature(final PsiMethod methodToRename, final String newName, final List<UsageInfo> result) {
+  private void findHidingMethodWithOtherSignature(final PsiMethod methodToRename, final String newName, final List<UsageInfo> result) {
     final PsiClass containingClass = methodToRename.getContainingClass();
     if (containingClass != null) {
       final PsiMethod prototype = getPrototypeWithNewName(methodToRename, newName);
@@ -191,7 +205,8 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
             if (((PsiReferenceExpression)element).resolve() == methodToRename) {
               final PsiMethodCallExpression copy = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(element.getProject())
                 .createExpressionFromText(element.getParent().getText(), element);
-              final PsiReferenceExpression expression = (PsiReferenceExpression)copy.getMethodExpression().handleElementRename(newName);
+              final PsiReferenceExpression expression = (PsiReferenceExpression)processRef(copy.getMethodExpression(), newName);
+              if (expression == null) continue;
               final JavaResolveResult resolveResult = expression.advancedResolve(true);
               final PsiMember resolveResultElement = (PsiMember)resolveResult.getElement();
               if (resolveResult.isValidResult() && resolveResultElement != null) {

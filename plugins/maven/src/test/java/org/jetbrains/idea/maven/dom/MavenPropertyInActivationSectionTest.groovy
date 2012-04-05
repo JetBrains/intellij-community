@@ -49,8 +49,9 @@ class MavenPropertyInActivationSectionTest extends MavenDomTestCase {
   </properties>
 """);
 
-    assert getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1).isSoft()
-    assert !getReference(myProjectPom, "env.GLASSFISH_HOME_123", 2).isSoft()
+
+    assert getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1).resolve() != null
+    assert getReference(myProjectPom, "env.GLASSFISH_HOME_123", 2).resolve() == null
   }
 
 }

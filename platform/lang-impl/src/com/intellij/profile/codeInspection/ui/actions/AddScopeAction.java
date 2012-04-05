@@ -94,7 +94,7 @@ public abstract class AddScopeAction extends AnAction {
                                                                           getSelectedProfile().isToolEnabled(descriptor.getKey()));
       final Descriptor addedDescriptor = new Descriptor(scopeToolState, getSelectedProfile());
       if (node.getChildCount() == 0) {
-        node.add(new InspectionConfigTreeNode(descriptor, getSelectedProfile().getToolDefaultState(descriptor.getKey().getID()), true, true, false));
+        node.add(new InspectionConfigTreeNode(descriptor, getSelectedProfile().getToolDefaultState(descriptor.getKey().toString()), true, true, false));
       }
       node.insert(new InspectionConfigTreeNode(addedDescriptor, scopeToolState, false, false), 0);
       node.setInspectionNode(false);

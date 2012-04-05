@@ -289,10 +289,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     fireChanges(scheme);
   }
 
+  @NotNull
   private static DefaultColorsScheme getDefaultScheme() {
     return DefaultColorSchemesManager.getInstance().getAllSchemes()[0];
   }
 
+  @NotNull
   @Override
   public EditorColorsScheme getGlobalScheme() {
     final EditorColorsScheme scheme = mySchemesManager.getCurrentScheme();

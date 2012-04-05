@@ -63,19 +63,24 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   protected final MavenDomProjectModel myProjectDom;
   protected final MavenProject myMavenProject;
-  private Boolean mySoft;
+  private final boolean mySoft;
 
   public MavenPropertyPsiReference(MavenProject mavenProject, PsiElement element, String text, TextRange range, boolean isSoft) {
     super(element, text, range);
     myMavenProject = mavenProject;
-    mySoft = isSoft ? true : null;
+    mySoft = isSoft;
     myProjectDom = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
   }
 
   @Nullable
   public PsiElement resolve() {
     PsiElement result = doResolve();
-    if (result == null) return result;
+    if (result == null) {
+      if (MavenDomUtil.isMavenFile(getElement())) {
+        result = tryResolveToActivationSection();
+        if (result == null) return null;
+      }
+    }
 
     if (result instanceof XmlTag) {
       XmlTagChild[] children = ((XmlTag)result).getValue().getChildren();
@@ -84,6 +89,30 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
 
     return result;
+  }
+
+  private PsiElement tryResolveToActivationSection() {
+    XmlTag xmlTag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
+    while (xmlTag != null) {
+      if (xmlTag.getName().equals("profile")) {
+        XmlTag activation = xmlTag.findFirstSubTag("activation");
+        if (activation != null) {
+          for (XmlTag propertyTag : activation.findSubTags("property")) {
+            XmlTag nameTag = propertyTag.findFirstSubTag("name");
+            if (nameTag != null) {
+              if (nameTag.getValue().getTrimmedText().equals(myText)) {
+                return nameTag;
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      xmlTag = xmlTag.getParentTag();
+    }
+
+    return null;
   }
 
   // See org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator.createValueSources()
@@ -431,34 +460,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
   @Override
   public boolean isSoft() {
-    Boolean res = mySoft;
-    if (res == null) {
-      XmlTag xmlTag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
-      while (xmlTag != null) {
-        if (xmlTag.getName().equals("profile")) {
-          XmlTag activation = xmlTag.findFirstSubTag("activation");
-          if (activation != null) {
-            for (XmlTag propertyTag : activation.findSubTags("property")) {
-              XmlTag nameTag = propertyTag.findFirstSubTag("name");
-              if (nameTag != null) {
-                if (nameTag.getValue().getTrimmedText().equals(myText)) {
-                  res = true;
-                  break;
-                }
-              }
-            }
-          }
-          break;
-        }
-
-        xmlTag = xmlTag.getParentTag();
-      }
-
-      if (res == null) res = false;
-      mySoft = res;
-    }
-
-    return res;
+    return mySoft;
   }
 
   private interface SchemaProcessor<T> {

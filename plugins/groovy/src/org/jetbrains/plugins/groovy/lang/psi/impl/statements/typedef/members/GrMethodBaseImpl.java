@@ -399,7 +399,17 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    PsiImplUtil.setName(name, getNameIdentifierGroovy());
+    PsiElement nameElement = getNameIdentifierGroovy();
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(nameElement.getProject());
+    PsiElement newNameElement;
+    try {
+      newNameElement = factory.createReferenceNameFromText(name);
+    }
+    catch (IncorrectOperationException e) {
+      newNameElement = factory.createLiteralFromValue(name).getFirstChild();
+    }
+    nameElement.replace(newNameElement);
     return this;
   }
 

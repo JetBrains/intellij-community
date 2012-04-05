@@ -2,6 +2,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
@@ -37,7 +40,16 @@ public class RedundantCast15Test extends InspectionTestCase {
 
   public void testRawCastsToAvoidIncompatibility() throws Exception { doTest();}
 
-  public void testTypeParameterAccessChecksJava7() throws Exception { doTest();}
+  public void testTypeParameterAccessChecksJava7() throws Exception {
+    final JavaVersionServiceImpl versionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
+    try {
+      versionService.setTestVersion(JavaSdkVersion.JDK_1_7);
+      doTest();
+    }
+    finally {
+      versionService.setTestVersion(null);
+    }
+  }
 
   public void testIgnore() throws Exception {
     final RedundantCastInspection castInspection = new RedundantCastInspection();

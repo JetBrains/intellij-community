@@ -512,7 +512,9 @@ public final class PsiUtil extends PsiUtilCore {
     final PsiTypeParameter[] typeParameters2 = bClass.getTypeParameters();
     if (typeParameters1.length != typeParameters2.length) return false;
     for (int i = 0; i < typeParameters1.length; i++) {
-      if (!Comparing.equal(s1.substitute(typeParameters1[i]), s2.substitute(typeParameters2[i]))) return false;
+      final PsiType substituted2 = s2.substitute(typeParameters2[i]);
+      if (!Comparing.equal(s1.substituteWithBoundsPromotion(typeParameters1[i]), substituted2) && 
+          !Comparing.equal(s1.substitute(typeParameters1[i]), substituted2)) return false;
     }
     if (aClass.hasModifierProperty(PsiModifier.STATIC)) return true;
     final PsiClass containingClass1 = aClass.getContainingClass();

@@ -158,6 +158,7 @@
     <colorSettingsPage implementation="org.jetbrains.plugins.groovy.highlighter.GroovyColorsAndFontsPage"/>
     <framework.type implementation="org.jetbrains.plugins.groovy.config.GroovyFrameworkType"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
+    <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.GrMethodRenameHandler"/>
     <renamePsiElementProcessor id="groovyFieldRenameProcessor"
                                implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGrFieldProcessor"
                                order="first"/>
