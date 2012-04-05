@@ -81,6 +81,7 @@ public class TextChangeImpl implements TextChange {
   }
 
   public void setStart(int start) {
+    assert start >= 0 : start;
     myStart = start;
   }
 

@@ -1854,12 +1854,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void paintComposedTextDecoration(@NotNull Graphics2D g) {
     if (myInputMethodRequestsHandler != null && myInputMethodRequestsHandler.composedText != null) {
-      VisualPosition visStart =
-        offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextStart, myDocument.getTextLength()));
+      VisualPosition visStart = offsetToVisualPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getStartOffset(), myDocument.getTextLength()));
       int y = visibleLineToY(visStart.line) + getLineHeight() - getDescent() + 1;
       Point p1 = visualPositionToXY(visStart);
-      Point p2 =
-        logicalPositionToXY(offsetToLogicalPosition(Math.min(myInputMethodRequestsHandler.composedTextEnd, myDocument.getTextLength())));
+      Point p2 = logicalPositionToXY(offsetToLogicalPosition(Math.min(myInputMethodRequestsHandler.composedTextRange.getEndOffset(), myDocument.getTextLength())));
 
       Stroke saved = g.getStroke();
       BasicStroke dotted = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{0, 2, 0, 2}, 0);
@@ -2092,18 +2090,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
             position.x = drawBackground(g, backColor, collapsedFolderAt.getPlaceholderText(), position, fontType, defaultBackground, clip);
           }
+          else if (hEnd > lEnd - lIterator.getSeparatorLength()) {
+            position.x = drawSoftWrapAwareBackground(
+              g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
+              defaultBackground, clip, softWrapsToSkip, caretRowPainted
+            );
+          }
           else {
-            if (hEnd > lEnd - lIterator.getSeparatorLength()) {
-              position.x = drawSoftWrapAwareBackground(
-                g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
-                defaultBackground, clip, softWrapsToSkip, caretRowPainted
-              );
-            }
-            else {
-              position.x = drawSoftWrapAwareBackground(
-                g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted
-              );
-            }
+            position.x = drawSoftWrapAwareBackground(
+              g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted
+            );
           }
 
           iterationState.advance();
@@ -2739,13 +2735,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (placement == SeparatorPlacement.TOP) {
       y = visibleLineToY(logicalToVisualLine(line));
     }
+    else if (line + 1 >= myDocument.getLineCount()) {
+      y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()));
+    }
     else {
-      if (line + 1 >= myDocument.getLineCount()) {
-        y = visibleLineToY(offsetToVisualLine(myDocument.getTextLength()));
-      }
-      else {
-        y = logicalLineToY(line + 1);
-      }
+      y = logicalLineToY(line + 1);
     }
 
     if (y < clip.y || y > clip.y + clip.height) return;
@@ -4849,8 +4843,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyInputMethodHandler implements InputMethodRequests {
     private String composedText;
-    private int composedTextStart;
-    private int composedTextEnd;
+    private ProperTextRange composedTextRange;
 
     @NotNull
     @Override
@@ -4871,8 +4864,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         p.x = x - p.x;
         p.y = y - p.y;
         int pos = logicalPositionToOffset(xyToLogicalPosition(p));
-        if (pos >= composedTextStart && pos <= composedTextEnd) {
-          return TextHitInfo.leading(pos - composedTextStart);
+        if (composedTextRange.containsOffset(pos)) {
+          return TextHitInfo.leading(pos - composedTextRange.getStartOffset());
         }
       }
       return null;
@@ -4883,8 +4876,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int composedStartIndex = 0;
       int composedEndIndex = 0;
       if (composedText != null) {
-        composedStartIndex = composedTextStart;
-        composedEndIndex = composedTextEnd;
+        composedStartIndex = composedTextRange.getStartOffset();
+        composedEndIndex = composedTextRange.getEndOffset();
       }
 
       int caretIndex = getCaretModel().getOffset();
@@ -4892,13 +4885,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (caretIndex < composedStartIndex) {
         return caretIndex;
       }
+      else if (caretIndex < composedEndIndex) {
+        return composedStartIndex;
+      }
       else {
-        if (caretIndex < composedEndIndex) {
-          return composedStartIndex;
-        }
-        else {
-          return caretIndex - (composedEndIndex - composedStartIndex);
-        }
+        return caretIndex - (composedEndIndex - composedStartIndex);
       }
     }
 
@@ -4916,8 +4907,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int composedStartIndex = 0;
       int composedEndIndex = 0;
       if (composedText != null) {
-        composedStartIndex = composedTextStart;
-        composedEndIndex = composedTextEnd;
+        composedStartIndex = composedTextRange.getStartOffset();
+        composedEndIndex = composedTextRange.getEndOffset();
       }
 
       String committed;
@@ -4972,7 +4963,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
       if (composedText != null) {
-        int dot = composedTextStart;
+        int dot = composedTextRange.getStartOffset();
 
         TextHitInfo caretPos = e.getCaret();
         if (caretPos != null) {
@@ -5010,7 +5001,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           runUndoTransparent(new Runnable() {
             @Override
             public void run() {
-              doc.deleteString(Math.max(0, composedTextStart), Math.min(composedTextEnd, doc.getTextLength()));
+              int docLength = doc.getTextLength();
+              ProperTextRange range = composedTextRange.intersection(new TextRange(0, docLength));
+              doc.deleteString(range.getStartOffset(), range.getEndOffset());
             }
           });
         }
@@ -5043,8 +5036,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
             });
 
-            composedTextStart = getCaretModel().getOffset();
-            composedTextEnd = getCaretModel().getOffset() + composedText.length();
+            composedTextRange = ProperTextRange.from(getCaretModel().getOffset(), composedText.length());
           }
         }
       }
