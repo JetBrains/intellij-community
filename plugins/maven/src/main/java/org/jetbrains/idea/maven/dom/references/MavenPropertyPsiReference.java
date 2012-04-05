@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -74,7 +75,12 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
   @Nullable
   public PsiElement resolve() {
     PsiElement result = doResolve();
-    if (result == null) return result;
+    if (result == null) {
+      if (MavenDomUtil.isMavenFile(getElement())) {
+        result = tryResolveToActivationSection();
+        if (result == null) return null;
+      }
+    }
 
     if (result instanceof XmlTag) {
       XmlTagChild[] children = ((XmlTag)result).getValue().getChildren();
@@ -83,6 +89,30 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
     }
 
     return result;
+  }
+
+  private PsiElement tryResolveToActivationSection() {
+    XmlTag xmlTag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
+    while (xmlTag != null) {
+      if (xmlTag.getName().equals("profile")) {
+        XmlTag activation = xmlTag.findFirstSubTag("activation");
+        if (activation != null) {
+          for (XmlTag propertyTag : activation.findSubTags("property")) {
+            XmlTag nameTag = propertyTag.findFirstSubTag("name");
+            if (nameTag != null) {
+              if (nameTag.getValue().getTrimmedText().equals(myText)) {
+                return nameTag;
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      xmlTag = xmlTag.getParentTag();
+    }
+
+    return null;
   }
 
   // See org.apache.maven.project.interpolation.AbstractStringBasedModelInterpolator.createValueSources()
