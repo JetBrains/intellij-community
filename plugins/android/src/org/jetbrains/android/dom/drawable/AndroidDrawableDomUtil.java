@@ -30,7 +30,8 @@ import java.util.Map;
 public class AndroidDrawableDomUtil {
   public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
   private static final String[] POSSIBLE_DRAWABLE_ROOTS =
-    new String[]{"selector", "bitmap", "nine-patch", "layer-list", "level-list", "transition", "inset", "clip", "scale", "shape"};
+    new String[]{"selector", "bitmap", "nine-patch", "layer-list", "level-list", "transition", "inset", "clip", "scale", "shape",
+      "animation-list", "animated-rotate"};
 
   static {
     SPECIAL_STYLEABLE_NAMES.put("selector", "StateListDrawable");
@@ -41,6 +42,7 @@ public class AndroidDrawableDomUtil {
     SPECIAL_STYLEABLE_NAMES.put("clip", "ClipDrawable");
     SPECIAL_STYLEABLE_NAMES.put("scale", "ScaleDrawable");
     SPECIAL_STYLEABLE_NAMES.put("animation-list", "AnimationDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("animated-rotate", "AnimatedRotateDrawable");
 
     SPECIAL_STYLEABLE_NAMES.put("shape", "GradientDrawable");
     SPECIAL_STYLEABLE_NAMES.put("corners", "DrawableCorners");

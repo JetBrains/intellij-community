@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InsetOrClipOrScaleDomFileDescription extends AndroidResourceDomFileDescription<InsetOrClipOrScale> {
 
-  @NonNls private static final String[] ROOT_TAGS = new String[] {"inset", "clip", "scale"};
+  @NonNls private static final String[] ROOT_TAGS = new String[] {"inset", "clip", "scale", "animated-rotate"};
 
   public InsetOrClipOrScaleDomFileDescription() {
     super(InsetOrClipOrScale.class, ROOT_TAGS[0], "drawable");

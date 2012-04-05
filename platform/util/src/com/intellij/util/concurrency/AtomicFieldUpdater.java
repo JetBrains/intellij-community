@@ -32,7 +32,7 @@ public class AtomicFieldUpdater<T,V> {
   private static final Unsafe unsafe = getUnsafe();
 
   @NotNull
-  private static Unsafe getUnsafe() {
+  public static Unsafe getUnsafe() {
     Unsafe unsafe = null;
     Class uc = Unsafe.class;
     try {
@@ -69,6 +69,9 @@ public class AtomicFieldUpdater<T,V> {
     Field[] declaredFields = ownerClass.getDeclaredFields();
     Field found = null;
     for (Field field : declaredFields) {
+      if ((field.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0) {
+        continue;
+      }
       if (fieldType.isAssignableFrom(field.getType())) {
         if (found == null) {
           found = field;
@@ -79,14 +82,11 @@ public class AtomicFieldUpdater<T,V> {
       }
     }
     if (found == null) {
-      throw new IllegalArgumentException("No field of "+fieldType+" found in the "+ownerClass);
+      throw new IllegalArgumentException("No (non-static, non-final) field of "+fieldType+" found in the "+ownerClass);
     }
     found.setAccessible(true);
     if ((found.getModifiers() & Modifier.VOLATILE) == 0) {
       throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must be volatile");
-    }
-    if ((found.getModifiers() & (Modifier.STATIC | Modifier.FINAL)) != 0) {
-      throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must be non-final non-static");
     }
     offset = unsafe.objectFieldOffset(found);
   }

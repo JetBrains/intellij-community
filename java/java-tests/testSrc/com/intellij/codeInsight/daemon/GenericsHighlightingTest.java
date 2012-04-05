@@ -4,6 +4,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -100,7 +102,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testSOE() throws Exception { doTest(true); }
 
   public void testGenericExtendException() throws Exception { doTest(false); }
-  public void testSameErasureDifferentReturnTypes() throws Exception { doTest(false); }
+  public void testSameErasureDifferentReturnTypes() throws Exception { doTest17Incompatibility(); }
   public void testSameErasureDifferentReturnTypesJdk14() throws Exception { doTest(false); }
   public void testDeepConflictingReturnTypes() throws Exception { doTest(false); }
   public void testInheritFromTypeParameter() throws Exception { doTest(false); }
@@ -116,12 +118,15 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPrivateInnerClassRef() throws Exception { doTest(false); }
   public void testWideningCastToTypeParam() throws Exception { doTest(false); }
   public void testCapturedWildcardAssignments() throws Exception { doTest(false);}
-  public void testTypeParameterBoundVisibility() throws Exception { doTest(false);}
+  public void testTypeParameterBoundVisibility() throws Exception { doTest17Incompatibility(); }
   public void testTypeParameterBoundVisibilityJdk14() throws Exception { doTest(false);}
 
   public void testUncheckedWarningsLevel6() throws Exception { doTest(true);}
   public void testIDEA77991() throws Exception { doTest(false);}
   public void testIDEA80386() throws Exception { doTest(false);}
+
+  public void testIDEA66311() throws Exception { doTest17Incompatibility();}
+  public void testIDEA66311_16() throws Exception { doTest(false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
@@ -131,5 +136,16 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     final String text = collectionsClass.getContainingFile().getText();
     configureFromFileText("Collections.java", text.replaceAll("\r","\n"));
     doTestConfiguredFile(false, false, null);
+  }
+
+  private void doTest17Incompatibility() throws Exception {
+    final JavaVersionServiceImpl javaVersionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
+    try {
+      javaVersionService.setTestVersion(true);
+      doTest(false);
+    }
+    finally {
+      javaVersionService.setTestVersion(false);
+    }
   }
 }

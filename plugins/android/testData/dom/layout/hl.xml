@@ -9,6 +9,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dip"
         android:text="@string/welcome"
+        android:padding="@null"
     />
 
     <TextView
@@ -16,6 +17,7 @@
           android:layout_height="wrap_content"
           android:layout_marginBottom="10dip"
           android:text="<error>@string/animation_1_instructions</error>"
+          android:padding="<error>@nul</error>"
       />
 
   <RadioGroup android:layout_width="fill_parent" android:layout_height="wrap_content"/>

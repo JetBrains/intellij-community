@@ -24,10 +24,14 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +43,8 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase> extends SettingsEditor<T> implements PanelWithAnchor {
+  private static final Icon INFO_MESSAGE_ICON = IconLoader.getIcon("/compiler/warning.png");
+
   private JPanel myPanel;
   private JComboBox myModulesComboBox;
   private LabeledComponent<RawCommandLineEditor> myCommandLineComponent;
@@ -53,6 +59,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   private JRadioButton myEmulatorRadioButton;
   private JRadioButton myUsbDeviceRadioButton;
   private LabeledComponent<AvdComboBox> myAvdComboComponent;
+  private JBLabel myMinSdkInfoMessageLabel;
   private AvdComboBox myAvdCombo;
   private RawCommandLineEditor myCommandLineField;
   private String incorrectPreferredAvd;
@@ -93,17 +100,23 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     });
     myAvdCombo = myAvdComboComponent.getComponent();
 
+    myMinSdkInfoMessageLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
+    myMinSdkInfoMessageLabel.setIcon(INFO_MESSAGE_ICON);
+    myMinSdkInfoMessageLabel.setDisabledIcon(INFO_MESSAGE_ICON);
+
     Disposer.register(this, myAvdCombo);
 
     final ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         boolean enabled = myEmulatorRadioButton.isSelected();
         myAvdComboComponent.setEnabled(enabled);
+        myMinSdkInfoMessageLabel.setEnabled(enabled);
       }
     };
     myModulesComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myAvdCombo.startUpdatingAvds(ModalityState.current());
+        updateInfoMessage();
       }
     });
     myShowChooserRadioButton.addActionListener(listener);
@@ -112,6 +125,26 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
 
     myNetworkSpeedCombo.setModel(new DefaultComboBoxModel(NETWORK_SPEEDS));
     myNetworkLatencyCombo.setModel(new DefaultComboBoxModel(NETWORK_LATENCIES));
+  }
+
+  private void updateInfoMessage() {
+    int apiLevel = -1;
+    final Module module = getModuleSelector().getModule();
+    if (module != null) {
+      final AndroidPlatform platform = AndroidPlatform.getInstance(module);
+      if (platform != null) {
+        apiLevel = platform.getTarget().getVersion().getApiLevel();
+      }
+    }
+
+    if (apiLevel >= 0) {
+      myMinSdkInfoMessageLabel.setText(AndroidBundle.message("deployment.target.settings.min.sdk.info.message", apiLevel));
+      myMinSdkInfoMessageLabel.setVisible(true);
+    }
+    else {
+      myMinSdkInfoMessageLabel.setText("");
+      myMinSdkInfoMessageLabel.setVisible(false);
+    }
   }
 
   @Override
@@ -163,6 +196,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myUsbDeviceRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.USB_DEVICE);
     
     myAvdComboComponent.setEnabled(targetSelectionMode == TargetSelectionMode.EMULATOR);
+    myMinSdkInfoMessageLabel.setEnabled(targetSelectionMode == TargetSelectionMode.EMULATOR);
     
     myCommandLineField.setText(configuration.COMMAND_LINE);
     myConfigurationSpecificEditor.resetFrom(configuration);
@@ -171,6 +205,8 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myNetworkSpeedCombo.setSelectedItem(configuration.NETWORK_SPEED);
     myNetworkLatencyCombo.setSelectedItem(configuration.NETWORK_SPEED);
     myClearLogCheckBox.setSelected(configuration.CLEAR_LOGCAT);
+
+    updateInfoMessage();
   }
 
   protected void applyEditorTo(T configuration) throws ConfigurationException {

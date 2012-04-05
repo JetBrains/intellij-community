@@ -43,7 +43,16 @@ public class Mappings {
 
   private final TIntHashSet myChangedClasses;
   private final TIntHashSet myChangedFiles;
+  private final TIntHashSet myDeletedClasses;
   private final Object myLock;
+
+  private void addDeletedClass (final int it) {
+    assert (myDeletedClasses != null);
+
+    myDeletedClasses.add(it);
+
+    addChangedClass(it);
+  }
 
   private void addChangedClass(final int it) {
     assert (myChangedClasses != null && myChangedFiles != null);
@@ -56,6 +65,10 @@ public class Mappings {
     }
 
     myIsDifferentiated = true;
+  }
+
+  private TIntHashSet getDeletedClasses() {
+      return myDeletedClasses;
   }
 
   private TIntHashSet getChangedClasses() {
@@ -129,6 +142,7 @@ public class Mappings {
     myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
+    myDeletedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeltaIsTransient = base.myDeltaIsTransient;
     myRootDir = new File(FileUtil.toSystemIndependentName(base.myRootDir.getAbsolutePath()) + File.separatorChar + "delta");
     myContext = base.myContext;
@@ -144,6 +158,7 @@ public class Mappings {
     myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = null;
     myChangedFiles = null;
+    myDeletedClasses = null;
     myDeltaIsTransient = transientDelta;
     myRootDir = rootDir;
     createImplementation();
@@ -918,7 +933,7 @@ public class Mappings {
         }
       });
 
-      for (FileClasses compiledFile : newClasses) {
+      for (final FileClasses compiledFile : newClasses) {
         final int fileName = compiledFile.fileName;
         final Set<ClassRepr> classes = compiledFile.fileClasses;
         final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
@@ -931,7 +946,7 @@ public class Mappings {
         final Difference.Specifier<ClassRepr> classDiff = Difference.make(pastClasses, classes);
 
         debug("Processing changed classes:");
-        for (Pair<ClassRepr, Difference> changed : classDiff.changed()) {
+        for (final Pair<ClassRepr, Difference> changed : classDiff.changed()) {
           final ClassRepr it = changed.first;
           final ClassRepr.Diff diff = (ClassRepr.Diff)changed.second;
 
@@ -1024,7 +1039,7 @@ public class Mappings {
                   .createAnnotationUsage(myContext, TypeRepr.createClassType(myContext, it.name), null, removedtargets));
               }
 
-              for (MethodRepr m : diff.methods().added()) {
+              for (final MethodRepr m : diff.methods().added()) {
                 if (!m.hasValue()) {
                   debug("Added method with no default value: ", m.name);
                   debug("Adding class usage to affected usages");
@@ -1079,7 +1094,7 @@ public class Mappings {
 
               final Collection<MethodRepr> lessSpecific = it.findMethods(u.lessSpecific(m));
 
-              for (MethodRepr mm : lessSpecific) {
+              for (final MethodRepr mm : lessSpecific) {
                 if (!mm.equals(m)) {
                   debug("Found less specific method, affecting method usages");
                   u.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), affectedUsages, dependants);
@@ -1087,7 +1102,7 @@ public class Mappings {
               }
 
               debug("Processing affected by specificity methods");
-              for (Pair<MethodRepr, ClassRepr> p : affectedMethods) {
+              for (final Pair<MethodRepr, ClassRepr> p : affectedMethods) {
                 final MethodRepr mm = p.first;
                 final ClassRepr cc = p.second;
 
@@ -1183,7 +1198,7 @@ public class Mappings {
               boolean clear = true;
 
               loop:
-              for (Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
+              for (final Pair<MethodRepr, ClassRepr> overriden : overridenMethods) {
                 final MethodRepr mm = overriden.first;
 
                 if (mm == myMockMethod || !mm.type.equals(m.type) || !empty(mm.signature) || !empty(m.signature)) {
@@ -1219,7 +1234,7 @@ public class Mappings {
                       boolean allAbstract = true;
                       boolean visited = false;
 
-                      for (Pair<MethodRepr, ClassRepr> pp : overridenInS) {
+                      for (final Pair<MethodRepr, ClassRepr> pp : overridenInS) {
                         final ClassRepr cc = pp.second;
 
                         if (cc == myMockClass) {
@@ -1259,7 +1274,7 @@ public class Mappings {
           debug("End of removed methods processing");
 
           debug("Processing changed methods:");
-          for (Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
+          for (final Pair<MethodRepr, Difference> mr : diff.methods().changed()) {
             final MethodRepr m = mr.first;
             final MethodRepr.Diff d = (MethodRepr.Diff)mr.second;
             final boolean throwsChanged = (d.exceptions().added().size() > 0) || (d.exceptions().changed().size() > 0);
@@ -1286,7 +1301,7 @@ public class Mappings {
                 debug("Method became package-local, affecting method usages outside the package");
                 u.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, dependants);
 
-                for (UsageRepr.Usage usage : usages) {
+                for (final UsageRepr.Usage usage : usages) {
                   usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
                 }
 
@@ -1333,7 +1348,7 @@ public class Mappings {
                         affectedUsages.addAll(usages);
                       }
 
-                      for (UsageRepr.Usage usage : usages) {
+                      for (final UsageRepr.Usage usage : usages) {
                         usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
                       }
                     }
@@ -1396,7 +1411,7 @@ public class Mappings {
 
             final Collection<Pair<FieldRepr, ClassRepr>> overridden = u.findOverridenFields(f, it);
 
-            for (Pair<FieldRepr, ClassRepr> p : overridden) {
+            for (final Pair<FieldRepr, ClassRepr> p : overridden) {
               final FieldRepr ff = p.first;
               final ClassRepr cc = p.second;
 
@@ -1429,7 +1444,7 @@ public class Mappings {
                                                              u.new NegationConstraint(u.new PackageConstraint(cc.getPackageName())));
                   }
 
-                  for (UsageRepr.Usage usage : localUsages) {
+                  for (final UsageRepr.Usage usage : localUsages) {
                     usageConstraints.put(usage, constaint);
                   }
                 }
@@ -1441,7 +1456,7 @@ public class Mappings {
           debug("End of added fields processing");
 
           debug("Processing removed fields:");
-          for (FieldRepr f : diff.fields().removed()) {
+          for (final FieldRepr f : diff.fields().removed()) {
             debug("Field: ", f.name);
 
             if ((f.access & Opcodes.ACC_PRIVATE) == 0 && (f.access & mask) == mask && f.hasValue()) {
@@ -1458,7 +1473,7 @@ public class Mappings {
           debug("End of removed fields processing");
 
           debug("Processing changed fields:");
-          for (Pair<FieldRepr, Difference> f : diff.fields().changed()) {
+          for (final Pair<FieldRepr, Difference> f : diff.fields().changed()) {
             final Difference d = f.second;
             final FieldRepr field = f.first;
 
@@ -1507,7 +1522,7 @@ public class Mappings {
                       affectedUsages.addAll(usages);
                     }
 
-                    for (UsageRepr.Usage usage : usages) {
+                    for (final UsageRepr.Usage usage : usages) {
                       if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0) {
                         usageConstraints.put(usage, u.new InheritanceConstraint(it.name));
                       }
@@ -1525,8 +1540,8 @@ public class Mappings {
         debug("End of changed classes processing");
 
         debug("Processing removed classes:");
-        for (ClassRepr c : classDiff.removed()) {
-          delta.addChangedClass(c.name);
+        for (final ClassRepr c : classDiff.removed()) {
+          delta.addDeletedClass(c.name);
           self.appendDependents(c, dependants);
           debug("Adding usages of class ", c.name);
           affectedUsages.add(c.createUsage());
@@ -1534,7 +1549,7 @@ public class Mappings {
         debug("End of removed classes processing.");
 
         debug("Processing added classes:");
-        for (ClassRepr c : classDiff.added()) {
+        for (final ClassRepr c : classDiff.added()) {
           delta.addChangedClass(c.name);
 
           final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
@@ -1573,7 +1588,7 @@ public class Mappings {
 
 
         filewise:
-        for (int depFile : dependentFiles.toArray()) {  // todo: avoid toArray()?
+        for (final int depFile : dependentFiles.toArray()) {  // todo: avoid toArray()?
           final File theFile = new File(myContext.getValue(depFile));
 
           if (affectedFiles.contains(theFile) || compiledFiles.contains(theFile)) {
@@ -1583,7 +1598,7 @@ public class Mappings {
           debug("Dependent file: ", depFile);
           final Collection<UsageRepr.Cluster> depClusters = mySourceFileToUsages.get(depFile);
           if (depClusters != null) {
-            for (UsageRepr.Cluster depCluster : depClusters) {
+            for (final UsageRepr.Cluster depCluster : depClusters) {
               final Set<UsageRepr.Usage> depUsages = depCluster.getUsages();
               if (depUsages == null) {
                 continue;
@@ -1603,7 +1618,7 @@ public class Mappings {
                   }
                   else {
                     final TIntHashSet residenceClasses = depCluster.getResidence(usage);
-                    for (int residentName : residenceClasses.toArray()) {
+                    for (final int residentName : residenceClasses.toArray()) {
                       if (constraint.checkResidence(residentName)) {
                         debug("Added file with satisfied constraint");
                         affectedFiles.add(theFile);
@@ -1617,8 +1632,8 @@ public class Mappings {
               if (annotationQuery.size() > 0) {
                 final Collection<UsageRepr.Usage> annotationUsages = mySourceFileToAnnotationUsages.get(depFile);
 
-                for (UsageRepr.Usage usage : annotationUsages) {
-                  for (UsageRepr.AnnotationUsage query : annotationQuery) {
+                for (final UsageRepr.Usage usage : annotationUsages) {
+                  for (final UsageRepr.AnnotationUsage query : annotationQuery) {
                     if (query.satisfies(usage)) {
                       debug("Added file due to annotation query");
                       affectedFiles.add(theFile);
@@ -1633,7 +1648,7 @@ public class Mappings {
       }
 
       if (removed != null) {
-        for (String r : removed) {
+        for (final String r : removed) {
           affectedFiles.remove(new File(r));
         }
       }
@@ -1649,26 +1664,26 @@ public class Mappings {
         delta.runPostPasses();
 
         if (removed != null) {
-          for (String file : removed) {
+          for (final String file : removed) {
             final int key = myContext.get(file);
             final Set<ClassRepr> classes = (Set<ClassRepr>)mySourceFileToClasses.get(key);
             final Collection<UsageRepr.Cluster> clusters = mySourceFileToUsages.get(key);
 
             if (classes != null) {
-              for (ClassRepr cr : classes) {
+              for (final ClassRepr cr : classes) {
                 myClassToSubclasses.remove(cr.name);
                 myClassToSourceFile.remove(cr.name);
                 myClassToClassDependency.remove(cr.name);
 
-                for (int superSomething : cr.getSupers()) {
+                for (final int superSomething : cr.getSupers()) {
                   myClassToSubclasses.removeFrom(superSomething, cr.name);
                 }
 
                 if (clusters != null) {
-                  for (UsageRepr.Cluster cluster : clusters) {
+                  for (final UsageRepr.Cluster cluster : clusters) {
                     final Set<UsageRepr.Usage> usages = cluster.getUsages();
                     if (usages != null) {
-                      for (UsageRepr.Usage u : usages) {
+                      for (final UsageRepr.Usage u : usages) {
                         if (u instanceof UsageRepr.ClassUsage) {
                           final TIntHashSet residents = cluster.getResidence(u);
 
@@ -1690,6 +1705,16 @@ public class Mappings {
         }
 
         if (delta.isDifferentiated()) {
+          delta.getDeletedClasses().forEach(new TIntProcedure() {
+            @Override
+            public boolean execute(int value) {
+              myClassToClassDependency.remove(value);
+              myClassToSubclasses.remove(value);
+              myClassToSourceFile.remove(value);
+              return true;
+            }
+          });
+
           delta.getChangedClasses().forEach(new TIntProcedure() {
             @Override
             public boolean execute(int c) {
@@ -1795,11 +1820,11 @@ public class Mappings {
 
   private int[] getClassNames(Collection<File> compiled) {
     final TIntHashSet classnames = new TIntHashSet(compiled.size());
-    for (File c : compiled) {
+    for (final File c : compiled) {
       final int fileName = myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath()));
       final Collection<ClassRepr> reprs = mySourceFileToClasses.get(fileName);
       if (reprs != null) {
-        for (ClassRepr repr : reprs) {
+        for (final ClassRepr repr : reprs) {
           classnames.add(repr.name);
         }
       }
@@ -1843,11 +1868,11 @@ public class Mappings {
             myClassToSourceFile.put(repr.name, sourceFileNameS);
             mySourceFileToClasses.put(sourceFileNameS, repr);
 
-            for (int s : repr.getSupers()) {
+            for (final int s : repr.getSupers()) {
               myClassToSubclasses.put(s, repr.name);
             }
 
-            for (UsageRepr.Usage u : localUsages.getUsages()) {
+            for (final UsageRepr.Usage u : localUsages.getUsages()) {
               final int owner = u.getOwner();
 
               if (owner != className) {
@@ -1883,7 +1908,7 @@ public class Mappings {
 
       @Override
       public void registerImports(final String className, final Collection<String> imports, Collection<String> staticImports) {
-        for (String s : staticImports) {
+        for (final String s : staticImports) {
           int i = s.length() - 1;
           for (; s.charAt(i) != '.'; i--) ;
           imports.add(s.substring(0, i));
@@ -1982,6 +2007,4 @@ public class Mappings {
     });
     return changed.get();
   }
-
-
 }

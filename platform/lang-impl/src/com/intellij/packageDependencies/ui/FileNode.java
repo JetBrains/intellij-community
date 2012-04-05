@@ -44,7 +44,10 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
-    set.add(getFile());
+    final PsiFile file = getFile();
+    if (file != null && file.isValid()) {
+      set.add(file);
+    }
   }
 
   public boolean hasUnmarked() {

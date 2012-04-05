@@ -192,6 +192,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   public void resolveEntryPoints(final RefManager manager) {
     if (!myResolved) {
       myResolved = true;
+      cleanup();
       validateEntryPoints();
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {

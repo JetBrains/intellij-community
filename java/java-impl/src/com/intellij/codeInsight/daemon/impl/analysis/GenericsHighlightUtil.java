@@ -27,7 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -509,7 +509,8 @@ public class GenericsHighlightUtil {
     final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
 
     boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
-    if (checkEqualsSuper && JavaSdkVersionUtil.isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7)) {
+    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7);
+    if (checkEqualsSuper && atLeast17) {
       if (retErasure1 != null && retErasure2 != null) {
         differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
       } else {
@@ -520,8 +521,17 @@ public class GenericsHighlightUtil {
     if (differentReturnTypeErasure &&
         !TypeConversionUtil.isVoidType(retErasure1) &&
         !TypeConversionUtil.isVoidType(retErasure2) &&
-        !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes()))) {
-      return null;
+        !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes())) &&
+        !atLeast17) {
+      int idx = 0;
+      final PsiType[] parameterTypes = signatureToCheck.getParameterTypes();
+      boolean erasure = parameterTypes.length > 0;
+      for (PsiType type : superSignature.getParameterTypes()) {
+        erasure &= Comparing.equal(type, TypeConversionUtil.erasure(parameterTypes[idx]));
+        idx++;
+      }
+
+      if (!erasure) return null;
     }
 
     if (!checkEqualsSuper && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {

@@ -131,6 +131,8 @@ public class PsiImplUtil {
   }
 
   public static int getParameterIndex(@NotNull PsiParameter parameter, @NotNull PsiParameterList parameterList) {
+    PsiElement parameterParent = parameter.getParent();
+    assert parameterParent == parameterList : parameterList +"; "+parameterParent;
     PsiParameter[] parameters = parameterList.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter paramInList = parameters[i];
@@ -146,9 +148,8 @@ public class PsiImplUtil {
         break;
       }
     }
-    String message = parameter + ":"+parameter.getClass()+" not found among parameters: " + Arrays.asList(parameters) + "." +
+    String message = parameter + ":" + parameter.getClass() + " not found among parameters: " + Arrays.asList(parameters) + "." +
                      " parameterList' parent: " + parameterList.getParent() + ";" +
-                     " parameter.getParent()==paramList: " + (parameter.getParent() == parameterList) + "; " + parameterList.getClass() + ";" +
                      " parameter.isValid()=" + parameter.isValid() + ";" +
                      " parameterList.isValid()= " + parameterList.isValid() + ";" +
                      " parameterList stub: " + (parameterList instanceof StubBasedPsiElement ? ((StubBasedPsiElement)parameterList).getStub() : "---") + "; " +

@@ -105,6 +105,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
       if (recursively) return null;
       FileNode fNode = (FileNode)node;
       final PsiFile file = (PsiFile)fNode.getPsiElement();
+      if (file == null) return null;
       final VirtualFile virtualFile = file.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       final VirtualFile contentRoot = ProjectRootManager.getInstance(file.getProject()).getFileIndex().getContentRootForFile(virtualFile);
