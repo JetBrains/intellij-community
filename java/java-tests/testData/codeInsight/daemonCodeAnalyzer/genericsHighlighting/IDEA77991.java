@@ -13,3 +13,14 @@ class Test {
         return null;
     }
 }
+
+class Comp {
+  public static <T> boolean equal(T arg1, T arg2) {
+    return false;
+  }
+
+  void foo(String s, Object o) {
+    if (equal(s, o)) {
+    }
+  }
+}
