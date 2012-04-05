@@ -197,20 +197,21 @@ class TeamcityNoseRunner(unittest.TextTestRunner):
         the test result class.
         """
         #for 2.5 compat
-        for plugin in self.config.plugins.plugins:
-            if plugin.name == "profile":
-                plugin.begin()
-
-        wrapper = self.config.plugins.prepareTest(test)
+        plugins = self.config.plugins
+        plugins.configure(self.config.options, self.config)
+        plugins.begin()
+        wrapper = plugins.prepareTest(test)
         if wrapper is not None:
-            test = wrapper
+          test = wrapper
 
         # plugins can decorate or capture the output stream
         wrapped = self.config.plugins.setOutputStream(self.stream)
         if wrapped is not None:
-            self.stream = wrapped
+          self.stream = wrapped
 
         result = self._makeResult()
         test(result)
         result.endLastSuite()
+        plugins.finalize(result)
+
         return result
