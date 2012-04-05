@@ -90,6 +90,24 @@ def monkey_patch_module(module, funcname, create_func):
 def monkey_patch_os(funcname, create_func):
     monkey_patch_module(os, funcname, create_func)
 
+
+def warn_multiproc():
+    import pydev_log
+
+    pydev_log.error_once(
+        "New process is launching. Breakpoints won't work.\n To debug that process please enable 'Attach to subprocess automatically while debugging' option in your run configuration.\n")
+
+
+def create_warn_multiproc(original_name):
+
+    def new_warn_multiproc(*args):
+        import os
+
+        warn_multiproc()
+
+        return getattr(os, original_name)(*args)
+    return new_warn_multiproc
+
 def create_execl(original_name):
     def new_execl(path, *args):
         '''
@@ -164,6 +182,16 @@ CreateProcess(*args, **kwargs)
         return getattr(_subprocess, original_name)(appName, patch_arg_str_win(commandLine), *args)
     return new_CreateProcess
 
+def create_CreateProcessWarnMultiproc(original_name):
+    """
+CreateProcess(*args, **kwargs)
+    """
+    def new_CreateProcess(*args):
+        import _subprocess
+        warn_multiproc()
+        return getattr(_subprocess, original_name)(*args)
+    return new_CreateProcess
+
 def create_fork(original_name):
     def new_fork():
         import os
@@ -217,3 +245,29 @@ def patch_new_process_functions():
         #Windows
         import _subprocess
         monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcess)
+
+
+def patch_new_process_functions_with_warning():
+    monkey_patch_os('execl', create_warn_multiproc)
+    monkey_patch_os('execle', create_warn_multiproc)
+    monkey_patch_os('execlp', create_warn_multiproc)
+    monkey_patch_os('execlpe', create_warn_multiproc)
+    monkey_patch_os('execv', create_warn_multiproc)
+    monkey_patch_os('execve', create_warn_multiproc)
+    monkey_patch_os('execvp', create_warn_multiproc)
+    monkey_patch_os('execvpe', create_warn_multiproc)
+    monkey_patch_os('spawnl', create_warn_multiproc)
+    monkey_patch_os('spawnle', create_warn_multiproc)
+    monkey_patch_os('spawnlp', create_warn_multiproc)
+    monkey_patch_os('spawnlpe', create_warn_multiproc)
+    monkey_patch_os('spawnv', create_warn_multiproc)
+    monkey_patch_os('spawnve', create_warn_multiproc)
+    monkey_patch_os('spawnvp', create_warn_multiproc)
+    monkey_patch_os('spawnvpe', create_warn_multiproc)
+
+    if sys.platform != 'win32':
+        monkey_patch_os('fork', create_warn_multiproc)
+    else:
+        #Windows
+        import _subprocess
+        monkey_patch_module(_subprocess, 'CreateProcess', create_CreateProcessWarnMultiproc)
