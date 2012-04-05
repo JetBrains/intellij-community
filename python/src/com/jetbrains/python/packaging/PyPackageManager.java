@@ -40,7 +40,6 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.script.ScriptException;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
@@ -584,14 +583,8 @@ public class PyPackageManager {
           }
           return result;
         }
-        catch (InterruptedException e) {
-          throw new PyExternalProcessException(ERROR_INTERRUPTED, helperPath, args, e.getMessage());
-        }
         catch (ExecutionException e) {
           throw new PyExternalProcessException(ERROR_EXECUTION, helperPath, args, e.getMessage());
-        }
-        catch (ScriptException e) {
-          throw new PyExternalProcessException(ERROR_TOOL_NOT_FOUND, helperPath, args, e.getMessage());
         }
         catch (IOException e) {
           throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helperPath, args, e.getMessage());
