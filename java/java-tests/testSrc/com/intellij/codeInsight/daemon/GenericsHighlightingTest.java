@@ -127,6 +127,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testIDEA66311() throws Exception { doTest17Incompatibility();}
   public void testIDEA66311_16() throws Exception { doTest(false);}
+  public void testIDEA76283() throws Exception {doTest(false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {
     PsiClass collectionsClass = getJavaFacade().findClass("java.util.Collections", GlobalSearchScope.moduleWithLibrariesScope(getModule()));
