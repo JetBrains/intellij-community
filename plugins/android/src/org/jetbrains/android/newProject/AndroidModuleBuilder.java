@@ -67,6 +67,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -418,11 +419,13 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
     }
 
+    final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName.replace("\\", "\\\\"));
+
     if (appNameResElement == null) {
-      manager.addValueResource("string", appNameResource, myApplicationName);
+      manager.addValueResource("string", appNameResource, normalizedAppName);
     }
     else {
-      appNameResElement.setStringValue(myApplicationName);
+      appNameResElement.setStringValue(normalizedAppName);
     }
 
     final Manifest manifest = facet.getManifest();
