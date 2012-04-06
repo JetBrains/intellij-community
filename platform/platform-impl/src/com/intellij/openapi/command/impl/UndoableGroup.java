@@ -173,22 +173,31 @@ class UndoableGroup {
   }
 
   boolean isInsideStartFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
-    final FinishMarkAction finishMark = getFinishMark();
-    final StartMarkAction startMark = getStartMark();
-    if (startMark == null || finishMark == null) {
+    final List<FinishMarkAction> finishMarks = new ArrayList<FinishMarkAction>();
+    final List<StartMarkAction> startMarks = new ArrayList<StartMarkAction>();
+    for (UndoableAction action : myActions) {
+      if (action instanceof StartMarkAction) {
+        startMarks.add((StartMarkAction)action);
+      } else if (action instanceof FinishMarkAction) {
+        finishMarks.add((FinishMarkAction)action);
+      }
+    }
+    final int startNmb = startMarks.size();
+    final int finishNmb = finishMarks.size();
+    if (startNmb != finishNmb) {
       if (isUndo) {
-        if (finishMark != null) {
+        if (finishNmb > startNmb) {
           return true;
         }
-        else if (startMark != null) {
+        else {
           return false;
         }
       }
       else {
-        if (startMark != null) {
+        if (startNmb > finishNmb) {
           return true;
         }
-        else if (finishMark != null) {
+        else {
           return false;
         }
       }
