@@ -738,4 +738,54 @@ private def handleImplicitBind(arg) {
 }''')
     myFixture.testHighlighting(true, false, false)
   }
+
+  public void testTargetAnnotationInsideGroovy1() {
+    myFixture.addFileToProject('Ann.groovy', '''
+import java.lang.annotation.Target
+
+import static java.lang.annotation.ElementType.*
+
+@Target(FIELD)
+@interface Ann {}
+''')
+
+    myFixture.configureByText('_.groovy', '''
+@<error descr="'@Ann' not applicable to type">Ann</error>
+class C {
+  @Ann
+  def foo
+
+  def ar() {
+    @Ann
+    def x
+  }
+}''')
+
+    myFixture.testHighlighting(true, false, false)
+  }
+
+  public void testTargetAnnotationInsideGroovy2() {
+    myFixture.addFileToProject('Ann.groovy', '''
+import java.lang.annotation.Target
+
+import static java.lang.annotation.ElementType.*
+
+@Target(value=[FIELD, TYPE])
+@interface Ann {}
+''')
+
+    myFixture.configureByText('_.groovy', '''
+@Ann
+class C {
+  @Ann
+  def foo
+
+  def ar() {
+    @Ann
+    def x
+  }
+}''')
+    myFixture.testHighlighting(true, false, false)
+  }
+
 }

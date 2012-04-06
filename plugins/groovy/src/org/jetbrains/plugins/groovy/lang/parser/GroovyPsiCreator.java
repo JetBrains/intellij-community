@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArgumentListImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArrrayInitializerImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationArrayInitializerImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationNameValuePairImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
@@ -106,7 +106,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem == MODIFIERS) return new GrModifierListImpl(node);
     if (elem == ANNOTATION) return new GrAnnotationImpl(node);
     if (elem == ANNOTATION_ARGUMENTS) return new GrAnnotationArgumentListImpl(node);
-    if (elem == ANNOTATION_ARRAY_INITIALIZER) return new GrAnnotationArrrayInitializerImpl(node);
+    if (elem == ANNOTATION_ARRAY_INITIALIZER) return new GrAnnotationArrayInitializerImpl(node);
     if (elem == ANNOTATION_MEMBER_VALUE_PAIR) return new GrAnnotationNameValuePairImpl(node);
 
     if (elem == DEFAULT_ANNOTATION_VALUE) return new GrDefaultAnnotationValueImpl(node);
