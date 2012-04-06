@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -79,6 +81,12 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public AbstractVcsHelper getVcsHelper(@NotNull Project project) {
     return AbstractVcsHelper.getInstance(project);
+  }
+
+  @NotNull
+  @Override
+  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+    return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 
   @NotNull

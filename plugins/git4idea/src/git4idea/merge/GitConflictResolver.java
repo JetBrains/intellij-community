@@ -19,7 +19,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,7 +59,6 @@ public class GitConflictResolver {
 
   @NotNull private final GitRepositoryManager myRepositoryManager;
   private final AbstractVcsHelper myVcsHelper;
-  private final GitVcs myVcs;
 
   /**
    * Customizing parameters - mostly String notification texts, etc.
@@ -113,10 +111,8 @@ public class GitConflictResolver {
     myPlatformFacade = platformFacade;
     myRoots = roots;
     myParams = params;
-    myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
-
-    myVcsHelper = AbstractVcsHelper.getInstance(project);
-    myVcs = GitVcs.getInstance(project);
+    myRepositoryManager = myPlatformFacade.getRepositoryManager(myProject);
+    myVcsHelper = myPlatformFacade.getVcsHelper(project);
   }
 
   /**
@@ -217,7 +213,8 @@ public class GitConflictResolver {
   private void showMergeDialog(final Collection<VirtualFile> initiallyUnmergedFiles) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override public void run() {
-        final MergeProvider mergeProvider = myParams.reverse ? myVcs.getReverseMergeProvider() : myVcs.getMergeProvider();
+        final MergeProvider mergeProvider = myParams.reverse ?
+                                            new GitMergeProvider(myProject, true) : new GitMergeProvider(myProject, false);
         myVcsHelper.showMergeDialog(new ArrayList<VirtualFile>(initiallyUnmergedFiles), mergeProvider, myParams.myMergeDialogCustomizer);
       }
     });

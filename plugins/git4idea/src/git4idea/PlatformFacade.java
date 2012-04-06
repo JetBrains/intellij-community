@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -71,4 +72,7 @@ public interface PlatformFacade {
 
   @NotNull
   AbstractVcsHelper getVcsHelper(@NotNull Project project);
+
+  @NotNull
+  GitRepositoryManager getRepositoryManager(@NotNull Project project);
 }

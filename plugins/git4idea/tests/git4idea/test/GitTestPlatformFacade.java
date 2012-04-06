@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import git4idea.Notificator;
 import git4idea.PlatformFacade;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.tests.TestDialogManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,11 +44,13 @@ public class GitTestPlatformFacade implements PlatformFacade {
   private TestDialogManager myTestDialogManager;
   private GitMockProjectRootManager myProjectRootManager;
   private ChangeListManager myChangeListManager;
+  private GitTestRepositoryManager myRepositoryManager;
 
   public GitTestPlatformFacade() {
     myTestDialogManager = new TestDialogManager();
     myProjectRootManager = new GitMockProjectRootManager();
     myChangeListManager = new MockChangeListManager();
+    myRepositoryManager = new GitTestRepositoryManager();
   }
 
   @NotNull
@@ -111,6 +114,12 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Override
   public AbstractVcsHelper getVcsHelper(@NotNull Project project) {
     return new MockVcsHelper();
+  }
+
+  @NotNull
+  @Override
+  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+    return myRepositoryManager;
   }
 
   @NotNull
