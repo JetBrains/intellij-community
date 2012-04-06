@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +21,15 @@ import java.util.regex.Pattern;
 public class Substring implements CharSequence {
   private static final Pattern RE_NL = Pattern.compile("(\\r?\\n)");
 
-  private final String myString;
+  @NotNull private final String myString;
   private final int myStartOffset;
   private final int myEndOffset;
 
-  public Substring(String s) {
+  public Substring(@NotNull String s) {
     this(s, 0, s.length());
   }
 
-  public Substring(String s, int start, int end) {
+  public Substring(@NotNull String s, int start, int end) {
     myString = s;
     myStartOffset = start;
     myEndOffset = end;
@@ -50,24 +51,29 @@ public class Substring implements CharSequence {
     return toString().hashCode();
   }
 
+  @NotNull
   @Override
   public String toString() {
     return getTextRange().substring(myString);
   }
 
+  @NotNull
   public String getSuperString() {
     return myString;
   }
 
+  @NotNull
   public TextRange getTextRange() {
     return TextRange.create(myStartOffset, myEndOffset);
   }
 
-  public List<Substring> split(String regex) {
+  @NotNull
+  public List<Substring> split(@NotNull String regex) {
     return split(Pattern.compile(regex));
   }
 
-  public List<Substring> split(Pattern pattern) {
+  @NotNull
+  public List<Substring> split(@NotNull Pattern pattern) {
     final List<Substring> result = new ArrayList<Substring>();
     final Matcher m = pattern.matcher(myString);
     int start = myStartOffset;
@@ -87,10 +93,12 @@ public class Substring implements CharSequence {
     return result;
   }
 
+  @NotNull
   public List<Substring> splitLines() {
     return split(RE_NL);
   }
 
+  @NotNull
   public Substring trim() {
     int start;
     int end;
@@ -101,7 +109,8 @@ public class Substring implements CharSequence {
     return createAnotherSubstring(start, end + 1);
   }
 
-  public Substring getMatcherGroup(Matcher m, int group) {
+  @NotNull
+  public Substring getMatcherGroup(@NotNull Matcher m, int group) {
     return substring(m.start(group), m.end(group));
   }
 
@@ -120,26 +129,29 @@ public class Substring implements CharSequence {
     return substring(start,  end);
   }
 
-  public boolean startsWith(String prefix) {
+  public boolean startsWith(@NotNull String prefix) {
     return indexOf(prefix) == 0;
   }
 
-  public int indexOf(String s) {
+  public int indexOf(@NotNull String s) {
     int n = myString.indexOf(s, myStartOffset);
     return n < myEndOffset ? n - myStartOffset : -1;
   }
 
+  @NotNull
   @SuppressWarnings({"MethodNamesDifferingOnlyByCase"})
   public Substring substring(int start) {
     return substring(start, length());
   }
 
+  @NotNull
   @SuppressWarnings({"MethodNamesDifferingOnlyByCase"})
   public Substring substring(int start, int end) {
     return createAnotherSubstring(myStartOffset + start, myStartOffset + end);
   }
 
-  public String concatTrimmedLines(String separator) {
+  @NotNull
+  public String concatTrimmedLines(@NotNull String separator) {
     final StringBuilder b = new StringBuilder();
     List<Substring> lines = splitLines();
     final int n = lines.size();
@@ -152,6 +164,7 @@ public class Substring implements CharSequence {
     return b.toString();
   }
 
+  @NotNull
   private Substring createAnotherSubstring(int start, int end) {
     return new Substring(myString, start, end);
   }

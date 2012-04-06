@@ -1,5 +1,6 @@
 package com.jetbrains.python.documentation;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -14,7 +15,7 @@ public class SphinxDocString extends StructuredDocString {
                                                    ":type", ":raise", ":raises", ":var", ":cvar", ":ivar",
                                                    ":return", ":returns", ":rtype", ":except", ":exception" };
 
-  public SphinxDocString(String docstringText) {
+  public SphinxDocString(@NotNull String docstringText) {
     super(docstringText, ":");
   }
 
@@ -33,8 +34,12 @@ public class SphinxDocString extends StructuredDocString {
     return toUniqueStrings(getKeywordArgumentSubstrings());
   }
 
+  @Nullable
   @Override
-  public String getKeywordArgumentDescription(String paramName) {
+  public String getKeywordArgumentDescription(@Nullable String paramName) {
+    if (paramName == null) {
+      return null;
+    }
     return concatTrimmedLines(getTagValue(KEYWORD_ARGUMENT_TAGS, paramName));
   }
 
@@ -48,9 +53,10 @@ public class SphinxDocString extends StructuredDocString {
     return concatTrimmedLines(getParamTypeSubstring(paramName));
   }
 
+  @Nullable
   @Override
-  public String getParamDescription(String paramName) {
-    return concatTrimmedLines(getTagValue("param", paramName));
+  public String getParamDescription(@Nullable String paramName) {
+    return paramName != null ? concatTrimmedLines(getTagValue("param", paramName)) : null;
   }
 
   @Override
@@ -63,8 +69,12 @@ public class SphinxDocString extends StructuredDocString {
     return toUniqueStrings(getTagArguments(EpydocString.RAISES_TAGS));
   }
 
+  @Nullable
   @Override
-  public String getRaisedExceptionDescription(String exceptionName) {
+  public String getRaisedExceptionDescription(@Nullable String exceptionName) {
+    if (exceptionName == null) {
+      return null;
+    }
     return concatTrimmedLines(getTagValue(EpydocString.RAISES_TAGS, exceptionName));
   }
 

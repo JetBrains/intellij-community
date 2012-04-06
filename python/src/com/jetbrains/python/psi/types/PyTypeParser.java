@@ -31,13 +31,13 @@ public class PyTypeParser {
   }
 
   @Nullable
-  public static PyType getTypeByName(PsiElement anchor, String type) {
+  public static PyType getTypeByName(@Nullable PsiElement anchor, @NotNull String type) {
     final ParseResult result = parse(anchor, type);
     return result.getType();
   }
 
   @NotNull
-  public static ParseResult parse(PsiElement anchor, String type) {
+  public static ParseResult parse(@Nullable PsiElement anchor, @NotNull String type) {
     final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
     final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
     final PyType t = parse(anchor, type, types, fullRanges, 0);
@@ -158,8 +158,8 @@ public class PyTypeParser {
   }
 
   @Nullable
-  private static PyType parseObjectType(PsiElement anchor, String type, PyBuiltinCache builtinCache, Map<TextRange, PyType> types,
-                                        Map<PyType, TextRange> fullRanges, int offset) {
+  private static PyType parseObjectType(@NotNull PsiElement anchor, @NotNull String type, @NotNull PyBuiltinCache builtinCache,
+                                        @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges, int offset) {
     final TextRange whole = new TextRange(offset, offset + type.length());
     final PyClassType classType = builtinCache.getObjectType(type);
     if (classType != null) {
@@ -236,8 +236,9 @@ public class PyTypeParser {
     return null;
   }
 
-  private static PyType parseTupleType(PsiElement anchor, String elementTypeNames, Map<TextRange, PyType> types,
-                                       Map<PyType, TextRange> fullRanges, int offset) {
+  @Nullable
+  private static PyType parseTupleType(@NotNull PsiElement anchor, @NotNull String elementTypeNames, @NotNull Map<TextRange, PyType> types,
+                                       @NotNull Map<PyType, TextRange> fullRanges, int offset) {
     final List<TextRange> ranges = splitRanges(elementTypeNames, ",");
     final List<PyType> elementTypes = new ArrayList<PyType>();
     for (TextRange range : ranges) {
@@ -247,8 +248,8 @@ public class PyTypeParser {
   }
 
   @Nullable
-  private static PyType parseDictFromToType(PsiElement anchor, String type, Map<TextRange, PyType> types,
-                                            Map<PyType, TextRange> fullRanges, int offset) {
+  private static PyType parseDictFromToType(@NotNull PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
+                                            @NotNull Map<PyType, TextRange> fullRanges, int offset) {
     final Matcher m = DICT_TYPE.matcher(type);
     PyClassType dict = PyBuiltinCache.getInstance(anchor).getDictType();
     if (dict != null) {
@@ -264,8 +265,8 @@ public class PyTypeParser {
   }
 
   @Nullable
-  private static PyType parseUnionType(PsiElement anchor, String type, Map<TextRange, PyType> types,
-                                       Map<PyType, TextRange> fullRanges, int offset) {
+  private static PyType parseUnionType(@NotNull PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
+                                       @NotNull Map<PyType, TextRange> fullRanges, int offset) {
     final List<TextRange> ranges = splitRanges(type, " or ");
     PyType result = null;
     for (TextRange range : ranges) {
