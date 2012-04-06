@@ -419,7 +419,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
     }
 
-    final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName);
+    final String normalizedAppName = AndroidResourceUtil.normalizeXmlResourceValue(myApplicationName.replace("\\", "\\\\"));
 
     if (appNameResElement == null) {
       manager.addValueResource("string", appNameResource, normalizedAppName);
