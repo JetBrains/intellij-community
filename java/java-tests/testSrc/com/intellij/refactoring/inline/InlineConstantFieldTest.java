@@ -26,6 +26,10 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
    public void testQualifiedConstantExpressionReplacedWithAnotherOne() throws Exception {
     doTest();
   }
+  
+  public void testStaticallyImportedQualifiedExpression() throws Exception {
+    doTest();
+  }
 
   private void doTest() throws Exception {
     String name = getTestName(false);
