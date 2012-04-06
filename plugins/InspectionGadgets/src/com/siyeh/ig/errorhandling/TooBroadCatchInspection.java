@@ -42,7 +42,7 @@ public class TooBroadCatchInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;
 
-  @SuppressWarnings("UnusedDeclaration")
+  @SuppressWarnings("PublicField")
   public boolean ignoreInTestCode = false;
 
   @Override
@@ -229,7 +229,9 @@ public class TooBroadCatchInspection extends BaseInspection {
       final List<PsiClass> maskedExceptions = findMaskedExceptions(exceptionsThrown, exceptionsCaught, type);
       if (!maskedExceptions.isEmpty()) {
         final PsiTypeElement typeElement = parameter.getTypeElement();
-        registerError(typeElement, maskedExceptions);
+        if (typeElement != null) {
+          registerError(typeElement, maskedExceptions);
+        }
       }
     }
 

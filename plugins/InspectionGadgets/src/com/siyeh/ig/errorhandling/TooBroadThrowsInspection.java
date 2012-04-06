@@ -37,7 +37,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean onlyWarnOnRootExceptions = false;
 
-  @SuppressWarnings("UnusedDeclaration")
+  @SuppressWarnings("PublicField")
   public boolean ignoreInTestCode = false;
 
   @Override
