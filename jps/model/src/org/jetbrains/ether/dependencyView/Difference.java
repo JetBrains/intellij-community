@@ -28,20 +28,18 @@ abstract class Difference {
 
   public static <T> Specifier<T> make(final Set<T> past, final Set<T> now) {
     if (past == null) {
-      final Collection<T> removed = new HashSet<T>();
-      final Collection<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>>();
-
+      final Collection<T> _now = Collections.unmodifiableCollection(now);
       return new Specifier<T>() {
         public Collection<T> added() {
-          return now;
+          return _now;
         }
 
         public Collection<T> removed() {
-          return removed;
+          return Collections.emptyList();
         }
 
         public Collection<Pair<T, Difference>> changed() {
-          return changed;
+          return Collections.emptyList();
         }
 
         public boolean unchanged() {

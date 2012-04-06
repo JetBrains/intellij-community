@@ -91,13 +91,6 @@ public class GeneralCommandLine implements UserDataHolder {
     myWorkDirectory = workDirectory;
   }
 
-  /**
-   * @deprecated use {@link #setWorkDirectory(java.io.File)} (to remove in IDEA 12).
-   */
-  public void setWorkingDirectory(@Nullable final File workDirectory) {
-    setWorkDirectory(workDirectory);
-  }
-
   @Nullable
   public Map<String, String> getEnvParams() {
     return myEnvParams;

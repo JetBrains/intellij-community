@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,9 @@ public class CopyAbstractMethodImplementationHandler {
         }
         for(PsiClass psiClass: myTargetClasses) {
           final Collection<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethod(psiClass, myMethod, true);
-          PsiMethod overriddenMethod = methods.iterator().next();
+          final Iterator<PsiMethod> iterator = methods.iterator();
+          if (!iterator.hasNext()) continue;
+          PsiMethod overriddenMethod = iterator.next();
           final PsiCodeBlock body = overriddenMethod.getBody();
           final PsiCodeBlock sourceBody = sourceMethod.getBody();
           assert body != null && sourceBody != null;

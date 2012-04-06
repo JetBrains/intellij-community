@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
     // alignment of blocks located before them and post error every time we detect endless cycle.
     Set<LeafBlockWrapper> blocksCausedRealignment = context.backwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
     if (blocksCausedRealignment != null && blocksCausedRealignment.contains(context.targetBlock)) {
-      LOG.error(String.format("Please create dedicated ticket at the tracker with the content of the current editor attached!%n%n"
+      LOG.error(String.format("Please create dedicated ticket at the tracker with the content of the current editor attached%n%n"
                               + "Formatting error - code block %s is set to be shifted right because of its alignment with "
                               + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
                               + "subsequent block to be shifted right as well - cyclic dependency. Debug info: %s",

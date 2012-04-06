@@ -15,10 +15,7 @@
  */
 package com.intellij.designer.model;
 
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.*;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +37,9 @@ public abstract class RadLayout {
   @Nullable
   public EditOperation processChildOperation(OperationContext context) {
     return null;
+  }
+
+  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
   }
 
   public void addSelectionActions(DesignerEditorPanel designer,

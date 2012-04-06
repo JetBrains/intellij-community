@@ -20,10 +20,7 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
@@ -61,6 +58,11 @@ public class FileUtil extends FileUtilRt {
 
   private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
   private static final Object JAVA_IO_FILESYSTEM; // java.io.FileSystem
+
+  @NotNull
+  public static String join(@NotNull final String... parts) {
+    return StringUtil.join(parts, File.separator);
+  }
 
   @Nullable
   public static String getRelativePath(File base, File file) {

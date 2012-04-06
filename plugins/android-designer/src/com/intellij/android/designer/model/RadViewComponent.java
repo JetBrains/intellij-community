@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -153,6 +154,14 @@ public class RadViewComponent extends RadComponent {
 
     for (RadComponent child : myChildren) {
       child.copyTo(parent);
+    }
+  }
+
+  @Override
+  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
+    RadViewLayout layout = (RadViewLayout)getLayout();
+    if (layout != null) {
+      layout.addStaticDecorators(decorators, selection);
     }
   }
 

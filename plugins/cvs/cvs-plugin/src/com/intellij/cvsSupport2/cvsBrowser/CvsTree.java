@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import java.util.*;
 import java.util.List;
 
 public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListener, ChildrenLoader<CvsElement> {
-  private CvsElement[] myCurrentSelection = new CvsElement[0];
+  private CvsElement[] myCurrentSelection = CvsElement.EMPTY_ARRAY;
   private Tree myTree;
   private DefaultTreeModel myModel;
   private CvsRootConfiguration myCvsRootConfiguration = null;
@@ -60,8 +60,8 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
 
   @NonNls public static final String SELECTION_CHANGED = "Selection Changed";
 
-  public CvsTree(Project project, boolean allowRootSelection, @JdkConstants.TreeSelectionMode int selectionMode, boolean showModules, boolean showFiles,
-                 Consumer<VcsException> errorCallback) {
+  public CvsTree(Project project, boolean allowRootSelection, @JdkConstants.TreeSelectionMode int selectionMode,
+                 boolean showModules, boolean showFiles, Consumer<VcsException> errorCallback) {
     super(new BorderLayout());
     myProject = project;
     mySelectionMode = selectionMode;
@@ -75,6 +75,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
 
   private void addSelectionListener() {
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         setCurrentSelection(myTree.getSelectionPaths());
       }
@@ -91,12 +92,12 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   }
 
   private void setCurrentSelection(TreePath[] paths) {
-    ArrayList<CvsElement> selection = new ArrayList<CvsElement>();
+    final ArrayList<CvsElement> selection = new ArrayList<CvsElement>();
     if (paths != null) {
       for (TreePath path : paths) {
-        Object selectedObject = path.getLastPathComponent();
+        final Object selectedObject = path.getLastPathComponent();
         if (!(selectedObject instanceof CvsElement)) continue;
-        CvsElement cvsElement = (CvsElement)selectedObject;
+        final CvsElement cvsElement = (CvsElement)selectedObject;
         if (cvsElement.getElementPath().equals(".") && !myAllowRootSelection) continue;
         selection.add(cvsElement);
       }
@@ -109,8 +110,8 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     if (myCvsRootConfiguration == null) {
       return new DefaultMutableTreeNode();
     }
-    String rootName = myCvsRootConfiguration.toString();
-    CvsElement result = CvsElementFactory.FOLDER_ELEMENT_FACTORY.createElement(rootName, myCvsRootConfiguration, project);
+    final String rootName = myCvsRootConfiguration.toString();
+    final CvsElement result = CvsElementFactory.FOLDER_ELEMENT_FACTORY.createElement(rootName, myCvsRootConfiguration, project);
     result.setDataProvider(new RootDataProvider(myCvsRootConfiguration));
     result.setPath(".");
     result.cannotBeCheckedOut();
@@ -135,7 +136,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   }
 
   public void init() {
-    TreeNode root = createRoot(myProject);
+    final TreeNode root = createRoot(myProject);
     myModel = new DefaultTreeModel(root, true);
     myTree = new Tree(myModel);
     add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
@@ -144,7 +145,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     myTree.setCellRenderer(new Cvs2Renderer());
     addSelectionListener();
 
-    TreeUIHelper uiHelper = TreeUIHelper.getInstance();
+    final TreeUIHelper uiHelper = TreeUIHelper.getInstance();
     uiHelper.installTreeSpeedSearch(myTree);
     TreeUtil.installActions(myTree);
 
@@ -152,6 +153,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
   }
 
   private static class AlwaysNotifiedObservable extends Observable{
+    @Override
     public void notifyObservers(Object arg) {
       setChanged();
       super.notifyObservers(arg);
@@ -174,6 +176,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     }
   }
 
+  @Override
   public void deactivated() {
     mySelectionObservable.deleteObservers();
     synchronized (myListeners) {
@@ -191,6 +194,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     final Application application = ApplicationManager.getApplication();
     final ModalityState modalityState = application.getCurrentModalityState();
     application.executeOnPooledThread(new Runnable() {
+      @Override
       public void run() {
         final RemoteResourceDataProvider dataProvider = element.getDataProvider();
         dataProvider.fillContentFor(new MyGetContentCallback(element, modalityState, myProject), myErrorCallback);
@@ -240,18 +244,22 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
       return myModalityState;
     }
 
+    @Override
     public void deactivated() {
       if (myListener != null) {
         myListener.indirectCancel();
       }
     }
 
+    @Override
     public void useForCancel(final CvsListenerWithProgress listener) {
       myListener = listener;
     }
 
+    @Override
     public void appendDirectoryContent(final DirectoryContent directoryContent) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           final TreePath selectionPath = myTree.getSelectionPath();
           if (selectionPath != null) {
@@ -286,9 +294,11 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
       }
     }
 
+    @Override
     public void finished() {
       removeListener(this);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           myLoadingNodeManager.removeFrom(myParentNode);
           myParentNode.setLoading(false);

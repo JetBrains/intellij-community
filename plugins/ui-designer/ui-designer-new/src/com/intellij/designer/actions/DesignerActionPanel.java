@@ -22,7 +22,6 @@ import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -121,14 +120,7 @@ public class DesignerActionPanel implements DataProvider {
     }
     myDynamicGroup.removeAll();
 
-    Set<RadComponent> parents = new HashSet<RadComponent>();
-    for (RadComponent component : selection) {
-      RadComponent parent = component.getParent();
-      if (parent != null) {
-        parents.add(parent);
-      }
-    }
-
+    Set<RadComponent> parents = RadComponent.getParents(selection);
     for (RadComponent parent : parents) {
       parent.getLayout().addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
     }

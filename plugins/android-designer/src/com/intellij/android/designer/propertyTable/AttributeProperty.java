@@ -45,7 +45,11 @@ public class AttributeProperty extends Property<RadViewComponent> {
   private final PropertyEditor myEditor;
 
   public AttributeProperty(@NotNull String name, @NotNull AttributeDefinition definition) {
-    super(null, name);
+    this(null, name, definition);
+  }
+
+  public AttributeProperty(@Nullable Property parent, @NotNull String name, @NotNull AttributeDefinition definition) {
+    super(parent, name);
     myDefinition = definition;
 
     Set<AttributeFormat> formats = definition.getFormats();
@@ -76,8 +80,8 @@ public class AttributeProperty extends Property<RadViewComponent> {
   }
 
   @Override
-  public Property createForNewPresentation() {
-    return new AttributeProperty(getName(), myDefinition);
+  public Property<RadViewComponent> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
+    return new AttributeProperty(parent, name, myDefinition);
   }
 
   @Override

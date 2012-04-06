@@ -64,8 +64,14 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return myOutput;
   }
 
+  /**
+   *  Starts process with specified timeout
+   *
+   * @param timeoutInMilliseconds non-positive means infinity
+   * @return
+   */
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
-    if (timeoutInMilliseconds < 0) {
+    if (timeoutInMilliseconds <= 0) {
       return runProcess();
     }
     startNotify();

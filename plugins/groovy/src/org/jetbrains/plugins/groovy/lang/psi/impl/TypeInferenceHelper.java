@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AssertionInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.InstanceOfInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -134,7 +134,7 @@ public class TypeInferenceHelper {
   }
 
   @Nullable
-  private static PsiType getInferredType(String varName, Instruction instruction, Instruction[] flow, GrControlFlowOwner scope) {
+  private static PsiType getInferredType(@NotNull String varName, @NotNull Instruction instruction, @NotNull Instruction[] flow, @NotNull GrControlFlowOwner scope) {
     final Pair<ReachingDefinitionsDfaInstance, List<TIntObjectHashMap<TIntHashSet>>> pair = getDefUseMaps(scope);
 
     List<TIntObjectHashMap<TIntHashSet>> dfaResult = pair.second;
@@ -165,10 +165,10 @@ public class TypeInferenceHelper {
         final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow) {
           @Override
           public void fun(TIntObjectHashMap<TIntHashSet> m, Instruction instruction) {
-            if (instruction instanceof AssertionInstruction) { //todo assertions are not defs, they just add to type intersection and don't overwrite it completely
-              final AssertionInstruction assertionInstruction = (AssertionInstruction)instruction;
-              final PsiElement element = assertionInstruction.getElement();
-              if (element instanceof GrInstanceOfExpression && !assertionInstruction.isNegate()) {
+            if (instruction instanceof InstanceOfInstruction) { //todo assertions are not defs, they just add to type intersection and don't overwrite it completely
+              final InstanceOfInstruction instanceOfInstruction = (InstanceOfInstruction)instruction;
+              final PsiElement element = instanceOfInstruction.getElement();
+              if (element instanceof GrInstanceOfExpression && !instanceOfInstruction.isNegate()) {
                 final GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
                 final GrTypeElement typeElement = ((GrInstanceOfExpression)element).getTypeElement();
                 if (typeElement != null) {
@@ -216,7 +216,11 @@ public class TypeInferenceHelper {
       @Override
       @Nullable
       public PsiType compute() {
-        final PsiType original = getInferredType(instruction.getVariableName(), instruction.getInstructionToMixin(flow), flow, scope);
+        String varName = instruction.getVariableName();
+        if (varName == null) return null;
+        ReadWriteVariableInstruction originalInstr = instruction.getInstructionToMixin(flow);
+        LOG.assertTrue(originalInstr != null, scope.getContainingFile().getName() + ":" + scope.getText());
+        final PsiType original = getInferredType(varName, originalInstr, flow, scope);
         final PsiType mixin = instruction.inferMixinType();
         if (mixin == null) return original;
         if (original == null) return mixin;

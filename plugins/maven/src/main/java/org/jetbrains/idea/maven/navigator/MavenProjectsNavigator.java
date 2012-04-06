@@ -25,10 +25,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
@@ -43,7 +40,6 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
-import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -216,7 +212,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
 
     final ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
     myToolWindow = manager.registerToolWindow(TOOL_WINDOW_ID, panel, ToolWindowAnchor.RIGHT, myProject, true);
-    myToolWindow.setIcon(MavenIcons.MAVEN_ICON);
+    myToolWindow.setIcon(IconLoader.getIcon("/images/toolWindowMaven.png"));
 
     final ToolWindowManagerAdapter listener = new ToolWindowManagerAdapter() {
       boolean wasVisible = false;

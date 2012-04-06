@@ -60,6 +60,11 @@ public class AndroidResourceUtil {
   private AndroidResourceUtil() {
   }
 
+  @NotNull
+  public static String normalizeXmlResourceValue(@NotNull String value) {
+    return value.replace("'", "\\'").replace("\"", "\\\"");
+  }
+
   static {
     REFERRABLE_RESOURCE_TYPES.addAll(Arrays.asList(ResourceType.values()));
     REFERRABLE_RESOURCE_TYPES.remove(ResourceType.ATTR);

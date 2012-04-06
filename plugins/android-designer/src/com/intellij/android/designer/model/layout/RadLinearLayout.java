@@ -15,21 +15,13 @@
  */
 package com.intellij.android.designer.model.layout;
 
-import com.intellij.android.designer.model.ModelParser;
-import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
-import com.intellij.designer.componentTree.TreeEditOperation;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.FeedbackLayer;
-import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
+import com.intellij.designer.designSurface.*;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -39,16 +31,24 @@ public class RadLinearLayout extends RadViewLayoutWithData {
   private static final String[] LAYOUT_PARAMS = {"LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
   @Override
+  @NotNull
   public String[] getLayoutParams() {
     return LAYOUT_PARAMS;
   }
 
   @Override
   public EditOperation processChildOperation(OperationContext context) {
-    if (context.isCreate()) {
-      return context.isTree() ? new TreeCreateOperation(myContainer, context) : new CreateOperation(context);
-    }
     return null;
+  }
+
+  @Override
+  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
+    super.addStaticDecorators(decorators, selection); // TODO: Auto-generated method stub
+  }
+
+  @Override
+  public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
+    return super.getChildSelectionDecorator(component, selection); // TODO: Auto-generated method stub
   }
 
   @Override
@@ -65,71 +65,5 @@ public class RadLinearLayout extends RadViewLayoutWithData {
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
     super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
-  }
-
-  private void addNewComponent(RadViewComponent newComponent, @Nullable RadViewComponent insertBefore) throws Exception {
-    ModelParser.addComponent((RadViewComponent)myContainer, newComponent, insertBefore);
-  }
-
-  private class TreeCreateOperation extends TreeEditOperation {
-    public TreeCreateOperation(RadComponent host, OperationContext context) {
-      super(host, context);
-    }
-
-    @Override
-    protected void execute(RadComponent insertBefore) throws Exception {
-      addNewComponent((RadViewComponent)myComponents.get(0), (RadViewComponent)insertBefore);
-    }
-  }
-
-  private class CreateOperation implements EditOperation {
-    private final OperationContext myContext;
-    private RadComponent myComponent;
-    private JComponent myFeedback;
-
-    private CreateOperation(OperationContext context) {
-      myContext = context;
-    }
-
-    @Override
-    public void setComponent(RadComponent component) {
-      myComponent = component;
-    }
-
-    @Override
-    public void setComponents(List<RadComponent> components) {
-    }
-
-    @Override
-    public void showFeedback() {
-      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-
-      if (myFeedback == null) {
-        myFeedback = new AlphaComponent(Color.green);
-        layer.add(myFeedback);
-        myFeedback.setBounds(myContainer.getBounds(layer));
-        layer.repaint();
-      }
-    }
-
-    @Override
-    public void eraseFeedback() {
-      if (myFeedback != null) {
-        FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-        layer.remove(myFeedback);
-        layer.repaint();
-        myFeedback = null;
-      }
-    }
-
-    @Override
-    public boolean canExecute() {
-      return true;
-    }
-
-    @Override
-    public void execute() throws Exception {
-      addNewComponent((RadViewComponent)myComponent, null);
-    }
   }
 }

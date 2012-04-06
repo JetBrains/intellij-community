@@ -18,10 +18,7 @@ package com.intellij.android.designer.model;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
-import com.intellij.android.designer.propertyTable.AttributeProperty;
-import com.intellij.android.designer.propertyTable.AttributePropertyWithDefault;
-import com.intellij.android.designer.propertyTable.CompoundProperty;
-import com.intellij.android.designer.propertyTable.FlagProperty;
+import com.intellij.android.designer.propertyTable.*;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
@@ -92,10 +89,7 @@ public class PropertyParser {
         component.setProperties(Collections.<Property>emptyList());
       }
       else {
-        Class<?> componentClass = myClassLoader.loadClass(info.getClassName());
-        if (componentClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
-          componentClass = myClassLoader.loadClass("android.view.View");
-        }
+        Class<?> componentClass = configureClass(myClassLoader.loadClass(info.getClassName()));
         component.setProperties(loadWidgetProperties(componentClass, model));
       }
     }
@@ -116,8 +110,26 @@ public class PropertyParser {
       }
 
       if (layoutParams != null) {
-        List<Property> properties = loadLayoutProperties(layoutParams, 0, parent.getMetaModel());
+        MetaModel[] models = new MetaModel[layoutParams.length];
+        models[0] = parent.getMetaModel();
 
+        for (int i = 1; i < layoutParams.length; i++) {
+          if (models[i - 1] == null) {
+            break;
+          }
+          String extendTarget = models[i - 1].getTarget();
+          if (extendTarget == null) {
+            break;
+          }
+
+          Class<?> superClass = myClassLoader.loadClass(extendTarget).getSuperclass();
+          if (superClass != null) {
+            superClass = configureClass(superClass);
+            models[i] = myMetaManager.getModelByTarget(superClass.getName());
+          }
+        }
+
+        List<Property> properties = loadLayoutProperties(layoutParams, 0, models);
         if (!properties.isEmpty()) {
           properties = new ArrayList<Property>(properties);
           properties.addAll(component.getProperties());
@@ -138,7 +150,7 @@ public class PropertyParser {
 
       StyleableDefinition definitions = myDefinitions.getStyleableByName(component);
       if (definitions != null) {
-        Property padding = null;
+        boolean padding = false;
 
         for (AttributeDefinition definition : definitions.getAttributes()) {
           String name = definition.getName();
@@ -146,10 +158,10 @@ public class PropertyParser {
           Property property;
 
           if ("padding".equals(name) && "View".equals(component)) {
-            property = padding = new CompoundProperty(name, definition);
+            padding = true;
           }
-          else if (formats.contains(AttributeFormat.Flag)) {
-            property = new FlagProperty(name, definition, model);
+          if (formats.contains(AttributeFormat.Flag)) {
+            property = new FlagProperty(name, definition);
           }
           else {
             property = new AttributeProperty(name, definition);
@@ -158,27 +170,29 @@ public class PropertyParser {
           if (model != null) {
             model.decorate(property, name);
           }
-
           properties.add(property);
         }
 
-        if (padding != null) {
-          List<Property> children = padding.getChildren(null);
-
-          children.add(PropertyTable.extractProperty(properties, "paddingLeft"));
-          children.add(PropertyTable.extractProperty(properties, "paddingTop"));
-          children.add(PropertyTable.extractProperty(properties, "paddingRight"));
-          children.add(PropertyTable.extractProperty(properties, "paddingBottom"));
-          children.add(PropertyTable.extractProperty(properties, "paddingStart"));
-          children.add(PropertyTable.extractProperty(properties, "paddingEnd"));
+        if (padding) {
+          CompoundDimensionProperty paddingProperty = new CompoundDimensionProperty("padding");
+          moveProperties(properties, paddingProperty,
+                         "padding", "all",
+                         "paddingLeft", "left",
+                         "paddingTop", "top",
+                         "paddingRight", "right",
+                         "paddingBottom", "bottom",
+                         "paddingStart", "start",
+                         "paddingEnd", "end");
+          if (model != null) {
+            paddingProperty.decorate(model);
+          }
+          properties.add(paddingProperty);
         }
       }
 
       Class<?> superComponentClass = componentClass.getSuperclass();
       if (superComponentClass != null) {
-        if (superComponentClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
-          superComponentClass = myClassLoader.loadClass("android.view.View");
-        }
+        superComponentClass = configureClass(superComponentClass);
 
         List<Property> superProperties = loadWidgetProperties(superComponentClass,
                                                               myMetaManager.getModelByTarget(superComponentClass.getName()));
@@ -188,25 +202,7 @@ public class PropertyParser {
               properties.add(superProperty);
             }
             else {
-              String name = superProperty.getName();
-              boolean normal = model.isNormalProperty(name);
-              boolean important = model.isImportantProperty(name);
-              boolean expert = model.isExpertProperty(name);
-              boolean deprecated = model.isDeprecatedProperty(name);
-
-              if ((normal && (superProperty.isImportant() || superProperty.isExpert())) ||
-                  (important && !superProperty.isImportant()) ||
-                  (expert && !superProperty.isExpert()) ||
-                  (deprecated && !superProperty.isDeprecated())) {
-                Property property = superProperty.createForNewPresentation();
-                property.setImportant(important);
-                property.setExpert(expert);
-                property.setDeprecated(deprecated);
-                properties.add(property);
-              }
-              else {
-                properties.add(superProperty);
-              }
+              properties.add(model.decorateWithOverride(superProperty));
             }
           }
         }
@@ -225,8 +221,16 @@ public class PropertyParser {
     return properties;
   }
 
-  private List<Property> loadLayoutProperties(String[] components, int index, MetaModel model) throws Exception {
+  private Class<?> configureClass(Class<?> viewClass) throws Exception {
+    if (viewClass.getName().equals("com.android.layoutlib.bridge.MockView")) {
+      return myClassLoader.loadClass("android.view.View");
+    }
+    return viewClass;
+  }
+
+  private List<Property> loadLayoutProperties(String[] components, int index, MetaModel[] models) throws Exception {
     String component = components[index];
+    MetaModel model = models[index];
 
     List<Property> properties = myCachedProperties.get(component);
 
@@ -236,7 +240,7 @@ public class PropertyParser {
 
       StyleableDefinition definitions = myDefinitions.getStyleableByName(component);
       if (definitions != null) {
-        Property margin = null;
+        boolean margin = false;
 
         for (AttributeDefinition definition : definitions.getAttributes()) {
           String name = definition.getName();
@@ -244,7 +248,7 @@ public class PropertyParser {
           Set<AttributeFormat> formats = definition.getFormats();
           Property property;
 
-          if (name.startsWith(LAYOUT_MARGIN_PREFIX) && name.length() > LAYOUT_MARGIN_PREFIX.length()) {
+          if (name.startsWith(LAYOUT_MARGIN_PREFIX)) {
             name = name.substring(LAYOUT_PREFIX.length());
             important = false;
           }
@@ -252,45 +256,54 @@ public class PropertyParser {
             name = "layout:" + name.substring(LAYOUT_PREFIX.length());
           }
 
-          if ("layout:margin".equals(name) && "ViewGroup_MarginLayout".equals(component)) {
-            property = margin = new CompoundProperty(name, definition);
+          if ("margin".equals(name) && "ViewGroup_MarginLayout".equals(component)) {
+            margin = true;
           }
-          else if ("layout:width".equals(name) || "layout:height".equals(name)) {
+          if ("layout:width".equals(name) || "layout:height".equals(name)) {
             property = new AttributePropertyWithDefault(name, definition, "wrap_content");
           }
           else if (formats.contains(AttributeFormat.Flag)) {
-            property = new FlagProperty(name, definition, model);
+            property = new FlagProperty(name, definition);
           }
           else {
             property = new AttributeProperty(name, definition);
           }
 
+          if (model != null) {
+            model.decorate(property, name);
+          }
           property.setImportant(important);
           properties.add(property);
         }
 
-        if (margin != null) {
-          List<Property> children = margin.getChildren(null);
-
-          PropertyTable.moveProperty(properties, "marginLeft", children, -1);
-          PropertyTable.moveProperty(properties, "marginTop", children, -1);
-          PropertyTable.moveProperty(properties, "marginRight", children, -1);
-          PropertyTable.moveProperty(properties, "marginBottom", children, -1);
-          PropertyTable.moveProperty(properties, "marginStart", children, -1);
-          PropertyTable.moveProperty(properties, "marginEnd", children, -1);
-
+        if (margin) {
+          CompoundDimensionProperty marginProperty = new CompoundDimensionProperty("layout:margin");
+          moveProperties(properties, marginProperty,
+                         "margin", "all",
+                         "marginLeft", "left",
+                         "marginTop", "top",
+                         "marginRight", "right",
+                         "marginBottom", "bottom",
+                         "marginStart", "start",
+                         "marginEnd", "end");
           if (model != null) {
-            for (Property child : children) {
-              model.decorate(child, "layout:margin." + child.getName());
-            }
+            marginProperty.decorate(model);
           }
+          marginProperty.setImportant(true);
+          properties.add(marginProperty);
         }
       }
 
       if (++index < components.length) {
-        for (Property property : loadLayoutProperties(components, index, model)) {
+        for (Property property : loadLayoutProperties(components, index, models)) {
           if (PropertyTable.findProperty(properties, property) == -1) {
-            properties.add(property);
+            if (model == null) {
+              properties.add(property);
+            }
+            else {
+              property = model.decorateWithOverride(property);
+              properties.add(property);
+            }
           }
         }
       }
@@ -311,6 +324,16 @@ public class PropertyParser {
     }
 
     return properties;
+  }
+
+  private static void moveProperties(List<Property> source, Property destination, String... names) {
+    List<Property> children = destination.getChildren(null);
+    for (int i = 0; i < names.length; i += 2) {
+      Property property = PropertyTable.extractProperty(source, names[i]);
+      if (property != null) {
+        children.add(property.createForNewPresentation(destination, names[i + 1]));
+      }
+    }
   }
 
   public boolean isAssignableFrom(MetaModel base, MetaModel test) {

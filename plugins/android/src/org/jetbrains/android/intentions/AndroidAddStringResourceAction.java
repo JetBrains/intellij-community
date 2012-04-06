@@ -184,7 +184,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     final AndroidFacet facet = AndroidFacet.getInstance(file);
     assert facet != null;
 
-    value = value.replace("'", "\\'").replace("\"", "\\\"");
+    value = AndroidResourceUtil.normalizeXmlResourceValue(value);
 
     final String aPackage = getPackage(facet);
     if (aPackage == null) {
