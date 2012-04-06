@@ -30,7 +30,7 @@ import java.awt.event.ActionEvent;
  * @author Eugene Zhuravlev
  *         Date: Apr 26, 2005
  */
-public class LineBreakpointFactory extends BreakpointFactory{
+public class LineBreakpointFactory extends BreakpointFactory {
   public Breakpoint createBreakpoint(Project project, final Element element) {
     return new LineBreakpoint(project);
   }
@@ -43,9 +43,24 @@ public class LineBreakpointFactory extends BreakpointFactory{
     return LineBreakpoint.DISABLED_ICON;
   }
 
-  public BreakpointPanel createBreakpointPanel(Project project, final DialogWrapper parentDialog) {
-    final BreakpointPanel panel = new BreakpointPanel(project, new LineBreakpointPropertiesPanel(project), new BreakpointPanelAction[]{
-      new SwitchViewAction(),
+  @Override
+  protected String getHelpID() {
+    return HelpID.LINE_BREAKPOINTS;
+  }
+
+  @Override
+  public String getDisplayName() {
+    return DebuggerBundle.message("line.breakpoints.tab.title");
+  }
+
+  @Override
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
+    return new LineBreakpointPropertiesPanel(project);
+  }
+
+  @Override
+  protected BreakpointPanelAction[] createBreakpointPanelActions(Project project, final DialogWrapper parentDialog) {
+    return new BreakpointPanelAction[]{new SwitchViewAction(),
       new GotoSourceAction(project) {
         public void actionPerformed(ActionEvent e) {
           super.actionPerformed(e);
@@ -57,10 +72,9 @@ public class LineBreakpointFactory extends BreakpointFactory{
       new ToggleGroupByMethodsAction(),
       new ToggleGroupByClassesAction(),
       new ToggleFlattenPackagesAction(),
-    }, getBreakpointCategory(), DebuggerBundle.message("line.breakpoints.tab.title"), HelpID.LINE_BREAKPOINTS);
-    return panel;
+    };
   }
-  
+
   public Key<LineBreakpoint> getBreakpointCategory() {
     return LineBreakpoint.CATEGORY;
   }

@@ -157,19 +157,28 @@ public class DebuggerUIUtil {
     popup.show(point);
   }
 
-  public static void showBreakpointEditorBalloon(final Project project,
-                                                 @Nullable final Point point, final JComponent component,
-                                                 final boolean showAllOptions,
-                                                 final XBreakpoint breakpoint) {
+
+
+  public static void showXBreakpointEditorBalloon(final Project project,
+                                                  @Nullable final Point point,
+                                                  final JComponent component,
+                                                  final boolean showAllOptions,
+                                                  final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     final XLightBreakpointPropertiesPanel propertiesPanel =
       new XLightBreakpointPropertiesPanel(project, breakpointManager,
                                           breakpoint, showAllOptions);
 
     final JComponent mainPanel = propertiesPanel.getMainPanel();
-    final Balloon balloon = JBPopupFactory.getInstance().createDialogBalloonBuilder(mainPanel, breakpoint.getType().getDisplayText(breakpoint)).
-      setHideOnClickOutside(true).
-      createBalloon();
+
+    final Runnable showMoreOptions = new Runnable() {
+      @Override
+      public void run() {
+        propertiesPanel.saveProperties();
+        showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
+      }
+    };
+    final Balloon balloon = showBreakpointEditor(mainPanel, breakpoint.getType().getDisplayText(breakpoint), point, component, propertiesPanel.showMoreOptions() ? showMoreOptions : null);
     final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointAdded(@NotNull XBreakpoint<?> breakpoint1) {
@@ -204,7 +213,7 @@ public class DebuggerUIUtil {
       public void showMoreOptions() {
         propertiesPanel.saveProperties();
         balloon.hide();
-        showBreakpointEditorBalloon(project, point, component, true, breakpoint);
+        showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
       }
     });
 
@@ -223,6 +232,45 @@ public class DebuggerUIUtil {
         IdeFocusManager.findInstance().requestFocus(mainPanel, true);
       }
     });
+  }
+
+  public static Balloon showBreakpointEditor(final JComponent mainPanel,
+                                             final String displayName,
+                                             final Point whereToShow,
+                                             final JComponent component,
+                                             @Nullable final Runnable showMoreOptions) {
+    final BreakpointEditor editor = new BreakpointEditor();
+    editor.setPropertiesPanel(mainPanel);
+    editor.setShowMoreOptionsLink(showMoreOptions != null);
+
+    final Balloon balloon = JBPopupFactory.getInstance().
+      createDialogBalloonBuilder(editor.getMainPanel(), displayName).
+      setHideOnClickOutside(true).
+      setCloseButtonEnabled(false).
+      createBalloon();
+
+    editor.setDelegate(new BreakpointEditor.Delegate() {
+      @Override
+      public void done() {
+        balloon.hide();
+      }
+
+      @Override
+      public void more() {
+        assert showMoreOptions != null;
+        balloon.hide();
+        showMoreOptions.run();
+      }
+    });
+
+    if (whereToShow == null) {
+      balloon.showInCenterOf(component);
+    }
+    else {
+      balloon.show(new RelativePoint(component, whereToShow), Balloon.Position.atRight);
+    }
+
+    return balloon;
   }
 
   private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {

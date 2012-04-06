@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
@@ -39,6 +40,26 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
 
   public Icon getDisabledIcon() {
     return DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON;
+  }
+
+  @Override
+  protected String getHelpID() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public String getDisplayName() {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
+    return null;  //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  protected BreakpointPanelAction[] createBreakpointPanelActions(Project project, DialogWrapper parentDialog) {
+    return new BreakpointPanelAction[0];  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   public @Nullable BreakpointPanel createBreakpointPanel(Project project, DialogWrapper parentDialog) {

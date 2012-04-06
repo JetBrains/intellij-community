@@ -91,11 +91,28 @@ public abstract class BreakpointPropertiesPanel {
   private JLabel myEnableOrDisableLabel;
   private JButton myMakeDefaultButton;
 
+  private JPanel myDependsOnPanel;
+  private JPanel myInstanceFiltersPanel;
+  private JPanel myClassFiltersPanel;
+  private JPanel myPassCountPanel;
+  private JPanel myConditionsPanel;
+  private JPanel myConditionPanel;
+  private JPanel myCompactConditionsPanel;
+  private JPanel myConditionPlaceholder;
+  private JPanel myActionsPanel;
+
   ButtonGroup mySuspendPolicyGroup;
   @NonNls public static final String CONTROL_LOG_MESSAGE = "logMessage";
   private BreakpointComboboxHandler myBreakpointComboboxHandler;
   private static final int MAX_COMBO_WIDTH = 300;
   private final FixedSizeButton myConditionMagnifierButton;
+  private boolean myMoreOptionsVisible = true;
+
+  public interface Delegate {
+
+    void showActionsPanel();
+  }
+  private Delegate myDelegate;
 
   public JComponent getControl(String control) {
     if(CONTROL_LOG_MESSAGE.equals(control)) {
@@ -115,6 +132,29 @@ public abstract class BreakpointPropertiesPanel {
     if (myLogExpressionCombo != null) {
       myLogExpressionCombo.dispose();
     }
+  }
+
+  public void setActionsPanelVisible(boolean b) {
+    myActionsPanel.setVisible(b);
+  }
+
+  public void setMoreOptionsVisible(boolean b) {
+    myMoreOptionsVisible = b;
+    myDependsOnPanel.setVisible(b);
+    myConditionsPanel.setVisible(b);
+    myActionsPanel.setVisible(b);
+    if (!b) {
+      myConditionPlaceholder.remove(myConditionPanel);
+      myCompactConditionsPanel.add(myConditionPanel, BorderLayout.CENTER);
+    }
+    else {
+      myCompactConditionsPanel.remove(myConditionPanel);
+      myConditionPlaceholder.add(myConditionPanel, BorderLayout.CENTER);
+    }
+  }
+
+  public void setDelegate(Delegate delegate) {
+    myDelegate = delegate;
   }
 
   private class MyTextField extends JTextField {
@@ -330,6 +370,7 @@ public abstract class BreakpointPropertiesPanel {
     myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED);
     if(DebuggerSettings.SUSPEND_NONE.equals(breakpoint.SUSPEND_POLICY)) {
       mySuspendPolicyGroup.setSelected(mySuspendNoneRadio.getModel(), true);
+      setActionsPanelVisible(true);
     }
     else if(DebuggerSettings.SUSPEND_THREAD.equals(breakpoint.SUSPEND_POLICY)){
       mySuspendPolicyGroup.setSelected(mySuspendThreadRadio.getModel(), true);
@@ -337,6 +378,18 @@ public abstract class BreakpointPropertiesPanel {
     else {
       mySuspendPolicyGroup.setSelected(mySuspendAllRadio.getModel(), true);
     }
+    mySuspendNoneRadio.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        if (!myActionsPanel.isVisible()) {
+          if (mySuspendNoneRadio.isSelected()) {
+            if (myDelegate != null) {
+              myDelegate.showActionsPanel();
+            }
+          }
+        }
+      }
+    });
     myLogMessageCheckBox.setSelected(breakpoint.LOG_ENABLED);
     myLogExpressionCheckBox.setSelected(breakpoint.LOG_EXPRESSION_ENABLED);
 

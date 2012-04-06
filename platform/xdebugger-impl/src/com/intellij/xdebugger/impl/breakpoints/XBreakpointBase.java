@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -40,6 +41,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -362,7 +364,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       DefaultActionGroup group = new DefaultActionGroup();
       final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getProject());
 
-      group.add(new EditBreakpointAction(XDebuggerBundle.message("xdebugger.view.breakpoint.edit.action"), XBreakpointBase.this, this));
+      group.add(new EditBreakpointAction(XBreakpointBase.this, this));
 
       group.add(new Separator());
 
@@ -375,7 +377,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       }
       group.add(new Separator());
 
-      group.add(new ViewBreakpointsAction(XDebuggerBundle.message("xdebugger.view.breakpoint.reveal.action"), XBreakpointBase.this));
+      group.add(new ViewBreakpointsAction(ActionsBundle.actionText(XDebuggerActions.VIEW_BREAKPOINTS), XBreakpointBase.this));
       return group;
     }
 
