@@ -1,5 +1,6 @@
 package org.jetbrains.android.uipreview;
 
+import com.android.ide.common.rendering.api.RenderParams;
 import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.ProjectTopics;
@@ -362,7 +363,8 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
       synchronized (RENDERING_LOCK) {
         if (target != null && theme != null) {
           final RenderingResult result =
-            RenderUtil.renderLayout(facet.getModule(), layoutXmlText, layoutXmlFile, imgPath, target, facet, config, xdpi, ydpi, theme);
+            RenderUtil.renderLayout(facet.getModule(), layoutXmlText, layoutXmlFile, imgPath, target, facet, config, xdpi, ydpi, theme,
+                                    RenderParams.DEFAULT_TIMEOUT, false);
 
           if (result != null) {
             warnMessages.addAll(result.getWarnMessages());

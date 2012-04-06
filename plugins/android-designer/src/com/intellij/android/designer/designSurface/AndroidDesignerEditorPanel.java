@@ -37,9 +37,9 @@ import com.intellij.designer.palette.Item;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -47,10 +47,14 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.uipreview.*;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -131,6 +135,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
                     Result result = mySession.render();
 
+                    // XXX
+
                     if (!result.isSuccess()) {
                       System.out.println(
                         "No re render session: " +
@@ -154,7 +160,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                     }
                   }
                   catch (Throwable e) {
-                    showError("reRender error: ", e);
+                    showError("reRender error: ", e, null);
                   }
                 }
               }, new Condition() {
@@ -188,8 +194,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
-        checkRenderer();
-
         RootView rootView = new RootView(mySession.getImage(), 30, 20);
         parser.updateRootComponent(mySession, rootView);
         RadViewComponent newRootComponent = parser.getRootComponent();
@@ -215,61 +219,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
   }
 
-  private void updateRenderer(final boolean updateProperties) {
-    myParseTime = true;
-    final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        if (ModelParser.checkTag(myXmlFile.getRootTag())) {
-          return myXmlFile.getText();
-        }
-        return ModelParser.NO_ROOT_CONTENT;
-      }
-    });
-    createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        checkRenderer();
-
-        RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
-        RootView rootView = (RootView)rootComponent.getNativeComponent();
-        rootView.setImage(mySession.getImage());
-        ModelParser.updateRootComponent(rootComponent, mySession, rootView);
-
-        myParseTime = false;
-
-        myLayeredPane.repaint();
-
-        DesignerToolWindowManager.getInstance(getProject()).refresh(updateProperties);
-      }
-    });
-  }
-
-  private void checkRenderer() throws Throwable {
-    Result result = mySession.getResult();
-    if (!result.isSuccess()) {
-      System.out.println(
-        "No session: " + result.getErrorMessage() + " : " + result.getStatus() + " : " + result.getData() + " : " + result.getException());
-      Throwable exception = result.getException();
-      if (exception != null) {
-        throw exception;
-      }
-      else {
-        throw new RenderingException("No session result");
-      }
-    }
-  }
-
-  private void removeNativeRoot() {
-    if (myRootComponent != null) {
-      myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
-    }
-  }
-
   private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
-    if (mySession != null) {
-      disposeSession();
-    }
+    disposeRenderer();
+
     mySessionAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
@@ -282,6 +234,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
+        RenderingResult result = null;
+
         try {
           long time = System.currentTimeMillis();
 
@@ -315,22 +269,24 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           float xdpi = deviceConfiguration.getDevice().getXDpi();
           float ydpi = deviceConfiguration.getDevice().getYDpi();
 
-          Project project = getProject();
           IAndroidTarget target = manager.getSelectedTarget();
           ThemeData theme = manager.getSelectedTheme();
 
-          while (true) {
-            mySession = RenderUtil
-              .createRenderSession(project, layoutXmlText, myFile, target, facet, config, xdpi, ydpi,
-                                   theme, 10000);
-            if (mySession.getResult().getStatus() != Result.Status.ERROR_TIMEOUT) {
-              break;
-            }
+          if (target == null || theme == null) {
+            throw new RenderingException();
           }
+
+          result = RenderUtil.renderLayout(myModule, layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
 
           if (ApplicationManagerEx.getApplicationEx().isInternal()) {
             System.out.println("Render time: " + (System.currentTimeMillis() - time));
           }
+
+          if (result == null) {
+            throw new RenderingException();
+          }
+
+          mySession = result.getSession();
           mySessionAlarm.cancelAllRequests();
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -341,44 +297,113 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                 runnable.run();
               }
               catch (Throwable e) {
-                showError("Parse error: ", e);
+                showError("Parse error: ", e, null);
                 myParseTime = false;
               }
             }
           });
         }
         catch (final Throwable e) {
+          mySessionAlarm.cancelAllRequests();
+          final Object data = result;
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              showError("Render session error: ", e);
+              showError("Render session error: ", e, data);
               myParseTime = false;
             }
           });
-        }
-        finally {
-          mySessionAlarm.cancelAllRequests();
         }
       }
     });
   }
 
-  private void disposeSession() {
+  private void disposeRenderer() {
     if (mySession != null) {
       mySession.dispose();
       mySession = null;
     }
   }
 
-  @Override
-  protected void configureError(ErrorInfo info) {
-    if (info.throwable instanceof AndroidSdkNotConfiguredException) {
-      info.displayMessage = "Please configure Android SDK";
-      info.stack = false;
+  private void updateRenderer(final boolean updateProperties) {
+    myParseTime = true;
+    final String layoutXmlText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        if (ModelParser.checkTag(myXmlFile.getRootTag())) {
+          return myXmlFile.getText();
+        }
+        return ModelParser.NO_ROOT_CONTENT;
+      }
+    });
+    createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
+      @Override
+      public void run() throws Throwable {
+        RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
+        RootView rootView = (RootView)rootComponent.getNativeComponent();
+        rootView.setImage(mySession.getImage());
+        ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+
+        myParseTime = false;
+
+        myLayeredPane.repaint();
+
+        DesignerToolWindowManager.getInstance(getProject()).refresh(updateProperties);
+      }
+    });
+  }
+
+  private void removeNativeRoot() {
+    if (myRootComponent != null) {
+      myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
     }
-    else if (!(info.throwable instanceof RenderingException)) {
-      info.show = myParseTime;
-      info.log = true;
+  }
+
+  @Override
+  protected void configureError(@NotNull ErrorInfo info, @Nullable Object data) {
+    if (info.myThrowable instanceof AndroidSdkNotConfiguredException) {
+      info.myShowLog = false;
+      info.myShowStack = false;
+
+      if (AndroidMavenUtil.isMavenizedModule(myModule)) {
+        info.myMessages.add(new FixableMessageInfo(true, AndroidBundle.message("android.maven.cannot.parse.android.sdk.error",
+                                                                               myModule.getName()), "", "", null, null));
+      }
+      else {
+        info.myMessages.add(new FixableMessageInfo(true, "Please ", "configure", " Android SDK", new Runnable() {
+          @Override
+          public void run() {
+            AndroidSdkUtils.openModuleDependenciesConfigurable(myModule);
+          }
+        }, null));
+      }
+    }
+    else {
+      boolean renderError = info.myThrowable instanceof RenderingException;
+
+      if (renderError) {
+        RenderingException exception = (RenderingException)info.myThrowable;
+        String message = exception.getPresentableMessage();
+        if (!StringUtil.isEmpty(message)) {
+          info.myDisplayMessage += "\n" + message;
+        }
+      }
+
+      if (data == null) {
+        info.myShowMessage = myParseTime || renderError;
+        info.myShowLog = !renderError;
+      }
+      else {
+        info.myShowLog = false;
+        info.myShowStack = true;
+
+        RenderingResult result = (RenderingResult)data;
+        for (FixableIssueMessage message : result.getWarnMessages()) {
+          info.myMessages.add(
+            new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText, message.myQuickFix,
+                                   message.myAdditionalFixes));
+        }
+      }
     }
 
     StringBuilder builder = new StringBuilder("SDK: ");
@@ -389,14 +414,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       builder.append(target.getFullName()).append(" - ").append(target.getVersion());
     }
     catch (Throwable e) {
-      builder.append("<none>");
+      builder.append("<unknown>");
     }
 
-    info.message = builder.toString();
+    info.myMessage = builder.toString();
   }
 
   @Override
   protected void showErrorPage(ErrorInfo info) {
+    mySessionAlarm.cancelAllRequests();
     removeNativeRoot();
     super.showErrorPage(info);
   }
@@ -420,7 +446,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public void dispose() {
     myPSIChangeListener.stop();
     super.dispose();
-    disposeSession();
+    disposeRenderer();
   }
 
   @Override
@@ -469,7 +495,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       return true;
     }
     catch (Throwable e) {
-      showError("Execute command", e);
+      showError("Execute command", e, null);
       return false;
     }
     finally {
@@ -487,7 +513,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       updateRenderer(true);
     }
     catch (Throwable e) {
-      showError("Execute command", e);
+      showError("Execute command", e, null);
     }
     finally {
       myPSIChangeListener.start();

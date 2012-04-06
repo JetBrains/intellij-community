@@ -2,6 +2,9 @@ package org.jetbrains.android.uipreview;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.PrintStream;
+import java.io.PrintWriter;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -39,5 +42,29 @@ public class RenderingException extends Exception {
 
   public String getPresentableMessage() {
     return myPresentableMessage;
+  }
+
+  @Override
+  public void printStackTrace(PrintStream s) {
+    if (myCauses != null && myCauses.length > 0) {
+      for (Throwable e : myCauses) {
+        e.printStackTrace(s);
+      }
+    }
+    else {
+      super.printStackTrace(s);
+    }
+  }
+
+  @Override
+  public void printStackTrace(PrintWriter s) {
+    if (myCauses != null && myCauses.length > 0) {
+      for (Throwable e : myCauses) {
+        e.printStackTrace(s);
+      }
+    }
+    else {
+      super.printStackTrace(s);
+    }
   }
 }
