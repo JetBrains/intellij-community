@@ -53,6 +53,11 @@ public class ResourceEntry {
   }
 
   @Override
+  public String toString() {
+    return "[" + myType + ":" + myName + "]";
+  }
+
+  @Override
   public int hashCode() {
     int result = myType.hashCode();
     result = 31 * result + myName.hashCode();
