@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
@@ -66,6 +67,9 @@ public class IncrementalFindAction extends EditorAction {
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
+      if (myReplace && ConsoleViewUtil.isConsoleViewEditor(editor)) {
+        return false;
+      }
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       return project != null && !editor.isOneLineMode();
     }
