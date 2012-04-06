@@ -337,7 +337,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         super.visitReferenceElement(reference);
         final PsiElement resolve = reference.resolve();
         if (resolve instanceof PsiMember) {
-          if (PsiTreeUtil.isAncestor(myOuterClass, resolve, true) && !PsiTreeUtil.isAncestor(myInnerClass, resolve, true)) {
+          if (PsiTreeUtil.isAncestor(myOuterClass, resolve, true) && !PsiTreeUtil.isAncestor(myInnerClass, resolve, false)) {
             if (becomesInaccessible((PsiMember)resolve)) {
               registerConflict(reference, resolve, reported, conflicts);
             }
