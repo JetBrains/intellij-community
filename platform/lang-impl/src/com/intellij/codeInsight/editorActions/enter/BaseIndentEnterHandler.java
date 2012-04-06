@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
@@ -131,9 +132,21 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
       }
 
       EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, lineIndent.length()));
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, calcLogicalLength(editor, lineIndent)));
       return Result.Stop;
     }
+  }
+
+  private static int calcLogicalLength(Editor editor, CharSequence lineIndent) {
+    int result = 0;
+    for (int i = 0; i < lineIndent.length(); i++) {
+      if (lineIndent.charAt(i) == '\t') {
+        result += EditorUtil.getTabSize(editor);
+      } else {
+        result++;
+      }
+    }
+    return result;
   }
 
   protected static String getSingleIndent(final PsiFile file, CharSequence lineIndent) {
