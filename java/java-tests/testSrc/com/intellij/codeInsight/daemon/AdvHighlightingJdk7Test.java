@@ -17,6 +17,9 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.projectRoots.JavaVersionServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -59,5 +62,74 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
 
   public void testStaticAndSingleImportConflict() throws Exception {
     doTest(BASE_PATH + "staticImportConflict/UsageMixed.java", BASE_PATH + "/staticImportConflict", false, false);
+  }
+
+  //ambiguous method calls
+  private void doTestAmbiguous() throws Exception {
+    final String name = getTestName(true);
+    final JavaVersionServiceImpl versionService = (JavaVersionServiceImpl)JavaVersionService.getInstance();
+    try {
+      versionService.setTestVersion(JavaSdkVersion.JDK_1_7);
+      doTest(BASE_PATH + name + "/pck/AmbiguousMethodCall.java", BASE_PATH + "/" + name, false, false);
+    }
+    finally {
+      versionService.setTestVersion(null);
+    }
+  }
+
+  public void testAmbiguous() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousArrayInSubst() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousTypeParamExtends() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousTypeParamNmb() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousTypeParamNmb1() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousInheritance() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousInheritance1() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousVarargs() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousVarargs1() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousMultiIntInheritance() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousMultipleTypeParamExtends() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousMultipleTypeParamExtends1() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousMultipleTypeParamExtends2() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousMultipleTypeParamExtends3() throws Exception {
+    doTestAmbiguous();
   }
 }
