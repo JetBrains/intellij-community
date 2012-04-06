@@ -482,6 +482,7 @@ public abstract class PassExecutorService implements Disposable {
 
   public static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls Object... info) {
     if (LOG.isDebugEnabled()) {
+      String docText = pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 10, true);
       synchronized (PassExecutorService.class) {
         StringBuilder s = new StringBuilder();
         for (Object o : info) {
@@ -492,7 +493,7 @@ public abstract class PassExecutorService implements Disposable {
                          + s
                          + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
                          + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                         + " : '" + (pass == null ? "" : StringUtil.first(pass.getDocument().getText(), 10, true)) + "'";
+                         + " : '" + docText + "'";
         LOG.debug(message);
         //System.out.println(message);
       }

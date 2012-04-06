@@ -101,6 +101,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     workspaceConfiguration.COMPILE_IN_BACKGROUND = myCbCompileInBackground.isSelected();
     workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = myCbAutoShowFirstError.isSelected();
     workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
+    boolean wasUsing = workspaceConfiguration.USE_COMPILE_SERVER;
     workspaceConfiguration.USE_COMPILE_SERVER = myCbUseCompileServer.isSelected();
     workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbMakeProjectOnSave.isSelected();
 
@@ -112,9 +113,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     // this will schedule for compilation all files that might become compilable after resource patterns' changing
     final TranslatingCompilerFilesMonitor monitor = TranslatingCompilerFilesMonitor.getInstance();
     if (!workspaceConfiguration.USE_COMPILE_SERVER) {
-      CompileServerManager.getInstance().shutdownServer();
-      monitor.watchProject(myProject);
-      monitor.scanSourcesForCompilableFiles(myProject);
+      if (wasUsing) {
+        CompileServerManager.getInstance().shutdownServer();
+        monitor.watchProject(myProject);
+        monitor.scanSourcesForCompilableFiles(myProject);
+      }
     }
     else {
       monitor.suspendProject(myProject);

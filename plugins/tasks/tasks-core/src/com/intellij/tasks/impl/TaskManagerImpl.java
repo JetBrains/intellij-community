@@ -83,7 +83,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private final WorkingContextManager myContextManager;
 
   private final Map<String,Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<String,Task>());
-  private final Map<String,Task> myTemporaryCache = Collections.synchronizedMap(new LinkedHashMap<String,Task>());
 
   private final Map<String, LocalTaskImpl> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTaskImpl>() {
     @Override
@@ -184,7 +183,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     set.removeAll(repositories);
     myBadRepositories.removeAll(set); // remove all changed reps
     myIssueCache.clear();
-    myTemporaryCache.clear();
 
     myRepositories.clear();
     myRepositories.addAll(repositories);
@@ -236,20 +234,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Override
   public List<Task> getIssues(String query, boolean forceRequest) {
     List<Task> tasks = getIssuesFromRepositories(query, 50, 0, forceRequest);
-    synchronized (myIssueCache) {
-      myTemporaryCache.clear();
-      myTemporaryCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
-    }
+    if (tasks == null) return getCachedIssues();
+    myIssueCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
     return tasks;
   }
 
   @Override
   public List<Task> getCachedIssues() {
-    synchronized (myIssueCache) {
-      ArrayList<Task> tasks = new ArrayList<Task>(myIssueCache.values());
-      tasks.addAll(myTemporaryCache.values());
-      return tasks;
-    }
+    return new ArrayList<Task>(myIssueCache.values());
   }
 
   @Nullable
@@ -694,6 +686,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   private void doUpdate(Runnable onComplete) {
     try {
       List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
+      if (issues == null) return;
 
       synchronized (myIssueCache) {
         myIssueCache.clear();
@@ -724,8 +717,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
+  @Nullable
   private List<Task> getIssuesFromRepositories(@Nullable String request, int max, long since, boolean forceRequest) {
-    List<Task> issues = new ArrayList<Task>();
+    List<Task> issues = null;
     for (final TaskRepository repository : getAllRepositories()) {
       if (!repository.isConfigured() || (!forceRequest && myBadRepositories.contains(repository))) {
         continue;
@@ -733,6 +727,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       try {
         Task[] tasks = repository.getIssues(request, max, since);
         myBadRepositories.remove(repository);
+        if (issues == null) issues = new ArrayList<Task>(tasks.length);
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {

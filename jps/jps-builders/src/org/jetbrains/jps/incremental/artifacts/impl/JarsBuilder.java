@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -43,7 +44,9 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.io.*;
 import java.util.*;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -147,11 +150,16 @@ public class JarsBuilder {
     myBuiltJars.put(jar, jarFile);
 
     FileUtil.createParentDirs(jarFile);
-    final JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jarFile)));
-
     final String targetJarPath = jar.getDestination().getOutputFilePath();
+    Manifest manifest = loadManifest(jar, targetJarPath);
+    final JarOutputStream jarOutputStream = createJarOutputStream(jarFile, manifest);
+
     try {
       final THashSet<String> writtenPaths = new THashSet<String>();
+      if (manifest != null) {
+        writtenPaths.add(JarFile.MANIFEST_NAME);
+      }
+
       for (Pair<String, Object> pair : jar.getContent()) {
         final String relativePath = pair.getFirst();
         if (pair.getSecond() instanceof ArtifactSourceRoot) {
@@ -186,6 +194,71 @@ public class JarsBuilder {
     }
     finally {
       jarOutputStream.close();
+    }
+  }
+
+  private static JarOutputStream createJarOutputStream(File jarFile, @Nullable Manifest manifest) throws IOException {
+    final BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(jarFile));
+    if (manifest != null) {
+      return new JarOutputStream(outputStream, manifest);
+    }
+    return new JarOutputStream(outputStream);
+  }
+
+  @Nullable
+  private Manifest loadManifest(JarInfo jar, String targetJarPath) throws IOException {
+    for (Pair<String, Object> pair : jar.getContent()) {
+      if (pair.getSecond() instanceof ArtifactSourceRoot) {
+        final String rootPath = pair.getFirst();
+        if (!JarFile.MANIFEST_NAME.startsWith(rootPath)) {
+          continue;
+        }
+        final String manifestPath = PathUtil.trimForwardSlashes(JarFile.MANIFEST_NAME.substring(rootPath.length()));
+        final ArtifactSourceRoot root = (ArtifactSourceRoot)pair.getSecond();
+        if (root instanceof FileBasedArtifactSourceRoot) {
+          final File manifestFile = new File(root.getRootFile(), manifestPath);
+          if (manifestFile.exists()) {
+            final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
+            myContext.getLoggingManager().getArtifactBuilderLogger().fileCopied(fullManifestPath);
+            mySrcOutMapping.appendData(fullManifestPath, Collections.singletonList(targetJarPath));
+            //noinspection IOResourceOpenedButNotSafelyClosed
+            return createManifest(new FileInputStream(manifestFile), manifestFile);
+          }
+        }
+        else {
+          final Ref<Manifest> manifestRef = Ref.create(null);
+          ((JarBasedArtifactSourceRoot)root).processEntries(new JarBasedArtifactSourceRoot.EntryProcessor() {
+            @Override
+            public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
+              if (manifestRef.isNull() && relativePath.equals(manifestPath) && inputStream != null) {
+                manifestRef.set(createManifest(inputStream, root.getRootFile()));
+              }
+            }
+          });
+          if (!manifestRef.isNull()) {
+            return manifestRef.get();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Manifest createManifest(InputStream manifestStream, File manifestFile) {
+    try {
+      try {
+        return new Manifest(manifestStream);
+      }
+      finally {
+        manifestStream.close();
+      }
+    }
+    catch (IOException e) {
+      myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR,
+                                                   "Cannot create MANIFEST.MF from " + manifestFile.getAbsolutePath() + ":" + e.getMessage()));
+      LOG.debug(e);
+      return null;
     }
   }
 

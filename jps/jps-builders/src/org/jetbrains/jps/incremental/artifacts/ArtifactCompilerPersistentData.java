@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.storage.StorageOwner;
 
 import java.io.*;
 import java.util.HashMap;
@@ -29,7 +30,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class ArtifactCompilerPersistentData {
+public class ArtifactCompilerPersistentData implements StorageOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.ArtifactCompilerPersistentData");
   private static final int VERSION = 1;
   private File myFile;
@@ -71,7 +72,22 @@ public class ArtifactCompilerPersistentData {
     return myVersionChanged;
   }
 
-  public void save() throws IOException {
+  @Override
+  public void flush(boolean memoryCachesOnly) {
+    try {
+      save();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    save();
+  }
+
+  private void save() throws IOException {
     final DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(myFile)));
     try {
       output.writeInt(VERSION);

@@ -33,7 +33,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBList;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
@@ -138,7 +140,9 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
 
           JScrollPane scrollPane =
-            ScrollPaneFactory.createScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            ScrollPaneFactory.createScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+          scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
             ActionManager actionManager = ActionManager.getInstance();
             ActionGroup actionGroup = (ActionGroup) actionManager.getAction(ThumbnailViewActions.GROUP_TOOLBAR);

@@ -237,9 +237,8 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     assertBuildFailed(a);
   }
 
-  //todo[nik]
   //IDEA-73893
-  public void _testManifestFileIsFirstEntry() throws IOException {
+  public void testManifestFileIsFirstEntry() throws IOException {
     final String firstFile = createFile("src/A.txt");
     final String manifestFile = createFile("src/MANIFEST.MF");
     final String lastFile = createFile("src/Z.txt");

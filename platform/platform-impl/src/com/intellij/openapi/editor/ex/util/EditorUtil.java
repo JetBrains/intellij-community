@@ -206,6 +206,8 @@ public class EditorUtil {
    * @return              given text offset that identifies the same position that is pointed by the given visual column
    */
   public static int calcOffset(EditorEx editor, CharSequence text, int start, int end, int columnNumber, int tabSize) {
+    assert start >= 0 : "start (" + start + ") must not be negative. end (" + end + ")";
+    assert end >= start : "start (" + start + ") must not be greater than end (" + end + ")";
     final int maxScanIndex = Math.min(start + columnNumber + 1, end);
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);

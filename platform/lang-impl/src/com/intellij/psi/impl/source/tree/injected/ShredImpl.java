@@ -67,9 +67,16 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   @Override
   @NotNull
   public TextRange getRangeInsideHost() {
-    TextRange hostTextRange = getHost().getTextRange();
+    PsiLanguageInjectionHost host = getHost();
     ProperTextRange textRange =
       relevantRangeInHost.isValid() ? new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()) : null;
+    if (host == null) {
+      if (textRange != null) return textRange;
+      Segment fromSP = hostElementPointer.getRange();
+      if (fromSP != null) return TextRange.create(fromSP);
+      return new TextRange(0,0);
+    }
+    TextRange hostTextRange = host.getTextRange();
     textRange = textRange == null ? null : textRange.intersection(hostTextRange);
     if (textRange == null) return new ProperTextRange(0, hostTextRange.getLength());
     return textRange.shiftRight(-hostTextRange.getStartOffset());
@@ -77,16 +84,11 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return "Shred " + getHost().getTextRange() + ": " + getHost() +
-           " Inhost range: " +
-           (relevantRangeInHost.isValid() ? "" : "!") +
-           "(" +
-           relevantRangeInHost.getStartOffset() +
-           "," +
-           relevantRangeInHost.getEndOffset() +
-           ");" +
-           " PSI range: " +
-           range;
+    PsiLanguageInjectionHost host = getHost();
+    return "Shred " + (host == null ? null : host.getTextRange()) + ": " + host +
+           " Inhost range: " + (relevantRangeInHost.isValid() ? "" : "!") +
+           "(" + relevantRangeInHost.getStartOffset() + "," + relevantRangeInHost.getEndOffset() + ");" +
+           " PSI range: " + range;
   }
 
   @Override

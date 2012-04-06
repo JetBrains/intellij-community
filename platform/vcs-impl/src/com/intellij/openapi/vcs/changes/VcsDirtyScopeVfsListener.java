@@ -126,7 +126,12 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       }
     }
     // and notify VCSDirtyScopeManager
-    dirtyFilesAndDirs.markDirty();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        dirtyFilesAndDirs.markDirty();
+      }
+    });
   }
 
   @Nullable

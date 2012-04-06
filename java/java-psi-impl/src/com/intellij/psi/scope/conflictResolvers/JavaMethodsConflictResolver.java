@@ -16,6 +16,8 @@
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -27,6 +29,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -412,8 +415,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       PsiType type1 = classSubstitutor1.substitute(methodSubstitutor1.substitute(types1[i]));
       PsiType type2 = classSubstitutor2.substitute(methodSubstitutor2.substitute(types2[i]));
 
-      final Specifics specifics = type1 == null || type2 == null ? null : checkSubtyping(type1, type2, method1, method2);
-      if (specifics == null) continue;
+      Specifics specifics = type1 == null || type2 == null ? null : checkSubtyping(type1, type2, method1, method2);
+      if (specifics == null) {
+        if (Comparing.equal(type1,  type2)) {
+          specifics = checkSubstitutorSpecific(method1, method2, classSubstitutor1, classSubstitutor2, types1[i], types2[i]);
+        }
+        if (specifics == null) continue;
+      }
+
       switch (specifics) {
         case FIRST:
           if (isMoreSpecific == Specifics.SECOND) return Specifics.NEITHER;
@@ -447,12 +456,53 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
     if (isMoreSpecific == null) {
-      if (typeParameters1.length < typeParameters2.length) return Specifics.FIRST;
-      if (typeParameters1.length > typeParameters2.length) return Specifics.SECOND;
+      if (!JavaVersionService.getInstance().isAtLeast(myArgumentsList, JavaSdkVersion.JDK_1_7) ||
+          !MethodSignatureUtil.areParametersErasureEqual(method1, method2)) {
+        if (typeParameters1.length < typeParameters2.length) return Specifics.FIRST;
+        if (typeParameters1.length > typeParameters2.length) return Specifics.SECOND;
+      }
       return Specifics.NEITHER;
     }
 
     return isMoreSpecific;
+  }
+
+  @Nullable
+  private static Specifics checkSubstitutorSpecific(PsiMethod method1,
+                                                    PsiMethod method2,
+                                                    PsiSubstitutor classSubstitutor1,
+                                                    PsiSubstitutor classSubstitutor2,
+                                                    PsiType type1,
+                                                    PsiType type2) {
+    final Map<PsiTypeParameter, PsiType> map1 = classSubstitutor1.getSubstitutionMap();
+    final Map<PsiTypeParameter, PsiType> map2 = classSubstitutor2.getSubstitutionMap();
+
+    if (map1.size() == 1 && map2.size() == 1) {
+      final PsiType t1 = map1.values().iterator().next();
+      final PsiType t2 = map2.values().iterator().next();
+      int d1 = t1 != null ? t1.getArrayDimensions() : 0;
+      int d2 = t2 != null ? t2.getArrayDimensions() : 0;
+      if (d1 > d2) {
+        return Specifics.SECOND;
+      }
+      else if (d2 > d1) {
+        return Specifics.FIRST;
+      }
+      else {
+        final PsiTypeParameter p1 = map1.keySet().iterator().next();
+        final PsiTypeParameter p2 = map2.keySet().iterator().next();
+        Specifics specifics = checkSubtyping(TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p1)),
+                                             TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p2)), method1, method2);
+        if (specifics != null) {
+          return specifics;
+        } else {               
+          final PsiType ctype1 = classSubstitutor1.substitute(type1);
+          final PsiType ctype2 = classSubstitutor2.substitute(type2);
+          return checkSubtyping(ctype1, ctype2, method1, method2);
+        }
+      }
+    }
+    return null;
   }
 
   private PsiSubstitutor calculateMethodSubstitutor(final PsiTypeParameter[] typeParameters,

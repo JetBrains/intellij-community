@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -39,8 +38,11 @@ import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
+import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -62,11 +64,12 @@ import org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -82,7 +85,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   private JPanel myPanel;
   private GrTypeComboBox myTypeCombo;
   private ReferenceEditorComboWithBrowseButton myTargetClassEditor;
-  private ComboBox myNameComboBox;
+  private TextFieldWithAutoCompletion<String> myNameField;
   private JavaVisibilityPanel myJavaVisibilityPanel;
   private JPanel myTargetClassPanel;
   private JLabel myTargetClassLabel;
@@ -106,7 +109,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameComboBox;
+    return myNameField;
   }
 
   @Override
@@ -182,32 +185,15 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   }
 
   private void initializeName() {
-    myNameLabel.setLabelFor(myNameComboBox);
-    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE, myNameComboBox);
-
-    myNameComboBox.setEditor(comboEditor);
-    myNameComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
-
-    myNameComboBox.setEditable(true);
-    myNameComboBox.setMaximumRowCount(8);
-
+    myNameLabel.setLabelFor(myNameField);
 
     myPanel.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myNameComboBox.requestFocus();
+        myNameField.requestFocus();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    final GrVariable var = myContext.getVar();
-    if (var != null) {
-      myNameComboBox.addItem(var.getName());
-    }
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.getExpression(), new GroovyVariableValidator(myContext), true);
-    for (String possibleName : possibleNames) {
-      myNameComboBox.addItem(possibleName);
-    }
-
-    ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
+    myNameField.addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
       }
 
@@ -215,14 +201,6 @@ public class GrIntroduceConstantDialog extends DialogWrapper
         updateOkStatus();
       }
     });
-
-    myNameComboBox.addItemListener(
-      new ItemListener() {
-        public void itemStateChanged(ItemEvent e) {
-          updateOkStatus();
-        }
-      }
-    );
   }
 
   @Override
@@ -249,12 +227,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   @Nullable
   @Override
   public String getName() {
-    if (myNameComboBox.getEditor().getItem() instanceof String && ((String)myNameComboBox.getEditor().getItem()).length() > 0) {
-      return (String)myNameComboBox.getEditor().getItem();
-    }
-    else {
-      return null;
-    }
+    return myNameField.getText().trim();
   }
 
   @Override
@@ -278,6 +251,22 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     else {
       myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.getExpression());
     }
+
+    List<String> names = new ArrayList<String>();
+    final GrVariable var = myContext.getVar();
+    if (var != null) {
+      names.add(var.getName());
+    }
+    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.getExpression(), new GroovyVariableValidator(myContext), true);
+    ContainerUtil.addAll(names, possibleNames);
+
+    myNameField = TextFieldWithAutoCompletion.create(myContext.getProject(), names, null, true);
+    if (names.size()>0) {
+      myNameField.setText(names.get(0));
+      myNameField.selectAll();
+    }
+
+    GrTypeComboBox.registerUpDownHint(myNameField, myTypeCombo);
   }
 
   private void targetClassChanged() {
@@ -327,6 +316,8 @@ public class GrIntroduceConstantDialog extends DialogWrapper
   }
 
   private void updateOkStatus() {
+    if (myTargetClassEditor == null) return; //dialog is not initialized yet
+
     String text = getName();
     if (!GroovyNamesUtil.isIdentifier(text)) {
       setOKActionEnabled(false);
