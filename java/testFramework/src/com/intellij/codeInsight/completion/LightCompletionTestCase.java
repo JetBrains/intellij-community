@@ -24,7 +24,9 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -109,15 +111,11 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   protected void assertStringItems(@NonNls String... items) {
-    assertEquals(Arrays.asList(myItems).toString(), items.length, myItems.length);
-    for (int i = 0; i < myItems.length; i++) {
-      LookupElement item = myItems[i];
-      assertEquals(items[i], item.getLookupString());
-    }
+    assertEquals(getLookupStrings(new ArrayList<String>()), Arrays.asList(items));
   }
 
   protected void assertContainsItems(final String... expected) {
-    final Set<String> actual = getLookupStrings();
+    final Set<String> actual = getLookupStrings(new HashSet<String>());
     for (String s : expected) {
       assertTrue("Expected '" + s + "' not found in " + actual,
                  actual.contains(s));
@@ -125,15 +123,14 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   protected void assertNotContainItems(final String... unexpected) {
-    final Set<String> actual = getLookupStrings();
+    final Set<String> actual = getLookupStrings(new HashSet<String>());
     for (String s : unexpected) {
       assertFalse("Unexpected '" + s + "' presented in " + actual,
                   actual.contains(s));
     }
   }
 
-  private Set<String> getLookupStrings() {
-    final Set<String> actual = new HashSet<String>();
+  private <T extends Collection<String>> T getLookupStrings(T actual) {
     if (myItems != null) {
       for (LookupElement lookupElement : myItems) {
         actual.add(lookupElement.getLookupString());
