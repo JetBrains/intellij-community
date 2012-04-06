@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,8 +62,9 @@ abstract class CharArray implements CharSequenceBackedByArray {
   private volatile char[] myArray;
   private volatile Reference<String> myStringRef; // buffers String value - for not to generate it every time
   private volatile int myBufferSize;
-  private volatile  int myDeferredShift;
+  private volatile int myDeferredShift;
   private volatile boolean myDeferredChangeMode;
+  private volatile boolean myHasDeferredChanges;
   // this lock is for mutual exclusion during read action access
   // (some fields are changed in read action too)
   private final Lock lock = new ReentrantLock();
@@ -170,6 +171,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     myCount = chars.length();
     assert myStart == 0; // can't change substring
     myDeferredChangesStorage.clear();
+    myHasDeferredChanges = false;
     trimToSize();
 
     if (myDebug) {
@@ -217,7 +219,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
     String str = myStringRef == null ? null : myStringRef.get();
     if (str == null) {
-      if (hasDeferredChanges()) {
+      if (myHasDeferredChanges) {
         str = doSubString(0, myCount + myDeferredShift).toString();
       }
       else if (myOriginalSequence != null) {
@@ -353,6 +355,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
       flushDeferredChanged();
     }
     myDeferredChangesStorage.store(change);
+    myHasDeferredChanges = true;
     myDeferredShift += change.getDiff();
 
     if (myDebug) {
@@ -384,14 +387,16 @@ abstract class CharArray implements CharSequenceBackedByArray {
     assertConsistency();
     String str = myStringRef == null ? null : myStringRef.get();
     if (str == null) {
-      if (hasDeferredChanges()) {
-        str = substring(0, length()).toString();
-      }
-      else if (myOriginalSequence != null) {
-        str = myOriginalSequence.toString();
+      if (!myHasDeferredChanges) {
+        if (myOriginalSequence != null) {
+          str = myOriginalSequence.toString();
+        }
+        else {
+          str = new String(myArray, myStart, myCount);
+        }
       }
       else {
-        str = new String(myArray, myStart, myCount);
+        str = substring(0, length()).toString();
       }
       myStringRef = new SoftReference<String>(str);
     }
@@ -417,14 +422,16 @@ abstract class CharArray implements CharSequenceBackedByArray {
     }
     i += myStart;
     final char result;
-    if (hasDeferredChanges()) {
-      result = myDeferredChangesStorage.charAt(myArray, i);
-    }
-    else if (myOriginalSequence != null) {
-      result = myOriginalSequence.charAt(i);
+    if (!myHasDeferredChanges) {
+      if (myOriginalSequence != null) {
+        result = myOriginalSequence.charAt(i);
+      }
+      else {
+        result = myArray[i];
+      }
     }
     else {
-      result = myArray[i];
+      result = myDeferredChangesStorage.charAt(myArray, i);
     }
 
     if (myDebug && isDeferredChangeMode()) {
@@ -456,7 +463,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
     assertConsistency();
     char[] array = myArray;
     CharSequence originalSequence = myOriginalSequence;
-    if (hasDeferredChanges() || originalSequence != null && array == null) {
+    if (myHasDeferredChanges || originalSequence != null && array == null) {
       // slow track
       lock.lock();
       try {
@@ -557,7 +564,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
   }
 
   public boolean hasDeferredChanges() {
-    return !myDeferredChangesStorage.isEmpty();
+    return myHasDeferredChanges;
   }
   
   /**
@@ -640,6 +647,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
       myCount += myDeferredShift;
       myDeferredShift = 0;
       myDeferredChangesStorage.clear();
+      myHasDeferredChanges = false;
       myDeferredChangeMode = false;
       myStringRef = null;
 
