@@ -192,4 +192,14 @@ public class GrDynamicImplicitProperty extends GrImplicitVariableImpl implements
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
+
+  @NotNull
+  @Override
+  public PsiType getType() {
+    PsiType type = super.getType();
+    if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
+      return PsiType.getJavaLangObject(myManager, getResolveScope());
+    }
+    return type;
+  }
 }

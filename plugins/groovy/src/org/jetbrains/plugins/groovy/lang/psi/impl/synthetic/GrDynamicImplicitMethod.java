@@ -143,11 +143,11 @@ public class GrDynamicImplicitMethod extends LightElement implements PsiMethod, 
   }
 
   public PsiType getReturnType() {
-    final PsiType typeElement = myMethod.getReturnType();
-    if (typeElement == null) {
+    final PsiType type = myMethod.getReturnType();
+    if (type == null || type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
       return TypesUtil.getJavaLangObject(myMethod);
     }
-    return typeElement;
+    return type;
   }
 
   public PsiTypeElement getReturnTypeElement() {
