@@ -135,6 +135,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected abstract String getElementText(Object element);
 
+  protected int getElementCount() {
+    return getAllElements().length;
+  }
+
   /**
    * Should convert given view index to model index
    */
@@ -149,8 +153,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   protected abstract void selectElement(Object element, String selectedText);
 
   protected ListIterator<Object> getElementIterator(int startingIndex) {
-    final Object[] allElements = getAllElements();
-    return new ViewIterator(this, startingIndex < 0 ? allElements.length : startingIndex);
+    return new ViewIterator(this, startingIndex < 0 ? getElementCount() : startingIndex);
   }
 
   public void addChangeListener(PropertyChangeListener listener) {
@@ -229,7 +232,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     if (UISettings.getInstance().CYCLE_SCROLLING) {
-      final ListIterator<Object> i = getElementIterator(getAllElements().length);
+      final ListIterator<Object> i = getElementIterator(getElementCount());
       while (i.hasPrevious()) {
         final Object element = i.previous();
         if (isMatchingElement(element, _s)) return element;
@@ -564,7 +567,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  protected class ViewIterator implements ListIterator {
+  protected class ViewIterator implements ListIterator<Object> {
     private SpeedSearchBase mySpeedSearch;
     private int myCurrentIndex;
     private Object[] myElements;
