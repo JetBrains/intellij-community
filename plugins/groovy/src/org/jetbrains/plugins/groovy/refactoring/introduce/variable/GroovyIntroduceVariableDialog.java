@@ -18,18 +18,14 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
-import com.intellij.ui.EditorComboBoxEditor;
-import com.intellij.ui.EditorComboBoxRenderer;
-import com.intellij.ui.StringComboboxEditor;
+import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
@@ -41,6 +37,8 @@ import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
 public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIntroduceDialog<GroovyIntroduceVariableSettings> {
   private static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
@@ -50,7 +48,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   private final int myOccurrencesCount;
   private final GrIntroduceVariableHandler.Validator myValidator;
 
-  private ComboBox myNameComboBox;
+  private TextFieldWithAutoCompletion<String> myNameField;
   private JCheckBox myCbIsFinal;
   private JCheckBox myCbReplaceAllOccurrences;
   private GrTypeComboBox myTypeComboBox;
@@ -68,7 +66,6 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   protected void init() {
     super.init();
 
-    setUpNameComboBox();
     setModal(true);
     setTitle(REFACTORING_NAME);
 
@@ -103,7 +100,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   protected ValidationInfo doValidate() {
     String text = getEnteredName();
     if (!GroovyNamesUtil.isIdentifier(text)) {
-      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameComboBox);
+      return new ValidationInfo(GroovyRefactoringBundle.message("name.is.wrong", text), myNameField);
     }
     return null;
   }
@@ -121,7 +118,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     final GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(1, 1, 1, 1);
     final JPanel namePanel = new JPanel(new GridBagLayout());
 
-    final JLabel typeLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("Variable of &type:"));
+    final JLabel typeLabel = new JLabel(UIUtil.replaceMnemonicAmpersand("&Type:"));
     c.nextLine().next().weightx(0).fillCellNone();
     namePanel.add(typeLabel, c);
 
@@ -134,23 +131,18 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     c.nextLine().next().weightx(0).fillCellNone();
     namePanel.add(nameLabel, c);
 
-    myNameComboBox = new ComboBox();
+    myNameField = setUpNameComboBox();
     c.next().weightx(1).fillCellHorizontally();
-    namePanel.add(myNameComboBox, c);
-    nameLabel.setLabelFor(myNameComboBox);
+    namePanel.add(myNameField, c);
+    nameLabel.setLabelFor(myNameField);
+
+    GrTypeComboBox.registerUpDownHint(myNameField, myTypeComboBox);
     return namePanel;
   }
 
-
   @Nullable
   protected String getEnteredName() {
-    if (myNameComboBox.getEditor().getItem() instanceof String &&
-        ((String)myNameComboBox.getEditor().getItem()).length() > 0) {
-      return (String)myNameComboBox.getEditor().getItem();
-    }
-    else {
-      return null;
-    }
+    return myNameField.getText().trim();
   }
 
   protected boolean isReplaceAllOccurrences() {
@@ -166,24 +158,21 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     return myTypeComboBox.getSelectedType();
   }
 
-  private void setUpNameComboBox() {
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myExpression, myValidator);
+  private TextFieldWithAutoCompletion<String> setUpNameComboBox() {
+    List<String> possibleNames = Arrays.asList(GroovyNameSuggestionUtil.suggestVariableNames(myExpression, myValidator));
 
-    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE, myNameComboBox);
+    TextFieldWithAutoCompletion<String> result = TextFieldWithAutoCompletion.create(myProject, possibleNames, null, true);
 
-    myNameComboBox.setEditor(comboEditor);
-    myNameComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
-
-    myNameComboBox.setEditable(true);
-    myNameComboBox.setMaximumRowCount(8);
-
-    for (String possibleName : possibleNames) {
-      myNameComboBox.addItem(possibleName);
+    if (possibleNames.size() > 0) {
+      result.setText(possibleNames.get(0));
+      result.selectAll();
     }
+
+    return result;
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myNameComboBox;
+    return myNameField;
   }
 
   protected Action[] createActions() {

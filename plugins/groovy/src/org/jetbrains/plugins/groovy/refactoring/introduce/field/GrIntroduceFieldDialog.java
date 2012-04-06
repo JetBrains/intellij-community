@@ -15,18 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -58,7 +60,7 @@ import static com.intellij.refactoring.introduceField.IntroduceFieldHandler.REFA
 
 public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduceDialog<GrIntroduceFieldSettings>, GrIntroduceFieldSettings {
   private JPanel myContentPane;
-  private NameSuggestionsField myNameSuggestionsField;
+  private TextFieldWithAutoCompletion<String> myNameField;
   private JRadioButton myPrivateRadioButton;
   private JRadioButton myProtectedRadioButton;
   private JRadioButton myPublicRadioButton;
@@ -79,7 +81,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myNameSuggestionsField;
+    return myNameField;
   }
 
   private final GrIntroduceContext myContext;
@@ -90,12 +92,6 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
     GrTypeDefinition clazz = (GrTypeDefinition)context.getScope();
     myIsStatic = GrIntroduceFieldHandler.shouldBeStatic(context.getPlace(), clazz);
-    if (myIsStatic) {
-      myTypeLabel.setText("Static Field of Type:");
-    }
-    else {
-      myTypeLabel.setText("Field of Type:");
-    }
 
     initVisibility();
 
@@ -135,9 +131,13 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       myReplaceAllOccurrencesCheckBox.setVisible(false);
     }
 
-    myNameSuggestionsField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
+    myNameField.addDocumentListener(new DocumentListener() {
       @Override
-      public void dataChanged() {
+      public void beforeDocumentChange(DocumentEvent event) {
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
         validateOKAction();
       }
     });
@@ -145,7 +145,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     ItemListener l = new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        myNameSuggestionsField.requestFocusInWindow();
+        myNameField.requestFocusInWindow();
         checkErrors();
       }
     };
@@ -239,7 +239,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   @Override
   protected JComponent createCenterPanel() {
-    myNameLabel.setLabelFor(myNameSuggestionsField);
+    myNameLabel.setLabelFor(myNameField);
     myTypeLabel.setLabelFor(myTypeComboBox);
     return myContentPane;
   }
@@ -260,14 +260,16 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     else {
       possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator);
     }
+    List<String> list = new ArrayList<String>();
     if (var != null) {
-      String[] arr = new String[possibleNames.length + 1];
-      arr[0] = var.getName();
-      System.arraycopy(possibleNames, 0, arr, 1, possibleNames.length);
-      possibleNames = arr;
+      list.add(var.getName());
     }
-    myNameSuggestionsField = new NameSuggestionsField(possibleNames, myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
-
+    ContainerUtil.addAll(list, possibleNames);
+    myNameField = TextFieldWithAutoCompletion.create(myContext.getProject(), list, null, true);
+    if (list.size()>0) {
+      myNameField.setText(list.get(0));
+      myNameField.selectAll();
+    }
 
     if (expression == null) {
       myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType()
@@ -276,6 +278,8 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     else {
       myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(expression);
     }
+
+    GrTypeComboBox.registerUpDownHint(myNameField, myTypeComboBox);
   }
 
   @Override
@@ -315,7 +319,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   @Override
   @NotNull
   public String getName() {
-    return myNameSuggestionsField.getEnteredName();
+    return myNameField.getText().trim();
   }
 
   @Override
