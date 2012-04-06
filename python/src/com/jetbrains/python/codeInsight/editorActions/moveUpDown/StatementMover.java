@@ -15,9 +15,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
@@ -189,7 +191,7 @@ public class StatementMover extends LineMover {
     info.toMove = range;
     info.toMove2 = new LineRange(nearLine, nearLine + 1);
 
-    moveToEmptyLine = isMoveToEmptyLine(editor, info);
+    moveToEmptyLine = isMoveToEmptyLine(editor, info, down);
     if (moveToEmptyLine) return;
     // if try to move to the function or to the class
 
@@ -230,11 +232,25 @@ public class StatementMover extends LineMover {
     }
   }
   
-  private boolean isMoveToEmptyLine(Editor editor, MoveInfo info) {
-    Document document = editor.getDocument();
+  private boolean isMoveToEmptyLine(Editor editor, MoveInfo info, boolean down) {
+    final Document document = editor.getDocument();
     if (document.getLineCount() >= info.toMove2.endLine) {
-      String lineToMoveTo = document.getText(new TextRange(getLineStartSafeOffset(document, info.toMove2.startLine), getLineStartSafeOffset(document, info.toMove2.endLine)));
-      if (StringUtil.isEmptyOrSpaces(lineToMoveTo)) return true;
+      final TextRange range = new TextRange(getLineStartSafeOffset(document,info.toMove2.startLine),
+                                            getLineStartSafeOffset(document, info.toMove2.endLine));
+      final String lineToMoveTo = document.getText(range);
+      if (StringUtil.isEmptyOrSpaces(lineToMoveTo)) {
+        if (myStatementToMove instanceof PyFunction || myStatementToMove instanceof PyClass) {
+          final CommonCodeStyleSettings indentOptions = CodeStyleSettingsManager.getInstance(editor.getProject()).
+              getCurrentSettings().getCommonSettings(PythonLanguage.getInstance());
+          final int blankLines = myStatementToMove instanceof PyFunction? indentOptions.BLANK_LINES_AROUND_METHOD :
+                                                indentOptions.BLANK_LINES_AROUND_CLASS;
+          final int nearLine = down ? info.toMove2.endLine + blankLines - 1: info.toMove2.startLine - blankLines;
+          if (document.getLineCount() > nearLine && nearLine > 0)
+            info.toMove2 = new LineRange(nearLine, nearLine + 1);
+          return false;
+        }
+        return true;
+      }
     }
     return false;
   }
