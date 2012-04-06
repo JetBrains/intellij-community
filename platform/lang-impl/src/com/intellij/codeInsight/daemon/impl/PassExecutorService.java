@@ -71,6 +71,7 @@ public abstract class PassExecutorService implements Disposable {
     myProject = project;
   }
 
+  @Override
   public void dispose() {
     cancelAll(true);
     isDisposed = true;
@@ -123,10 +124,12 @@ public abstract class PassExecutorService implements Disposable {
         else {
           // run all passes in sequence
           textEditorHighlightingPass = new TextEditorHighlightingPass(myProject, document, true) {
+            @Override
             public void doCollectInformation(ProgressIndicator progress) {
               pass.collectInformation(progress);
             }
 
+            @Override
             public void doApplyInformationToEditor() {
               pass.applyInformationToEditor();
             }
@@ -163,6 +166,7 @@ public abstract class PassExecutorService implements Disposable {
 
       // create one scheduled pass per unique id (possibly for multiple file editors. they all will be applied at the pass finish)
       ContainerUtil.quickSort(passes, new Comparator<TextEditorHighlightingPass>() {
+        @Override
         public int compare(final TextEditorHighlightingPass o1, final TextEditorHighlightingPass o2) {
           return o1.getId() - o2.getId();
         }
@@ -311,6 +315,7 @@ public abstract class PassExecutorService implements Disposable {
       myUpdateProgress = progressIndicator;
     }
 
+    @Override
     public void run() {
       try {
         doRun();
@@ -338,8 +343,10 @@ public abstract class PassExecutorService implements Disposable {
       }
 
       ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+        @Override
         public void run() {
           boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
@@ -387,6 +394,7 @@ public abstract class PassExecutorService implements Disposable {
       }
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "SP: " + myPass;
@@ -399,6 +407,7 @@ public abstract class PassExecutorService implements Disposable {
                                          @NotNull final AtomicInteger threadsToStartCountdown) {
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
     ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+      @Override
       public void run() {
         doApplyInformationToEditors(updateProgress, pass, fileEditors, threadsToStartCountdown, testMode);
       }
