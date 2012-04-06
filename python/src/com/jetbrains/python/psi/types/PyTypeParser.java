@@ -45,35 +45,38 @@ public class PyTypeParser {
   }
 
   public static class ParseResult {
-    private PyType myType;
-    private Map<TextRange, PyType> myTypes;
-    private Map<PyType, TextRange> myFullRanges;
+    @Nullable private PyType myType;
+    @NotNull private Map<TextRange, PyType> myTypes;
+    @NotNull private Map<PyType, TextRange> myFullRanges;
 
-    ParseResult(PyType type, Map<TextRange, PyType> types, Map<PyType, TextRange> fullRanges) {
+    ParseResult(@Nullable PyType type, @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges) {
       myType = type;
       myTypes = types;
       myFullRanges = fullRanges;
     }
 
+    @Nullable
     public PyType getType() {
       return myType;
     }
 
+    @NotNull
     public Map<TextRange, PyType> getTypes() {
       return myTypes;
     }
 
+    @NotNull
     public Map<PyType, TextRange> getFullRanges() {
       return myFullRanges;
     }
   }
 
   @Nullable
-  private static PyType parse(PsiElement anchor, String type, Map<TextRange, PyType> types, Map<PyType, TextRange> fullRanges, int offset) {
-    if (type == null) {
+  private static PyType parse(@Nullable PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
+                              @NotNull Map<PyType, TextRange> fullRanges, int offset) {
+    if (anchor == null || !anchor.isValid()) {
       return null;
     }
-
     final String trimmed = DocStringUtil.trimDocString(type);
     offset += type.indexOf(trimmed);
     type = trimmed;
@@ -89,11 +92,7 @@ public class PyTypeParser {
     if (type.contains(" or ")) {
       return parseUnionType(anchor, type, types, fullRanges, offset);
     }
-
-    assert anchor.isValid();
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
-    assert builtinCache.isValid();
-
     if (type.equals("unknown")) {
       return null;
     }
