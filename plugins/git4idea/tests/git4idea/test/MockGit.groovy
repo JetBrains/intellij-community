@@ -67,89 +67,106 @@ class MockGit implements Git {
     }
   }
 
+  @NotNull
   @Override
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners) {
     new File(root.path, ".git").mkdir()
     FAKE_SUCCESS_RESULT
   }
 
+  @NotNull
   @Override
-  Set<VirtualFile> untrackedFiles(Project project, VirtualFile root, Collection<VirtualFile> files) {
+  Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root, Collection<VirtualFile> files) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  Collection<VirtualFile> untrackedFilesNoChunk(Project project, VirtualFile root, List<String> relativePaths) {
+  Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, List<String> relativePaths) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult clone(Project project, File parentDirectory, String url, String clonedDirectoryName) {
+  GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult merge(GitRepository repository, String branchToMerge, GitLineHandlerListener... listeners) {
+  GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult checkout(GitRepository repository, String reference, String newBranch, boolean force, GitLineHandlerListener... listeners) {
+  GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, String newBranch, boolean force, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult checkoutNewBranch(GitRepository repository, String branchName, GitLineHandlerListener listener) {
+  GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName, GitLineHandlerListener listener) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult createNewTag(GitRepository repository, String tagName, GitLineHandlerListener listener, String reference) {
+  GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName, GitLineHandlerListener listener, @NotNull String reference) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult branchDelete(GitRepository repository, String branchName, boolean force, GitLineHandlerListener... listeners) {
+  GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult branchContains(GitRepository repository, String commit) {
+  GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult branchCreate(GitRepository repository, String branchName) {
+  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult resetHard(GitRepository repository, String revision) {
+  GitCommandResult resetHard(@NotNull GitRepository repository, @NotNull String revision) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult resetMerge(GitRepository repository, String revision) {
+  GitCommandResult resetMerge(@NotNull GitRepository repository, String revision) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult tip(GitRepository repository, String branchName) {
+  GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult push(GitRepository repository, String remote, String spec, GitLineHandlerListener... listeners) {
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String spec, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult push(GitRepository repository, GitPushSpec pushSpec, GitLineHandlerListener... listeners) {
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult cherryPick(GitRepository repository, String hash, boolean autoCommit, GitLineHandlerListener... listeners) {
+  GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit, @NotNull GitLineHandlerListener... listeners) {
     GitCommandResult result = callExecutor(OperationName.CHERRY_PICK)
     if (result != null) {
       produceOutput(result.getErrorOutputAsJoinedString(), listeners)
@@ -159,8 +176,9 @@ class MockGit implements Git {
     return FAKE_SUCCESS_RESULT
   }
 
+  @NotNull
   @Override
-  GitCommandResult getUnmergedFiles(GitRepository repository) {
+  GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
     GitCommandResult result = callExecutor(OperationName.CHERRY_PICK)
     if (result != null) {
       return result;

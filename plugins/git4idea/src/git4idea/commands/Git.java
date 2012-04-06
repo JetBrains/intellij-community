@@ -33,42 +33,38 @@ import java.util.Set;
  */
 public interface Git {
 
+  @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  Set<VirtualFile> untrackedFiles(@NotNull Project project,
-                                  @NotNull VirtualFile root,
+  Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root,
                                   @Nullable Collection<VirtualFile> files) throws VcsException;
 
   // relativePaths are guaranteed to fit into command line length limitations.
   @NotNull
-  Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project,
-                                                @NotNull VirtualFile root,
-                                                @Nullable List<String> relativePaths)
-    throws VcsException;
+  Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root,
+                                                @Nullable List<String> relativePaths) throws VcsException;
 
   @NotNull
   GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName);
 
   @NotNull
-  GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge,
-                         @NotNull GitLineHandlerListener... listeners);
+  GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @NotNull GitLineHandlerListener... listeners);
 
-  GitCommandResult checkout(@NotNull GitRepository repository,
-                            @NotNull String reference,
-                            @Nullable String newBranch,
-                            boolean force,
+  @NotNull
+  GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, @Nullable String newBranch, boolean force,
                             @NotNull GitLineHandlerListener... listeners);
 
+  @NotNull
   GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                      @Nullable GitLineHandlerListener listener);
 
+  @NotNull
   GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName,
-                                @Nullable GitLineHandlerListener listener, String reference);
+                                @Nullable GitLineHandlerListener listener, @NotNull String reference);
 
-  GitCommandResult branchDelete(@NotNull GitRepository repository,
-                                @NotNull String branchName,
-                                boolean force,
+  @NotNull
+  GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force,
                                 @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
@@ -83,6 +79,7 @@ public interface Git {
   @NotNull
   GitCommandResult resetMerge(@NotNull GitRepository repository, @Nullable String revision);
 
+  @NotNull
   GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName);
 
   @NotNull
@@ -97,7 +94,7 @@ public interface Git {
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
                               @NotNull GitLineHandlerListener... listeners);
 
-
   @NotNull
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);
+
 }
