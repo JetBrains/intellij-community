@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -40,9 +41,7 @@ import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -101,6 +100,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -163,7 +163,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     final PsiElement parent = refElement.getParent();
     GroovyResolveResult resolveResult = refElement.advancedResolve();
-    highlightAnnotation(myHolder, refElement, resolveResult);
     if (refElement.getReferenceName() != null) {
 
       if (parent instanceof GrImportStatement && ((GrImportStatement)parent).isStatic() && refElement.multiResolve(false).length > 0) {
@@ -1072,15 +1071,30 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  @Override
+
   public void visitAnnotation(GrAnnotation annotation) {
     super.visitAnnotation(annotation);
     final GrCodeReferenceElement ref = annotation.getClassReference();
+    GroovyResolveResult resolveResult = ref.advancedResolve();
     final PsiElement resolved = ref.resolve();
 
-    assert resolved == null || resolved instanceof PsiClass;
-    if (resolved != null && !((PsiClass)resolved).isAnnotationType()) {
+    highlightAnnotation(myHolder, ref, resolveResult);
+
+    if (resolved == null) return;
+    assert resolved instanceof PsiClass;
+
+    PsiClass anno = (PsiClass) resolved;
+    if (!anno.isAnnotationType()) {
       myHolder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.annotation", ((PsiClass)resolved).getQualifiedName()));
+      return;
+    }
+    PsiElement parent = annotation.getParent();
+    PsiElement owner = parent.getParent();
+    String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(parent instanceof PsiModifierList ? owner : parent);
+    if (!GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
+      String description = JavaErrorMessages
+        .message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
+      myHolder.createErrorAnnotation(ref, description);
     }
   }
 

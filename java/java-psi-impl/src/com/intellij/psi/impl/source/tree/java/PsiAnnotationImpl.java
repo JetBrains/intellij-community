@@ -26,6 +26,7 @@ import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
@@ -120,6 +121,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return MetaRegistry.getMetaBase(this);
   }
 
+  @Nullable
   @Override
   public PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
@@ -160,6 +162,14 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       return !strict;
     }
     PsiClass annotationType = (PsiClass)resolved;
+    return isAnnotationApplicable(strict, annotationType, elementTypeFields, annotation.getManager(), annotation.getResolveScope());
+  }
+
+  public static boolean isAnnotationApplicable(boolean strict,
+                                               PsiClass annotationType,
+                                               String[] elementTypeFields,
+                                               PsiManager manager,
+                                               GlobalSearchScope resolveScope) {
     PsiAnnotation target = annotationType.getModifierList().findAnnotation(CommonClassNames.TARGET_ANNOTATION_FQ_NAME);
     if (target == null) {
       //todo hack: ambiguity in spec
@@ -173,8 +183,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     PsiAnnotationMemberValue value = attributes[0].getValue();
     LOG.assertTrue(elementTypeFields.length > 0);
 
-    PsiManager manager = annotation.getManager();
-    PsiClass elementTypeClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.annotation.ElementType", annotation.getResolveScope());
+    PsiClass elementTypeClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.annotation.ElementType", resolveScope);
     if (elementTypeClass == null) {
       //todo hack
       return !strict;
@@ -187,19 +196,19 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       if (value instanceof PsiArrayInitializerMemberValue) {
         PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
         for (PsiAnnotationMemberValue initializer : initializers) {
-          if (initializer instanceof PsiReferenceExpression) {
-            PsiReferenceExpression refExpr = (PsiReferenceExpression)initializer;
-            if (refExpr.isReferenceTo(field)) return true;
+          if (initializer instanceof PsiReference) {
+            if (((PsiReference)initializer).isReferenceTo(field)) return true;
           }
         }
       }
-      else if (value instanceof PsiReferenceExpression) {
-        if (((PsiReferenceExpression)value).isReferenceTo(field)) return true;
+      else if (value instanceof PsiReference) {
+        if (((PsiReference)value).isReferenceTo(field)) return true;
       }
     }
     return false;
   }
 
+  @Nullable
   public static String[] getApplicableElementTypeFields(PsiElement owner) {
     if (owner instanceof PsiClass) {
       PsiClass aClass = (PsiClass)owner;

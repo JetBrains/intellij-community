@@ -101,5 +101,6 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    *
    * @return annotation owner
    */
+  @Nullable
   PsiAnnotationOwner getOwner();
 }

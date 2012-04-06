@@ -29,8 +29,8 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
-public class GrAnnotationArrrayInitializerImpl extends GroovyPsiElementImpl implements GrAnnotationArrayInitializer {
-  public GrAnnotationArrrayInitializerImpl(@NotNull ASTNode node) {
+public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl implements GrAnnotationArrayInitializer {
+  public GrAnnotationArrayInitializerImpl(@NotNull ASTNode node) {
     super(node);
   }
 
