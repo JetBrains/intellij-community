@@ -55,6 +55,8 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testOverloadingMethods() throws Exception { doTest(true, 0); }
 
+  public void testPolyadicExpr() throws Exception { doTest(true, 0); }
+
   public void testEscalateVisibility() throws Exception {
     doTest(true, 0, VisibilityUtil.ESCALATE_VISIBILITY);
   }
