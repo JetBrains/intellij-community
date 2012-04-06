@@ -57,12 +57,14 @@ Otherwise, please use 'git reset'
   @Before
   void setUp() {
     super.setUp()
-    myCherryPicker = new CherryPicker(myProject, myGit, myPlatformFacade, myRepositoryManager, true)
+    myCherryPicker = new CherryPicker(myProject, myGit, myPlatformFacade, true)
   }
 
   @Test
   void "clean tree, no conflicts, then commit & notify, no new changelists"() {
     GitCommit commit = commit()
+
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit.subject))
     invokeCherryPick(commit)
 
     assertHeadCommit(commit)
@@ -143,6 +145,9 @@ Otherwise, please use 'git reset'
   void "2 commits, no problems, then commit all & notify"() {
     GitCommit commit1 = commit("First commit to cherry-pick")
     GitCommit commit2 = commit("Second commit to cherry-pick")
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit2.subject))
+
     invokeCherryPick([commit1, commit2])
     assertLastCommits commit2, commit1
     assertNotificationShown("Succesfully cherry-picked", notificationContent(commit1, commit2), NotificationType.INFORMATION)
@@ -154,8 +159,9 @@ Otherwise, please use 'git reset'
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulOperationExecutor(CHERRY_PICK),
-                                     new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK))
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+                                     new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK),
+                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3.subject))
 
     invokeCherryPick([commit1, commit2, commit3])
 
@@ -172,8 +178,9 @@ Didn't cherry-pick others""", NotificationType.ERROR)
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulOperationExecutor(CHERRY_PICK))
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject))
     prepareConflict()
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3.subject))
 
     myDialogManager.registerDialogHandler(CommitChangeListDialog, new TestDialogHandler<CommitChangeListDialog>() {
       @Override
@@ -203,10 +210,10 @@ Didn't cherry-pick others""", NotificationType.ERROR)
   @Test
   void "1st successful, 2nd empty (all applied), then compound notification"() {
     // Inspired by IDEA-73548
-    myGit.registerOperationExecutors(new MockGit.SuccessfulOperationExecutor(CHERRY_PICK),
-                                     new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
     GitCommit commit1 = commit()
     GitCommit commit2 = commit()
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+                                     new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
 
     invokeCherryPick([ commit1, commit2 ])
 

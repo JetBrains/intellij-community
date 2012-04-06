@@ -16,16 +16,15 @@
 package git4idea.test
 
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.repo.GitFakeRepositoryManager
 import git4idea.tests.TestDialogManager
 import org.junit.Before
 
 import static git4idea.test.GitGTestUtil.stripLineBreaksAndHtml
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertNotNull
-import com.intellij.notification.NotificationType
 
 /**
  * 
@@ -37,7 +36,7 @@ class GitFastTest {
 
   Project myProject
   GitTestPlatformFacade myPlatformFacade
-  GitFakeRepositoryManager myRepositoryManager
+  GitTestRepositoryManager myRepositoryManager
   MockGit myGit
   String myProjectDir
   TestDialogManager myDialogManager
@@ -54,7 +53,7 @@ class GitFastTest {
     myPlatformFacade = new GitTestPlatformFacade()
     myGit = new MockGit()
     myDialogManager = myPlatformFacade.getDialogManager()
-    myRepositoryManager = new GitFakeRepositoryManager()
+    myRepositoryManager = (GitTestRepositoryManager) myPlatformFacade.getRepositoryManager(myProject)
     myVcsHelper = (MockVcsHelper) myPlatformFacade.getVcsHelper(myProject)
   }
 

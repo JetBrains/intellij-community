@@ -40,7 +40,7 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
   @Before
   void setUp() {
     super.setUp()
-    myCherryPicker = new CherryPicker(myProject, myGit, myPlatformFacade, myRepositoryManager, false)
+    myCherryPicker = new CherryPicker(myProject, myGit, myPlatformFacade, false)
   }
 
   @Test
@@ -98,7 +98,9 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulOperationExecutor(CHERRY_PICK))
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit2.subject),
+                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3.subject))
     prepareConflict()
 
     AtomicInteger commitDialogShown = new AtomicInteger()

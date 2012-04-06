@@ -27,6 +27,8 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
+import static git4idea.test.MockGit.OperationName.*
+
 /**
  * 
  * @author Kirill Likhodedov
@@ -34,8 +36,7 @@ import org.jetbrains.annotations.Nullable
 class MockGit implements Git {
 
   public static final GitCommandResult FAKE_SUCCESS_RESULT = new GitCommandResult(true, 0, Collections.emptyList(), Collections.emptyList())
-  private final Map<GitRepository, GitLightRepository> myRepositories = new HashMap<GitRepository, GitLightRepository>();
-  private final Map<OperationName, List<OperationExecutor>> myExecutors = new HashMap<OperationName, List<OperationExecutor>>()
+  private final Map<OperationName, Queue<OperationExecutor>> myExecutors = new HashMap<OperationName, Queue<OperationExecutor>>()
 
   public static interface OperationExecutor {
     GitCommandResult execute();
@@ -47,10 +48,6 @@ class MockGit implements Git {
     GET_UNMERGED_FILES;
   }
 
-  GitLightRepository get(GitRepository repository) {
-    return myRepositories.get(repository)
-  }
-
   /**
    * Register executors for specific operations. These are put into queues, i.e. once operation is called, the executor is popped out of the
    * queue. If the queue is empty or certain operation, then it is executed as by default.
@@ -58,9 +55,9 @@ class MockGit implements Git {
   void registerOperationExecutors(OperationExecutor... executors) {
     for (OperationExecutor executor : executors) {
       OperationName name = executor.getName()
-      List<OperationExecutor> exs = myExecutors.get(name)
+      Queue<OperationExecutor> exs = myExecutors.get(name)
       if (exs == null) {
-        exs = new ArrayList<OperationExecutor>()
+        exs = new ArrayDeque<OperationExecutor>()
         myExecutors.put(name, exs)
       }
       exs.add(executor)
@@ -167,19 +164,19 @@ class MockGit implements Git {
   @NotNull
   @Override
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit, @NotNull GitLineHandlerListener... listeners) {
-    GitCommandResult result = callExecutor(OperationName.CHERRY_PICK)
+    GitCommandResult result = callExecutor(CHERRY_PICK)
     if (result != null) {
-      produceOutput(result.getErrorOutputAsJoinedString(), listeners)
+      produceOutput(result.getOutputAsJoinedString(), listeners)
       return result;
     }
-    myRepositories.get(repository).cherryPick(hash, "message")
+    ((GitLightRepository)repository).cherryPick("cherry-pick from $hash")
     return FAKE_SUCCESS_RESULT
   }
 
   @NotNull
   @Override
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
-    GitCommandResult result = callExecutor(OperationName.CHERRY_PICK)
+    GitCommandResult result = callExecutor(CHERRY_PICK)
     if (result != null) {
       return result;
     }
@@ -227,21 +224,25 @@ class MockGit implements Git {
     new GitCommandResult(false, 127, Collections.emptyList(), Collections.singletonList(output))
   }
 
-  public static class SuccessfulOperationExecutor implements OperationExecutor {
-    OperationName myOperationName
+  public static class SuccessfulCherryPickExecutor implements OperationExecutor {
 
-    SuccessfulOperationExecutor(OperationName operationName) {
-      myOperationName = operationName
+    GitRepository myRepository
+    String myCommitMessage
+
+    SuccessfulCherryPickExecutor(GitRepository repository, String commitMessage) {
+      myRepository = repository;
+      myCommitMessage = commitMessage;
     }
 
     @Override
     GitCommandResult execute() {
+      ((GitLightRepository)myRepository).cherryPick(myCommitMessage)
       return FAKE_SUCCESS_RESULT
     }
 
     @Override
     OperationName getName() {
-      return myOperationName
+      return CHERRY_PICK
     }
   }
 

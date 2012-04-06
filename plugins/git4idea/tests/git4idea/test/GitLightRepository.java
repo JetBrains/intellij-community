@@ -16,6 +16,7 @@
 package git4idea.test;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchesCollection;
@@ -102,7 +103,7 @@ public class GitLightRepository implements GitRepository {
     return commit;
   }
 
-  public Commit cherryPick(String originalCommitHash, String commitMessage) {
+  public Commit cherryPick(String commitMessage) {
     return commit(commitMessage);
   }
 
@@ -114,7 +115,7 @@ public class GitLightRepository implements GitRepository {
   @NotNull
   @Override
   public VirtualFile getRoot() {
-    throw new UnsupportedOperationException();
+    return new GitMockVirtualFile(FileUtil.getTempDirectory());
   }
 
   @NotNull

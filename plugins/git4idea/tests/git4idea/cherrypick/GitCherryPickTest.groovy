@@ -15,10 +15,12 @@
  */
 package git4idea.cherrypick
 
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.testFramework.vcs.MockChangeListManager
+import com.intellij.testFramework.vcs.MockContentRevision
 import git4idea.history.browser.CherryPicker
 import git4idea.history.browser.GitCommit
 import git4idea.history.browser.SHAHash
@@ -30,9 +32,10 @@ import git4idea.test.MockGit
 import sun.security.provider.SHA
 
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
-import static junit.framework.Assert.assertEquals
-import static junit.framework.Assert.assertTrue
-import static junit.framework.Assert.assertNotNull
+import static junit.framework.Assert.*
+import com.intellij.openapi.vcs.FilePathImpl
+import com.intellij.mock.MockVirtualFile
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 
 /**
  * Common parent for all tests on cherry-pick
@@ -69,12 +72,15 @@ hint: and commit the result with 'git commit'
     super.setUp()
 
     myRepository = new GitLightRepository()
+    myRepositoryManager.add(myRepository)
     myInitialCommit = myRepository.commit("initial")
   }
 
   GitCommit commit(String commitMessage = "plain commit") {
     AbstractHash hash = AbstractHash.create(new SHA().toString())
-    new GitCommit(hash, SHAHash.emulate(hash), null, null, null, commitMessage, null, null, null, null, null, null, null, null, null, 0)
+    List<Change> changes = new ArrayList<Change>();
+    changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
+    new GitCommit(hash, SHAHash.emulate(hash), "John Smith", null, null, commitMessage, null, null, null, null, null, null, null, null, changes, 0)
   }
 
   void assertOnlyDefaultChangelist() {
