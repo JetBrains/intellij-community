@@ -211,11 +211,13 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
     final Module myModule;
     final VirtualFile mySourceFile;
     final String mySourceRelativePath;
+    private final TimestampValidityState myValidityState;
 
     private MyItem(Module module, VirtualFile sourceFile, String sourceRelativePath) {
       myModule = module;
       mySourceFile = sourceFile;
       mySourceRelativePath = sourceRelativePath;
+      myValidityState = new TimestampValidityState(mySourceFile.getTimeStamp());
     }
 
     @Override
@@ -226,7 +228,7 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
     @Nullable
     @Override
     public ValidityState getValidityState() {
-      return new TimestampValidityState(mySourceFile.getTimeStamp());
+      return myValidityState;
     }
 
     @Override

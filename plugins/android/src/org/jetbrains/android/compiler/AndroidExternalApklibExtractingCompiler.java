@@ -202,11 +202,13 @@ public class AndroidExternalApklibExtractingCompiler implements SourceGenerating
     private final Module myModule;
     private final String myGenContentRootPath;
     private final String myArtifactPath;
+    private final TimestampValidityState myValidityState;
 
     private MyGenerationItem(@NotNull Module module, @NotNull String genContentRootPath, @NotNull String artifactPath) {
       myModule = module;
       myGenContentRootPath = genContentRootPath;
       myArtifactPath = artifactPath;
+      myValidityState = new TimestampValidityState(new File(myArtifactPath).lastModified());
     }
 
     @Nullable
@@ -217,7 +219,7 @@ public class AndroidExternalApklibExtractingCompiler implements SourceGenerating
 
     @Override
     public ValidityState getValidityState() {
-      return new TimestampValidityState(new File(myArtifactPath).lastModified());
+      return myValidityState;
     }
 
     @Override
