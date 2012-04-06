@@ -1808,6 +1808,24 @@ public class Mappings {
               return true;
             }
           });
+
+          delta.myClassToClassDependency.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+            @Override
+            public boolean execute(int aClass, TIntHashSet now) {
+              if (!now.isEmpty()) {
+                final TIntHashSet past = myClassToClassDependency.get(aClass);
+                if (past == null) {
+                  myClassToClassDependency.put(aClass, now);
+                }
+                else {
+                  if (addAll(past, now)) {
+                    myClassToClassDependency.replace(aClass, past);
+                  }
+                }
+              }
+              return true;
+            }
+          });
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
@@ -1816,25 +1834,17 @@ public class Mappings {
           mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
           mySourceFileToUsages.replaceAll(delta.mySourceFileToUsages);
           mySourceFileToAnnotationUsages.replaceAll(delta.mySourceFileToAnnotationUsages);
-        }
 
-        delta.myClassToClassDependency.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-          @Override
-          public boolean execute(int aClass, TIntHashSet now) {
-            if (!now.isEmpty()) {
-              final TIntHashSet past = myClassToClassDependency.get(aClass);
-              if (past == null) {
+          delta.myClassToClassDependency.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+            @Override
+            public boolean execute(int aClass, TIntHashSet now) {
+              if (!now.isEmpty()) {
                 myClassToClassDependency.put(aClass, now);
               }
-              else {
-                if (addAll(past, now)) {
-                  myClassToClassDependency.replace(aClass, past);
-                }
-              }
+              return true;
             }
-            return true;
-          }
-        });
+          });
+        }
       }
       finally {
         delta.close();
