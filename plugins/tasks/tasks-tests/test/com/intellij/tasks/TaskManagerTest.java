@@ -5,6 +5,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskProjectConfiguration;
 import com.intellij.tasks.youtrack.YouTrackRepository;
 import com.intellij.tasks.youtrack.YouTrackRepositoryType;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -113,5 +115,24 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
     TaskRepository[] repositories = myManager.getAllRepositories();
     assertEquals(1, repositories.length);
+  }
+
+  public void testIssuesCacheSurvival() throws Exception {
+    final Ref<Boolean> stopper = new Ref<Boolean>(Boolean.FALSE);
+    TestRepository repository = new TestRepository(new LocalTaskImpl("foo", "bar")) {
+      @Override
+      public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+        if (stopper.get()) throw new Exception();
+        return super.getIssues(query, max, since);
+      }
+    };
+    myManager.setRepositories(Collections.singletonList(repository));
+
+    List<Task> issues = myManager.getIssues("");
+    assertEquals(1, issues.size());
+
+    stopper.set(Boolean.TRUE);
+    issues = myManager.getIssues("");
+    assertEquals(1, issues.size());
   }
 }
