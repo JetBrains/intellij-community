@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.artifacts;
 import org.jetbrains.jps.artifacts.Artifact;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
+import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
 /**
@@ -159,5 +160,25 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     buildAll();
     assertDeleted("out/artifacts/a/ddd/xxx.txt");
     assertOutput(a, fs().dir("ddd").file("y.txt"));
+  }
+
+  public void testUpdateManifest() {
+    final String manifestText1 = "Manifest-Version: 1.0\r\nMain-Class: A\r\n\r\n";
+    final String manifest = createFile("MANIFEST.MF", manifestText1);
+    final Artifact a = addArtifact("a", archive("a.jar").dir("META-INF").fileCopy(manifest).fileCopy(createFile("a.txt")));
+    buildAll();
+    assertOutput(a, fs().archive("a.jar").dir("META-INF").file("MANIFEST.MF", manifestText1).file("a.txt"));
+
+    final String manifestText2 = "Manifest-Version: 1.0\r\nMain-Class: B\r\n\r\n";
+    change(manifest, manifestText2);
+    buildAll();
+    assertCopied("MANIFEST.MF", "a.txt");
+    assertOutput(a, fs().archive("a.jar").dir("META-INF").file("MANIFEST.MF", manifestText2).file("a.txt"));
+    buildAllAndAssertUpToDate();
+
+    delete(manifest);
+    buildAll();
+    assertDeletedAndCopied("out/artifacts/a/a.jar", "a.txt");
+    assertOutput(a, fs().archive("a.jar").dir("META-INF").file("a.txt"));
   }
 }
