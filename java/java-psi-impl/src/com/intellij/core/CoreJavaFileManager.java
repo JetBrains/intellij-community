@@ -73,6 +73,10 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
     return answer;
   }
 
+  public VirtualFile[] getRoots() {
+     return roots();
+  }
+
   @Nullable
   private VirtualFile calcRoot(File root) {
     if (root.isFile()) {
@@ -224,6 +228,8 @@ public class CoreJavaFileManager extends PackageIndex implements JavaFileManager
   @Override
   public void initialize() {
   }
+
+
 
   public void addToClasspath(File path) {
     myClasspath.add(path);

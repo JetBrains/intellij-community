@@ -93,8 +93,11 @@ public class CoreLocalVirtualFileWithId extends VirtualFile implements VirtualFi
     if (answer == null) {
       List<VirtualFile> result = new ArrayList<VirtualFile>();
       final File[] files = myIoFile.listFiles();
-      for (File file : files) {
-        result.add(myFileSystem.findFileByPath(file.getAbsolutePath()));
+      if(files != null)
+      {
+        for (File file : files) {
+          result.add(myFileSystem.findFileByPath(file.getAbsolutePath()));
+        }
       }
       answer = result.toArray(new VirtualFile[result.size()]);
 

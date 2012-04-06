@@ -18,12 +18,14 @@ package com.intellij.core.indexing;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndexBase;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
+import org.jetbrains.annotations.NonNls;
 
 public class IdIndexCore extends IdIndexBase {
+  @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
+
   public IdIndexCore(IdTableBuilding idTableBuilding) {
     super(idTableBuilding);
   }
@@ -32,6 +34,11 @@ public class IdIndexCore extends IdIndexBase {
     return (fileType instanceof LanguageFileType ||
             getIdTableBuilding().isIdIndexerRegistered(fileType) ||
             CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null) &&
-           !ProjectUtil.isProjectOrWorkspaceFile(file, fileType);
+           !isProjectOrWorkspaceFile(file, fileType);
+  }
+
+  private boolean isProjectOrWorkspaceFile(VirtualFile file, FileType fileType) {
+//      if (fileType instanceof InternalFileType) return true;
+      return file.getPath().contains("/"+ DIRECTORY_BASED_PROJECT_DIR +"/");
   }
 }

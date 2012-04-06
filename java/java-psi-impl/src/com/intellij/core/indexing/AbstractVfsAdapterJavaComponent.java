@@ -16,21 +16,25 @@
 package com.intellij.core.indexing;
 
 
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystemWithId;
 import com.intellij.openapi.vfs.local.CoreLocalVirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.indexing.AbstractVfsAdapter;
 import com.intellij.util.indexing.IndexableFileSet;
+import com.intellij.util.io.UnsyncByteArrayInputStream;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class AbstractVfsAdapterJavaComponent extends AbstractVfsAdapter {
   private CoreLocalFileSystemWithId myFileSystemWithId;
+  private HashMap<VirtualFile, byte[]> myAttribute = new HashMap<VirtualFile, byte[]>();
 
   public AbstractVfsAdapterJavaComponent(CoreLocalFileSystemWithId fileSystemWithId) {
     myFileSystemWithId = fileSystemWithId;
@@ -76,19 +80,19 @@ public class AbstractVfsAdapterJavaComponent extends AbstractVfsAdapter {
     //}
   }
 
-  private static void iterate(final VirtualFile file, VirtualFileVisitor visitor) {
-    if (!(file instanceof NewVirtualFile)) return;
-
-    final NewVirtualFile nvf = (NewVirtualFile)file;
-    if (file.isDirectory()) {
-      for (VirtualFile child : nvf.getCachedChildren()) {
-        iterate(child, visitor);
-      }
-    }
-    else {
-      visitor.visitFile(file);
-    }
-  }
+  //private static void iterate(final VirtualFile file, VirtualFileVisitor visitor) {
+  //  if (!(file instanceof NewVirtualFile)) return;
+  //
+  //  final NewVirtualFile nvf = (NewVirtualFile)file;
+  //  if (file.isDirectory()) {
+  //    for (VirtualFile child : nvf.getCachedChildren()) {
+  //      iterate(child, visitor);
+  //    }
+  //  }
+  //  else {
+  //    visitor.visitFile(file);
+  //  }
+  //}
 
   @Override
   public boolean isMock(VirtualFile file) {
@@ -102,11 +106,35 @@ public class AbstractVfsAdapterJavaComponent extends AbstractVfsAdapter {
 
   @Override
   public DataInputStream readTimeStampAttribute(VirtualFile key) {
-    throw new NotImplementedException();
+    final byte[] bytes = myAttribute.get(key);
+    if(bytes == null)
+      return null;
+
+    return new DataInputStream(new UnsyncByteArrayInputStream(bytes));
   }
 
   @Override
   public DataOutputStream writeTimeStampAttribute(VirtualFile key) {
-    throw new NotImplementedException();
+        return new AttributeStream(key);
+  }
+
+  private class AttributeStream extends com.intellij.util.io.DataOutputStream {
+    private VirtualFile myFile;
+
+    private AttributeStream(VirtualFile file) {
+      super(new BufferExposingByteArrayOutputStream());
+      myFile = file;
+    }
+
+    @Override
+    public void close() throws IOException {
+      super.close();
+      doFlush();
+    }
+
+    protected void doFlush() throws IOException {
+      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      myAttribute.put(myFile, _out.getInternalBuffer());
+    }
   }
 }

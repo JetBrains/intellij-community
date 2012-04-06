@@ -106,6 +106,8 @@ public class CoreEnvironment {
 
     MessageBusImpl messageBus = new MessageBusImpl(myApplication, null);
     registerComponentInstance(appContainer, MessageBus.class, messageBus);
+    myApplication.registerService(MessageBus.class, messageBus);
+
     registerComponentInstance(appContainer, VirtualFileManager.class,
                               new VirtualFileManagerImpl(new VirtualFileSystem[] {myLocalFileSystem, myJarFileSystem}, messageBus,
                                                          new FileSystemPersistence() {
@@ -139,7 +141,7 @@ public class CoreEnvironment {
     myProject.registerService(ResolveCache.class, new ResolveCache(null));
     
     registerProjectExtensionPoint(PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, null, modificationTracker);
+    myPsiManager = new PsiManagerImpl(myProject, null, null, myFileIndexFacade, messageBus, modificationTracker);
     ((FileManagerImpl) myPsiManager.getFileManager()).markInitialized();
     registerComponentInstance(projectContainer, PsiManager.class, myPsiManager);
 

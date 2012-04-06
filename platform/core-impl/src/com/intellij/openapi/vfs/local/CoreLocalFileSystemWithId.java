@@ -57,6 +57,7 @@ public class CoreLocalFileSystemWithId extends DeprecatedVirtualFileSystem {
 
   @Override
   public void refresh(boolean asynchronous) {
+    //call FileBasedIndexProjectHandlerJavaComponent RefreshCacheUpdater
   }
 
   @Override

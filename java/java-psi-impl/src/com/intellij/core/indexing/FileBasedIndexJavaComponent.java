@@ -15,31 +15,30 @@
  */
 package com.intellij.core.indexing;
 
+import com.intellij.core.CoreJavaFileManager;
+import com.intellij.core.ProjectHolder;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.stubs.SerializationManager;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.*;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Set;
 
 
 public class FileBasedIndexJavaComponent extends FileBasedIndex implements BaseComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.indexing.FileBasedIndexJavaComponent");
+  private ProjectHolder myHolder;
 
   public FileBasedIndexJavaComponent(MessageBus bus,
                                      FileBasedIndexUnsavedDocumentsManager unsavedDocumentsManager,
@@ -48,8 +47,10 @@ public class FileBasedIndexJavaComponent extends FileBasedIndex implements BaseC
                                      FileBasedIndexLimitsChecker limitsChecker,
                                      AbstractVfsAdapter vfsAdapter,
                                      IndexingStamp indexingStamp,
-                                     SerializationManager sm) throws IOException {
+                                     SerializationManager sm,
+                                     ProjectHolder holder) throws IOException {
     super(bus, unsavedDocumentsManager, indexIndicesManager, transactionMap, limitsChecker, vfsAdapter, indexingStamp, sm);
+    myHolder = holder;
   }
 
   @Override
@@ -61,65 +62,78 @@ public class FileBasedIndexJavaComponent extends FileBasedIndex implements BaseC
   }
 
   @Override
-  public void iterateIndexableFiles(ContentIterator processor, Project project, ProgressIndicator indicator) {
-    if (project.isDisposed()) {
-      return;
-    }
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    // iterate project content
-    projectFileIndex.iterateContent(processor);
-
+  public void iterateIndexableFiles(final ContentIterator processor, Project project, ProgressIndicator indicator) {
     if (project.isDisposed()) {
       return;
     }
 
-    Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
-    // iterate associated libraries
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (module.isDisposed()) {
-        return;
-      }
-      OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
-          if (orderEntry.isValid()) {
-            final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
-            final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
-            for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
-              for (VirtualFile root : roots) {
-                if (visitedRoots.add(root)) {
-                  iterateRecursively(root, processor, indicator);
-                }
-              }
-            }
-          }
+    CoreJavaFileManager fileManager = project.getComponent(CoreJavaFileManager.class);
+    for(VirtualFile root : fileManager.getRoots())
+    {
+      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(VirtualFile file) {
+          processor.processFile(file);
+          return true;
         }
-      }
+      });
     }
+
+    //final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    //// iterate project content
+    //projectFileIndex.iterateContent(processor);
+    //
+    //if (project.isDisposed()) {
+    //  return;
+    //}
+
+    //Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
+    //// iterate associated libraries
+    //for (Module module : ModuleManager.getInstance(project).getModules()) {
+    //  if (module.isDisposed()) {
+    //    return;
+    //  }
+    //  OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
+    //  for (OrderEntry orderEntry : orderEntries) {
+    //    if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
+    //      if (orderEntry.isValid()) {
+    //        final VirtualFile[] libSources = orderEntry.getFiles(OrderRootType.SOURCES);
+    //        final VirtualFile[] libClasses = orderEntry.getFiles(OrderRootType.CLASSES);
+    //        for (VirtualFile[] roots : new VirtualFile[][]{libSources, libClasses}) {
+    //          for (VirtualFile root : roots) {
+    //            if (visitedRoots.add(root)) {
+    //              iterateRecursively(root, processor, indicator);
+    //            }
+    //          }
+    //        }
+    //      }
+    //    }
+    //  }
+    //}
   }
 
-  private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
-    if (root != null) {
-      if (indicator != null) {
-        indicator.checkCanceled();
-        indicator.setText2(root.getPresentableUrl());
-      }
-
-      if (root.isDirectory()) {
-        for (VirtualFile file : root.getChildren()) {
-          if (file.isDirectory()) {
-            iterateRecursively(file, processor, indicator);
-          }
-          else {
-            processor.processFile(file);
-          }
-        }
-      }
-      else {
-        processor.processFile(root);
-      }
-    }
-  }
+  //private static void iterateRecursively(@Nullable final VirtualFile root, final ContentIterator processor, ProgressIndicator indicator) {
+  //  if (root != null) {
+  //    if (indicator != null) {
+  //      indicator.checkCanceled();
+  //      indicator.setText2(root.getPresentableUrl());
+  //    }
+  //
+  //    if (root.isDirectory()) {
+  //      for (VirtualFile file : root.getChildren()) {
+  //        if (file.isDirectory()) {
+  //          iterateRecursively(file, processor, indicator);
+  //        }
+  //        else {
+  //          processor.processFile(file);
+  //        }
+  //      }
+  //    }
+  //    else {
+  //      processor.processFile(root);
+  //    }
+  //  }
+  //}
 
   @Override
   protected void handleDumbMode(@Nullable Project project) {
@@ -132,25 +146,23 @@ public class FileBasedIndexJavaComponent extends FileBasedIndex implements BaseC
 
   @Override
   protected void scheduleIndexRebuild(boolean forceDumbMode) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      UnindexedFilesUpdater updater = new UnindexedFilesUpdater(project, this, getIndexingStamp());
-      VirtualFile[] virtualFiles = updater.queryNeededFiles(new EmptyProgressIndicator());
+    Project project = myHolder.getProject();
+    UnindexedFilesUpdater updater = new UnindexedFilesUpdater(project, this, getIndexingStamp());
+    VirtualFile[] virtualFiles = updater.queryNeededFiles(new EmptyProgressIndicator());
 
-      for (VirtualFile f : virtualFiles)
-      {
-        FileContent content = new FileContent(f);
-
-        if (f.isValid() && !f.isDirectory()) {
-          if (!doLoadContent(content)) {
-            content.setEmptyContent();
-          }
-        }
-        else {
+    for (VirtualFile f : virtualFiles)
+    {
+      FileContent content = new FileContent(f);
+      if (f.isValid() && !f.isDirectory()) {
+        if (!doLoadContent(content)) {
           content.setEmptyContent();
         }
-
-        updater.processFile(content);
       }
+      else {
+        content.setEmptyContent();
+      }
+
+      updater.processFile(content);
     }
   }
 
@@ -168,7 +180,7 @@ public class FileBasedIndexJavaComponent extends FileBasedIndex implements BaseC
 
   @Override
   protected Project guessProjectFile(VirtualFile file) {
-    return ProjectUtil.guessProjectForFile(file);
+    return myHolder.getProject();
   }
 
   @NotNull
