@@ -1691,19 +1691,24 @@ public class Mappings {
     }
 
     if (clusters != null) {
+      final TIntHashSet usedClasses = new TIntHashSet();
+
       for (final UsageRepr.Cluster cluster : clusters) {
-        final Set<UsageRepr.Usage> usages = cluster.getUsages();
-        if (usages != null) {
-          for (final UsageRepr.Usage u : usages) {
-            if (u instanceof UsageRepr.ClassUsage) {
-              final TIntHashSet residents = cluster.getResidence(u);
-              if (residents != null && residents.contains(className)) {
-                myClassToClassDependency.removeFrom(((UsageRepr.ClassUsage)u).className, className);
-              }
-            }
+        for (final UsageRepr.Usage u : cluster.getUsages()) {
+          final TIntHashSet residents = cluster.getResidence(u);
+          if (residents != null && residents.contains(className)) {
+            usedClasses.add(u.getOwner());
           }
         }
       }
+
+      usedClasses.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int usedClassName) {
+          myClassToClassDependency.removeFrom(usedClassName, className);
+          return true;
+        }
+      });
     }
   }
 
@@ -1751,24 +1756,24 @@ public class Mappings {
 
           delta.getChangedClasses().forEach(new TIntProcedure() {
             @Override
-            public boolean execute(int c) {
-              final TIntHashSet subClasses = delta.myClassToSubclasses.get(c);
+            public boolean execute(int className) {
+              final TIntHashSet subClasses = delta.myClassToSubclasses.get(className);
               if (subClasses != null) {
-                myClassToSubclasses.replace(c, subClasses);
+                myClassToSubclasses.replace(className, subClasses);
               }
               else {
-                myClassToSubclasses.remove(c);
+                myClassToSubclasses.remove(className);
               }
 
-              final int sourceFile = delta.myClassToSourceFile.get(c);
+              final int sourceFile = delta.myClassToSourceFile.get(className);
               if (sourceFile > 0) {
-                myClassToSourceFile.put(c, sourceFile);
+                myClassToSourceFile.put(className, sourceFile);
               }
               else {
-                myClassToSourceFile.remove(c);
+                myClassToSourceFile.remove(className);
               }
 
-              cleanupBackDependency(c, null);
+              cleanupBackDependency(className, null);
 
               return true;
             }
@@ -1776,29 +1781,29 @@ public class Mappings {
 
           delta.getChangedFiles().forEach(new TIntProcedure() {
             @Override
-            public boolean execute(int f) {
-              final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(f);
+            public boolean execute(int fileName) {
+              final Collection<ClassRepr> classes = delta.mySourceFileToClasses.get(fileName);
               if (classes != null) {
-                mySourceFileToClasses.replace(f, classes);
+                mySourceFileToClasses.replace(fileName, classes);
               }
               else {
-                mySourceFileToClasses.remove(f);
+                mySourceFileToClasses.remove(fileName);
               }
 
-              final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(f);
+              final Collection<UsageRepr.Cluster> clusters = delta.mySourceFileToUsages.get(fileName);
               if (clusters != null) {
-                mySourceFileToUsages.replace(f, clusters);
+                mySourceFileToUsages.replace(fileName, clusters);
               }
               else {
-                mySourceFileToUsages.remove(f);
+                mySourceFileToUsages.remove(fileName);
               }
 
-              final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(f);
+              final Collection<UsageRepr.Usage> usages = delta.mySourceFileToAnnotationUsages.get(fileName);
               if (usages != null) {
-                mySourceFileToAnnotationUsages.replace(f, usages);
+                mySourceFileToAnnotationUsages.replace(fileName, usages);
               }
               else {
-                mySourceFileToAnnotationUsages.remove(f);
+                mySourceFileToAnnotationUsages.remove(fileName);
               }
               return true;
             }
@@ -1813,38 +1818,20 @@ public class Mappings {
           mySourceFileToAnnotationUsages.replaceAll(delta.mySourceFileToAnnotationUsages);
         }
 
-        final int[] compiledClasses = getClassNames(compiled);
-        final int[] changedClassesArray = delta.getChangedClasses().toArray();
-
         delta.myClassToClassDependency.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
           @Override
           public boolean execute(int aClass, TIntHashSet now) {
-            if (delta.isDifferentiated()) {
-              final boolean classChanged = delta.getChangedClasses().contains(aClass);
-              final TIntHashSet depClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-              addAll(depClasses, now);
-
-              depClasses.retainAll(changedClassesArray);
-
-              if (!classChanged && depClasses.isEmpty()) {
-                return true;
+            if (!now.isEmpty()) {
+              final TIntHashSet past = myClassToClassDependency.get(aClass);
+              if (past == null) {
+                myClassToClassDependency.put(aClass, now);
+              }
+              else {
+                if (addAll(past, now)) {
+                  myClassToClassDependency.replace(aClass, past);
+                }
               }
             }
-
-            final TIntHashSet past = myClassToClassDependency.get(aClass);
-
-            if (past == null) {
-              myClassToClassDependency.put(aClass, now);
-            }
-            else {
-              boolean changed = past.removeAll(compiledClasses);
-              changed |= addAll(past, now);
-
-              if (changed) {
-                myClassToClassDependency.replace(aClass, past);
-              }
-            }
-
             return true;
           }
         });
@@ -1853,20 +1840,6 @@ public class Mappings {
         delta.close();
       }
     }
-  }
-
-  private int[] getClassNames(Collection<File> compiled) {
-    final TIntHashSet classnames = new TIntHashSet(compiled.size());
-    for (final File c : compiled) {
-      final int fileName = myContext.get(FileUtil.toSystemIndependentName(c.getAbsolutePath()));
-      final Collection<ClassRepr> reprs = mySourceFileToClasses.get(fileName);
-      if (reprs != null) {
-        for (final ClassRepr repr : reprs) {
-          classnames.add(repr.name);
-        }
-      }
-    }
-    return classnames.toArray();
   }
 
   public Callbacks.Backend getCallback() {

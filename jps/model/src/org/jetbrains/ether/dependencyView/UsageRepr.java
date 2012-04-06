@@ -2,6 +2,7 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.Type;
 import org.jetbrains.ether.RW;
 
@@ -82,6 +83,7 @@ class UsageRepr {
       s.add(residence);
     }
 
+    @NotNull
     public Set<Usage> getUsages() {
       return Collections.unmodifiableSet(myUsageToDependenciesMap.keySet());
     }
