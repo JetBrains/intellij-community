@@ -203,7 +203,10 @@ public class PyTypeParser {
           final RatedResolveResult result = results.get(0);
           final PsiElement resolved = result.getElement();
           if (resolved instanceof PyTypedElement) {
-            final PyType t = ((PyTypedElement)resolved).getType(context.getTypeEvalContext());
+            PyType t = ((PyTypedElement)resolved).getType(context.getTypeEvalContext());
+            if (t instanceof PyClassType) {
+              t = ((PyClassType)t).toInstance();
+            }
             types.put(classRange.shiftRight(offset), t);
             fullRanges.put(t, whole);
             return t;
