@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -326,6 +327,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       myContentSize = 0;
       myBuffer.clear();
       myHyperlinks.clearHyperlinks();
+      myFolding.clear();
     }
     if (myFlushAlarm.isDisposed()) return;
     cancelAllFlushRequests();
@@ -573,25 +575,31 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (myProject.isDisposed()) {
       return;
     }
-    if (myEditor == null) {
+    EditorEx editor = myEditor;
+    if (editor == null) {
       //already disposed
       return;
     }
     if (clear) {
-      final Document document;
+      final DocumentEx document;
       synchronized (LOCK) {
         myHyperlinks.clearHyperlinks();
         myTokens.clear();
-        if (myEditor == null) return;
-        myEditor.getMarkupModel().removeAllHighlighters();
-        document = myEditor.getDocument();
+        editor.getMarkupModel().removeAllHighlighters();
+        document = editor.getDocument();
         myFoldingAlarm.cancelAllRequests();
         cancelHeavyAlarm();
       }
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         @Override
         public void run() {
-          document.deleteString(0, document.getTextLength());
+          document.setInBulkUpdate(true);
+          try {
+            document.deleteString(0, document.getTextLength());
+          }
+          finally {
+            document.setInBulkUpdate(false);
+          }
         }
       }, null, DocCommandGroupId.noneGroupId(document));
     }
@@ -603,7 +611,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     synchronized (LOCK) {
       if (myOutputPaused) return;
       if (myBuffer.isEmpty()) return;
-      if (myEditor == null) return;
 
       text = myBuffer.getText();
 
