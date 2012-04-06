@@ -158,6 +158,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final boolean myIsLibrary;
     
     final int myPlatformToolsRevision;
+    private final MyValidityState myValidityState;
 
     private AptGenerationItem(@NotNull Module module,
                               @NotNull VirtualFile manifestFile,
@@ -175,6 +176,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myLibraryPackages = libPackages;
       myIsLibrary = isLibrary;
       myPlatformToolsRevision = platformToolsRevision;
+      myValidityState = new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision);
     }
 
     public String getPath() {
@@ -182,7 +184,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
 
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision);
+      return myValidityState;
     }
 
     public Module getModule() {

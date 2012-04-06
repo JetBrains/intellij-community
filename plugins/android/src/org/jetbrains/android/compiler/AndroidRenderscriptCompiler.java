@@ -258,6 +258,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     final Collection<VirtualFile> myFiles;
     final IAndroidTarget myAndroidTarget;
     final String myRawDirPath;
+    private final MyValidityState myValidityState;
 
     public MyGenerationItem(@NotNull Module module,
                             @NotNull Collection<VirtualFile> files,
@@ -269,6 +270,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
       myRawDirPath = rawDirPath;
       mySdkLocation = sdkLocation;
       myAndroidTarget = target;
+      myValidityState = new MyValidityState(myFiles);
     }
 
     @Nullable
@@ -278,7 +280,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myFiles);
+      return myValidityState;
     }
 
     public Module getModule() {
