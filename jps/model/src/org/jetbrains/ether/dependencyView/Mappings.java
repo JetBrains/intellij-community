@@ -1682,7 +1682,7 @@ public class Mappings {
     }
   }
 
-  private void cleanupBackDependency(final int className, @Nullable Collection<UsageRepr.Cluster> clusters) {
+  private void cleanupBackDependency(final int className, @Nullable Collection<UsageRepr.Cluster> clusters, IntIntMultiMaplet buffer) {
     if (clusters == null) {
       final int sourceFile = myClassToSourceFile.get(className);
       if (sourceFile > 0) {
@@ -1691,45 +1691,37 @@ public class Mappings {
     }
 
     if (clusters != null) {
-      final TIntHashSet usedClasses = new TIntHashSet();
-
       for (final UsageRepr.Cluster cluster : clusters) {
         for (final UsageRepr.Usage u : cluster.getUsages()) {
           final TIntHashSet residents = cluster.getResidence(u);
           if (residents != null && residents.contains(className)) {
-            usedClasses.add(u.getOwner());
+            buffer.put(u.getOwner(), className);
           }
         }
       }
-
-      usedClasses.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int usedClassName) {
-          myClassToClassDependency.removeFrom(usedClassName, className);
-          return true;
-        }
-      });
     }
   }
 
-  private void cleanupRemovedClass(@NotNull ClassRepr cr, Collection<UsageRepr.Cluster> clusters) {
+  private void cleanupRemovedClass(@NotNull ClassRepr cr, Collection<UsageRepr.Cluster> clusters, IntIntMultiMaplet buffer) {
     final int className = cr.name;
 
     for (final int superSomething : cr.getSupers()) {
       myClassToSubclasses.removeFrom(superSomething, className);
     }
 
-    cleanupBackDependency(className, clusters);
+    cleanupBackDependency(className, clusters, buffer);
 
     myClassToClassDependency.remove(className);
     myClassToSubclasses.remove(className);
     myClassToSourceFile.remove(className);
   }
 
-  public void integrate(final Mappings delta, final Collection<File> compiled, final Collection<String> removed) {
+  public void integrate(final Mappings delta, final Collection<String> removed) {
     synchronized (myLock) {
       try {
         delta.runPostPasses();
+
+        final IntIntMultiMaplet classDependenciesToRemove = new IntIntTransientMultiMaplet();
 
         if (removed != null) {
           for (final String file : removed) {
@@ -1739,7 +1731,7 @@ public class Mappings {
 
             if (fileClasses != null) {
               for (final ClassRepr aClass : fileClasses) {
-                cleanupRemovedClass(aClass, fileUsages);
+                cleanupRemovedClass(aClass, fileUsages, classDependenciesToRemove);
               }
             }
 
@@ -1751,7 +1743,7 @@ public class Mappings {
 
         if (delta.isDifferentiated()) {
           for (ClassRepr repr : delta.getDeletedClasses()) {
-            cleanupRemovedClass(repr, null);
+            cleanupRemovedClass(repr, null, classDependenciesToRemove);
           }
 
           delta.getChangedClasses().forEach(new TIntProcedure() {
@@ -1773,7 +1765,7 @@ public class Mappings {
                 myClassToSourceFile.remove(className);
               }
 
-              cleanupBackDependency(className, null);
+              cleanupBackDependency(className, null, classDependenciesToRemove);
 
               return true;
             }
@@ -1808,24 +1800,6 @@ public class Mappings {
               return true;
             }
           });
-
-          delta.myClassToClassDependency.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(int aClass, TIntHashSet now) {
-              if (!now.isEmpty()) {
-                final TIntHashSet past = myClassToClassDependency.get(aClass);
-                if (past == null) {
-                  myClassToClassDependency.put(aClass, now);
-                }
-                else {
-                  if (addAll(past, now)) {
-                    myClassToClassDependency.replace(aClass, past);
-                  }
-                }
-              }
-              return true;
-            }
-          });
         }
         else {
           myClassToSubclasses.putAll(delta.myClassToSubclasses);
@@ -1834,17 +1808,47 @@ public class Mappings {
           mySourceFileToClasses.replaceAll(delta.mySourceFileToClasses);
           mySourceFileToUsages.replaceAll(delta.mySourceFileToUsages);
           mySourceFileToAnnotationUsages.replaceAll(delta.mySourceFileToAnnotationUsages);
+        }
 
-          delta.myClassToClassDependency.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-            @Override
-            public boolean execute(int aClass, TIntHashSet now) {
-              if (!now.isEmpty()) {
+        // updating classToClass dependencies
+
+        final TIntHashSet affectedClasses = new TIntHashSet();
+        addAllKeys(affectedClasses, classDependenciesToRemove);
+        addAllKeys(affectedClasses, delta.myClassToClassDependency);
+
+        affectedClasses.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(int aClass) {
+            final TIntHashSet now = delta.myClassToClassDependency.get(aClass);
+            final TIntHashSet toRemove = classDependenciesToRemove.get(aClass);
+
+            if (toRemove != null && !toRemove.isEmpty()) {
+              final TIntHashSet past = myClassToClassDependency.get(aClass);
+              if (past != null && !past.isEmpty()) {
+                boolean changed = past.removeAll(toRemove.toArray());
+                if (now != null && !now.isEmpty()) {
+                  changed |= past.addAll(now.toArray());
+                }
+                if (changed) {
+                  myClassToClassDependency.replace(aClass, past);
+                }
+              }
+              else {
+                if (now != null && !now.isEmpty()) {
+                  myClassToClassDependency.put(aClass, now);
+                }
+              }
+            }
+            else {
+              // nothing to remove for this class
+              if (now != null && !now.isEmpty()) {
                 myClassToClassDependency.put(aClass, now);
               }
-              return true;
             }
-          });
-        }
+            return true;
+          }
+        });
+
       }
       finally {
         delta.close();
@@ -2026,5 +2030,15 @@ public class Mappings {
       }
     });
     return changed.get();
+  }
+
+  private static void addAllKeys(final TIntHashSet whereToAdd, IntIntMultiMaplet maplet) {
+    maplet.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
+      @Override
+      public boolean execute(int key, TIntHashSet b) {
+        whereToAdd.add(key);
+        return true;
+      }
+    });
   }
 }

@@ -138,7 +138,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
       context.processMessage(new ProgressMessage("Updating dependency information"));
 
-      globalMappings.integrate(delta, successfullyCompiled, removedPaths);
+      globalMappings.integrate(delta, removedPaths);
 
       return additionalPassRequired;
     }
