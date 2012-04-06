@@ -24,6 +24,8 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
@@ -39,6 +41,8 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase> extends SettingsEditor<T> implements PanelWithAnchor {
+  private static final Icon INFO_MESSAGE_ICON = IconLoader.getIcon("/compiler/warning.png");
+
   private JPanel myPanel;
   private JComboBox myModulesComboBox;
   private LabeledComponent<RawCommandLineEditor> myCommandLineComponent;
@@ -53,6 +57,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   private JRadioButton myEmulatorRadioButton;
   private JRadioButton myUsbDeviceRadioButton;
   private LabeledComponent<AvdComboBox> myAvdComboComponent;
+  private JBLabel myMinSdkInfoMessageLabel;
   private AvdComboBox myAvdCombo;
   private RawCommandLineEditor myCommandLineField;
   private String incorrectPreferredAvd;
@@ -93,12 +98,17 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     });
     myAvdCombo = myAvdComboComponent.getComponent();
 
+    myMinSdkInfoMessageLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
+    myMinSdkInfoMessageLabel.setIcon(INFO_MESSAGE_ICON);
+    myMinSdkInfoMessageLabel.setDisabledIcon(INFO_MESSAGE_ICON);
+
     Disposer.register(this, myAvdCombo);
 
     final ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         boolean enabled = myEmulatorRadioButton.isSelected();
         myAvdComboComponent.setEnabled(enabled);
+        myMinSdkInfoMessageLabel.setEnabled(enabled);
       }
     };
     myModulesComboBox.addActionListener(new ActionListener() {
@@ -161,8 +171,9 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myShowChooserRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.SHOW_DIALOG);
     myEmulatorRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.EMULATOR);
     myUsbDeviceRadioButton.setSelected(targetSelectionMode == TargetSelectionMode.USB_DEVICE);
-    
+
     myAvdComboComponent.setEnabled(targetSelectionMode == TargetSelectionMode.EMULATOR);
+    myMinSdkInfoMessageLabel.setEnabled(targetSelectionMode == TargetSelectionMode.EMULATOR);
     
     myCommandLineField.setText(configuration.COMMAND_LINE);
     myConfigurationSpecificEditor.resetFrom(configuration);
