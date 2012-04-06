@@ -131,7 +131,7 @@ public class AndroidCommonUtils {
             }
           }
 
-          LOG.info(msg);
+          LOG.debug(msg);
         }
       }
     });
