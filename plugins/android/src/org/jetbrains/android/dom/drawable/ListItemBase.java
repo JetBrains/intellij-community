@@ -27,4 +27,6 @@ public interface ListItemBase extends DrawableDomElement {
   List<InsetOrClipOrScale> getScales();
 
   List<InsetOrClipOrScale> getInsets();
+
+  List<InsetOrClipOrScale> getAnimatedRotates();
 }
