@@ -235,7 +235,7 @@ public class PythonStringUtil {
         }
       }
       if (flag) {
-        StringBuffer res = new StringBuffer("");
+        StringBuilder res = new StringBuilder("");
         for (int j = 0; j <= i; j++) {
           if (j > 0) {
             res.append(".");
@@ -317,9 +317,15 @@ public class PythonStringUtil {
   }
 
   public static String stripQuotesAroundValue(String text) {
-    if ((startsWith(text, "u\"") && endsWith(text, "\"")) || (startsWith(text, "u\'") && endsWith(text, "\'"))) {
+    if (isStringPrefixedBy(text.toLowerCase(), "u") || isStringPrefixedBy(text.toLowerCase(), "r")) {
       text = text.substring(1);
     }
+
+
     return StringUtil.stripQuotesAroundValue(text);
+  }
+
+  private static boolean isStringPrefixedBy(String text, String prefix) {
+    return (startsWith(text, "u" + "\"") && endsWith(text, "\"")) || (startsWith(text, prefix + "\'") && endsWith(text, "\'"));
   }
 }
