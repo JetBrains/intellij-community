@@ -45,6 +45,11 @@ public class TestNotificator extends Notificator {
   }
 
   @Override
+  public void notifyError(@NotNull String title, @NotNull String message) {
+    myLastNotification = createNotification(title, message, NotificationType.ERROR);
+  }
+
+  @Override
   public void notifySuccess(@NotNull String title, @NotNull String message) {
     myLastNotification = createNotification(title, message, NotificationType.INFORMATION);
   }
