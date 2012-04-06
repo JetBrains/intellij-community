@@ -28,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 /**
  * @author peter
  */
-public class AssertionInstruction extends InstructionImpl implements MixinTypeInstruction {
+public class InstanceOfInstruction extends InstructionImpl implements MixinTypeInstruction {
   private final boolean myNegate;
 
-  public AssertionInstruction(int num, GrExpression assertion, boolean negate) {
+  public InstanceOfInstruction(int num, GrExpression assertion, boolean negate) {
     super(assertion, num);
     myNegate = negate;
   }
@@ -41,11 +41,11 @@ public class AssertionInstruction extends InstructionImpl implements MixinTypeIn
   }
 
   protected String getElementPresentation() {
-    return "assertion: " + (myNegate ? "! " : "") + getElement().getText();
+    return "instanceof: " + (myNegate ? "! " : "") + getElement().getText();
   }
 
   @Nullable
-  private GrInstanceOfExpression getApplicableInstanceofOrNull() {
+  private GrInstanceOfExpression getApplicableInstanceof() {
     final PsiElement element = getElement();
     if (element instanceof GrInstanceOfExpression && !isNegate()) {
       GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
@@ -59,7 +59,7 @@ public class AssertionInstruction extends InstructionImpl implements MixinTypeIn
 
   @Nullable
   public PsiType inferMixinType() {
-    GrInstanceOfExpression instanceOf = getApplicableInstanceofOrNull();
+    GrInstanceOfExpression instanceOf = getApplicableInstanceof();
     if (instanceOf == null) return null;
 
     return instanceOf.getTypeElement().getType();
@@ -67,7 +67,7 @@ public class AssertionInstruction extends InstructionImpl implements MixinTypeIn
 
   @Override
   public ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow) {
-    GrInstanceOfExpression instanceOf = getApplicableInstanceofOrNull();
+    GrInstanceOfExpression instanceOf = getApplicableInstanceof();
     if (instanceOf == null) return null;
 
     Instruction instruction = ControlFlowUtils.findInstruction(instanceOf.getOperand(), flow);
@@ -80,7 +80,7 @@ public class AssertionInstruction extends InstructionImpl implements MixinTypeIn
   @Nullable
   @Override
   public String getVariableName() {
-    GrInstanceOfExpression instanceOf = getApplicableInstanceofOrNull();
+    GrInstanceOfExpression instanceOf = getApplicableInstanceof();
     if (instanceOf == null) return null;
 
     return instanceOf.getOperand().getText();

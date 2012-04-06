@@ -419,7 +419,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitInstanceofExpression(GrInstanceOfExpression expression) {
     expression.getOperand().accept(this);
-    addNode(new AssertionInstruction(myInstructionNumber++, expression, myNegate));
+    addNode(new InstanceOfInstruction(myInstructionNumber++, expression, myNegate));
   }
 
   public void visitReferenceExpression(GrReferenceExpression refExpr) {

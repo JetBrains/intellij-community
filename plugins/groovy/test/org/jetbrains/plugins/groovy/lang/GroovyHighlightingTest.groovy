@@ -725,4 +725,17 @@ class X {
     myFixture.enableInspections(GrDeprecatedAPIUsageInspection)
     myFixture.testHighlighting(true, false, false)
   }
+
+  public void testInstanceOf() {
+    myFixture.configureByText('_a.groovy', '''\
+class DslPointcut {}
+
+private def handleImplicitBind(arg) {
+    if (arg instanceof Map && arg.size() == 1 && arg.keySet().iterator().next() instanceof String && arg.values().iterator().next() instanceof DslPointcut) {
+        return DslPointcut.bind(arg)
+    }
+    return arg
+}''')
+    myFixture.testHighlighting(true, false, false)
+  }
 }
