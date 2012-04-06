@@ -201,10 +201,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
                                                       elementProcessor.isToSearchInComments(substituted),
                                                       elementProcessor.isToSearchForTextOccurrences(substituted));
               for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-                if (factory.isApplicable(substituted) && factory.getOptionName() != null) {
-                  if (factory.isEnabled()) {
-                    renameProcessor.addRenamerFactory(factory);
-                  }
+                if (factory.isApplicable(substituted)) {
+                  renameProcessor.addRenamerFactory(factory);
                 }
               }
               renameProcessor.run();
