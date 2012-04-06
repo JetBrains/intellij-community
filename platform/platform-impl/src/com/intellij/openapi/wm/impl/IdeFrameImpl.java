@@ -124,6 +124,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     return getRootPane();
   }
 
+  @Nullable
+  public static Window getActiveFrame() {
+    for (Frame frame : getFrames()) {
+      if (frame.isActive()) return frame;
+    }
+    return null;
+  }
+
   private static boolean isThereActiveFrame() {
     Frame[] all = Frame.getFrames();
     for (Frame each : all) {
@@ -461,5 +469,15 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
   public void showWelcomeScreen() {
     myRootPane.showWelcomeScreen();
+  }
+
+  @Override
+  public void toFront() {
+    super.toFront();
+  }
+
+  @Override
+  public void toBack() {
+    super.toBack();
   }
 }
