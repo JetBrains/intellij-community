@@ -60,7 +60,7 @@ public class MockChangeListManager extends ChangeListManager {
                                 String title,
                                 Consumer<VcsDirtyScopeManager> dirtyScopeManager,
                                 ModalityState state) {
-    throw new UnsupportedOperationException();
+    afterUpdate.run();
   }
 
   @Override
@@ -276,7 +276,9 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
-    throw new UnsupportedOperationException();
+    MockChangeList changeList = new MockChangeList(name);
+    myChangeLists.put(name, changeList);
+    return changeList;
   }
 
   @Override
@@ -296,7 +298,6 @@ public class MockChangeListManager extends ChangeListManager {
 
   @Override
   public void moveChangesTo(LocalChangeList list, Change[] changes) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
