@@ -16,6 +16,8 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -33,6 +35,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,6 +51,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   private final WizardContext myContext;
   private final SdkType myType;
   private boolean myInitialized = false;
+  private final JButton mySetAsDefaultButton;
 
   public ProjectJdkForModuleStep(final WizardContext context, final SdkType type) {
     myContext = context;
@@ -66,11 +71,15 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     myPanel.add(jdklabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                  GridBagConstraints.NONE, new Insets(8, 10, 0, 10), 0, 0));
 
-    myPanel.add(myJdkChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+    myPanel.add(myJdkChooser, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.BOTH, new Insets(2, 10, 10, 5), 0, 0));
     JButton configureButton = new JButton(IdeBundle.message("button.configure"));
-    myPanel.add(configureButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                        GridBagConstraints.NONE, new Insets(2, 0, 10, 5), 0, 0));
+    myPanel.add(configureButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                        GridBagConstraints.NONE, new Insets(2, 0, 5, 5), 0, 0));
+    mySetAsDefaultButton = new JButton("Set Default");
+    mySetAsDefaultButton.setMnemonic('D');
+    myPanel.add(mySetAsDefaultButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.NORTHWEST,
+                                                 GridBagConstraints.NONE, new Insets(2, 0, 10, 5), 0, 0));
 
     configureButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -95,6 +104,29 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
             }
           }
         });
+      }
+    });
+
+    final Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
+    mySetAsDefaultButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        
+        final Sdk jdk = getJdk();
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            ProjectRootManagerEx.getInstanceEx(defaultProject).setProjectSdk(jdk);
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(runnable);
+        mySetAsDefaultButton.setEnabled(false);
+      }
+    });
+
+    myJdkChooser.addSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        mySetAsDefaultButton.setEnabled(getJdk() != ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk());
       }
     });
   }
@@ -128,10 +160,11 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   public void updateStep() {
     if (!myInitialized) { //lazy default project initialization
       myJdkChooser.fillList(myType);
-      Sdk defaultJdk = getDefaultJdk();
+      final Sdk defaultJdk = getDefaultJdk(myContext);
       if (defaultJdk != null) {
         myJdkChooser.selectJdk(defaultJdk);
       }
+      mySetAsDefaultButton.setEnabled(defaultJdk != null);
       myInitialized = true;
     }
   }
@@ -149,9 +182,13 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   }
 
   @Nullable
-  private static Sdk getDefaultJdk() {
+  private static Sdk getDefaultJdk(WizardContext context) {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
-    return ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk();
+    final Sdk sdk = ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectSdk();
+    if (sdk == null) {
+      return AddModuleWizard.getMostRecentSuitableSdk(context);
+    }
+    return sdk;
   }
 
 
