@@ -15,17 +15,15 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 /**
  * @ author Bas Leijdekkers
@@ -88,17 +86,17 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Nullable
-  public Frame findProjectFrame() {
+  private Project findProject() {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       if (myProjectLocation.equals(project.getPresentableUrl())) {
-        final WindowManager windowManager = WindowManager.getInstance();
-        return windowManager.getFrame(project);
+        return project;
       }
     }
     return null;
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     // show check mark for active and visible project frame
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -108,21 +106,16 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
     return myProjectLocation.equals(project.getPresentableUrl());
   }
 
+  @Override
   public void setSelected(@Nullable AnActionEvent e, boolean selected) {
     if (!selected) {
       return;
     }
-    final Frame projectFrame = findProjectFrame();
-    if (projectFrame == null) {
+    final Project project = findProject();
+    if (project == null) {
       return;
     }
-    final int frameState = projectFrame.getExtendedState();
-    if ((frameState & Frame.ICONIFIED) == Frame.ICONIFIED) {
-      // restore the frame if it is minimized
-      projectFrame.setExtendedState(frameState ^ Frame.ICONIFIED);
-    }
-    // bring the frame forward
-    projectFrame.toFront();
+    ProjectUtil.focusProjectWindow(project, true);
   }
 
   @Override
