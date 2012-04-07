@@ -208,7 +208,7 @@ public class OptimizedFileManager extends DefaultFileManager {
 
                             if (callback != null) {
                                 final ClassReader reader = new ClassReader(buffer);
-                                callback.associate(classFileName, Callbacks.getDefaultLookup(sourceFileName), reader);
+                                callback.associate(classFileName, sourceFileName, reader);
                             }
 
                             myWriters.add(new DelayedClassFileWriter() {

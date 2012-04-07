@@ -169,7 +169,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
           final String moduleName = moduleAndRoot.module.getName().toLowerCase(Locale.US);
           context.getDataManager().getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
         }
-        callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
+        callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
         successfullyCompiledFiles.add(new File(sourcePath));
 
         generatedEvent.add(moduleOutputPath, FileUtil.getRelativePath(moduleOutputPath, outputPath, '/'));

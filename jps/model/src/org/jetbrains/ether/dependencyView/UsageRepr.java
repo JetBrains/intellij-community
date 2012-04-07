@@ -9,7 +9,6 @@ import org.jetbrains.ether.RW;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.lang.annotation.ElementType;
 import java.util.*;
 
 /**
@@ -20,14 +19,15 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 class UsageRepr {
-  private final static int FIELD_USAGE = 0;
-  private final static int FIELD_ASSIGN_USAGE = 1;
-  private final static int METHOD_USAGE = 2;
-  private final static int CLASS_USAGE = 3;
-  private final static int CLASS_EXTENDS_USAGE = 4;
-  private final static int CLASS_NEW_USAGE = 5;
-  private final static int ANNOTATION_USAGE = 6;
-  private final static int METAMETHOD_USAGE = 7;
+  private static final byte FIELD_USAGE = 0x0;
+  private static final byte FIELD_ASSIGN_USAGE = 0x1;
+  private static final byte METHOD_USAGE = 0x2;
+  private static final byte CLASS_USAGE = 0x3;
+  private static final byte CLASS_EXTENDS_USAGE = 0x4;
+  private static final byte CLASS_NEW_USAGE = 0x5;
+  private static final byte ANNOTATION_USAGE = 0x6;
+  private static final byte METAMETHOD_USAGE = 0x7;
+
   private static final int DEFAULT_SET_CAPACITY = 32;
   private static final float DEFAULT_SET_LOAD_FACTOR = 0.98f;
 
@@ -141,9 +141,9 @@ class UsageRepr {
       return owner;
     }
 
-    private FMUsage(final int n, final int o) {
-      name = n;
-      owner = o;
+    private FMUsage(final int name, final int owner) {
+      this.name = name;
+      this.owner = owner;
     }
 
     private FMUsage(final DataInput in) {
@@ -156,9 +156,9 @@ class UsageRepr {
       }
     }
 
-    protected void save(final int tag, final DataOutput out) {
+    protected final void save(final byte tag, final DataOutput out) {
       try {
-        out.writeInt(tag);
+        out.writeByte(tag);
         out.writeInt(name);
         out.writeInt(owner);
       }
@@ -189,9 +189,9 @@ class UsageRepr {
   public static class FieldUsage extends FMUsage {
     public final TypeRepr.AbstractType type;
 
-    private FieldUsage(final DependencyContext context, final int n, final int o, final int d) {
-      super(n, o);
-      type = TypeRepr.getType(context, d);
+    private FieldUsage(final DependencyContext context, final int name, final int owner, final int descriptor) {
+      super(name, owner);
+      type = TypeRepr.getType(context, descriptor);
     }
 
     private FieldUsage(final DependencyContext context, final DataInput in) {
@@ -261,10 +261,10 @@ class UsageRepr {
     public final TypeRepr.AbstractType[] argumentTypes;
     public final TypeRepr.AbstractType returnType;
 
-    private MethodUsage(final DependencyContext context, final int n, final int o, final String d) {
-      super(n, o);
-      argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(d));
-      returnType = TypeRepr.getType(context, Type.getReturnType(d));
+    private MethodUsage(final DependencyContext context, final int name, final int owner, final String descriptor) {
+      super(name, owner);
+      argumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
+      returnType = TypeRepr.getType(context, Type.getReturnType(descriptor));
     }
 
     private MethodUsage(final DependencyContext context, final DataInput in) {
@@ -330,7 +330,7 @@ class UsageRepr {
 
     @Override
     public void save(final DataOutput out) {
-      super.save(METAMETHOD_USAGE, out);
+      save(METAMETHOD_USAGE, out);
       try {
         out.writeInt(myArity);
       }
@@ -361,20 +361,20 @@ class UsageRepr {
   }
 
   public static class ClassUsage extends Usage {
-    final int className;
+    final int myClassName;
 
     @Override
     public int getOwner() {
-      return className;
+      return myClassName;
     }
 
-    private ClassUsage(final int n) {
-      className = n;
+    private ClassUsage(final int className) {
+      this.myClassName = className;
     }
 
     private ClassUsage(final DataInput in) {
       try {
-        className = in.readInt();
+        myClassName = in.readInt();
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -384,8 +384,8 @@ class UsageRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(CLASS_USAGE);
-        out.writeInt(className);
+        out.writeByte(CLASS_USAGE);
+        out.writeInt(myClassName);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -399,12 +399,12 @@ class UsageRepr {
 
       final ClassUsage that = (ClassUsage)o;
 
-      return className == that.className;
+      return myClassName == that.myClassName;
     }
 
     @Override
     public int hashCode() {
-      return className;
+      return myClassName;
     }
   }
 
@@ -416,8 +416,8 @@ class UsageRepr {
       return className;
     }
 
-    private ClassExtendsUsage(final int n) {
-      className = n;
+    private ClassExtendsUsage(final int className) {
+      this.className = className;
     }
 
     private ClassExtendsUsage(final DataInput in) {
@@ -432,7 +432,7 @@ class UsageRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(CLASS_EXTENDS_USAGE);
+        out.writeByte(CLASS_EXTENDS_USAGE);
         out.writeInt(className);
       }
       catch (IOException e) {
@@ -459,8 +459,8 @@ class UsageRepr {
   }
 
   public static class ClassNewUsage extends ClassExtendsUsage {
-    public ClassNewUsage(int n) {
-      super(n);
+    public ClassNewUsage(int className) {
+      super(className);
     }
 
     private ClassNewUsage(final DataInput in) {
@@ -470,7 +470,7 @@ class UsageRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(CLASS_NEW_USAGE);
+        out.writeByte(CLASS_NEW_USAGE);
         out.writeInt(className);
       }
       catch (IOException e) {
@@ -485,22 +485,27 @@ class UsageRepr {
   }
 
   public static class AnnotationUsage extends Usage {
-    public static final DataExternalizer<ElementType> elementTypeExternalizer = new DataExternalizer<ElementType>() {
+    public static final DataExternalizer<ElemType> elementTypeExternalizer = new DataExternalizer<ElemType>() {
       @Override
-      public void save(final DataOutput out, final ElementType value) throws IOException {
-        out.writeUTF(value.toString());
+      public void save(final DataOutput out, final ElemType value) throws IOException {
+        out.writeInt(value.ordinal());
       }
 
       @Override
-      public ElementType read(final DataInput in) throws IOException {
-        final String s = in.readUTF();
-        return ElementType.valueOf(s);
+      public ElemType read(final DataInput in) throws IOException {
+        final int ordinal = in.readInt();
+        for (ElemType value : ElemType.values()) {
+          if (value.ordinal() == ordinal) {
+            return value;
+          }
+        }
+        throw new IOException("Error reading ElementType enum value; unknown ordinal: " + ordinal);
       }
     };
 
     final TypeRepr.ClassType type;
     final TIntHashSet usedArguments;
-    final Collection<ElementType> usedTargets;
+    final Set<ElemType> usedTargets;
 
     public boolean satisfies(final Usage usage) {
       if (usage instanceof AnnotationUsage) {
@@ -523,7 +528,7 @@ class UsageRepr {
         boolean targetsSatisfy = false;
 
         if (usedTargets != null) {
-          final Collection<ElementType> targets = new HashSet<ElementType>(usedTargets);
+          final Collection<ElemType> targets = EnumSet.copyOf(usedTargets);
 
           targets.retainAll(annotationUsage.usedTargets);
 
@@ -536,9 +541,7 @@ class UsageRepr {
       return false;
     }
 
-    private AnnotationUsage(final TypeRepr.ClassType type,
-                            final TIntHashSet usedArguments,
-                            final Collection<ElementType> targets) {
+    private AnnotationUsage(final TypeRepr.ClassType type, final TIntHashSet usedArguments, final Set<ElemType> targets) {
       this.type = type;
       this.usedArguments = usedArguments;
       this.usedTargets = targets;
@@ -550,7 +553,7 @@ class UsageRepr {
       try {
         type = (TypeRepr.ClassType)externalizer.read(in);
         usedArguments = RW.read(new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR), in);
-        usedTargets = RW.read(elementTypeExternalizer, new HashSet<ElementType>(), in);
+        usedTargets = (EnumSet<ElemType>)RW.read(elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -560,7 +563,7 @@ class UsageRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(ANNOTATION_USAGE);
+        out.writeByte(ANNOTATION_USAGE);
         type.save(out);
         RW.save(usedArguments, out);
         RW.save(usedTargets, elementTypeExternalizer, out);
@@ -598,24 +601,15 @@ class UsageRepr {
     }
   }
 
-  public static Usage createFieldUsage(final DependencyContext context,
-                                       final int name,
-                                       final int owner,
-                                       final int descr) {
+  public static Usage createFieldUsage(final DependencyContext context, final int name, final int owner, final int descr) {
     return context.getUsage(new FieldUsage(context, name, owner, descr));
   }
 
-  public static Usage createFieldAssignUsage(final DependencyContext context,
-                                             final int name,
-                                             final int owner,
-                                             final int descr) {
+  public static Usage createFieldAssignUsage(final DependencyContext context, final int name, final int owner, final int descr) {
     return context.getUsage(new FieldAssignUsage(context, name, owner, descr));
   }
 
-  public static Usage createMethodUsage(final DependencyContext context,
-                                        final int name,
-                                        final int owner,
-                                        final String descr) {
+  public static Usage createMethodUsage(final DependencyContext context, final int name, final int owner, final String descr) {
     return context.getUsage(new MethodUsage(context, name, owner, descr));
   }
 
@@ -636,7 +630,7 @@ class UsageRepr {
     return context.getUsage(new ClassNewUsage(name));
   }
 
-  public static Usage createAnnotationUsage(final DependencyContext context, final TypeRepr.ClassType type, final TIntHashSet usedArguments, final Collection<ElementType> targets) {
+  public static Usage createAnnotationUsage(final DependencyContext context, final TypeRepr.ClassType type, final TIntHashSet usedArguments, final Set<ElemType> targets) {
     return context.getUsage(new AnnotationUsage(type, usedArguments, targets));
   }
 
@@ -649,7 +643,8 @@ class UsageRepr {
 
       @Override
       public Usage read(DataInput in) throws IOException {
-        switch (in.readInt()) {
+        final byte tag = in.readByte();
+        switch (tag) {
           case CLASS_USAGE:
             return context.getUsage(new ClassUsage(in));
 

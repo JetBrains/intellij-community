@@ -19,9 +19,9 @@ import java.util.Collection;
  * To change this template use File | Settings | File Templates.
  */
 class TypeRepr {
-  private final static int PRIMITIVE_TYPE = 0;
-  private final static int CLASS_TYPE = 1;
-  private final static int ARRAY_TYPE = 2;
+  private static final byte PRIMITIVE_TYPE = 0x0;
+  private static final byte CLASS_TYPE = 0x1;
+  private static final byte ARRAY_TYPE = 0x2;
 
   private TypeRepr() {
 
@@ -49,7 +49,7 @@ class TypeRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(PRIMITIVE_TYPE);
+        out.writeByte(PRIMITIVE_TYPE);
         out.writeInt(myType);
       }
       catch (IOException e) {
@@ -131,7 +131,7 @@ class TypeRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(ARRAY_TYPE);
+        out.writeByte(ARRAY_TYPE);
         elementType.save(out);
       }
       catch (IOException e) {
@@ -199,7 +199,7 @@ class TypeRepr {
     @Override
     public void save(final DataOutput out) {
       try {
-        out.writeInt(CLASS_TYPE);
+        out.writeByte(CLASS_TYPE);
         out.writeInt(className);
         out.writeInt(typeArgs.length);
         for (AbstractType t : typeArgs) {
@@ -283,7 +283,8 @@ class TypeRepr {
 
         loop:
         while (true) {
-          switch (in.readInt()) {
+          final byte tag = in.readByte();
+          switch (tag) {
             case PRIMITIVE_TYPE:
               elementType = context.getType(new PrimitiveType(in));
               break loop;
@@ -295,6 +296,9 @@ class TypeRepr {
             case ARRAY_TYPE:
               level++;
               break;
+
+            default :
+              System.out.println("Unknown type!");
           }
         }
 
