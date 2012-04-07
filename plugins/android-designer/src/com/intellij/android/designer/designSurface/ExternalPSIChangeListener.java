@@ -59,7 +59,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     if (myRunState) {
       myRunState = false;
       PsiManager.getInstance(myFile.getProject()).removePsiTreeChangeListener(this);
-      myAlarm.cancelAllRequests();
+      clear();
     }
   }
 
@@ -100,7 +100,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   }
 
   public void addRequest(final Runnable runnable) {
-    myAlarm.cancelAllRequests();
+    clear();
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
@@ -111,6 +111,9 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     }, myDelayMillis, ModalityState.stateForComponent(myComponent));
   }
 
+  public void clear() {
+    myAlarm.cancelAllRequests();
+  }
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // PSI

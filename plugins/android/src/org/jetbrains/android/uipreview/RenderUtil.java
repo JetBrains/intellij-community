@@ -182,14 +182,15 @@ public class RenderUtil {
             exception instanceof ClassCastException &&
             (SdkConstants.CLASS_MOCK_VIEW + " cannot be cast to " + SdkConstants.CLASS_VIEWGROUP)
               .equalsIgnoreCase(exception.getMessage())) {
-          throw new RenderingException(exceptionsFromWarnings.toArray(new Throwable[exceptionsFromWarnings.size()]));
+          throw new RenderingException(exceptionsFromWarnings.toArray(new Throwable[exceptionsFromWarnings.size()]))
+            .setWarnMessages(warnMessages);
         }
-        throw new RenderingException(exception);
+        throw new RenderingException(exception).setWarnMessages(warnMessages);
       }
       final String message = result.getErrorMessage();
       if (message != null) {
         LOG.info(message);
-        throw new RenderingException();
+        throw new RenderingException().setWarnMessages(warnMessages);
       }
       return null;
     }

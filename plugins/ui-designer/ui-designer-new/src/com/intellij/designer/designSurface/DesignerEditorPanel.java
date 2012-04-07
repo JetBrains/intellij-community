@@ -80,6 +80,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   private final static String DESIGNER_CARD = "designer";
   private final static String ERROR_CARD = "error";
+  private final static String ERROR_STACK_CARD = "stack";
+  private final static String ERROR_NO_STACK_CARD = "no_stack";
 
   protected final Module myModule;
   protected final VirtualFile myFile;
@@ -114,7 +116,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private JPanel myErrorStackPanel;
   private CardLayout myErrorStackLayout;
   private JTextArea myErrorStack;
-  private boolean myLastShowStack;
 
   private JPanel myProgressPanel;
   private AsyncProcessIcon myProgressIcon;
@@ -253,7 +254,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
       @Override
       public void showError(@NonNls String message, Throwable e) {
-        DesignerEditorPanel.this.showError(message, e, null);
+        DesignerEditorPanel.this.showError(message, e);
       }
     };
 
@@ -289,13 +290,13 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected final void showDesignerCard() {
     myErrorMessages.removeAll();
     myErrorStack.setText(null);
+    myLayeredPane.revalidate();
     myLayout.show(this, DESIGNER_CARD);
   }
 
   private void createErrorCard() {
     myErrorPanel = new JPanel(new BorderLayout());
-
-    myErrorMessages = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+    myErrorMessages = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
     myErrorPanel.add(myErrorMessages, BorderLayout.PAGE_START);
 
     myErrorStack = new JTextArea(50, 20);
@@ -303,15 +304,15 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myErrorStackLayout = new CardLayout();
     myErrorStackPanel = new JPanel(myErrorStackLayout);
-    myErrorStackPanel.add(new JLabel(), "No_Stack");
-    myErrorStackPanel.add(ScrollPaneFactory.createScrollPane(myErrorStack), "Stack");
+    myErrorStackPanel.add(new JLabel(), ERROR_NO_STACK_CARD);
+    myErrorStackPanel.add(ScrollPaneFactory.createScrollPane(myErrorStack), ERROR_STACK_CARD);
 
     myErrorPanel.add(myErrorStackPanel, BorderLayout.CENTER);
 
     add(myErrorPanel, ERROR_CARD);
   }
 
-  public final void showError(@NotNull String message, @NotNull Throwable e, @Nullable Object data) {
+  public final void showError(@NotNull String message, @NotNull Throwable e) {
     while (e instanceof InvocationTargetException) {
       if (e.getCause() == null) {
         break;
@@ -322,7 +323,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     ErrorInfo info = new ErrorInfo();
     info.myMessage = info.myDisplayMessage = message;
     info.myThrowable = e;
-    configureError(info, data);
+    configureError(info);
 
     if (info.myShowMessage) {
       showErrorPage(info);
@@ -337,9 +338,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
   }
 
-  protected abstract void configureError(@NotNull ErrorInfo info, @Nullable Object data);
+  protected abstract void configureError(final @NotNull ErrorInfo info);
 
-  protected void showErrorPage(ErrorInfo info) {
+  protected void showErrorPage(final ErrorInfo info) {
     storeState();
     hideProgress();
     myRootComponent = null;
@@ -347,22 +348,16 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorMessages.removeAll();
 
     if (info.myShowStack) {
-      info.myMessages.add(0, new FixableMessageInfo(true, info.myDisplayMessage + " ", "Show details", "", new Runnable() {
-        @Override
-        public void run() {
-          myErrorStackLayout.next(myErrorStackPanel);
-          myLastShowStack = !myLastShowStack;
-        }
-      }, null));
+      info.myMessages.add(0, new FixableMessageInfo(true, info.myDisplayMessage, "", "", null, null));
 
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
       info.myThrowable.printStackTrace(new PrintStream(stream));
       myErrorStack.setText(stream.toString());
-      myErrorStackLayout.show(myErrorStackPanel, myLastShowStack ? "Stack" : "No_Stack");
+      myErrorStackLayout.show(myErrorStackPanel, ERROR_STACK_CARD);
     }
     else {
       myErrorStack.setText(null);
-      myErrorStackLayout.show(myErrorStackPanel, "No_Stack");
+      myErrorStackLayout.show(myErrorStackPanel, ERROR_NO_STACK_CARD);
     }
 
     for (FixableMessageInfo message : info.myMessages) {
@@ -380,9 +375,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
       HyperlinkLabel warnLabel = new HyperlinkLabel();
       warnLabel.setOpaque(false);
-      warnLabel.setHyperlinkText(message.myBeforeLinkText,
-                                 message.myLinkText,
-                                 message.myAfterLinkText);
+      warnLabel.setHyperlinkText(message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText);
       warnLabel.setIcon(icon);
 
       if (message.myQuickFix != null) {

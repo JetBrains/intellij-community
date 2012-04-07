@@ -54,7 +54,6 @@ import org.jetbrains.android.uipreview.*;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -99,7 +98,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           myPSIChangeListener.activate();
           myPSIChangeListener.addRequest();
         }
-        else if (myProfileLastVersion != myProfileAction.getVersion()) {
+        else if (myProfileLastVersion != myProfileAction.getVersion() ||
+                 !ProfileManager.isAndroidSdk(myProfileAction.getCurrentSdk())) {
           myPSIChangeListener.addRequest(new Runnable() {
             @Override
             public void run() {
@@ -154,13 +154,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                       rootView.setImage(mySession.getImage());
                       ModelParser.updateRootComponent(rootComponent, mySession, rootView);
 
-                      myLayeredPane.repaint();
+                      myLayeredPane.revalidate();
 
                       DesignerToolWindowManager.getInstance(getProject()).refresh(true);
                     }
                   }
                   catch (Throwable e) {
-                    showError("reRender error: ", e, null);
+                    showError("Render error", e);
                   }
                 }
               }, new Condition() {
@@ -177,20 +177,30 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   private void reparseFile() {
-    storeState();
-    parseFile(new Runnable() {
-      @Override
-      public void run() {
-        showDesignerCard();
-        myLayeredPane.repaint();
-        restoreState();
-      }
-    });
+    try {
+      storeState();
+      showDesignerCard();
+
+      parseFile(new Runnable() {
+        @Override
+        public void run() {
+          showDesignerCard();
+          myLayeredPane.revalidate();
+          restoreState();
+        }
+      });
+    }
+    catch (RuntimeException e) {
+      myPSIChangeListener.clear();
+      showError("Parsing error", e.getCause());
+    }
   }
 
   private void parseFile(final Runnable runnable) {
     myParseTime = true;
+
     final ModelParser parser = new ModelParser(getProject(), myXmlFile);
+
     createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
       @Override
       public void run() throws Throwable {
@@ -234,8 +244,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        RenderingResult result = null;
-
         try {
           long time = System.currentTimeMillis();
 
@@ -276,7 +284,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             throw new RenderingException();
           }
 
-          result = RenderUtil.renderLayout(myModule, layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
+          RenderingResult result =
+            RenderUtil.renderLayout(myModule, layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
 
           if (ApplicationManagerEx.getApplicationEx().isInternal()) {
             System.out.println("Render time: " + (System.currentTimeMillis() - time));
@@ -297,19 +306,22 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                 runnable.run();
               }
               catch (Throwable e) {
-                showError("Parse error: ", e, null);
+                myPSIChangeListener.clear();
+                showError("Parsing error", e);
                 myParseTime = false;
               }
             }
           });
         }
         catch (final Throwable e) {
+          myPSIChangeListener.clear();
           mySessionAlarm.cancelAllRequests();
-          final Object data = result;
+
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              showError("Render session error: ", e, data);
+              myPSIChangeListener.clear();
+              showError("Render error", e);
               myParseTime = false;
             }
           });
@@ -346,7 +358,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
         myParseTime = false;
 
-        myLayeredPane.repaint();
+        myLayeredPane.revalidate();
 
         DesignerToolWindowManager.getInstance(getProject()).refresh(updateProperties);
       }
@@ -360,7 +372,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   @Override
-  protected void configureError(@NotNull ErrorInfo info, @Nullable Object data) {
+  protected void configureError(@NotNull ErrorInfo info) {
     if (info.myThrowable instanceof AndroidSdkNotConfiguredException) {
       info.myShowLog = false;
       info.myShowStack = false;
@@ -379,17 +391,28 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       }
     }
     else {
+      List<FixableIssueMessage> warnMessages = null;
       boolean renderError = info.myThrowable instanceof RenderingException;
 
       if (renderError) {
         RenderingException exception = (RenderingException)info.myThrowable;
-        String message = exception.getPresentableMessage();
-        if (!StringUtil.isEmpty(message)) {
-          info.myDisplayMessage += "\n" + message;
+        warnMessages = exception.getWarnMessages();
+
+        if (StringUtil.isEmpty(exception.getPresentableMessage())) {
+          Throwable[] causes = exception.getCauses();
+          if (causes.length == 0) {
+            info.myThrowable = new RenderingException(AndroidBundle.message("android.layout.preview.default.error.message"));
+          }
+          else if (causes.length == 1) {
+            info.myThrowable = causes[0];
+          }
+          else {
+            info.myThrowable = new RenderingException(AndroidBundle.message("android.layout.preview.default.error.message"), causes);
+          }
         }
       }
 
-      if (data == null) {
+      if (warnMessages == null) {
         info.myShowMessage = myParseTime || renderError;
         info.myShowLog = !renderError;
       }
@@ -397,8 +420,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         info.myShowLog = false;
         info.myShowStack = true;
 
-        RenderingResult result = (RenderingResult)data;
-        for (FixableIssueMessage message : result.getWarnMessages()) {
+        for (FixableIssueMessage message : warnMessages) {
           info.myMessages.add(
             new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText, message.myQuickFix,
                                    message.myAdditionalFixes));
@@ -422,6 +444,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected void showErrorPage(ErrorInfo info) {
+    myPSIChangeListener.clear();
     mySessionAlarm.cancelAllRequests();
     removeNativeRoot();
     super.showErrorPage(info);
@@ -495,7 +518,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       return true;
     }
     catch (Throwable e) {
-      showError("Execute command", e, null);
+      showError("Execute command", e);
       return false;
     }
     finally {
@@ -513,7 +536,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       updateRenderer(true);
     }
     catch (Throwable e) {
-      showError("Execute command", e, null);
+      showError("Execute command", e);
     }
     finally {
       myPSIChangeListener.start();

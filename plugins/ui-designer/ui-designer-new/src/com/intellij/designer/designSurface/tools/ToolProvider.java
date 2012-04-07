@@ -49,7 +49,7 @@ public abstract class ToolProvider {
         }
       }
       catch (Throwable e) {
-        showError("Edit error: ", e);
+        showError("Edit operation", e);
       }
     }
   }
@@ -84,7 +84,7 @@ public abstract class ToolProvider {
         }
       }
       catch (Throwable e) {
-        showError("Edit error: ", e);
+        showError("Edit operation", e);
       }
     }
   }
@@ -122,7 +122,7 @@ public abstract class ToolProvider {
           myTool.mouseMove(myEvent, myArea);
         }
         catch (Exception e) {
-          showError("Edit error: ", e);
+          showError("Edit operation", e);
         }
       }
     }

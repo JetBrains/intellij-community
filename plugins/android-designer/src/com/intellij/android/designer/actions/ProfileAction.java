@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -153,9 +154,17 @@ public class ProfileAction {
 
   public void externalUpdate() {
     Sdk sdk = myProfileList.getModuleSdk(myDesigner.getModule());
-    if ((sdk != null && !sdk.equals(myProfileManager.getSdk())) || myVersion != myProfileList.getVersion()) {
+    if ((sdk != null && !sdk.equals(getCurrentSdk()))) {
+      myProfileManager.update(sdk);
+    }
+    else if (myVersion != myProfileList.getVersion()) {
       updateActions();
     }
+  }
+
+  @Nullable
+  public Sdk getCurrentSdk() {
+    return myProfileManager.getSdk();
   }
 
   public int getVersion() {
