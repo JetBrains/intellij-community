@@ -61,25 +61,7 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
     final JComponent mainPanel = propertiesPanel.getPanel();
     final String displayName = myBreakpointWithHighlighter.getDisplayName();
 
-
-    final Runnable showMoreOptions = new Runnable() {
-      @Override
-      public void run() {
-        propertiesPanel.setMoreOptionsVisible(true);
-        DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, null);
-      }
-    };
-    final Balloon balloon =
-      DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
-    propertiesPanel.setDelegate(new BreakpointPropertiesPanel.Delegate() {
-      @Override
-      public void showActionsPanel() {
-        propertiesPanel.setActionsPanelVisible(true);
-        balloon.hide();
-        DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
-      }
-    });
-    balloon.addListener(new JBPopupListener() {
+    final JBPopupListener saveOnClose = new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
       }
@@ -92,7 +74,29 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
           }
         });
       }
+    };
+
+    final Runnable showMoreOptions = new Runnable() {
+      @Override
+      public void run() {
+        propertiesPanel.setMoreOptionsVisible(true);
+        final Balloon newBalloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, null);
+        newBalloon.addListener(saveOnClose);
+      }
+    };
+    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
+    balloon.addListener(saveOnClose);
+
+    propertiesPanel.setDelegate(new BreakpointPropertiesPanel.Delegate() {
+      @Override
+      public void showActionsPanel() {
+        propertiesPanel.setActionsPanelVisible(true);
+        balloon.hide();
+        final Balloon newBalloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
+        newBalloon.addListener(saveOnClose);
+      }
     });
+
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
