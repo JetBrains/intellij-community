@@ -460,7 +460,7 @@ public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
       if (oldViewableBreakpoint == null) {
         ((CardLayout)myPropertiesPanelPlace.getLayout()).show(myPropertiesPanelPlace, PROPERTIES_DATA);
       }
-      myPropertiesPanel.initFrom(myCurrentViewableBreakpoint);
+      myPropertiesPanel.initFrom(myCurrentViewableBreakpoint, true);
     }
     else {
       ((CardLayout)myPropertiesPanelPlace.getLayout()).show(myPropertiesPanelPlace, PROPERTIES_STUB);

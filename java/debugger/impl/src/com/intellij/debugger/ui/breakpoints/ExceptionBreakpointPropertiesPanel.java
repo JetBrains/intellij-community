@@ -93,10 +93,10 @@ public class ExceptionBreakpointPropertiesPanel extends BreakpointPropertiesPane
     myPassCountCheckbox.setEnabled(!(myExceptionBreakpoint instanceof AnyExceptionBreakpoint));
   }
 
-  public void initFrom(Breakpoint breakpoint) {
+  public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible) {
     ExceptionBreakpoint exceptionBreakpoint = (ExceptionBreakpoint)breakpoint;
     myExceptionBreakpoint = exceptionBreakpoint;
-    super.initFrom(breakpoint);
+    super.initFrom(breakpoint, moreOptionsVisible);
 
     myNotifyCaughtCheckBox.setSelected(exceptionBreakpoint.NOTIFY_CAUGHT);
     myNotifyUncaughtCheckBox.setSelected(exceptionBreakpoint.NOTIFY_UNCAUGHT);
