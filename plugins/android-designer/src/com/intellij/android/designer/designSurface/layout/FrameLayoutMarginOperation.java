@@ -24,7 +24,7 @@ import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
-import com.intellij.designer.designSurface.feedbacks.RectangleComponent;
+import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizePoint;
@@ -49,7 +49,7 @@ public class FrameLayoutMarginOperation implements EditOperation {
 
   private final OperationContext myContext;
   private RadViewComponent myComponent;
-  private RectangleComponent myFeedback;
+  private RectangleFeedback myFeedback;
   private TextFeedback myTextFeedback;
   private Rectangle myMargins;
 
@@ -75,7 +75,7 @@ public class FrameLayoutMarginOperation implements EditOperation {
       myTextFeedback.setBorder(new LineMarginBorder(0, 5, 3, 0));
       layer.add(myTextFeedback);
 
-      myFeedback = new RectangleComponent(Color.orange, 2);
+      myFeedback = new RectangleFeedback(Color.orange, 2);
       layer.add(myFeedback);
 
       layer.repaint();

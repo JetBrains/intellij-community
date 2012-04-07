@@ -21,7 +21,7 @@ import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
+import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -193,7 +193,7 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   private static final Gravity[] HORIZONTAL = {Gravity.left, Gravity.center, Gravity.right};
   private static final Gravity[] VERTICAL = {Gravity.top, Gravity.center, Gravity.bottom};
 
-  private class GravityFeedback extends AlphaComponent {
+  private class GravityFeedback extends AlphaFeedback {
 
     private Gravity myHorizontal;
     private Gravity myVertical;

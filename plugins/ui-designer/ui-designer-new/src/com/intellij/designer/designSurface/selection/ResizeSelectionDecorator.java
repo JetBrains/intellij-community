@@ -33,6 +33,10 @@ public class ResizeSelectionDecorator extends NonResizeSelectionDecorator {
     super(color, lineWidth);
   }
 
+  public void clear() {
+    myPoints.clear();
+  }
+
   public void addPoint(ResizePoint point) {
     myPoints.add(point);
   }

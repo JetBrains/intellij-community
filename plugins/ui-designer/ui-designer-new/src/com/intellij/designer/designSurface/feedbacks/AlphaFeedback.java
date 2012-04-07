@@ -21,28 +21,25 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class AlphaComponent extends JComponent {
+public class AlphaFeedback extends JComponent {
   private static final AlphaComposite myComposite1 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.3f);
   private static final AlphaComposite myComposite2 = AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.6f);
 
   private final Color myColor;
   private final Color myBorderColor;
 
-  public AlphaComponent(Color color) {
+  public AlphaFeedback(Color color) {
     this(color, color);
   }
 
-  public AlphaComponent(Color color, Color borderColor) {
+  public AlphaFeedback(Color color, Color borderColor) {
     myColor = color;
     myBorderColor = borderColor;
   }
 
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-
     Graphics2D g2d = (Graphics2D)g;
-    Composite oldComposite = g2d.getComposite();
-    Color oldColor = g2d.getColor();
 
     g2d.setColor(myColor);
     g2d.setComposite(myComposite1);
@@ -53,9 +50,6 @@ public class AlphaComponent extends JComponent {
     g2d.setComposite(myComposite2);
     g2d.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
     paintOther2(g2d);
-
-    g2d.setColor(oldColor);
-    g2d.setComposite(oldComposite);
   }
 
   protected void paintOther1(Graphics2D g2d) {

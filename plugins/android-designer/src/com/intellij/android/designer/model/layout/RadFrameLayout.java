@@ -46,6 +46,16 @@ import java.util.List;
 public class RadFrameLayout extends RadViewLayoutWithData {
   private static final String[] LAYOUT_PARAMS = {"FrameLayout_Layout", "ViewGroup_MarginLayout"};
 
+  private final ResizeSelectionDecorator mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1) {
+    @Override
+    protected boolean visible(RadComponent component, ResizePoint point) {
+      if (point.getType() == FrameLayoutMarginOperation.TYPE) {
+        return FrameLayoutMarginOperation.visible(component, (DirectionResizePoint)point);
+      }
+      return true;
+    }
+  };
+
   @Override
   @NotNull
   public String[] getLayoutParams() {
@@ -71,20 +81,12 @@ public class RadFrameLayout extends RadViewLayoutWithData {
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    ResizeSelectionDecorator decorator = new ResizeSelectionDecorator(Color.red, 1) {
-      @Override
-      protected boolean visible(RadComponent component, ResizePoint point) {
-        if (point.getType() == FrameLayoutMarginOperation.TYPE) {
-          return FrameLayoutMarginOperation.visible(component, (DirectionResizePoint)point);
-        }
-        return true;
-      }
-    };
+    mySelectionDecorator.clear();
     if (selection.size() == 1) {
-      FrameLayoutMarginOperation.points(decorator);
+      FrameLayoutMarginOperation.points(mySelectionDecorator);
     }
-    ResizeOperation.points(decorator);
-    return decorator;
+    ResizeOperation.points(mySelectionDecorator);
+    return mySelectionDecorator;
   }
 
   private static List<Pair<Boolean, Gravity>> ITEMS = Arrays

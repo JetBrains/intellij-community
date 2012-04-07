@@ -13,45 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.designSurface;
+package com.intellij.android.designer.designSurface.layout;
 
+import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
+import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public class DropToOperation extends AbstractEditOperation {
-  private JComponent myFeedback;
+public abstract class FlowBaseOperation extends AbstractEditOperation {
+  protected final boolean myHorizontal;
+  protected RectangleFeedback myInsertFeedback;
 
-  public DropToOperation(RadViewComponent container, OperationContext context) {
+  public FlowBaseOperation(RadViewComponent container, OperationContext context, boolean horizontal) {
     super(container, context);
+    myHorizontal = horizontal;
   }
 
   @Override
   public void showFeedback() {
-    FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-
-    if (myFeedback == null) {
-      myFeedback = new AlphaFeedback(Color.green);
-      layer.add(myFeedback);
-      myFeedback.setBounds(myContainer.getBounds(layer));
+    if (myInsertFeedback == null) {
+      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+      myInsertFeedback = new RectangleFeedback(Color.green, 2);
+      myInsertFeedback.setBounds(myContainer.getBounds(layer));
+      layer.add(myInsertFeedback);
       layer.repaint();
     }
+    // TODO: Auto-generated method stub
   }
 
   @Override
   public void eraseFeedback() {
-    if (myFeedback != null) {
+    if (myInsertFeedback != null) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-      layer.remove(myFeedback);
+      layer.remove(myInsertFeedback);
       layer.repaint();
-      myFeedback = null;
+      myInsertFeedback = null;
     }
+    // TODO: Auto-generated method stub
+  }
+
+  @Override
+  public boolean canExecute() {
+    return super.canExecute(); // TODO: Auto-generated method stub
   }
 }

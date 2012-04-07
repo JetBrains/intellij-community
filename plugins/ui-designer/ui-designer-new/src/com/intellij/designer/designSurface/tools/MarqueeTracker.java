@@ -16,9 +16,9 @@
 package com.intellij.designer.designSurface.tools;
 
 import com.intellij.designer.designSurface.FeedbackLayer;
+import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
-import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
 import com.intellij.designer.utils.Cursors;
 
 import javax.swing.*;
@@ -110,7 +110,7 @@ public class MarqueeTracker extends InputTool {
     FeedbackLayer layer = myArea.getFeedbackLayer();
 
     if (myFeedback == null) {
-      myFeedback = new AlphaComponent(myColor);
+      myFeedback = new AlphaFeedback(myColor);
       layer.add(myFeedback);
     }
 

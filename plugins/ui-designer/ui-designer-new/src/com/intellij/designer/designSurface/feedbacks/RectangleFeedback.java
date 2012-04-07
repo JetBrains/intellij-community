@@ -21,11 +21,11 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class RectangleComponent extends JComponent {
+public class RectangleFeedback extends JComponent {
   private final Color myColor;
   private final int myLine;
 
-  public RectangleComponent(Color color, int line) {
+  public RectangleFeedback(Color color, int line) {
     myColor = color;
     myLine = line;
   }
