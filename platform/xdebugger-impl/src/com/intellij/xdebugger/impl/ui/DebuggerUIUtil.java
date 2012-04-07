@@ -245,7 +245,7 @@ public class DebuggerUIUtil {
 
     final Balloon balloon = JBPopupFactory.getInstance().
       createDialogBalloonBuilder(editor.getMainPanel(), displayName).
-      setHideOnClickOutside(true).
+      setHideOnClickOutside(false).
       setCloseButtonEnabled(false).
       createBalloon();
 

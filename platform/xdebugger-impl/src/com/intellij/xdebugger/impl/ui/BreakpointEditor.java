@@ -15,6 +15,10 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CompositeShortcutSet;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 
@@ -69,6 +73,13 @@ public class BreakpointEditor {
         done();
       }
     });
+
+    final AnAction doneAction = new AnAction() {
+      public void actionPerformed(AnActionEvent e) {
+        done();
+      }
+    };
+    doneAction.registerCustomShortcutSet(new CompositeShortcutSet(CustomShortcutSet.fromString("ESCAPE"), CustomShortcutSet.fromString("control ENTER")), myMainPanel);
   }
 
   private void done() {

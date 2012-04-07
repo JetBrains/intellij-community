@@ -55,8 +55,7 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
     assert breakpointFactory != null : "can't find factory for breakpoint " + myBreakpointWithHighlighter;
 
     final BreakpointPropertiesPanel propertiesPanel = breakpointFactory.createBreakpointPropertiesPanel(project);
-    propertiesPanel.setMoreOptionsVisible(false);
-    propertiesPanel.initFrom(myBreakpointWithHighlighter);
+    propertiesPanel.initFrom(myBreakpointWithHighlighter, false);
 
     final JComponent mainPanel = propertiesPanel.getPanel();
     final String displayName = myBreakpointWithHighlighter.getDisplayName();
@@ -84,7 +83,7 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
         newBalloon.addListener(saveOnClose);
       }
     };
-    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
+    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, propertiesPanel.isMoreOptionsVisible() ? null : showMoreOptions);
     balloon.addListener(saveOnClose);
 
     propertiesPanel.setDelegate(new BreakpointPropertiesPanel.Delegate() {
@@ -92,7 +91,8 @@ public class JavaEditBreakpointAction extends EditBreakpointAction {
       public void showActionsPanel() {
         propertiesPanel.setActionsPanelVisible(true);
         balloon.hide();
-        final Balloon newBalloon = DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
+        final Balloon newBalloon =
+          DebuggerUIUtil.showBreakpointEditor(mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
         newBalloon.addListener(saveOnClose);
       }
     });
