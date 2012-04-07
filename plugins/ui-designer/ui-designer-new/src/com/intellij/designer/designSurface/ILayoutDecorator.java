@@ -15,27 +15,8 @@
  */
 package com.intellij.designer.designSurface;
 
-import com.intellij.designer.designSurface.tools.InputTool;
-import com.intellij.designer.model.RadComponent;
-
-import java.awt.*;
-
 /**
  * @author Alexander Lobas
  */
-public abstract class StaticDecorator extends ComponentDecorator {
-  private final RadComponent myComponent;
-
-  public StaticDecorator(RadComponent component) {
-    myComponent = component;
-  }
-
-  @Override
-  public final InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
-    return null;
-  }
-
-  public final void decorate(DecorationLayer layer, Graphics2D host) {
-    decorate(layer, host, myComponent);
-  }
+public interface ILayoutDecorator {
 }

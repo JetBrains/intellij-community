@@ -114,6 +114,11 @@ public abstract class MetaManager {
 
     Element properties = element.getChild("properties");
     if (properties != null) {
+      Attribute top = properties.getAttribute("top");
+      if (top != null) {
+        meta.setTopProperties(StringUtil.split(top.getValue(), " "));
+      }
+
       Attribute normal = properties.getAttribute("normal");
       if (normal != null) {
         meta.setNormalProperties(StringUtil.split(normal.getValue(), " "));

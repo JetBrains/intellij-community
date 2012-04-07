@@ -484,7 +484,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected ComponentDecorator getRootSelectionDecorator() {
-    return new NonResizeSelectionDecorator(Color.RED, 1);
+    return new NonResizeSelectionDecorator(Color.RED, 2);
   }
 
   @Override

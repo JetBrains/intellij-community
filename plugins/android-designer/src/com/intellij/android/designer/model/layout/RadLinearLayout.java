@@ -15,6 +15,8 @@
  */
 package com.intellij.android.designer.model.layout;
 
+import com.intellij.android.designer.designSurface.layout.FlowStaticDecorator;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.model.RadComponent;
@@ -27,8 +29,10 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class RadLinearLayout extends RadViewLayoutWithData {
+public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDecorator {
   private static final String[] LAYOUT_PARAMS = {"LinearLayout_Layout", "ViewGroup_MarginLayout"};
+
+  private FlowStaticDecorator myLineDecorator;
 
   @Override
   @NotNull
@@ -41,9 +45,34 @@ public class RadLinearLayout extends RadViewLayoutWithData {
     return null;
   }
 
+  private StaticDecorator getLineDecorator() {
+    if (myLineDecorator == null) {
+      myLineDecorator = new FlowStaticDecorator(myContainer) {
+        @Override
+        protected boolean isHorizontal() {
+          return !"vertical".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("android:orientation"));
+        }
+      };
+    }
+    return myLineDecorator;
+  }
+
   @Override
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
-    super.addStaticDecorators(decorators, selection); // TODO: Auto-generated method stub
+    if (selection.contains(myContainer)) {
+      if (!(myContainer.getParent().getLayout() instanceof ILayoutDecorator)) {
+        decorators.add(getLineDecorator());
+      }
+    }
+    else {
+      for (RadComponent component : selection) {
+        if (component.getParent() == myContainer) {
+          decorators.add(getLineDecorator());
+          return;
+        }
+      }
+      super.addStaticDecorators(decorators, selection);
+    }
   }
 
   @Override

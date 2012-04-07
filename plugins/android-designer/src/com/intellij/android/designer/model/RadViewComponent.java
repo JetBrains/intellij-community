@@ -16,11 +16,8 @@
 package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -154,25 +151,6 @@ public class RadViewComponent extends RadComponent {
 
     for (RadComponent child : myChildren) {
       child.copyTo(parent);
-    }
-  }
-
-  @Override
-  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
-    RadViewLayout layout = (RadViewLayout)getLayout();
-    if (layout != null) {
-      layout.addStaticDecorators(decorators, selection);
-    }
-  }
-
-  @Override
-  public void addSelectionActions(DesignerEditorPanel designer,
-                                  DefaultActionGroup actionGroup,
-                                  JComponent shortcuts,
-                                  List<RadComponent> selection) {
-    RadViewLayout layout = (RadViewLayout)getLayout();
-    if (layout != null) {
-      layout.addContainerSelectionActions(designer, actionGroup, shortcuts, selection);
     }
   }
 }

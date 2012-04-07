@@ -215,6 +215,12 @@ public class PropertyParser {
             return p1.getName().compareTo(p2.getName());
           }
         });
+
+        if (model != null) {
+          for (String topName : model.getTopProperties()) {
+            PropertyTable.moveProperty(properties, topName, properties, 0);
+          }
+        }
       }
     }
 

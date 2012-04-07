@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface;
+package com.intellij.android.designer.designSurface.layout;
 
-import com.intellij.designer.designSurface.tools.InputTool;
+import com.intellij.designer.designSurface.DecorationLayer;
+import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;
@@ -23,19 +24,18 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public abstract class StaticDecorator extends ComponentDecorator {
-  private final RadComponent myComponent;
+public class BorderStaticDecorator extends StaticDecorator {
+  private static final Color COLOR = new Color(47, 67, 96);
 
-  public StaticDecorator(RadComponent component) {
-    myComponent = component;
+  public BorderStaticDecorator(RadComponent component) {
+    super(component);
   }
 
   @Override
-  public final InputTool findTargetTool(DecorationLayer layer, RadComponent component, int x, int y) {
-    return null;
-  }
+  protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
+    Rectangle bounds = component.getBounds(layer);
 
-  public final void decorate(DecorationLayer layer, Graphics2D host) {
-    decorate(layer, host, myComponent);
+    g.setColor(COLOR);
+    g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 }
