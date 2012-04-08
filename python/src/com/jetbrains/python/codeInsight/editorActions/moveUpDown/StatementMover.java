@@ -87,7 +87,7 @@ public class StatementMover extends LineMover {
             statementList = (PyStatementList)myStatementToMove.getParent();
           }
           if (statementList != null && statementList.getStatements().length > 0) {
-            if ((statementList.getStatements()[0] == myStatementToMove /*&& !down*/)
+            if ((statementList.getStatements()[0] == myStatementToMove && !down)
                 || (statementList.getStatements()[statementList.getStatements().length-1] == myStatementToMove && down)) {
               info.toMove2 = info.toMove;
               return true;
