@@ -15,85 +15,184 @@
  */
 package git4idea.history.browser;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import git4idea.GitVcs;
 import git4idea.PlatformFacade;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitSimpleEventDetector;
+import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
+import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT;
+import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
 public class CherryPicker {
 
-  private static final Logger LOG = Logger.getInstance(CherryPicker.class);
+  @NotNull private final Project myProject;
+  @NotNull private final Git myGit;
+  @NotNull private final PlatformFacade myPlatformFacade;
+  @NotNull private final ChangeListManager myChangeListManager;
+  private final boolean myAutoCommit;
 
-  private GitVcs myVcs;
-  private List<GitCommit> myCommits;
-  @NotNull private CheckinEnvironment myCheckinEnvironment;
-  private LowLevelAccess myAccess;
-
-  private List<VcsException> myExceptions;
-  private List<VcsException> myWarnings;
-  private boolean myConflictsExist;
-  private ChangeListManager myChangeListManager;
-
-  private List<CherryPickedData> myCherryPickedData;
-
-  public CherryPicker(GitVcs vcs, final List<GitCommit> commits, LowLevelAccess access) {
-    myVcs = vcs;
-    myCommits = commits;
-    myAccess = access;
-
-    myChangeListManager = PeriodicalTasksCloser.getInstance().safeGetComponent(myVcs.getProject(), ChangeListManager.class);
-    CheckinEnvironment ce = myVcs.getCheckinEnvironment();
-    LOG.assertTrue(ce != null);
-    myCheckinEnvironment = ce;
-
-    myExceptions = new ArrayList<VcsException>();
-    myWarnings = new ArrayList<VcsException>();
-    myCherryPickedData = new ArrayList<CherryPickedData>();
+  public CherryPicker(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade platformFacade, boolean autoCommit) {
+    myProject = project;
+    myGit = git;
+    myPlatformFacade = platformFacade;
+    myAutoCommit = autoCommit;
+    myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
   }
 
-  public CherryPicker(Project project, Git git, PlatformFacade platformFacade, GitRepositoryManager repositoryManager, boolean autoCommit) {
-  }
-
-  public void cherryPick(Map<GitRepository, List<GitCommit>> commitsInRoots) {
-
-  }
-
-  public void execute() {
-    for (GitCommit commit : myCommits) {
-      cherryPickStep(commit);
+  public void cherryPick(@NotNull Map<GitRepository, List<GitCommit>> commitsInRoots) {
+    List<GitCommit> successfulCommits = new ArrayList<GitCommit>();
+    for (Map.Entry<GitRepository, List<GitCommit>> entry : commitsInRoots.entrySet()) {
+      if (!cherryPick(entry.getKey(), entry.getValue(), successfulCommits)) {
+        return;
+      }
     }
-
-    // remove those that are in newer lists
-    checkListsForSamePaths();
-
-    refreshChangedFiles();
-    findAndProcessChangedForVcs();
-
-    showResults();
+    notifySuccess(successfulCommits);
   }
 
-  private void refreshChangedFiles() {
-    for (FilePath file : getAllChangedFiles()) {
-      VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getPath());
+  private boolean cherryPick(@NotNull GitRepository repository, @NotNull List<GitCommit> commits,
+                             @NotNull List<GitCommit> successfulCommits) {
+    if (myAutoCommit) {
+      GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(CHERRY_PICK_CONFLICT);
+      GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
+      for (GitCommit commit : commits) {
+        GitCommandResult result = myGit.cherryPick(repository, commit.getHash().getValue(), true,
+                                                   conflictDetector, localChangesOverwrittenDetector);
+        if (result.success()) {
+          successfulCommits.add(commit);
+        }
+        else if (conflictDetector.hasHappened()) {
+          boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
+                                                                  commit.getShortHash().getString(), commit.getAuthor(),
+                                                                  commit.getSubject()).merge();
+          if (mergeCompleted) {
+            boolean committed = updateChangeListManagerAndShowCommitDialogIfNeeded(commit, true);
+            if (!committed) {
+              notifyConflictWarning(commit, successfulCommits);
+              return false;
+            }
+            else {
+              successfulCommits.add(commit);
+            }
+          }
+          else {
+            updateChangeListManagerAndShowCommitDialogIfNeeded(commit, false);
+            notifyConflictWarning(commit, successfulCommits);
+            return false;
+          }
+        }
+        else {
+          // including localChangesOverwrittenDetector.hasHappened() - no special handler for now
+          notifyError(result.getErrorOutputAsHtmlString(), commit, successfulCommits);
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private void notifyConflictWarning(GitCommit commit, List<GitCommit> successfulCommits) {
+    String description = commitDetails(commit);
+    description += getSuccessfulCommitDetailsIfAny(successfulCommits, description);
+    myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-picked with conflicts", description);
+  }
+
+  private boolean updateChangeListManagerAndShowCommitDialogIfNeeded(@NotNull final GitCommit commit, boolean showCommitDialog) {
+    final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
+    refreshChangedFiles(paths);
+    final String commitMessage = createCommitMessage(commit, paths);
+    LocalChangeList changeList = createChangeListAfterUpdate(commit.getChanges(), paths, commitMessage);
+    if (showCommitDialog) {
+      return showCommitDialog(commit, changeList, commitMessage);
+    }
+    return false;
+  }
+
+  @NotNull
+  private LocalChangeList createChangeListAfterUpdate(@NotNull final List<Change> changes, @NotNull final Collection<FilePath> paths,
+                                                      @NotNull final String commitMessage) {
+    final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
+    myChangeListManager.invokeAfterUpdate(new Runnable() {
+      public void run() {
+        changeList.set(createChangeList(changes, commitMessage));
+      }
+    }, InvokeAfterUpdateMode.SILENT, "", new Consumer<VcsDirtyScopeManager>() {
+      public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
+        vcsDirtyScopeManager.filePathsDirty(paths, null);
+      }
+    }, ModalityState.NON_MODAL);
+
+    return changeList.get();
+  }
+
+  @NotNull
+  private String createCommitMessage(@NotNull GitCommit commit, @NotNull Collection<FilePath> paths) {
+    CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
+    String message = ce == null ? null : ce.getDefaultMessageFor(ArrayUtil.toObjectArray(paths, FilePath.class));
+    message = message == null ? commit.getDescription() + "\n(cherry-picked from " + commit.getShortHash().getString() + ")" : message;
+    return message;
+  }
+
+  private boolean showCommitDialog(@NotNull GitCommit commit, @NotNull LocalChangeList changeList, @NotNull String commitMessage) {
+    return myPlatformFacade.getVcsHelper(myProject).commitChanges(commit.getChanges(), changeList, commitMessage);
+  }
+
+  private void notifyError(@NotNull String content, @NotNull GitCommit failedCommit, @NotNull List<GitCommit> successfulCommits) {
+    String description = "Cherry-pick failed for " + commitDetails(failedCommit) + "<br/>" + content;
+    description += getSuccessfulCommitDetailsIfAny(successfulCommits, description);
+    myPlatformFacade.getNotificator(myProject).notifyError("Cherry-pick failed", description);
+  }
+
+  @NotNull
+  private static String getSuccessfulCommitDetailsIfAny(@NotNull List<GitCommit> successfulCommits, @NotNull String description) {
+    if (!successfulCommits.isEmpty()) {
+      description += "<br/>However it succeeded for the following " + StringUtil.pluralize("commit", successfulCommits.size()) + ": <br/>";
+      description = getCommitsDetails(successfulCommits);
+    }
+    return description;
+  }
+
+  private void notifySuccess(@NotNull List<GitCommit> successfulCommits) {
+    String description = getCommitsDetails(successfulCommits);
+    myPlatformFacade.getNotificator(myProject).notifySuccess("Cherry-pick successful", description);
+  }
+
+  @NotNull
+  private static String getCommitsDetails(@NotNull List<GitCommit> successfulCommits) {
+    String description = "";
+    for (GitCommit commit : successfulCommits) {
+      description += commitDetails(commit);
+    }
+    return description;
+  }
+
+  @NotNull
+  private static String commitDetails(@NotNull GitCommit commit) {
+    return commit.getShortHash().toString() + " " + commit.getSubject();
+  }
+
+  private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {
+    for (FilePath file : filePaths) {
+      VirtualFile vf = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByPath(file.getPath());
       if (vf != null) {
         vf.refresh(false, false);
       }
@@ -101,190 +200,92 @@ public class CherryPicker {
   }
 
   @NotNull
-  private Collection<FilePath> getAllChangedFiles() {
-    Collection<FilePath> files = new ArrayList<FilePath>();
-    for (CherryPickedData data : myCherryPickedData) {
-      files.addAll(data.getFiles());
+  private LocalChangeList createChangeList(@NotNull List<Change> changes, @NotNull String commitMessage) {
+    if (!changes.isEmpty()) {
+      final LocalChangeList changeList = myChangeListManager.addChangeList(commitMessage, null);
+      myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
+      myChangeListManager.setDefaultChangeList(changeList);
+      return changeList;
     }
-    return files;
+    return myChangeListManager.getDefaultChangeList();
   }
 
-  private void findAndProcessChangedForVcs() {
-    myChangeListManager.invokeAfterUpdate(new Runnable() {
-      public void run() {
-        moveToCorrectLists();
-      }
-    }, InvokeAfterUpdateMode.SILENT, "", new Consumer<VcsDirtyScopeManager>() {
-      public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-        vcsDirtyScopeManager.filePathsDirty(getAllChangedFiles(), null);
-      }
-    }, ModalityState.NON_MODAL);
-  }
+  private static class CherryPickConflictResolver extends GitConflictResolver {
 
-  private void showResults() {
-    final Project project = myVcs.getProject();
-    if (myExceptions.isEmpty() && !myConflictsExist) {
-      showOverChangesView(project, "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
-    } else {
-      if (myExceptions.isEmpty()) {
-        showOverChangesView(project, "Unresolved conflicts while cherry-picking. Resolve conflicts, then commit changes",
-                            MessageType.WARNING);
-      } else {
-        showOverChangesView(project, "Errors in cherry-pick", MessageType.ERROR);
-      }
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final String myCommitHash;
+    @NotNull private final String myCommitAuthor;
+    @NotNull private final String myCommitMessage;
+    @NotNull private final Git myGit;
+    @NotNull private final PlatformFacade myPlatformFacade;
+
+    public CherryPickConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade facade, @NotNull VirtualFile root,
+                                      @NotNull String commitHash, @NotNull String commitAuthor, @NotNull String commitMessage) {
+      super(project, git, facade, Collections.singleton(root), makeParams(commitHash, commitAuthor, commitMessage));
+      myGit = git;
+      myPlatformFacade = facade;
+      myRoot = root;
+      myCommitHash = commitHash;
+      myCommitAuthor = commitAuthor;
+      myCommitMessage = commitMessage;
     }
-    if ((! myExceptions.isEmpty()) || (! myWarnings.isEmpty())) {
-      myExceptions.addAll(myWarnings);
-      AbstractVcsHelper.getInstance(project).showErrors(myExceptions, "Cherry-pick problems");
+
+    private static Params makeParams(String commitHash, String commitAuthor, String commitMessage) {
+      Params params = new Params();
+      params.setErrorNotificationTitle("Cherry-picked with conflicts");
+      params.setMergeDialogCustomizer(new CherryPickMergeDialogCustomizer(commitHash, commitAuthor, commitMessage));
+      return params;
     }
-  }
 
-  private void moveToCorrectLists() {
-    for (CherryPickedData pickedData : myCherryPickedData) {
-      final Collection<FilePath> filePaths = pickedData.getFiles();
-      final String message = pickedData.getCommitMessage();
-
-      if (filePaths.isEmpty()) continue;
-
-      final List<Change> changes = pathsToChanges(filePaths);
-      pickedData.setChanges(changes);
-      if (!changes.isEmpty()) {
-        final LocalChangeList cl = myChangeListManager.addChangeList(message, null);
-        pickedData.setChangeList(cl);
-        myChangeListManager.moveChangesTo(cl, changes.toArray(new Change[changes.size()]));
-      }
-    }
-  }
-
-  @NotNull
-  private List<Change> pathsToChanges(@NotNull Collection<FilePath> filePaths) {
-    final List<Change> changes = new ArrayList<Change>(filePaths.size());
-    for (FilePath filePath : filePaths) {
-      changes.add(myChangeListManager.getChange(filePath));
-    }
-    return changes;
-  }
-
-  private void checkListsForSamePaths() {
-    List<String> myMessagesInOrder = new ArrayList<String>(myCherryPickedData.size());
-    Map<String, Collection<FilePath>> myFilesToMove = new HashMap<String, Collection<FilePath>>(myCherryPickedData.size());
-    for (CherryPickedData data : myCherryPickedData) {
-      myMessagesInOrder.add(data.getCommitMessage());
-      myFilesToMove.put(data.getCommitMessage(), data.getFiles());
-    }
-    final GroupOfListsProcessor listsProcessor = new GroupOfListsProcessor();
-    listsProcessor.process(myMessagesInOrder, myFilesToMove);
-    final Set<String> lostSet = listsProcessor.getHaveLostSomething();
-    markFilesMovesToNewerLists(myWarnings, lostSet, myFilesToMove);
-  }
-
-  private void cherryPickStep(@NotNull GitCommit commit) {
-    try {
-      if (!myAccess.cherryPick(commit)) {
-        myConflictsExist = true;
-      }
-    }
-    catch (VcsException e) {
-      myExceptions.add(e);
-    }
-    final List<Change> changes = commit.getChanges();
-
-    final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
-    String message = myCheckinEnvironment.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
-    message = (message == null) ? commit.getDescription() + " (cherry picked from commit " + commit.getShortHash() + ")" : message;
-
-    myCherryPickedData.add(new CherryPickedData(message, paths));
-  }
-
-  private static void markFilesMovesToNewerLists(List<VcsException> exceptions, Set<String> lostSet,
-                                                 Map<String, Collection<FilePath>> filesToMove) {
-    if (! lostSet.isEmpty()) {
-      final StringBuilder sb = new StringBuilder("Some changes are moved from following list(s) to other:");
-      boolean first = true;
-      for (String s : lostSet) {
-        if (filesToMove.get(s).isEmpty()) {
-          final VcsException exc =
-            new VcsException("Changelist not created since all files moved to other cherry-pick(s): '" + s + "'");
-          exc.setIsWarning(true);
-          exceptions.add(exc);
-          continue;
-        }
-        sb.append(s);
-        if (! first) {
-          sb.append(", ");
-        }
-        first = false;
-      }
-      if (! first) {
-        final VcsException exc = new VcsException(sb.toString());
-        exc.setIsWarning(true);
-        exceptions.add(exc);
-      }
+    @Override
+    protected void notifyUnresolvedRemain() {
+      myPlatformFacade.getNotificator(myProject).notifyStrongWarning("Conflicts were not resolved during cherry-pick",
+                                                                     "Cherry-pick is not complete, you have unresolved merges in your working tree<br/>" +
+                                                                     "<a href='resolve'>Resolve</a> conflicts.",
+                                                                     new NotificationListener() {
+                                                                       @Override
+                                                                       public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                                                   @NotNull HyperlinkEvent event) {
+                                                                         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                                                                           if (event.getDescription().equals("resolve")) {
+                                                                             new CherryPickConflictResolver(myProject, myGit,
+                                                                                                            myPlatformFacade, myRoot,
+                                                                                                            myCommitHash, myCommitAuthor,
+                                                                                                            myCommitMessage)
+                                                                               .mergeNoProceed();
+                                                                           }
+                                                                         }
+                                                                       }
+                                                                     });
     }
   }
 
-  private static class GroupOfListsProcessor {
-    private final Set<String> myHaveLostSomething;
+  private static class CherryPickMergeDialogCustomizer extends MergeDialogCustomizer {
 
-    private GroupOfListsProcessor() {
-      myHaveLostSomething = new HashSet<String>();
+    private String myCommitHash;
+    private String myCommitAuthor;
+    private String myCommitMessage;
+
+    public CherryPickMergeDialogCustomizer(String commitHash, String commitAuthor, String commitMessage) {
+      myCommitHash = commitHash;
+      myCommitAuthor = commitAuthor;
+      myCommitMessage = commitMessage;
     }
 
-    public void process(final List<String> messagesInOrder, final Map<String, Collection<FilePath>> filesToMove) {
-      // remove those that are in newer lists
-      for (int i = 1; i < messagesInOrder.size(); i++) {
-        final String message = messagesInOrder.get(i);
-        final Collection<FilePath> currentFiles = filesToMove.get(message);
-
-        for (int j = 0; j < i; j++) {
-          final String previous = messagesInOrder.get(j);
-          final boolean somethingChanged = filesToMove.get(previous).removeAll(currentFiles);
-          if (somethingChanged) {
-            myHaveLostSomething.add(previous);
-          }
-        }
-      }
+    @Override
+    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+      return "<html>Conflicts during cherry-picking commit <code>" + myCommitHash + "</code> made by " + myCommitAuthor + "<br/>" +
+             "<code>\"" + myCommitMessage + "\"</code></html>";
     }
 
-    public Set<String> getHaveLostSomething() {
-      return myHaveLostSomething;
-    }
-  }
-
-  private static class CherryPickedData {
-
-    private final String myCommitMessage;
-    private final Collection<FilePath> myFiles;
-    private LocalChangeList myChangeList;
-    private Collection<Change> myChanges;
-
-    private CherryPickedData(@NotNull String message, @NotNull Collection<FilePath> files) {
-      myCommitMessage = message;
-      myFiles = files;
+    @Override
+    public String getLeftPanelTitle(VirtualFile file) {
+      return "Local changes";
     }
 
-    public Collection<Change> getChanges() {
-      return myChanges;
-    }
-
-    public LocalChangeList getChangeList() {
-      return myChangeList;
-    }
-
-    public String getCommitMessage() {
-      return myCommitMessage;
-    }
-
-    public Collection<FilePath> getFiles() {
-      return myFiles;
-    }
-
-    public void setChanges(List<Change> changes) {
-      myChanges = changes;
-    }
-
-    public void setChangeList(LocalChangeList changeList) {
-      myChangeList = changeList;
+    @Override
+    public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+      return "<html>Changes from cherry-pick <code>" + myCommitHash + "</code>";
     }
   }
 

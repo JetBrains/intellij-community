@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -58,10 +59,13 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.changes.GitChangeUtils;
+import git4idea.commands.Git;
 import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1611,12 +1615,10 @@ public class GitLogUI implements Disposable {
       final Application application = ApplicationManager.getApplication();
       application.executeOnPooledThread(new Runnable() {
         public void run() {
-          for (VirtualFile file : commits.keySet()) {
-            final List<GitCommit> part = (List<GitCommit>)commits.get(file);
-            // earliest first!!!
-            Collections.reverse(part);
-            new CherryPicker(GitVcs.getInstance(myProject), part, new LowLevelAccessImpl(myProject, file)).execute();
-          }
+          boolean autoCommit = true;
+          Map<GitRepository, List<GitCommit>> commitsInRoots = prepareCommitsForCherryPick(commits);
+          new CherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), autoCommit).cherryPick(
+            commitsInRoots);
 
           application.invokeLater(new Runnable() {
             public void run() {
@@ -1627,6 +1629,22 @@ public class GitLogUI implements Disposable {
           });
         }
       });
+    }
+
+    private Map<GitRepository, List<GitCommit>> prepareCommitsForCherryPick(MultiMap<VirtualFile, GitCommit> commits) {
+      Map<GitRepository, List<GitCommit>> commitsInRoots = new HashMap<GitRepository, List<GitCommit>>();
+      GitRepositoryManager repositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
+      for (Map.Entry<VirtualFile, Collection<GitCommit>> entry : commits.entrySet()) {
+        List<GitCommit> sortedCommits = new ArrayList<GitCommit>(entry.getValue());
+        // earliest first!!!
+        Collections.reverse(sortedCommits);
+        GitRepository repository = repositoryManager.getRepositoryForRoot(entry.getKey());
+        if (repository == null) {
+          continue;
+        }
+        commitsInRoots.put(repository, sortedCommits);
+      }
+      return commitsInRoots;
     }
 
     // newest first

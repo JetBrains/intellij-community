@@ -80,7 +80,8 @@ hint: and commit the result with 'git commit'
     AbstractHash hash = AbstractHash.create(new SHA().toString())
     List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
-    new GitCommit(hash, SHAHash.emulate(hash), "John Smith", null, null, commitMessage, null, null, null, null, null, null, null, null, changes, 0)
+    new GitCommit(hash, SHAHash.emulate(hash), "John Smith", null, null, commitMessage, commitMessage, null, null, null, null, null, null,
+                  null, changes, 0)
   }
 
   void assertOnlyDefaultChangelist() {
@@ -113,8 +114,8 @@ hint: and commit the result with 'git commit'
     ChangeListManager changeListManager = myPlatformFacade.getChangeListManager(myProject)
     List<LocalChangeList> lists = changeListManager.changeLists
     Collection<String> listNames = lists.collect { it.name }
-    assertEquals changeLists.toSet(), listNames.toSet()
-    assertEquals activeChangelist, changeListManager.defaultChangeList.name
+    assertEquals "Change lists are different", changeLists.toSet(), listNames.toSet()
+    assertEquals "Wrong active changelist", activeChangelist, changeListManager.defaultChangeList.name
   }
 
   String notificationContent(GitCommit commit) {

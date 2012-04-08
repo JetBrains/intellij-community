@@ -92,7 +92,11 @@ Otherwise, please use 'git reset'
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertChangeLists([DEFAULT, commit.getSubject()], commit.getSubject())
+    assertChangeLists([DEFAULT, newCommitMessage(commit)], newCommitMessage(commit))
+  }
+
+  String newCommitMessage(GitCommit commit) {
+    "${commit.description}\n(cherry-picked from ${commit.hash.value})"
   }
 
   @Test
@@ -151,7 +155,7 @@ Otherwise, please use 'git reset'
     invokeCherryPick(commit)
     assertMergeDialogShown()
     assertTrue "Commit dialog was not shown", commitDialogShown
-    assertChangeLists([DEFAULT, commit.getSubject()], commit.getSubject())
+    assertChangeLists([DEFAULT, newCommitMessage(commit)], newCommitMessage(commit))
   }
 
   @Test

@@ -26,6 +26,8 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
   private boolean myHappened;
 
   public enum Event {
+    CHERRY_PICK_CONFLICT("fter resolving the conflicts"), // a is uppercase in 1.7.0.5 and lowercase in 1.7.9.2
+    LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK("would be overwritten by merge"),
     UNMERGED_PREVENTING_CHECKOUT("you need to resolve your current index first"),
     UNMERGED_PREVENTING_MERGE("is not possible because you have unmerged files"),
     BRANCH_NOT_FULLY_MERGED("is not fully merged"),
