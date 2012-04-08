@@ -177,6 +177,7 @@ public class GitConflictResolver {
   }
   
   private void notifyWarning(String title, String content) {
+    myPlatformFacade.getNotificator(myProject).notifyStrongWarning(title, content, new ResolveNotificationListener());
     GitVcs.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, new ResolveNotificationListener()).notify(myProject);
   }
 
