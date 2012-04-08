@@ -74,7 +74,7 @@ public abstract class QtFileType implements FileType, INativeFileType {
   }
 
   @Override
-  public boolean openFileInAssociatedApplication(Project project, VirtualFile file) {
+  public boolean openFileInAssociatedApplication(Project project, @NotNull VirtualFile file) {
     String qtTool = findQtTool(ModuleUtil.findModuleForFile(file, project), getToolName());
     if (qtTool == null) {
       return false;

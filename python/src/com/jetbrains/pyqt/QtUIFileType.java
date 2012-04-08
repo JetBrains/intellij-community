@@ -10,7 +10,7 @@ public class QtUIFileType extends QtFileType implements FileType {
   public static QtUIFileType INSTANCE = new QtUIFileType();
 
   protected QtUIFileType() {
-    super("Qt UI file", "Qt UI Designer form file", "ui", IconLoader.getIcon("/com/jetbrains/pyqt/uiForm.png"));
+    super("Qt UI file", "Qt UI Designer form files", "ui", IconLoader.getIcon("/com/jetbrains/pyqt/uiForm.png"));
   }
 
   protected String getToolName() {

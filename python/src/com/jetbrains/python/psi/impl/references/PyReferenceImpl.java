@@ -505,7 +505,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final int underscores = PyUtil.getInitialUnderscores(element.getName());
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element);
     final ScopeOwner owner = realContext instanceof ScopeOwner ? (ScopeOwner)realContext : ScopeUtil.getScopeOwner(realContext);
-    if (owner != null && originalElement != null) {
+    if (owner != null) {
       PyResolveUtil.scopeCrawlUp(processor, owner, null);
     }
 
@@ -529,7 +529,18 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
 
-    ret.addAll(processor.getResultList());
+    // Throw away fake elements used for completion internally
+    for (LookupElement e : processor.getResultList()) {
+      final Object o = e.getObject();
+      if (o instanceof PsiElement) {
+        final PsiElement original = CompletionUtil.getOriginalElement((PsiElement)o);
+        if (original == null) {
+          continue;
+        }
+      }
+      ret.add(e);
+    }
+
     return ret.toArray();
   }
 

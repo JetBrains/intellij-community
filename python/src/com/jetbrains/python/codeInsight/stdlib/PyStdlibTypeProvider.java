@@ -94,6 +94,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return null;
     }
     final String s = docString.getReturnType();
+    if (s == null) {
+      return null;
+    }
     final PyType result = PyTypeParser.getTypeByName(anchor, s);
     cache.storeStdlibType(key, result);
     return result;
@@ -180,6 +183,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return null;
     }
     final String s = docString.getParamType(name);
+    if (s == null) {
+      return null;
+    }
     final PyType result = PyTypeParser.getTypeByName(anchor, s);
     cache.storeStdlibType(key, result);
     return result;

@@ -15,7 +15,7 @@ public class BuildoutCfgFileType extends LanguageFileType {
   public static final BuildoutCfgFileType INSTANCE = new BuildoutCfgFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "cfg";
   @NonNls private static final String NAME = "BuildoutCfg";
-  @NonNls private static final String DESCRIPTION = "Buildout config";
+  @NonNls private static final String DESCRIPTION = "Buildout config files";
 
   private BuildoutCfgFileType() {
     super(BuildoutCfgLanguage.INSTANCE);

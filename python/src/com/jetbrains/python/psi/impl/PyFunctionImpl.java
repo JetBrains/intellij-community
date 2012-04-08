@@ -278,10 +278,12 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     }
   }
 
+  @Nullable
+  @Override
   public PyType getReturnTypeFromDocString() {
     final String value = getDocStringValue();
-    String typeName = value != null ? extractReturnType(value) : null;
-    return PyTypeParser.getTypeByName(this, typeName);
+    final String typeName = value != null ? extractReturnType(value) : null;
+    return typeName != null ? PyTypeParser.getTypeByName(this, typeName) : null;
   }
 
   @Nullable

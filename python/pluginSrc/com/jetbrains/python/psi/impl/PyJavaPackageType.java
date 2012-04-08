@@ -82,4 +82,8 @@ public class PyJavaPackageType implements PyType {
   public boolean isBuiltin(TypeEvalContext context) {
     return false;
   }
+
+  @Override
+  public void assertValid() {
+  }
 }

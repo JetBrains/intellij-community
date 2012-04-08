@@ -10,7 +10,7 @@ public class QtTranslationsFileType extends QtFileType implements FileType {
   public static QtTranslationsFileType INSTANCE = new QtTranslationsFileType();
 
   protected QtTranslationsFileType() {
-    super("Qt translations file", "Qt Linguist translations file", "ts", IconLoader.getIcon("/com/jetbrains/pyqt/tsFile.png"));
+    super("Qt translations file", "Qt Linguist translations files", "ts", IconLoader.getIcon("/com/jetbrains/pyqt/tsFile.png"));
   }
 
   protected String getToolName() {

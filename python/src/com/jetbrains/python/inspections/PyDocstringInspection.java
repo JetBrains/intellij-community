@@ -107,10 +107,14 @@ public class PyDocstringInspection extends PyInspection {
     private boolean checkParameters(PyDocStringOwner pyDocStringOwner, PyStringLiteralExpression node) {
       PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(node.getProject());
       List<String> docstringParams;
+      final String text = node.getText();
+      if (text == null) {
+        return false;
+      }
       if (documentationSettings.isEpydocFormat(node.getContainingFile()))
-        docstringParams = new EpydocString(node.getText()).getParameters();
+        docstringParams = new EpydocString(text).getParameters();
       else if (documentationSettings.isReSTFormat(node.getContainingFile()))
-        docstringParams = new SphinxDocString(node.getText()).getParameters();
+        docstringParams = new SphinxDocString(text).getParameters();
       else
         return false;
 
@@ -134,7 +138,7 @@ public class PyDocstringInspection extends PyInspection {
         if (!unexpectedParams.isEmpty()) {
           for (String param : unexpectedParams) {
             ProblemsHolder holder = getHolder();
-            int index = node.getText().indexOf("param "+param+":") +6;
+            int index = text.indexOf("param " + param + ":") +6;
             if (holder != null)
               holder.registerProblem(node, TextRange.create(index, index+param.length()),
                                    "Unexpected parameter " + param + " in docstring",
