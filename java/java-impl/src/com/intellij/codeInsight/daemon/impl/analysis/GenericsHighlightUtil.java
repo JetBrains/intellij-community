@@ -372,6 +372,7 @@ public class GenericsHighlightUtil {
     }
   }
 
+  @Nullable
   public static HighlightInfo checkElementInTypeParameterExtendsList(PsiReferenceList referenceList, JavaResolveResult resolveResult, PsiElement element) {
     PsiClass aClass = (PsiClass)referenceList.getParent();
     final PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
@@ -392,6 +393,11 @@ public class GenericsHighlightUtil {
         JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       IntentionAction fix = QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false);
       QuickFixAction.registerQuickFixAction(errorResult, fix, null);
+    }
+    if (errorResult == null && JavaVersionService.getInstance().isAtLeast(referenceList, JavaSdkVersion.JDK_1_7) && 
+        referenceElements.length > 1) {
+      //todo suppress erased methods which come from the same class
+      return checkOverrideEquivalentMethods(aClass);
     }
     return errorResult;
   }

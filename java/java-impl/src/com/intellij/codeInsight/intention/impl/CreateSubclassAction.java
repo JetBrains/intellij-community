@@ -261,12 +261,12 @@ public class CreateSubclassAction extends BaseIntentionAction {
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
 
           final TextRange textRange = targetClass.getTextRange();
+          final int startClassOffset = textRange.getStartOffset();
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
             public void templateFinished(Template template, boolean brokenOff) {
-              //todo
-              chooseAndImplement(psiClass, project, ((PsiClassOwner)containingFile).getClasses()[0], editor);
+              chooseAndImplement(psiClass, project, PsiTreeUtil.getParentOfType(containingFile.findElementAt(startClassOffset), PsiClass.class), editor);
             }
           }, getTitle(psiClass));
         }

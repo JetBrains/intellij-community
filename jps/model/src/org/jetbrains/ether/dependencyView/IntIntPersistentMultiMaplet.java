@@ -143,17 +143,7 @@ class IntIntPersistentMultiMaplet implements IntIntMultiMaplet {
       final TIntHashSet collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
-        final Ref<Boolean> isChanged = new Ref<Boolean>(Boolean.FALSE);
-        values.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(int value) {
-            if (collection.remove(value)) {
-              isChanged.set(Boolean.TRUE);
-            }
-            return true;
-          }
-        });
-        if (isChanged.get()) {
+        if (collection.removeAll(values.toArray())) {
           myCache.remove(key);
           if (collection.isEmpty()) {
             myMap.remove(key);
