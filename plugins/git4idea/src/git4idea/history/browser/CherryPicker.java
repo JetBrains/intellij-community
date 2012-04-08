@@ -17,6 +17,7 @@ package git4idea.history.browser;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +27,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import git4idea.PlatformFacade;
@@ -137,7 +137,7 @@ public class CherryPicker {
   private LocalChangeList createChangeListAfterUpdate(@NotNull final List<Change> changes, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
     final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
-    GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
         myChangeListManager.invokeAfterUpdate(new Runnable() {
@@ -168,7 +168,7 @@ public class CherryPicker {
   private boolean showCommitDialog(@NotNull final GitCommit commit, @NotNull final LocalChangeList changeList,
                                    @NotNull final String commitMessage) {
     final AtomicBoolean commitSucceeded = new AtomicBoolean();
-    GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
         commitSucceeded.set(myPlatformFacade.getVcsHelper(myProject).commitChanges(commit.getChanges(), changeList, commitMessage));
