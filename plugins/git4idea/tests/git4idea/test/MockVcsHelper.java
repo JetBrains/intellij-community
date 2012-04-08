@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
@@ -43,6 +44,7 @@ import java.util.Map;
  */
 public class MockVcsHelper extends AbstractVcsHelper {
   private boolean myMergeDialogShown;
+  private CommitHandler myCommitHandler;
 
   @Override
   public void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName) {
@@ -180,4 +182,22 @@ public class MockVcsHelper extends AbstractVcsHelper {
                                                        VcsShowConfirmationOption confirmationOption) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
+                               @NotNull String commitMessage) {
+    if (myCommitHandler != null) {
+      return myCommitHandler.commit(commitMessage);
+    }
+    return false;
+  }
+
+  public void registerHandler(CommitHandler handler) {
+    myCommitHandler = handler;
+  }
+
+  public interface CommitHandler {
+    boolean commit(String commitMessage);
+  }
+
 }

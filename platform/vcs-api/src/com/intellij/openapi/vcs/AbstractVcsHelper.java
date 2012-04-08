@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
@@ -150,4 +151,12 @@ public abstract class AbstractVcsHelper {
                                                                 final String singleFileTitle,
                                                                 final String singleFilePromptTemplate,
                                                                 final VcsShowConfirmationOption confirmationOption);
+
+  /**
+   * Shows commit dialog, fills it with the given changes and given commit message, initially selects the given changelist.
+   * @return true if user commits the changes, and commit succeeds; false if user presses Cancel or commit fails with errors.
+   */
+  public abstract boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
+                                        @NotNull String commitMessage);
+
 }
