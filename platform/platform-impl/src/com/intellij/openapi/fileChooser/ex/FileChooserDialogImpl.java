@@ -66,8 +66,6 @@ import java.util.List;
 import java.util.Map;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
-  private static VirtualFile ourLastPath = null;
-
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
   private Project myProject;
@@ -122,9 +120,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void prepareAndShow(@Nullable VirtualFile toSelect, @Nullable Project project) {
+    if (myProject == null && project != null) myProject = project;
     init();
 
-    final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, project, toSelect, ourLastPath);
+    final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
+    final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, project, toSelect, lastOpenedFile);
 
     if (file != null && file.isValid()) {
       myFileSystemTree.select(file, new Runnable() {
@@ -289,13 +289,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     myChosenFiles = files;
-    setLastSelectedPath(files[files.length - 1]);
+    FileChooserUtil.setLastOpenedFile(myProject, files[files.length - 1]);
 
     super.doOKAction();
-  }
-
-  private static void setLastSelectedPath(final VirtualFile selectedPath) {
-    ourLastPath = selectedPath;
   }
 
   public final void doCancelAction() {

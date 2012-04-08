@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -46,14 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
-  private static String getLastFilePath(Project project) {
-    return PropertiesComponent.getInstance(project).getValue("last_opened_file_path");
-  }
-
-  private static void setLastFilePath(Project project, String path) {
-    PropertiesComponent.getInstance(project).setValue("last_opened_file_path", path);
-  }
-
   public void actionPerformed(AnActionEvent e) {
     @Nullable final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null &&
@@ -64,10 +55,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor();
     descriptor.setTitle(IdeBundle.message("title.open.file"));
 
-    final String lastFilePath = project != null ? getLastFilePath(project) : null;
-    final VirtualFile toSelect = lastFilePath == null ? null : LocalFileSystem.getInstance().findFileByPath(lastFilePath);
-
-    FileChooser.chooseFiles(descriptor, project, toSelect, new Consumer<List<VirtualFile>>() {
+    FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
       @Override
       public void consume(final List<VirtualFile> files) {
         doOpenFile(project, files);
@@ -78,7 +66,6 @@ public class OpenFileAction extends AnAction implements DumbAware {
   private static void doOpenFile(@Nullable final Project project,
                                  @NotNull final List<VirtualFile> result) {
     for (final VirtualFile file : result) {
-      if (project != null) setLastFilePath(project, file.getParent().getPath());
       if (isProjectFile(file.getName())) {
         int answer = Messages.showYesNoDialog(project,
                                               IdeBundle.message("message.open.file.is.project", file.getName(),
