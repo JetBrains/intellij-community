@@ -2,6 +2,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -30,7 +31,7 @@ public class EpydocString extends StructuredDocString {
     "precondition", "postcondition", "invariant", "author", "organization", "copyright", "license", "contact", "summary", "see"
   };
 
-  public EpydocString(String docstringText) {
+  public EpydocString(@NotNull String docstringText) {
     super(docstringText, "@");
   }
 
@@ -70,7 +71,10 @@ public class EpydocString extends StructuredDocString {
 
   @Override
   @Nullable
-  public String getParamDescription(String paramName) {
+  public String getParamDescription(@Nullable String paramName) {
+    if (paramName == null) {
+      return null;
+    }
     Substring value = getTagValue(PARAM_TAGS, paramName);
     if (value == null) {
       value = getTagValue(PARAM_TAGS, "*" + paramName);
@@ -81,8 +85,12 @@ public class EpydocString extends StructuredDocString {
     return inlineMarkupToHTML(value);
   }
 
+  @Nullable
   @Override
-  public String getKeywordArgumentDescription(String paramName) {
+  public String getKeywordArgumentDescription(@Nullable String paramName) {
+    if (paramName == null) {
+      return null;
+    }
     return inlineMarkupToHTML(getTagValue(KEYWORD_ARGUMENT_TAGS, paramName));
   }
 
@@ -92,7 +100,10 @@ public class EpydocString extends StructuredDocString {
   }
 
   @Override
-  public String getRaisedExceptionDescription(String exceptionName) {
+  public String getRaisedExceptionDescription(@Nullable String exceptionName) {
+    if (exceptionName == null) {
+      return null;
+    }
     return removeInlineMarkup(getTagValue(RAISES_TAGS, exceptionName));
   }
 
