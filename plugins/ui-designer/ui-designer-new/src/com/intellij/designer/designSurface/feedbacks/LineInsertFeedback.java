@@ -15,55 +15,34 @@
  */
 package com.intellij.designer.designSurface.feedbacks;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
-public class LineFeedback extends JComponent {
-  private final Color myColor;
-  private final int myLine;
-  private final boolean myHorizontal;
+public class LineInsertFeedback extends LineFeedback {
+  private static final int SIZE = 2;
+  private static final int FULL_SIZE = 6;
 
-  public LineFeedback(Color color, int line, boolean horizontal) {
-    myColor = color;
-    myLine = line;
-    myHorizontal = horizontal;
+  public LineInsertFeedback(Color color, boolean horizontal) {
+    super(color, FULL_SIZE, horizontal);
   }
 
-  public void size(int width, int height) {
-    if (myHorizontal) {
-      setSize(width, myLine);
-    }
-    else {
-      setSize(myLine, height);
+  @Override
+  protected void paintHorizontal(Graphics g, Dimension size) {
+    for (int i = 0; i < SIZE; i++) {
+      g.drawLine(0, i + SIZE, size.width, i + SIZE);
+      g.drawLine(i, 0, i, FULL_SIZE);
+      g.drawLine(size.width - i - 1, 0, size.width - i - 1, FULL_SIZE);
     }
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    g.setColor(myColor);
-
-    Dimension size = getSize();
-    if (myHorizontal) {
-      paintHorizontal(g, size);
-    }
-    else {
-      paintVertical(g, size);
-    }
-  }
-
-  protected void paintHorizontal(Graphics g, Dimension size) {
-    for (int i = 0; i < myLine; i++) {
-      g.drawLine(0, i, size.width, i);
-    }
-  }
-
   protected void paintVertical(Graphics g, Dimension size) {
-    for (int i = 0; i < myLine; i++) {
-      g.drawLine(i, 0, i, size.height);
+    for (int i = 0; i < SIZE; i++) {
+      g.drawLine(i + SIZE, 0, i + SIZE, size.height);
+      g.drawLine(0, i, FULL_SIZE, i);
+      g.drawLine(0, size.height - i - 1, FULL_SIZE, size.height - i - 1);
     }
   }
 }

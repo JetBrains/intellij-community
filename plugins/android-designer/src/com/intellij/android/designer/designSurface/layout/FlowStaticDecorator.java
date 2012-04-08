@@ -26,7 +26,6 @@ import java.awt.*;
  */
 public abstract class FlowStaticDecorator extends StaticDecorator {
   private static final BasicStroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{3, 1}, 0);
-  private static final Color LINE_COLOR = new Color(47, 67, 96);
 
   public FlowStaticDecorator(RadComponent component) {
     super(component);
@@ -36,7 +35,7 @@ public abstract class FlowStaticDecorator extends StaticDecorator {
   protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
     Rectangle bounds = component.getBounds(layer);
 
-    g.setColor(LINE_COLOR);
+    g.setColor(BorderStaticDecorator.COLOR);
     g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
     g.setStroke(STROKE);

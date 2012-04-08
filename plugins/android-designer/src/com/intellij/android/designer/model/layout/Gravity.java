@@ -41,7 +41,7 @@ public enum Gravity {
   public static final int END = (1 << 11) | RIGHT;
 
   @Nullable
-  public static String getValue(Gravity horizontal, Gravity vertical) {
+  public static String getValue(@Nullable Gravity horizontal, @Nullable Gravity vertical) {
     StringBuilder gravity = new StringBuilder();
 
     if (horizontal == center && vertical == center) {

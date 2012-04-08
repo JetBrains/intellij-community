@@ -25,7 +25,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class BorderStaticDecorator extends StaticDecorator {
-  private static final Color COLOR = new Color(47, 67, 96);
+  public static final Color COLOR = new Color(47, 67, 96);
 
   public BorderStaticDecorator(RadComponent component) {
     super(component);
