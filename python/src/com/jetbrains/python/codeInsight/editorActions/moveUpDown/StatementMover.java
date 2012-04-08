@@ -217,17 +217,24 @@ public class StatementMover extends LineMover {
       parent2 = PsiTreeUtil.getParentOfType(element2, PyFunction.class);
       PyElement parent1 = PsiTreeUtil.getParentOfType(myStatementToMove, PyFunction.class);
       if (parent2 != null && parent2 != parent1) {
-        TextRange textRange2 = parent2.getTextRange();
-        int endOffset = myStatementToMove instanceof PsiComment? doc.getLineNumber(textRange2.getEndOffset())
-                                                               : doc.getLineNumber(textRange2.getEndOffset())+1;
+        final TextRange textRange2 = parent2.getTextRange();
+        if (myStatementToMove instanceof PsiComment) {
+          myStatementToIncreaseIndent = myStatementToMove;
+          return;
+        }
+        final int endOffset = doc.getLineNumber(textRange2.getEndOffset())+1;
         info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()), endOffset);
       }
       parent2 = PsiTreeUtil.getParentOfType(element2, PyClass.class);
       parent1 = PsiTreeUtil.getParentOfType(myStatementToMove, PyClass.class);
       if (parent2 != null && parent2 != parent1) {
-        TextRange textRange2 = parent2.getTextRange();
-        info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()),
-                                              doc.getLineNumber(textRange2.getEndOffset())+1);
+        final TextRange textRange2 = parent2.getTextRange();
+        if (myStatementToMove instanceof PsiComment) {
+          myStatementToIncreaseIndent = myStatementToMove;
+          return;
+        }
+        final int endOffset = doc.getLineNumber(textRange2.getEndOffset())+1;
+        info.toMove2 = new LineRange(doc.getLineNumber(textRange2.getStartOffset()), endOffset);
       }
     }
   }
