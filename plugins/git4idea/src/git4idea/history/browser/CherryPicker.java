@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import git4idea.PlatformFacade;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT;
@@ -135,15 +137,22 @@ public class CherryPicker {
   private LocalChangeList createChangeListAfterUpdate(@NotNull final List<Change> changes, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
     final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
-    myChangeListManager.invokeAfterUpdate(new Runnable() {
+    GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
       public void run() {
-        changeList.set(createChangeList(changes, commitMessage));
-      }
-    }, InvokeAfterUpdateMode.SILENT, "", new Consumer<VcsDirtyScopeManager>() {
-      public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-        vcsDirtyScopeManager.filePathsDirty(paths, null);
+        myChangeListManager.invokeAfterUpdate(new Runnable() {
+            public void run() {
+              changeList.set(createChangeList(changes, commitMessage));
+            }
+          }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "",
+          new Consumer<VcsDirtyScopeManager>() {
+            public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
+              vcsDirtyScopeManager.filePathsDirty(paths, null);
+            }
+        }, ModalityState.current());
       }
     }, ModalityState.NON_MODAL);
+
 
     return changeList.get();
   }
@@ -156,8 +165,16 @@ public class CherryPicker {
     return message;
   }
 
-  private boolean showCommitDialog(@NotNull GitCommit commit, @NotNull LocalChangeList changeList, @NotNull String commitMessage) {
-    return myPlatformFacade.getVcsHelper(myProject).commitChanges(commit.getChanges(), changeList, commitMessage);
+  private boolean showCommitDialog(@NotNull final GitCommit commit, @NotNull final LocalChangeList changeList,
+                                   @NotNull final String commitMessage) {
+    final AtomicBoolean commitSucceeded = new AtomicBoolean();
+    GuiUtils.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        commitSucceeded.set(myPlatformFacade.getVcsHelper(myProject).commitChanges(commit.getChanges(), changeList, commitMessage));
+      }
+    }, ModalityState.NON_MODAL);
+    return commitSucceeded.get();
   }
 
   private void notifyError(@NotNull String content, @NotNull GitCommit failedCommit, @NotNull List<GitCommit> successfulCommits) {
