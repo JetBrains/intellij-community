@@ -119,7 +119,7 @@ hint: and commit the result with 'git commit'
   }
 
   String notificationContent(GitCommit commit) {
-    "${commit.shortHash.toString()} ${commit.subject}"
+    "${commit.shortHash.toString()} \"${commit.subject}\""
   }
 
   String notificationContent(GitCommit... commits) {

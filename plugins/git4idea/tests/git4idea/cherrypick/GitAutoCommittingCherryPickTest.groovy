@@ -15,7 +15,6 @@
  */
 package git4idea.cherrypick
 
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import git4idea.history.browser.CherryPicker
 import git4idea.history.browser.GitCommit
@@ -76,13 +75,15 @@ Otherwise, please use 'git reset'
   void "dirty tree, conflicting with commit, then show error"() {
     myGit.registerOperationExecutors(new SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK))
 
-    invokeCherryPick(commit())
+    def commit = commit()
+    invokeCherryPick(commit)
 
     assertNotCherryPicked()
     assertOnlyDefaultChangelist()
-    assertNotificationShown(new Notification(TEST_NOTIFICATION_GROUP, "Cherry-pick failed",
-                                             "Your local changes to some files would be overwritten by cherry-pick. View them",
-                                             NotificationType.ERROR))
+    assertNotificationShown("Cherry-pick failed",
+                            "Cherry-pick failed for ${notificationContent(commit)}" +
+                            "Your local changes would be overwritten by cherry-pick.<br/>Commit your changes or stash them to proceed.",
+                            NotificationType.ERROR)
   }
 
   @Test

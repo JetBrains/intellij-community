@@ -100,8 +100,12 @@ public class CherryPicker {
             return false;
           }
         }
+        else if (localChangesOverwrittenDetector.hasHappened()) {
+          notifyError("Your local changes would be overwritten by cherry-pick.<br/>Commit your changes or stash them to proceed.",
+                      commit, successfulCommits);
+          return false;
+        }
         else {
-          // including localChangesOverwrittenDetector.hasHappened() - no special handler for now
           notifyError(result.getErrorOutputAsHtmlString(), commit, successfulCommits);
           return false;
         }
@@ -112,7 +116,7 @@ public class CherryPicker {
 
   private void notifyConflictWarning(GitCommit commit, List<GitCommit> successfulCommits) {
     String description = commitDetails(commit);
-    description += getSuccessfulCommitDetailsIfAny(successfulCommits, description);
+    description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-picked with conflicts", description);
   }
 
@@ -158,12 +162,13 @@ public class CherryPicker {
 
   private void notifyError(@NotNull String content, @NotNull GitCommit failedCommit, @NotNull List<GitCommit> successfulCommits) {
     String description = "Cherry-pick failed for " + commitDetails(failedCommit) + "<br/>" + content;
-    description += getSuccessfulCommitDetailsIfAny(successfulCommits, description);
+    description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyError("Cherry-pick failed", description);
   }
 
   @NotNull
-  private static String getSuccessfulCommitDetailsIfAny(@NotNull List<GitCommit> successfulCommits, @NotNull String description) {
+  private static String getSuccessfulCommitDetailsIfAny(@NotNull List<GitCommit> successfulCommits) {
+    String description = "";
     if (!successfulCommits.isEmpty()) {
       description += "<br/>However it succeeded for the following " + StringUtil.pluralize("commit", successfulCommits.size()) + ": <br/>";
       description = getCommitsDetails(successfulCommits);
@@ -187,7 +192,7 @@ public class CherryPicker {
 
   @NotNull
   private static String commitDetails(@NotNull GitCommit commit) {
-    return commit.getShortHash().toString() + " " + commit.getSubject();
+    return commit.getShortHash().toString() + " \"" + commit.getSubject() + "\"";
   }
 
   private void refreshChangedFiles(@NotNull Collection<FilePath> filePaths) {
