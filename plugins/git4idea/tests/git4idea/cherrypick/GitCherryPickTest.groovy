@@ -15,10 +15,12 @@
  */
 package git4idea.cherrypick
 
+import com.intellij.mock.MockVirtualFile
+import com.intellij.openapi.vcs.FilePathImpl
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.testFramework.vcs.MockChangeListManager
 import com.intellij.testFramework.vcs.MockContentRevision
 import git4idea.history.browser.CherryPicker
@@ -32,10 +34,8 @@ import git4idea.test.MockGit
 import sun.security.provider.SHA
 
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
-import static junit.framework.Assert.*
-import com.intellij.openapi.vcs.FilePathImpl
-import com.intellij.mock.MockVirtualFile
-import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import static junit.framework.Assert.assertEquals
+import static junit.framework.Assert.assertTrue
 
 /**
  * Common parent for all tests on cherry-pick
@@ -95,11 +95,6 @@ hint: and commit the result with 'git commit'
     myCherryPicker.cherryPick(Collections.<GitRepository, List<GitCommit>> singletonMap(myRepository, commits))
   }
 
-  void assertCommitDialogShown() {
-    assertNotNull "No dialog was shown", myDialogManager.lastShownDialog
-    assertEquals "Commit dialog was not shown", CommitChangeListDialog, myDialogManager.lastShownDialog.class
-  }
-
   void assertHeadCommit(GitCommit commit) {
     assertEquals "Wrong commit at the HEAD", commit.subject, myRepository.head.commitMessage
   }
@@ -143,7 +138,7 @@ hint: and commit the result with 'git commit'
 
   void prepareConflict() {
     myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, CHERRY_PICK_CONFLICT),
-                                     new MockGit.SimpleErrorOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES, UNMERGED_FILE))
+                                     new MockGit.SimpleSuccessOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES, UNMERGED_FILE))
   }
 
   void assertMergeDialogShown() {

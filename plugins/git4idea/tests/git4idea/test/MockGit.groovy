@@ -176,7 +176,7 @@ class MockGit implements Git {
   @NotNull
   @Override
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
-    GitCommandResult result = callExecutor(CHERRY_PICK)
+    GitCommandResult result = callExecutor(GET_UNMERGED_FILES)
     if (result != null) {
       return result;
     }
@@ -211,7 +211,7 @@ class MockGit implements Git {
 
     @Override
     GitCommandResult execute() {
-      return errorResult(myOutput);
+      return result(myOutput, false);
     }
 
     @Override
@@ -220,8 +220,29 @@ class MockGit implements Git {
     }
   }
 
-  private static GitCommandResult errorResult(String output) {
-    new GitCommandResult(false, 127, Collections.emptyList(), Collections.singletonList(output))
+  public static class SimpleSuccessOperationExecutor implements MockGit.OperationExecutor {
+
+    String myOutput
+    MockGit.OperationName myOperationName
+
+    SimpleSuccessOperationExecutor(MockGit.OperationName operationName, String output) {
+      myOutput = output;
+      myOperationName = operationName
+    }
+
+    @Override
+    GitCommandResult execute() {
+      return result(myOutput, true);
+    }
+
+    @Override
+    MockGit.OperationName getName() {
+      return myOperationName
+    }
+  }
+
+  private static GitCommandResult result(String output, boolean success) {
+    new GitCommandResult(success, success ? 0 : 127, Collections.emptyList(), Collections.singletonList(output))
   }
 
   public static class SuccessfulCherryPickExecutor implements OperationExecutor {

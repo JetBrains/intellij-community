@@ -17,16 +17,16 @@ package git4idea.cherrypick
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import git4idea.history.browser.CherryPicker
 import git4idea.history.browser.GitCommit
-import git4idea.test.MockGit
-import git4idea.tests.TestDialogHandler
+import git4idea.test.MockVcsHelper
 import org.junit.Before
 import org.junit.Test
 
+import static git4idea.test.MockGit.*
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
+import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
+import static junit.framework.Assert.assertTrue
 
 /**
  * Cherry-pick of one or multiple commits with "commit at once" option enabled.
@@ -64,7 +64,7 @@ Otherwise, please use 'git reset'
   void "clean tree, no conflicts, then commit & notify, no new changelists"() {
     GitCommit commit = commit()
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit.subject))
     invokeCherryPick(commit)
 
     assertHeadCommit(commit)
@@ -74,7 +74,7 @@ Otherwise, please use 'git reset'
 
   @Test
   void "dirty tree, conflicting with commit, then show error"() {
-    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK))
+    myGit.registerOperationExecutors(new SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK))
 
     invokeCherryPick(commit())
 
@@ -88,8 +88,7 @@ Otherwise, please use 'git reset'
   @Test
   void "conflict, merge dialog, not all merged, then new & active changelist"() {
     prepareConflict()
-    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(MockGit.OperationName.GET_UNMERGED_FILES, UNMERGED_FILE))
-
+    myGit.registerOperationExecutors(new SimpleSuccessOperationExecutor(GET_UNMERGED_FILES, UNMERGED_FILE))
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
@@ -100,26 +99,38 @@ Otherwise, please use 'git reset'
   void "conflict, merge completed, then commit dialog"() {
     prepareConflict()
     GitCommit commit = commit()
+
+    boolean commitDialogShown = false;
+    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
+      @Override
+      boolean commit(String commitMessage) {
+        commitDialogShown = true;
+        return true;
+      }
+    })
+
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertCommitDialogShown()
+    assertTrue "Commit dialog was not shown", commitDialogShown
   }
 
   @Test
   void "conflict, merge finished, commit succeeded, no new changelists"() {
     prepareConflict()
 
-    myDialogManager.registerDialogHandler(CommitChangeListDialog, new TestDialogHandler<CommitChangeListDialog>() {
+    boolean commitDialogShown = false;
+    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
       @Override
-      int handleDialog(CommitChangeListDialog dialog) {
-        return DialogWrapper.OK_EXIT_CODE
+      boolean commit(String commitMessage) {
+        commitDialogShown = true;
+        return true;
       }
     })
 
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertCommitDialogShown()
+    assertTrue "Commit dialog was not shown", commitDialogShown
     assertOnlyDefaultChangelist()
   }
 
@@ -127,17 +138,19 @@ Otherwise, please use 'git reset'
   void "conflict, merge ok, commit cancelled, then new & active changelist"() {
     prepareConflict()
 
-    myDialogManager.registerDialogHandler(CommitChangeListDialog, new TestDialogHandler<CommitChangeListDialog>() {
+    boolean commitDialogShown = false;
+    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
       @Override
-      int handleDialog(CommitChangeListDialog dialog) {
-        return DialogWrapper.CANCEL_EXIT_CODE
+      boolean commit(String commitMessage) {
+        commitDialogShown = true;
+        return false;
       }
     })
 
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertCommitDialogShown()
+    assertTrue "Commit dialog was not shown", commitDialogShown
     assertChangeLists([DEFAULT, commit.getSubject()], commit.getSubject())
   }
 
@@ -145,8 +158,8 @@ Otherwise, please use 'git reset'
   void "2 commits, no problems, then commit all & notify"() {
     GitCommit commit1 = commit("First commit to cherry-pick")
     GitCommit commit2 = commit("Second commit to cherry-pick")
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
-                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit2.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+                                     new SuccessfulCherryPickExecutor(myRepository, commit2.subject))
 
     invokeCherryPick([commit1, commit2])
     assertLastCommits commit2, commit1
@@ -159,9 +172,9 @@ Otherwise, please use 'git reset'
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
-                                     new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK),
-                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+                                     new SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK),
+                                     new SuccessfulCherryPickExecutor(myRepository, commit3.subject))
 
     invokeCherryPick([commit1, commit2, commit3])
 
@@ -178,26 +191,28 @@ Didn't cherry-pick others""", NotificationType.ERROR)
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject))
     prepareConflict()
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit3.subject))
 
-    myDialogManager.registerDialogHandler(CommitChangeListDialog, new TestDialogHandler<CommitChangeListDialog>() {
+    boolean commitDialogShown = false;
+    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
       @Override
-      int handleDialog(CommitChangeListDialog dialog) {
-        return DialogWrapper.OK_EXIT_CODE
+      boolean commit(String commitMessage) {
+        commitDialogShown = true;
+        return true;
       }
     })
 
     assertMergeDialogShown()
-    assertCommitDialogShown()
+    assertTrue "Commit dialog was not shown", commitDialogShown
     assertLastCommits commit3, commit2, commit1
   }
 
   @Test
   void "Notify if changes have already been applied"() {
     // Inspired by IDEA-73548
-    myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
+    myGit.registerOperationExecutors(new SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
 
     GitCommit commit = commit()
     invokeCherryPick(commit)
@@ -212,8 +227,8 @@ Didn't cherry-pick others""", NotificationType.ERROR)
     // Inspired by IDEA-73548
     GitCommit commit1 = commit()
     GitCommit commit2 = commit()
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
-                                     new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+                                     new SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
 
     invokeCherryPick([ commit1, commit2 ])
 
