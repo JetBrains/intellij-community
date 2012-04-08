@@ -77,7 +77,7 @@ hint: and commit the result with 'git commit'
   }
 
   GitCommit commit(String commitMessage = "plain commit") {
-    AbstractHash hash = AbstractHash.create(new SHA().toString())
+    AbstractHash hash = AbstractHash.create(Integer.toHexString(new SHA().hashCode()))
     List<Change> changes = new ArrayList<Change>();
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
     new GitCommit(hash, SHAHash.emulate(hash), "John Smith", null, null, commitMessage, commitMessage, null, null, null, null, null, null,
