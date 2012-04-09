@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -127,7 +128,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable {
+public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
   public static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
@@ -562,7 +563,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   @NotNull
-  public FoldingModelEx getFoldingModel() {
+  public FoldingModelImpl getFoldingModel() {
     return myFoldingModel;
   }
 
@@ -2609,8 +2610,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + "', allow caret inside tab: " + mySettings.isCaretInsideTabs()
            + ", allow caret after line end: " + mySettings.isVirtualSpace()
            + ", soft wraps: " + (mySoftWrapModel.isSoftWrappingEnabled() ? "on" : "off")
-           +  ", soft wraps data: " + getSoftWrapModel()
-           + "\n\nfolding data: " + getFoldingModel()
+           +  ", soft wraps data: " + getSoftWrapModel().dumpState()
+           + "\n\nfolding data: " + getFoldingModel().dumpState()
            + "\n\ndocument info: " + myDocument.dumpState();
   }
   

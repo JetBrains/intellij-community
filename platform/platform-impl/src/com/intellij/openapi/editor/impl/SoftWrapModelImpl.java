@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,7 +52,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jun 8, 2010 12:47:32 PM
  */
-public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener, PropertyChangeListener {
+public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener, PropertyChangeListener, Dumpable {
 
   /**
    * Holds name of JVM property which presence should trigger debug-aware soft wraps processing.
@@ -686,9 +687,16 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     }
   }
 
+  @NotNull
+  @Override
+  public String dumpState() {
+    return String.format("appliance manager state: %s; soft wraps mapping info: %s",
+                         myApplianceManager.dumpState(), myDataMapper.dumpState());
+  }
+
   @Override
   public String toString() {
-    return String.format("appliance manager state: %s; soft wraps mapping info: %s", myApplianceManager, myDataMapper);
+    return dumpState();
   }
 
   /**

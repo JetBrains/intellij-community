@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.ArrayUtil;
@@ -37,7 +38,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @author cdr
  */
-abstract class CharArray implements CharSequenceBackedByArray {
+abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
 
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
@@ -669,7 +670,7 @@ abstract class CharArray implements CharSequenceBackedByArray {
 
   @NonNls
   @NotNull
-  private String dumpState() {
+  public String dumpState() {
     return "deferred changes mode: " + isDeferredChangeMode()+", length: " + length()+" (data array length: " + myCount+
            ", deferred shift: " + myDeferredShift+"); view offsets: [" + myStart+"; "+myCount+"]; deferred changes: "+myDeferredChangesStorage;
   }

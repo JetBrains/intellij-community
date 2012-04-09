@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -55,7 +56,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Aug 31, 2010 10:24:47 AM
  */
-public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAwareDocumentParsingListener {
+public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAwareDocumentParsingListener, Dumpable {
   
   private static final Logger LOG = Logger.getInstance("#" + CachingSoftWrapDataMapper.class.getName());
   private static final boolean DEBUG_SOFT_WRAP_PROCESSING = false;
@@ -617,9 +618,15 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     } 
   }
 
+  @NotNull
+  @Override
+  public String dumpState() {
+    return myCache.toString();
+  }
+
   @Override
   public String toString() {
-    return myCache.toString();
+    return dumpState();
   }
 
   /**

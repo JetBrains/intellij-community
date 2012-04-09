@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.diagnostic.Dumpable;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -398,10 +400,20 @@ public class EditorUtil {
         char c = text.charAt(i);
         if (c == '\n' || c == '\r') {
           String editorInfo = editor instanceof EditorImpl ? ". Editor info: " + ((EditorImpl)editor).dumpState() : "";
-          LOG.error(String.format(
-            "Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d. Text holder class: %s%s",
-            c, i, start, offset, tabSize, text.getClass(), editorInfo
-          ));
+          String documentInfo;
+          if (text instanceof Dumpable) {
+            documentInfo = ((Dumpable)text).dumpState();
+          }
+          else {
+            documentInfo = "Text holder class: " + text.getClass();
+          }
+          LogMessageEx.error(
+            LOG, "detected incorrect offset -> column number calculation",
+            String.format(
+              "Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d. %s%s",
+              c, i, start, offset, tabSize, documentInfo, editorInfo
+            )
+          );
         }
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;

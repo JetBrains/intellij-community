@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +54,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jul 5, 2010 10:01:27 AM
  */
-public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener {
+public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener, Dumpable {
   
   private static final Logger LOG = Logger.getInstance("#" + SoftWrapApplianceManager.class.getName());
   
@@ -925,13 +926,19 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
   public void setWidthProvider(VisibleAreaWidthProvider widthProvider) {
     myWidthProvider = widthProvider;
   }
-  
+
+  @NotNull
   @Override
-  public String toString() {
+  public String dumpState() {
     return String.format(
       "recalculation in progress: %b; stored update events: %s; active update events: %s, event being processed: %s",
       myInProgress, myEventsStorage, myActiveEvents, myEventBeingProcessed
     );
+  }
+
+  @Override
+  public String toString() {
+    return dumpState();
   }
 
   /**
