@@ -42,6 +42,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,6 @@ public abstract class BreakpointPropertiesPanel {
   private JCheckBox myLogExpressionCheckBox;
   private JCheckBox myLogMessageCheckBox;
   protected JCheckBox myPassCountCheckbox;
-  private JCheckBox myConditionCheckbox;
   private JCheckBox myInstanceFiltersCheckBox;
   private JCheckBox myClassFiltersCheckBox;
 
@@ -84,21 +84,19 @@ public abstract class BreakpointPropertiesPanel {
   private PsiClass myBreakpointPsiClass;
 
   private JRadioButton mySuspendThreadRadio;
-  private JRadioButton mySuspendNoneRadio;
   private JRadioButton mySuspendAllRadio;
-  private JRadioButton myDisableAgainRadio;
-  private JRadioButton myLeaveEnabledRadioButton;
-  private JLabel myEnableOrDisableLabel;
+  private JBCheckBox mySuspendJBCheckBox;
   private JButton myMakeDefaultButton;
 
+  private JRadioButton myDisableAgainRadio;
+  private JRadioButton myLeaveEnabledRadioButton;
+
+  private JLabel myEnableOrDisableLabel;
   private JPanel myDependsOnPanel;
   private JPanel myInstanceFiltersPanel;
   private JPanel myClassFiltersPanel;
   private JPanel myPassCountPanel;
   private JPanel myConditionsPanel;
-  private JPanel myConditionPanel;
-  private JPanel myCompactConditionsPanel;
-  private JPanel myConditionPlaceholder;
   private JPanel myActionsPanel;
 
   ButtonGroup mySuspendPolicyGroup;
@@ -146,14 +144,8 @@ public abstract class BreakpointPropertiesPanel {
     myMoreOptionsVisible = b;
     myDependsOnPanel.setVisible(b);
     myConditionsPanel.setVisible(b);
-    if (!b) {
-      myConditionPlaceholder.remove(myConditionPanel);
-      myCompactConditionsPanel.add(myConditionPanel, BorderLayout.CENTER);
-    }
-    else {
+    if (b) {
       myActionsPanel.setVisible(true);
-      myCompactConditionsPanel.remove(myConditionPanel);
-      myConditionPlaceholder.add(myConditionPanel, BorderLayout.CENTER);
     }
   }
 
@@ -195,8 +187,7 @@ public abstract class BreakpointPropertiesPanel {
     mySuspendPolicyGroup = new ButtonGroup();
     mySuspendPolicyGroup.add(mySuspendAllRadio);
     mySuspendPolicyGroup.add(mySuspendThreadRadio);
-    mySuspendPolicyGroup.add(mySuspendNoneRadio);
-    
+
     updateSuspendPolicyRbFont();
     final ItemListener suspendPolicyChangeListener = new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
@@ -207,8 +198,16 @@ public abstract class BreakpointPropertiesPanel {
         }
       }
     };
+
+    mySuspendJBCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        mySuspendAllRadio.setEnabled(mySuspendJBCheckBox.isSelected());
+        mySuspendThreadRadio.setEnabled(mySuspendJBCheckBox.isSelected());
+      }
+    });
+
     mySuspendAllRadio.addItemListener(suspendPolicyChangeListener);
-    mySuspendNoneRadio.addItemListener(suspendPolicyChangeListener);
     mySuspendThreadRadio.addItemListener(suspendPolicyChangeListener);
     
     myMakeDefaultButton.addActionListener(new ActionListener() {
@@ -219,9 +218,6 @@ public abstract class BreakpointPropertiesPanel {
         updateSuspendPolicyRbFont();
         if (DebuggerSettings.SUSPEND_THREAD.equals(suspendPolicy)) {
           mySuspendThreadRadio.requestFocus();
-        }
-        else if (DebuggerSettings.SUSPEND_NONE.equals(suspendPolicy)) {
-          mySuspendNoneRadio.requestFocus();
         }
         else {
           mySuspendAllRadio.requestFocus();
@@ -312,22 +308,20 @@ public abstract class BreakpointPropertiesPanel {
       }
     };
     myPassCountCheckbox.addActionListener(listener);
-    myConditionCheckbox.addActionListener(listener);
     myInstanceFiltersCheckBox.addActionListener(listener);
     myClassFiltersCheckBox.addActionListener(listener);
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
-    DebuggerUIUtil.focusEditorOnCheck(myConditionCheckbox, myConditionCombo);
     DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
   }
 
   private String getSelectedSuspendPolicy() {
+    if (!mySuspendJBCheckBox.isSelected()) {
+      return DebuggerSettings.SUSPEND_NONE;
+    }
     if (mySuspendThreadRadio.isSelected()) {
       return DebuggerSettings.SUSPEND_THREAD;
-    }
-    if (mySuspendNoneRadio.isSelected()) {
-      return DebuggerSettings.SUSPEND_NONE;
     }
     return DebuggerSettings.SUSPEND_ALL;
   }
@@ -340,7 +334,6 @@ public abstract class BreakpointPropertiesPanel {
     
     mySuspendAllRadio.setFont(DebuggerSettings.SUSPEND_ALL.equals(defPolicy)? boldFont : font);
     mySuspendThreadRadio.setFont(DebuggerSettings.SUSPEND_THREAD.equals(defPolicy)? boldFont : font);
-    mySuspendNoneRadio.setFont(DebuggerSettings.SUSPEND_NONE.equals(defPolicy)? boldFont : font);
   }
 
   protected ClassFilter createClassConditionFilter() {
@@ -379,10 +372,19 @@ public abstract class BreakpointPropertiesPanel {
 
     PsiElement context = breakpoint.getEvaluationElement();
     myPassCountCheckbox.setSelected(breakpoint.COUNT_FILTER_ENABLED);
-    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED);
+    if (!breakpoint.CONDITION_ENABLED) {
+      myConditionCombo.setText(emptyText());
+    }
+    else {
+      myConditionCombo.setContext(context);
+      myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : emptyText());
+    }
+
+    mySuspendJBCheckBox.setSelected(!breakpoint.SUSPEND_POLICY.equals(DebuggerSettings.SUSPEND_NONE));
+    mySuspendThreadRadio.setEnabled(mySuspendJBCheckBox.isSelected());
+    mySuspendAllRadio.setEnabled(mySuspendJBCheckBox.isSelected());
 
     if(DebuggerSettings.SUSPEND_NONE.equals(breakpoint.SUSPEND_POLICY)) {
-      mySuspendPolicyGroup.setSelected(mySuspendNoneRadio.getModel(), true);
       actionsPanelVisible = true;
     }
     else if(DebuggerSettings.SUSPEND_THREAD.equals(breakpoint.SUSPEND_POLICY)){
@@ -391,16 +393,19 @@ public abstract class BreakpointPropertiesPanel {
     else {
       mySuspendPolicyGroup.setSelected(mySuspendAllRadio.getModel(), true);
     }
-    mySuspendNoneRadio.addActionListener(new ActionListener() {
+
+    mySuspendJBCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
         if (!myActionsPanel.isVisible()) {
-          if (mySuspendNoneRadio.isSelected()) {
+          if (!mySuspendJBCheckBox.isSelected()) {
             if (myDelegate != null) {
               myDelegate.showActionsPanel();
             }
           }
         }
+        mySuspendThreadRadio.setEnabled(mySuspendJBCheckBox.isSelected());
+        mySuspendAllRadio.setEnabled(mySuspendJBCheckBox.isSelected());
       }
     });
     myLogMessageCheckBox.setSelected(breakpoint.LOG_ENABLED);
@@ -409,16 +414,13 @@ public abstract class BreakpointPropertiesPanel {
       actionsPanelVisible = true;
     }
 
-    myConditionCombo.setContext(context);
-    myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
-
     myLogExpressionCombo.setContext(context);
 
     if (breakpoint.getLogMessage() != null) {
       myLogExpressionCombo.setText(breakpoint.getLogMessage());
     }
     else {
-      myLogExpressionCombo.setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
+      myLogExpressionCombo.setText(emptyText());
     }
 
     myLogExpressionCombo.setEnabled(breakpoint.LOG_EXPRESSION_ENABLED);
@@ -453,6 +455,10 @@ public abstract class BreakpointPropertiesPanel {
     setMoreOptionsVisible(moreOptionsVisible);
   }
 
+  private TextWithImportsImpl emptyText() {
+    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
+  }
+
   /**
    * Save values in the UI components to the breakpoint object
    */
@@ -470,7 +476,7 @@ public abstract class BreakpointPropertiesPanel {
     }
     breakpoint.COUNT_FILTER_ENABLED = breakpoint.COUNT_FILTER > 0 && myPassCountCheckbox.isSelected();
     breakpoint.setCondition(myConditionCombo.getText());
-    breakpoint.CONDITION_ENABLED = !breakpoint.getCondition().isEmpty() && myConditionCheckbox.isSelected();
+    breakpoint.CONDITION_ENABLED = !breakpoint.getCondition().isEmpty();
     breakpoint.setLogMessage(myLogExpressionCombo.getText());
     breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty() && myLogExpressionCheckBox.isSelected();
     breakpoint.LOG_ENABLED = myLogMessageCheckBox.isSelected();
@@ -616,7 +622,7 @@ public abstract class BreakpointPropertiesPanel {
   }
 
   protected void updateCheckboxes() {
-    JCheckBox [] checkBoxes = { myConditionCheckbox, myInstanceFiltersCheckBox, myClassFiltersCheckBox };
+    JCheckBox [] checkBoxes = {myInstanceFiltersCheckBox, myClassFiltersCheckBox };
     JCheckBox    selected   = null;
     for (JCheckBox checkBoxe : checkBoxes) {
       if (checkBoxe.isSelected()) {
@@ -624,8 +630,7 @@ public abstract class BreakpointPropertiesPanel {
         break;
       }
     }
-
-    if(selected != null){
+    if(selected != null || !myConditionCombo.getText().isEmpty()){
       myPassCountCheckbox.setEnabled(false);
     } else {
       myPassCountCheckbox.setEnabled(true);
@@ -637,8 +642,8 @@ public abstract class BreakpointPropertiesPanel {
 
     myPassCountField.setEditable(myPassCountCheckbox.isSelected());
     myPassCountField.setEnabled (myPassCountCheckbox.isSelected());
-    myConditionCombo.setEnabled(myConditionCheckbox.isSelected());
-    myConditionMagnifierButton.setEnabled(myConditionCheckbox.isSelected());
+    myConditionCombo.setEnabled(true);
+    myConditionMagnifierButton.setEnabled(true);
     myInstanceFiltersField.setEnabled(myInstanceFiltersCheckBox.isSelected());
     myInstanceFiltersField.getTextField().setEditable(myInstanceFiltersCheckBox.isSelected());
     myClassFiltersField.setEnabled(myClassFiltersCheckBox.isSelected());
