@@ -78,7 +78,7 @@ public class VcsGuess {
         final boolean inContent = myVcsManager.isFileInContent(validParent);
         if (inContent) return true;
         if (filePath != null) {
-          return isFileInBaseDir(filePath, myProject.getBaseDir()) && ! ! myExcludedFileIndex.isExcludedFile(validParent);
+          return isFileInBaseDir(filePath, myProject.getBaseDir()) && ! myExcludedFileIndex.isExcludedFile(validParent);
         }
         return false;
       }
