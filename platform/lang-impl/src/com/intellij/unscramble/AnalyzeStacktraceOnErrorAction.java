@@ -17,7 +17,6 @@
 package com.intellij.unscramble;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,9 +36,7 @@ public class AnalyzeStacktraceOnErrorAction extends AnAction {
 
     final String message = IdeErrorsDialog.CURRENT_TRACE_KEY.getData(dataContext);
     if (message != null) {
-      final ConsoleView consoleView = AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>");
-      consoleView.allowHeavyFilters();
-      AnalyzeStacktraceUtil.printStacktrace(consoleView, message);
+      AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>", message);
     }
   }
 }

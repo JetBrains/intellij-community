@@ -16,6 +16,7 @@
 package com.intellij.unscramble;
 
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
@@ -29,8 +30,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +42,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +51,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,6 +65,15 @@ public class UnscrambleDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   @NonNls private static final String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   @NonNls private static final String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
+  private static final Condition<ThreadState> DEADLOCK_CONDITION = new Condition<ThreadState>() {
+    @Override
+    public boolean value(ThreadState state) {
+      return state.isDeadlocked();
+    }
+  };
+  private static final Icon THREAD_DUMP_ICON = IconLoader.getIcon("/debugger/threadStates/threaddump.png");
+  private static final Icon DEADLOCK_ICON = IconLoader.getIcon("/debugger/killProcess.png");
+  private static final Icon EXCEPTION_ICON = IconLoader.getIcon("/debugger/threadStates/exception.png");
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -358,25 +375,43 @@ public class UnscrambleDialog extends DialogWrapper {
 
   private boolean performUnscramble() {
     UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
-    return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), myProject, myStacktraceEditorPanel.getText());
+    return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), myProject, myStacktraceEditorPanel.getText()) != null;
   }
 
-  static boolean showUnscrambledText(UnscrambleSupport unscrambleSupport, String logName, Project project, String textToUnscramble) {
+  @Nullable
+  static RunContentDescriptor showUnscrambledText(@Nullable UnscrambleSupport unscrambleSupport,
+                                                  String logName,
+                                                  Project project,
+                                                  String textToUnscramble) {
     String unscrambledTrace = unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project,textToUnscramble, logName);
-    if (unscrambledTrace == null) return false;
+    if (unscrambledTrace == null) return null;
     List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
-    final ConsoleView consoleView = addConsole(project, threadStates);
-    consoleView.allowHeavyFilters();
-    AnalyzeStacktraceUtil.printStacktrace(consoleView, unscrambledTrace);
-    return true;
+    return addConsole(project, threadStates, unscrambledTrace);
   }
 
-  public static ConsoleView addConsole(final Project project, final List<ThreadState> threadDump) {
+  private static RunContentDescriptor addConsole(final Project project, final List<ThreadState> threadDump, String unscrambledTrace) {
+    Icon icon = null;
+    String message = IdeBundle.message("unscramble.unscrambled.stacktrace.tab");
+    if (!threadDump.isEmpty()) {
+      message = IdeBundle.message("unscramble.unscrambled.threaddump.tab");
+      icon = THREAD_DUMP_ICON;
+    }
+    else {
+      String name = getExceptionName(unscrambledTrace);
+      if (name != null) {
+        message = name;
+        icon = EXCEPTION_ICON;
+      }
+    }
+    if (ContainerUtil.find(threadDump, DEADLOCK_CONDITION) != null) {
+      message = IdeBundle.message("unscramble.unscrambled.deadlock.tab");
+      icon = DEADLOCK_ICON;
+    }
     return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new AnalyzeStacktraceUtil.ConsoleFactory() {
       public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {
         return new ThreadDumpPanel(project, consoleView, toolbarActions, threadDump);
       }
-    } : null, IdeBundle.message("unscramble.unscrambled.stacktrace.tab"));
+    } : null, message, unscrambledTrace, icon);
   }
 
   protected String getDimensionServiceKey(){
@@ -386,4 +421,53 @@ public class UnscrambleDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myStacktraceEditorPanel.getEditorComponent();
   }
+
+  @Nullable
+  private static String getExceptionName(String unscrambledTrace) {
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    BufferedReader reader = new BufferedReader(new StringReader(unscrambledTrace));
+    for (int i = 0; i < 3; i++) {
+      try {
+        String line = reader.readLine();
+        if (line == null) return null;
+        line = line.trim();
+        String name = getExceptionAbbreviation(line);
+        if (name != null) return name;
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getExceptionAbbreviation(String line) {
+    int lastDelimiter = 0;
+    for (int j = 0; j < line.length(); j++) {
+      char c = line.charAt(j);
+      if (c == '.' || c == '$') {
+        lastDelimiter = j;
+        continue;
+      }
+      if (!StringUtil.isJavaIdentifierPart(c)) {
+        return null;
+      }
+    }
+    String clazz = line.substring(lastDelimiter);
+    String abbreviate = abbreviate(clazz);
+    return abbreviate.length() > 1 ? abbreviate : clazz;
+  }
+
+  private static String abbreviate(String s) {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < s.length(); i++) {
+          char c = s.charAt(i);
+          if (Character.isUpperCase(c)) {
+              builder.append(c);
+          }
+      }
+      return builder.toString();
+  }
+
 }
