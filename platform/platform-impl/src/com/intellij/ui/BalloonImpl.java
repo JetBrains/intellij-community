@@ -58,6 +58,10 @@ import java.awt.image.BufferedImage;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static java.awt.event.KeyEvent.KEY_PRESSED;
+import static java.awt.event.MouseEvent.MOUSE_CLICKED;
+import static java.awt.event.MouseEvent.MOUSE_PRESSED;
+
 public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   private MyComponent myComp;
@@ -78,45 +82,49 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private CloseButton myCloseRec;
 
   private final AWTEventListener myAwtActivityListener = new AWTEventListener() {
-    public void eventDispatched(final AWTEvent event) {
-      if (myHideOnMouse &&
-          (event.getID() == MouseEvent.MOUSE_PRESSED)) {
-        final MouseEvent me = (MouseEvent)event;
-        if (isInsideBalloon(me))  return;
+    public void eventDispatched(final AWTEvent e) {
+      final int id = e.getID();
+      if (e instanceof MouseEvent) {
+        final MouseEvent me = (MouseEvent)e;
+        final boolean insideBalloon = isInsideBalloon(me);
 
-        hide();
-        return;
-      }
-
-      if (myClickHandler != null && event.getID() == MouseEvent.MOUSE_CLICKED) {
-        final MouseEvent me = (MouseEvent)event;
-        if (!(me.getComponent() instanceof CloseButton) && isInsideBalloon(me)) {
-          myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
-          if (myCloseOnClick) {
+        if (myHideOnMouse && id == MOUSE_PRESSED) {
+          if (!insideBalloon) {
             hide();
-            return;
+          }
+          return;
+        }
+
+        if (myClickHandler != null && id == MOUSE_CLICKED) {
+          if (!(me.getComponent() instanceof CloseButton) && insideBalloon) {
+            myClickHandler.actionPerformed(new ActionEvent(BalloonImpl.this, ActionEvent.ACTION_PERFORMED, "click", me.getModifiersEx()));
+            if (myCloseOnClick) {
+              hide();
+              return;
+            }
           }
         }
-      }
 
-      if (myEnableCloseButton && event.getID() == MouseEvent.MOUSE_MOVED) {
-        final MouseEvent me = (MouseEvent)event;
-        final boolean inside = isInsideBalloon(me);
-        final boolean moveChanged = inside != myLastMoveWasInsideBalloon;
-        myLastMoveWasInsideBalloon = inside;
-        if (moveChanged) {
-          myComp.repaintButton();
+        if (myEnableCloseButton && id == MouseEvent.MOUSE_MOVED) {
+          final boolean moveChanged = insideBalloon != myLastMoveWasInsideBalloon;
+          myLastMoveWasInsideBalloon = insideBalloon;
+          if (moveChanged) {
+            myComp.repaintButton();
+          }
+        }
+
+        if (UIUtil.isCloseClick((MouseEvent)e)) {
+          hide();
+          return;
         }
       }
 
-      if (event instanceof MouseEvent && UIUtil.isCloseClick((MouseEvent)event)) {
-        hide();
-        return;
-      }
-
-      if (myHideOnKey && (event.getID() == KeyEvent.KEY_PRESSED)) {
-        final KeyEvent ke = (KeyEvent)event;
-        if (ke.getKeyCode() != KeyEvent.VK_SHIFT && ke.getKeyCode() != KeyEvent.VK_CONTROL && ke.getKeyCode() != KeyEvent.VK_ALT && ke.getKeyCode() != KeyEvent.VK_META) {
+      if (myHideOnKey && e instanceof KeyEvent && id == KEY_PRESSED) {
+        final KeyEvent ke = (KeyEvent)e;
+        if (ke.getKeyCode() != KeyEvent.VK_SHIFT &&
+            ke.getKeyCode() != KeyEvent.VK_CONTROL &&
+            ke.getKeyCode() != KeyEvent.VK_ALT &&
+            ke.getKeyCode() != KeyEvent.VK_META) {
           if (SwingUtilities.isDescendingFrom(ke.getComponent(), myComp) || ke.getComponent() == myComp) return;
           hide();
         }
@@ -524,6 +532,22 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.add(myComp);
     myLayeredPane.setLayer(myComp, getLayer());
     myPosition.updateBounds(this);
+    myComp.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        e.consume();
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+        e.consume();
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+        e.consume();
+      }
+    });
   }
 
 

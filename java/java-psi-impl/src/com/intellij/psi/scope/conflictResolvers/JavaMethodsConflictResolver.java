@@ -329,6 +329,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return checkSubtyping(type1, type2, method1, method2, true);
   }
 
+  @Nullable
   private static Specifics checkSubtyping(PsiType type1,
                                           PsiType type2,
                                           PsiMethod method1,
@@ -336,9 +337,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                           boolean boxingHappening) {
     boolean noBoxing = boxingHappening || type1 instanceof PsiPrimitiveType == type2 instanceof PsiPrimitiveType;
     final boolean allowUncheckedConversion =
-      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC);
-    final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion || InheritanceUtil.isInheritorOrSelf(method1.getContainingClass(), method2.getContainingClass(), true));
-    final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion || InheritanceUtil.isInheritorOrSelf(method2.getContainingClass(), method1.getContainingClass(), true));
+      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC) ||
+       method1.getContainingClass() == method2.getContainingClass();
+    final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion);
+    final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion);
     if (assignable1From2 || assignable2From1) {
       if (assignable1From2 && assignable2From1) {
         return null;
@@ -347,7 +349,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       return assignable1From2 ? Specifics.SECOND : Specifics.FIRST;
     }
 
-    return Specifics.NEITHER;
+    return allowUncheckedConversion ? Specifics.NEITHER : null;
   }
 
   private boolean isBoxingHappened(PsiType argType, PsiType parameterType) {
