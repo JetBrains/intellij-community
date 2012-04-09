@@ -22,10 +22,7 @@ import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.actions.AbstractComboBoxAction;
-import com.intellij.designer.designSurface.ComponentDecorator;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.EditOperation;
-import com.intellij.designer.designSurface.OperationContext;
+import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
@@ -48,6 +45,16 @@ import java.util.List;
  */
 public class RadFrameLayout extends RadViewLayoutWithData {
   private static final String[] LAYOUT_PARAMS = {"FrameLayout_Layout", "ViewGroup_MarginLayout"};
+
+  private final ResizeSelectionDecorator mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1) {
+    @Override
+    protected boolean visible(RadComponent component, ResizePoint point) {
+      if (point.getType() == FrameLayoutMarginOperation.TYPE) {
+        return FrameLayoutMarginOperation.visible(component, (DirectionResizePoint)point);
+      }
+      return true;
+    }
+  };
 
   @Override
   @NotNull
@@ -74,20 +81,12 @@ public class RadFrameLayout extends RadViewLayoutWithData {
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    ResizeSelectionDecorator decorator = new ResizeSelectionDecorator(Color.red, 1) {
-      @Override
-      protected boolean visible(RadComponent component, ResizePoint point) {
-        if (point.getType() == FrameLayoutMarginOperation.TYPE) {
-          return FrameLayoutMarginOperation.visible(component, (DirectionResizePoint)point);
-        }
-        return true;
-      }
-    };
+    mySelectionDecorator.clear();
     if (selection.size() == 1) {
-      FrameLayoutMarginOperation.points(decorator);
+      FrameLayoutMarginOperation.points(mySelectionDecorator);
     }
-    ResizeOperation.points(decorator);
-    return decorator;
+    ResizeOperation.points(mySelectionDecorator);
+    return mySelectionDecorator;
   }
 
   private static List<Pair<Boolean, Gravity>> ITEMS = Arrays

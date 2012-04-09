@@ -15,12 +15,32 @@
  */
 package com.intellij.android.designer.model;
 
+import com.intellij.android.designer.designSurface.layout.BorderStaticDecorator;
+import com.intellij.designer.designSurface.StaticDecorator;
+import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class RadViewLayoutWithData extends RadViewLayout {
+  private BorderStaticDecorator myBorderDecorator;
+
   @NotNull
   public abstract String[] getLayoutParams();
+
+  private StaticDecorator getBorderDecorator() {
+    if (myBorderDecorator == null) {
+      myBorderDecorator = new BorderStaticDecorator(myContainer);
+    }
+    return myBorderDecorator;
+  }
+
+  public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
+    if (!selection.contains(myContainer) && myContainer.getParent() != myContainer.getRoot()) {
+      decorators.add(getBorderDecorator());
+    }
+  }
 }

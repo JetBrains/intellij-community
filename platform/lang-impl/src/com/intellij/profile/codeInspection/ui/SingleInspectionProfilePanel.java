@@ -929,6 +929,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     final ModifiableModel selectedProfile = getSelectedProfile();
     final ProfileManager profileManager =
       myShareProfile ? myProjectProfileManager : InspectionProfileManager.getInstance();
+    selectedProfile.setLocal(!myShareProfile);
     if (selectedProfile.getProfileManager() != profileManager) {
       if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) != null) {
         selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());

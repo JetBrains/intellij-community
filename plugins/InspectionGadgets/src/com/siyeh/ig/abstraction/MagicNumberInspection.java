@@ -33,11 +33,10 @@ import javax.swing.*;
 
 public class MagicNumberInspection extends BaseInspection {
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean ignoreInHashCode = true;
 
+  @SuppressWarnings("PublicField")
   public boolean ignoreInTestCode = false;
 
   @Override

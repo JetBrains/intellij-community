@@ -24,7 +24,7 @@ import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
-import com.intellij.designer.designSurface.feedbacks.RectangleComponent;
+import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizePoint;
@@ -49,7 +49,7 @@ public class FrameLayoutMarginOperation implements EditOperation {
 
   private final OperationContext myContext;
   private RadViewComponent myComponent;
-  private RectangleComponent myFeedback;
+  private RectangleFeedback myFeedback;
   private TextFeedback myTextFeedback;
   private Rectangle myMargins;
 
@@ -75,7 +75,7 @@ public class FrameLayoutMarginOperation implements EditOperation {
       myTextFeedback.setBorder(new LineMarginBorder(0, 5, 3, 0));
       layer.add(myTextFeedback);
 
-      myFeedback = new RectangleComponent(Color.orange, 2);
+      myFeedback = new RectangleFeedback(Color.orange, 2);
       layer.add(myFeedback);
 
       layer.repaint();
@@ -185,13 +185,6 @@ public class FrameLayoutMarginOperation implements EditOperation {
     }
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  // Handlers
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
-  private static final float[] DASHES = new float[]{1, 2};
-
   public static boolean visible(RadComponent component, DirectionResizePoint point) {
     Pair<Gravity, Gravity> gravity = RadFrameLayout.gravity(component);
     int direction = point.getDirection();
@@ -211,16 +204,17 @@ public class FrameLayoutMarginOperation implements EditOperation {
     return true;
   }
 
+  private static final BasicStroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{1, 2}, 0);
+
   public static void points(ResizeSelectionDecorator decorator) {
     decorator.addPoint(new ResizePoint() {
-      private final BasicStroke myStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, DASHES, 0);
 
       @Override
       protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
         Rectangle bounds = component.getBounds(layer);
         applyMargins(bounds, getMargins(component));
 
-        g.setStroke(myStroke);
+        g.setStroke(STROKE);
         g.setColor(Color.red);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }

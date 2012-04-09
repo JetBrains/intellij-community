@@ -18,7 +18,7 @@ package com.intellij.android.designer.designSurface;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
+import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +38,7 @@ public class DropToOperation extends AbstractEditOperation {
     FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
     if (myFeedback == null) {
-      myFeedback = new AlphaComponent(Color.green);
+      myFeedback = new AlphaFeedback(Color.green);
       layer.add(myFeedback);
       myFeedback.setBounds(myContainer.getBounds(layer));
       layer.repaint();

@@ -1,0 +1,4 @@
+package p;
+
+class A {
+}

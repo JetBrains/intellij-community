@@ -13,31 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.designSurface.feedbacks;
+package pck;
+abstract class A {
+    abstract void foo(Object... x);
+    abstract void foo(int... x);
 
-import javax.swing.*;
-import java.awt.*;
-
-/**
- * @author Alexander Lobas
- */
-public class RectangleComponent extends JComponent {
-  private final Color myColor;
-  private final int myLine;
-
-  public RectangleComponent(Color color, int line) {
-    myColor = color;
-    myLine = line;
-  }
-
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    g.setColor(myColor);
-
-    Dimension size = getSize();
-    for (int i = 0; i < myLine; i++) {
-      g.drawRect(i, i, size.width - i - i - 1, size.height - i - i - 1);
+    {
+        foo<error descr="Ambiguous method call: both 'A.foo(Object...)' and 'A.foo(int...)' match">(1)</error>;
     }
-  }
 }

@@ -38,6 +38,7 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -68,7 +69,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   }
 
   @Override
-  public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiNameIdentifierOwner) {
       if (parent instanceof GrField && element == ((GrField)parent).getNameIdentifierGroovy()) {
@@ -166,7 +167,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
   }
 
   @Override
-  public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     Set<PsiMethod> methods = new HashSet<PsiMethod>();
     for (PsiElement element : elements) {
       ProgressManager.checkCanceled();
@@ -197,6 +198,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     for (final PsiClass aClass : classes) {
       try {
         AllOverridingMethodsSearch.search(aClass).forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+          @Override
           public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
             ProgressManager.checkCanceled();
 
@@ -219,10 +221,10 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
 
     for (PsiElement element : overridden) {
       final Icon icon = OVERRIDEN_METHOD_MARKER_RENDERER;
-      PsiElement range;
-      
+
       element = PsiImplUtil.handleMirror(element);
 
+      PsiElement range;
       if (element instanceof GrNamedElement) {
         range = ((GrNamedElement)element).getNameIdentifierGroovy();
       }

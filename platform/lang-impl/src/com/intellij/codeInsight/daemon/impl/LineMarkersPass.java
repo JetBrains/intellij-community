@@ -51,6 +51,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,18 +137,19 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
     if (forMerge.isEmpty() || myEditor == null) return markers;
 
     final List<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>(markers);
-    final HashMap<Integer, List<MergeableLineMarkerInfo>> map = new HashMap<Integer, List<MergeableLineMarkerInfo>>();
+    TIntObjectHashMap<List<MergeableLineMarkerInfo>> sameLineMarkers = new TIntObjectHashMap<List<MergeableLineMarkerInfo>>();
     for (MergeableLineMarkerInfo info : forMerge) {
       final LogicalPosition position = myEditor.offsetToLogicalPosition(info.startOffset);
-      List<MergeableLineMarkerInfo> infos = map.get(position.line);
+      List<MergeableLineMarkerInfo> infos = sameLineMarkers.get(position.line);
       if (infos == null) {
         infos = new ArrayList<MergeableLineMarkerInfo>();
-        map.put(position.line, infos);
+        sameLineMarkers.put(position.line, infos);
       }
       infos.add(info);
     }
 
-    for (List<MergeableLineMarkerInfo> infos : map.values()) {
+    for (Object v : sameLineMarkers.getValues()) {
+      List<MergeableLineMarkerInfo> infos = (List<MergeableLineMarkerInfo>)v;
       result.addAll(MergeableLineMarkerInfo.merge(infos));
     }
 

@@ -112,7 +112,8 @@ class MethodRepr extends ProtoMember {
     super(context, in);
     try {
       final DataExternalizer<TypeRepr.AbstractType> externalizer = TypeRepr.externalizer(context);
-      argumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[in.readInt()]);
+      final int size = in.readInt();
+      argumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[size]);
       exceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new HashSet<TypeRepr.AbstractType>(), in);
     }
     catch (IOException e) {

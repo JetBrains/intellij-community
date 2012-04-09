@@ -23,6 +23,7 @@ import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.components.JBViewport;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -395,6 +397,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     if (!isCellEditable(row, column)) {
       return false;
+    }
+
+    if (e instanceof KeyEvent && UIUtil.isReallyTypedEvent((KeyEvent)e)) {
+      SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this);
+      if (supply != null && supply.isPopupActive()) {
+        return false;
+      }
     }
 
     if (myEditorRemover == null) {

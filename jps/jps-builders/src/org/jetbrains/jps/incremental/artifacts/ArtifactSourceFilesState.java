@@ -11,6 +11,8 @@ import org.jetbrains.jps.artifacts.LayoutElement;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
+import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
+import org.jetbrains.jps.incremental.storage.StorageOwner;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +21,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ArtifactSourceFilesState {
+public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private final Project myProject;
   private final Artifact myArtifact;
   private final int myArtifactId;
@@ -60,13 +62,9 @@ public class ArtifactSourceFilesState {
     return myOutSrcMapping;
   }
 
-  public void clean() {
-    if (mySrcOutMapping != null) {
-      mySrcOutMapping.wipe();
-    }
-    if (myOutSrcMapping != null) {
-      myOutSrcMapping.wipe();
-    }
+  @Override
+  protected Collection<? extends StorageOwner> getChildStorages() {
+    return Arrays.asList(mySrcOutMapping, myOutSrcMapping);
   }
 
   public Map<String, IntArrayList> getChangedFiles() {
@@ -191,23 +189,5 @@ public class ArtifactSourceFilesState {
       }
     }
     return ArrayUtil.append(oldState, newItem);
-  }
-
-  public void close() throws IOException {
-    if (mySrcOutMapping != null) {
-      mySrcOutMapping.close();
-    }
-    if (myOutSrcMapping != null) {
-      myOutSrcMapping.close();
-    }
-  }
-
-  public void flush(boolean memoryCachesOnly) {
-    if (mySrcOutMapping != null) {
-      mySrcOutMapping.flush(memoryCachesOnly);
-    }
-    if (myOutSrcMapping != null) {
-      myOutSrcMapping.flush(memoryCachesOnly);
-    }
   }
 }

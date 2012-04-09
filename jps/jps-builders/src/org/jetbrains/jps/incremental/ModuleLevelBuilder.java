@@ -127,7 +127,9 @@ public abstract class ModuleLevelBuilder extends Builder {
           }
         }
         else {
-          context.processMessage(new ProgressMessage("Marking " + chunk.getName() + " and dependants for recompilation"));
+          final String messageText = "Marking " + chunk.getName() + " and direct dependants for recompilation";
+          LOG.info("Non-incremental mode: " + messageText);
+          context.processMessage(new ProgressMessage(messageText));
 
           additionalPassRequired = context.isMake();
           context.markDirtyRecursively(chunk);
@@ -136,7 +138,7 @@ public abstract class ModuleLevelBuilder extends Builder {
 
       context.processMessage(new ProgressMessage("Updating dependency information"));
 
-      globalMappings.integrate(delta, successfullyCompiled, removedPaths);
+      globalMappings.integrate(delta, removedPaths);
 
       return additionalPassRequired;
     }

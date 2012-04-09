@@ -17,13 +17,13 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadComponentVisitor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -58,24 +58,26 @@ public class DecorationLayer extends JComponent {
 
   @Override
   public void paint(Graphics g) {
-    Graphics2D g2d = (Graphics2D)g;
-    paintStatic(g2d);
-    if (myShowSelection) {
-      paintSelection(g2d);
+    if (myArea.getRootComponent() != null) {
+      Graphics2D g2d = (Graphics2D)g;
+      paintStaticDecorators(g2d);
+      if (myShowSelection) {
+        paintSelection(g2d);
+      }
     }
   }
 
-  private void paintStatic(Graphics2D g) {
-    List<StaticDecorator> decorators = new ArrayList<StaticDecorator>();
-    List<RadComponent> selection = myArea.getSelection();
-    Set<RadComponent> parents = RadComponent.getParents(selection);
+  private void paintStaticDecorators(Graphics2D g) {
+    final List<StaticDecorator> decorators = new ArrayList<StaticDecorator>();
+    final List<RadComponent> selection = myArea.getSelection();
 
-    for (RadComponent parent : parents) {
-      parent.getLayout().addStaticDecorators(decorators, selection);
-    }
-    for (RadComponent component : selection) {
-      component.addStaticDecorators(decorators, selection);
-    }
+    myArea.getRootComponent().accept(new RadComponentVisitor() {
+      @Override
+      public void endVisit(RadComponent component) {
+        component.addStaticDecorators(decorators, selection);
+      }
+    }, true);
+
     for (StaticDecorator decorator : decorators) {
       decorator.decorate(this, g);
     }

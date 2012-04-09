@@ -29,10 +29,12 @@ import java.awt.*;
 public class NonResizeSelectionDecorator extends ComponentDecorator {
   private final Color myColor;
   private final int myLineWidth;
+  private final BasicStroke myStroke;
 
   public NonResizeSelectionDecorator(Color color, int lineWidth) {
     myColor = color;
     myLineWidth = Math.max(lineWidth, 1);
+    myStroke = myLineWidth > 1 ? new BasicStroke(myLineWidth) : null;
   }
 
   @Override
@@ -55,8 +57,8 @@ public class NonResizeSelectionDecorator extends ComponentDecorator {
   @Override
   protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
     g.setColor(myColor);
-    if (myLineWidth > 1) {
-      g.setStroke(new BasicStroke(myLineWidth));
+    if (myStroke != null) {
+      g.setStroke(myStroke);
     }
 
     Rectangle bounds = component.getBounds(layer);

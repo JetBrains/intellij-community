@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.fileChooser.impl;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,6 +29,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class FileChooserUtil {
+  private static final String LAST_OPENED_FILE_PATH = "last_opened_file_path";
+
+  @Nullable
+  public static VirtualFile getLastOpenedFile(@Nullable final Project project) {
+    if (project != null) {
+      final String path = PropertiesComponent.getInstance(project).getValue(LAST_OPENED_FILE_PATH);
+      if (path != null) {
+        return LocalFileSystem.getInstance().findFileByPath(path);
+      }
+    }
+    return null;
+  }
+
+  public static void setLastOpenedFile(@Nullable final Project project, @Nullable final VirtualFile file) {
+    if (project != null && file != null) {
+      PropertiesComponent.getInstance(project).setValue(LAST_OPENED_FILE_PATH, file.getPath());
+    }
+  }
+
   @Nullable
   public static VirtualFile getFileToSelect(@NotNull final FileChooserDescriptor descriptor,
                                             @Nullable final Project project,

@@ -157,18 +157,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
     }
 
-    // grand VFS refresh significantly slows down local tests and generally not needed
-    //ApplicationManager.getApplication().runWriteAction(new Runnable() {
-    //  public void run() {
-    //    refresh(false);
-    //  }
-    //});
-
     myRootsToWatch.clear();
-
-    final File file = new File(FileUtil.getTempDirectory());
-    String path = file.getCanonicalPath().replace(File.separatorChar, '/');
-    addRootToWatch(path, true);
   }
 
   private WatchRequest[] normalizeRootsForRefresh() {

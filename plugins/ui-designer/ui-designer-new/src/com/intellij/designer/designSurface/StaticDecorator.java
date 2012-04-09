@@ -35,7 +35,7 @@ public abstract class StaticDecorator extends ComponentDecorator {
     return null;
   }
 
-  public void decorate(DecorationLayer layer, Graphics2D host) {
+  public final void decorate(DecorationLayer layer, Graphics2D host) {
     decorate(layer, host, myComponent);
   }
 }

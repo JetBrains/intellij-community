@@ -29,16 +29,19 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.ide.palette.impl.PaletteManager;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -49,6 +52,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -75,6 +80,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   private final static String DESIGNER_CARD = "designer";
   private final static String ERROR_CARD = "error";
+  private final static String ERROR_STACK_CARD = "stack";
+  private final static String ERROR_NO_STACK_CARD = "no_stack";
 
   protected final Module myModule;
   protected final VirtualFile myFile;
@@ -105,7 +112,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private int[][] mySelectionState;
 
   private JPanel myErrorPanel;
-  private JLabel myErrorMessage;
+  private JPanel myErrorMessages;
+  private JPanel myErrorStackPanel;
+  private CardLayout myErrorStackLayout;
   private JTextArea myErrorStack;
 
   private JPanel myProgressPanel;
@@ -279,68 +288,138 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected final void showDesignerCard() {
+    myErrorMessages.removeAll();
+    myErrorStack.setText(null);
+    myLayeredPane.revalidate();
     myLayout.show(this, DESIGNER_CARD);
   }
 
   private void createErrorCard() {
     myErrorPanel = new JPanel(new BorderLayout());
-
-    myErrorMessage = new JLabel(IconLoader.getIcon("/ide/error_notifications.png"));
-    myErrorMessage.setFont(myErrorMessage.getFont().deriveFont(Font.BOLD));
-    myErrorPanel.add(myErrorMessage, BorderLayout.PAGE_START);
+    myErrorMessages = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
+    myErrorPanel.add(myErrorMessages, BorderLayout.PAGE_START);
 
     myErrorStack = new JTextArea(50, 20);
     myErrorStack.setEditable(false);
 
-    myErrorPanel.add(ScrollPaneFactory.createScrollPane(myErrorStack), BorderLayout.CENTER);
+    myErrorStackLayout = new CardLayout();
+    myErrorStackPanel = new JPanel(myErrorStackLayout);
+    myErrorStackPanel.add(new JLabel(), ERROR_NO_STACK_CARD);
+    myErrorStackPanel.add(ScrollPaneFactory.createScrollPane(myErrorStack), ERROR_STACK_CARD);
+
+    myErrorPanel.add(myErrorStackPanel, BorderLayout.CENTER);
 
     add(myErrorPanel, ERROR_CARD);
   }
 
-  public final void showError(@NonNls String message, Throwable e) {
+  public final void showError(@NotNull String message, @NotNull Throwable e) {
     while (e instanceof InvocationTargetException) {
+      if (e.getCause() == null) {
+        break;
+      }
       e = e.getCause();
     }
 
     ErrorInfo info = new ErrorInfo();
-    info.message = info.displayMessage = message;
-    info.throwable = e;
+    info.myMessage = info.myDisplayMessage = message;
+    info.myThrowable = e;
     configureError(info);
 
-    if (info.show) {
+    if (info.myShowMessage) {
       showErrorPage(info);
     }
-    if (info.log || ApplicationManagerEx.getApplicationEx().isInternal()) {
-      LOG.error(LogMessageEx.createEvent(info.displayMessage,
-                                         info.message + "\n" + ExceptionUtil.getThrowableText(info.throwable),
+    if (info.myShowLog) {
+      LOG.error(LogMessageEx.createEvent(info.myDisplayMessage,
+                                         info.myMessage + "\n" + ExceptionUtil.getThrowableText(info.myThrowable),
                                          new Attachment(myFile)));
+    }
+    else {
+      LOG.info(info.myDisplayMessage + "\n" + info.myMessage, info.myThrowable);
     }
   }
 
-  protected abstract void configureError(ErrorInfo info);
+  protected abstract void configureError(final @NotNull ErrorInfo info);
 
-  protected void showErrorPage(ErrorInfo info) {
+  protected void showErrorPage(final ErrorInfo info) {
     storeState();
     hideProgress();
     myRootComponent = null;
 
-    myErrorMessage.setText(info.displayMessage);
+    myErrorMessages.removeAll();
 
-    if (info.stack) {
+    if (info.myShowStack) {
+      info.myMessages.add(0, new FixableMessageInfo(true, info.myDisplayMessage, "", "", null, null));
+
       ByteArrayOutputStream stream = new ByteArrayOutputStream();
-      info.throwable.printStackTrace(new PrintStream(stream));
+      info.myThrowable.printStackTrace(new PrintStream(stream));
       myErrorStack.setText(stream.toString());
-      myErrorStack.setVisible(true);
+      myErrorStackLayout.show(myErrorStackPanel, ERROR_STACK_CARD);
     }
     else {
       myErrorStack.setText(null);
-      myErrorStack.setVisible(false);
+      myErrorStackLayout.show(myErrorStackPanel, ERROR_NO_STACK_CARD);
     }
 
+    for (FixableMessageInfo message : info.myMessages) {
+      addErrorMessage(message, message.myErrorIcon ? Messages.getErrorIcon() : Messages.getWarningIcon());
+    }
+
+    myErrorPanel.revalidate();
     myLayout.show(this, ERROR_CARD);
 
     DesignerToolWindowManager.getInstance(getProject()).refresh(true);
     repaint();
+  }
+
+  private void addErrorMessage(final FixableMessageInfo message, Icon icon) {
+    if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
+      HyperlinkLabel warnLabel = new HyperlinkLabel();
+      warnLabel.setOpaque(false);
+      warnLabel.setHyperlinkText(message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText);
+      warnLabel.setIcon(icon);
+
+      if (message.myQuickFix != null) {
+        warnLabel.addHyperlinkListener(new HyperlinkListener() {
+          public void hyperlinkUpdate(final HyperlinkEvent e) {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              message.myQuickFix.run();
+            }
+          }
+        });
+      }
+      myErrorMessages.add(warnLabel);
+    }
+    else {
+      JBLabel warnLabel = new JBLabel();
+      warnLabel.setOpaque(false);
+      warnLabel.setText("<html><body>" + message.myBeforeLinkText.replace("\n", "<br>") + "</body></html>");
+      warnLabel.setIcon(icon);
+      myErrorMessages.add(warnLabel);
+    }
+    if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
+      JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+      fixesPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 10, 0));
+      fixesPanel.setOpaque(false);
+      fixesPanel.add(Box.createHorizontalStrut(icon.getIconWidth()));
+
+      for (Pair<String, Runnable> pair : message.myAdditionalFixes) {
+        HyperlinkLabel fixLabel = new HyperlinkLabel();
+        fixLabel.setOpaque(false);
+        fixLabel.setHyperlinkText(pair.getFirst());
+        final Runnable fix = pair.getSecond();
+
+        fixLabel.addHyperlinkListener(new HyperlinkListener() {
+          @Override
+          public void hyperlinkUpdate(HyperlinkEvent e) {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              fix.run();
+            }
+          }
+        });
+        fixesPanel.add(fixLabel);
+      }
+      myErrorMessages.add(fixesPanel);
+    }
   }
 
   private void createProgressPanel() {
@@ -721,11 +800,38 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public static final class ErrorInfo {
-    public String message;
-    public String displayMessage;
-    public Throwable throwable;
-    public boolean show = true;
-    public boolean stack = true;
-    public boolean log;
+    public String myMessage;
+    public String myDisplayMessage;
+
+    public final List<FixableMessageInfo> myMessages = new ArrayList<FixableMessageInfo>();
+
+    public Throwable myThrowable;
+
+    public boolean myShowMessage = true;
+    public boolean myShowStack = true;
+    public boolean myShowLog;
+  }
+
+  public static final class FixableMessageInfo {
+    public final boolean myErrorIcon;
+    public final String myBeforeLinkText;
+    public final String myLinkText;
+    public final String myAfterLinkText;
+    public final Runnable myQuickFix;
+    public final List<Pair<String, Runnable>> myAdditionalFixes;
+
+    public FixableMessageInfo(boolean errorIcon,
+                              String beforeLinkText,
+                              String linkText,
+                              String afterLinkText,
+                              Runnable quickFix,
+                              List<Pair<String, Runnable>> additionalFixes) {
+      myErrorIcon = errorIcon;
+      myBeforeLinkText = beforeLinkText;
+      myLinkText = linkText;
+      myAfterLinkText = afterLinkText;
+      myQuickFix = quickFix;
+      myAdditionalFixes = additionalFixes;
+    }
   }
 }

@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.uipreview.LayoutDeviceManager;
 
 import java.util.ArrayList;
@@ -83,22 +82,12 @@ public class ProfileList implements PersistentStateComponent<ProfileList.Profile
   }
 
   private synchronized void updatePlatform() {
+    updateModules();
+
     DesignerEditorPanel designer = DesignerToolWindowManager.getInstance(myProject).getActiveDesigner();
     if (designer instanceof AndroidDesignerEditorPanel) {
-      Module module = designer.getModule();
-      Sdk prevSdk = myModule2Sdk.get(module);
-      Sdk newSdk = ModuleRootManager.getInstance(module).getSdk();
-
-      if (newSdk != null
-          && (newSdk.getSdkType() instanceof AndroidSdkType ||
-              (prevSdk != null && prevSdk.getSdkType() instanceof AndroidSdkType))
-          && !newSdk.equals(prevSdk)) {
-
-        ((AndroidDesignerEditorPanel)designer).getProfileAction().getProfileManager().update(newSdk);
-      }
+      ((AndroidDesignerEditorPanel)designer).getProfileAction().externalUpdate();
     }
-
-    updateModules();
   }
 
   public List<Profile> getProfiles() {

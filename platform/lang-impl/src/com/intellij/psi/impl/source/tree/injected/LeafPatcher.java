@@ -126,7 +126,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private static void storeUnescapedTextFor(final LeafElement leaf, final String leafText) {
     PsiElement psi = leaf.getPsi();
     if (psi != null) {
-      psi.putUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
+      psi.putCopyableUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
     }
   }
 }

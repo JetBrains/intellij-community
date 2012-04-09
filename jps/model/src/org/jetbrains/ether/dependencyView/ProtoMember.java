@@ -14,13 +14,13 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 abstract class ProtoMember extends Proto {
-  private final static int STRING = 0;
-  private final static int NONE = 1;
-  private final static int INTEGER = 2;
-  private final static int LONG = 3;
-  private final static int FLOAT = 4;
-  private final static int DOUBLE = 5;
-  private final static int TYPE = 6;
+  private final static byte STRING = 0;
+  private final static byte NONE = 1;
+  private final static byte INTEGER = 2;
+  private final static byte LONG = 3;
+  private final static byte FLOAT = 4;
+  private final static byte DOUBLE = 5;
+  private final static byte TYPE = 6;
 
   public final TypeRepr.AbstractType type;
   public final Object value;
@@ -37,7 +37,7 @@ abstract class ProtoMember extends Proto {
 
   private static Object loadTyped(final DataInput in) {
     try {
-      switch (in.readInt()) {
+      switch (in.readByte()) {
         case STRING:
           return in.readUTF();
         case NONE:
@@ -50,7 +50,7 @@ abstract class ProtoMember extends Proto {
           return in.readFloat();
         case DOUBLE:
           return in.readDouble();
-        case TYPE : 
+        case TYPE :
           return Type.getType(in.readUTF());
       }
     }
@@ -80,31 +80,31 @@ abstract class ProtoMember extends Proto {
 
     try {
       if (value instanceof String) {
-        out.writeInt(STRING);
+        out.writeByte(STRING);
         out.writeUTF((String)value);
       }
       else if (value instanceof Integer) {
-        out.writeInt(INTEGER);
+        out.writeByte(INTEGER);
         out.writeInt(((Integer)value).intValue());
       }
       else if (value instanceof Long) {
-        out.writeInt(LONG);
+        out.writeByte(LONG);
         out.writeLong(((Long)value).longValue());
       }
       else if (value instanceof Float) {
-        out.writeInt(FLOAT);
+        out.writeByte(FLOAT);
         out.writeFloat(((Float)value).floatValue());
       }
       else if (value instanceof Double) {
-        out.writeInt(DOUBLE);
+        out.writeByte(DOUBLE);
         out.writeDouble(((Double)value).doubleValue());
       }
       else if (value instanceof Type) {
-        out.writeInt(TYPE);
+        out.writeByte(TYPE);
         out.writeUTF(((Type)value).getDescriptor());
       }
       else {
-        out.writeInt(NONE);
+        out.writeByte(NONE);
       }
     }
     catch (IOException e) {

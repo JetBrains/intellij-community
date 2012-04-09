@@ -52,29 +52,29 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
     return DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON;
   }
 
-  public BreakpointPanel createBreakpointPanel(final Project project, DialogWrapper parentDialog) {
-    BreakpointPanel panel = new BreakpointPanel(project, new ExceptionBreakpointPropertiesPanel(project), createActions(project), getBreakpointCategory(), DebuggerBundle.message("exception.breakpoints.tab.title"), HelpID.EXCEPTION_BREAKPOINTS) {
-      public void resetBreakpoints() {
-        super.resetBreakpoints();
-        Breakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getBreakpointCategory());
-        final AnyExceptionBreakpoint anyExceptionBreakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();
-        boolean found = false;
-        for (Breakpoint breakpoint : breakpoints) {
-          if (breakpoint.equals(anyExceptionBreakpoint)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          insertBreakpointAt(anyExceptionBreakpoint, 0);
-        }
-      }
-    };
-    panel.getTree().setGroupByMethods(false);
-    return panel;
+  @Override
+  protected String getHelpID() {
+    return HelpID.EXCEPTION_BREAKPOINTS;
   }
 
-  private static BreakpointPanelAction[] createActions(final Project project) {
+  @Override
+  public String getDisplayName() {
+    return DebuggerBundle.message("exception.breakpoints.tab.title");
+  }
+
+  @Override
+  protected void configureBreakpointPanel(BreakpointPanel panel) {
+    super.configureBreakpointPanel(panel);
+    panel.getTree().setGroupByMethods(false);
+  }
+
+  @Override
+  public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project) {
+    return new ExceptionBreakpointPropertiesPanel(project);
+  }
+
+  @Override
+  protected BreakpointPanelAction[] createBreakpointPanelActions(final Project project, DialogWrapper parentDialog) {
     return new BreakpointPanelAction[]{
       new SwitchViewAction(),
       new AddExceptionBreakpointAction(project),
@@ -94,6 +94,32 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
       new ToggleGroupByClassesAction(),
       new ToggleFlattenPackagesAction(),
     };
+  }
+
+
+  public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
+    BreakpointPanel panel = new BreakpointPanel(project,
+                                                createBreakpointPropertiesPanel(project),
+                                                createBreakpointPanelActions(project, parentDialog),
+                                                getBreakpointCategory(), getDisplayName(), getHelpID()){
+      public void resetBreakpoints() {
+        super.resetBreakpoints();
+        Breakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getBreakpointCategory());
+        final AnyExceptionBreakpoint anyExceptionBreakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();
+        boolean found = false;
+        for (Breakpoint breakpoint : breakpoints) {
+          if (breakpoint.equals(anyExceptionBreakpoint)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          insertBreakpointAt(anyExceptionBreakpoint, 0);
+        }
+      }
+    };
+    configureBreakpointPanel(panel);
+    return panel;
   }
 
   public Key<ExceptionBreakpoint> getBreakpointCategory() {

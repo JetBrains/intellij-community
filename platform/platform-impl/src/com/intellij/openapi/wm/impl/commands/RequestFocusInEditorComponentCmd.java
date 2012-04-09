@@ -19,7 +19,6 @@
  */
 package com.intellij.openapi.wm.impl.commands;
 
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -82,6 +82,11 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
 
       final Window owner = myComponent != null ? SwingUtilities.getWindowAncestor(myComponent) : null;
       if(owner==null){
+        myDoneCallback.setRejected();
+        return;
+      }
+
+      if (owner instanceof IdeFrameImpl && IdeFrameImpl.getActiveFrame() != owner) {
         myDoneCallback.setRejected();
         return;
       }

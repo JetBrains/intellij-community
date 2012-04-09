@@ -209,7 +209,7 @@ public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<PsiElement, String> myTooltip;
 
-  public MarkerType(Function<PsiElement, String> tooltip, final LineMarkerNavigator navigator) {
+  public MarkerType(@NotNull Function<PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
     myTooltip = tooltip;
     handler = new GutterIconNavigationHandler<PsiElement>() {
       @Override
@@ -219,10 +219,12 @@ public class MarkerType {
     };
   }
 
+  @NotNull
   public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
     return handler;
   }
 
+  @NotNull
   public Function<PsiElement, String> getTooltip() {
     return myTooltip;
   }

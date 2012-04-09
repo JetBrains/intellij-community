@@ -588,13 +588,17 @@ public class ProfileManager {
     if (sdk == null) {
       sdk = ProfileList.getInstance(myModule.getProject()).getModuleSdk(myModule);
     }
-    if (sdk != null && sdk.getSdkType() instanceof AndroidSdkType) {
+    if (isAndroidSdk(sdk)) {
       AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
       if (additionalData != null) {
         return additionalData.getAndroidPlatform();
       }
     }
     return null;
+  }
+
+  public static boolean isAndroidSdk(@Nullable Sdk sdk) {
+    return sdk != null && sdk.getSdkType() instanceof AndroidSdkType;
   }
 
   private static abstract class MyComboBoxAction<T> extends AbstractComboBoxAction<T> {

@@ -855,7 +855,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Nullable
-    private static PsiField checkForwardRefs(@Nullable PsiExpression initializer, final PsiClass parentClass) {
+    private static PsiField checkForwardRefs(@Nullable final PsiExpression initializer, final PsiClass parentClass) {
       if (initializer == null) return null;
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -865,7 +865,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           final PsiElement resolve = expression.resolve();
           if (resolve instanceof PsiField &&
               ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL) &&
-              PsiTreeUtil.isAncestor(parentClass, resolve, false) && ((PsiField)resolve).hasInitializer()) {
+              PsiTreeUtil.isAncestor(parentClass, resolve, false) && ((PsiField)resolve).hasInitializer() &&
+              !PsiTreeUtil.isAncestor(initializer, resolve, false)) {
             if (refConstantFields[0] == null || refConstantFields[0].getTextOffset() < resolve.getTextOffset()) {
               refConstantFields[0] = (PsiField)resolve;
             }

@@ -983,7 +983,7 @@
 
   <!-- ================= Layouts ================= -->
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
         layout="com.intellij.android.designer.model.layout.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
@@ -991,7 +991,9 @@
     <palette title="LinearLayout" icon="/com/intellij/android/designer/icons/LinearLayout.png"
              tooltip="A Layout that arranges its children in a single column or a single row."/>
 
-    <properties important="orientation gravity baselineAligned measureWithLargestChild showDividers"/>
+    <properties important="orientation gravity baselineAligned measureWithLargestChild showDividers"
+                top="gravity orientation"
+        />
 
     <creation>
       <![CDATA[
@@ -1004,7 +1006,7 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadViewComponent"
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
         layout="com.intellij.android.designer.model.layout.RadFrameLayout"
         class="android.widget.FrameLayout"
         tag="FrameLayout">

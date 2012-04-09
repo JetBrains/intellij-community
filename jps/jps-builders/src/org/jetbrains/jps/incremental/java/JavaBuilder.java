@@ -100,7 +100,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
               }
             }
             final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-            callback.associate(outputPath, Callbacks.getDefaultLookup(sourcePath), reader);
+            callback.associate(outputPath, sourcePath, reader);
           }
         }
       }

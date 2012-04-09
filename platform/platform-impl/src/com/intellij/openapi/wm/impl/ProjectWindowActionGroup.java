@@ -45,11 +45,9 @@ public class ProjectWindowActionGroup extends DefaultActionGroup {
     final List<ProjectWindowAction> duplicateWindowActions = findWindowActionsWithProjectName(projectName);
     if (!duplicateWindowActions.isEmpty()) {
       for (ProjectWindowAction action : duplicateWindowActions) {
-        action.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(
-          FileUtil.toSystemDependentName(action.getProjectLocation())));
+        action.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(action.getProjectLocation()));
       }
-      windowAction.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(
-        FileUtil.toSystemDependentName(windowAction.getProjectLocation())));
+      windowAction.getTemplatePresentation().setText(FileUtil.getLocationRelativeToUserHome(windowAction.getProjectLocation()));
     }
     add(windowAction);
     latest = windowAction;

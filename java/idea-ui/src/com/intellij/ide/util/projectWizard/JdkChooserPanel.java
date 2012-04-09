@@ -150,7 +150,7 @@ public class JdkChooserPanel extends JPanel {
   public void fillList(final SdkType type) {
     myListModel.clear();
     final Sdk[] jdks;
-    if (myProject == null) {
+    if (myProject == null || myProject.isDefault()) {
       final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
       jdks = getCompatibleJdks(type, Arrays.asList(allJdks));
     }
@@ -201,6 +201,10 @@ public class JdkChooserPanel extends JPanel {
     if (index >= 0) {
       myList.setSelectedIndex(index);
     }
+  }
+
+  public void addSelectionListener(final ListSelectionListener listener) {
+    myList.addListSelectionListener(listener);
   }
 
   private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {

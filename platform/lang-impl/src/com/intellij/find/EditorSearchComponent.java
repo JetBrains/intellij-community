@@ -777,6 +777,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
     setMatchesLimit(MATCHES_LIMIT);
 
+    updateResults(false);
+
     myLivePreview = new LivePreview(mySearchResults);
 
     myLivePreviewController = new MyLivePreviewController();

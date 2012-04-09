@@ -21,7 +21,7 @@ import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
-import com.intellij.designer.designSurface.feedbacks.RectangleComponent;
+import com.intellij.designer.designSurface.feedbacks.RectangleFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
@@ -48,9 +48,9 @@ public class ResizeOperation implements EditOperation {
   private final OperationContext myContext;
   private RadViewComponent myComponent;
 
-  private RectangleComponent myWrapFeedback;
-  private RectangleComponent myFillFeedback;
-  private RectangleComponent myFeedback;
+  private RectangleFeedback myWrapFeedback;
+  private RectangleFeedback myFillFeedback;
+  private RectangleFeedback myFeedback;
   private TextFeedback myTextFeedback;
 
   private String myStaticWidth;
@@ -172,10 +172,10 @@ public class ResizeOperation implements EditOperation {
       fillBounds = new Rectangle(bounds.getLocation(), myFillSize);
     }
 
-    myWrapFeedback = new RectangleComponent(Color.green, 1);
+    myWrapFeedback = new RectangleFeedback(Color.green, 1);
     myWrapFeedback.setBounds(wrapBounds);
 
-    myFillFeedback = new RectangleComponent(Color.green, 1);
+    myFillFeedback = new RectangleFeedback(Color.green, 1);
     myFillFeedback.setBounds(fillBounds);
   }
 
@@ -187,7 +187,7 @@ public class ResizeOperation implements EditOperation {
     if (myFeedback == null) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
-      myFeedback = new RectangleComponent(Color.blue, 2);
+      myFeedback = new RectangleFeedback(Color.blue, 2);
       layer.add(myFeedback);
 
       myTextFeedback = new TextFeedback();

@@ -30,12 +30,12 @@ import java.util.List;
  */
 public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvider {
   @Override
-  public RelatedItemLineMarkerInfo getLineMarkerInfo(PsiElement element) {
+  public RelatedItemLineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
   }
 
   @Override
-  public final void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
+  public final void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
     collectNavigationMarkers(elements, result, false);
   }
 

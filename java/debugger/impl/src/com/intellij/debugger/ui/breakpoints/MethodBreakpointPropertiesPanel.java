@@ -83,8 +83,8 @@ public class MethodBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     return _panel;
   }
 
-  public void initFrom(Breakpoint breakpoint) {
-    super.initFrom(breakpoint);
+  public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible) {
+    super.initFrom(breakpoint, moreOptionsVisible);
     if (breakpoint instanceof MethodBreakpoint) {
       MethodBreakpoint methodBreakpoint = (MethodBreakpoint)breakpoint;
       myWatchEntryCheckBox.setSelected(methodBreakpoint.WATCH_ENTRY);

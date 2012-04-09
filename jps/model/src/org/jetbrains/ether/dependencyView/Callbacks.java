@@ -12,21 +12,10 @@ import java.util.Collection;
  * To change this template use File | Settings | File Templates.
  */
 public class Callbacks {
-  public interface SourceFileNameLookup {
-    String get(String sourceAttribute);
-  }
-
-  public static SourceFileNameLookup getDefaultLookup(final String name) {
-    return new SourceFileNameLookup() {
-      public String get(final String sourceAttribute) {
-        return name;
-      }
-    };
-  }
 
   public interface Backend {
     Collection<String> getClassFiles();
-    void associate(String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
+    void associate(String classFileName, String sourceFileName, ClassReader cr);
     void registerConstantUsage(String className, String fieldName, String fieldOwner);
     void registerImports(String className, Collection<String> imports, Collection<String> staticImports);
   }

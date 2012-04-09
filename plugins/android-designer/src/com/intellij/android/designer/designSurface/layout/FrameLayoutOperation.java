@@ -21,7 +21,7 @@ import com.intellij.android.designer.model.layout.Gravity;
 import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.feedbacks.AlphaComponent;
+import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -106,6 +106,18 @@ public class FrameLayoutOperation extends AbstractEditOperation {
     myTextFeedback.centerTop(bounds);
   }
 
+  @Override
+  public void eraseFeedback() {
+    if (myFeedback != null) {
+      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
+      layer.remove(myFeedback);
+      layer.remove(myTextFeedback);
+      layer.repaint();
+      myFeedback = null;
+      myTextFeedback = null;
+    }
+  }
+
   @Nullable
   private static Gravity calculateHorizontal(Rectangle bounds, Point location) {
     Gravity horizontal = null;
@@ -155,18 +167,6 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   }
 
   @Override
-  public void eraseFeedback() {
-    if (myFeedback != null) {
-      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-      layer.remove(myFeedback);
-      layer.remove(myTextFeedback);
-      layer.repaint();
-      myFeedback = null;
-      myTextFeedback = null;
-    }
-  }
-
-  @Override
   public boolean canExecute() {
     return myGravity != null;
   }
@@ -190,11 +190,10 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   // Feedback
   //
   //////////////////////////////////////////////////////////////////////////////////////////
-  private static final Gravity[] HORIZONTAL = {Gravity.left, Gravity.center, Gravity.right};
-  private static final Gravity[] VERTICAL = {Gravity.top, Gravity.center, Gravity.bottom};
+  public static final Gravity[] HORIZONTALS = {Gravity.left, Gravity.center, Gravity.right};
+  public static final Gravity[] VERTICALS = {Gravity.top, Gravity.center, Gravity.bottom};
 
-  private class GravityFeedback extends AlphaComponent {
-
+  private class GravityFeedback extends AlphaFeedback {
     private Gravity myHorizontal;
     private Gravity myVertical;
 
@@ -210,8 +209,8 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
     @Override
     protected void paintOther1(Graphics2D g2d) {
-      for (Gravity h : HORIZONTAL) {
-        for (Gravity v : VERTICAL) {
+      for (Gravity h : HORIZONTALS) {
+        for (Gravity v : VERTICALS) {
           if (!exclude(h, v)) {
             paintCell(g2d, h, v, false);
           }
@@ -221,8 +220,8 @@ public class FrameLayoutOperation extends AbstractEditOperation {
 
     @Override
     protected void paintOther2(Graphics2D g2d) {
-      for (Gravity h : HORIZONTAL) {
-        for (Gravity v : VERTICAL) {
+      for (Gravity h : HORIZONTALS) {
+        for (Gravity v : VERTICALS) {
           if (paintCell(g2d, h, v, true)) {
             break;
           }

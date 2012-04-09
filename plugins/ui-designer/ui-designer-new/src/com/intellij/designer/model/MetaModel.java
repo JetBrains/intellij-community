@@ -39,6 +39,7 @@ public class MetaModel {
   private Icon myIcon;
   private String myCreation;
   private boolean myDelete = true;
+  private List<String> myTopProperties = Collections.emptyList();
   private List<String> myNormalProperties = Collections.emptyList();
   private List<String> myImportantProperties = Collections.emptyList();
   private List<String> myExpertProperties = Collections.emptyList();
@@ -113,6 +114,14 @@ public class MetaModel {
   public void setPaletteItem(@NotNull Item paletteItem) {
     myPaletteItem = paletteItem;
     myPaletteItem.setMetaModel(this);
+  }
+
+  public List<String> getTopProperties() {
+    return myTopProperties;
+  }
+
+  public void setTopProperties(List<String> topProperties) {
+    myTopProperties = topProperties;
   }
 
   public void setNormalProperties(List<String> normalProperties) {

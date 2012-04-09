@@ -17,8 +17,8 @@ import java.util.Map;
  * @author Eugene Zhuravlev
  *         Date: 10/7/11
  */
-public class BuildDataManager {
-  private static final int VERSION = 1;
+public class BuildDataManager implements StorageOwner {
+  private static final int VERSION = 2;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
   private static final String SRC_TO_FORM_STORAGE = "src-form";

@@ -147,6 +147,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
     private final Module myModule;
     private final IAndroidTarget myTarget;
     private final VirtualFile myResourceDir;
+    private final MyValidityState myValidityState;
 
     private MyItem(@NotNull Module module,
                    @NotNull IAndroidTarget target,
@@ -154,6 +155,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
       myModule = module;
       myTarget = target;
       myResourceDir = resourceDir;
+      myValidityState = new MyValidityState(myTarget, myResourceDir);
     }
 
     @NotNull
@@ -184,7 +186,7 @@ public class AndroidPngFilesCachingCompiler implements SourceGeneratingCompiler 
 
     @Override
     public ValidityState getValidityState() {
-      return new MyValidityState(myTarget, myResourceDir);
+      return myValidityState;
     }
   }
 

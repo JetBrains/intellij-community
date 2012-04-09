@@ -7,12 +7,8 @@ import org.jetbrains.ether.RW;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,12 +19,11 @@ import java.util.Set;
  */
 public class ClassRepr extends Proto {
   private final DependencyContext context;
-  public final int sourceFileName;
   public final int fileName;
   public final TypeRepr.AbstractType superClass;
   public final Set<TypeRepr.AbstractType> interfaces;
   public final Set<TypeRepr.AbstractType> nestedClasses;
-  public final Set<ElementType> targets;
+  public final Set<ElemType> targets;
   public final RetentionPolicy policy;
 
   public final Set<FieldRepr> fields;
@@ -50,7 +45,7 @@ public class ClassRepr extends Proto {
 
     public abstract Specifier<MethodRepr> methods();
 
-    public abstract Specifier<ElementType> targets();
+    public abstract Specifier<ElemType> targets();
 
     public abstract boolean retentionChanged();
 
@@ -121,7 +116,7 @@ public class ClassRepr extends Proto {
       }
 
       @Override
-      public Specifier<ElementType> targets() {
+      public Specifier<ElemType> targets() {
         return Difference.make(pastClass.targets, targets);
       }
 
@@ -173,20 +168,19 @@ public class ClassRepr extends Proto {
     }
   }
 
-  public ClassRepr(final DependencyContext context, final int a, final int sn, final int fn, final int n, final int sig,
+  public ClassRepr(final DependencyContext context, final int a, final int fn, final int n, final int sig,
                    final int sup,
                    final String[] i,
                    final Collection<String> ns,
                    final Set<FieldRepr> f,
                    final Set<MethodRepr> m,
-                   final Set<ElementType> targets,
+                   final Set<ElemType> targets,
                    final RetentionPolicy policy,
                    final int outerClassName,
                    final boolean localClassFlag) {
     super(a, sig, n);
     this.context = context;
     fileName = fn;
-    sourceFileName = sn;
     superClass = TypeRepr.createClassType(context, sup);
     interfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, i, new HashSet<TypeRepr.AbstractType>());
     nestedClasses = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, ns, new HashSet<TypeRepr.AbstractType>());
@@ -203,13 +197,12 @@ public class ClassRepr extends Proto {
     try {
       this.context = context;
       fileName = in.readInt();
-      sourceFileName = in.readInt();
       superClass = TypeRepr.externalizer(context).read(in);
       interfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
       nestedClasses = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new HashSet<TypeRepr.AbstractType>(), in);
       fields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new HashSet<FieldRepr>(), in);
       methods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new HashSet<MethodRepr>(), in);
-      targets = (Set<ElementType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, new HashSet<ElementType>(), in);
+      targets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = in.readUTF();
 
@@ -228,7 +221,6 @@ public class ClassRepr extends Proto {
     try {
       super.save(out);
       out.writeInt(fileName);
-      out.writeInt(sourceFileName);
       superClass.save(out);
       RW.save(interfaces, out);
       RW.save(nestedClasses, out);
@@ -268,10 +260,6 @@ public class ClassRepr extends Proto {
 
   public UsageRepr.Usage createUsage() {
     return UsageRepr.createClassUsage(context, name);
-  }
-
-  public int getSourceFileName() {
-    return sourceFileName;
   }
 
   public String getPackageName() {

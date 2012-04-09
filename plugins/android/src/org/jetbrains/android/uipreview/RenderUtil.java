@@ -63,81 +63,18 @@ public class RenderUtil {
   }
 
   @Nullable
-  public static RenderSession createRenderSession(@NotNull Project project,
-                                                  @NotNull String layoutXmlText,
-                                                  @Nullable VirtualFile layoutXmlFile,
-                                                  @NotNull IAndroidTarget target,
-                                                  @NotNull AndroidFacet facet,
-                                                  @NotNull FolderConfiguration config,
-                                                  float xdpi,
-                                                  float ydpi,
-                                                  @NotNull ThemeData theme,
-                                                  long timeout)
-    throws RenderingException, IOException, AndroidSdkNotConfiguredException {
-    final Sdk sdk = ModuleRootManager.getInstance(facet.getModule()).getSdk();
-    if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
-      throw new AndroidSdkNotConfiguredException();
-    }
-
-    final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
-    if (data == null) {
-      throw new AndroidSdkNotConfiguredException();
-    }
-
-    final AndroidPlatform platform = data.getAndroidPlatform();
-    if (platform == null) {
-      throw new AndroidSdkNotConfiguredException();
-    }
-
-    config.setVersionQualifier(new VersionQualifier(target.getVersion().getApiLevel()));
-
-    final RenderServiceFactory factory = platform.getSdkData().getTargetData(target).getRenderServiceFactory(project);
-    if (factory == null) {
-      throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
-    }
-
-    final ProjectResources projectResources = new ProjectResources();
-
-    final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
-    final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
-
-    loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
-    final int minSdkVersion = getMinSdkVersion(facet);
-
-    final ProjectCallback callback = new ProjectCallback(factory.getLibrary(), facet.getModule(), projectResources);
-    try {
-      callback.loadAndParseRClass();
-    }
-    catch (ClassNotFoundException e) {
-      LOG.debug(e);
-    }
-    catch (IncompatibleClassFileFormatException e) {
-      LOG.debug(e);
-    }
-
-    final Pair<RenderResources, RenderResources> pair =
-      factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
-    final RenderService renderService = factory.createService(pair.getFirst(), pair.getSecond(), config, xdpi, ydpi, callback, minSdkVersion);
-
-    try {
-      return renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet), timeout);
-    }
-    catch (XmlPullParserException e) {
-      throw new RenderingException(e);
-    }
-  }
-
-  @Nullable
   public static RenderingResult renderLayout(@NotNull final Module module,
                                              @NotNull String layoutXmlText,
                                              @Nullable VirtualFile layoutXmlFile,
-                                             @NotNull String imgPath,
+                                             @Nullable String imgPath,
                                              @NotNull IAndroidTarget target,
                                              @NotNull AndroidFacet facet,
                                              @NotNull FolderConfiguration config,
                                              float xdpi,
                                              float ydpi,
-                                             @NotNull ThemeData theme)
+                                             @NotNull ThemeData theme,
+                                             long timeout,
+                                             boolean checkTimeout)
     throws RenderingException, IOException, AndroidSdkNotConfiguredException {
     final Project project = module.getProject();
 
@@ -195,9 +132,18 @@ public class RenderUtil {
       factory.createResourceResolver(facet, config, projectResources, theme.getName(), theme.isProjectTheme());
     final RenderService renderService = factory.createService(pair.getFirst(), pair.getSecond(), config, xdpi, ydpi, callback, minSdkVersion);
 
-    final RenderSession session;
+    String appLabel = getAppLabelToShow(facet);
+
+    RenderSession session;
     try {
-      session = renderService.createRenderSession(layoutXmlText, getAppLabelToShow(facet), RenderParams.DEFAULT_TIMEOUT);
+      while (true) {
+        session = renderService
+          .createRenderSession(layoutXmlText, appLabel, timeout);
+        if (checkTimeout && session.getResult().getStatus() == Result.Status.ERROR_TIMEOUT) {
+          continue;
+        }
+        break;
+      }
     }
     catch (XmlPullParserException e) {
       throw new RenderingException(e);
@@ -236,24 +182,28 @@ public class RenderUtil {
             exception instanceof ClassCastException &&
             (SdkConstants.CLASS_MOCK_VIEW + " cannot be cast to " + SdkConstants.CLASS_VIEWGROUP)
               .equalsIgnoreCase(exception.getMessage())) {
-          throw new RenderingException(exceptionsFromWarnings.toArray(new Throwable[exceptionsFromWarnings.size()]));
+          throw new RenderingException(exceptionsFromWarnings.toArray(new Throwable[exceptionsFromWarnings.size()]))
+            .setWarnMessages(warnMessages);
         }
-        throw new RenderingException(exception);
+        throw new RenderingException(exception).setWarnMessages(warnMessages);
       }
       final String message = result.getErrorMessage();
       if (message != null) {
         LOG.info(message);
-        throw new RenderingException();
+        throw new RenderingException().setWarnMessages(warnMessages);
       }
       return null;
     }
 
-    final String format = FileUtil.getExtension(imgPath);
-    ImageIO.write(session.getImage(), format, new File(imgPath));
+    if (imgPath != null) {
+      final String format = FileUtil.getExtension(imgPath);
+      ImageIO.write(session.getImage(), format, new File(imgPath));
 
       session.dispose();
+      session = null;
+    }
 
-    return new RenderingResult(warnMessages);
+    return new RenderingResult(warnMessages, session);
   }
 
   private static void reportBrokenClassesWarning(@NotNull List<FixableIssueMessage> warnMessages,

@@ -779,7 +779,10 @@ public class AndroidCompileUtil {
       AndroidUtils.collectFiles(subdir, visited, resourceFiles);
 
       for (VirtualFile file : resourceFiles) {
-        resourceSet.add(new ResourceEntry(subdir.getName(), file.getName()));
+        final String subdirName = subdir.getName();
+        final int index = subdirName.indexOf('-');
+        final String type = index >= 0 ? subdirName.substring(0, index) : subdirName;
+        resourceSet.add(new ResourceEntry(type, FileUtil.getNameWithoutExtension(file.getName())));
       }
     }
   }

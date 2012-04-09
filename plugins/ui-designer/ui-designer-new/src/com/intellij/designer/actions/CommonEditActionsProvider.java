@@ -152,7 +152,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       return true;
     }
     catch (Throwable e) {
-      myDesigner.showError("Copy error:", e);
+      myDesigner.showError("Copy error", e);
       return false;
     }
   }

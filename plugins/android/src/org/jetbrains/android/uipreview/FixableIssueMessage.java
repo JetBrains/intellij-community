@@ -4,20 +4,20 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
 * @author Eugene.Kudelevsky
 */
-class FixableIssueMessage {
-  final String myBeforeLinkText;
-  final String myLinkText;
-  final String myAfterLinkText;
-  final Runnable myQuickFix;
-  final Collection<Pair<String, Runnable>> myAdditionalFixes;
+public class FixableIssueMessage {
+  public final String myBeforeLinkText;
+  public final String myLinkText;
+  public final String myAfterLinkText;
+  public final Runnable myQuickFix;
+  public final List<Pair<String, Runnable>> myAdditionalFixes;
 
-  FixableIssueMessage(@NotNull String beforeLinkText,
+  public FixableIssueMessage(@NotNull String beforeLinkText,
                       @NotNull String linkText,
                       @NotNull String afterLinkText,
                       @Nullable Runnable quickFix) {
@@ -28,11 +28,11 @@ class FixableIssueMessage {
     myAdditionalFixes = Collections.emptyList();
   }
 
-  FixableIssueMessage(@NotNull String message) {
+  public FixableIssueMessage(@NotNull String message) {
     this(message, "", "", null);
   }
 
-  FixableIssueMessage(@NotNull String message, @NotNull Collection<Pair<String, Runnable>> quickFixes) {
+  public FixableIssueMessage(@NotNull String message, @NotNull List<Pair<String, Runnable>> quickFixes) {
     myBeforeLinkText = message;
     myLinkText = "";
     myAfterLinkText = "";

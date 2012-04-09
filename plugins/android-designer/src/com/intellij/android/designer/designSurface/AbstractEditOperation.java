@@ -19,6 +19,7 @@ import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -33,19 +34,23 @@ public abstract class AbstractEditOperation extends com.intellij.designer.design
 
   @Override
   public void execute() throws Exception {
+    execute(null);
+  }
+
+  protected void execute(@Nullable RadViewComponent insertBefore) throws Exception {
     if (myContext.isAdd() || myContext.isMove()) {
       for (RadComponent component : myComponents) {
-        ModelParser.moveComponent(myContainer, (RadViewComponent)component, null);
+        ModelParser.moveComponent(myContainer, (RadViewComponent)component, insertBefore);
       }
     }
     else if (myContext.isCreate()) {
       for (RadComponent component : myComponents) {
-        ModelParser.addComponent(myContainer, (RadViewComponent)component, null);
+        ModelParser.addComponent(myContainer, (RadViewComponent)component, insertBefore);
       }
     }
     else if (myContext.isPaste()) {
       for (RadComponent component : myComponents) {
-        ModelParser.pasteComponent(myContainer, (RadViewComponent)component, null);
+        ModelParser.pasteComponent(myContainer, (RadViewComponent)component, insertBefore);
       }
     }
   }

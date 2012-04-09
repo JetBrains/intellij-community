@@ -84,8 +84,8 @@ public class FieldBreakpointPropertiesPanel extends BreakpointPropertiesPanel {
     return _panel;
   }
 
-  public void initFrom(Breakpoint breakpoint) {
-    super.initFrom(breakpoint);
+  public void initFrom(Breakpoint breakpoint, boolean moreOptionsVisible) {
+    super.initFrom(breakpoint, moreOptionsVisible);
     FieldBreakpoint fieldBreakpoint = (FieldBreakpoint)breakpoint;
 
     myWatchAccessCheckBox.setSelected(fieldBreakpoint.WATCH_ACCESS);
