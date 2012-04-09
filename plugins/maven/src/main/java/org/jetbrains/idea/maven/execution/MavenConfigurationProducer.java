@@ -53,10 +53,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
     final MavenRunnerParameters params = createBuildParameters(location);
     if (params == null) return null;
 
-    MavenGeneralSettings settings = MavenProjectsManager.getInstance(location.getProject()).getGeneralSettings();
-    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(location.getProject()).getState();
-
-    return MavenRunConfigurationType.createRunnerAndConfigurationSettings(settings, runnerSettings, params, location.getProject());
+    return MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, location.getProject());
   }
 
   @Override

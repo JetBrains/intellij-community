@@ -192,7 +192,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       isOverridden = override;
 
       component.setEditable(override);
-      component.setEnabled(override);
+      component.setEnabled(override && checkBox.isEnabled());
 
       if (override) {
         if (overrideText != null) component.setText(overrideText);

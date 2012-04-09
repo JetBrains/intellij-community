@@ -147,15 +147,13 @@ public class MavenRunConfigurationType implements ConfigurationType {
   public static void runConfiguration(Project project,
                                       MavenRunnerParameters params,
                                       @Nullable ProgramRunner.Callback callback) {
-    MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
-    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(project).getState();
-    runConfiguration(project, params, settings, runnerSettings, callback);
+    runConfiguration(project, params, null, null, callback);
   }
 
   public static void runConfiguration(Project project,
-                                      MavenRunnerParameters params,
-                                      MavenGeneralSettings settings,
-                                      MavenRunnerSettings runnerSettings,
+                                      @NotNull MavenRunnerParameters params,
+                                      @Nullable MavenGeneralSettings settings,
+                                      @Nullable  MavenRunnerSettings runnerSettings,
                                       @Nullable ProgramRunner.Callback callback) {
     RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
                                                                                          runnerSettings,
@@ -174,8 +172,8 @@ public class MavenRunConfigurationType implements ConfigurationType {
     }
   }
 
-  static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(MavenGeneralSettings generalSettings,
-                                                                             MavenRunnerSettings runnerSettings,
+  static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
+                                                                             @Nullable MavenRunnerSettings runnerSettings,
                                                                              MavenRunnerParameters params,
                                                                              Project project) {
     MavenRunConfigurationType type = ConfigurationTypeUtil.findConfigurationType(MavenRunConfigurationType.class);
@@ -184,8 +182,8 @@ public class MavenRunConfigurationType implements ConfigurationType {
       .createConfiguration(generateName(project, params), type.myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(params);
-    if (generalSettings != null) runConfiguration.setGeneralSettings(generalSettings);
-    if (runnerSettings != null) runConfiguration.setRunnerSettings(runnerSettings);
+    runConfiguration.setGeneralSettings(generalSettings);
+    runConfiguration.setRunnerSettings(runnerSettings);
 
     return settings;
   }

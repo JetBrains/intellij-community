@@ -21,6 +21,7 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -48,10 +50,19 @@ public class MavenExternalParameters {
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
   public static JavaParameters createJavaParameters(@Nullable final Project project,
-                                                    final MavenRunnerParameters parameters,
-                                                    final MavenGeneralSettings coreSettings,
-                                                    final MavenRunnerSettings runnerSettings) throws ExecutionException {
+                                                    @NotNull final MavenRunnerParameters parameters,
+                                                    @Nullable MavenGeneralSettings coreSettings,
+                                                    @Nullable MavenRunnerSettings runnerSettings) throws ExecutionException {
     final JavaParameters params = new JavaParameters();
+
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+
+    if (coreSettings == null) {
+      coreSettings = project == null ? new MavenGeneralSettings() : MavenProjectsManager.getInstance(project).getGeneralSettings();
+    }
+    if (runnerSettings == null) {
+      runnerSettings = project == null ? new MavenRunnerSettings() : MavenRunner.getInstance(project).getState();
+    }
 
     params.setWorkingDirectory(parameters.getWorkingDirFile());
 

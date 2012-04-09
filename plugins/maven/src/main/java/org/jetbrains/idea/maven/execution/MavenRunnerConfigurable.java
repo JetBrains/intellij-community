@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Properties;
 
 public abstract class MavenRunnerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final Project myProject;
+  protected final Project myProject;
   private final boolean myRunConfigurationMode;
 
   private JCheckBox myRunInBackgroundCheckbox;
