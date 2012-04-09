@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,11 +243,12 @@ public class DebuggerUIUtil {
     editor.setPropertiesPanel(mainPanel);
     editor.setShowMoreOptionsLink(showMoreOptions != null);
 
-    final Balloon balloon = JBPopupFactory.getInstance().
-      createDialogBalloonBuilder(editor.getMainPanel(), displayName).
-      setHideOnClickOutside(false).
-      setCloseButtonEnabled(false).
-      createBalloon();
+    final Balloon balloon = JBPopupFactory.getInstance()
+      .createDialogBalloonBuilder(editor.getMainPanel(), displayName)
+      .setHideOnClickOutside(true)
+      .setCloseButtonEnabled(false)
+      .setAnimationCycle(0)
+      .createBalloon();
 
     editor.setDelegate(new BreakpointEditor.Delegate() {
       @Override
