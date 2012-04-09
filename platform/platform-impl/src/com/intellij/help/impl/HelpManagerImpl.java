@@ -43,6 +43,9 @@ public class HelpManagerImpl extends HelpManager {
   private IdeaHelpBroker myBroker = null;
 
   public void invokeHelp(String id) {
+    if (MacHelpUtil.isApplicable()) {
+      if (MacHelpUtil.invokeHelp(id)) return;
+    }
     if (myHelpSet == null) {
       myHelpSet = createHelpSet();
     }
