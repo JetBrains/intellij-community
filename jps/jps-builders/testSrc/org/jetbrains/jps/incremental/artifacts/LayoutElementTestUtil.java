@@ -66,18 +66,20 @@ public class LayoutElementTestUtil {
     }
 
     public LayoutElementCreator fileCopy(String filePath, @Nullable String outputFileName) {
-      myElement.getChildren().add(new FileCopyElement(filePath, outputFileName));
-      return this;
+      return element(new FileCopyElement(filePath, outputFileName));
     }
 
     public LayoutElementCreator dirCopy(String dirPath) {
-      myElement.getChildren().add(new DirectoryCopyElement(dirPath));
-      return this;
+      return element(new DirectoryCopyElement(dirPath));
     }
 
     public LayoutElementCreator module(Module module) {
       final ModuleOutputElement element = new ModuleOutputElement();
       element.setModuleName(module.getName());
+      return element(element);
+    }
+
+    public LayoutElementCreator element(LayoutElement element) {
       myElement.getChildren().add(element);
       return this;
     }
@@ -86,23 +88,20 @@ public class LayoutElementTestUtil {
       final LibraryFilesElement element = new LibraryFilesElement();
       element.setLibraryName(library.getName());
       element.setLibraryLevel(LibraryFilesElement.PROJECT_LEVEL);
-      myElement.getChildren().add(element);
-      return this;
+      return element(element);
     }
 
     public LayoutElementCreator extractedDir(String jarPath, String pathInJar) {
       ExtractedDirectoryElement dir = new ExtractedDirectoryElement();
       dir.setJarPath(jarPath);
       dir.setPathInJar(pathInJar);
-      myElement.getChildren().add(dir);
-      return this;
+      return element(dir);
     }
 
     public LayoutElementCreator artifact(Artifact included) {
       final ArtifactLayoutElement element = new ArtifactLayoutElement();
       element.setArtifactName(included.getName());
-      myElement.getChildren().add(element);
-      return this;
+      return element(element);
     }
 
     public LayoutElementCreator end() {

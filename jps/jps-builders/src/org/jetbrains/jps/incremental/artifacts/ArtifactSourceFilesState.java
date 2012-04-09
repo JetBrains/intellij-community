@@ -11,6 +11,7 @@ import org.jetbrains.jps.artifacts.LayoutElement;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 
@@ -75,7 +76,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     return myDeletedFiles;
   }
 
-  public void initState() throws IOException {
+  public void initState(final BuildDataManager dataManager) throws IOException {
     final Set<String> currentPaths = new HashSet<String>();
     myChangedFiles.clear();
     myDeletedFiles.clear();
@@ -84,7 +85,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       public boolean process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
         final File rootFile = root.getRootFile();
         if (rootFile.exists()) {
-          processRecursively(rootFile, rootIndex, root.getFilter(), currentPaths);
+          processRecursively(rootFile, rootIndex, dataManager, root.getFilter(), currentPaths);
         }
         return true;
       }
@@ -99,15 +100,15 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     }
   }
 
-  private void processRecursively(File file, int rootIndex, SourceFileFilter filter, Set<String> currentPaths) throws IOException {
+  private void processRecursively(File file, int rootIndex, BuildDataManager dataManager, SourceFileFilter filter, Set<String> currentPaths) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(file.getPath()));
-    if (!filter.accept(filePath)) return;
+    if (!filter.accept(filePath, dataManager)) return;
 
     if (file.isDirectory()) {
       final File[] children = file.listFiles();
       if (children != null) {
         for (File child : children) {
-          processRecursively(child, rootIndex, filter, currentPaths);
+          processRecursively(child, rootIndex, dataManager, filter, currentPaths);
         }
       }
     }

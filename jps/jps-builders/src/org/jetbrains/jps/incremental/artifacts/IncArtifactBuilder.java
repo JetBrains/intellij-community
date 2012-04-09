@@ -73,7 +73,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     try {
       final ArtifactSourceFilesState state = dataManager.getArtifactsBuildData().getOrCreateState(artifact,
                                                                                                   context.getProject(), context.getRootsIndex());
-      state.initState();
+      state.initState(dataManager);
       final Set<String> deletedFiles = state.getDeletedFiles();
       final Map<String,IntArrayList> changedFiles = state.getChangedFiles();
       if (deletedFiles.isEmpty() && changedFiles.isEmpty()) {
@@ -142,7 +142,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           if (sourcePaths == null) return true;
 
           for (String sourcePath : sourcePaths) {
-            if (!root.containsFile(sourcePath)) continue;//todo[nik] this seems to be unnecessary
+            if (!root.containsFile(sourcePath, dataManager)) continue;//todo[nik] this seems to be unnecessary
 
             for (DestinationInfo destination : destinations) {
               if (destination instanceof ExplodedDestinationInfo) {

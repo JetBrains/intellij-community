@@ -170,7 +170,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     final String excluded = PathUtil.getParentPath(file);
     final String dir = PathUtil.getParentPath(excluded);
 
-    final Module module = addModule("myModule", null);
+    final Module module = addModule("myModule");
     module.getContentRoots().add(dir);
     module.addExcludedRoot(excluded);
 
@@ -186,7 +186,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     createFile("xxx/CVS");
     final String dir = PathUtil.getParentPath(PathUtil.getParentPath(file));
 
-    Module module = addModule("myModule", null);
+    Module module = addModule("myModule");
     module.getContentRoots().add(dir);
     module.addExcludedRoot(PathUtil.getParentPath(file));
 

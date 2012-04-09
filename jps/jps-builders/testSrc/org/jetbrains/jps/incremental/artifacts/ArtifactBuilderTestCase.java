@@ -106,12 +106,16 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     artifact.setName(name);
     artifact.setRootElement(root.buildElement());
     
-    artifact.setOutputPath(FileUtil.toSystemIndependentName(new File(getOrCreateProjectDir(), "out/artifacts/" + name).getAbsolutePath()));
+    artifact.setOutputPath(getAbsolutePath("out/artifacts/" + name));
     myProject.getArtifacts().put(name, artifact);
     return artifact;
   }
 
-  protected Module addModule(String moduleName, @Nullable String srcPath) {
+  private String getAbsolutePath(final String pathRelativeToProjectRoot) {
+    return FileUtil.toSystemIndependentName(new File(getOrCreateProjectDir(), pathRelativeToProjectRoot).getAbsolutePath());
+  }
+
+  protected Module addModule(String moduleName, String... srcPaths) {
     if (myJdk == null) {
       try {
         myJdk = myProject.createSdk("JavaSDK", "jdk", "1.6", System.getProperty("java.home"), null);
@@ -127,10 +131,12 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     module.forceInit();
     module.setSdk(myJdk);
     module.addDependency(myJdk, PredefinedDependencyScopes.getCOMPILE(), false);
-    if (srcPath != null) {
-      module.getContentRoots().add(srcPath);
-      module.getSourceRoots().add(srcPath);
-      module.setOutputPath("out/production/" + moduleName);
+    if (srcPaths.length > 0) {
+      for (String srcPath : srcPaths) {
+        module.getContentRoots().add(srcPath);
+        module.getSourceRoots().add(srcPath);
+      }
+      module.setOutputPath(getAbsolutePath("out/production/" + moduleName));
     }
     return module;
   }
