@@ -123,19 +123,21 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return Module.EMPTY_ARRAY;
   }
 
+  @Nullable
   public MavenGeneralSettings getGeneralSettings() {
     return mySettings.myGeneralSettings;
   }
 
-  public void setGeneralSettings(MavenGeneralSettings settings) {
+  public void setGeneralSettings(@Nullable MavenGeneralSettings settings) {
     mySettings.myGeneralSettings = settings;
   }
 
+  @Nullable
   public MavenRunnerSettings getRunnerSettings() {
     return mySettings.myRunnerSettings;
   }
 
-  public void setRunnerSettings(MavenRunnerSettings settings) {
+  public void setRunnerSettings(@Nullable MavenRunnerSettings settings) {
     mySettings.myRunnerSettings = settings;
   }
 
@@ -155,8 +157,6 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
       mySettings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
       if (mySettings == null) mySettings = new MavenSettings();
 
-      if (mySettings.myGeneralSettings == null) mySettings.myGeneralSettings = new MavenGeneralSettings();
-      if (mySettings.myRunnerSettings == null) mySettings.myRunnerSettings = new MavenRunnerSettings();
       if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters();
 
       // fix old settings format
@@ -193,13 +193,12 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     }
 
     public MavenSettings(Project project) {
-      this(MavenProjectsManager.getInstance(project).getGeneralSettings(), MavenRunner.getInstance(project).getState(),
-           new MavenRunnerParameters());
+      this(null, null, new MavenRunnerParameters());
     }
 
-    private MavenSettings(MavenGeneralSettings cs, MavenRunnerSettings rs, MavenRunnerParameters rp) {
-      myGeneralSettings = cs.clone();
-      myRunnerSettings = rs.clone();
+    private MavenSettings(@Nullable MavenGeneralSettings cs, @Nullable MavenRunnerSettings rs, MavenRunnerParameters rp) {
+      myGeneralSettings = cs == null ? null : cs.clone();
+      myRunnerSettings = rs == null ? null : rs.clone();
       myRunnerParameters = rp.clone();
     }
 

@@ -75,10 +75,11 @@ public class VcsGuess {
   private Boolean isFileInIndex(@Nullable final FilePath filePath, final VirtualFile validParent) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
+        if (myProject.isDisposed()) return false;
         final boolean inContent = myVcsManager.isFileInContent(validParent);
         if (inContent) return true;
         if (filePath != null) {
-          return isFileInBaseDir(filePath, myProject.getBaseDir()) && ! ! myExcludedFileIndex.isExcludedFile(validParent);
+          return isFileInBaseDir(filePath, myProject.getBaseDir()) && ! myExcludedFileIndex.isExcludedFile(validParent);
         }
         return false;
       }

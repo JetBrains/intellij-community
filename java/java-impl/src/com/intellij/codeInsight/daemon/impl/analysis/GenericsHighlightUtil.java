@@ -507,7 +507,8 @@ public class GenericsHighlightUtil {
     }
     else if (superMethod.isConstructor()) return null;
 
-    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper) {
+    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7);
+    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper && !atLeast17) {
       return null;
     }
 
@@ -515,7 +516,6 @@ public class GenericsHighlightUtil {
     final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
 
     boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
-    final boolean atLeast17 = JavaVersionService.getInstance().isAtLeast(checkMethod, JavaSdkVersion.JDK_1_7);
     if (checkEqualsSuper && atLeast17) {
       if (retErasure1 != null && retErasure2 != null) {
         differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
@@ -555,7 +555,10 @@ public class GenericsHighlightUtil {
 
   private static HighlightInfo getSameErasureMessage(final boolean sameClass, final PsiMethod method, final PsiMethod superMethod,
                                                      TextRange textRange) {
-    @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" : "generics.methods.have.same.erasure.override";
+    @NonNls final String key = sameClass ? "generics.methods.have.same.erasure" : 
+                                           method.hasModifierProperty(PsiModifier.STATIC) ? 
+                                             "generics.methods.have.same.erasure.hide" :
+                                             "generics.methods.have.same.erasure.override";
     String description = JavaErrorMessages.message(key, HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, textRange, description);
   }

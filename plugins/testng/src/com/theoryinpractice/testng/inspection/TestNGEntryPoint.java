@@ -56,7 +56,7 @@ public class TestNGEntryPoint extends EntryPoint {
   public boolean isEntryPoint(PsiElement psiElement) {
     if (ADD_TESTNG_TO_ENTRIES) {
       if (psiElement instanceof PsiModifierListOwner) {
-        if (TestNGUtil.hasTest((PsiModifierListOwner)psiElement, false)) return true;
+        if (TestNGUtil.hasTest((PsiModifierListOwner)psiElement, false, false, TestNGUtil.hasDocTagsSupport)) return true;
         return TestNGUtil.hasConfig((PsiModifierListOwner)psiElement);
       }
     }

@@ -20,7 +20,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.project.MavenGeneralConfigurable;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenGeneralConfigurableWithUseProjectSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 
 import javax.swing.*;
@@ -38,15 +39,25 @@ public class MavenRunConfigurationSettings extends SettingsEditor<MavenRunConfig
         protected MavenRunnerParameters getParameters() {
           return configuration.getRunnerParameters();
         }
-      }, new MavenGeneralConfigurable() {
+      }, new MavenGeneralConfigurableWithUseProjectSettings(p) {
         protected MavenGeneralSettings getState() {
           return configuration.getGeneralSettings();
         }
-      }, new MavenRunnerConfigurable(p, true) {
+
+      @Override
+      public void setState(@Nullable MavenGeneralSettings state) {
+        configuration.setGeneralSettings(state);
+      }
+    }, new MavenRunnerConfigurableWithUseProjectSettings(p) {
         protected MavenRunnerSettings getState() {
           return configuration.getRunnerSettings();
         }
-      });
+
+      @Override
+      public void setState(@Nullable MavenRunnerSettings state) {
+        configuration.setRunnerSettings(state);
+      }
+    });
   }
 
   protected void resetEditorFrom(MavenRunConfiguration configuration) {

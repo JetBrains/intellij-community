@@ -16,7 +16,6 @@
 
 package com.intellij.tasks.actions;
 
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.Comment;
@@ -49,9 +48,7 @@ public class AnalyzeTaskStacktraceAction extends BaseTaskAction {
     if (stacktraceDialog.isOK() && stacktraceDialog.getTraces().length > 0) {
       Comment[] comments = stacktraceDialog.getTraces();
       for (Comment comment : comments) {
-        ConsoleView consoleView = AnalyzeStacktraceUtil.addConsole(project, null, task.getId());
-        consoleView.allowHeavyFilters();
-        AnalyzeStacktraceUtil.printStacktrace(consoleView, comment.getText());
+        AnalyzeStacktraceUtil.addConsole(project, null, task.getId(), comment.getText());
       }
     }
   }

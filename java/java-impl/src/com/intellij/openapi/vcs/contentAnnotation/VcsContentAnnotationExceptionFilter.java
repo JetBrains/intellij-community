@@ -137,24 +137,26 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
           int endIdx = idx == -1 ? worker.getInfo().getThird().getEndOffset() : idx;
           consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileOffset + 1, startOffset + lineStartOffset + endIdx));
 
-          // also check method
-          final List<TextRange> ranges = findMethodRange(worker, document, previousLineResult);
-          if (ranges != null) {
-            boolean methodChanged = false;
-            for (TextRange range : ranges) {
-              if (localChangesCorrector.isRangeChangedLocally(vf, document, range)) {
-                methodChanged = true;
-                break;
+          if (worker.getPsiClass() != null) {
+            // also check method
+            final List<TextRange> ranges = findMethodRange(worker, document, previousLineResult);
+            if (ranges != null) {
+              boolean methodChanged = false;
+              for (TextRange range : ranges) {
+                if (localChangesCorrector.isRangeChangedLocally(vf, document, range)) {
+                  methodChanged = true;
+                  break;
+                }
+                final TextRange correctedRange = localChangesCorrector.getCorrectedRange(vf, document, range);
+                if (vcsContentAnnotation.intervalRecentlyChanged(vf, correctedRange, recentChangeRevision)) {
+                  methodChanged = true;
+                  break;
+                }
               }
-              final TextRange correctedRange = localChangesCorrector.getCorrectedRange(vf, document, range);
-              if (vcsContentAnnotation.intervalRecentlyChanged(vf, correctedRange, recentChangeRevision)) {
-                methodChanged = true;
-                break;
+              if (methodChanged) {
+                consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + worker.getInfo().getSecond().getStartOffset(),
+                                                           startOffset + lineStartOffset + worker.getInfo().getSecond().getEndOffset()));
               }
-            }
-            if (methodChanged) {
-              consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + worker.getInfo().getSecond().getStartOffset(),
-                                                         startOffset + lineStartOffset + worker.getInfo().getSecond().getEndOffset()));
             }
           }
         }
