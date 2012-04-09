@@ -23,13 +23,13 @@ def error(message, retcode):
     exit(retcode)
 
 def error_no_pip():
-    error("Python package management tool 'pip' not found. <a href=\"installPip\">Install 'pip'</a>.", ERROR_NO_PACKAGING_TOOLS)
+    error("Python package management tool 'pip' not found. <a href=\"installPip\">Install 'pip'</a>", ERROR_NO_PACKAGING_TOOLS)
 
 def do_list():
     try:
         import pkg_resources
     except ImportError:
-        error("Python package management tools not found. <a href=\"installDistribute\">Install 'distribute'</a>.", ERROR_NO_PACKAGING_TOOLS)
+        error("Python package management tools not found. <a href=\"installDistribute\">Install 'distribute'</a>", ERROR_NO_PACKAGING_TOOLS)
     for pkg in pkg_resources.working_set:
         requires = ':'.join([str(x) for x in pkg.requires()])
         print('\t'.join([pkg.project_name, pkg.version, pkg.location, requires]))
