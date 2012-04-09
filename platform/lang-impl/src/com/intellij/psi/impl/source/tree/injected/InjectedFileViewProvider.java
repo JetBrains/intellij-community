@@ -22,6 +22,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -87,13 +88,14 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     Document hostDocument = oldDocumentWindow.getDelegate();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
-    final Language hostFileLanguage = getPsi(getBaseLanguage()).getContext().getContainingFile().getLanguage();
+    Language language = getBaseLanguage();
+    final Language hostFileLanguage = getPsi(language).getContext().getContainingFile().getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
     Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
-    PsiElement elementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
-    assert elementCopy != null;
+    PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);
+    assert hostElementCopy != null;
     final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
-    InjectedLanguageUtil.enumerate(elementCopy, hostPsiFileCopy, true, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       @Override
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
         Document document = documentManager.getCachedDocument(injectedPsi);
@@ -101,10 +103,21 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
           provider.set(injectedPsi.getViewProvider());
         }
       }
-    });
+    };
+    for (PsiElement current = hostElementCopy; current != null && current != hostPsiFileCopy; current = current.getParent()) {
+      current.putUserData(LANGUAGE_FOR_INJECTED_COPY_KEY, language);
+      try {
+        InjectedLanguageUtil.enumerate(current, hostPsiFileCopy, false, visitor);
+      }
+      finally {
+        current.putUserData(LANGUAGE_FOR_INJECTED_COPY_KEY, null);
+      }
+      if (provider.get() != null) break;
+    }
     return provider.get();
   }
 
+  static Key<Language> LANGUAGE_FOR_INJECTED_COPY_KEY = Key.create("LANGUAGE_FOR_INJECTED_COPY_KEY");
   // returns true if shreds were set, false if old ones were reused
   boolean setShreds(@NotNull Place newShreds, @NotNull Project project) {
     synchronized (myLock) {
