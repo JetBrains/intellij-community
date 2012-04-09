@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -271,7 +272,7 @@ public class PasswordSafePromptDialog extends DialogWrapper {
       }
     }
     final AtomicReference<String> pw = new AtomicReference<String>(null);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
       public void run() {
         final PasswordSafePromptDialog d = new PasswordSafePromptDialog(project, ps, title, message);
         if (promptLabel != null) {
