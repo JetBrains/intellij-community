@@ -95,7 +95,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       }
     }
     // and notify VCSDirtyScopeManager
-    dirtyFilesAndDirs.markDirty();
+    markDirtyOnPooled(dirtyFilesAndDirs);
   }
 
   @Override
@@ -126,12 +126,18 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       }
     }
     // and notify VCSDirtyScopeManager
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        dirtyFilesAndDirs.markDirty();
-      }
-    });
+    markDirtyOnPooled(dirtyFilesAndDirs);
+  }
+
+  private void markDirtyOnPooled(final FileAndDirsCollector dirtyFilesAndDirs) {
+    if (! dirtyFilesAndDirs.isEmpty()) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          dirtyFilesAndDirs.markDirty();
+        }
+      });
+    }
   }
 
   @Nullable
@@ -202,6 +208,10 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         manager.filePathsDirty(files, dirs);
       }
     }
+
+    public boolean isEmpty() {
+      return map.isEmpty();
+    }
   }
 
   /**
@@ -213,13 +223,18 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
   private Collection<VcsDirtyScopeManager> getManagers(final VirtualFile file) {
     final Collection<VcsDirtyScopeManager> result = new HashSet<VcsDirtyScopeManager>();
     if (file == null) { return result; }
-    final Collection<Project> projects = myProjectLocator.getProjectsForFile(file);
-    for (Project project : projects) {
-      final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
-      if (manager != null) {
-        result.add(manager);
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        final Collection<Project> projects = myProjectLocator.getProjectsForFile(file);
+        for (Project project : projects) {
+          final VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(project);
+          if (manager != null) {
+            result.add(manager);
+          }
+        }
       }
-    }
+    });
     return result;
   }
 
