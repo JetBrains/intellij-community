@@ -166,7 +166,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
         final RootDescriptor moduleAndRoot = context.getModuleAndRoot(new File(sourcePath));
         if (moduleAndRoot != null) {
-          final String moduleName = moduleAndRoot.module.getName().toLowerCase(Locale.US);
+          final String moduleName = moduleAndRoot.module.getName();
           context.getDataManager().getSourceToOutputMap(moduleName, moduleAndRoot.isTestRoot).appendData(sourcePath, outputPath);
         }
         callback.associate(outputPath, sourcePath, new ClassReader(FileUtil.loadFileBytes(new File(outputPath))));
@@ -204,8 +204,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, String moduleOutputPath) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
     for (Module module : chunk.getModules()) {
-      final String moduleName = module.getName().toLowerCase(Locale.US);
-      final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+      final SourceToOutputMapping srcToOut = context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
       for (String src : srcToOut.getKeys()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
             !context.getProject().getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {

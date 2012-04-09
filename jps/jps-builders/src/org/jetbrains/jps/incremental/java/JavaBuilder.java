@@ -92,7 +92,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             final BuildDataManager dataManager = context.getDataManager();
             if (moduleAndRoot != null) {
               try {
-                final String moduleName = moduleAndRoot.module.getName().toLowerCase(Locale.US);
+                final String moduleName = moduleAndRoot.module.getName();
                 dataManager.getSourceToOutputMap(moduleName, context.isCompilingTests()).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {

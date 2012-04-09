@@ -42,14 +42,15 @@ public class BuildDataManager implements StorageOwner {
     myVersionFile = new File(myDataStorageRoot, "version.dat");
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(String moduleName, boolean testSources) throws IOException {
-    final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
+  public SourceToOutputMapping getSourceToOutputMap(final String moduleName, final boolean testSources) throws IOException {
+    String lowerCaseModuleName = moduleName.toLowerCase(Locale.US);
+    final Map<String, SourceToOutputMapping> storageMap = testSources ? myTestSourceToOutputs : myProductionSourceToOutputs;
     SourceToOutputMapping mapping;
     synchronized (mySourceToOutputLock) {
-      mapping = storageMap.get(moduleName);
+      mapping = storageMap.get(lowerCaseModuleName);
       if (mapping == null) {
-        mapping = new SourceToOutputMapping(new File(getSourceToOutputRoot(moduleName, testSources), "data"));
-        storageMap.put(moduleName, mapping);
+        mapping = new SourceToOutputMapping(new File(getSourceToOutputRoot(lowerCaseModuleName, testSources), "data"));
+        storageMap.put(lowerCaseModuleName, mapping);
       }
     }
     return mapping;

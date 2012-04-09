@@ -426,9 +426,8 @@ public class IncProjectBuilder {
         }
         allChunkRemovedSources.addAll(deletedPaths);
 
-        final String moduleName = module.getName().toLowerCase(Locale.US);
         final SourceToOutputMapping sourceToOutputStorage =
-          context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests());
+          context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests());
         // actually delete outputs associated with removed paths
         for (String deletedSource : deletedPaths) {
           // deleting outputs corresponding to non-existing source
@@ -585,7 +584,7 @@ public class IncProjectBuilder {
         public boolean apply(Module module, File file, String sourceRoot) throws IOException {
           SourceToOutputMapping srcToOut = storageMap.get(module);
           if (srcToOut == null) {
-            srcToOut = dataManager.getSourceToOutputMap(module.getName().toLowerCase(Locale.US), compilingTests);
+            srcToOut = dataManager.getSourceToOutputMap(module.getName(), compilingTests);
             storageMap.put(module, srcToOut);
           }
           final String srcPath = FileUtil.toSystemIndependentName(file.getPath());
