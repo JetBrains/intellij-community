@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Collection;
@@ -51,7 +52,11 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
     myPsiElement = location.getPsiElement();
     final MavenRunnerParameters params = createBuildParameters(location);
     if (params == null) return null;
-    return MavenRunConfigurationType.createRunnerAndConfigurationSettings(null, null, params, location.getProject());
+
+    MavenGeneralSettings settings = MavenProjectsManager.getInstance(location.getProject()).getGeneralSettings();
+    MavenRunnerSettings runnerSettings = MavenRunner.getInstance(location.getProject()).getState();
+
+    return MavenRunConfigurationType.createRunnerAndConfigurationSettings(settings, runnerSettings, params, location.getProject());
   }
 
   @Override
