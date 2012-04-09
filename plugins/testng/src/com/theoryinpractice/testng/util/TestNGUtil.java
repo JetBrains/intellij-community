@@ -171,13 +171,13 @@ public class TestNGUtil
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled) {
-    return hasTest(element, checkDisabled, hasDocTagsSupport);
+    return hasTest(element, true, checkDisabled, hasDocTagsSupport);
   }
 
-  public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled, boolean checkJavadoc) {
+  public static boolean hasTest(PsiModifierListOwner element, boolean checkHierarchy, boolean checkDisabled, boolean checkJavadoc) {
     //LanguageLevel effectiveLanguageLevel = element.getManager().getEffectiveLanguageLevel();
     //boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
-    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, true, true);
+    boolean hasAnnotation = AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, checkHierarchy, true);
     if (hasAnnotation) {
       if (checkDisabled) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, true, TEST_ANNOTATION_FQN);
@@ -207,7 +207,7 @@ public class TestNGUtil
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, true, true)) {
+        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, checkHierarchy, true)) {
           //even if it has a global test, we ignore private methods
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
           return !isPrivate;
@@ -463,7 +463,7 @@ public class TestNGUtil
   }
 
   public static boolean isTestNGClass(PsiClass psiClass) {
-    return hasTest(psiClass, true, false);
+    return hasTest(psiClass, true, true, false);
   }
 
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {
