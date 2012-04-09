@@ -138,7 +138,9 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   public void initComponent() { }
 
   public void addFileStatusListener(@NotNull FileStatusListener listener) {
-    myListeners.add(listener);
+    if (listener != null) {
+      myListeners.add(listener);
+    }
   }
 
   public void addFileStatusListener(final FileStatusListener listener, Disposable parentDisposable) {

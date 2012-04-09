@@ -3,7 +3,6 @@
   <id>Subversion</id>
   <version>1.1</version>
   <category>VCS Integration</category>
-  <idea-version since-build="111.275"/>
   <description>For Subversion 1.7 and older versions</description>
   <depends>com.intellij.modules.vcs</depends>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>

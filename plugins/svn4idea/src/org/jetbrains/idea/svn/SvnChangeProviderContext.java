@@ -259,7 +259,7 @@ class SvnChangeProviderContext implements StatusReceiver {
     catch (SVNException e) {
       final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
       if (SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
-          SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode)) {
+          SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) || SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode)) {
         return;
       }
       throw e;
