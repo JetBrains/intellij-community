@@ -336,11 +336,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                           boolean boxingHappening) {
     boolean noBoxing = boxingHappening || type1 instanceof PsiPrimitiveType == type2 instanceof PsiPrimitiveType;
     final boolean allowUncheckedConversion =
-      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC) ||
-      InheritanceUtil.isInheritorOrSelf(method1.getContainingClass(), method2.getContainingClass(), true) ||
-      InheritanceUtil.isInheritorOrSelf( method2.getContainingClass(), method1.getContainingClass(),true);
-    final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion);
-    final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion);
+      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC);
+    final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion || InheritanceUtil.isInheritorOrSelf(method1.getContainingClass(), method2.getContainingClass(), true));
+    final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion || InheritanceUtil.isInheritorOrSelf(method2.getContainingClass(), method1.getContainingClass(), true));
     if (assignable1From2 || assignable2From1) {
       if (assignable1From2 && assignable2From1) {
         return null;
