@@ -172,4 +172,9 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
   public void testAmbiguousIDEA25097() throws Exception {
     doTestAmbiguous();
   }
+  
+  public void testAmbiguousIDEA24768() throws Exception {
+    doTestAmbiguous();
+  }
+  
 }
