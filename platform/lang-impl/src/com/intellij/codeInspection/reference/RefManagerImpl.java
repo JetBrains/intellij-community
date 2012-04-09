@@ -36,8 +36,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -63,7 +63,7 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private THashMap<PsiAnchor, RefElement> myRefTable;
+  private Map<PsiAnchor, RefElement> myRefTable;
 
   private THashMap<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
@@ -87,7 +87,7 @@ public class RefManagerImpl extends RefManager {
     myContext = context;
     myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
-    myRefTable = new THashMap<PsiAnchor, RefElement>();
+    myRefTable = new LinkedHashMap<PsiAnchor, RefElement>();
     myProjectIterator = new ProjectIterator();
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final RefManagerExtension extension = factory.createRefManagerExtension(this);
@@ -101,7 +101,7 @@ public class RefManagerImpl extends RefManager {
   public void iterate(RefVisitor visitor) {
     myLock.readLock().lock();
     try {
-      final THashMap<PsiAnchor, RefElement> refTable = getRefTable();
+      final Map<PsiAnchor, RefElement> refTable = getRefTable();
       for (RefElement refElement : refTable.values()) {
         refElement.accept(visitor);
       }
@@ -299,7 +299,7 @@ public class RefManagerImpl extends RefManager {
     return myRefProject;
   }
 
-  public THashMap<PsiAnchor, RefElement> getRefTable() {
+  public Map<PsiAnchor, RefElement> getRefTable() {
     return myRefTable;
   }
 
@@ -311,7 +311,7 @@ public class RefManagerImpl extends RefManager {
   public void removeReference(RefElement refElem) {
     myLock.writeLock().lock();
     try {
-      final THashMap<PsiAnchor, RefElement> refTable = getRefTable();
+      final Map<PsiAnchor, RefElement> refTable = getRefTable();
       final PsiElement element = refElem.getElement();
       final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
       if (extension != null) {

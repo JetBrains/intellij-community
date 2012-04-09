@@ -33,6 +33,8 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * @author anna
  * Date: 20-Dec-2007
@@ -133,7 +135,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
         refPackage.accept(visitor);
       }
     }
-    final THashMap<PsiAnchor, RefElement> refTable = myRefManager.getRefTable();
+    final Map<PsiAnchor, RefElement> refTable = myRefManager.getRefTable();
     for (RefElement refElement : refTable.values()) {
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass)refElement;
