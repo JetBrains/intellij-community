@@ -2,6 +2,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
+import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -97,6 +98,20 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
     assertFalse(strings.toString(), strings.contains("HierarchicalMethodSignatureImpl: A([])"));
   }
 
+  public void testEnumConstant() throws Exception {
+    String name = getTestName(false);
+    configureByFile("/codeInsight/overrideImplement/before" + name + ".java");
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiElement context = getFile().findElementAt(offset);
+    PsiMethod psiMethod = PsiTreeUtil.getParentOfType(context, PsiMethod.class);
+    assert psiMethod != null;
+    final PsiClass aClass = psiMethod.getContainingClass();
+    assert aClass != null && aClass.isEnum();
+    final PsiField[] fields = aClass.getFields();
+    new ImplementAbstractMethodHandler(getProject(), getEditor(), psiMethod).implementInClass(fields);
+    checkResultByFile("/codeInsight/overrideImplement/after" + name + ".java");
+  }
+  
   private void doTest(boolean copyJavadoc) throws Exception {
     String name = getTestName(false);
     configureByFile("/codeInsight/overrideImplement/before" + name + ".java");

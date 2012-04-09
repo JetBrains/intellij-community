@@ -37,6 +37,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilBase;
@@ -135,7 +136,7 @@ public class ImplementAbstractMethodHandler {
       showInBestPositionFor(myEditor);
   }
 
-  private void implementInClass(final Object[] selection) {
+  public void implementInClass(final Object[] selection) {
     for (Object o : selection) {
       if (!((PsiElement)o).isValid()) return;
     }
@@ -143,9 +144,14 @@ public class ImplementAbstractMethodHandler {
       @Override
       public void run() {
         final LinkedHashSet<PsiClass> classes = new LinkedHashSet<PsiClass>();
-        for (Object o : selection) {
+        for (final Object o : selection) {
           if (o instanceof PsiEnumConstant) {
-            classes.add(((PsiEnumConstant)o).getOrCreateInitializingClass());
+            classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>(){
+              @Override
+              public PsiClass compute() {
+                return ((PsiEnumConstant) o).getOrCreateInitializingClass();
+              }
+            }));
           }
           else {
             classes.add((PsiClass)o);
