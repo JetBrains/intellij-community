@@ -60,11 +60,11 @@ import java.util.Map;
 public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
   private static final Icon ICON = IconLoader.getIcon("/icons/navigate.png");
 
-  public LineMarkerInfo getLineMarkerInfo(PsiElement psiElement) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement psiElement) {
     return null;
   }
 
-  public void collectSlowLineMarkers(List<PsiElement> psiElements, Collection<LineMarkerInfo> lineMarkerInfos) {
+  public void collectSlowLineMarkers(@NotNull List<PsiElement> psiElements, @NotNull Collection<LineMarkerInfo> lineMarkerInfos) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < psiElements.size(); i++) {
       PsiElement element = psiElements.get(i);
