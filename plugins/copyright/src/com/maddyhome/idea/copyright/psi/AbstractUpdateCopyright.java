@@ -19,6 +19,7 @@ package com.maddyhome.idea.copyright.psi;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.maddyhome.idea.copyright.CopyrightManager;
@@ -49,13 +50,13 @@ public abstract class AbstractUpdateCopyright implements UpdateCopyright {
       FileType ftype = FileTypeUtil.getInstance().getFileTypeByFile(root);
       LanguageOptions opts = CopyrightManager.getInstance(project).getOptions().getMergedOptions(ftype.getName());
       String base = EntityUtil.decode(myCopyrightProfile.getNotice());
-      if (base.length() > 0) {
-        String expanded = VelocityHelper.evaluate(manager.findFile(root), project, module, base);
-        String cmt = FileTypeUtil.buildComment(root.getFileType(), expanded, opts);
-        commentText = prefix + cmt + suffix;
+      if (base.isEmpty()) {
+        commentText = "";
       }
       else {
-        commentText = "";
+        String expanded = VelocityHelper.evaluate(manager.findFile(root), project, module, base);
+        String cmt = FileTypeUtil.buildComment(root.getFileType(), expanded, opts);
+        commentText = StringUtil.convertLineSeparators(prefix + cmt + suffix);
       }
     }
 
@@ -63,6 +64,7 @@ public abstract class AbstractUpdateCopyright implements UpdateCopyright {
   }
 
 
+  @Override
   public VirtualFile getRoot() {
     return root;
   }
