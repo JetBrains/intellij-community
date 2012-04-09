@@ -132,4 +132,36 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
   public void testAmbiguousMultipleTypeParamExtends3() throws Exception {
     doTestAmbiguous();
   }
+
+  public void testAmbiguousIDEA57317() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA57278() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA57269() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA67573() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA57306() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA57535() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA67832() throws Exception {
+    doTestAmbiguous();
+  }
+
+  public void testAmbiguousIDEA67837() throws Exception {
+    doTestAmbiguous();
+  }
 }

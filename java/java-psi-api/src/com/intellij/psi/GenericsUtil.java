@@ -216,10 +216,11 @@ public class GenericsUtil {
       PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
       for (PsiClassType type : extendsTypes) {
         PsiType extendsType = substitutor.substitute(type);
-        if (!extendsType.isAssignableFrom(substituted)) {
-          return false;
+        if (extendsType.isAssignableFrom(substituted)) {
+          return true;
         }
       }
+      if (extendsTypes.length > 0) return false;
     }
 
     return true;
