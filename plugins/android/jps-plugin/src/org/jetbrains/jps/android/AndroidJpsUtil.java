@@ -158,6 +158,8 @@ class AndroidJpsUtil {
   public static Set<String> getExternalLibraries(@NotNull ProjectPaths paths, @NotNull Module module) {
     final Set<String> result = new HashSet<String>();
     fillClasspath(paths, module, null, result, new HashSet<String>(), false);
+
+    // todo: add annotations.jar to result
     return result;
   }
 

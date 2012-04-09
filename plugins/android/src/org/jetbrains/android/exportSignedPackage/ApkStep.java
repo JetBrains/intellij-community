@@ -42,6 +42,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,6 +80,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
   public static final String APK_PATH_PROPERTY_UNSIGNED = "ExportedUnsignedApkPath";
   public static final String RUN_PROGUARD_PROPERTY = "AndroidRunProguardForReleaseBuild";
   public static final String PROGUARD_CFG_PATH_PROPERTY = "AndroidProguardConfigPath";
+  public static final String INCLUDE_SYSTEM_PROGUARD_FILE_PROPERTY = "AndroidIncludeSystemProguardFile";
 
   private TextFieldWithBrowseButton myApkPathField;
   private JPanel myContentPanel;
@@ -86,6 +88,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
   private JCheckBox myProguardCheckBox;
   private JBLabel myProguardConfigFilePathLabel;
   private TextFieldWithBrowseButton myProguardConfigFilePathField;
+  private JCheckBox myIncludeSystemProguardFileCheckBox;
 
   private final ExportSignedPackageWizard myWizard;
   private boolean myInited;
@@ -140,6 +143,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
         final boolean enabled = myProguardCheckBox.isSelected();
         myProguardConfigFilePathLabel.setEnabled(enabled);
         myProguardConfigFilePathField.setEnabled(enabled);
+        myIncludeSystemProguardFileCheckBox.setEnabled(enabled);
       }
     });
 
@@ -149,7 +153,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
   @Override
   public void _init() {
     if (myInited) return;
-    Module module = myWizard.getFacet().getModule();
+    final AndroidFacet facet = myWizard.getFacet();
+    Module module = facet.getModule();
 
     PropertiesComponent properties = PropertiesComponent.getInstance(module.getProject());
     String lastModule = properties.getValue(ChooseModuleStep.MODULE_PROPERTY);
@@ -172,29 +177,41 @@ class ApkStep extends ExportSignedPackageWizardStep {
       selected = Boolean.parseBoolean(runProguardPropValue);
     }
     else {
-      selected = myWizard.getFacet().getConfiguration().RUN_PROGUARD;
+      selected = facet.getConfiguration().RUN_PROGUARD;
     }
     myProguardCheckBox.setSelected(selected);
     myProguardConfigFilePathLabel.setEnabled(selected);
     myProguardConfigFilePathField.setEnabled(selected);
+    myIncludeSystemProguardFileCheckBox.setEnabled(selected);
+
+    final AndroidPlatform platform = AndroidPlatform.getInstance(module);
+    final int sdkToolsRevision = platform != null ? platform.getSdkData().getSdkToolsRevision() : -1;
+    myIncludeSystemProguardFileCheckBox.setVisible(AndroidCommonUtils.isIncludingInProguardSupported(sdkToolsRevision));
 
     final String proguardCfgPath = properties.getValue(PROGUARD_CFG_PATH_PROPERTY);
     if (proguardCfgPath != null && 
         LocalFileSystem.getInstance().refreshAndFindFileByPath(proguardCfgPath) != null) {
       myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardCfgPath));
+      final String includeSystemProguardFile = properties.getValue(INCLUDE_SYSTEM_PROGUARD_FILE_PROPERTY);
+      myIncludeSystemProguardFileCheckBox.setSelected(Boolean.parseBoolean(includeSystemProguardFile));
     }
     else {
-      final AndroidFacetConfiguration configuration = myWizard.getFacet().getConfiguration();
+      final AndroidFacetConfiguration configuration = facet.getConfiguration();
       if (configuration.RUN_PROGUARD) {
-        final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(myWizard.getFacet());
+        final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
         if (proguardCfgFile != null) {
           myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardCfgFile.getPath()));
         }
+        myIncludeSystemProguardFileCheckBox.setSelected(facet.getConfiguration().isIncludeSystemProguardCfgPath());
       }
       else {
-        final VirtualFile proguardConfigFile = AndroidCompileUtil.getDefaultProguardConfigFile(myWizard.getFacet());
-        if (proguardConfigFile != null) {
-          myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardConfigFile.getPath()));
+        final Pair<VirtualFile, Boolean> pair = AndroidCompileUtil.getDefaultProguardConfigFile(facet);
+        if (pair != null) {
+          myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(pair.getFirst().getPath()));
+          myIncludeSystemProguardFileCheckBox.setSelected(pair.getSecond());
+        }
+        else {
+          myIncludeSystemProguardFileCheckBox.setSelected(true);
         }
       }
     }
@@ -332,7 +349,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
-  protected void commitForNext() throws CommitStepException {
+  public void _commit(boolean finishChosen) throws CommitStepException {
     final String apkPath = myApkPathField.getText().trim();
     if (apkPath.length() == 0) {
       throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.apk.path.error"));
@@ -361,19 +378,21 @@ class ApkStep extends ExportSignedPackageWizardStep {
     AndroidCompileUtil.setReleaseBuild(compileScope);
 
     properties.setValue(RUN_PROGUARD_PROPERTY, Boolean.toString(myProguardCheckBox.isSelected()));
-    
+
     if (myProguardCheckBox.isSelected()) {
       final String proguardCfgPath = myProguardConfigFilePathField.getText().trim();
       if (proguardCfgPath.length() == 0) {
         throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.proguard.cfg.path.error"));
       }
       properties.setValue(PROGUARD_CFG_PATH_PROPERTY, proguardCfgPath);
-      
+      properties.setValue(INCLUDE_SYSTEM_PROGUARD_FILE_PROPERTY, Boolean.toString(myIncludeSystemProguardFileCheckBox.isSelected()));
+
       if (!new File(proguardCfgPath).isFile()) {
         throw new CommitStepException("Cannot find file " + proguardCfgPath);
       }
-      
+
       compileScope.putUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY, proguardCfgPath);
+      compileScope.putUserData(AndroidProguardCompiler.INCLUDE_SYSTEM_PROGUARD_FILE, myIncludeSystemProguardFileCheckBox.isSelected());
     }
 
     manager.make(compileScope, new CompileStatusNotification() {
@@ -390,5 +409,9 @@ class ApkStep extends ExportSignedPackageWizardStep {
         });
       }
     });
+  }
+
+  @Override
+  protected void commitForNext() throws CommitStepException {
   }
 }

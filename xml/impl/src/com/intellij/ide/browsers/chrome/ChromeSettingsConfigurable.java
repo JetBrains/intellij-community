@@ -62,6 +62,7 @@ public class ChromeSettingsConfigurable implements Configurable {
         myPortField.setEnabled(myEnableRemoteDebugCheckBox.isSelected());
       }
     });
+    myCommandLineOptionsEditor.setDialogCaption("Chrome Command Line Options");
     myCommandLineOptionsLabel.setLabelFor(myCommandLineOptionsEditor.getTextField());
   }
 

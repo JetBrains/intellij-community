@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import java.awt.im.InputMethodRequests;
 import java.util.Map;
 
 public class EditorComponentImpl extends JComponent implements Scrollable, DataProvider, Queryable, TypingTarget {
+
   private final EditorImpl myEditor;
 
   public EditorComponentImpl(EditorImpl editor) {
@@ -144,7 +145,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
     try {
-      ((Graphics2D)g).setComposite(AlphaComposite.Src);
+      UIUtil.setupComposite((Graphics2D)g);
 
       UISettings.setupAntialiasing(g);
       myEditor.paint((Graphics2D)g);

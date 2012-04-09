@@ -85,6 +85,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
   private static GenerationItem[] doGenerate(final CompileContext context, GenerationItem[] items, VirtualFile outputRootDirectory) {
     List<GenerationItem> results = new ArrayList<GenerationItem>(items.length);
+    boolean toRefresh = false;
+
     for (GenerationItem item : items) {
       if (item instanceof AptGenerationItem) {
         final AptGenerationItem aptItem = (AptGenerationItem)item;
@@ -101,7 +103,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                                aptItem.myManifestFile.getPath(), aptItem.myPackage,
                                outputDirOsPath, aptItem.myResourcesPaths,
                                aptItem.myLibraryPackages, aptItem.myIsLibrary));
-          
+          toRefresh = true;
           AndroidCompileUtil.addMessages(context, messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
             results.add(aptItem);
@@ -117,6 +119,10 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           });
         }
       }
+    }
+
+    if (toRefresh) {
+      outputRootDirectory.refresh(false, true);
     }
     return results.toArray(new GenerationItem[results.size()]);
   }
@@ -152,6 +158,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final boolean myIsLibrary;
     
     final int myPlatformToolsRevision;
+    private final MyValidityState myValidityState;
 
     private AptGenerationItem(@NotNull Module module,
                               @NotNull VirtualFile manifestFile,
@@ -169,6 +176,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myLibraryPackages = libPackages;
       myIsLibrary = isLibrary;
       myPlatformToolsRevision = platformToolsRevision;
+      myValidityState = new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision);
     }
 
     public String getPath() {
@@ -176,7 +184,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
 
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision);
+      return myValidityState;
     }
 
     public Module getModule() {

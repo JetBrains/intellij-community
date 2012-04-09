@@ -95,7 +95,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
   @NotNull
   @Override
   public String getFamilyName() {
-    return AndroidBundle.message("intention.family");
+    return getText();
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -184,7 +184,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
     final AndroidFacet facet = AndroidFacet.getInstance(file);
     assert facet != null;
 
-    value = value.replace("'", "\\'").replace("\"", "\\\"");
+    value = AndroidResourceUtil.normalizeXmlResourceValue(value);
 
     final String aPackage = getPackage(facet);
     if (aPackage == null) {

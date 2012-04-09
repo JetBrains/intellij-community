@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
@@ -125,20 +126,35 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     }
     else {
       if (myIndentTokens.contains(type)) {
-        final String singleIndent = getSingleIndent(file);
+        final String singleIndent = getSingleIndent(file, lineIndent);
         EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + singleIndent);
         return Result.Stop;
       }
 
       EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent);
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, lineIndent.length()));
+      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, calcLogicalLength(editor, lineIndent)));
       return Result.Stop;
     }
   }
 
-  protected static String getSingleIndent(final PsiFile file) {
-    CodeStyleSettings currantSettings = CodeStyleSettingsManager.getSettings(file.getProject());
-    CommonCodeStyleSettings.IndentOptions indentOptions = currantSettings.getIndentOptions(file.getFileType());
+  private static int calcLogicalLength(Editor editor, CharSequence lineIndent) {
+    int result = 0;
+    for (int i = 0; i < lineIndent.length(); i++) {
+      if (lineIndent.charAt(i) == '\t') {
+        result += EditorUtil.getTabSize(editor);
+      } else {
+        result++;
+      }
+    }
+    return result;
+  }
+
+  protected static String getSingleIndent(final PsiFile file, CharSequence lineIndent) {
+    if (lineIndent.length() > 0 && lineIndent.charAt(lineIndent.length() - 1) == '\t') {
+      return "\t";
+    }
+    CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(file.getProject());
+    CommonCodeStyleSettings.IndentOptions indentOptions = currentSettings.getIndentOptions(file.getFileType());
     return StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
   }
 

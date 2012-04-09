@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -699,7 +700,12 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
       }
     }
 
-    return !OverrideImplementUtil.getMethodSignaturesToImplement(baseClass).isEmpty();
+    try {
+      return !OverrideImplementUtil.getMethodSignaturesToImplement(baseClass).isEmpty();
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
   }
 
   private static boolean addToFold(List<FoldingDescriptor> list, PsiElement elementToFold, Document document, boolean allowOneLiners) {

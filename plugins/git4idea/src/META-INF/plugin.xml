@@ -76,7 +76,7 @@
     <component>
       <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
       <implementation-class>git4idea.repo.GitRepositoryManagerImpl</implementation-class>
-      <headless-implementation-class>git4idea.test.GitTestRepositoryManager</headless-implementation-class>
+      <headless-implementation-class>git4idea.repo.GitFakeRepositoryManager</headless-implementation-class>
     </component>
   </project-components>
 

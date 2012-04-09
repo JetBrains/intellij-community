@@ -49,6 +49,9 @@ public class AndroidCommonUtils {
   @NonNls public static final String PROGUARD_CFG_PATH_OPTION = "ANDROID_PROGUARD_CFG_PATH";
   @NonNls public static final String DIRECTORY_FOR_LOGS_NAME = "proguard_logs";
   @NonNls public static final String PROGUARD_OUTPUT_JAR_NAME = "obfuscated_sources.jar";
+  @NonNls public static final String INCLUDE_SYSTEM_PROGUARD_FILE_OPTION = "INCLUDE_SYSTEM_PROGUARD_FILE";
+  @NonNls public static final String SYSTEM_PROGUARD_CFG_FILE_NAME = "proguard-android.txt";
+  @NonNls private static final String PROGUARD_HOME_ENV_VARIABLE = "PROGUARD_HOME";
 
   private AndroidCommonUtils() {
   }
@@ -128,7 +131,7 @@ public class AndroidCommonUtils {
             }
           }
 
-          LOG.info(msg);
+          LOG.debug(msg);
         }
       }
     });
@@ -272,18 +275,33 @@ public class AndroidCommonUtils {
 
   @NotNull
   public static Map<AndroidCompilerMessageKind, List<String>> launchProguard(@NotNull IAndroidTarget target,
-                                                                              @NotNull String sdkOsPath,
-                                                                              @NotNull String proguardConfigFileOsPath,
-                                                                              @NotNull String inputJarOsPath,
-                                                                              @NotNull String[] externalJarOsPaths,
-                                                                              @NotNull String outputJarFileOsPath,
-                                                                              @Nullable String logDirOutputOsPath) throws IOException {
-
+                                                                             int sdkToolsRevision,
+                                                                             @NotNull String sdkOsPath,
+                                                                             @NotNull String proguardConfigFileOsPath,
+                                                                             boolean includeSystemProguardFile,
+                                                                             @NotNull String inputJarOsPath,
+                                                                             @NotNull String[] externalJarOsPaths,
+                                                                             @NotNull String outputJarFileOsPath,
+                                                                             @Nullable String logDirOutputOsPath) throws IOException {
     final List<String> commands = new ArrayList<String>();
     final String toolOsPath = sdkOsPath + File.separator + SdkConstants.OS_SDK_TOOLS_PROGUARD_BIN_FOLDER + SdkConstants.FN_PROGUARD;
-
     commands.add(toolOsPath);
-    commands.add("@" + quotePath(proguardConfigFileOsPath));
+
+    final String proguardHome = sdkOsPath + File.separator + SdkConstants.FD_TOOLS + File.separator + SdkConstants.FD_PROGUARD;
+
+    final String systemProguardCfgPath = proguardHome + File.separator + SYSTEM_PROGUARD_CFG_FILE_NAME;
+
+    if (isIncludingInProguardSupported(sdkToolsRevision)) {
+      if (includeSystemProguardFile) {
+        commands.add("-include");
+        commands.add(quotePath(systemProguardCfgPath));
+      }
+      commands.add("-include");
+      commands.add(quotePath(proguardConfigFileOsPath));
+    }
+    else {
+      commands.add("@" + quotePath(proguardConfigFileOsPath));
+    }
 
     commands.add("-injars");
 
@@ -326,7 +344,10 @@ public class AndroidCommonUtils {
     }
 
     LOG.info(command2string(commands));
-    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(commands));
+    final Map<String, String> home = System.getenv().containsKey(PROGUARD_HOME_ENV_VARIABLE)
+                                     ? Collections.<String, String>emptyMap()
+                                     : Collections.singletonMap(PROGUARD_HOME_ENV_VARIABLE, proguardHome);
+    return AndroidExecutionUtil.doExecute(ArrayUtil.toStringArray(commands), home);
   }
 
   private static String quotePath(String path) {
@@ -347,5 +368,9 @@ public class AndroidCommonUtils {
 
   public static String toolPath(@NotNull String toolFileName) {
     return SdkConstants.OS_SDK_TOOLS_FOLDER + toolFileName;
+  }
+
+  public static boolean isIncludingInProguardSupported(int sdkToolsRevision) {
+    return sdkToolsRevision == -1 || sdkToolsRevision >= 17;
   }
 }

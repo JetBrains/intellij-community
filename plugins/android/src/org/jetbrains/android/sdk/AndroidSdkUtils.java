@@ -73,6 +73,7 @@ public class AndroidSdkUtils {
 
   public static final String DEFAULT_PLATFORM_NAME_PROPERTY = "AndroidPlatformName";
   @NonNls public static final String ANDROID_HOME_ENV = "ANDROID_HOME";
+  @NonNls public static final String ANNOTATIONS_JAR_RELATIVE_PATH = "/tools/support/annotations.jar";
 
   private AndroidSdkUtils() {
   }
@@ -128,6 +129,16 @@ public class AndroidSdkUtils {
         result.add(new OrderRoot(resFolder, OrderRootType.CLASSES));
       }
     }
+
+    if (sdkPath != null) {
+      // todo: check if we should do it for new android platforms (api_level >= 15)
+      final VirtualFile annotationsJar = JarFileSystem.getInstance()
+        .findFileByPath(FileUtil.toSystemIndependentName(sdkPath) + ANNOTATIONS_JAR_RELATIVE_PATH + JarFileSystem.JAR_SEPARATOR);
+      if (annotationsJar != null) {
+        result.add(new OrderRoot(annotationsJar, OrderRootType.CLASSES));
+      }
+    }
+
     return result;
   }
 

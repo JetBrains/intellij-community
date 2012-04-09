@@ -70,7 +70,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
           ASTNode startNode = localFoldingStack.pop();
           int startOffset = startNode.getTextRange().getStartOffset();
           TextRange range = new TextRange(startOffset, child.getTextRange().getEndOffset());
-          descriptors.add(new FoldingDescriptor(localFoldingStack.getOwner(), range));
+          descriptors.add(new FoldingDescriptor(startNode, range));
         }
       }
       else {
@@ -83,15 +83,11 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements D
 
   @Override
   public final String getPlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
-    if (isCustomFoldingRoot(node)) {
-      PsiFile file = node.getPsi().getContainingFile();
-      PsiElement contextElement = file.findElementAt(range.getStartOffset());
-      if (contextElement != null && isCustomFoldingCandidate(contextElement.getNode())) {
-        String elementText = contextElement.getText();
-        CustomFoldingProvider defaultProvider = getDefaultProvider(elementText);
-        if (defaultProvider != null && defaultProvider.isCustomRegionStart(elementText)) {
-          return defaultProvider.getPlaceholderText(elementText);
-        }
+    if (isCustomFoldingCandidate(node)) {
+      String elementText = node.getText();
+      CustomFoldingProvider defaultProvider = getDefaultProvider(elementText);
+      if (defaultProvider != null && defaultProvider.isCustomRegionStart(elementText)) {
+        return defaultProvider.getPlaceholderText(elementText);
       }
     }
     return getLanguagePlaceholderText(node, range);

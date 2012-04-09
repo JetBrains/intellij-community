@@ -307,7 +307,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        String unescaped = element.getUserData(UNESCAPED_TEXT);
+        String unescaped = element.getCopyableUserData(UNESCAPED_TEXT);
         if (unescaped != null) {
           text.append(unescaped);
           return;

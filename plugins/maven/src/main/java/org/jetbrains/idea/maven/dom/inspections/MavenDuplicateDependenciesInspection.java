@@ -35,9 +35,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspection<MavenDomProjectModel> {
   public MavenDuplicateDependenciesInspection() {
@@ -47,15 +45,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   @Override
   public void checkFileElement(DomFileElement<MavenDomProjectModel> domFileElement,
                                DomElementAnnotationHolder holder) {
-
-    final XmlFile xmlFile = domFileElement.getFile();
     MavenDomProjectModel projectModel = domFileElement.getRootElement();
 
-    checkMavenProjectModel(projectModel, xmlFile, holder);
+    checkMavenProjectModel(projectModel, holder);
   }
 
   private static void checkMavenProjectModel(@NotNull MavenDomProjectModel projectModel,
-                                             @NotNull XmlFile xmlFile,
                                              @NotNull DomElementAnnotationHolder holder) {
     final Map<String, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
 
@@ -64,16 +59,36 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
       if (id != null) {
         Set<MavenDomDependency> dependencies = allDuplicates.get(id);
         if (dependencies != null && dependencies.size() > 1) {
-          addProblem(dependency, dependencies, holder);
+
+          List<MavenDomDependency> duplicatedDependencies = new ArrayList<MavenDomDependency>();
+
+          for (MavenDomDependency d : dependencies) {
+            if (d == dependency) continue;
+
+            if (d.getParent() == dependency.getParent() || scope(d).equals(scope(dependency))) {
+              duplicatedDependencies.add(d);
+            }
+          }
+
+          if (duplicatedDependencies.size() > 0) {
+            addProblem(dependency, duplicatedDependencies, holder);
+          }
         }
       }
     }
   }
 
+  private static String scope(MavenDomDependency dependency) {
+    String res = dependency.getScope().getRawText();
+    if (StringUtil.isEmpty(res)) return "compile";
+
+    return res;
+  }
+
   private static void addProblem(@NotNull MavenDomDependency dependency,
-                                 @NotNull Set<MavenDomDependency> dependencies,
+                                 @NotNull Collection<MavenDomDependency> dependencies,
                                  @NotNull DomElementAnnotationHolder holder) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     Set<MavenDomProjectModel> processed = new HashSet<MavenDomProjectModel>();
     for (MavenDomDependency domDependency : dependencies) {
       if (dependency.equals(domDependency)) continue;
@@ -90,7 +105,7 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   private static String createLinkText(@NotNull MavenDomProjectModel model, @NotNull MavenDomDependency dependency) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
 
     XmlTag tag = dependency.getXmlTag();
     if (tag == null) return getProjectName(model);

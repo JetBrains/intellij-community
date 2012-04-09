@@ -152,6 +152,7 @@
     <renamePsiElementProcessor implementation="org.jetbrains.android.AndroidRenameResourceProcessor" order="first"/>
     <intentionAction>
       <className>org.jetbrains.android.intentions.AndroidAddStringResourceAction</className>
+      <category>Android</category>
     </intentionAction>
 
     <localInspection language="XML" shortName="AndroidDomInspection" bundle="messages.AndroidBundle" key="android.inspections.dom.name"
@@ -166,9 +167,10 @@
                      key="android.inspections.element.not.allowed.name" groupKey="android.inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.android.inspections.AndroidElementNotAllowedInspection"/>
 
-    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle" key="android.inspections.group.name"
-                         groupKey="android.inspections.group.name" enabledByDefault="true" level="ERROR"
-                         implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
+    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle"
+                     key="android.inspections.non.constant.res.ids.in.switch.name" groupKey="android.inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
 
     <inspectionToolProvider implementation="org.jetbrains.android.inspections.lint.AndroidLintInspectionToolProvider"/>
     <codeInspection.InspectionExtension implementation="org.jetbrains.android.inspections.lint.AndroidInspectionExtensionsFactory"/>

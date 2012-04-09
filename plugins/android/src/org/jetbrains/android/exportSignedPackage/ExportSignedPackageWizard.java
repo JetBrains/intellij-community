@@ -21,6 +21,7 @@ import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,8 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
     myProject = project;
     mySigned = signed;
     assert facets.size() > 0;
-    if (facets.size() > 1) {
+    if (facets.size() > 1 ||
+        SystemInfo.isMac /* wizards with only step are shown incorrectly on mac */) {
       addStep(new ChooseModuleStep(this, facets));
     }
     else {

@@ -432,4 +432,30 @@ public class InjectedLanguageUtil {
     });
     return result.get().booleanValue();
   }
+
+  public static String getUnescapedText(PsiFile file, @Nullable final PsiElement startElement, @NotNull final PsiElement endElement) {
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
+    if (manager.getInjectionHost(file) == null) {
+      return file.getText().substring(startElement == null? 0 : startElement.getTextRange().getStartOffset(), endElement.getTextRange().getStartOffset());
+    }
+    final StringBuilder sb = new StringBuilder();
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+
+      Boolean myState = startElement == null? Boolean.TRUE : null;
+
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element == startElement) myState = Boolean.TRUE;
+        if (element == endElement) myState = Boolean.FALSE;
+        if (Boolean.FALSE == myState) return;
+        if (Boolean.TRUE == myState && element.getFirstChild() == null) {
+          sb.append(manager.getUnescapedText(element));
+        }
+        else {
+          super.visitElement(element);
+        }
+      }
+    });
+    return sb.toString();
+  }
 }
