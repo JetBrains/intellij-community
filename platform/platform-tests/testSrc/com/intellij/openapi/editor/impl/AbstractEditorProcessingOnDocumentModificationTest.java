@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,8 @@ public abstract class AbstractEditorProcessingOnDocumentModificationTest extends
   protected static void setupSoftWraps(@NotNull String data) {
     Scanner scanner = new Scanner(data);
     Pattern generalPattern =
-      Pattern.compile("visual line: (\\d+), offsets: (\\d+)-(\\d+), fold regions: \\[([^\\]]*)\\], tab data: \\[([^\\]]*)\\]");
+      Pattern.compile("visual line: (\\d+), offsets: (\\d+)-(\\d+), logical lines: (\\d+)-(\\d+), logical columns: (\\d+)-(\\d+), "
+                      + "end visual column: (\\d+), fold regions: \\[([^\\]]*)\\], tab data: \\[([^\\]]*)\\]");
     Pattern foldPattern = Pattern.compile("width in columns: (-?\\d+), start X: (-?\\d+), fold region: FoldRegion [-+]\\((\\d+):(\\d+)");
     Pattern tabPattern = Pattern.compile("\\[(\\d+), width: (\\d+)");
     final SoftWrapModelImpl softWrapModel = (SoftWrapModelImpl)myEditor.getSoftWrapModel();
@@ -163,9 +164,14 @@ public abstract class AbstractEditorProcessingOnDocumentModificationTest extends
       int visualLine = Integer.parseInt(generalMatch.group(1));
       int startOffset = Integer.parseInt(generalMatch.group(2));
       int endOffset = Integer.parseInt(generalMatch.group(3));
+      int startLogicalLine = Integer.parseInt(generalMatch.group(4));
+      int endLogicalLine = Integer.parseInt(generalMatch.group(5));
+      int startLogicalColumn = Integer.parseInt(generalMatch.group(6));
+      int endLogicalColumn = Integer.parseInt(generalMatch.group(7));
+      int endVisualColumn = Integer.parseInt(generalMatch.group(8));
       
       List<Trinity<Integer, Integer, FoldRegion>> foldRegions = new ArrayList<Trinity<Integer, Integer, FoldRegion>>();
-      Scanner foldScanner = new Scanner(generalMatch.group(4));
+      Scanner foldScanner = new Scanner(generalMatch.group(9));
       while (foldScanner.findInLine(foldPattern) != null) {
         final MatchResult foldMatch = foldScanner.match();
         int widthInColumns = Integer.parseInt(foldMatch.group(1));
@@ -183,7 +189,7 @@ public abstract class AbstractEditorProcessingOnDocumentModificationTest extends
       }
       
       List<Pair<Integer, Integer>> tabData = new ArrayList<Pair<Integer, Integer>>();
-      Scanner tabScanner = new Scanner(generalMatch.group(5));
+      Scanner tabScanner = new Scanner(generalMatch.group(10));
       while (tabScanner.findInLine(tabPattern) != null) {
         final MatchResult tabMatch = tabScanner.match();
         int offset = Integer.parseInt(tabMatch.group(1));
@@ -191,7 +197,7 @@ public abstract class AbstractEditorProcessingOnDocumentModificationTest extends
         tabData.add(new Pair<Integer, Integer>(offset, widthInColumns));
       }
       
-      mapper.rawAdd(visualLine, startOffset, endOffset, foldRegions, tabData);
+      mapper.rawAdd(visualLine, startOffset, endOffset, startLogicalLine, startLogicalColumn, endLogicalLine, endLogicalColumn, endVisualColumn, foldRegions, tabData);
     }
   }
 

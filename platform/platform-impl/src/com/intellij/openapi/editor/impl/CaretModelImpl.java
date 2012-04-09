@@ -439,14 +439,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     if (column < 0) {
       if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical column to zero as it is negative (" + column + ")\n");
+        debugBuffer.append("Resetting target logical column to zero as it is negative (").append(column).append(")\n");
       }
       column = 0;
       softWrapColumns = 0;
     }
     if (line < 0) {
       if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical line to zero as it is negative (" + line + ")\n");
+        debugBuffer.append("Resetting target logical line to zero as it is negative (").append(line).append(")\n");
       }
       line = 0;
       softWrapLinesBefore = 0;
