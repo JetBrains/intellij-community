@@ -145,11 +145,15 @@ public class ResizeOperation implements EditOperation {
     if ("wrap_content".equals(value)) {
       wrap = size;
     }
-    else if ("fill_parent".equals(value) || "match_parent".equals(value)) {
+    else if (isFill(value)) {
       fill = size;
     }
 
     return new Pair<Integer, Integer>(wrap, fill);
+  }
+
+  public static boolean isFill(String value) {
+    return "fill_parent".equals(value) || "match_parent".equals(value);
   }
 
   private void createStaticFeedback(Rectangle bounds, String width, String height) {

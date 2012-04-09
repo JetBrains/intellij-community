@@ -16,21 +16,24 @@
 package com.intellij.android.designer.model.layout;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.designSurface.layout.FrameLayoutMarginOperation;
 import com.intellij.android.designer.designSurface.layout.FrameLayoutOperation;
+import com.intellij.android.designer.designSurface.layout.LayoutMarginOperation;
 import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.actions.AbstractComboBoxAction;
-import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.ComponentDecorator;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.EditOperation;
+import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizePoint;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.utils.Position;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -46,15 +49,7 @@ import java.util.List;
 public class RadFrameLayout extends RadViewLayoutWithData {
   private static final String[] LAYOUT_PARAMS = {"FrameLayout_Layout", "ViewGroup_MarginLayout"};
 
-  private final ResizeSelectionDecorator mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1) {
-    @Override
-    protected boolean visible(RadComponent component, ResizePoint point) {
-      if (point.getType() == FrameLayoutMarginOperation.TYPE) {
-        return FrameLayoutMarginOperation.visible(component, (DirectionResizePoint)point);
-      }
-      return true;
-    }
-  };
+  private ResizeSelectionDecorator mySelectionDecorator;
 
   @Override
   @NotNull
@@ -73,19 +68,46 @@ public class RadFrameLayout extends RadViewLayoutWithData {
     else if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);
     }
-    else if (context.is(FrameLayoutMarginOperation.TYPE)) {
-      return new FrameLayoutMarginOperation(context);
+    else if (context.is(LayoutMarginOperation.TYPE)) {
+      return new LayoutMarginOperation(context);
     }
     return null;
   }
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
+    if (mySelectionDecorator == null) {
+      mySelectionDecorator = new ResizeSelectionDecorator(Color.red, 1) {
+        @Override
+        protected boolean visible(RadComponent component, ResizePoint point) {
+          if (point.getType() == LayoutMarginOperation.TYPE) {
+            Pair<Gravity, Gravity> gravity = Gravity.getSides(component);
+            int direction = ((DirectionResizePoint)point).getDirection();
+
+            if (direction == Position.WEST) { // left
+              return gravity.first == Gravity.left || gravity.first == Gravity.center;
+            }
+            if (direction == Position.EAST) { // right
+              return gravity.first == Gravity.right || gravity.first == Gravity.center;
+            }
+            if (direction == Position.NORTH) { // top
+              return gravity.second == Gravity.top || gravity.second == Gravity.center;
+            }
+            if (direction == Position.SOUTH) { // bottom
+              return gravity.second == Gravity.bottom || gravity.second == Gravity.center;
+            }
+          }
+          return true;
+        }
+      };
+    }
+
     mySelectionDecorator.clear();
     if (selection.size() == 1) {
-      FrameLayoutMarginOperation.points(mySelectionDecorator);
+      LayoutMarginOperation.points(mySelectionDecorator);
     }
     ResizeOperation.points(mySelectionDecorator);
+
     return mySelectionDecorator;
   }
 
@@ -118,7 +140,7 @@ public class RadFrameLayout extends RadViewLayoutWithData {
       @NotNull
       @Override
       protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        myGravity = gravity(selection.get(0));
+        myGravity = Gravity.getSides(selection.get(0));
         return super.createPopupActionGroup(button);
       }
 
@@ -159,38 +181,9 @@ public class RadFrameLayout extends RadViewLayoutWithData {
     };
     Presentation presentation = action.getTemplatePresentation();
     presentation.setDescription("Gravity");
-    presentation.setIcon(IconLoader.getIcon("/com/intellij/android/designer/icons/gravity.png"));
+    presentation.setIcon(Gravity.ICON);
     action.setItems(ITEMS, null);
 
     actionGroup.add(action);
-  }
-
-  public static Pair<Gravity, Gravity> gravity(RadComponent component) {
-    String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
-    int flags = Gravity.getFlags(value);
-
-    Gravity horizontal = Gravity.left;
-    if ((flags & Gravity.LEFT) != 0) {
-      horizontal = Gravity.left;
-    }
-    else if ((flags & Gravity.CENTER_HORIZONTAL) != 0) {
-      horizontal = Gravity.center;
-    }
-    else if ((flags & Gravity.RIGHT) != 0) {
-      horizontal = Gravity.right;
-    }
-
-    Gravity vertical = Gravity.top;
-    if ((flags & Gravity.TOP) != 0) {
-      vertical = Gravity.top;
-    }
-    else if ((flags & Gravity.CENTER_VERTICAL) != 0) {
-      vertical = Gravity.center;
-    }
-    else if ((flags & Gravity.BOTTOM) != 0) {
-      vertical = Gravity.bottom;
-    }
-
-    return Pair.create(horizontal, vertical);
   }
 }

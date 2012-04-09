@@ -17,10 +17,8 @@ package com.intellij.android.designer.designSurface.layout;
 
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.Gravity;
-import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,11 +26,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LightColors;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,42 +38,27 @@ import java.util.List;
 public class LinearLayoutOperation extends FlowBaseOperation {
   private GravityFeedback myFeedback;
   private TextFeedback myTextFeedback;
-  private List<Gravity> myExcludes;
+  private Gravity myExclude;
   private Gravity myGravity;
 
   public LinearLayoutOperation(RadViewComponent container, OperationContext context, boolean horizontal) {
     super(container, context, horizontal);
 
-    if (context.isMove()) {
-      myExcludes = new ArrayList<Gravity>();
-      for (RadComponent component : context.getComponents()) {
-        String fill;
-        if (myHorizontal) {
-          fill = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_height");
-        }
-        else {
-          fill = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_width");
-        }
-
-        if ("match_parent".equals(fill) || "fill_parent".equals(fill)) {
-          myExcludes.add(null);
-        }
-        else {
-          Pair<Gravity, Gravity> gravity = RadFrameLayout.gravity(component);
-          myExcludes.add(myHorizontal ? gravity.second : gravity.first);
-        }
-      }
+    if (context.isMove() && context.getComponents().size() == 1) {
+      myExclude = getGravity(myHorizontal, context.getComponents().get(0));
     }
   }
 
   @Override
   protected void createFeedback() {
     super.createFeedback();
+
     if (myFeedback == null) {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
       myFeedback = new GravityFeedback();
-      layer.add(myFeedback);
+      myFeedback.setBounds(myBounds);
+      layer.add(myFeedback, 0);
 
       myTextFeedback = new TextFeedback();
       myTextFeedback.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 2, 0));
@@ -89,18 +71,6 @@ public class LinearLayoutOperation extends FlowBaseOperation {
   @Override
   public void showFeedback() {
     super.showFeedback();
-
-    if (myChildTarget == null) {
-      myFeedback.setBounds(myBounds);
-    }
-    else if (myHorizontal) {
-      Rectangle childBounds = myChildTarget.getBounds(myContext.getArea().getFeedbackLayer());
-      myFeedback.setBounds(childBounds.x, myBounds.y, childBounds.width, myBounds.height);
-    }
-    else {
-      Rectangle childBounds = myChildTarget.getBounds(myContext.getArea().getFeedbackLayer());
-      myFeedback.setBounds(myBounds.x, childBounds.y, myBounds.width, childBounds.height);
-    }
 
     Point location = myContext.getLocation();
     Gravity gravity = myHorizontal ? calculateVertical(myBounds, location) : calculateHorizontal(myBounds, location);
@@ -129,11 +99,11 @@ public class LinearLayoutOperation extends FlowBaseOperation {
 
   @Nullable
   private static Gravity calculateHorizontal(Rectangle bounds, Point location) {
-    Gravity horizontal = null;
+    Gravity horizontal = Gravity.right;
     double width = bounds.width / 4.0;
     double left = bounds.x + width;
     double center = bounds.x + 2 * width;
-    double right = bounds.x + 3 * width;
+    double fill = bounds.x + 3 * width;
 
     if (location.x < left) {
       horizontal = Gravity.left;
@@ -141,8 +111,8 @@ public class LinearLayoutOperation extends FlowBaseOperation {
     else if (left < location.x && location.x < center) {
       horizontal = Gravity.center;
     }
-    else if (center < location.x && location.x < right) {
-      horizontal = Gravity.right;
+    else if (center < location.x && location.x < fill) {
+      horizontal = null;
     }
 
     return horizontal;
@@ -150,11 +120,11 @@ public class LinearLayoutOperation extends FlowBaseOperation {
 
   @Nullable
   private static Gravity calculateVertical(Rectangle bounds, Point location) {
-    Gravity vertical = null;
+    Gravity vertical = Gravity.bottom;
     double height = bounds.height / 4.0;
     double top = bounds.y + height;
     double center = bounds.y + 2 * height;
-    double bottom = bounds.y + 3 * height;
+    double fill = bounds.y + 3 * height;
 
     if (location.y < top) {
       vertical = Gravity.top;
@@ -162,8 +132,8 @@ public class LinearLayoutOperation extends FlowBaseOperation {
     else if (top < location.y && location.y < center) {
       vertical = Gravity.center;
     }
-    else if (center < location.y && location.y < bottom) {
-      vertical = Gravity.bottom;
+    else if (center < location.y && location.y < fill) {
+      vertical = null;
     }
 
     return vertical;
@@ -171,51 +141,63 @@ public class LinearLayoutOperation extends FlowBaseOperation {
 
   @Override
   public boolean canExecute() {
-    if (myContext.isMove()) {
-      return !isExclude(myGravity);
-    }
-    return true;
-  }
-
-  private boolean isExclude(Gravity gravity) {
-    int index = myComponents.indexOf(myChildTarget);
-    return index != -1 && gravity == myExcludes.get(index);
+    return super.canExecute() || (myComponents.size() == 1 && myGravity != myExclude);
   }
 
   @Override
   public void execute() throws Exception {
-    super.execute();
+    if (super.canExecute()) {
+      super.execute();
+    }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        if (myGravity == null) {
-          for (RadComponent component : myComponents) {
-            XmlTag tag = ((RadViewComponent)component).getTag();
-
-            XmlAttribute attribute = tag.getAttribute("android:layout_gravity");
-            if (attribute != null) {
-              attribute.delete();
-            }
-
-            tag.setAttribute(myHorizontal ? "android:layout_height" : "android:layout_width", "fill_parent");
-          }
-        }
-        else {
-          for (RadComponent component : myComponents) {
-            XmlTag tag = ((RadViewComponent)component).getTag();
-
-            XmlAttribute attribute = tag.getAttribute(myHorizontal ? "android:layout_height" : "android:layout_width");
-            if (attribute != null && ("match_parent".equals(attribute.getValue()) || "fill_parent".equals(attribute.getValue()))) {
-              attribute.setValue("wrap_content");
-            }
-
-            tag.setAttribute("android:layout_gravity", myHorizontal ?
-                                                       Gravity.getValue(null, myGravity) : Gravity.getValue(myGravity, null));
-          }
-        }
+        execute(myHorizontal, myGravity, myComponents);
       }
     });
+  }
+
+  public static void execute(boolean horizontal, Gravity gravity, List<RadComponent> components) {
+    if (gravity == null) {
+      for (RadComponent component : components) {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+
+        XmlAttribute attribute = tag.getAttribute("android:layout_gravity");
+        if (attribute != null) {
+          attribute.delete();
+        }
+
+        tag.setAttribute(horizontal ? "android:layout_height" : "android:layout_width", "fill_parent");
+      }
+    }
+    else {
+      String gravityValue = horizontal ? Gravity.getValue(null, gravity) : Gravity.getValue(gravity, null);
+
+      for (RadComponent component : components) {
+        XmlTag tag = ((RadViewComponent)component).getTag();
+
+        XmlAttribute attribute = tag.getAttribute(horizontal ? "android:layout_height" : "android:layout_width");
+        if (attribute != null && ("match_parent".equals(attribute.getValue()) || "fill_parent".equals(attribute.getValue()))) {
+          attribute.setValue("wrap_content");
+        }
+
+        tag.setAttribute("android:layout_gravity", gravityValue);
+      }
+    }
+  }
+
+  @Nullable
+  public static Gravity getGravity(boolean horizontal, RadComponent component) {
+    XmlTag tag = ((RadViewComponent)component).getTag();
+    String length = tag.getAttributeValue(horizontal ? "android:layout_height" : "android:layout_width");
+
+    if (!ResizeOperation.isFill(length)) {
+      Pair<Gravity, Gravity> gravity = Gravity.getSides(component);
+      return horizontal ? gravity.second : gravity.first;
+    }
+
+    return null;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -223,145 +205,83 @@ public class LinearLayoutOperation extends FlowBaseOperation {
   // Feedback
   //
   //////////////////////////////////////////////////////////////////////////////////////////
-  public static final Gravity[] HORIZONTALS = {Gravity.left, Gravity.center, Gravity.right, null};
-  public static final Gravity[] VERTICALS = {Gravity.top, Gravity.center, Gravity.bottom, null};
 
-  private class GravityFeedback extends AlphaFeedback {
+  private static final int SIZE = 2;
+
+  private class GravityFeedback extends JComponent {
     private Gravity myGravity;
-
-    public GravityFeedback() {
-      super(BorderStaticDecorator.COLOR);
-    }
 
     public void setGravity(Gravity gravity) {
       myGravity = gravity;
       repaint();
     }
 
-    @Override
-    protected void paintOther1(Graphics2D g2d) {
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+      g.setColor(Color.magenta);
+
       if (myHorizontal) {
-        for (Gravity gravity : VERTICALS) {
-          if (!myContext.isMove() || !isExclude(gravity)) {
-            paintHorizontalCell(g2d, gravity, false);
-          }
-        }
+        paintHorizontalCell(g);
       }
       else {
-        for (Gravity gravity : HORIZONTALS) {
-          if (!myContext.isMove() || !isExclude(gravity)) {
-            paintVerticalCell(g2d, gravity, false);
-          }
-        }
+        paintVerticalCell(g);
       }
     }
 
-    @Override
-    protected void paintOther2(Graphics2D g2d) {
-      if (myHorizontal) {
-        for (Gravity gravity : VERTICALS) {
-          if ((!myContext.isMove() || !isExclude(gravity)) && paintHorizontalCell(g2d, gravity, true)) {
-            break;
-          }
-        }
-      }
-      else {
-        for (Gravity gravity : HORIZONTALS) {
-          if ((!myContext.isMove() || !isExclude(gravity)) && paintVerticalCell(g2d, gravity, true)) {
-            break;
-          }
-        }
-      }
-    }
-
-    private boolean paintHorizontalCell(Graphics2D g2d, Gravity gravity, boolean selection) {
-      int x = 0;
-      int width = getWidth();
-
+    private void paintHorizontalCell(Graphics g) {
       int y = 0;
       int height = (getHeight() - 3) / 4;
-      if (gravity == Gravity.center) {
+      if (myGravity == Gravity.center) {
         y = height + 1;
       }
-      else if (gravity == Gravity.bottom) {
+      else if (myGravity == null) {
         y = 2 * height + 2;
       }
-      else if (gravity == null) {
+      else if (myGravity == Gravity.bottom) {
         y = getHeight() - height;
       }
 
-      int hSpace = Math.min(5, Math.max(1, getWidth() / 30));
-      if (hSpace > 1) {
-        x += hSpace;
-        width -= 2 * hSpace;
-      }
-
       int vSpace = Math.min(5, Math.max(1, getHeight() / 30));
       if (vSpace > 1) {
         y += vSpace;
         height -= 2 * vSpace;
       }
 
-      if (selection) {
-        if (myGravity == gravity) {
-          Color oldColor = g2d.getColor();
-          g2d.setColor(LightColors.YELLOW);
-          g2d.fillRect(x, y, width, height);
-          g2d.setColor(oldColor);
-
-          return true;
-        }
+      if (myContainer.getChildren().isEmpty()) {
+        g.fillRect(0, y, 2, height);
+        g.fillRect(myBounds.width - SIZE, y, SIZE, height);
       }
       else {
-        g2d.fillRect(x, y, width, height);
+        g.fillRect(myInsertFeedback.getX() - myBounds.x + SIZE, y, SIZE, height);
       }
-
-      return false;
     }
 
-    private boolean paintVerticalCell(Graphics2D g2d, Gravity gravity, boolean selection) {
+    private void paintVerticalCell(Graphics g) {
       int x = 0;
       int width = (getWidth() - 3) / 4;
-      if (gravity == Gravity.center) {
+      if (myGravity == Gravity.center) {
         x = width + 1;
       }
-      else if (gravity == Gravity.right) {
+      else if (myGravity == null) {
         x = 2 * width + 2;
       }
-      else if (gravity == null) {
+      else if (myGravity == Gravity.right) {
         x = getWidth() - width;
       }
 
-      int y = 0;
-      int height = getHeight();
-
       int hSpace = Math.min(5, Math.max(1, getWidth() / 30));
       if (hSpace > 1) {
         x += hSpace;
         width -= 2 * hSpace;
       }
 
-      int vSpace = Math.min(5, Math.max(1, getHeight() / 30));
-      if (vSpace > 1) {
-        y += vSpace;
-        height -= 2 * vSpace;
-      }
-
-      if (selection) {
-        if (myGravity == gravity) {
-          Color oldColor = g2d.getColor();
-          g2d.setColor(LightColors.YELLOW);
-          g2d.fillRect(x, y, width, height);
-          g2d.setColor(oldColor);
-
-          return true;
-        }
+      if (myContainer.getChildren().isEmpty()) {
+        g.fillRect(x, 0, width, SIZE);
+        g.fillRect(x, myBounds.height - SIZE, width, SIZE);
       }
       else {
-        g2d.fillRect(x, y, width, height);
+        g.fillRect(x, myInsertFeedback.getY() - myBounds.y + SIZE, width, SIZE);
       }
-
-      return false;
     }
   }
 }

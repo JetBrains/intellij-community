@@ -15,14 +15,22 @@
  */
 package com.intellij.android.designer.model.layout;
 
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Alexander Lobas
  */
 public enum Gravity {
   left, right, center, top, bottom;
+
+  public static Icon ICON = IconLoader.getIcon("/com/intellij/android/designer/icons/gravity.png");
 
   public static final int NONE = 0;
   public static final int TOP = 1 << 0;
@@ -133,5 +141,34 @@ public enum Gravity {
       }
     }
     return flags;
+  }
+
+  public static Pair<Gravity, Gravity> getSides(RadComponent component) {
+    String value = ((RadViewComponent)component).getTag().getAttributeValue("android:layout_gravity");
+    int flags = getFlags(value);
+
+    Gravity horizontal = left;
+    if ((flags & LEFT) != 0) {
+      horizontal = left;
+    }
+    else if ((flags & CENTER_HORIZONTAL) != 0) {
+      horizontal = center;
+    }
+    else if ((flags & RIGHT) != 0) {
+      horizontal = right;
+    }
+
+    Gravity vertical = top;
+    if ((flags & TOP) != 0) {
+      vertical = top;
+    }
+    else if ((flags & CENTER_VERTICAL) != 0) {
+      vertical = center;
+    }
+    else if ((flags & BOTTOM) != 0) {
+      vertical = bottom;
+    }
+
+    return Pair.create(horizontal, vertical);
   }
 }

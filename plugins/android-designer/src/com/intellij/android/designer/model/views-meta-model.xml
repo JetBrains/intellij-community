@@ -43,6 +43,7 @@
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.widget.TextView"
         tag="TextView">
+
     <presentation title=" - &quot;%text%&quot;"/>
 
     <palette title="TextView" icon="/com/intellij/android/designer/icons/TextView.png"
@@ -67,6 +68,7 @@
   <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.widget.Button"
         tag="Button">
+
     <presentation title=" - &quot;%text%&quot;"/>
 
     <palette title="Button" icon="/com/intellij/android/designer/icons/Button.png"
@@ -987,6 +989,8 @@
         layout="com.intellij.android.designer.model.layout.RadLinearLayout"
         class="android.widget.LinearLayout"
         tag="LinearLayout">
+
+    <presentation title=" (%orientation%)"/>
 
     <palette title="LinearLayout" icon="/com/intellij/android/designer/icons/LinearLayout.png"
              tooltip="A Layout that arranges its children in a single column or a single row."/>

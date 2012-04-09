@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
@@ -43,13 +44,15 @@ public abstract class FlowStaticDecorator extends StaticDecorator {
     if (isHorizontal()) {
       for (RadComponent child : component.getChildren()) {
         Rectangle childBounds = child.getBounds(layer);
-        g.drawLine(childBounds.x + childBounds.width, bounds.y, childBounds.x + childBounds.width, bounds.y + bounds.height);
+        int x = childBounds.x + childBounds.width + ((RadViewComponent)child).getMargins().width;
+        g.drawLine(x, bounds.y, x, bounds.y + bounds.height);
       }
     }
     else {
       for (RadComponent child : component.getChildren()) {
         Rectangle childBounds = child.getBounds(layer);
-        g.drawLine(bounds.x, childBounds.y + childBounds.height, bounds.x + bounds.width, childBounds.y + childBounds.height);
+        int y = childBounds.y + childBounds.height + ((RadViewComponent)child).getMargins().height;
+        g.drawLine(bounds.x, y, bounds.x + bounds.width, y);
       }
     }
   }

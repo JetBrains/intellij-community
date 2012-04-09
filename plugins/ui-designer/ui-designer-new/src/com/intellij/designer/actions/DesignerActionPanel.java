@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -120,8 +119,7 @@ public class DesignerActionPanel implements DataProvider {
     }
     myDynamicGroup.removeAll();
 
-    Set<RadComponent> parents = RadComponent.getParents(selection);
-    for (RadComponent parent : parents) {
+    for (RadComponent parent : RadComponent.getParents(selection)) {
       parent.getLayout().addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
     }
     for (RadComponent component : selection) {

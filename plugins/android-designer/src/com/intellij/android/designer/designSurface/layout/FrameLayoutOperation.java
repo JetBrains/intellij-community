@@ -18,7 +18,6 @@ package com.intellij.android.designer.designSurface.layout;
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.Gravity;
-import com.intellij.android.designer.model.layout.RadFrameLayout;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
@@ -52,7 +51,7 @@ public class FrameLayoutOperation extends AbstractEditOperation {
       myExcludes = new HashSet<Pair<Gravity, Gravity>>();
 
       for (RadComponent component : context.getComponents()) {
-        myExcludes.add(RadFrameLayout.gravity(component));
+        myExcludes.add(Gravity.getSides(component));
       }
     }
   }

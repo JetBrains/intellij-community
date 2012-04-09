@@ -75,7 +75,8 @@ public class FlowBaseOperation extends AbstractEditOperation {
       if (myHorizontal) {
         for (RadComponent child : myContainer.getChildren()) {
           Rectangle childBounds = child.getBounds(layer);
-          if (childBounds.x <= location.x && location.x <= childBounds.getMaxX()) {
+          Rectangle margins = ((RadViewComponent)child).getMargins();
+          if (childBounds.x - margins.x <= location.x && location.x <= childBounds.getMaxX() + margins.width) {
             myChildTarget = child;
             break;
           }
@@ -84,7 +85,8 @@ public class FlowBaseOperation extends AbstractEditOperation {
       else {
         for (RadComponent child : myContainer.getChildren()) {
           Rectangle childBounds = child.getBounds(layer);
-          if (childBounds.y <= location.y && location.y <= childBounds.getMaxY()) {
+          Rectangle margins = ((RadViewComponent)child).getMargins();
+          if (childBounds.y - margins.y <= location.y && location.y <= childBounds.getMaxY() + margins.height) {
             myChildTarget = child;
             break;
           }
@@ -95,24 +97,25 @@ public class FlowBaseOperation extends AbstractEditOperation {
       }
 
       Rectangle targetBounds = myChildTarget.getBounds(layer);
+      Rectangle targetMargins = ((RadViewComponent)myChildTarget).getMargins();
       if (myHorizontal) {
         myInsertBefore = location.x < targetBounds.getCenterX();
 
         if (myInsertBefore) {
-          myInsertFeedback.setLocation(targetBounds.x, myBounds.y);
+          myInsertFeedback.setLocation(targetBounds.x - targetMargins.x, myBounds.y);
         }
         else {
-          myInsertFeedback.setLocation(targetBounds.x + targetBounds.width, myBounds.y);
+          myInsertFeedback.setLocation(targetBounds.x + targetBounds.width + targetMargins.width, myBounds.y);
         }
       }
       else {
         myInsertBefore = location.y < targetBounds.getCenterY();
 
         if (myInsertBefore) {
-          myInsertFeedback.setLocation(myBounds.x, targetBounds.y);
+          myInsertFeedback.setLocation(myBounds.x, targetBounds.y - targetMargins.y);
         }
         else {
-          myInsertFeedback.setLocation(myBounds.x, targetBounds.y + targetBounds.height);
+          myInsertFeedback.setLocation(myBounds.x, targetBounds.y + targetBounds.height + targetMargins.height);
         }
       }
 
