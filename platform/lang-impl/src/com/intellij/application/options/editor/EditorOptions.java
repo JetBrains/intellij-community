@@ -33,6 +33,7 @@ public class EditorOptions implements SearchableConfigurable.Parent {
   private EditorOptionsPanel myEditorOptionsPanel;
   private Configurable[] myChildren;
 
+  @Override
   public Configurable[] getConfigurables() {
     if (myChildren == null) {
       final List<EditorOptionsProvider> configurables = AbstractConfigurableEP.createConfigurables(EditorOptionsProviderEP.EP_NAME);
@@ -41,56 +42,68 @@ public class EditorOptions implements SearchableConfigurable.Parent {
     return myChildren;
   }
 
+  @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.editor");
   }
 
+  @Override
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableEditor.png");
   }
 
+  @Override
   public String getHelpTopic() {
     return ID;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return ID;
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }
 
+  @Override
   public boolean hasOwnContent() {
     return true;
   }
 
+  @Override
   public boolean isVisible() {
     return true;
   }
 
+  @Override
   public JComponent createComponent() {
     myEditorOptionsPanel = new EditorOptionsPanel();
     return myEditorOptionsPanel.getComponent();
   }
 
+  @Override
   public boolean isModified() {
     return myEditorOptionsPanel != null && myEditorOptionsPanel.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myEditorOptionsPanel != null) {
       myEditorOptionsPanel.apply();
     }
   }
 
+  @Override
   public void reset() {
     if (myEditorOptionsPanel != null) {
       myEditorOptionsPanel.reset();
     }
   }
 
+  @Override
   public void disposeUIResources() {
     myEditorOptionsPanel = null;
 

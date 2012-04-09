@@ -61,6 +61,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   static void installTrafficLights(@NotNull EditorEx editor) {
     TrafficLightRenderer renderer = new TrafficLightRenderer(null, null,null){
+      @Override
       protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(boolean fillErrorsCount, SeverityRegistrar severityRegistrar) {
         DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
         status.errorAnalyzingFinished = true;
@@ -99,10 +100,12 @@ public class FontEditorPreview implements PreviewPanel{
     return editor;
   }
 
+  @Override
   public Component getPanel() {
     return myEditor.getComponent();
   }
 
+  @Override
   public void updateView() {
     EditorColorsScheme scheme = updateOptionsScheme(myOptions.getSelectedScheme());
 
@@ -115,13 +118,16 @@ public class FontEditorPreview implements PreviewPanel{
     return selectedScheme;
   }
 
+  @Override
   public void blinkSelectedHighlightType(Object description) {
   }
 
+  @Override
   public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public void disposeUIResources() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myEditor);

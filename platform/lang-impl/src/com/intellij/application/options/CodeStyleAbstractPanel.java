@@ -105,6 +105,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myUpdateAlarm.setActivationComponent(myEditor.getComponent());
     }
     myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
+      @Override
       public void stateChanged() {
         somethingChanged();
       }
@@ -183,6 +184,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
     final Project finalProject = ProjectUtil.guessCurrentProject(getPanel());
     CommandProcessor.getInstance().executeCommand(finalProject, new Runnable() {
+      @Override
       public void run() {
         replaceText(finalProject);
       }
@@ -202,6 +204,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private void replaceText(final Project project) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           Document beforeReformat = null;
@@ -412,6 +415,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   @Nullable
   public abstract JComponent getPanel();
 
+  @Override
   public void dispose() {
     myUpdateAlarm.cancelAllRequests();
     if (myEditor != null) {
@@ -468,6 +472,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     setSomethingChanged(true);
     if (myEditor != null) {
       UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), new Runnable() {
+        @Override
         public void run() {
           addUpdatePreviewRequest();
         }
@@ -477,6 +482,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private void addUpdatePreviewRequest() {
     myUpdateAlarm.addComponentRequest(new Runnable() {
+      @Override
       public void run() {
         try {
           myUpdateAlarm.cancelAllRequests();

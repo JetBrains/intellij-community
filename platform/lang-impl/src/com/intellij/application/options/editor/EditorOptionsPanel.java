@@ -426,43 +426,53 @@ public class EditorOptionsPanel {
   }
 
   public class MyConfigurable implements SearchableConfigurable {
+    @Override
     @NotNull
     public String getId() {
       return "Editor.Behavior";
     }
 
+    @Override
     public Runnable enableSearch(final String option) {
       return null;
     }
 
+    @Override
     public String getDisplayName() {
       return ApplicationBundle.message("tab.editor.settings.behavior");
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     public String getHelpTopic() {
       return null;
     }
 
+    @Override
     public JComponent createComponent() {
       return myBehaviourPanel;
     }
 
+    @Override
     public boolean isModified() {
       return EditorOptionsPanel.this.isModified();
     }
 
+    @Override
     public void apply() throws ConfigurationException {
       EditorOptionsPanel.this.apply();
     }
 
+    @Override
     public void reset() {
       EditorOptionsPanel.this.reset();
     }
 
+    @Override
     public void disposeUIResources() {
       EditorOptionsPanel.this.disposeUIResources();
     }

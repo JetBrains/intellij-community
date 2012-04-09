@@ -48,9 +48,11 @@ public class CodeStyleSchemesPanel{
     myDefaultComboFont = myCombo.getFont();
     myBoldComboFont = myDefaultComboFont.deriveFont(Font.BOLD);
     myCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myIsReset) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   onCombo();
                 }

@@ -50,12 +50,14 @@ public class ClickNavigator {
 
   public void addClickNavigatorToGeneralView(final Editor view) {
     view.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseMoved(MouseEvent e) {
         EditorUtil.setHandCursor(view);
       }
     });
 
     CaretListener listener = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         setSelectedItem(HighlighterColors.TEXT.getExternalName(), true);
       }
@@ -97,6 +99,7 @@ public class ClickNavigator {
     addMouseMotionListener(view, highlighter, data, isBackgroundImportant);
 
     CaretListener listener = new CaretListener() {
+      @Override
       public void caretPositionChanged(CaretEvent e) {
         navigate(view, true, e.getNewPosition(), highlighter, data, isBackgroundImportant);
       }
@@ -128,6 +131,7 @@ public class ClickNavigator {
                                       final SyntaxHighlighter highlighter,
                                       final HighlightData[] data, final boolean isBackgroundImportant) {
     view.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseMoved(MouseEvent e) {
         LogicalPosition pos = view.xyToLogicalPosition(new Point(e.getX(), e.getY()));
         navigate(view, false, pos, highlighter, data, isBackgroundImportant);

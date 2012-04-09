@@ -167,18 +167,21 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     myOptions.add(option);
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     for (IntOption option : myOptions) {
       option.setValue(option.getFieldValue(settings));
     }
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     for (IntOption option : myOptions) {
       option.setFieldValue(settings, option.getValue());
     }
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     for (IntOption option : myOptions) {
       if (option.getFieldValue(settings) != option.getValue()) {
@@ -188,10 +191,12 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     return false;
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   public void showAllStandardOptions() {
     myAllOptionsAllowed = true;
     for (IntOption option : myOptions) {
@@ -199,6 +204,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     }
   }
 
+  @Override
   public void showStandardOptions(String... optionNames) {
     if (myIsFirstUpdate) {
       Collections.addAll(myAllowedOptions, optionNames);
@@ -222,6 +228,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
   }
 
+  @Override
   public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                                String fieldName,
                                String title,

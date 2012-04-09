@@ -48,6 +48,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     myCategoryName = categoryName;
 
     optionsPanel.setActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myDispatcher.getMulticaster().settingsChanged();
       }
@@ -56,12 +57,14 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     myOptionsList = new JBList();
 
     myOptionsList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         if (!mySchemesProvider.areSchemesLoaded()) return;
         processListValueChanged();
       }
     });
     myOptionsList.setCellRenderer(new DefaultListCellRenderer(){
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof ColorAndFontDescription) {
@@ -84,6 +87,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     add(north, BorderLayout.NORTH);
   }
 
+  @Override
   public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -126,15 +130,18 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     }
   }
 
+  @Override
   public JPanel getPanel() {
     return this;
   }
 
+  @Override
   public void updateOptionsList() {
     fillOptionsList();
     processListValueChanged();
   }
 
+  @Override
   public Runnable showOption(final String option) {
     final String lowerCaseOption = option.toLowerCase();
     DefaultListModel model = (DefaultListModel)myOptionsList.getModel();
@@ -147,6 +154,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
             o.toString().toLowerCase().contains(lowerCaseOption)) {
           final int i1 = i;
           return new Runnable() {
+            @Override
             public void run() {
               ListScrollingUtil.selectItem(myOptionsList, i1);
             }
@@ -159,6 +167,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     return null;
   }
 
+  @Override
   public void applyChangesToScheme() {
     Object selectedValue = myOptionsList.getSelectedValue();
     if (selectedValue instanceof ColorAndFontDescription) {
@@ -167,6 +176,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   }
 
+  @Override
   public void selectOption(final String typeToSelect) {
     DefaultListModel model = (DefaultListModel)myOptionsList.getModel();
 
@@ -182,6 +192,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
 
   }
 
+  @Override
   public Set<String> processListOptions() {
     HashSet<String> result = new HashSet<String>();
     EditorSchemeAttributeDescriptor[] descriptions = myOptions.getCurrentDescriptions();

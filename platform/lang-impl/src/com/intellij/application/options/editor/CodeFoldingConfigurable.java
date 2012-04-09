@@ -44,19 +44,23 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
   private JPanel myRootPanel;
   private JPanel myFoldingPanel;
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ApplicationBundle.message("group.code.folding");
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.code.folding";
   }
 
+  @Override
   public JComponent createComponent() {
     myFoldingPanel.removeAll();
     for (CodeFoldingOptionsProvider provider : getConfigurables()) {
@@ -67,11 +71,13 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     return myRootPanel;
   }
 
+  @Override
   public boolean isModified() {
     return myCbFolding.isSelected() != EditorSettingsExternalizable.getInstance().isFoldingOutlineShown() ||
            super.isModified();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     EditorSettingsExternalizable.getInstance().setFoldingOutlineShown(myCbFolding.isSelected());
     super.apply();
@@ -85,6 +91,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
           for (Pair<Editor, Project> each : toUpdate) {
               if (each.second == null || each.second.isDisposed()) {
@@ -100,20 +107,24 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     }, ModalityState.NON_MODAL);
   }
 
+  @Override
   public void reset() {
     myCbFolding.setSelected(EditorSettingsExternalizable.getInstance().isFoldingOutlineShown());
     super.reset();
   }
 
+  @Override
   protected List<CodeFoldingOptionsProvider> createConfigurables() {
     return AbstractConfigurableEP.createConfigurables(CodeFoldingOptionsProviderEP.EP_NAME);
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.folding";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }

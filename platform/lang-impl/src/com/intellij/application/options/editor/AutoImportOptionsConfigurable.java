@@ -33,23 +33,28 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
   private JPanel myPanel;
   private JPanel myProvidersPanel;
 
+  @Override
   protected List<AutoImportOptionsProvider> createConfigurables() {
     return AbstractConfigurableEP.createConfigurables(AutoImportOptionsProviderEP.EP_NAME);
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return ApplicationBundle.message("auto.import");
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.autoimport";
   }
 
+  @Override
   public JComponent createComponent() {
     myProvidersPanel.removeAll();
     for (int i = 0; i < getConfigurables().size(); i++) {
@@ -67,11 +72,13 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
     return myPanel;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.import";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }

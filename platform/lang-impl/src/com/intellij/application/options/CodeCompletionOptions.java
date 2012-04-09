@@ -30,44 +30,54 @@ import javax.swing.*;
 public class CodeCompletionOptions extends BaseConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
   private CodeCompletionPanel myPanel;
 
+  @Override
   public boolean isModified() {
     return myPanel != null && myPanel.isModified();
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new CodeCompletionPanel();
     return myPanel.myPanel;
   }
 
+  @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.code.completion");
   }
 
+  @Override
   public Icon getIcon() {
     return IconLoader.getIcon("/general/configurableCodeCompletion.png");
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public void apply() {
     myPanel.apply();
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.code.completion";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.completion";
   }
 
+  @Override
   @Nullable
   public Runnable enableSearch(String option) {
     return null;

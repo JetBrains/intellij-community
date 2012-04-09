@@ -30,6 +30,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     return LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
   }
 
+  @Override
   protected void initTables() {
     initBooleanField("SPACE_BEFORE_METHOD_PARENTHESES", ApplicationBundle.message("checkbox.spaces.method.declaration.parentheses"), SPACES_BEFORE_PARENTHESES);
     initBooleanField("SPACE_BEFORE_METHOD_CALL_PARENTHESES", ApplicationBundle.message("checkbox.spaces.method.call.parentheses"), SPACES_BEFORE_PARENTHESES);

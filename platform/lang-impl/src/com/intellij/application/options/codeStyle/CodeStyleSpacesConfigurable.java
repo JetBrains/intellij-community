@@ -28,14 +28,17 @@ public class CodeStyleSpacesConfigurable extends CodeStyleAbstractConfigurable {
     super(settings, cloneSettings, ApplicationBundle.message("title.spaces"));
   }
 
+  @Override
   public Icon getIcon() {
     return StdFileTypes.JAVA.getIcon();
   }
 
+  @Override
   protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
     return new CodeStyleSpacesPanel(settings);
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle.spaces";
   }

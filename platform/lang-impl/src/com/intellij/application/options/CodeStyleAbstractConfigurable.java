@@ -39,14 +39,17 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
     myDisplayName = displayName;
   }
 
+  @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = createPanel(myCloneSettings);
     myPanel.setModel(myModel);
@@ -55,12 +58,14 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
 
   protected abstract CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings);
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myPanel != null) {
       myPanel.apply(mySettings);
     }
   }
 
+  @Override
   public void reset() {
     if (myPanel != null) {
       myPanel.reset(mySettings);
@@ -73,10 +78,12 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
     }
   }
 
+  @Override
   public boolean isModified() {
     return myPanel != null && myPanel.isModified(mySettings);
   }
 
+  @Override
   public void disposeUIResources() {
     if (myPanel != null) {
       Disposer.dispose(myPanel);
