@@ -36,8 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -47,12 +46,11 @@ import java.util.List;
 public class MacFileChooserDialogImpl implements PathChooserDialog {
   private static final int OK = 1;
 
-  private static VirtualFile ourLastPath = null;
-  private static FileChooserDescriptor myChooserDescriptor;
-  private static List<String> myResultPaths = null;
-  private static Consumer<List<VirtualFile>> myCallback = null;
-  private static Consumer<List<VirtualFile>> myCallbackCandidate = null;
-  private Project myProject;
+  private static final Map<ID, MacFileChooserDialogImpl> ourImplMap = new HashMap<ID, MacFileChooserDialogImpl>(2);
+
+  private final FileChooserDescriptor myChooserDescriptor;
+  private final Project myProject;
+  private Consumer<List<VirtualFile>> myCallback;
 
   private static final Callback SHOULD_ENABLE_URL = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
@@ -61,6 +59,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     }
   };
 
+  /*
   private static final Callback SHOULD_SHOW_FILENAME_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public boolean callback(ID self, String selector, ID panel, ID filename) {
@@ -82,11 +81,12 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       return virtualFile == null || (!virtualFile.isDirectory() || myChooserDescriptor.isFileSelectable(virtualFile));
     }
   };
+  */
 
   private static final Callback OPEN_PANEL_DID_END = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, String selector, ID openPanelDidEnd, ID returnCode, ID contextInfo) {
-      processResult(returnCode, openPanelDidEnd);
+      final MacFileChooserDialogImpl impl = ourImplMap.remove(self);
 
       try {
         //noinspection SSBasedInspection
@@ -98,50 +98,50 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
             }
           }
         });
-        if (myResultPaths != null && myResultPaths.size() > 0) {
-          final List<String> paths = myResultPaths;
-          final Consumer<List<VirtualFile>> callback = myCallback;
+
+        final List<String> resultPaths = processResult(returnCode, openPanelDidEnd);
+        if (resultPaths.size() > 0) {
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-              final List<VirtualFile> files = getChosenFiles(paths);
+              final List<VirtualFile> files = getChosenFiles(resultPaths);
               if (files.size() > 0) {
-                setLastSelectedPath(files.get(0));
-                callback.consume(files);
+                FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
+                impl.myCallback.consume(files);
               }
             }
           });
         }
       }
       finally {
-        myResultPaths = null;
-        myCallback = null;
+        Foundation.cfRelease(self);
       }
-
-      Foundation.cfRelease(self);
     }
   };
 
-  private static void processResult(final ID result, final ID panel) {
-    final List<String> resultFiles = new ArrayList<String>();
+  @NotNull
+  private static List<String> processResult(final ID result, final ID panel) {
+    final List<String> resultPaths = new ArrayList<String>();
+
     if (result != null && OK == result.intValue()) {
-      ID fileNamesArray = invoke(panel, "filenames");
-      ID enumerator = invoke(fileNamesArray, "objectEnumerator");
+      final ID fileNamesArray = invoke(panel, "filenames");
+      final ID enumerator = invoke(fileNamesArray, "objectEnumerator");
 
       while (true) {
         final ID filename = invoke(enumerator, "nextObject");
         if (filename == null || 0 == filename.intValue()) break;
 
-        String s = Foundation.toStringViaUTF8(filename);
-        if (s != null) {
-          resultFiles.add(s);
+        final String path = Foundation.toStringViaUTF8(filename);
+        if (path != null) {
+          resultPaths.add(path);
         }
       }
-
-      myResultPaths = resultFiles;
     }
+
+    return resultPaths;
   }
 
+  @NotNull
   private static List<VirtualFile> getChosenFiles(final List<String> paths) {
     if (paths == null || paths.size() == 0) return Collections.emptyList();
 
@@ -158,21 +158,19 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     return files;
   }
 
-  private static void setLastSelectedPath(final VirtualFile selectedPath) {
-    ourLastPath = selectedPath;
-  }
-
   private static final Callback MAIN_THREAD_RUNNABLE = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public void callback(ID self, String selector, ID toSelect) {
       final ID nsOpenPanel = Foundation.getObjcClass("NSOpenPanel");
       final ID chooser = invoke(nsOpenPanel, "openPanel");
 
+      final FileChooserDescriptor chooserDescriptor = ourImplMap.get(self).myChooserDescriptor;
+
       invoke(chooser, "setPrompt:", Foundation.nsString("Choose"));
-      invoke(chooser, "setCanChooseFiles:", myChooserDescriptor.isChooseFiles() || myChooserDescriptor.isChooseJars());
-      invoke(chooser, "setCanChooseDirectories:", myChooserDescriptor.isChooseFolders());
-      invoke(chooser, "setAllowsMultipleSelection:", myChooserDescriptor.isChooseMultiple());
-      invoke(chooser, "setTreatsFilePackagesAsDirectories:", myChooserDescriptor.isChooseFolders());
+      invoke(chooser, "setCanChooseFiles:", chooserDescriptor.isChooseFiles() || chooserDescriptor.isChooseJars());
+      invoke(chooser, "setCanChooseDirectories:", chooserDescriptor.isChooseFolders());
+      invoke(chooser, "setAllowsMultipleSelection:", chooserDescriptor.isChooseMultiple());
+      invoke(chooser, "setTreatsFilePackagesAsDirectories:", chooserDescriptor.isChooseFolders());
 
       if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setCanCreateDirectories:"))) {
         invoke(chooser, "setCanCreateDirectories:", true);
@@ -181,7 +179,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
 
-      final Boolean showHidden = myChooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES);
+      final Boolean showHidden = chooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES);
       if (Boolean.TRUE.equals(showHidden) || Registry.is("ide.mac.filechooser.showhidden.files")) {
         if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);
@@ -205,7 +203,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       }
 
       ID types = null;
-      if (!myChooserDescriptor.isChooseFiles() && myChooserDescriptor.isChooseJars()) {
+      if (!chooserDescriptor.isChooseFiles() && chooserDescriptor.isChooseJars()) {
         types = invoke("NSArray", "arrayWithObject:", Foundation.nsString("jar"));
       }
 
@@ -221,7 +219,6 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
         final ID focusedWindow = MacUtil.findWindowForTitle(activeWindowTitle);
         if (focusedWindow != null) {
-          myCallback = myCallbackCandidate;
           invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
                  directory, file, types, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);
         }
@@ -233,12 +230,12 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
   static {
     final ID delegate = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSOpenPanelDelegate_");
-    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
-      throw new RuntimeException("Unable to add method to objective-c delegate class!");
-    }
-    if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:isValidFilename:"), IS_VALID_FILENAME_CALLBACK, "B*")) {
-      throw new RuntimeException("Unable to add method to objective-c delegate class!");
-    }
+    //if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:shouldShowFilename:"), SHOULD_SHOW_FILENAME_CALLBACK, "B*")) {
+    //  throw new RuntimeException("Unable to add method to objective-c delegate class!");
+    //}
+    //if (!Foundation.addMethod(delegate, Foundation.createSelector("panel:isValidFilename:"), IS_VALID_FILENAME_CALLBACK, "B*")) {
+    //  throw new RuntimeException("Unable to add method to objective-c delegate class!");
+    //}
     if (!Foundation.addMethod(delegate, Foundation.createSelector("showOpenPanel:"), MAIN_THREAD_RUNNABLE, "v*")) {
       throw new RuntimeException("Unable to add method to objective-c delegate class!");
     }
@@ -251,23 +248,23 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     Foundation.registerObjcClassPair(delegate);
   }
 
-  public MacFileChooserDialogImpl(@NotNull FileChooserDescriptor chooserDescriptor, Project project) {
+  public MacFileChooserDialogImpl(@NotNull final FileChooserDescriptor chooserDescriptor, final Project project) {
     myChooserDescriptor = chooserDescriptor;
     myProject = project;
   }
 
   @Override
   public void choose(@Nullable final VirtualFile toSelect, @NotNull final Consumer<List<VirtualFile>> callback) {
-    assert myCallback == null : "Current native file chooser should finish before next usage!";
-    myCallbackCandidate = callback;
+    myCallback = callback;
 
-    final VirtualFile selectFile = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, ourLastPath);
+    final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
+    final VirtualFile selectFile = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
     final String selectPath = selectFile != null ? FileUtil.toSystemDependentName(selectFile.getPath()) : null;
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        showNativeChooserAsSheet(selectPath);
+        showNativeChooserAsSheet(MacFileChooserDialogImpl.this, selectPath);
       }
     });
   }
@@ -288,7 +285,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     return null;
   }
 
-  private static void showNativeChooserAsSheet(@Nullable final String toSelect) {
+  private static void showNativeChooserAsSheet(@NotNull final MacFileChooserDialogImpl impl, @Nullable final String toSelect) {
     final IdeMenuBar bar = getMenuBar();
     if (bar != null) {
       bar.disableUpdates();
@@ -298,6 +295,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     try {
       final ID delegate = invoke(Foundation.getObjcClass("NSOpenPanelDelegate_"), "new");
       Foundation.cfRetain(delegate);
+      ourImplMap.put(delegate, impl);
 
       final ID select = toSelect == null ? null : Foundation.nsString(toSelect);
 
