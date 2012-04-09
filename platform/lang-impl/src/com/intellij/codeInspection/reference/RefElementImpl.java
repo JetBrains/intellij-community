@@ -120,6 +120,10 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return myID.getContainingFile();
   }
 
+  public VirtualFile getVirtualFile() {
+    return myID.getVirtualFile();
+  }
+
   public SmartPsiElementPointer getPointer() {
     return myID;
   }

@@ -49,6 +49,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,7 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private Map<PsiAnchor, RefElement> myRefTable;
+  private THashMap<PsiAnchor, RefElement> myRefTable;
 
   private THashMap<Module, RefModule> myModules;
   private final ProjectIterator myProjectIterator;
@@ -87,7 +88,7 @@ public class RefManagerImpl extends RefManager {
     myContext = context;
     myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
-    myRefTable = new LinkedHashMap<PsiAnchor, RefElement>();
+    myRefTable = new THashMap<PsiAnchor, RefElement>();
     myProjectIterator = new ProjectIterator();
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final RefManagerExtension extension = factory.createRefManagerExtension(this);
@@ -101,8 +102,7 @@ public class RefManagerImpl extends RefManager {
   public void iterate(RefVisitor visitor) {
     myLock.readLock().lock();
     try {
-      final Map<PsiAnchor, RefElement> refTable = getRefTable();
-      for (RefElement refElement : refTable.values()) {
+      for (RefElement refElement : getSortedElements()) {
         refElement.accept(visitor);
       }
       if (myModules != null) {
@@ -299,8 +299,23 @@ public class RefManagerImpl extends RefManager {
     return myRefProject;
   }
 
-  public Map<PsiAnchor, RefElement> getRefTable() {
+  public THashMap<PsiAnchor, RefElement> getRefTable() {
     return myRefTable;
+  }
+
+  public ArrayList<RefElement> getSortedElements() {
+    ArrayList<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
+    ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
+      @Override
+      public int compare(RefElement o1, RefElement o2) {
+        VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
+        VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
+
+        return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
+      }
+    });
+
+    return answer;
   }
 
   @Override
@@ -311,7 +326,7 @@ public class RefManagerImpl extends RefManager {
   public void removeReference(RefElement refElem) {
     myLock.writeLock().lock();
     try {
-      final Map<PsiAnchor, RefElement> refTable = getRefTable();
+      final THashMap<PsiAnchor, RefElement> refTable = getRefTable();
       final PsiElement element = refElem.getElement();
       final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
       if (extension != null) {
