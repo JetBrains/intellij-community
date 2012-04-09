@@ -214,7 +214,7 @@ public abstract class PsiClassType extends PsiType {
 
 
   @Override
-  public <A> A accept(PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitClassType(this);
   }
 
@@ -226,7 +226,8 @@ public abstract class PsiClassType extends PsiType {
    * @param languageLevel level to obtain class type with
    * @return type with requested language level
    */
-  public abstract PsiClassType setLanguageLevel(final LanguageLevel languageLevel);
+  @NotNull
+  public abstract PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
   /**
    * Represents the result of resolving a reference to a Java class.

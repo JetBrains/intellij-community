@@ -90,7 +90,8 @@ public class GrTupleType extends GrLiteralClassType {
     return true;
   }
 
-  public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
+  @NotNull
+  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrTupleType(myComponentTypes, myFacade, myScope,languageLevel);
   }
 
