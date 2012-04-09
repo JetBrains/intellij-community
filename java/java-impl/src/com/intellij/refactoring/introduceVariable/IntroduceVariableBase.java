@@ -752,6 +752,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               }
             }
 
+            if (!deleteSelf && replaceSelf && expr1 instanceof PsiPolyadicExpression && expr1.isValid() && !expr1.isPhysical() ) {
+              array.add(replace(expr1, ref, project));
+            }
+            
             if (editor != null) {
               final PsiElement[] replacedOccurences = PsiUtilBase.toPsiElementArray(array);
               highlightReplacedOccurences(project, editor, replacedOccurences);
