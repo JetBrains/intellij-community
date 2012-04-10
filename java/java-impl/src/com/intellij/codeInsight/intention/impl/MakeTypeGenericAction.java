@@ -34,16 +34,19 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
   private String variableName;
   private String newTypeName;
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.make.type.generic.family");
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.make.type.generic.text", variableName, newTypeName);
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     if (!element.isWritable()) return false;
@@ -52,21 +55,20 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
 
   private Pair<PsiVariable,PsiType> findVariable(final PsiElement element) {
     PsiVariable variable = null;
+    PsiElement elementParent = element.getParent();
     if (element instanceof PsiIdentifier) {
-      if (element.getParent() instanceof PsiVariable) {
-        variable = (PsiVariable)element.getParent();
+      if (elementParent instanceof PsiVariable) {
+        variable = (PsiVariable)elementParent;
       }
     }
     else if (element instanceof PsiJavaToken) {
       final PsiJavaToken token = (PsiJavaToken)element;
       if (token.getTokenType() != JavaTokenType.EQ) return null;
-      if (token.getParent() instanceof PsiVariable) {
-        variable = (PsiVariable)token.getParent();
+      if (elementParent instanceof PsiVariable) {
+        variable = (PsiVariable)elementParent;
       }
     }
-    if (variable == null) {
-      return null;
-    }
+    if (variable == null) return null;
     variableName = variable.getName();
     final PsiExpression initializer = variable.getInitializer();
     if (initializer == null) return null;
@@ -81,14 +83,16 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
     final PsiClassType.ClassResolveResult variableResolveResult = variableClassType.resolveGenerics();
     final PsiClassType.ClassResolveResult initializerResolveResult = initializerClassType.resolveGenerics();
     if (initializerResolveResult.getElement() == null) return null;
-    final PsiSubstitutor targetSubstitutor = TypeConversionUtil.getClassSubstitutor(variableResolveResult.getElement(), initializerResolveResult.getElement(), initializerResolveResult.getSubstitutor());
+    PsiClass variableResolved = variableResolveResult.getElement();
+    PsiSubstitutor targetSubstitutor = TypeConversionUtil.getClassSubstitutor(variableResolved, initializerResolveResult.getElement(), initializerResolveResult.getSubstitutor());
     if (targetSubstitutor == null) return null;
-    PsiType type =
-      JavaPsiFacade.getInstance(variable.getProject()).getElementFactory().createType(variableResolveResult.getElement(), targetSubstitutor);
+    PsiType type = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory().createType(variableResolved, targetSubstitutor);
+    if (variableType.equals(type)) return null;
     newTypeName = type.getCanonicalText();
     return Pair.create(variable, type);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final CaretModel caretModel = editor.getCaretModel();
     final int position = caretModel.getOffset();
