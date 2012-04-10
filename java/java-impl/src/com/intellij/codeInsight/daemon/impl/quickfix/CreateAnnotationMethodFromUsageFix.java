@@ -38,6 +38,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     myNameValuePair = SmartPointerManager.getInstance(valuePair.getProject()).createSmartPsiElementPointer(valuePair);
   }
 
+  @Override
   protected boolean isAvailableImpl(int offset) {
     final PsiNameValuePair call = getNameValuePair();
     if (call == null || !call.isValid()) return false;
@@ -49,12 +50,14 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     return true;
   }
 
+  @Override
   protected PsiElement getElement() {
     final PsiNameValuePair call = getNameValuePair();
     if (call == null || !call.getManager().isInProject(call)) return null;
     return call;
   }
 
+  @Override
   protected void invokeImpl(final PsiClass targetClass) {
     if (targetClass == null) return;
 
@@ -121,11 +124,13 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
 
+  @Override
   protected boolean isValidElement(PsiElement element) {
     final PsiReference reference = element.getReference();
     return reference != null && reference.resolve() != null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");

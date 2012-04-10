@@ -30,14 +30,17 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
     myReferenceDatas = referenceDatas;
   }
 
+  @Override
   public DataFlavor getFlavor() {
     return ReferenceData.getDataFlavor();
   }
 
+  @Override
   public int getOffsetCount() {
     return myReferenceDatas.length * 2;
   }
 
+  @Override
   public int getOffsets(final int[] offsets, int index) {
     for (ReferenceData data : myReferenceDatas) {
       offsets[index++] = data.startOffset;
@@ -46,6 +49,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
     return index;
   }
 
+  @Override
   public int setOffsets(final int[] offsets, int index) {
     for (ReferenceData data : myReferenceDatas) {
       data.startOffset = offsets[index++];
@@ -54,6 +58,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
     return index;
   }
 
+  @Override
   public ReferenceTransferableData clone() {
     ReferenceData[] newReferenceData = new ReferenceData[myReferenceDatas.length];
     for (int i = 0; i < myReferenceDatas.length; i++) {
@@ -81,6 +86,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
       this.staticMemberName = staticMemberDescriptor;
     }
 
+    @Override
     public Object clone() {
       try{
         return super.clone();

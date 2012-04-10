@@ -127,18 +127,22 @@ public class CreateClassDialog extends DialogWrapper {
     return false;
   }
 
+  @Override
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassNameEditable ? myTfClassName : myPackageComponent.getChildComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return new JPanel(new BorderLayout());
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -160,6 +164,7 @@ public class CreateClassDialog extends DialogWrapper {
       panel.add(myTfClassName, gbConstraints);
 
       myTfClassName.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
         protected void textChanged(DocumentEvent e) {
           getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myTfClassName.getText()));
         }
@@ -177,6 +182,7 @@ public class CreateClassDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
 
     new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         myPackageComponent.getButton().doClick();
       }
@@ -217,6 +223,7 @@ public class CreateClassDialog extends DialogWrapper {
   }
 
   private static class MyTextField extends JTextField {
+    @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       FontMetrics fontMetrics = getFontMetrics(getFont());
@@ -225,12 +232,14 @@ public class CreateClassDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected void doOKAction() {
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, myPackageComponent.getText());
     final String packageName = getPackageName();
 
     final String[] errorString = new String[1];
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         try {
           final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);

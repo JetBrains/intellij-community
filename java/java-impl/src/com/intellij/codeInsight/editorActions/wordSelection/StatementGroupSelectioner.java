@@ -26,10 +26,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class StatementGroupSelectioner extends BasicSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiStatement || e instanceof PsiComment && !(e instanceof PsiDocComment);
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = new ArrayList<TextRange>();
 

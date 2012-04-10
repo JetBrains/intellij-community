@@ -77,11 +77,13 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends PsiElementBase
     return null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Convert " + (isConvertToRelative() ? "absolute" : "relative") + " path to " + (isConvertToRelative() ? "relative" : "absolute");
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     final FileReference fileReference = reference == null ? null : findFileReference(reference);

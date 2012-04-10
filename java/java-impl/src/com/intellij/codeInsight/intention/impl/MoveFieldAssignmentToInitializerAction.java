@@ -39,16 +39,19 @@ import java.util.List;
  * @author cdr
  */
 public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.move.field.assignment.to.declaration");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
     if (assignment == null) return false;
@@ -155,6 +158,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     return PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiAssignmentExpression assignment = getAssignmentUnderCaret(editor, file);
     if (assignment == null) return;

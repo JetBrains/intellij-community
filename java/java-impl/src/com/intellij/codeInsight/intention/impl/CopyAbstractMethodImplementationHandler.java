@@ -64,6 +64,7 @@ public class CopyAbstractMethodImplementationHandler {
 
   public void invoke() {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         searchExistingImplementations();
       }
@@ -78,6 +79,7 @@ public class CopyAbstractMethodImplementationHandler {
     }
     else {
       Collections.sort(mySourceMethods, new Comparator<PsiMethod>() {
+        @Override
         public int compare(final PsiMethod o1, final PsiMethod o2) {
           PsiClass c1 = o1.getContainingClass();
           PsiClass c2 = o2.getContainingClass();
@@ -88,6 +90,7 @@ public class CopyAbstractMethodImplementationHandler {
       final JList list = new JBList(methodArray);
       list.setCellRenderer(new MethodCellRenderer(true));
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           int index = list.getSelectedIndex();
           if (index < 0) return;
@@ -148,6 +151,7 @@ public class CopyAbstractMethodImplementationHandler {
   private void copyImplementation(final PsiMethod sourceMethod) {
     final List<PsiMethod> generatedMethods = new ArrayList<PsiMethod>();
     new WriteCommandAction(myProject, getTargetFiles()) {
+      @Override
       protected void run(final Result result) throws Throwable {
         for (PsiEnumConstant enumConstant : myTargetEnumConstants) {
           PsiClass initializingClass = enumConstant.getOrCreateInitializingClass();

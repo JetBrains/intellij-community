@@ -46,6 +46,7 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
   public abstract Pair<String, String[]> getAnnotations(@NotNull Project project);
 
   // include not in project files
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     CaretModel caretModel = editor.getCaretModel();
     int position = caretModel.getOffset();

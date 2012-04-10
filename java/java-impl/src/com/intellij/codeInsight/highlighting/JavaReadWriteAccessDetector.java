@@ -23,10 +23,12 @@ import com.intellij.psi.util.PsiUtil;
  * @author yole
  */
 public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
+  @Override
   public boolean isReadWriteAccessible(final PsiElement element) {
     return element instanceof PsiVariable && !(element instanceof ImplicitVariable);
   }
 
+  @Override
   public boolean isDeclarationWriteAccess(final PsiElement element) {
     if (element instanceof PsiVariable && ((PsiVariable)element).getInitializer() != null) {
       return true;
@@ -37,10 +39,12 @@ public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
     return false;
   }
 
+  @Override
   public Access getReferenceAccess(final PsiElement referencedElement, final PsiReference reference) {
     return getExpressionAccess(reference.getElement());
   }
 
+  @Override
   public Access getExpressionAccess(final PsiElement expression) {
     if (!(expression instanceof PsiExpression)) return Access.Read;
     PsiExpression expr = (PsiExpression) expression;

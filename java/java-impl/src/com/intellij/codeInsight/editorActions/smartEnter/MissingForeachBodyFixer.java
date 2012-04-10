@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author Maxim.Mossienko
  */
 public class MissingForeachBodyFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     PsiForeachStatement forStatement = getForeachStatementParent(psiElement);
     if (forStatement == null) return;

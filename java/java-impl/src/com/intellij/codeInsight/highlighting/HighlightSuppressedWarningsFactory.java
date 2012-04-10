@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
  * @author yole
  */
 public class HighlightSuppressedWarningsFactory implements HighlightUsagesHandlerFactory {
+  @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(final Editor editor, final PsiFile file) {
     int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement target = file.findElementAt(offset);

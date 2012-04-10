@@ -29,6 +29,7 @@ import java.util.StringTokenizer;
 public class JavaElementSignatureProvider extends AbstractElementSignatureProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaElementSignatureProvider");
 
+  @Override
   @Nullable
   public String getSignature(@NotNull final PsiElement element) {
     if (element instanceof PsiImportList) {
@@ -152,6 +153,7 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
     return null;
   }
 
+  @Override
   protected PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
                                                 @NotNull PsiElement parent,
                                                 @NotNull String type,

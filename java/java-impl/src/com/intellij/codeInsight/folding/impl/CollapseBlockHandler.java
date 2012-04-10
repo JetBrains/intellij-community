@@ -32,8 +32,10 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
   public static final String ourPlaceHolderText = "{...}";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.CollapseBlockHandler");
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
+      @Override
       public void run() {
         final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
         FoldingModelEx model = (FoldingModelEx) editor.getFoldingModel();
@@ -81,6 +83,7 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
     });
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

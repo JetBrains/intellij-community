@@ -42,18 +42,22 @@ public class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiCl
     myTypeFilter = typeFilter;
   }
 
+  @Override
   public List<PsiClass> getTargets() {
     return ChooseClassAndDoHighlightRunnable.resolveClasses(myClassTypes);
   }
 
+  @Override
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(myClassTypes, myEditor, CodeInsightBundle.message("highlight.exceptions.thrown.chooser.title")) {
+      @Override
       protected void selected(PsiClass... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();
   }
 
+  @Override
   public void computeUsages(final List<PsiClass> targets) {
     final Project project = myEditor.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();

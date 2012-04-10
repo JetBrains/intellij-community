@@ -28,6 +28,7 @@ import com.intellij.lang.ASTNode;
  * @author maxim
  */
 public class XmlTagFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof XmlTag) {
       final ASTNode emptyTagEnd = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(psiElement.getNode());

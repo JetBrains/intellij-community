@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use Options | File Templates.
  */
 public class PlainEnterProcessor implements EnterProcessor {
+  @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
     if (processExistingBlankLine(editor, block, psiElement)) {

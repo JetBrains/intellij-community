@@ -43,16 +43,19 @@ import java.util.*;
  * @author cdr
  */
 public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("intention.move.initializer.to.constructor");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     if (element instanceof PsiCompiledElement) return false;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
@@ -63,6 +66,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
     return psiClass != null && !psiClass.isInterface() && !(psiClass instanceof PsiAnonymousClass) && !(psiClass instanceof JspClass);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 

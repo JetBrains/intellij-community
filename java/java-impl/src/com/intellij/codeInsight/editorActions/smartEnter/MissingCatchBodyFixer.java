@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class MissingCatchBodyFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiCatchSection)) return;
     PsiCatchSection catchSection = (PsiCatchSection) psiElement;
