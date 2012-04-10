@@ -34,7 +34,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileSyst
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,7 +64,7 @@ public class ExtractIncludeDialog extends DialogWrapper {
   }
 
   public ExtractIncludeDialog(final PsiDirectory currentDirectory, final String extension) {
-    super(false);
+    super(true);
     myCurrentDirectory = currentDirectory;
     myExtension = extension;
     setTitle(REFACTORING_NAME);
