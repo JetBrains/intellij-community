@@ -376,9 +376,9 @@ public abstract class BreakpointPropertiesPanel {
       myConditionCombo.setText(emptyText());
     }
     else {
-      myConditionCombo.setContext(context);
       myConditionCombo.setText(breakpoint.getCondition() != null ? breakpoint.getCondition() : emptyText());
     }
+    myConditionCombo.setContext(context);
 
     mySuspendJBCheckBox.setSelected(!breakpoint.SUSPEND_POLICY.equals(DebuggerSettings.SUSPEND_NONE));
     mySuspendThreadRadio.setEnabled(mySuspendJBCheckBox.isSelected());
