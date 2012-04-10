@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -560,7 +560,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     int end = myDocumentWindow.getLineEndOffset(lineNumber);
 
     CharSequence text = myDocumentWindow.getCharsSequence();
-    return EditorUtil.calcOffset(this, text, lineStartOffset, end, col, EditorUtil.getTabSize(myDelegate));
+    return EditorUtil.calcOffset(this, text, lineStartOffset, end, col, EditorUtil.getTabSize(myDelegate), null);
   }
 
   @Override

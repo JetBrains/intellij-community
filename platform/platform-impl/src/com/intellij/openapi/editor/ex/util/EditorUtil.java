@@ -32,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseWheelEvent;
@@ -205,11 +206,18 @@ public class EditorUtil {
    * @param end           end offset of the logical line that holds target column (exclusive)
    * @param columnNumber  target column number
    * @param tabSize       number of desired visual columns to use for tabulation representation
+   * @param debugBuffer   buffer to hold debug info during the processing (if any)
    * @return              given text offset that identifies the same position that is pointed by the given visual column
    */
-  public static int calcOffset(EditorEx editor, CharSequence text, int start, int end, int columnNumber, int tabSize) {
+  public static int calcOffset(EditorEx editor, CharSequence text, int start, int end, int columnNumber, int tabSize,
+                               @Nullable StringBuilder debugBuffer)
+  {
     assert start >= 0 : "start (" + start + ") must not be negative. end (" + end + ")";
     assert end >= start : "start (" + start + ") must not be greater than end (" + end + ")";
+    if (debugBuffer != null) {
+      debugBuffer.append(String.format("Starting calcOffset(). Start=%d, end=%d, column number=%d, tab size=%d%n",
+                                       start, end, columnNumber, tabSize));
+    }
     final int maxScanIndex = Math.min(start + columnNumber + 1, end);
     SoftWrapModel softWrapModel = editor.getSoftWrapModel();
     List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForRange(start, maxScanIndex);
@@ -221,7 +229,8 @@ public class EditorUtil {
       if (currentColumn[0] >= columnNumber) {
         return startToUse;
       }
-      int result = calcSoftWrapUnawareOffset(editor, text, startToUse, softWrap.getEnd(), columnNumber, tabSize, x, currentColumn);
+      int result
+        = calcSoftWrapUnawareOffset(editor, text, startToUse, softWrap.getEnd(), columnNumber, tabSize, x, currentColumn, debugBuffer);
       if (result >= 0) {
         return result;
       }
@@ -235,13 +244,17 @@ public class EditorUtil {
       return startToUse;
     }
 
-    int result = calcSoftWrapUnawareOffset(editor, text, startToUse, end, columnNumber, tabSize, x, currentColumn);
+    int result = calcSoftWrapUnawareOffset(editor, text, startToUse, end, columnNumber, tabSize, x, currentColumn, debugBuffer);
     if (result >= 0) {
       return result;
     }
 
     // We assume that given column points to the virtual space after the line end if control flow reaches this place,
     // hence, just return end of line offset then.
+    if (debugBuffer != null) {
+      debugBuffer.append(String.format("Returning %d as no match has been found for the target column (%d) at the target range [%d;%d)",
+                                       end, columnNumber, start, end));
+    }
     return end;
   }
 
@@ -256,12 +269,18 @@ public class EditorUtil {
    * @param tabSize         user-defined desired number of columns to use for tabulation symbol representation
    * @param x               <code>'x'</code> coordinate that corresponds to the given <code>'start'</code> offset
    * @param currentColumn   logical column that corresponds to the given <code>'start'</code> offset
+   * @param debugBuffer     buffer to hold debug info during the processing (if any)
    * @return                target offset that belongs to the <code>[start; end)</code> range and points to the target logical
    *                        column if any; <code>-1</code> otherwise
    */
   private static int calcSoftWrapUnawareOffset(Editor editor, CharSequence text, int start, int end, int columnNumber, int tabSize, int x,
-                                               int[] currentColumn)
-  {
+                                               int[] currentColumn, @Nullable StringBuilder debugBuffer) {
+    if (debugBuffer != null) {
+      debugBuffer.append(String.format(
+        "Starting calcSoftWrapUnawareOffset(). Target range: [%d; %d), target column number to map: %d, tab size: %d, "
+        + "x: %d, current column: %d%n", start, end, columnNumber, tabSize, x, currentColumn[0]));
+    }
+    
     // The main problem in a calculation is that target text may contain tabulation symbols and every such symbol may take different
     // number of logical columns to represent. E.g. it takes two columns if tab size is four and current column is two; three columns
     // if tab size is four and current column is one etc. So, first of all we check if there are tabulation symbols at the target
@@ -270,17 +289,26 @@ public class EditorUtil {
     boolean hasNonTabs = false;
     boolean hasTabs = false;
     for (int i = start; i < end; i++) {
-      if (text.charAt(i) == '\t') {
+      char c = text.charAt(i);
+      if (debugBuffer != null) {
+        debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
+      }
+      if (c == '\t') {
         hasTabs = true;
         if (hasNonTabs) {
           useOptimization = false;
           break;
         }
-      } else {
+      }
+      else {
         hasNonTabs = true;
       }
     }
 
+    if (debugBuffer != null) {
+      debugBuffer.append(String.format("Has tabs: %b, use optimisation: %b%n", hasTabs, useOptimization));
+    }
+    
     // Perform optimized processing if possible. 'Optimized' here means the processing when we exactly know how many logical
     // columns are occupied by tabulation symbols.
     if (editor == null || useOptimization) {
@@ -291,6 +319,9 @@ public class EditorUtil {
         }
         else {
           currentColumn[0] += end - start;
+          if (debugBuffer != null) {
+            debugBuffer.append(String.format("Incrementing 'current column' by %d (new value is %d)%n", end - start, currentColumn[0]));
+          }
           return -1;
         }
       }
@@ -300,14 +331,26 @@ public class EditorUtil {
       int shift = 0;
       int offset = start;
       int prevX = x;
+      if (debugBuffer != null) {
+        debugBuffer.append("Processing a string that contains only tabs\n");
+      }
       for (; offset < end && offset + shift + currentColumn[0] < start + columnNumber; offset++) {
-        if (text.charAt(offset) == '\t') {
+        final char c = text.charAt(offset);
+        if (c == '\t') {
           int nextX = nextTabStop(prevX, editor, tabSize);
-          shift += columnsNumber(nextX - prevX, getSpaceWidth(Font.PLAIN, editor)) - 1;
+          final int columnsShift = columnsNumber(nextX - prevX, getSpaceWidth(Font.PLAIN, editor)) - 1;
+          if (debugBuffer != null) {
+            debugBuffer.append(String.format(
+              "Processing tabulation symbol at the offset %d. Current X: %d, new X: %d, current columns shift: %d, new column shift: %d%n",
+              offset, prevX, nextX, shift, shift + columnsShift
+            ));
+          }
+          shift += columnsShift;
           prevX = nextX;
         }
       }
       int diff = start + columnNumber - offset - shift - currentColumn[0];
+      if (debugBuffer != null) debugBuffer.append(String.format("Resulting diff: %d%n", diff));
       if (diff < 0) {
         return offset - 1;
       }
@@ -315,7 +358,11 @@ public class EditorUtil {
         return offset;
       }
       else {
-        currentColumn[0] += offset - start + shift;
+        final int inc = offset - start + shift;
+        if (debugBuffer != null) {
+          debugBuffer.append(String.format("Incrementing 'current column' by %d (new value is %d)%n", inc, currentColumn[0] + inc));
+        }
+        currentColumn[0] += inc;
         return -1;
       }
     }
@@ -339,11 +386,25 @@ public class EditorUtil {
         char c = text.charAt(offset);
         if (c == '\t') {
           int prevX = x;
-          x = nextTabStop(x, editorImpl);
-          column += columnsNumber(x - prevX, spaceSize);
+          final int newX = nextTabStop(x, editorImpl);
+          final int columns = columnsNumber(x - prevX, spaceSize);
+          if (debugBuffer != null) {
+            debugBuffer.append(String.format(
+              "Processing tabulation at the offset %d. Current X: %d, new X: %d, current column: %d, new column: %d%n",
+              offset, x, newX, column, column + columns
+            ));
+          }
+          x = newX;
+          column += columns;
         }
         else {
-          x += charWidth(c, fontType, editorImpl);
+          final int width = charWidth(c, fontType, editorImpl);
+          if (debugBuffer != null) {
+            debugBuffer.append(String.format(
+              "Processing symbol '%c' at the offset %d. Current X: %d, new X: %d%n", c, offset, x, x + width
+            ));
+          }
+          x += width;
           column++;
         }
       }

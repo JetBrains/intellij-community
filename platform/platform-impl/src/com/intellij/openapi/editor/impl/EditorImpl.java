@@ -3312,6 +3312,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
+    return logicalPositionToOffset(pos, null);
+  }
+  
+  
+  public int logicalPositionToOffset(@NotNull LogicalPosition pos, @Nullable StringBuilder debugBuffer) {
     assertReadAccess();
     if (myDocument.getLineCount() == 0) return 0;
 
@@ -3328,7 +3333,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     CharSequence text = myDocument.getCharsNoThreadCheck();
 
-    return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this));
+    return EditorUtil.calcOffset(this, text, start, end, pos.column, EditorUtil.getTabSize(this), debugBuffer);
   }
 
   @Override
