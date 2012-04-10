@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -215,6 +216,15 @@ public class PullUpDialog extends RefactoringDialog {
 
     myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("javadoc.for.abstracts"));
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
+    boolean hasJavadoc = false;
+    for (MemberInfo info : myMemberInfos) {
+      final PsiMember member = info.getMember();
+      if (myMemberInfoModel.isAbstractEnabled(info) && member instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)member).getDocComment() != null) {
+        hasJavadoc = true;
+        break;
+      }
+    }
+    UIUtil.setEnabled(myJavaDocPanel, hasJavadoc, true);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;
   }
