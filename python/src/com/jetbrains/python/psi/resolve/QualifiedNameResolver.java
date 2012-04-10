@@ -278,7 +278,7 @@ public class QualifiedNameResolver implements RootVisitor {
       if (name == null) {
         return null;
       }
-      seeker = (PsiFileSystemItem) ResolveImportUtil.resolveChild(seeker, name, myFootholdFile, root, sdk, true, myCheckForPackage);
+      seeker = (PsiFileSystemItem) ResolveImportUtil.resolveChild(seeker, name, myFootholdFile, true, myCheckForPackage);
     }
     return seeker;
   }
