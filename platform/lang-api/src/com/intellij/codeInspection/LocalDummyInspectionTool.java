@@ -25,4 +25,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class LocalDummyInspectionTool extends LocalInspectionTool {
   @NotNull
   public abstract String getProblemGroup();
+
+  public abstract boolean shouldBeShownInInspectionProfile();
 }
