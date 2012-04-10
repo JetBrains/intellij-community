@@ -62,7 +62,7 @@ public class Bottom extends PsiType {
   }
 
   @Override
-  public <A> A accept(PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     if (visitor instanceof PsiTypeVisitorEx) {
       return ((PsiTypeVisitorEx<A>)visitor).visitBottom(this);
     }

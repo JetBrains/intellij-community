@@ -67,7 +67,7 @@ public class PsiArrayType extends PsiType {
   }
 
   @Override
-  public <A> A accept(PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitArrayType(this);
   }
 

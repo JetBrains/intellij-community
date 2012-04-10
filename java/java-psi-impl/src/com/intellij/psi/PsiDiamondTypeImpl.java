@@ -74,7 +74,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   @Override
-  public <A> A accept(PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitDiamondType(this);
   }
 
