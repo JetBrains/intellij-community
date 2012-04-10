@@ -385,9 +385,8 @@ public class EditorUtil {
 
         char c = text.charAt(offset);
         if (c == '\t') {
-          int prevX = x;
           final int newX = nextTabStop(x, editorImpl);
-          final int columns = columnsNumber(x - prevX, spaceSize);
+          final int columns = columnsNumber(newX - x, spaceSize);
           if (debugBuffer != null) {
             debugBuffer.append(String.format(
               "Processing tabulation at the offset %d. Current X: %d, new X: %d, current column: %d, new column: %d%n",
