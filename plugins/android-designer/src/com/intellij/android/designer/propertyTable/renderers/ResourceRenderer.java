@@ -60,6 +60,7 @@ public class ResourceRenderer implements PropertyRenderer {
     String value = (String)object;
 
     if (myBooleanRenderer != null && (StringUtil.isEmpty(value) || "false".equals(value) || "true".equals(value))) {
+      myBooleanRenderer.setText(value);
       return myBooleanRenderer.getComponent(component, "true".equals(value), selected, hasFocus);
     }
 
