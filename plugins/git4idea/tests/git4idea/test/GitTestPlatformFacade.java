@@ -16,6 +16,7 @@
 package git4idea.test;
 
 import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -98,6 +99,16 @@ public class GitTestPlatformFacade implements PlatformFacade {
 
   @Override
   public void runReadAction(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @Override
+  public void runWriteAction(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @Override
+  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     runnable.run();
   }
 

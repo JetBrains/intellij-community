@@ -17,7 +17,6 @@ package git4idea.history.browser;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -143,7 +142,7 @@ public class CherryPicker {
   private LocalChangeList createChangeListAfterUpdate(@NotNull final List<Change> changes, @NotNull final Collection<FilePath> paths,
                                                       @NotNull final String commitMessage) {
     final AtomicReference<LocalChangeList> changeList = new AtomicReference<LocalChangeList>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    myPlatformFacade.invokeAndWait(new Runnable() {
       @Override
       public void run() {
         myChangeListManager.invokeAfterUpdate(new Runnable() {
@@ -155,7 +154,7 @@ public class CherryPicker {
             public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
               vcsDirtyScopeManager.filePathsDirty(paths, null);
             }
-        }, ModalityState.current());
+        }, ModalityState.NON_MODAL);
       }
     }, ModalityState.NON_MODAL);
 
@@ -174,7 +173,7 @@ public class CherryPicker {
   private boolean showCommitDialog(@NotNull final GitRepository repository, @NotNull final GitCommit commit,
                                    @NotNull final LocalChangeList changeList, @NotNull final String commitMessage) {
     final AtomicBoolean commitSucceeded = new AtomicBoolean();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    myPlatformFacade.invokeAndWait(new Runnable() {
       @Override
       public void run() {
         cancelCherryPick(repository);
@@ -197,7 +196,7 @@ public class CherryPicker {
     final VirtualFile cherryPickHead = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByIoFile(cherryPickHeadFile);
 
     if (cherryPickHead != null && cherryPickHead.exists()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      myPlatformFacade.runWriteAction(new Runnable() {
         @Override
         public void run() {
           try {

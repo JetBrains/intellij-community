@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -65,6 +66,16 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public void runReadAction(@NotNull Runnable runnable) {
     ApplicationManager.getApplication().runReadAction(runnable);
+  }
+
+  @Override
+  public void runWriteAction(@NotNull Runnable runnable) {
+    ApplicationManager.getApplication().runWriteAction(runnable);
+  }
+
+  @Override
+  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    ApplicationManager.getApplication().invokeAndWait(runnable, modalityState);
   }
 
   @Override

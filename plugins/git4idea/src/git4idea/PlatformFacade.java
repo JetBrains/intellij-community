@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -65,6 +66,10 @@ public interface PlatformFacade {
   <T> T runReadAction(@NotNull Computable<T> computable);
 
   void runReadAction(@NotNull Runnable runnable);
+
+  void runWriteAction(@NotNull Runnable runnable);
+
+  void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
   ChangeListManager getChangeListManager(@NotNull Project project);
 

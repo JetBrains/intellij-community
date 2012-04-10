@@ -121,7 +121,7 @@ public class GitLightRepository implements GitRepository {
   @NotNull
   @Override
   public VirtualFile getGitDir() {
-    throw new UnsupportedOperationException();
+    return new GitMockVirtualFile(getRoot().getPath() + "/.git");
   }
 
   @NotNull
