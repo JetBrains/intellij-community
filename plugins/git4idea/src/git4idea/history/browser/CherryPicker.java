@@ -229,7 +229,7 @@ public class CherryPicker {
     String description = "";
     if (!successfulCommits.isEmpty()) {
       description += "<br/>However it succeeded for the following " + StringUtil.pluralize("commit", successfulCommits.size()) + ": <br/>";
-      description = getCommitsDetails(successfulCommits);
+      description += getCommitsDetails(successfulCommits);
     }
     return description;
   }
