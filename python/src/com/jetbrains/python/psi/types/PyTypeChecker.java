@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
@@ -9,7 +8,6 @@ import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,7 +144,7 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null) {
+    if (type == null || type instanceof PyTypeReference) {
       return true;
     }
     if (type instanceof PyUnionType) {
