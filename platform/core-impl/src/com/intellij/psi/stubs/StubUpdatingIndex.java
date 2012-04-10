@@ -373,7 +373,9 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         super.dispose();
       }
       finally {
-        getStubIndex().dispose();
+        StubIndexImpl stubIndex = getStubIndex();
+        if(stubIndex != null)
+          stubIndex.dispose();
       }
     }
   }
