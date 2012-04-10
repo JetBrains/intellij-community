@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeInsight.TargetElementEvaluator;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
@@ -34,6 +35,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightEle
  * @author Maxim.Medvedev
  */
 public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
+
+  public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
+
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
     return false;
   }
@@ -79,7 +83,8 @@ public class GroovyTargetElementEvaluator implements TargetElementEvaluator {
 
   @Nullable
   public static PsiElement correctSearchTargets(@Nullable PsiElement target) {
-    if (target != null && !(target instanceof GrAccessorMethod) && !target.isPhysical()) {
+    if (target != null && !(target instanceof GrAccessorMethod) && !target.isPhysical()
+        && target.getUserData(NAVIGATION_ELEMENT_IS_NOT_TARGET) == null) {
       return target.getNavigationElement();
     }
     return target;
