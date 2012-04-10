@@ -285,6 +285,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myStickySelectionStart;
   private boolean myScrollToCaret = true;
 
+  private boolean myPurePaintingMode;
   private boolean myPaintSelection;
   
   private final EditorSizeAdjustmentStrategy mySizeAdjustmentStrategy = new EditorSizeAdjustmentStrategy();
@@ -500,6 +501,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
+  public int getPrefixTextWidthInPixels() {
+    return myPrefixWidthInPixels;
+  }
+
+  @Override
   public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
     myPrefixText = prefixText == null ? null: prefixText.toCharArray();
     myPrefixAttributes = attributes;
@@ -513,8 +519,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public int getPrefixTextWidthInPixels() {
-    return myPrefixWidthInPixels;
+  public boolean isPurePaintingMode() {
+    return myPurePaintingMode;
+  }
+
+  @Override
+  public void setPurePaintingMode(boolean enabled) {
+    myPurePaintingMode = enabled;
   }
 
   @Override
@@ -2001,7 +2012,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     boolean locateBeforeSoftWrap = !SoftWrapHelper.isCaretAfterSoftWrap(this);
     int start = clipStartOffset;
     int end = clipEndOffset;
-    getSoftWrapModel().registerSoftWrapsIfNecessary();
+    if (!myPurePaintingMode) {
+      getSoftWrapModel().registerSoftWrapsIfNecessary();
+    }
 
     LineIterator lIterator = createLineIterator();
     lIterator.start(start);
