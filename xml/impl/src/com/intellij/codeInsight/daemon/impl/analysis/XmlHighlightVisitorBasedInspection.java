@@ -53,6 +53,7 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
             info.description,
             problemHighlightType,
             new TextRange(info.startOffset, info.endOffset),
+            null,
             manager,
             problemDescriptionsProcessor,
             globalContext

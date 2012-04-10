@@ -113,6 +113,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
         info.description,
         HighlightInfo.convertType(info.type),
         range.shiftRight(-element.getNode().getStartOffset()),
+        info.getProblemGroup(),
         manager,
         problemDescriptionsProcessor,
         globalContext
