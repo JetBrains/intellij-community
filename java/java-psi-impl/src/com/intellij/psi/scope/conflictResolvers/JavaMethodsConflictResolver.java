@@ -336,9 +336,18 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                           PsiMethod method2,
                                           boolean boxingHappening) {
     boolean noBoxing = boxingHappening || type1 instanceof PsiPrimitiveType == type2 instanceof PsiPrimitiveType;
-    final boolean allowUncheckedConversion =
-      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC) ||
-       method1.getContainingClass() == method2.getContainingClass();
+    boolean allowUncheckedConversion =
+      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC);
+
+    if (!allowUncheckedConversion) {
+      final PsiClass containingClass1 = method1.getContainingClass();
+      final PsiClass containingClass2 = method2.getContainingClass();
+      if (containingClass1 != null && containingClass2 != null) {
+        allowUncheckedConversion = !containingClass1.isInheritor(containingClass2, true) &&
+                                   !containingClass2.isInheritor(containingClass1, true);
+      }
+    }
+
     final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion);
     final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion);
     if (assignable1From2 || assignable2From1) {
