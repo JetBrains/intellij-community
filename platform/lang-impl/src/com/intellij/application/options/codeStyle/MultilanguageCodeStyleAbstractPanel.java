@@ -84,6 +84,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     }
   }
 
+  @Override
   public boolean setPanelLanguage(Language language) {
 
     boolean languageProviderFound = false;
@@ -167,6 +168,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     return StdFileTypes.JAVA;
   }
 
+  @Override
   @Nullable
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     FileType fileType = getFileType();
@@ -181,8 +183,10 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     final Document doc = manager.getDocument(psiFile);
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+                                                    @Override
                                                     public void run() {
                                                       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                                                        @Override
                                                         public void run() {
                                                           doc.replaceString(0, doc.getTextLength(), text);
                                                           manager.commitDocument(doc);
@@ -228,20 +232,24 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
         updatePreview(true);
       }
       tabbedPane.addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           onTabSelection((JTabbedPane)e.getSource());
         }
       });
       previewPanel.add(tabbedPane, BorderLayout.CENTER);
       previewPanel.addAncestorListener(new AncestorListener() {
+        @Override
         public void ancestorAdded(AncestorEvent event) {
           selectCurrentLanguageTab();
         }
 
+        @Override
         public void ancestorRemoved(AncestorEvent event) {
           // Do nothing
         }
 
+        @Override
         public void ancestorMoved(AncestorEvent event) {
           // Do nothing
         }

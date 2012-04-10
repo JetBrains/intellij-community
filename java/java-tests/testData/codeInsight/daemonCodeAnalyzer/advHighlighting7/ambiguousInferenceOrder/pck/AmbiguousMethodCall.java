@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package pck;
 
-/**
- * @author cdr
- */
-package com.intellij.application.options.colors;
+class Key<K>{}
 
-import javax.swing.*;
-import java.awt.*;
+public class C {
+     public <T> void putCopyableUserData(Key<T> key, T value) {
+     }
+}
 
-class TailPanel extends JPanel {
-  @Override
-  public Dimension getMinimumSize() {
-    return new Dimension(0, 0);
+interface D {
+  <T> void putCopyableUserData(Key<T> key, T value);
+}
+
+class B extends C implements D {}
+
+class A {
+  private static final Key<Integer> INDENT_INFO = new Key<Integer>();
+  
+  public static void foo(B b, int oldIndentation) {
+    b.putCopyableUserData(INDENT_INFO, oldIndentation >= 0 ? oldIndentation : null);
   }
 }

@@ -142,6 +142,22 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     return result == null ? PsiMethod.EMPTY_ARRAY : result;
   }
 
+  @NotNull
+  @Override
+  public PsiField[] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
+    Merger<PsiField> merger = null;
+    for (PsiShortNamesCache cache : myCacheArray) {
+      PsiField[] methods = cache.getFieldsByNameIfNotMoreThan(name, scope, maxCount);
+      if (methods.length == maxCount) return methods;
+      if (methods.length != 0) {
+        if (merger == null) merger = new Merger<PsiField>();
+        merger.add(methods);
+      }
+    }
+    PsiField[] result = merger == null ? null : merger.getResult();
+    return result == null ? PsiField.EMPTY_ARRAY : result;
+  }
+
   @Override
   public boolean processMethodsWithName(@NonNls @NotNull String name,
                                         @NotNull GlobalSearchScope scope,

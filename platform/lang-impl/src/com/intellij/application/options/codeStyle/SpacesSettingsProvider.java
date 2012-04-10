@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class SpacesSettingsProvider extends CodeStyleSettingsProvider {
+  @Override
   @NotNull
   public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
     return new CodeStyleSpacesConfigurable(settings, originalSettings);

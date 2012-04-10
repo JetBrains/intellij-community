@@ -143,7 +143,8 @@ public class GrClosureType extends GrLiteralClassType {
     return text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   }
 
-  public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
+  @NotNull
+  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     final GrClosureType result = create(mySignature, myScope, myFacade, languageLevel, true);
     result.myTypeArgs = this.myTypeArgs;
     return result;

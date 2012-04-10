@@ -158,6 +158,22 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   @NotNull
+  public PsiField[] getFieldsByNameIfNotMoreThan(@NotNull String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
+    final List<PsiField> methods = new SmartList<PsiField>();
+    StubIndex.getInstance().process(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), scope, new CommonProcessors.CollectProcessor<PsiField>(methods){
+      @Override
+      public boolean process(PsiField method) {
+        return methods.size() != maxCount && super.process(method);
+      }
+    });
+    if (methods.isEmpty()) return PsiField.EMPTY_ARRAY;
+
+    List<PsiField> list = filterMembers(methods, scope);
+    return list.toArray(new PsiField[list.size()]);
+  }
+
+  @NotNull
+  @Override
   public PsiField[] getFieldsByName(@NotNull String name, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiField> fields = JavaFieldNameIndex.getInstance().get(name, myManager.getProject(), scope);
 
@@ -190,7 +206,8 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
           String name = clazz.getName();
           if (name != null) {
             code += name.hashCode();
-          } else {
+          }
+          else {
             //anonymous classes are not equivalent
             code += clazz.hashCode();
           }

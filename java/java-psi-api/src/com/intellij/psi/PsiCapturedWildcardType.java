@@ -73,7 +73,7 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   @Override
-  public <A> A accept(PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitCapturedWildcardType(this);
   }
 

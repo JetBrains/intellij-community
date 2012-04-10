@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
@@ -60,6 +61,7 @@ public class MessageBusImpl implements MessageBus {
   private final Object myOwner;
   private boolean myDisposed;
 
+  @SuppressWarnings("UnusedDeclaration")
   public MessageBusImpl() {
     this(null, null);
   }
@@ -97,18 +99,21 @@ public class MessageBusImpl implements MessageBus {
     public final MessageBusConnectionImpl connection;
     public final Message message;
 
+    @NonNls
     @Override
     public String toString() {
       return "{ DJob connection:" + connection.toString() + "; message: " + message + " }";
     }
   }
 
+  @Override
   @NotNull
   public MessageBusConnection connect() {
     checkNotDisposed();
     return new MessageBusConnectionImpl(this);
   }
 
+  @Override
   @NotNull
   public MessageBusConnection connect(@NotNull Disposable parentDisposable) {
     final MessageBusConnection connection = connect();
@@ -116,6 +121,7 @@ public class MessageBusImpl implements MessageBus {
     return connection;
   }
 
+  @Override
   @NotNull
   @SuppressWarnings({"unchecked"})
   public <L> L syncPublisher(@NotNull final Topic<L> topic) {
@@ -124,6 +130,7 @@ public class MessageBusImpl implements MessageBus {
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
       InvocationHandler handler = new InvocationHandler() {
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
           sendMessage(new Message(topic, method, args));
           return NA;
@@ -135,6 +142,7 @@ public class MessageBusImpl implements MessageBus {
     return publisher;
   }
 
+  @Override
   @NotNull
   @SuppressWarnings({"unchecked"})
   public <L> L asyncPublisher(@NotNull final Topic<L> topic) {
@@ -143,6 +151,7 @@ public class MessageBusImpl implements MessageBus {
     if (publisher == null) {
       final Class<L> listenerClass = topic.getListenerClass();
       InvocationHandler handler = new InvocationHandler() {
+        @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
           postMessage(new Message(topic, method, args));
           return NA;
@@ -154,6 +163,7 @@ public class MessageBusImpl implements MessageBus {
     return publisher;
   }
 
+  @Override
   public void dispose() {
     checkNotDisposed();
     Queue<DeliveryJob> jobs = myMessageQueue.get();

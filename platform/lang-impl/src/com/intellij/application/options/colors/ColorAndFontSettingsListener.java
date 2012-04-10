@@ -27,19 +27,24 @@ public interface ColorAndFontSettingsListener extends EventListener {
   void fontChanged();
 
   abstract class Abstract implements ColorAndFontSettingsListener {
+    @Override
     public void selectedOptionChanged(final Object selected) {
 
     }
 
+    @Override
     public void schemeChanged(final Object source) {
     }
 
+    @Override
     public void settingsChanged() {
     }
 
+    @Override
     public void selectionInPreviewChanged(final String typeToSelect) {
     }
 
+    @Override
     public void fontChanged() {
       
     }

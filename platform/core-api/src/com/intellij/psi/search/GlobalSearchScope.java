@@ -27,6 +27,7 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,6 +147,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       @Override
       public boolean isSearchInLibraries() {
         return GlobalSearchScope.this.isSearchInLibraries();
+      }
+
+      @Override
+      public String toString() {
+        return "UnionToLocal: (" + GlobalSearchScope.this.toString() + ", " + scope + ")";
       }
     };
   }
@@ -341,7 +347,13 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public int hashCode() {
       return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
+
+    @Override
+    public String toString() {
+      return "Intersection: (" + myScope1 + ", " + myScope2 + ")";
+    }
   }
+
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
@@ -418,6 +430,12 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public int hashCode() {
       return 31 * myScope1.hashCode() + myScope2.hashCode();
+    }
+
+    @NonNls
+    @Override
+    public String toString() {
+      return "Union: (" + myScope1 + ", " + myScope2 + ")";
     }
   }
 

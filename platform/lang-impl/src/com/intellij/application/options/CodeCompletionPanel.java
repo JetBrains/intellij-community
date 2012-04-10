@@ -62,6 +62,7 @@ public class CodeCompletionPanel {
 
    myCbAutocompletion.addActionListener(
      new ActionListener() {
+       @Override
        public void actionPerformed(ActionEvent event) {
          myAutocompletionDelayField.setEnabled(myCbAutocompletion.isSelected());
        }
@@ -70,6 +71,7 @@ public class CodeCompletionPanel {
 
    myCbAutopopupJavaDoc.addActionListener(
      new ActionListener() {
+       @Override
        public void actionPerformed(ActionEvent event) {
          myAutopopupJavaDocField.setEnabled(myCbAutopopupJavaDoc.isSelected());
        }
@@ -78,6 +80,7 @@ public class CodeCompletionPanel {
 
    myCbParameterInfoPopup.addActionListener(
      new ActionListener() {
+       @Override
        public void actionPerformed(ActionEvent event) {
          myParameterInfoDelayField.setEnabled(myCbParameterInfoPopup.isSelected());
        }

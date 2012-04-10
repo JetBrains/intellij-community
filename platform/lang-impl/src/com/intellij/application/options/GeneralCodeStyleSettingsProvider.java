@@ -30,17 +30,21 @@ import javax.swing.*;
  * @author yole
  */
 public class GeneralCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
+  @Override
   @NotNull
   public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("title.general")) {
+      @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
         return new GeneralCodeStylePanel(settings);
       }
 
+      @Override
       public Icon getIcon() {
         return FileTypes.PLAIN_TEXT.getIcon();
       }
 
+      @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.IDE.globalcodestyle.general";
       }

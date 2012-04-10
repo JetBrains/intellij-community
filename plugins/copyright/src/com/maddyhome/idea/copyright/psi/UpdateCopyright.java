@@ -17,13 +17,12 @@
 package com.maddyhome.idea.copyright.psi;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.IncorrectOperationException;
 
 public interface UpdateCopyright
 {
     void prepare();
 
-    void complete() throws IncorrectOperationException, Exception;
+    void complete() throws Exception;
 
     VirtualFile getRoot();
 }

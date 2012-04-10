@@ -103,6 +103,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     if (schemesManager.isExportAvailable()) {
       myExportButton.setVisible(true);
       myExportButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           CodeStyleScheme selected = getSelectedScheme();
           ExportSchemeAction.doExport((CodeStyleSchemeImpl)selected, schemesManager);
@@ -117,9 +118,11 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     if (schemesManager.isImportAvailable()) {
       myImportButton.setVisible(true);
       myImportButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl> popup =
             new SchemesToImportPopup<CodeStyleScheme, CodeStyleSchemeImpl>(parent) {
+              @Override
               protected void onSchemeSelected(final CodeStyleSchemeImpl scheme) {
                 if (scheme != null) {
                   myModel.addScheme(scheme, true);

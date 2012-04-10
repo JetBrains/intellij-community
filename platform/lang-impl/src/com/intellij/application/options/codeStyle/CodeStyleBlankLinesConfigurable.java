@@ -28,14 +28,17 @@ public class CodeStyleBlankLinesConfigurable extends CodeStyleAbstractConfigurab
     super(settings, cloneSettings, ApplicationBundle.message("title.blank.lines"));
   }
 
+  @Override
   protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
     return new CodeStyleBlankLinesPanel(settings);
   }
 
+  @Override
   public Icon getIcon() {
     return StdFileTypes.JAVA.getIcon();
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle.blanklines";
   }

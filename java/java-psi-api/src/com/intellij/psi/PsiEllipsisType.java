@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -64,7 +65,7 @@ public class PsiEllipsisType extends PsiArrayType {
   }
 
   @Override
-  public <A> A accept(PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitEllipsisType(this);
   }
 
