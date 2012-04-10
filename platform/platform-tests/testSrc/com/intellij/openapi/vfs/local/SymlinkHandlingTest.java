@@ -266,7 +266,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   // todo[r.sh] use NIO2 API after migration to JDK 7
-  private static File createTempLink(final String target, final String link) throws InterruptedException, ExecutionException {
+  public static File createTempLink(final String target, final String link) throws InterruptedException, ExecutionException {
     final boolean isAbsolute = SystemInfo.isUnix && StringUtil.startsWithChar(link, '/') ||
                                SystemInfo.isWindows && link.matches("^[c-zC-Z]:[/\\\\].*$");
     final File linkFile = isAbsolute ? new File(link) : new File(FileUtil.getTempDirectory(), link);

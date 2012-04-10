@@ -95,8 +95,10 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
         final String value = (String)myServiceList.getSelectedValue();
         final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Add Service URL", Messages.getQuestionIcon(),
                                                      value == null ? "http://" : value, new URLInputVaslidator());
-        myModel.add(text);
-        myServiceList.setSelectedValue(text, true);
+        if (StringUtil.isNotEmpty(text)) {
+          myModel.add(text);
+          myServiceList.setSelectedValue(text, true);
+        }
       }
     });
     myEditButton.addActionListener(new ActionListener() {
@@ -105,7 +107,7 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
         final int index = myServiceList.getSelectedIndex();
         final String text = Messages.showInputDialog("Artifactory or Nexus Service URL", "Edit Service URL", Messages.getQuestionIcon(),
                                                      myModel.getElementAt(index), new URLInputVaslidator());
-        if (text != null) {
+        if (StringUtil.isNotEmpty(text)) {
           myModel.setElementAt(text, index);
         }
       }

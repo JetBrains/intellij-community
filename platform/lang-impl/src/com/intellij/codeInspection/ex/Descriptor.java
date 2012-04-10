@@ -19,6 +19,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalDummyInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -43,6 +44,7 @@ public class Descriptor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.Descriptor");
   private final ScopeToolState myState;
   private final InspectionProfileImpl myInspectionProfile;
+  private boolean myShouldBeShown = true;
 
   public Descriptor(ScopeToolState pair, InspectionProfileImpl inspectionProfile) {
     myState = pair;
@@ -56,6 +58,14 @@ public class Descriptor {
     myEnabled = ((InspectionProfileImpl)inspectionProfile).isToolEnabled(myKey, pair.getScope());
     myTool = tool;
     myScope = pair.getScope();
+
+    if (tool instanceof InspectionToolWrapper) {
+      InspectionProfileEntry inspection = ((InspectionToolWrapper)tool).getTool();
+
+      if (inspection instanceof LocalDummyInspectionTool) {
+        myShouldBeShown = ((LocalDummyInspectionTool)inspection).shouldBeShownInInspectionProfile();
+      }
+    }
   }
 
   public boolean equals(Object obj) {
@@ -78,6 +88,10 @@ public class Descriptor {
 
   public void setEnabled(final boolean enabled) {
     myEnabled = enabled;
+  }
+
+  public boolean shouldBeShown() {
+    return myShouldBeShown;
   }
 
   public String getText() {

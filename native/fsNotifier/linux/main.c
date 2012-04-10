@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 #define LOG_ENV_ERROR "error"
 #define LOG_ENV_OFF "off"
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 #define VERSION_MSG "fsnotifier " VERSION "\n"
 
 #define USAGE_MSG \
@@ -58,10 +58,7 @@ typedef struct {
 static array* roots = NULL;
 
 static bool show_warning = true;
-
 static bool self_test = false;
-
-#define CHECK_NULL(p) if (p == NULL)  { userlog(LOG_ERR, "out of memory"); return false; }
 
 static void init_log();
 static void run_self_test();
@@ -223,7 +220,7 @@ static bool read_input() {
 
   if (strcmp(line, "ROOTS") == 0) {
     array* new_roots = array_create(20);
-    CHECK_NULL(new_roots);
+    CHECK_NULL(new_roots, false);
 
     while (1) {
       line = read_line(stdin);
@@ -235,12 +232,9 @@ static bool read_input() {
         break;
       }
       else {
-        if (line[0] == '|')  line++;  // flat roots will be differentiated later
-
         int l = strlen(line);
         if (l > 1 && line[l-1] == '/')  line[l-1] = '\0';
-
-        CHECK_NULL(array_push(new_roots, strdup(line)));
+        CHECK_NULL(array_push(new_roots, strdup(line)), false);
       }
     }
 
@@ -266,7 +260,7 @@ static bool update_roots(array* new_roots) {
   }
 
   array* unwatchable = array_create(20);
-  CHECK_NULL(unwatchable);
+  CHECK_NULL(unwatchable, false);
   if (!unwatchable_mounts(unwatchable)) {
     return false;
   }
@@ -312,10 +306,10 @@ static bool register_roots(array* new_roots, array* unwatchable) {
     }
     else if (id >= 0) {
       watch_root* root = malloc(sizeof(watch_root));
-      CHECK_NULL(root);
+      CHECK_NULL(root, false);
       root->id = id;
       root->name = new_root;
-      CHECK_NULL(array_push(roots, root));
+      CHECK_NULL(array_push(roots, root), false);
     }
     else {
       if (show_warning && watch_limit_reached()) {
@@ -324,7 +318,7 @@ static bool register_roots(array* new_roots, array* unwatchable) {
         output("MESSAGE\n" INOTIFY_LIMIT_MSG, limit);
         show_warning = false;  // warn only once
       }
-      CHECK_NULL(array_push(unwatchable, new_root));
+      CHECK_NULL(array_push(unwatchable, new_root), false);
     }
   }
 
@@ -362,7 +356,7 @@ static bool unwatchable_mounts(array* mounts) {
     }
 
     if (!is_watchable(dev, point, fs)) {
-      CHECK_NULL(array_push(mounts, strdup(point)));
+      CHECK_NULL(array_push(mounts, strdup(point)), false);
     }
   }
 
