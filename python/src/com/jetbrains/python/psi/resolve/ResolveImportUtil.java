@@ -199,7 +199,20 @@ public class ResolveImportUtil {
           visitor.withRelative(0);
         }
       }
-      return visitor.resultsAsList();
+      final List<PsiFileSystemItem> results = visitor.resultsAsList();
+      if (results.isEmpty() && relativeLevel == 0 && !importIsAbsolute) {
+        // Try to resolve relative import as absolute in roots, not in its parent directory
+        final PsiDirectory containingDirectory = sourceFile.getContainingDirectory();
+        if (containingDirectory != null) {
+          final PyQualifiedName containingPath = findCanonicalImportPath(containingDirectory, null);
+          if (containingPath != null && containingPath.getComponentCount() > 0) {
+            final PyQualifiedName absolutePath = containingPath.append(qualifiedName.toString());
+            final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolver(absolutePath).fromElement(sourceFile);
+            return absoluteVisitor.resultsAsList();
+          }
+        }
+      }
+      return results;
     }
     finally {
       beingImported.remove(marker);
