@@ -34,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
@@ -151,41 +148,43 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
-    return getTypeName(type, context, new HashSet<PyType>());
+    return getTypeName(type, context, new HashMap<PyType, String>());
   }
 
-  private static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context, @NotNull final Set<PyType> visited) {
-    if (visited.contains(type)) {
-      return UNKNOWN;
+  private static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context, @NotNull final Map<PyType, String> visited) {
+    final String evaluated = visited.get(type);
+    if (evaluated != null) {
+      return evaluated;
     }
-    visited.add(type);
-    if (type == null) {
-      return UNKNOWN;
-    }
+    String result = null;
+    final String typeName = type != null ? type.getName() : null;
     if (type instanceof PyTypeReference) {
       final PyType resolved = ((PyTypeReference)type).resolve(null, context);
       if (resolved != null) {
-        return getTypeName(resolved, context, visited);
+        result = getTypeName(resolved, context, visited);
       }
-      return UNKNOWN;
     }
-    final String name = type.getName();
-    if (type instanceof PyCollectionType) {
+    else if (type instanceof PyCollectionType) {
+      final String name = type.getName();
       final PyType elementType = ((PyCollectionType)type).getElementType(context);
       if (elementType != null) {
-        return String.format("%s of %s", name, getTypeName(elementType, context, visited));
+        result = String.format("%s of %s", name, getTypeName(elementType, context, visited));
       }
     }
-    if (type instanceof PyUnionType) {
-      return String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
-                                                          new Function<PyType, String>() {
-                                                            @Override
-                                                            public String fun(PyType t) {
-                                                              return getTypeName(t, context, visited);
+    else if (type instanceof PyUnionType) {
+      result = String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
+                                                            new Function<PyType, String>() {
+                                                              @Override
+                                                              public String fun(PyType t) {
+                                                                return getTypeName(t, context, visited);
+                                                              }
+                                                            }, ", "));
     }
-                                                          }, ", "));
+    if (result == null) {
+      result = typeName != null ? typeName : UNKNOWN;
     }
-    return name != null ? name : UNKNOWN;
+    visited.put(type, result);
+    return result;
   }
 
   static ChainIterable<String> describeDecorators(

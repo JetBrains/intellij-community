@@ -10,10 +10,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyABCUtil;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeReference;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,7 +128,7 @@ public class PyArgumentListInspection extends PyInspection {
         PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
         if (content != null) {
           PyType inside_type = context.getType(content);
-          if (inside_type != null && !(inside_type instanceof PyTypeReference)) {
+          if (inside_type != null && !PyTypeChecker.isUnknown(inside_type)) {
             if (((PyStarArgument)arg).isKeyword()) {
               if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));

@@ -14,7 +14,6 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +124,6 @@ public class ResolveImportUtil {
       return Collections.emptyList();
     }
     PsiFile file = importElement.getContainingFile().getOriginalFile();
-    Sdk sdk = ModuleUtil.findModuleForPsiElement(importElement) != null ? null : PyBuiltinCache.findSdkForNonModuleFile(file);
     String name = qName.getComponents().get(0);
 
     final List<PsiFileSystemItem> candidates = importStatement.resolveImportSourceCandidates();
@@ -134,7 +132,7 @@ public class ResolveImportUtil {
       if (!candidate.isValid()) {
         throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates()");
       }
-      PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), name, file, null, sdk, false, true);
+      PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), name, file, false, true);
       if (result != null) {
         if (!result.isValid()) {
           throw new PsiInvalidElementAccessException(result, "Got an invalid candidate from resolveChild()");
@@ -171,35 +169,53 @@ public class ResolveImportUtil {
   /**
    * Resolves a module reference in a general case.
    *
-   * @param qualifiedName      qualified name of the module reference to resolve
-   * @param source_file        where that reference resides; serves as PSI foothold to determine module, project, etc.
-   * @param importIsAbsolute if false, try old python 2.x's "relative first, absolute next" approach.
-   * @param relativeLevel     if > 0, step back from source_file and resolve from there (even if importIsAbsolute is false!).
+   * @param qualifiedName     qualified name of the module reference to resolve
+   * @param sourceFile        where that reference resides; serves as PSI foothold to determine module, project, etc.
+   * @param importIsAbsolute  if false, try old python 2.x's "relative first, absolute next" approach.
+   * @param relativeLevel     if > 0, step back from sourceFile and resolve from there (even if importIsAbsolute is false!).
    * @return list of possible candidates
    */
   @NotNull
-  public static List<PsiFileSystemItem> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile source_file,
+  public static List<PsiFileSystemItem> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile sourceFile,
                                                       boolean importIsAbsolute, int relativeLevel) {
-    if (qualifiedName == null) return Collections.emptyList();
-    String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relativeLevel);
-    Set<String> being_imported = ourBeingImported.get();
-    if (being_imported.contains(marker)) return Collections.emptyList(); // break endless loop in import
+    if (qualifiedName == null || sourceFile == null) {
+      return Collections.emptyList();
+    }
+    final String marker = StringUtil.join(qualifiedName.getComponents(), ".") + "#" + Integer.toString(relativeLevel);
+    final Set<String> beingImported = ourBeingImported.get();
+    if (beingImported.contains(marker)) {
+      return Collections.emptyList(); // break endless loop in import
+    }
     try {
-      being_imported.add(marker);
-      QualifiedNameResolver visitor = new QualifiedNameResolver(qualifiedName).fromElement(source_file);
+      beingImported.add(marker);
+      final QualifiedNameResolver visitor = new QualifiedNameResolver(qualifiedName).fromElement(sourceFile);
       if (relativeLevel > 0) {
         // "from ...module import"
         visitor.withRelative(relativeLevel).withoutRoots();
       }
-      else { // "from module import"
+      else {
+        // "from module import"
         if (!importIsAbsolute) {
           visitor.withRelative(0);
         }
       }
-      return visitor.resultsAsList();
+      final List<PsiFileSystemItem> results = visitor.resultsAsList();
+      if (results.isEmpty() && relativeLevel == 0 && !importIsAbsolute) {
+        // Try to resolve relative import as absolute in roots, not in its parent directory
+        final PsiDirectory containingDirectory = sourceFile.getContainingDirectory();
+        if (containingDirectory != null) {
+          final PyQualifiedName containingPath = findCanonicalImportPath(containingDirectory, null);
+          if (containingPath != null && containingPath.getComponentCount() > 0) {
+            final PyQualifiedName absolutePath = containingPath.append(qualifiedName.toString());
+            final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolver(absolutePath).fromElement(sourceFile);
+            return absoluteVisitor.resultsAsList();
+          }
+        }
+      }
+      return results;
     }
     finally {
-      being_imported.remove(marker);
+      beingImported.remove(marker);
     }
   }
 
@@ -246,8 +262,6 @@ public class ResolveImportUtil {
    * @param parent          element under which to look for referenced name; if null, null is returned.
    * @param referencedName  which name to look for.
    * @param containingFile  where we're in.
-   * @param root            the root from which we started descending the directory tree (if any)
-   * @param sdk             the SDK to which the root belongs, if any
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
    * @return the element the referencedName resolves to, or null.
@@ -256,9 +270,7 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PsiElement resolveChild(@Nullable final PsiElement parent, @NotNull final String referencedName,
-                                        @Nullable final PsiFile containingFile, @Nullable VirtualFile root,
-                                        @Nullable Sdk sdk,
-                                        boolean fileOnly, boolean checkForPackage) {
+                                        @Nullable final PsiFile containingFile, boolean fileOnly, boolean checkForPackage) {
     PsiDirectory dir = null;
     PsiElement ret = null;
     PsiElement possible_ret = null;
@@ -267,7 +279,7 @@ public class ResolveImportUtil {
         // gobject does weird things like '_gobject = sys.modules['gobject._gobject'], so it's preferable to look at
         // files before looking at names exported from __init__.py
         dir = ((PyFile)parent).getContainingDirectory();
-        possible_ret = resolveInDirectory(referencedName, containingFile, dir, root, sdk, fileOnly, checkForPackage);
+        possible_ret = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
       }
 
       // OTOH, quite often a module named foo exports a class or function named foo, which is used as a fallback
@@ -289,13 +301,13 @@ public class ResolveImportUtil {
     else if (parent instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer container = (PsiDirectoryContainer)parent;
       for (PsiDirectory childDir : container.getDirectories()) {
-        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, root, sdk, fileOnly, checkForPackage);
+        final PsiElement result = resolveInDirectory(referencedName, containingFile, childDir, fileOnly, checkForPackage);
         //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
         if (result != null) return result;
       }
     }
     if (dir != null) {
-      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, root, sdk, fileOnly, checkForPackage);
+      final PsiElement result = resolveInDirectory(referencedName, containingFile, dir, fileOnly, checkForPackage);
       //if (fileOnly && ! (result instanceof PsiFile) && ! (result instanceof PsiDirectory)) return null;
       if (result != null) {
         return result;
@@ -306,9 +318,7 @@ public class ResolveImportUtil {
 
   @Nullable
   private static PsiElement resolveInDirectory(final String referencedName, @Nullable final PsiFile containingFile,
-                                               final PsiDirectory dir, @Nullable VirtualFile root,
-                                               @Nullable Sdk sdk,
-                                               boolean isFileOnly, boolean checkForPackage) {
+                                               final PsiDirectory dir, boolean isFileOnly, boolean checkForPackage) {
     if (referencedName == null) return null;
 
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
@@ -318,16 +328,6 @@ public class ResolveImportUtil {
 
     final PsiFile module = findPyFileInDir(dir, referencedName);
     if (module != null) return module;
-
-    if (sdk != null) {
-      PsiDirectory skeletonDir = findSkeletonDir(dir, root, sdk);
-      if (skeletonDir != null) {
-        final PsiFile skeletonFile = findPyFileInDir(skeletonDir, referencedName);
-        if (skeletonFile != null) {
-          return skeletonFile;
-        }
-      }
-    }
 
     if (!isFileOnly) {
       // not a subdir, not a file; could be a name in parent/__init__.py
@@ -346,29 +346,6 @@ public class ResolveImportUtil {
     // findFile() does case-insensitive search, and we need exactly matching case (see PY-381)
     if (file != null && FileUtil.getNameWithoutExtension(file.getName()).equals(referencedName)) {
       return file;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiDirectory findSkeletonDir(PsiDirectory dir, @Nullable VirtualFile root, Sdk sdk) {
-    String relativeName = null;
-    if (root != null) {
-      relativeName = VfsUtilCore.getRelativePath(dir.getVirtualFile(), root, '/');
-    }
-    else {
-      PyQualifiedName relativeQName = findShortestImportableQName(dir);
-      if (relativeQName != null) {
-        relativeName = relativeQName.join("/");
-      }
-    }
-    VirtualFile skeletonsRoot = PythonSdkType.findSkeletonsDir(sdk);
-    if (skeletonsRoot != null && relativeName != null) {
-      VirtualFile skeletonsVFile =
-        relativeName.length() == 0 ? skeletonsRoot : skeletonsRoot.findFileByRelativePath(relativeName.replace(".", "/"));
-      if (skeletonsVFile != null) {
-        return dir.getManager().findDirectory(skeletonsVFile);
-      }
     }
     return null;
   }

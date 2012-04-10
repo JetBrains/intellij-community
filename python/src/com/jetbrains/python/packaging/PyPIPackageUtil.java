@@ -43,6 +43,7 @@ public class PyPIPackageUtil {
   private List<String> errorMessages;
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
   private Set<ComparablePair> myAdditionalPackageNames;
+  @Nullable private volatile Set<String> myPackageNames = null;
 
   public Set<String> getPackageNames(final String url) throws IOException {
     final TreeSet<String> names = new TreeSet<String>();
@@ -150,6 +151,7 @@ public class PyPIPackageUtil {
   }
 
   public void parsePyPIList(final List<String> packages, final PyPackageService service) {
+    myPackageNames = null;
     for (String pyPackage : packages) {
       try {
         final Matcher matcher = PYPI_PATTERN.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
@@ -223,6 +225,17 @@ public class PyPIPackageUtil {
 
   public static Map<String, String> getPyPIPackages() {
     return PyPackageService.getInstance().PY_PACKAGES;
+  }
+
+  public boolean isInPyPI(@NotNull String packageName) {
+    if (myPackageNames == null) {
+      final Set<String> names = new HashSet<String>();
+      for (String name : getPyPIPackages().keySet()) {
+        names.add(name.toLowerCase());
+      }
+      myPackageNames = names;
+    }
+    return myPackageNames != null ? myPackageNames.contains(packageName.toLowerCase()) : false;
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description) {
