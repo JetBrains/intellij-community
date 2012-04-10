@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -38,6 +39,8 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,6 +49,8 @@ import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLIC
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
 public class CherryPicker {
+
+  private static final Logger LOG = Logger.getInstance(CherryPicker.class);
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -87,7 +92,7 @@ public class CherryPicker {
                                                                   commit.getShortHash().getString(), commit.getAuthor(),
                                                                   commit.getSubject()).merge();
           if (mergeCompleted) {
-            boolean committed = updateChangeListManagerAndShowCommitDialogIfNeeded(commit, true);
+            boolean committed = updateChangeListManagerAndShowCommitDialogIfNeeded(repository, commit, true);
             if (!committed) {
               notifyConflictWarning(commit, successfulCommits);
               return false;
@@ -97,7 +102,7 @@ public class CherryPicker {
             }
           }
           else {
-            updateChangeListManagerAndShowCommitDialogIfNeeded(commit, false);
+            updateChangeListManagerAndShowCommitDialogIfNeeded(repository, commit, false);
             notifyConflictWarning(commit, successfulCommits);
             return false;
           }
@@ -122,13 +127,14 @@ public class CherryPicker {
     myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-picked with conflicts", description);
   }
 
-  private boolean updateChangeListManagerAndShowCommitDialogIfNeeded(@NotNull final GitCommit commit, boolean showCommitDialog) {
+  private boolean updateChangeListManagerAndShowCommitDialogIfNeeded(@NotNull GitRepository repository, @NotNull final GitCommit commit,
+                                                                     boolean showCommitDialog) {
     final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
     refreshChangedFiles(paths);
     final String commitMessage = createCommitMessage(commit, paths);
     LocalChangeList changeList = createChangeListAfterUpdate(commit.getChanges(), paths, commitMessage);
     if (showCommitDialog) {
-      return showCommitDialog(commit, changeList, commitMessage);
+      return showCommitDialog(repository, commit, changeList, commitMessage);
     }
     return false;
   }
@@ -165,16 +171,49 @@ public class CherryPicker {
     return message;
   }
 
-  private boolean showCommitDialog(@NotNull final GitCommit commit, @NotNull final LocalChangeList changeList,
-                                   @NotNull final String commitMessage) {
+  private boolean showCommitDialog(@NotNull final GitRepository repository, @NotNull final GitCommit commit,
+                                   @NotNull final LocalChangeList changeList, @NotNull final String commitMessage) {
     final AtomicBoolean commitSucceeded = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
+        cancelCherryPick(repository);
         commitSucceeded.set(myPlatformFacade.getVcsHelper(myProject).commitChanges(commit.getChanges(), changeList, commitMessage));
       }
     }, ModalityState.NON_MODAL);
     return commitSucceeded.get();
+  }
+
+  /**
+   * We control the cherry-pick workflow ourselves + we want to use partial commits ('git commit --only'), which is prohibited during
+   * cherry-pick, i.e. until the CHERRY_PICK_HEAD exists.
+   */
+  private void cancelCherryPick(@NotNull GitRepository repository) {
+    removeCherryPickHead(repository);
+  }
+
+  private void removeCherryPickHead(@NotNull GitRepository repository) {
+    File cherryPickHeadFile = new File(repository.getGitDir().getPath(), "CHERRY_PICK_HEAD");
+    final VirtualFile cherryPickHead = myPlatformFacade.getLocalFileSystem().refreshAndFindFileByIoFile(cherryPickHeadFile);
+
+    if (cherryPickHead != null && cherryPickHead.exists()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            cherryPickHead.delete(this);
+          }
+          catch (IOException e) {
+            // if CHERRY_PICK_HEAD is not deleted, the partial commit will fail, and the user will be notified anyway.
+            // So here we just log the fact. It is happens relatively often, maybe some additional solution will follow.
+            LOG.error(e);
+          }
+        }
+      });
+    }
+    else {
+      LOG.info("Cancel cherry-pick in " + repository.getPresentableUrl() + ": no CHERRY_PICK_HEAD found");
+    }
   }
 
   private void notifyError(@NotNull String content, @NotNull GitCommit failedCommit, @NotNull List<GitCommit> successfulCommits) {
