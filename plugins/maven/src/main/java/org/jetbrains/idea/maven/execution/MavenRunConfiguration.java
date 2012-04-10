@@ -68,7 +68,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
 
   public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
     return MavenExternalParameters
-      .createJavaParameters(project, mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings);
+      .createJavaParameters(project, mySettings.myRunnerParameters, mySettings.myGeneralSettings, mySettings.myRunnerSettings, this);
   }
 
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
