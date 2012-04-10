@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class SemicolonFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     boolean fixed = fixReturn(editor, psiElement) || fixForUpdate(editor, psiElement, processor)
                     || fixAfterLastValidElement(editor, psiElement);

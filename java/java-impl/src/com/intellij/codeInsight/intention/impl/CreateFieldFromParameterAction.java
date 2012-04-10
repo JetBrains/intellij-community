@@ -96,12 +96,14 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return new PsiType[]{psiClass instanceof PsiTypeParameter ? subst.substitute((PsiTypeParameter)psiClass) : elementFactory.createType(psiClass, substitutor)};
   }
 
+  @Override
   @NotNull
   public String getText() {
     if (myName == null) return CodeInsightBundle.message("intention.create.fields.from.parameters.text");
     return CodeInsightBundle.message("intention.create.field.from.parameter.text", myName);
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter psiParameter = findParameterAtCursor(file, editor);
     PsiMethod method = null;
@@ -212,11 +214,13 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.create.field.from.parameter.family");
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     invoke(project, editor, file, !ApplicationManager.getApplication().isUnitTestMode());
   }
@@ -340,6 +344,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     final String fieldName = fieldNameToCalc;
     final PsiType fieldType = type;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         try {
           PsiManager psiManager = PsiManager.getInstance(project);
@@ -476,6 +481,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return i;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

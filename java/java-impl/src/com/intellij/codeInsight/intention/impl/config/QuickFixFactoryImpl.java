@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class QuickFixFactoryImpl extends QuickFixFactory {
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierList modifierList,
                                                                            @NotNull String modifier,
                                                                            boolean shouldHave,
@@ -38,6 +39,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new ModifierFix(modifierList, modifier, shouldHave,showContainingClass);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierListOwner owner,
                                                                            @NotNull final String modifier,
                                                                            final boolean shouldHave,
@@ -45,30 +47,36 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnFix(@NotNull PsiMethod method,
                                                                            @NotNull PsiType toReturn,
                                                                            boolean fixWholeHierarchy) {
     return new MethodReturnTypeFix(method, toReturn, fixWholeHierarchy);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
     return new AddMethodFix(method, toClass);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull String methodText,
                                                                         @NotNull PsiClass toClass,
                                                                         String... exceptions) {
     return new AddMethodFix(methodText, toClass, exceptions);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass aClass) {
     return new ImplementMethodsFix(aClass);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiElement psiElement) {
     return new ImplementMethodsFix(psiElement);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
                                                                            @NotNull PsiClassType exceptionClass,
                                                                            boolean shouldThrow,
@@ -76,6 +84,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new MethodThrowsFix(method, exceptionClass, shouldThrow, showContainingClass);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createAddDefaultConstructorFix(@NotNull PsiClass aClass) {
     return new AddDefaultConstructorFix(aClass);
   }
@@ -85,6 +94,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new AddDefaultConstructorFix(aClass, modifier);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createMethodParameterTypeFix(@NotNull PsiMethod method,
                                                                                   int index,
                                                                                   @NotNull PsiType newType,
@@ -92,38 +102,46 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return new MethodParameterFix(method, newType, index, fixWholeHierarchy);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass) {
     return new MakeClassInterfaceFix(aClass, true);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface) {
     return new MakeClassInterfaceFix(aClass, makeInterface);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createExtendsListFix(@NotNull PsiClass aClass,
                                                                           @NotNull PsiClassType typeToExtendFrom,
                                                                           boolean toAdd) {
     return new ExtendsListFix(aClass, typeToExtendFrom, toAdd);
   }
 
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createRemoveUnusedParameterFix(@NotNull PsiParameter parameter) {
     return new RemoveUnusedParameterFix(parameter);
   }
 
+  @Override
   public IntentionAction createRemoveUnusedVariableFix(@NotNull PsiVariable variable) {
     return new RemoveUnusedVariableFix(variable);
   }
 
+  @Override
   @Nullable
   public IntentionAction createCreateClassOrPackageFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : null, superClass);
   }
 
+  @Override
   @Nullable
   public IntentionAction createCreateClassOrInterfaceFix(@NotNull final PsiElement context, @NotNull final String qualifiedName, final boolean createClass, final String superClass) {
     return CreateClassOrPackageFix.createFix(qualifiedName, context, createClass ? ClassKind.CLASS : ClassKind.INTERFACE, superClass);
   }
 
+  @Override
   public IntentionAction createCreateFieldOrPropertyFix(final PsiClass aClass, final String name, final PsiType type, final PropertyMemberType targetMember, final PsiAnnotation... annotations) {
     return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
   }

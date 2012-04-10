@@ -26,11 +26,13 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class FinallyBlockSelectioner extends BasicSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiKeyword && PsiKeyword.FINALLY.equals(e.getText());
   }
 
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = new ArrayList<TextRange>();
 

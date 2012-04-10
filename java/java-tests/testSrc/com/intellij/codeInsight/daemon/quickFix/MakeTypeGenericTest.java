@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.folding.impl.actions;
+package com.intellij.codeInsight.daemon.quickFix;
+import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.folding.impl.CollapseExpandJavadocsHandler;
+public class MakeTypeGenericTest extends LightIntentionActionTestCase {
+  public void test() throws Exception { doAllTests(); }
 
-public class ExpandJavadocsAction extends BaseCodeInsightAction{
   @Override
-  protected CodeInsightActionHandler getHandler(){
-    return new CollapseExpandJavadocsHandler(true);
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/makeTypeGeneric";
   }
 }

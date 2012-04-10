@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import java.util.List;
 
 public class FieldSelectioner extends WordSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiField;
   }
@@ -38,6 +39,7 @@ public class FieldSelectioner extends WordSelectioner {
     }
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
     final PsiField field = (PsiField)e;

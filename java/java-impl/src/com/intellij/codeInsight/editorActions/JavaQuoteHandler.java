@@ -33,6 +33,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
     concatenatableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
   }
 
+  @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     boolean openingQuote = super.isOpeningQuote(iterator, offset);
 
@@ -50,6 +51,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
     return openingQuote;
   }
 
+  @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     boolean closingQuote = super.isClosingQuote(iterator, offset);
 
@@ -67,22 +69,27 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
     return closingQuote;
   }
 
+  @Override
   public TokenSet getConcatenatableStringTokenTypes() {
     return concatenatableStrings;
   }
 
+  @Override
   public String getStringConcatenationOperatorRepresentation() {
     return "+";
   }
 
+  @Override
   public TokenSet getStringTokenTypes() {
     return myLiteralTokenSet;
   }
 
+  @Override
   public boolean isAppropriateElementTypeForLiteral(final @NotNull IElementType tokenType) {
     return isAppropriateElementTypeForLiteralStatic(tokenType);
   }
 
+  @Override
   public boolean needParenthesesAroundConcatenation(final PsiElement element) {
     // example code: "some string".length() must become ("some" + " string").length()
     return element.getParent() instanceof PsiLiteralExpression && element.getParent().getParent() instanceof PsiReferenceExpression;

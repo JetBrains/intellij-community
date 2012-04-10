@@ -70,11 +70,13 @@ public class AddAnnotationFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.as", shortName);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.add.annotation.family");

@@ -42,6 +42,7 @@ import java.util.List;
 public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction");
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
@@ -81,6 +82,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     return psiClass;
   }
   
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiClass classToImport = getClassToPerformStaticImport(element);
     if (classToImport != null) {
@@ -138,6 +140,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       });
 
       expressionToDequalifyOffsets.forEachDescending(new TIntProcedure() {
+        @Override
         public boolean execute(int offset) {
           PsiJavaCodeReferenceElement expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiJavaCodeReferenceElement.class, false);
           if (expression == null) {
@@ -158,6 +161,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     }
   }
   
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     invoke(project, file, editor, element);

@@ -38,6 +38,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
     myClass = psiClass;
   }
 
+  @Override
   public List<PsiClass> getTargets() {
     PsiReferenceList list = PsiKeyword.EXTENDS.equals(myTarget.getText()) ? myClass.getExtendsList() : myClass.getImplementsList();
     if (list == null) return Collections.emptyList();
@@ -45,14 +46,17 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
     return ChooseClassAndDoHighlightRunnable.resolveClasses(classTypes);
   }
 
+  @Override
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(targets, myEditor, CodeInsightBundle.message("highlight.overridden.classes.chooser.title")) {
+      @Override
       protected void selected(PsiClass... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();
   }
 
+  @Override
   public void computeUsages(final List<PsiClass> classes) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.implements");
     for (PsiMethod method : myClass.getMethods()) {

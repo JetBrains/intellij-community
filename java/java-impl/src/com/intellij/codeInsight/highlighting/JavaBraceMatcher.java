@@ -34,10 +34,12 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
       new BracePair(JavaDocTokenType.DOC_INLINE_TAG_START, JavaDocTokenType.DOC_INLINE_TAG_END, false),
   };
 
+  @Override
   public BracePair[] getPairs() {
     return pairs;
   }
 
+  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     if (contextType instanceof IJavaElementType) return isPairedBracesAllowedBeforeTypeInJava(contextType);
     return true;
@@ -53,6 +55,7 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
             || tokenType == JavaTokenType.LBRACE;
   }
 
+  @Override
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
     PsiElement element = file.findElementAt(openingBraceOffset);
     if (element == null || element instanceof PsiFile) return openingBraceOffset;

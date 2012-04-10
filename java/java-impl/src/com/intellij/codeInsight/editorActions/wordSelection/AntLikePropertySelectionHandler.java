@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class AntLikePropertySelectionHandler implements ExtendWordSelectionHandler {
+  @Override
   public boolean canSelect(PsiElement e) {
     Language l = e.getLanguage();
     if (!(l.equals(StdLanguages.JAVA)
@@ -40,6 +41,7 @@ public class AntLikePropertySelectionHandler implements ExtendWordSelectionHandl
     return PsiTreeUtil.getParentOfType(e, PsiComment.class) == null;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     TextRange range = e.getTextRange();
     char prevLeftChar = ' ';

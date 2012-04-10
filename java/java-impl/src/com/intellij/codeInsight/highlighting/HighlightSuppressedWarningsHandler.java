@@ -62,6 +62,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
     mySuppressedExpression = suppressedExpression;
   }
 
+  @Override
   public List<PsiLiteralExpression> getTargets() {
     final List<PsiLiteralExpression> result = new ArrayList<PsiLiteralExpression>();
     if (mySuppressedExpression != null) {
@@ -84,6 +85,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
     return result;
   }
 
+  @Override
   protected void selectTargets(List<PsiLiteralExpression> targets, final Consumer<List<PsiLiteralExpression>> selectionConsumer) {
     if (targets.size() == 1) {
       selectionConsumer.consume(targets);
@@ -106,6 +108,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
     }
   }
 
+  @Override
   public void computeUsages(List<PsiLiteralExpression> targets) {
     final Project project = myTarget.getProject();
     final PsiElement parent = myTarget.getParent().getParent();
@@ -130,6 +133,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       Runnable inspect = new Runnable() {
+        @Override
         public void run() {
           pass.doInspectInBatch(managerEx, Collections.<InspectionProfileEntry>singletonList(tool));
         }

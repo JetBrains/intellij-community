@@ -64,11 +64,13 @@ public class CreateSubclassAction extends BaseIntentionAction {
   private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
   @NonNls private static final String IMPL_SUFFIX = "Impl";
 
+  @Override
   @NotNull
   public String getText() {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.implement.abstract.class.family");
@@ -120,6 +122,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
                : CodeInsightBundle.message("intention.implement.abstract.class.subclass.text");
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
@@ -196,6 +199,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
         }
         catch (final IncorrectOperationException e) {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               Messages.showErrorDialog(project, CodeInsightBundle.message("intention.error.cannot.create.class.message", className) +
                                                 "\n"+e.getLocalizedMessage(),
@@ -308,6 +312,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

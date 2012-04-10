@@ -43,16 +43,19 @@ public class DeannotateIntentionAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + DeannotateIntentionAction.class.getName());
   private String myAnnotationName = null;
 
+  @Override
   @NotNull
   public String getText() {
     return CodeInsightBundle.message("deannotate.intention.action.text") + (myAnnotationName != null ? " " + myAnnotationName : "");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("deannotate.intention.action.text");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiModifierListOwner listOwner = getContainer(editor, file);
     if (listOwner != null) {
@@ -119,13 +122,16 @@ public class DeannotateIntentionAction implements IntentionAction {
     return listOwner;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner listOwner = getContainer(editor, file);
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(listOwner);
     JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(CodeInsightBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
+      @Override
       public PopupStep onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
         new WriteCommandAction(project){
+          @Override
           protected void run(final Result result) throws Throwable {
             final VirtualFile virtualFile = file.getVirtualFile();
             if (annotationsManager.deannotate(listOwner, selectedValue.getQualifiedName()) && virtualFile != null && virtualFile.isInLocalFileSystem()) {
@@ -136,6 +142,7 @@ public class DeannotateIntentionAction implements IntentionAction {
         return PopupStep.FINAL_CHOICE;
       }
 
+      @Override
       @NotNull
       public String getTextFor(final PsiAnnotation value) {
         final String qualifiedName = value.getQualifiedName();
@@ -145,6 +152,7 @@ public class DeannotateIntentionAction implements IntentionAction {
     }).showInBestPositionFor(editor);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

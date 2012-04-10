@@ -38,11 +38,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplementAbstractMethodAction extends BaseIntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.implement.abstract.method.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     final PsiMethod method = findMethod(file, offset);
@@ -114,6 +116,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
       return myHasExistingImplementations;
     }
 
+    @Override
     public boolean execute(@NotNull PsiElement element) {
       if (element instanceof PsiClass) {
         PsiClass aClass = (PsiClass) element;
@@ -160,6 +163,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     return PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiMethod.class);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
@@ -171,6 +175,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     new ImplementAbstractMethodHandler(project, editor, method).invoke();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

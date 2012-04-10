@@ -94,6 +94,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   
   private final JavadocFixer myJavadocFixer = new JavadocFixer();
 
+  @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
     final Document document = editor.getDocument();
     final String textForRollback = document.getText();
@@ -236,6 +237,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     return element instanceof PsiClass || element instanceof PsiCodeBlock || element instanceof PsiStatement || element instanceof PsiMethod;
   }
 
+  @Override
   @Nullable
   protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
     final PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);

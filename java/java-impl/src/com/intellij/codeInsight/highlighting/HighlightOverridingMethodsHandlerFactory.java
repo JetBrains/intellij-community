@@ -23,6 +23,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
  * @author yole
  */
 public class HighlightOverridingMethodsHandlerFactory implements HighlightUsagesHandlerFactory {
+  @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(final Editor editor, final PsiFile file) {
     int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement target = file.findElementAt(offset);

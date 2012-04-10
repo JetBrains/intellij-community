@@ -23,6 +23,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
  * @author yole
  */
 public class JavaBasicWordSelectionFilter implements Condition<PsiElement> {
+  @Override
   public boolean value(final PsiElement e) {
     return !(e instanceof PsiCodeBlock) &&
            !(e instanceof PsiArrayInitializerExpression) &&

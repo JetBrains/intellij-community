@@ -40,6 +40,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<PsiElement>("TEMP_REFERENT_USER_DATA");
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.add.single.member.static.import.family");
@@ -105,6 +106,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     return aClass;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     String classQName = getStaticImportClass(element);
     if (classQName != null) {
@@ -198,6 +200,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
   }
   
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     invoke(file, element);

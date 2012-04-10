@@ -29,6 +29,7 @@ import com.intellij.util.text.CharArrayUtil;
  * To change this template use Options | File Templates.
  */
 public class MethodCallFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     PsiExpressionList args = null;
     if (psiElement instanceof PsiMethodCallExpression && !(psiElement instanceof JspMethodCall)) {

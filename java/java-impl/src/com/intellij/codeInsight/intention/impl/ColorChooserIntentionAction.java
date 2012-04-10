@@ -62,6 +62,7 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
     setText(CodeInsightBundle.message("intention.color.chooser.dialog"));
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
     // new Color(...)
     if (psiElement().inside(psiElement(PsiNewExpression.class)).accepts(element)) {
@@ -102,11 +103,13 @@ public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
     return false;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
