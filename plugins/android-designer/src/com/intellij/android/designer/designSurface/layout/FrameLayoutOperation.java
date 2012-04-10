@@ -189,8 +189,9 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   // Feedback
   //
   //////////////////////////////////////////////////////////////////////////////////////////
-  public static final Gravity[] HORIZONTALS = {Gravity.left, Gravity.center, Gravity.right};
-  public static final Gravity[] VERTICALS = {Gravity.top, Gravity.center, Gravity.bottom};
+
+  private static final Gravity[] HORIZONTALS = {Gravity.left, Gravity.center, Gravity.right};
+  private static final Gravity[] VERTICALS = {Gravity.top, Gravity.center, Gravity.bottom};
 
   private class GravityFeedback extends AlphaFeedback {
     private Gravity myHorizontal;

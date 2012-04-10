@@ -111,6 +111,12 @@ public class RadFrameLayout extends RadViewLayoutWithData {
     return mySelectionDecorator;
   }
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Actions
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   private static List<Pair<Boolean, Gravity>> ITEMS = Arrays
     .asList(Pair.create(Boolean.FALSE, Gravity.top), Pair.create(Boolean.FALSE, Gravity.center),
             Pair.create(Boolean.FALSE, Gravity.bottom), null, Pair.create(Boolean.TRUE, Gravity.left),

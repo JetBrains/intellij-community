@@ -172,7 +172,7 @@ public class LinearLayoutOperation extends FlowBaseOperation {
       }
     }
     else {
-      String gravityValue = horizontal ? Gravity.getValue(null, gravity) : Gravity.getValue(gravity, null);
+      String gravityValue = horizontal ? Gravity.getValue(Gravity.center, gravity) : Gravity.getValue(gravity, Gravity.center);
 
       for (RadComponent component : components) {
         XmlTag tag = ((RadViewComponent)component).getTag();
