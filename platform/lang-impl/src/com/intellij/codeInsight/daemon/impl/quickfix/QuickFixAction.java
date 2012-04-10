@@ -59,6 +59,7 @@ public final class QuickFixAction {
     }
   }
 
+  /** This is used by TeamCity plugin */
   @Deprecated
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
     doRegister(info, action, options, displayName, null, null);
