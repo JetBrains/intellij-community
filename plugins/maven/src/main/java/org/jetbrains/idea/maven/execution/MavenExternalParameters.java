@@ -19,9 +19,13 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.impl.EditConfigurationsDialog;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -35,11 +39,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Ralf Quebbemann
@@ -49,10 +58,34 @@ public class MavenExternalParameters {
   @NonNls private static final String JAVA_HOME = "JAVA_HOME";
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
+  @Deprecated // Use createJavaParameters(Project,MavenRunnerParameters, MavenGeneralSettings,MavenRunnerSettings,MavenRunConfiguration)
   public static JavaParameters createJavaParameters(@Nullable final Project project,
                                                     @NotNull final MavenRunnerParameters parameters,
                                                     @Nullable MavenGeneralSettings coreSettings,
                                                     @Nullable MavenRunnerSettings runnerSettings) throws ExecutionException {
+    return createJavaParameters(project, parameters, coreSettings, runnerSettings, null);
+  }
+
+  public static JavaParameters createJavaParameters(@Nullable final Project project,
+                                                    @NotNull final MavenRunnerParameters parameters) throws ExecutionException {
+    return createJavaParameters(project, parameters, null, null, null);
+  }
+
+  /**
+   *
+   * @param project
+   * @param parameters
+   * @param coreSettings
+   * @param runnerSettings
+   * @param runConfiguration used to creation fix if maven home not found
+   * @return
+   * @throws ExecutionException
+   */
+  public static JavaParameters createJavaParameters(@Nullable final Project project,
+                                                    @NotNull final MavenRunnerParameters parameters,
+                                                    @Nullable MavenGeneralSettings coreSettings,
+                                                    @Nullable MavenRunnerSettings runnerSettings,
+                                                    @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
     final JavaParameters params = new JavaParameters();
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -68,7 +101,7 @@ public class MavenExternalParameters {
 
     params.setJdk(getJdk(runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
 
-    final String mavenHome = resolveMavenHome(coreSettings);
+    final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
 
     addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
@@ -165,18 +198,38 @@ public class MavenExternalParameters {
   }
 
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
+    return resolveMavenHome(coreSettings, null, null);
+  }
+
+  /**
+   *
+   * @param coreSettings
+   * @param project used to creation fix if maven home not found
+   * @param runConfiguration used to creation fix if maven home not found
+   * @return
+   * @throws ExecutionException
+   */
+  public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
+                                        @Nullable Project project,
+                                        @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
     final File file = MavenUtil.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {
-      throw new ExecutionException(RunnerBundle.message("external.maven.home.no.default"));
+      throw createExecutionException(RunnerBundle.message("external.maven.home.no.default"),
+                                     RunnerBundle.message("external.maven.home.no.default.with.fix"),
+                                     coreSettings, project, runConfiguration);
     }
 
     if (!file.exists()) {
-      throw new ExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file.getPath()));
+      throw createExecutionException(RunnerBundle.message("external.maven.home.does.not.exist", file.getPath()),
+                                     RunnerBundle.message("external.maven.home.does.not.exist.with.fix", file.getPath()),
+                                     coreSettings, project, runConfiguration);
     }
 
     if (!MavenUtil.isValidMavenHome(file)) {
-      throw new ExecutionException(RunnerBundle.message("external.maven.home.invalid", file.getPath()));
+      throw createExecutionException(RunnerBundle.message("external.maven.home.invalid", file.getPath()),
+                                     RunnerBundle.message("external.maven.home.invalid.with.fix", file.getPath()),
+                                     coreSettings, project, runConfiguration);
     }
 
     try {
@@ -185,6 +238,34 @@ public class MavenExternalParameters {
     catch (IOException e) {
       throw new ExecutionException(e.getMessage(), e);
     }
+  }
+
+  private static ExecutionException createExecutionException(String text,
+                                                             String textWithFix,
+                                                             @NotNull MavenGeneralSettings coreSettings,
+                                                             @Nullable Project project,
+                                                             @Nullable MavenRunConfiguration runConfiguration) {
+    Project notNullProject = project;
+    if (notNullProject == null) {
+      if (runConfiguration == null) return new ExecutionException(text);
+      notNullProject = runConfiguration.getProject();
+      if (notNullProject == null) return new ExecutionException(text);
+    }
+
+    if (coreSettings == MavenProjectsManager.getInstance(notNullProject).getGeneralSettings()) {
+      return new ProjectSettingsOpenerExecutionException(textWithFix, notNullProject);
+    }
+
+    if (runConfiguration != null) {
+      Project runCfgProject = runConfiguration.getProject();
+      if (runCfgProject != null) {
+        if (((RunManagerImpl)RunManager.getInstance(runCfgProject)).getSettings(runConfiguration) != null) {
+          return new RunConfigurationOpenerExecutionException(textWithFix, runConfiguration);
+        }
+      }
+    }
+
+    return new ExecutionException(text);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -255,5 +336,49 @@ public class MavenExternalParameters {
       stringBuilder.append(entry.getKey());
     }
     return stringBuilder.toString();
+  }
+
+  private static class ProjectSettingsOpenerExecutionException extends ExecutionException implements HyperlinkListener {
+
+    private final Project myProject;
+
+    public ProjectSettingsOpenerExecutionException(final String s, Project project) {
+      super(s);
+      myProject = project;
+    }
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+
+      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenSettings.DISPLAY_NAME);
+    }
+  }
+
+  private static class RunConfigurationOpenerExecutionException extends ExecutionException implements HyperlinkListener {
+
+    private final MavenRunConfiguration myRunConfiguration;
+
+    public RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
+      super(s);
+      myRunConfiguration = runConfiguration;
+    }
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+
+      Project project = myRunConfiguration.getProject();
+      //RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(project);
+      //RunnerAndConfigurationSettings settings = runManager.getSettings(myRunConfiguration);
+      //if (settings == null) {
+      //  return;
+      //}
+      //
+      //runManager.setSelectedConfiguration(settings);
+
+      EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
+      dialog.show();
+    }
   }
 }

@@ -85,6 +85,10 @@ public class ExecutionUtil {
       LOG.error(fullMessage);
     }
 
+    if (listener == null && e instanceof HyperlinkListener) {
+      listener = (HyperlinkListener)e;
+    }
+
     final HyperlinkListener finalListener = listener;
     final String finalDescription = description;
     UIUtil.invokeLaterIfNeeded(new Runnable() {
