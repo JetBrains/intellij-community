@@ -230,14 +230,8 @@ public class LocalChangeListImpl extends LocalChangeList {
   public synchronized boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     final LocalChangeListImpl list = (LocalChangeListImpl)o;
-
-    if (myIsDefault != list.myIsDefault) return false;
-    if (!myName.equals(list.myName)) return false;
-    if (myIsReadOnly != list.myIsReadOnly) return false;
-
-    return true;
+    return myName.equals(list.myName);
   }
 
   public int hashCode() {
