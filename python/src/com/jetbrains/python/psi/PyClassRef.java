@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,7 +36,16 @@ public class PyClassRef {
 
   @Nullable
   public String getClassName() {
-    return myElement instanceof PyClass ? ((PyClass) myElement).getName() : null;
+    if (myElement instanceof PyClass) {
+      return ((PyClass)myElement).getName();
+    }
+    if (myQName != null) {
+      final PyQualifiedName qname = PyQualifiedName.fromDottedString(myQName);
+      if (qname != null) {
+        return qname.getLastComponent();
+      }
+    }
+    return null;
   }
 
   @Nullable
