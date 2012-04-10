@@ -96,22 +96,24 @@ public class PyStringFormatInspection extends PyInspection {
             }
           }
         }
+        final String s = myFormatSpec.get("1");
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
-          if (myFormatSpec.get("1") != null) {
+          if (s != null) {
             assert rightExpression != null;
             PyType right_type = myTypeEvalContext.getType(rightExpression);
             if (right_type instanceof PySubscriptableType) {
               PySubscriptableType tuple_type = (PySubscriptableType)right_type;
               for (int i=0; i <= tuple_type.getElementCount(); i += 1) {
-                PyType a_type = tuple_type.getElementType(i);
-                if (a_type != null) {
-                  checkTypeCompatible(problemTarget, a_type, PyTypeParser.getTypeByName(problemTarget,
-                                                                                        myFormatSpec.get(String.valueOf(i+1))));
+                PyType elementType = tuple_type.getElementType(i);
+                if (elementType != null) {
+                  final String typeName = myFormatSpec.get(String.valueOf(i + 1));
+                  final PyType type = typeName != null ? PyTypeParser.getTypeByName(problemTarget, typeName) : null;
+                  checkTypeCompatible(problemTarget, elementType, type);
                 }
               }
               return tuple_type.getElementCount();
             }
-            else checkExpressionType(rightExpression, myFormatSpec.get("1"), problemTarget);
+            else checkExpressionType(rightExpression, s, problemTarget);
           }
           return 1;
         }
@@ -173,19 +175,19 @@ public class PyStringFormatInspection extends PyInspection {
           return inspectDict(rightExpression, problemTarget, false);
         }
         else if (PyUtil.instanceOf(rightExpression, LIST_LIKE_EXPRESSIONS)) {
-          if (myFormatSpec.get("1") != null) {
+          if (s != null) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
-                                PyTypeParser.getTypeByName(problemTarget, myFormatSpec.get("1")));
+                                PyTypeParser.getTypeByName(problemTarget, s));
             return 1;
           }
         }
         else if (rightExpression instanceof PySliceExpression) {
-          if (myFormatSpec.get("1") != null) {
+          if (s != null) {
             PyType type = ((PySliceExpression)rightExpression).getOperand().getType(myTypeEvalContext);
             if (type != null) {
               if ("list".equals(type.getName()) || "str".equals(type.getName())) {
                 checkTypeCompatible(problemTarget, builtinCache.getStrType(),
-                                    PyTypeParser.getTypeByName(problemTarget, myFormatSpec.get("1")));
+                                    PyTypeParser.getTypeByName(problemTarget, s));
                 return 1;
               }
             }

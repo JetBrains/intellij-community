@@ -374,6 +374,9 @@ public class PyRequirement {
     }
     final String url = editableEggMatcher.group(1);
     final String egg = editableEggMatcher.group(2);
+    if (url == null) {
+      return null;
+    }
     final Matcher nameVersionMatcher = NAME_VERSION.matcher(egg);
     if (nameVersionMatcher.matches()) {
       final String name = normalizeName(nameVersionMatcher.group(1));

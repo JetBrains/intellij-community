@@ -39,7 +39,7 @@ public abstract class StructuredDocString {
     return new EpydocString(text);
   }
 
-  protected StructuredDocString(String docStringText, String tagPrefix) {
+  protected StructuredDocString(@NotNull String docStringText, String tagPrefix) {
     final Substring docString = new Substring(docStringText);
     final List<Substring> lines = docString.splitLines();
     final int nlines = lines.size();
@@ -151,13 +151,13 @@ public abstract class StructuredDocString {
   }
 
   @Nullable
-  public Substring getTagValue(String tagName, String argName) {
+  public Substring getTagValue(String tagName, @NotNull String argName) {
     final Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
     return argValues != null ? argValues.get(new Substring(argName)) : null;
   }
 
   @Nullable
-  public Substring getTagValue(String[] tagNames, String argName) {
+  public Substring getTagValue(String[] tagNames, @NotNull String argName) {
     for (String tagName : tagNames) {
       Map<Substring, Substring> argValues = myArgTagValues.get(tagName);
       if (argValues != null) {
@@ -197,12 +197,15 @@ public abstract class StructuredDocString {
   public abstract String getParamType(@Nullable String paramName);
 
   @Nullable
-  public abstract String getParamDescription(String paramName);
-  public abstract String getKeywordArgumentDescription(String paramName);
+  public abstract String getParamDescription(@Nullable String paramName);
+
+  @Nullable
+  public abstract String getKeywordArgumentDescription(@Nullable String paramName);
 
   public abstract List<String> getRaisedExceptions();
 
-  public abstract String getRaisedExceptionDescription(String exceptionName);
+  @Nullable
+  public abstract String getRaisedExceptionDescription(@Nullable String exceptionName);
 
   @Nullable
   public abstract String getAttributeDescription();
