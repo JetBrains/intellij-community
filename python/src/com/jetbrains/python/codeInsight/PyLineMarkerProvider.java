@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -141,7 +142,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   };
 
-  public LineMarkerInfo getLineMarkerInfo(final PsiElement element) {
+  public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     final ASTNode node = element.getNode();
     if (node != null && node.getElementType() == PyTokenTypes.IDENTIFIER && element.getParent() instanceof PyFunction) {
       final PyFunction function = (PyFunction)element.getParent();
@@ -199,7 +200,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     return null;
   }
 
-  public void collectSlowLineMarkers(final List<PsiElement> elements, final Collection<LineMarkerInfo> result) {
+  public void collectSlowLineMarkers(@NotNull final List<PsiElement> elements, @NotNull final Collection<LineMarkerInfo> result) {
     Set<PyFunction> functions = new HashSet<PyFunction>();
     for(PsiElement element: elements) {
       if (element instanceof PyClass) {
