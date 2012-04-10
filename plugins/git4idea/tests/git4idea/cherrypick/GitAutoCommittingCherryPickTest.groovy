@@ -68,7 +68,7 @@ Otherwise, please use 'git reset'
 
     assertHeadCommit(commit)
     assertOnlyDefaultChangelist()
-    assertNotificationShown("Successful cherry-pick", notificationContent(commit), NotificationType.INFORMATION)
+    assertNotificationShown("Cherry-pick successful", notificationContent(commit), NotificationType.INFORMATION)
   }
 
   @Test
@@ -168,7 +168,7 @@ Otherwise, please use 'git reset'
 
     invokeCherryPick([commit1, commit2])
     assertLastCommits commit2, commit1
-    assertNotificationShown("Succesfully cherry-picked", notificationContent(commit1, commit2), NotificationType.INFORMATION)
+    assertNotificationShown("Cherry-pick successful", notificationContent(commit1, commit2), NotificationType.INFORMATION)
   }
 
   @Test
@@ -208,6 +208,8 @@ Didn't cherry-pick others""", NotificationType.ERROR)
         return true;
       }
     })
+
+    invokeCherryPick([commit1, commit2, commit3])
 
     assertMergeDialogShown()
     assertTrue "Commit dialog was not shown", commitDialogShown
