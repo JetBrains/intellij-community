@@ -209,6 +209,9 @@ public class ResizeOperation implements EditOperation {
     createFeedback();
 
     myBounds = myContext.getTransformedRectangle(myComponent.getBounds(myContext.getArea().getFeedbackLayer()));
+    myBounds.width = Math.max(myBounds.width, 0);
+    myBounds.height = Math.max(myBounds.height, 0);
+
     int direction = myContext.getResizeDirection();
 
     if ((direction & Position.EAST) != 0) {
