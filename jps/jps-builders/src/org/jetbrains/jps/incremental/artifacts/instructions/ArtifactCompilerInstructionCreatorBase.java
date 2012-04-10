@@ -22,8 +22,10 @@ import org.jetbrains.jps.IgnoredFilePatterns;
 import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -84,8 +86,8 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     }
 
     @Override
-    public boolean accept(@NotNull String fullFilePath) {
-      if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath)) return false;
+    public boolean accept(@NotNull String fullFilePath, BuildDataManager dataManager) throws IOException {
+      if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, dataManager)) return false;
 
       if (myIgnoredFilePatterns.isIgnored(PathUtil.getFileName(fullFilePath))) {
         return false;

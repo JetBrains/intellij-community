@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ClassMap;
 import org.jetbrains.jps.Module;
 import org.jetbrains.jps.artifacts.*;
+import org.jetbrains.jps.idea.OwnServiceLoader;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
 
@@ -26,24 +27,26 @@ public class LayoutElementBuildersRegistry {
     return InstanceHolder.ourInstance;
   }
 
-  private ClassMap<LayoutElementBuilder> myBuilders;
+  private ClassMap<LayoutElementBuilderService> myBuilders;
 
   private LayoutElementBuildersRegistry() {
-    myBuilders = new ClassMap<LayoutElementBuilder>();
-    myBuilders.put(RootElement.class, new RootElementBuilder());
-    myBuilders.put(DirectoryElement.class, new DirectoryElementBuilder());
-    myBuilders.put(ArchiveElement.class, new ArchiveElementBuilder());
-    myBuilders.put(DirectoryCopyElement.class, new DirectoryCopyElementBuilder());
-    myBuilders.put(FileCopyElement.class, new FileCopyElementBuilder());
-    myBuilders.put(ExtractedDirectoryElement.class, new ExtractedDirectoryElementBuilder());
-    myBuilders.put(ModuleOutputElement.class, new ModuleOutputElementBuilder());
-    myBuilders.put(ModuleTestOutputElement.class, new ModuleTestOutputElementBuilder());
-    myBuilders.put(ComplexLayoutElement.class, new ComplexElementBuilder());
+    myBuilders = new ClassMap<LayoutElementBuilderService>();
+    LayoutElementBuilderService<?>[] standardBuilders = {
+      new RootElementBuilder(), new DirectoryElementBuilder(), new ArchiveElementBuilder(), new DirectoryCopyElementBuilder(),
+      new FileCopyElementBuilder(), new ExtractedDirectoryElementBuilder(), new ModuleOutputElementBuilder(),
+      new ModuleTestOutputElementBuilder(), new ComplexElementBuilder(), new ArtifactOutputElementBuilder()
+    };
+    for (LayoutElementBuilderService<?> builder : standardBuilders) {
+      myBuilders.put(builder.getElementClass(), builder);
+    }
+    for (LayoutElementBuilderService builder : OwnServiceLoader.load(LayoutElementBuilderService.class)) {
+      myBuilders.put(builder.getElementClass(), builder);
+    }
   }
 
   public void generateInstructions(LayoutElement layoutElement, ArtifactCompilerInstructionCreator instructionCreator,
                                    ArtifactInstructionsBuilderContext builderContext) {
-    final LayoutElementBuilder builder = myBuilders.get(layoutElement.getClass());
+    final LayoutElementBuilderService builder = myBuilders.get(layoutElement.getClass());
     if (builder == null) {
       LOG.error("Builder not found for artifact output layout element of class " + layoutElement.getClass());
     }
@@ -84,14 +87,22 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private class RootElementBuilder extends LayoutElementBuilder<RootElement> {
+  private class RootElementBuilder extends LayoutElementBuilderService<RootElement> {
+    public RootElementBuilder() {
+      super(RootElement.class);
+    }
+
     @Override
     public void generateInstructions(RootElement element, ArtifactCompilerInstructionCreator instructionCreator, ArtifactInstructionsBuilderContext builderContext) {
       generateChildrenInstructions(element, instructionCreator, builderContext);
     }
   }
 
-  private class DirectoryElementBuilder extends LayoutElementBuilder<DirectoryElement> {
+  private class DirectoryElementBuilder extends LayoutElementBuilderService<DirectoryElement> {
+    public DirectoryElementBuilder() {
+      super(DirectoryElement.class);
+    }
+
     @Override
     public void generateInstructions(DirectoryElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
@@ -100,7 +111,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private class ArchiveElementBuilder extends LayoutElementBuilder<ArchiveElement> {
+  private class ArchiveElementBuilder extends LayoutElementBuilderService<ArchiveElement> {
+    public ArchiveElementBuilder() {
+      super(ArchiveElement.class);
+    }
+
     @Override
     public void generateInstructions(ArchiveElement element, ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
@@ -108,7 +123,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class DirectoryCopyElementBuilder extends LayoutElementBuilder<DirectoryCopyElement> {
+  private static class DirectoryCopyElementBuilder extends LayoutElementBuilderService<DirectoryCopyElement> {
+    public DirectoryCopyElementBuilder() {
+      super(DirectoryCopyElement.class);
+    }
+
     @Override
     public void generateInstructions(DirectoryCopyElement element, ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
@@ -122,7 +141,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class FileCopyElementBuilder extends LayoutElementBuilder<FileCopyElement> {
+  private static class FileCopyElementBuilder extends LayoutElementBuilderService<FileCopyElement> {
+    public FileCopyElementBuilder() {
+      super(FileCopyElement.class);
+    }
+
     @Override
     public void generateInstructions(FileCopyElement element, ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
@@ -137,7 +160,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ExtractedDirectoryElementBuilder extends LayoutElementBuilder<ExtractedDirectoryElement> {
+  private static class ExtractedDirectoryElementBuilder extends LayoutElementBuilderService<ExtractedDirectoryElement> {
+    public ExtractedDirectoryElementBuilder() {
+      super(ExtractedDirectoryElement.class);
+    }
+
     @Override
     public void generateInstructions(ExtractedDirectoryElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
@@ -151,7 +178,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ModuleOutputElementBuilder extends LayoutElementBuilder<ModuleOutputElement> {
+  private static class ModuleOutputElementBuilder extends LayoutElementBuilderService<ModuleOutputElement> {
+    public ModuleOutputElementBuilder() {
+      super(ModuleOutputElement.class);
+    }
+
     @Override
     public void generateInstructions(ModuleOutputElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
@@ -160,7 +191,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ModuleTestOutputElementBuilder extends LayoutElementBuilder<ModuleTestOutputElement> {
+  private static class ModuleTestOutputElementBuilder extends LayoutElementBuilderService<ModuleTestOutputElement> {
+    public ModuleTestOutputElementBuilder() {
+      super(ModuleTestOutputElement.class);
+    }
+
     @Override
     public void generateInstructions(ModuleTestOutputElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
@@ -169,7 +204,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private class ComplexElementBuilder extends LayoutElementBuilder<ComplexLayoutElement> {
+  private class ComplexElementBuilder extends LayoutElementBuilderService<ComplexLayoutElement> {
+    public ComplexElementBuilder() {
+      super(ComplexLayoutElement.class);
+    }
+
     @Override
     public void generateInstructions(ComplexLayoutElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
@@ -178,7 +217,11 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private class ArtifactOutputElementBuilder extends LayoutElementBuilder<ArtifactLayoutElement> {
+  private class ArtifactOutputElementBuilder extends LayoutElementBuilderService<ArtifactLayoutElement> {
+    public ArtifactOutputElementBuilder() {
+      super(ArtifactLayoutElement.class);
+    }
+
     @Override
     public void generateInstructions(ArtifactLayoutElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,

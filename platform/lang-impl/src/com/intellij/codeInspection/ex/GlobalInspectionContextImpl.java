@@ -71,10 +71,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GlobalInspectionContextImpl extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -566,7 +563,8 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
                 GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
                 GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
                 ProblemsHolder problemsHolder = new ProblemsHolder(manager, file, false);
-                tool.checkFile(file, manager, problemsHolder, GlobalInspectionContextImpl.this, toolWrapper);
+                GlobalInspectionToolWrapper problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, localTools);
+                tool.checkFile(file, manager, problemsHolder, GlobalInspectionContextImpl.this, problemDescriptionProcessor);
                 LocalInspectionToolWrapper.addProblemDescriptors(problemsHolder.getResults(), false, GlobalInspectionContextImpl.this, null,
                                                                  CONVERT, toolWrapper);
                 return true;
@@ -595,6 +593,58 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
       tool.inspectionFinished(manager, this, toolWrapper);
     }
+  }
+
+  private static GlobalInspectionToolWrapper getProblemDescriptionProcessor(
+    @NotNull final GlobalInspectionToolWrapper toolWrapper, @NotNull List<Tools> localTools) {
+    final Map<String, DescriptorProviderInspection> dummyWrappersMap = getDummyInspectionWrappersMap(localTools);
+
+    if (dummyWrappersMap == null) {
+      return toolWrapper;
+    }
+
+    return new GlobalInspectionToolWrapper(toolWrapper.getTool()) {
+      @Override
+      public void addProblemElement(RefEntity refEntity, CommonProblemDescriptor... commonProblemDescriptors) {
+        for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
+          if (problemDescriptor instanceof ProblemDescriptor) {
+            String problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
+
+            if (problemGroup != null) {
+              dummyWrappersMap.get(problemGroup).addProblemElement(refEntity, problemDescriptor);
+            }
+            else {
+              toolWrapper.addProblemElement(refEntity, commonProblemDescriptors);
+            }
+          }
+        }
+      }
+    };
+  }
+
+  @Nullable
+  // Returns null if there's no dummy inspections
+  private static Map<String, DescriptorProviderInspection> getDummyInspectionWrappersMap(List<Tools> tools) {
+    Map<String, DescriptorProviderInspection> toolWrappers = null;
+
+    for (Tools tool : tools) {
+      InspectionProfileEntry profileEntry = tool.getTool();
+
+      if (profileEntry instanceof InspectionToolWrapper) {
+        InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profileEntry;
+        InspectionProfileEntry inspectionTool = toolWrapper.getTool();
+
+        if (inspectionTool instanceof LocalDummyInspectionTool) {
+          if (toolWrappers == null) {
+            toolWrappers = new HashMap<String, DescriptorProviderInspection>();
+          }
+
+          toolWrappers.put(((LocalDummyInspectionTool)inspectionTool).getProblemGroup(), toolWrapper);
+        }
+      }
+    }
+
+    return toolWrappers;
   }
 
   private static final TripleFunction<LocalInspectionTool,PsiElement,GlobalInspectionContext,RefElement> CONVERT =

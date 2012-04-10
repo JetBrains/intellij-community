@@ -20,6 +20,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Maxim.Mossienko
@@ -45,6 +46,7 @@ public class GlobalInspectionUtil {
   }
 
   public static void createProblem(PsiElement elt, String message, ProblemHighlightType problemHighlightType, TextRange range,
+                                   @Nullable String problemGroup,
                                    InspectionManager manager, ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    GlobalInspectionContext globalContext) {
     ProblemDescriptor descriptor = manager.createProblemDescriptor(
@@ -52,6 +54,7 @@ public class GlobalInspectionUtil {
       range,
       createInspectionMessage(message),
       problemHighlightType, false);
+    descriptor.setProblemGroup(problemGroup);
     problemDescriptionsProcessor.addProblemElement(
       retrieveRefElement(elt, globalContext),
       descriptor

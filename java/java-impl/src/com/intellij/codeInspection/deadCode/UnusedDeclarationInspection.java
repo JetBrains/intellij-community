@@ -341,6 +341,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       @Override public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
+          if (!refElement.isSuspicious()) return;
+
           final PsiElement element = refElement.getElement();
           if (element == null) return;
           final boolean isSuppressed = refElement.isSuppressed(getShortName());
@@ -350,7 +352,6 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
             }
             return;
           }
-          if (!refElement.isSuspicious()) return;
           refElement.accept(new RefJavaVisitor() {
             @Override public void visitElement(final RefEntity elem) {
               if (elem instanceof RefElement) {

@@ -235,6 +235,7 @@ public class HighlightInfo implements Segment {
   public boolean fromInjection;
 
   private GutterIconRenderer gutterIconRenderer;
+  private String myProblemGroup;
 
   public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
     this(null, type, startOffset, endOffset, description, toolTip, type.getSeverity(null), false, null, false);
@@ -363,6 +364,15 @@ public class HighlightInfo implements Segment {
     this.gutterIconRenderer = gutterIconRenderer;
   }
 
+  @Nullable
+  public String getProblemGroup() {
+    return myProblemGroup;
+  }
+
+  public void setProblemGroup(@Nullable String problemGroup) {
+    myProblemGroup = problemGroup;
+  }
+
   public static HighlightInfo createHighlightInfo(@NotNull final HighlightInfoType type,
                                                   @NotNull final PsiElement element,
                                                   final String message,
@@ -389,6 +399,7 @@ public class HighlightInfo implements Segment {
                                            annotation.getMessage(), annotation.getTooltip(),
                                            annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping(), annotation.isFileLevelAnnotation());
     info.setGutterIconRenderer(annotation.getGutterIconRenderer());
+    info.setProblemGroup(annotation.getProblemGroup());
     List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {

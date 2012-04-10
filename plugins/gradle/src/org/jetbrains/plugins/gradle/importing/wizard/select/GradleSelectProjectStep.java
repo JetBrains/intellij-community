@@ -95,7 +95,8 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
 
   @Override
   public boolean validate() throws ConfigurationException {
-    if (myConfigurable.getCurrentGradleHomeSettingType() == GradleHomeSettingType.EXPLICIT_INCORRECT) {
+    final GradleHomeSettingType settingType = myConfigurable.getCurrentGradleHomeSettingType();
+    if (settingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
       GradleUtil.showBalloon(
         myConfigurable.getGradleHomeComponent().getPathComponent(),
         MessageType.ERROR,
@@ -103,7 +104,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
       );
       return false;
     }
-    if (myConfigurable.getCurrentGradleHomeSettingType() == GradleHomeSettingType.UNKNOWN) {
+    if (settingType == GradleHomeSettingType.UNKNOWN) {
       GradleUtil.showBalloon(
         myConfigurable.getGradleHomeComponent().getPathComponent(),
         MessageType.ERROR,

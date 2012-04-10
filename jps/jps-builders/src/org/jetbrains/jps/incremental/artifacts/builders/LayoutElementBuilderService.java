@@ -7,6 +7,16 @@ import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructions
 /**
  * @author nik
  */
-public abstract class LayoutElementBuilder<E extends LayoutElement> {
+public abstract class LayoutElementBuilderService<E extends LayoutElement> {
+  private final Class<E> myElementClass;
+
+  protected LayoutElementBuilderService(Class<E> elementClass) {
+    myElementClass = elementClass;
+  }
+
   public abstract void generateInstructions(E element, ArtifactCompilerInstructionCreator instructionCreator, ArtifactInstructionsBuilderContext builderContext);
+
+  public final Class<E> getElementClass() {
+    return myElementClass;
+  }
 }

@@ -55,7 +55,7 @@ import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
-import com.intellij.uiDesigner.make.CopyResourcesUtil;
+import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import com.intellij.uiDesigner.make.Form2ByteCodeCompiler;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;

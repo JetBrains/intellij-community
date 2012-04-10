@@ -55,6 +55,8 @@ public final class Annotation implements Segment {
   private boolean myAfterEndOfLine = false;
   private boolean myIsFileLevelAnnotation = false;
   private GutterIconRenderer myGutterIconRenderer;
+  @Nullable
+  private String myProblemGroup;
 
   public static class QuickFixInfo {
     public final IntentionAction quickFix;
@@ -377,6 +379,25 @@ public final class Annotation implements Segment {
    */
   public void setGutterIconRenderer(@Nullable final GutterIconRenderer gutterIconRenderer) {
     myGutterIconRenderer = gutterIconRenderer;
+  }
+
+  /**
+   * Gets the unique string, which is the same for all of the problems of this group
+   *
+   * @return the problem group
+   */
+  @Nullable
+  public String getProblemGroup() {
+    return myProblemGroup;
+  }
+
+  /**
+   * Sets the unique string, which is the same for all of the problems of this group
+   *
+   * @param problemGroup the problem group
+   */
+  public void setProblemGroup(@Nullable String problemGroup) {
+    myProblemGroup = problemGroup;
   }
 
   @NonNls

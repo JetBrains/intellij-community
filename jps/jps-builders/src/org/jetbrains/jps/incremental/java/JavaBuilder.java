@@ -92,7 +92,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             final BuildDataManager dataManager = context.getDataManager();
             if (moduleAndRoot != null) {
               try {
-                final String moduleName = moduleAndRoot.module.getName().toLowerCase(Locale.US);
+                final String moduleName = moduleAndRoot.module.getName();
                 dataManager.getSourceToOutputMap(moduleName, context.isCompilingTests()).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {
@@ -288,6 +288,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
+                if (context.getProject().getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !context.isCompilingTests()) {
+                  for (Module module : chunk.getModules()) {
+                    final File outputDir = paths.getModuleOutputDir(module, false);
+                    if (outputDir != null) {
+                      CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
+                    }
+                  }
+                }
               }
               finally {
                 context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));
