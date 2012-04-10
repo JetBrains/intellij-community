@@ -56,42 +56,6 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
-    return super.intersectWith(scope);
-  }
-
-  @Override
-  @NotNull
-  public SearchScope intersectWith(@NotNull SearchScope scope2) {
-    return super.intersectWith(scope2);
-  }
-
-  @NotNull
-  @Override
-  public SearchScope intersectWith(@NotNull LocalSearchScope localScope2) {
-    return super.intersectWith(localScope2);
-  }
-
-  @Override
-  @NotNull
-  public GlobalSearchScope union(@NotNull SearchScope scope) {
-    return super.union(scope);
-  }
-
-  @Override
-  @NotNull
-  public GlobalSearchScope union(@NotNull LocalSearchScope scope) {
-    return super.union(scope);
-  }
-
-  @NotNull
-  @Override
-  public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    return super.uniteWith(scope);
-  }
-
-  @Override
   public String getDisplayName() {
     return myBaseScope.getDisplayName();
   }
