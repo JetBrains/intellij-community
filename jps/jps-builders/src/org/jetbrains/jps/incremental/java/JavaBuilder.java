@@ -288,6 +288,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
+                if (context.getProject().getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !context.isCompilingTests()) {
+                  for (Module module : chunk.getModules()) {
+                    final File outputDir = paths.getModuleOutputDir(module, false);
+                    if (outputDir != null) {
+                      CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
+                    }
+                  }
+                }
               }
               finally {
                 context.processMessage(new ProgressMessage("Finished instrumenting forms [" + chunkName + "]"));

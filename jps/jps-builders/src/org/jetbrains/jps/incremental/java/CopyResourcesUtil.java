@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner.make;
+package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.uiDesigner.actions.PreviewFormAction;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -40,7 +39,7 @@ public final class CopyResourcesUtil {
       }
     }
     @NonNls final String resourceName = "/" + className + ".class";
-    final InputStream stream = PreviewFormAction.class.getResourceAsStream(resourceName);
+    final InputStream stream = CopyResourcesUtil.class.getResourceAsStream(resourceName);
     if (stream == null) {
       throw new IOException("cannot load " + resourceName);
     }
@@ -71,7 +70,7 @@ public final class CopyResourcesUtil {
       f.deleteOnExit();
     }
     final String resourceName = "/" + fileName;
-    final InputStream stream = PreviewFormAction.class.getResourceAsStream(resourceName);
+    final InputStream stream = CopyResourcesUtil.class.getResourceAsStream(resourceName);
     if (stream == null) {
       return;
     }
