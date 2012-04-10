@@ -57,7 +57,9 @@ public class LinearLayoutOperation extends FlowBaseOperation {
       FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
 
       myFeedback = new GravityFeedback();
-      myFeedback.setBounds(myBounds);
+      if (myContainer.getChildren().isEmpty()) {
+        myFeedback.setBounds(myBounds);
+      }
       layer.add(myFeedback, 0);
 
       myTextFeedback = new TextFeedback();
@@ -74,6 +76,10 @@ public class LinearLayoutOperation extends FlowBaseOperation {
 
     Point location = myContext.getLocation();
     Gravity gravity = myHorizontal ? calculateVertical(myBounds, location) : calculateHorizontal(myBounds, location);
+
+    if (!myContainer.getChildren().isEmpty()) {
+      myFeedback.setBounds(myInsertFeedback.getBounds());
+    }
 
     myFeedback.setGravity(gravity);
 
@@ -252,7 +258,7 @@ public class LinearLayoutOperation extends FlowBaseOperation {
         g.fillRect(myBounds.width - SIZE, y, SIZE, height);
       }
       else {
-        g.fillRect(myInsertFeedback.getX() - myBounds.x + SIZE, y, SIZE, height);
+        g.fillRect(SIZE, y, SIZE, height);
       }
     }
 
@@ -280,7 +286,7 @@ public class LinearLayoutOperation extends FlowBaseOperation {
         g.fillRect(x, myBounds.height - SIZE, width, SIZE);
       }
       else {
-        g.fillRect(x, myInsertFeedback.getY() - myBounds.y + SIZE, width, SIZE);
+        g.fillRect(x, SIZE, width, SIZE);
       }
     }
   }
