@@ -29,9 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ui.GradleIcons;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
+import org.jetbrains.plugins.gradle.util.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -289,9 +287,13 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     return myGradleHomeComponent;
   }
 
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   @NotNull
   public GradleHomeSettingType getCurrentGradleHomeSettingType() {
     String path = myGradleHomeComponent.getPath();
+    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+      GradleLog.LOG.info(String.format("Checking 'gradle home' status. Manually entered value is '%s'", path));
+    }
     if (path == null || StringUtil.isEmpty(path.trim())) {
       return GradleHomeSettingType.UNKNOWN;
     }
