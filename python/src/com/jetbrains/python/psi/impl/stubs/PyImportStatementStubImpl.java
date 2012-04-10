@@ -13,4 +13,9 @@ public class PyImportStatementStubImpl extends StubBase<PyImportStatement> imple
   public PyImportStatementStubImpl(StubElement parentStub, IStubElementType elementType) {
     super(parentStub, elementType);
   }
+
+  @Override
+  public String toString() {
+    return "PyImportStatementStub()";
+  }
 }

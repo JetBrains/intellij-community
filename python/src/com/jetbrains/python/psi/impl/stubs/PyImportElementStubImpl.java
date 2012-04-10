@@ -30,4 +30,9 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
   public String getAsName() {
     return myAsName;
   }
+
+  @Override
+  public String toString() {
+    return "PyImportElementStub(importedQName=" + myImportedQName + " asName=" + myAsName + ")";
+  }
 }

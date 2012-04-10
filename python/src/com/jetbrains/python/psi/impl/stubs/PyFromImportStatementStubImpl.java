@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
@@ -38,6 +37,6 @@ public class PyFromImportStatementStubImpl extends StubBase<PyFromImportStatemen
 
   @Override
   public String toString() {
-    return "PyFromImportStarementStub(source=" + myImportSourceQName + " starImport=" + myStarImport + ")";
+    return "PyFromImportStatementStub(source=" + myImportSourceQName + " starImport=" + myStarImport + ")";
   }
 }
