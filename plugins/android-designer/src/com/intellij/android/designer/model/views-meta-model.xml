@@ -1074,6 +1074,24 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
+        layout="com.intellij.android.designer.model.layout.RadAbsoluteLayout"
+        class="android.widget.AbsoluteLayout"
+        tag="AbsoluteLayout">
+
+    <palette title="AbsoluteLayout" icon="/com/intellij/android/designer/icons/AbsoluteLayout.png"
+             tooltip="A layout that lets you specify exact locations (x/y coordinates) of its children. Absolute layouts are less flexible and harder to maintain than other types of layouts without absolute positioning."/>
+
+    <creation>
+      <![CDATA[
+          <AbsoluteLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </AbsoluteLayout>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Palette ================= -->
 
   <palette>
