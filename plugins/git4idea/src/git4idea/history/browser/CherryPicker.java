@@ -91,17 +91,19 @@ public class CherryPicker {
                                                                   commit.getShortHash().getString(), commit.getAuthor(),
                                                                   commit.getSubject()).merge();
           if (mergeCompleted) {
-            boolean committed = updateChangeListManagerAndShowCommitDialogIfNeeded(repository, commit, true);
+            CherryPickData data = updateChangeListManager(commit);
+            boolean committed = showCommitDialog(repository, commit, data.myChangeList, data.myCommitMessage);
             if (!committed) {
               notifyConflictWarning(commit, successfulCommits);
               return false;
             }
             else {
+              removeChangeList(data.myChangeList);
               successfulCommits.add(commit);
             }
           }
           else {
-            updateChangeListManagerAndShowCommitDialogIfNeeded(repository, commit, false);
+            updateChangeListManager(commit);
             notifyConflictWarning(commit, successfulCommits);
             return false;
           }
@@ -120,22 +122,22 @@ public class CherryPicker {
     return true;
   }
 
+  private void removeChangeList(LocalChangeList list) {
+    myChangeListManager.removeChangeList(list);
+  }
+
   private void notifyConflictWarning(GitCommit commit, List<GitCommit> successfulCommits) {
     String description = commitDetails(commit);
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-picked with conflicts", description);
   }
 
-  private boolean updateChangeListManagerAndShowCommitDialogIfNeeded(@NotNull GitRepository repository, @NotNull final GitCommit commit,
-                                                                     boolean showCommitDialog) {
+  private CherryPickData updateChangeListManager(@NotNull final GitCommit commit) {
     final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
     refreshChangedFiles(paths);
     final String commitMessage = createCommitMessage(commit, paths);
     LocalChangeList changeList = createChangeListAfterUpdate(commit.getChanges(), paths, commitMessage);
-    if (showCommitDialog) {
-      return showCommitDialog(repository, commit, changeList, commitMessage);
-    }
-    return false;
+    return new CherryPickData(changeList, commitMessage);
   }
 
   @NotNull
@@ -146,15 +148,16 @@ public class CherryPicker {
       @Override
       public void run() {
         myChangeListManager.invokeAfterUpdate(new Runnable() {
-            public void run() {
-              changeList.set(createChangeList(changes, commitMessage));
-            }
-          }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "",
-          new Consumer<VcsDirtyScopeManager>() {
-            public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-              vcsDirtyScopeManager.filePathsDirty(paths, null);
-            }
-        }, ModalityState.NON_MODAL);
+                                                public void run() {
+                                                  changeList.set(createChangeList(changes, commitMessage));
+                                                }
+                                              }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, "",
+                                              new Consumer<VcsDirtyScopeManager>() {
+                                                public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
+                                                  vcsDirtyScopeManager.filePathsDirty(paths, null);
+                                                }
+                                              }, ModalityState.NON_MODAL
+        );
       }
     }, ModalityState.NON_MODAL);
 
@@ -268,6 +271,16 @@ public class CherryPicker {
       return changeList;
     }
     return myChangeListManager.getDefaultChangeList();
+  }
+
+  private static class CherryPickData {
+    private final LocalChangeList myChangeList;
+    private final String myCommitMessage;
+
+    private CherryPickData(LocalChangeList list, String message) {
+      myChangeList = list;
+      myCommitMessage = message;
+    }
   }
 
   private static class CherryPickConflictResolver extends GitConflictResolver {
