@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,6 @@
 #define WATCH_COUNT_NAME "/proc/sys/fs/inotify/max_user_watches"
 
 #define DEFAULT_SUBDIR_COUNT 5
-
-#define CHECK_NULL(p) if (p == NULL)  { userlog(LOG_ERR, "out of memory"); return ERR_ABORT; }
 
 typedef struct __watch_node {
   char* name;
@@ -153,9 +151,9 @@ static int add_watch(const char* path, watch_node* parent) {
 
   node = malloc(sizeof(watch_node));
 
-  CHECK_NULL(node);
+  CHECK_NULL(node, ERR_ABORT);
   node->name = strdup(path);
-  CHECK_NULL(node->name);
+  CHECK_NULL(node->name, ERR_ABORT);
   node->wd = wd;
   node->parent = parent;
   node->kids = NULL;
@@ -163,9 +161,9 @@ static int add_watch(const char* path, watch_node* parent) {
   if (parent != NULL) {
     if (parent->kids == NULL) {
       parent->kids = array_create(DEFAULT_SUBDIR_COUNT);
-      CHECK_NULL(parent->kids);
+      CHECK_NULL(parent->kids, ERR_ABORT);
     }
-    CHECK_NULL(array_push(parent->kids, node));
+    CHECK_NULL(array_push(parent->kids, node), ERR_ABORT);
   }
 
   if (table_put(watches, wd, node) == NULL) {
@@ -238,25 +236,31 @@ static bool is_ignored(const char* path, array* ignores) {
   return false;
 }
 
-static int walk_tree(const char* path, watch_node* parent, array* ignores) {
+static int walk_tree(const char* path, watch_node* parent, array* ignores, bool recursive) {
   if (is_ignored(path, ignores)) {
     return ERR_IGNORE;
   }
 
-  DIR* dir = opendir(path);
-  if (dir == NULL) {
-    if (errno == EACCES) {
-      return ERR_IGNORE;
+  DIR* dir;
+  if (recursive) {
+    dir = opendir(path);
+    if (dir == NULL) {
+      if (errno == EACCES) {
+        return ERR_IGNORE;
+      }
+      else if (errno == ENOTDIR) {  // "future" root
+        return add_watch(path, parent);
+      }
+      userlog(LOG_ERR, "opendir(%s): %s", path, strerror(errno));
+      return ERR_CONTINUE;
     }
-    else if (errno == ENOTDIR) {  // flat root
-      return add_watch(path, parent);
-    }
-    userlog(LOG_ERR, "opendir(%s): %s", path, strerror(errno));
-    return ERR_CONTINUE;
   }
 
   int id = add_watch(path, parent);
-  if (id < 0) {
+  if (!recursive) {
+    return id;
+  }
+  else if (id < 0) {
     closedir(dir);
     return id;
   }
@@ -279,7 +283,7 @@ static int walk_tree(const char* path, watch_node* parent, array* ignores) {
       continue;
     }
 
-    int subdir_id = walk_tree(subdir, table_get(watches, id), ignores);
+    int subdir_id = walk_tree(subdir, table_get(watches, id), ignores, recursive);
     if (subdir_id < 0 && subdir_id != ERR_IGNORE) {
       rm_watch(id, true);
       id = subdir_id;
@@ -293,9 +297,15 @@ static int walk_tree(const char* path, watch_node* parent, array* ignores) {
 
 
 int watch(const char* root, array* ignores) {
+  bool recursive = true;
+  if (root[0] == '|') {
+    root++;
+    recursive = false;
+  }
+
   char buf[PATH_MAX];
   const char* normalized = realpath(root, buf);
-  return walk_tree((normalized != NULL ? normalized : root), NULL, ignores);
+  return walk_tree((normalized != NULL ? normalized : root), NULL, ignores, recursive);
 }
 
 
@@ -323,7 +333,7 @@ static bool process_inotify_event(struct inotify_event* event) {
   }
 
   if ((event->mask & IN_CREATE || event->mask & IN_MOVED_TO) && event->mask & IN_ISDIR) {
-    int result = walk_tree(path, node, NULL);
+    int result = walk_tree(path, node, NULL, true);
     if (result < 0 && result != ERR_IGNORE) {
       return false;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@
 // logging
 void userlog(int priority, const char* format, ...);
 
+#define CHECK_NULL(p, r) if (p == NULL)  { userlog(LOG_ERR, "out of memory"); return r; }
+
 
 // variable-length array
 typedef struct __array array;
@@ -38,7 +40,7 @@ void array_delete(array* a);
 void array_delete_vs_data(array* a);
 
 
-// key/value pairs table
+// poor man's hash table
 typedef struct __table table;
 
 table* table_create(int capacity);
