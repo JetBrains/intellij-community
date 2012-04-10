@@ -343,11 +343,12 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           if (!refElement.isSuspicious()) return;
 
-          final PsiElement element = refElement.getElement();
-          if (element == null) return;
+          PsiFile file = refElement.getContainingFile();
+
+          if (file == null) return;
           final boolean isSuppressed = refElement.isSuppressed(getShortName());
-          if (!getContext().isToCheckMember(element, UnusedDeclarationInspection.this) || isSuppressed) {
-            if (isSuppressed || !scope.contains(element)) {
+          if (!getContext().isToCheckFile(file, UnusedDeclarationInspection.this) || isSuppressed) {
+            if (isSuppressed || !scope.contains(file)) {
               getEntryPointsManager().addEntryPoint(refElement, false);
             }
             return;

@@ -71,7 +71,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class GlobalInspectionContextImpl extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -346,16 +349,15 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
 
   public boolean isToCheckMember(@NotNull RefElement owner, InspectionProfileEntry tool) {
-    final PsiElement element = owner.getElement();
-    return isToCheckMember(element, tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName());
+    return isToCheckFile(((RefElementImpl)owner).getContainingFile(), tool) && !((RefElementImpl)owner).isSuppressed(tool.getShortName());
   }
 
-  public boolean isToCheckMember(final PsiElement element, final InspectionProfileEntry tool) {
+  public boolean isToCheckFile(PsiFile file, final InspectionProfileEntry tool) {
     final Tools tools = myTools.get(tool.getShortName());
     if (tools != null) {
       for (ScopeToolState state : tools.getTools()) {
-        final NamedScope namedScope = state.getScope(element.getProject());
-        if (namedScope == null || namedScope.getValue().contains(element.getContainingFile(), getCurrentProfile().getProfileManager().getScopesManager())) {
+        final NamedScope namedScope = state.getScope(file.getProject());
+        if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
           if (state.isEnabled()) {
             final InspectionProfileEntry entry = state.getTool();
             if (entry instanceof InspectionToolWrapper && ((InspectionToolWrapper)entry).getTool() == tool) return true;
