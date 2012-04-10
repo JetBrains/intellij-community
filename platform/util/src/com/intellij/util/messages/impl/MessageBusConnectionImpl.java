@@ -47,6 +47,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     myBus = bus;
   }
 
+  @Override
   public <L> void subscribe(Topic<L> topic, L handler) throws IllegalStateException {
     if (mySubscriptions.put(topic, handler) != null) {
       throw new IllegalStateException("Subscription to " + topic + " already exists");
@@ -54,6 +55,7 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     myBus.notifyOnSubscription(this, topic);
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public <L> void subscribe(Topic<L> topic) throws IllegalStateException {
     if (myDefaultHandler == null) {
@@ -61,32 +63,34 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
                                       + "Target topic: " + topic);
     }
     if (topic.getListenerClass().isInstance(myDefaultHandler)) {
-      throw new IllegalStateException(String.format(
-        "Can't subscribe to the topic '%s'. Reason: default handler has incompatible type - expected: '%s', actual: '%s'",
-        topic, topic.getListenerClass(), myDefaultHandler.getClass()
-      ));
+      throw new IllegalStateException("Can't subscribe to the topic '" + topic +"'. Default handler has incompatible type - expected: '" +
+        topic.getListenerClass() + "', actual: '" + myDefaultHandler.getClass() + "'");
     }
 
     subscribe(topic, (L)myDefaultHandler);
   }
 
+  @Override
   public void setDefaultHandler(MessageHandler handler) {
     myDefaultHandler = handler;
   }
 
+  @Override
   public void disconnect() {
     Queue<Message> jobs = myPendingMessages.get();
-    if (!jobs.isEmpty()) {
-      LOG.error("Not delivered events in the queue: "+jobs);
-    }
     myPendingMessages.remove();
     myBus.notifyConnectionTerminated(this);
+    if (!jobs.isEmpty()) {
+      LOG.error("Not delivered events in the queue: " + jobs);
+    }
   }
 
+  @Override
   public void dispose() {
     disconnect();
   }
 
+  @Override
   public void deliverImmediately() {
     while (!myPendingMessages.get().isEmpty()) {
       myBus.deliverSingleMessage();
