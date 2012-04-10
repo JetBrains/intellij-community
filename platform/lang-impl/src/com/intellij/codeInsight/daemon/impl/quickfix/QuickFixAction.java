@@ -50,7 +50,7 @@ public final class QuickFixAction {
   }
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
-    registerQuickFixAction(info, null, action, null);
+    registerQuickFixAction(info, null, action);
   }
 
   public static void registerQuickFixActions(final HighlightInfo info, final Collection<? extends IntentionAction> actions) {
@@ -87,6 +87,10 @@ public final class QuickFixAction {
 
   public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
     doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
+  }
+
+  public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action) {
+    doRegister(info, action, null, null, fixRange, null);
   }
 
   public static void unregisterQuickFixAction(HighlightInfo info, Condition<IntentionAction> condition) {

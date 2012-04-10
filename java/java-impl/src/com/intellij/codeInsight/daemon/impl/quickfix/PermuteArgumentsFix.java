@@ -114,7 +114,7 @@ public class PermuteArgumentsFix implements IntentionAction {
     }
     if (permutations.size() == 1) {
       PermuteArgumentsFix fix = new PermuteArgumentsFix(callExpression, permutations.get(0));
-      QuickFixAction.registerQuickFixAction(info, fixRange, fix, null);
+      QuickFixAction.registerQuickFixAction(info, fixRange, fix);
     }
   }
 
