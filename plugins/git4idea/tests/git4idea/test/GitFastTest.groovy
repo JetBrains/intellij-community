@@ -61,7 +61,8 @@ class GitFastTest {
     if (expected) {
       Notification actualNotification = (myPlatformFacade.getNotificator(myProject) as TestNotificator).lastNotification
       assertNotNull "No notification was shown", actualNotification
-      assertEquals(stripLineBreaksAndHtml(expected.content), stripLineBreaksAndHtml(actualNotification.content))
+      assertEquals "Notification has wrong content", stripLineBreaksAndHtml(expected.content),
+                   stripLineBreaksAndHtml(actualNotification.content)
     }
   }
 
