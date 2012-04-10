@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,7 +97,7 @@ public class LocalResourceManager extends ResourceManager {
     return AndroidRootUtil.getResourceDir(getFacet());
   }
 
-  public List<Resources> getResourceElements() {
+  public List<Pair<Resources, VirtualFile>> getResourceElements() {
     return getResourceElements(null);
   }
 
@@ -200,7 +201,8 @@ public class LocalResourceManager extends ResourceManager {
   @NotNull
   public List<Attr> findAttrs(@NotNull String name) {
     List<Attr> list = new ArrayList<Attr>();
-    for (Resources res : getResourceElements()) {
+    for (Pair<Resources, VirtualFile> pair : getResourceElements()) {
+      final Resources res = pair.getFirst();
       for (Attr attr : res.getAttrs()) {
         if (name.equals(attr.getName().getValue())) {
           list.add(attr);
@@ -219,7 +221,8 @@ public class LocalResourceManager extends ResourceManager {
 
   public List<DeclareStyleable> findStyleables(@NotNull String name) {
     List<DeclareStyleable> list = new ArrayList<DeclareStyleable>();
-    for (Resources res : getResourceElements()) {
+    for (Pair<Resources, VirtualFile> pair : getResourceElements()) {
+      final Resources res = pair.getFirst();
       for (DeclareStyleable styleable : res.getDeclareStyleables()) {
         if (name.equals(styleable.getName().getValue())) {
           list.add(styleable);
