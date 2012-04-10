@@ -444,10 +444,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       return false;
     }
     for (InspectionToolWrapper tool : tools) {
-      if (tool.getTool() instanceof LocalDummyInspectionTool && !((LocalDummyInspectionTool)tool.getTool()).shouldBeShownInInspectionProfile()) {
-        continue;
-      }
-
       final String shortName = tool.getShortName();
       HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
       if (key == null) {
