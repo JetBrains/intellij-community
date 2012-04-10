@@ -1,0 +1,101 @@
+object path entity ('myObject')
+WHITE_SPACE (' ')
+{ ('{')
+WHITE_SPACE ('
+')
+object path entity ('field')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('title')
+WHITE_SPACE ('
+   ')
+object path entity ('ifEmpty')
+WHITE_SPACE (' ')
+{ ('{')
+ignored text ('  ignored text')
+WHITE_SPACE ('
+       ')
+object path entity ('data')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('leveltitle:0  } bracket is ignored')
+WHITE_SPACE ('
+     ')
+condition ('[i = 5]')
+WHITE_SPACE ('
+    ')
+} ('}')
+ignored text ('    some ignored text')
+WHITE_SPACE ('
+')
+} ('}')
+WHITE_SPACE ('
+')
+} ('}')
+ignored text (' this brace is also ignored by parser')
+WHITE_SPACE ('
+
+')
+object path entity ('second')
+. ('.')
+object path entity ('object')
+{ ('{')
+WHITE_SPACE ('
+')
+ignored text ('{ ignored opening bracket')
+WHITE_SPACE ('
+ ')
+. ('.')
+object path entity ('10')
+WHITE_SPACE (' ')
+= ('=')
+WHITE_SPACE (' ')
+assignment value ('left')
+WHITE_SPACE ('
+ ')
+object path entity ('prop')
+WHITE_SPACE (' ')
+< ('<')
+WHITE_SPACE (' ')
+object path entity ('test')
+WHITE_SPACE ('
+ ')
+object path entity ('text')
+( ('(')
+WHITE_SPACE ('
+  ')
+multiline value ('} ignored bracket')
+WHITE_SPACE ('
+ ')
+) (')')
+WHITE_SPACE ('
+')
+} ('}')
+WHITE_SPACE ('
+
+')
+object path entity ('third')
+. ('.')
+object path entity ('object')
+{ ('{')
+WHITE_SPACE ('
+  ')
+object path entity ('do')
+. ('.')
+object path entity ('not')
+. ('.')
+object path entity ('ignore')
+{ ('{')
+WHITE_SPACE ('
+    ')
+object path entity ('i')
+= ('=')
+assignment value ('5')
+WHITE_SPACE ('
+  ')
+} ('}')
+WHITE_SPACE ('
+')
+} ('}')

@@ -1,0 +1,28 @@
+one line comment ('#CommentText')
+WHITE_SPACE ('
+')
+one line comment ('/ another comment')
+WHITE_SPACE ('
+
+')
+one line comment ('/third comment for test')
+WHITE_SPACE ('
+')
+one line comment ('#fourth comment')
+WHITE_SPACE ('
+')
+one line comment ('# the fifth comment')
+WHITE_SPACE ('
+
+')
+one line comment ('#sixth comment')
+WHITE_SPACE ('
+')
+one line comment ('/seventh')
+WHITE_SPACE ('
+')
+one line comment ('/and one more comment')
+WHITE_SPACE ('
+
+')
+one line comment ('// must be single comment')

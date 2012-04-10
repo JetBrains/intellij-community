@@ -1,0 +1,1 @@
+myObject=[value 1]
