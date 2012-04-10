@@ -98,7 +98,7 @@ public class CherryPicker {
               return false;
             }
             else {
-              removeChangeList(data.myChangeList);
+              removeChangeList(data);
               successfulCommits.add(commit);
             }
           }
@@ -122,8 +122,9 @@ public class CherryPicker {
     return true;
   }
 
-  private void removeChangeList(LocalChangeList list) {
-    myChangeListManager.removeChangeList(list);
+  private void removeChangeList(CherryPickData list) {
+    myChangeListManager.setDefaultChangeList(list.myPreviouslyDefaultChangeList);
+    myChangeListManager.removeChangeList(list.myChangeList);
   }
 
   private void notifyConflictWarning(GitCommit commit, List<GitCommit> successfulCommits) {
@@ -136,8 +137,9 @@ public class CherryPicker {
     final Collection<FilePath> paths = ChangesUtil.getPaths(commit.getChanges());
     refreshChangedFiles(paths);
     final String commitMessage = createCommitMessage(commit, paths);
+    LocalChangeList previouslyDefaultChangeList = myChangeListManager.getDefaultChangeList();
     LocalChangeList changeList = createChangeListAfterUpdate(commit.getChanges(), paths, commitMessage);
-    return new CherryPickData(changeList, commitMessage);
+    return new CherryPickData(changeList, commitMessage, previouslyDefaultChangeList);
   }
 
   @NotNull
@@ -276,10 +278,12 @@ public class CherryPicker {
   private static class CherryPickData {
     private final LocalChangeList myChangeList;
     private final String myCommitMessage;
+    private final LocalChangeList myPreviouslyDefaultChangeList;
 
-    private CherryPickData(LocalChangeList list, String message) {
+    private CherryPickData(LocalChangeList list, String message, LocalChangeList previouslyDefaultChangeList) {
       myChangeList = list;
       myCommitMessage = message;
+      myPreviouslyDefaultChangeList = previouslyDefaultChangeList;
     }
   }
 
