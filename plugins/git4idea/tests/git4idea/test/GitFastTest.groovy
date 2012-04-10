@@ -63,6 +63,7 @@ class GitFastTest {
       assertNotNull "No notification was shown", actualNotification
       assertEquals "Notification has wrong content", stripLineBreaksAndHtml(expected.content),
                    stripLineBreaksAndHtml(actualNotification.content)
+      assertEquals "Notification has wrong title", expected.title, actualNotification.title
     }
   }
 
