@@ -34,7 +34,7 @@ import java.util.*;
  */
 public class PyClassType extends UserDataHolderBase implements PyCallableType {
 
-  protected final PyClass myClass;
+  @Nullable protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
   private static ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
@@ -110,10 +110,14 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     }
   }
 
+  @Nullable
   private List<? extends RatedResolveResult> doResolveMember(String name,
                                                              PyExpression location,
                                                              AccessDirection direction,
                                                              PyResolveContext resolveContext) {
+    if (myClass == null) {
+      return null;
+    }
     if (resolveContext.allowProperties()) {
       Property property = myClass.findProperty(name);
       if (property != null) {
@@ -189,7 +193,11 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     return Collections.emptyList();
   }
 
+  @Nullable
   private PyClassType getMetaclassType() {
+    if (myClass == null) {
+      return null;
+    }
     final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.METACLASS, true);
     if (metaClassAttribute != null) {
       final PyExpression metaclass = metaClassAttribute.findAssignedValue();
@@ -290,6 +298,9 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
+    if (myClass == null) {
+      return;
+    }
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
@@ -336,6 +347,9 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   private void addInheritedMembers(String name, PyExpression expressionHook, ProcessingContext context, List<Object> ret) {
+    if (myClass == null) {
+      return;
+    }
     for (PyClass ancestor : myClass.getSuperClasses()) {
       Object[] ancestry = (new PyClassType(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
@@ -366,7 +380,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
 
   @Override
   public void assertValid() {
-    if (!myClass.isValid()) {
+    if (myClass != null && !myClass.isValid()) {
       throw new PsiInvalidElementAccessException(myClass);
     }
   }
