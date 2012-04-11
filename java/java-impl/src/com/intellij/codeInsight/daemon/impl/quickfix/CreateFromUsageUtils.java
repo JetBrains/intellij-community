@@ -29,6 +29,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -182,7 +183,7 @@ public class CreateFromUsageUtils {
     }
   }
 
-  public static void setupEditor(PsiMethod method, Editor newEditor) {
+  public static void setupEditor(PsiMethod method, final Editor newEditor) {
     PsiCodeBlock body = method.getBody();
     if (body != null) {
       PsiElement l = PsiTreeUtil.skipSiblingsForward(body.getLBrace(), PsiWhiteSpace.class);
@@ -191,7 +192,14 @@ public class CreateFromUsageUtils {
         int start = l.getTextRange().getStartOffset();
         int end   = r.getTextRange().getEndOffset();
         newEditor.getCaretModel().moveToOffset(Math.max(start, end));
-        newEditor.getSelectionModel().setSelection(Math.min(start, end), Math.max(start, end));
+        if (end < start) {
+          newEditor.getCaretModel().moveToOffset(end + 1);
+          CodeStyleManager styleManager = CodeStyleManager.getInstance(method.getProject());
+          final String lineIndent = styleManager.getLineIndent(method.getContainingFile(), Math.min(start, end));
+          EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
+        } else {
+          newEditor.getSelectionModel().setSelection(Math.min(start, end), Math.max(start, end));
+        }
         newEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }
