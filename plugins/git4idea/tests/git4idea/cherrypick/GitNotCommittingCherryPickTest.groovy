@@ -28,7 +28,9 @@ import static junit.framework.Assert.*
 import git4idea.test.GitLightRepository
 
 /**
- * 
+ * Tests for {@link CherryPicker}, when the "auto-commit on cherry-pick" option is deselected.
+ * Most situations are equal or similar, so the majority of cherry pick tests are located in {@link GitAutoCommittingCherryPickTest}.
+ *
  * @author Kirill Likhodedov
  */
 class GitNotCommittingCherryPickTest extends GitCherryPickTest {
