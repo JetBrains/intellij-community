@@ -679,7 +679,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private DocumentListener[] getCachedListeners() {
     DocumentListener[] cachedListeners = myCachedDocumentListeners;
     if (cachedListeners == null) {
-      DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
+      List<DocumentListener> copy = new ArrayList<DocumentListener>(myDocumentListeners);
+      DocumentListener[] listeners = copy.toArray(new DocumentListener[copy.size()]);
       Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
       myCachedDocumentListeners = cachedListeners = listeners;
     }

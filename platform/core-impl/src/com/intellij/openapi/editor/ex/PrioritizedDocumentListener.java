@@ -41,6 +41,7 @@ public interface PrioritizedDocumentListener extends DocumentListener {
     }
 
     private int getPriority(Object o) {
+      assert o != null;
       if (o instanceof PrioritizedDocumentListener) return ((PrioritizedDocumentListener)o).getPriority();
       return Integer.MAX_VALUE;
     }
