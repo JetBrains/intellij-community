@@ -26,6 +26,7 @@ import static git4idea.test.MockGit.*
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
 import static junit.framework.Assert.assertTrue
+import git4idea.test.GitLightRepository
 
 /**
  * Cherry-pick of one or multiple commits with "commit at once" option enabled.
@@ -63,7 +64,7 @@ Otherwise, please use 'git reset'
   void "clean tree, no conflicts, then commit & notify, no new changelists"() {
     GitCommit commit = commit()
 
-    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit))
     invokeCherryPick(commit)
 
     assertHeadCommit(commit)
@@ -172,8 +173,8 @@ Otherwise, please use 'git reset'
   void "2 commits, no problems, then commit all & notify"() {
     GitCommit commit1 = commit("First commit to cherry-pick")
     GitCommit commit2 = commit("Second commit to cherry-pick")
-    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject),
-                                     new SuccessfulCherryPickExecutor(myRepository, commit2.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1),
+                                     new SuccessfulCherryPickExecutor(myRepository, commit2))
 
     invokeCherryPick([commit1, commit2])
     assertLastCommits commit2, commit1
@@ -186,9 +187,9 @@ Otherwise, please use 'git reset'
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1),
                                      new SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK),
-                                     new SuccessfulCherryPickExecutor(myRepository, commit3.subject))
+                                     new SuccessfulCherryPickExecutor(myRepository, commit3))
 
     invokeCherryPick([commit1, commit2, commit3])
 
@@ -210,15 +211,17 @@ Otherwise, please use 'git reset'
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1))
     prepareConflict()
-    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit3.subject))
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit3))
 
     boolean commitDialogShown = false;
+    GitLightRepository repository = myRepository;
     myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
       @Override
       boolean commit(String commitMessage) {
         commitDialogShown = true;
+        repository.commit(commitMessage) // answering OK in the dialog => committing
         return true;
       }
     })
@@ -248,7 +251,7 @@ Otherwise, please use 'git reset'
     // Inspired by IDEA-73548
     GitCommit commit1 = commit()
     GitCommit commit2 = commit()
-    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1.subject),
+    myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit1),
                                      new SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
 
     invokeCherryPick([ commit1, commit2 ])

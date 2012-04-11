@@ -36,6 +36,7 @@ import sun.security.provider.SHA
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
+import static git4idea.test.MockGit.commitMessageForCherryPick
 
 /**
  * Common parent for all tests on cherry-pick
@@ -97,14 +98,14 @@ hint: and commit the result with 'git commit'
   }
 
   void assertHeadCommit(GitCommit commit) {
-    assertEquals "Wrong commit at the HEAD", commit.subject, myRepository.head.commitMessage
+    assertEquals "Wrong commit at the HEAD", commitMessageForCherryPick(commit), myRepository.head.commitMessage
   }
 
   void assertLastCommits(GitCommit... commits) {
     GitLightRepository.Commit current = myRepository.head
     int level = 0;
     for (GitCommit commit : commits) {
-      assertEquals "Wrong commit at level $level", commit.subject, current.commitMessage
+      assertEquals "Wrong commit at level $level", commitMessageForCherryPick(commit), current.commitMessage
       current = current.parent
       level++;
     }

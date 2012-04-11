@@ -22,12 +22,14 @@ import com.intellij.util.containers.hash.HashMap
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
+import git4idea.history.browser.GitCommit
 import git4idea.push.GitPushSpec
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 
-import static git4idea.test.MockGit.OperationName.*
+import static git4idea.test.MockGit.OperationName.CHERRY_PICK
+import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
 
 /**
  * 
@@ -248,16 +250,16 @@ class MockGit implements Git {
   public static class SuccessfulCherryPickExecutor implements OperationExecutor {
 
     GitRepository myRepository
-    String myCommitMessage
+    GitCommit myOriginalCommit
 
-    SuccessfulCherryPickExecutor(GitRepository repository, String commitMessage) {
+    SuccessfulCherryPickExecutor(GitRepository repository, GitCommit originalCommit) {
       myRepository = repository;
-      myCommitMessage = commitMessage;
+      myOriginalCommit = originalCommit
     }
 
     @Override
     GitCommandResult execute() {
-      ((GitLightRepository)myRepository).cherryPick(myCommitMessage)
+      ((GitLightRepository)myRepository).cherryPick(commitMessageForCherryPick(myOriginalCommit))
       return FAKE_SUCCESS_RESULT
     }
 
@@ -265,6 +267,10 @@ class MockGit implements Git {
     OperationName getName() {
       return CHERRY_PICK
     }
+  }
+
+  static String commitMessageForCherryPick(GitCommit commit) {
+    "$commit.subject\n(cherry-picked from ${commit.shortHash.getString()})"
   }
 
 }
