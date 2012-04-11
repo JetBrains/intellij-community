@@ -164,6 +164,10 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isExcluded(file)) return;
     if (myScope.belongsTo(new FilePathImpl(file))) {
+      if (ChangeListManagerImpl.DEBUG) {
+        System.out.println("UpdatingChangeListBuilder.processModifiedWithoutCheckout");
+        System.out.println("file = " + file);
+      }
       myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).addFile(file);
     }
   }
