@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,9 +33,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.JBLock;
-import com.intellij.util.concurrency.JBReentrantReadWriteLock;
-import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,51 +43,30 @@ import java.io.IOException;
 import java.util.*;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
-  private final JBReentrantReadWriteLock LOCK = LockFactory.createReadWriteLock();
-  private final JBLock WRITE_LOCK = LOCK.writeLock();
-
+  private final Object myLock = new Object();
   private final List<WatchRequestImpl> myRootsToWatch = new ArrayList<WatchRequestImpl>();
-  private WatchRequest[] myCachedNormalizedRequests = null;
-
+  private WatchRequestImpl[] myCachedNormalizedRequests = null;
   private final FileWatcher myWatcher;
 
   private static class WatchRequestImpl implements WatchRequest {
-    public final String myRootPath;
-
-    public String myFSRootPath;
-    public final boolean myToWatchRecursively;
-    boolean myDominated;
+    private final String myRootPath;
+    private final boolean myToWatchRecursively;
+    private String myFSRootPath;
+    private boolean myDominated;
 
     public WatchRequestImpl(String rootPath, final boolean toWatchRecursively) {
-      myToWatchRecursively = toWatchRecursively;
       final int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
-      final File file = new File(rootPath.replace('/', File.separatorChar));
-      if (!file.isDirectory()) {
-        final File parentFile = file.getParentFile();
-        if (parentFile != null) {
-          if (SystemInfo.isFileSystemCaseSensitive) {
-            myFSRootPath = parentFile.getAbsolutePath(); // fixes problem with symlinks under Unix (however does not under Windows!)
-          }
-          else {
-            try {
-              myFSRootPath = parentFile.getCanonicalPath();
-            }
-            catch (IOException e) {
-              myFSRootPath = rootPath; //need something
-            }
-          }
-        }
-        else {
-          myFSRootPath = rootPath.replace('/', File.separatorChar);
-        }
 
-        myRootPath = myFSRootPath.replace(File.separatorChar, '/');
+      File rootFile = new File(FileUtil.toSystemDependentName(rootPath));
+      if (index > 0 || !rootFile.isDirectory()) {
+        rootFile = rootFile.getParentFile();
+        assert rootFile != null : rootPath;
       }
-      else {
-        myRootPath = rootPath.replace(File.separatorChar, '/');
-        myFSRootPath = rootPath.replace('/', File.separatorChar);
-      }
+
+      myFSRootPath = rootFile.getAbsolutePath();
+      myRootPath = FileUtil.toSystemIndependentName(myFSRootPath);
+      myToWatchRecursively = toWatchRecursively;
     }
 
     @Override
@@ -100,6 +75,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       return myRootPath;
     }
 
+    /** @deprecated implementation details (to remove in IDEA 13) */
     @Override
     @NotNull
     public String getFileSystemRootPath() {
@@ -111,13 +87,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       return myToWatchRecursively;
     }
 
+    /** @deprecated implementation details (to remove in IDEA 13) */
     @Override
     public boolean dominates(@NotNull WatchRequest other) {
-      if (myToWatchRecursively) {
-        return other.getRootPath().startsWith(myRootPath);
-      }
-
-      return !other.isToWatchRecursively() && myRootPath.equals(other.getRootPath());
+      return LocalFileSystemImpl.dominates(this, (WatchRequestImpl)other);
     }
 
     @Override
@@ -160,13 +133,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     myRootsToWatch.clear();
   }
 
-  private WatchRequest[] normalizeRootsForRefresh() {
+  private WatchRequestImpl[] normalizeRootsForRefresh() {
     if (myCachedNormalizedRequests != null) return myCachedNormalizedRequests;
     List<WatchRequestImpl> result = new ArrayList<WatchRequestImpl>();
 
     // No need to call for a read action here since we're only called with it on hands already.
-    WRITE_LOCK.lock();
-    try {
+    synchronized (myLock) {
       NextRoot:
       for (WatchRequestImpl request : myRootsToWatch) {
         String rootPath = request.getRootPath();
@@ -189,20 +161,17 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         request.myDominated = false;
       }
     }
-    finally {
-      WRITE_LOCK.unlock();
-    }
 
-    myCachedNormalizedRequests = result.toArray(new WatchRequest[result.size()]);
+    myCachedNormalizedRequests = result.toArray(new WatchRequestImpl[result.size()]);
     return myCachedNormalizedRequests;
   }
 
   private void storeRefreshStatusToFiles() {
-    if (FileWatcher.getInstance().isOperational()) {
+    if (myWatcher.isOperational()) {
       // TODO: different ways to mark dirty for all these cases
-      markPathsDirty(FileWatcher.getInstance().getDirtyPaths());
-      markFlatDirsDirty(FileWatcher.getInstance().getDirtyDirs());
-      markRecursiveDirsDirty(FileWatcher.getInstance().getDirtyRecursivePaths());
+      markPathsDirty(myWatcher.getDirtyPaths());
+      markFlatDirsDirty(myWatcher.getDirtyDirs());
+      markRecursiveDirsDirty(myWatcher.getDirtyRecursivePaths());
     }
   }
 
@@ -269,25 +238,21 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       application.runReadAction(new Runnable() {
         @Override
         public void run() {
-          WRITE_LOCK.lock();
-          try {
-            final WatchRequest[] watchRequests = normalizeRootsForRefresh();
+          synchronized (myLock) {
+            final WatchRequestImpl[] watchRequests = normalizeRootsForRefresh();
             List<String> myRecursiveRoots = new ArrayList<String>();
             List<String> myFlatRoots = new ArrayList<String>();
 
-            for (WatchRequest root : watchRequests) {
+            for (WatchRequestImpl root : watchRequests) {
               if (root.isToWatchRecursively()) {
-                myRecursiveRoots.add(root.getFileSystemRootPath());
+                myRecursiveRoots.add(root.myFSRootPath);
               }
               else {
-                myFlatRoots.add(root.getFileSystemRootPath());
+                myFlatRoots.add(root.myFSRootPath);
               }
             }
 
             myWatcher.setWatchRoots(myRecursiveRoots, myFlatRoots);
-          }
-          finally {
-            WRITE_LOCK.unlock();
           }
         }
       });
@@ -298,8 +263,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     private static final long PERIOD = 1000;
 
     public StoreRefreshStatusThread() {
-      //noinspection HardCodedStringLiteral
-      super("StoreRefreshStatusThread");
+      super(StoreRefreshStatusThread.class.getSimpleName());
       setPriority(MIN_PRIORITY);
       setDaemon(true);
     }
@@ -324,14 +288,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @Override
   public WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively) {
-    if (rootPath.length() == 0 || !FileWatcher.getInstance().isOperational()) return null;
+    if (rootPath.length() == 0 || !myWatcher.isOperational()) return null;
 
     Application app = ApplicationManager.getApplication();
     return app.runReadAction(new Computable<WatchRequest>() {
       @Override
       public WatchRequest compute() {
-        WRITE_LOCK.lock();
-        try {
+        synchronized (myLock) {
           final WatchRequestImpl result = new WatchRequestImpl(rootPath, toWatchRecursively);
           boolean alreadyWatched = isAlreadyWatched(result);
           if (!alreadyWatched) {
@@ -355,24 +318,29 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
           setUpFileWatcher();
           return result;
         }
-        finally {
-          WRITE_LOCK.unlock();
-        }
       }
     });
   }
 
-  private boolean isAlreadyWatched(final WatchRequest request) {
-    for (final WatchRequest current : normalizeRootsForRefresh()) {
-      if (current.dominates(request)) return true;
+  private boolean isAlreadyWatched(final WatchRequestImpl request) {
+    for (final WatchRequestImpl current : normalizeRootsForRefresh()) {
+      if (dominates(current, request)) return true;
     }
     return false;
+  }
+
+  private static boolean dominates(final WatchRequestImpl request, final WatchRequestImpl other) {
+    if (request.myToWatchRecursively) {
+      return other.myRootPath.startsWith(request.myRootPath);
+    }
+
+    return !other.myToWatchRecursively && request.myRootPath.equals(other.myRootPath);
   }
 
   @Override
   @NotNull
   public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
-    if (!FileWatcher.getInstance().isOperational()) return Collections.emptySet();
+    if (!myWatcher.isOperational()) return Collections.emptySet();
 
     final Set<WatchRequest> result = new HashSet<WatchRequest>();
     final Set<VirtualFile> filesToSynchronize = new HashSet<VirtualFile>();
@@ -380,8 +348,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     Application application = ApplicationManager.getApplication();
     application.runReadAction(new Runnable() {
       public void run() {
-        WRITE_LOCK.lock();
-        try {
+        synchronized (myLock) {
           for (String rootPath : rootPaths) {
             LOG.assertTrue(rootPath != null);
             if (rootPath.length() > 0) {
@@ -398,9 +365,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
           }
           myCachedNormalizedRequests = null;
           setUpFileWatcher();
-        }
-        finally {
-          WRITE_LOCK.unlock();
         }
       }
     });
@@ -421,15 +385,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   public void removeWatchedRoot(@NotNull final WatchRequest watchRequest) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        WRITE_LOCK.lock();
-        try {
+        synchronized (myLock) {
           if (myRootsToWatch.remove((WatchRequestImpl)watchRequest) && !((WatchRequestImpl)watchRequest).myDominated) {
             myCachedNormalizedRequests = null;
             setUpFileWatcher();
           }
-        }
-        finally {
-          WRITE_LOCK.unlock();
         }
       }
     });
@@ -439,15 +399,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        WRITE_LOCK.lock();
-        try {
+        synchronized (myLock) {
           if (myRootsToWatch.removeAll(rootsToWatch)) {
             myCachedNormalizedRequests = null;
             setUpFileWatcher();
           }
-        }
-        finally {
-          WRITE_LOCK.unlock();
         }
       }
     });
