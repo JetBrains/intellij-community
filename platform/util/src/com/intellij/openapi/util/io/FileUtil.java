@@ -696,30 +696,36 @@ public class FileUtil extends FileUtilRt {
 
   public static boolean filesEqual(@Nullable File file1, @Nullable File file2) {
     // on MacOS java.io.File.equals() is incorrectly case-sensitive
-    return pathsEqual(file1 == null ? null : file1.getPath(), file2 == null ? null : file2.getPath(), true);
+    return pathsEqual(file1 == null ? null : file1.getPath(),
+                      file2 == null ? null : file2.getPath());
   }
 
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
-    return pathsEqual(path1, path2, false);
-  }
-
-  public static boolean pathsEqual(@Nullable String path1, @Nullable String path2, boolean convertSeparators) {
     if (path1 == path2) return true;
     if (path1 == null || path2 == null) return false;
 
-    if (convertSeparators) {
-      path1 = toSystemIndependentName(path1);
-      path2 = toSystemIndependentName(path2);
-    }
+    path1 = toSystemIndependentName(path1);
+    path2 = toSystemIndependentName(path2);
     return SystemInfo.isFileSystemCaseSensitive ? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
+  public static int compareFiles(@Nullable File file1, @Nullable File file2) {
+    return comparePaths(file1 == null ? null : file1.getPath(), file2 == null ? null : file2.getPath());
+  }
+
   public static int comparePaths(@Nullable String path1, @Nullable String path2) {
+    path1 = path1 == null ? null : toSystemIndependentName(path1);
+    path2 = path2 == null ? null : toSystemIndependentName(path2);
     return StringUtil.compare(path1, path2, !SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public static int fileHashCode(@Nullable File file) {
+    return pathHashCode(file == null ? null : file.getPath());
   }
 
   public static int pathHashCode(@Nullable String path) {
     if (path == null) return 0;
+    path = toSystemIndependentName(path);
     return SystemInfo.isFileSystemCaseSensitive ? path.hashCode() : StringUtil.toLowerCase(path).hashCode();
   }
 
