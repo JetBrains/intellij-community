@@ -104,10 +104,6 @@ Otherwise, please use 'git reset'
                             NotificationType.WARNING
   }
 
-  String newCommitMessage(GitCommit commit) {
-    "${commit.description}\n(cherry-picked from ${commit.hash.value})"
-  }
-
   @Test
   void "conflict, merge completed, then commit dialog"() {
     prepareConflict()

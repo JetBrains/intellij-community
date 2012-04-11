@@ -148,6 +148,10 @@ hint: and commit the result with 'git commit'
     assertTrue "Merge dialog was not shown", myVcsHelper.mergeDialogWasShown()
   }
 
+  String newCommitMessage(GitCommit commit) {
+    "${commit.description}\n(cherry-picked from ${commit.hash.value})"
+  }
+
   protected static class OKCommitDialogHandler implements MockVcsHelper.CommitHandler {
 
     private final GitLightRepository myRepository;

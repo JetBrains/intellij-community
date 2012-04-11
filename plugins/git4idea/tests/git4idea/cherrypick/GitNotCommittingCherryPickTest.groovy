@@ -15,21 +15,17 @@
  */
 package git4idea.cherrypick
 
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
+import com.intellij.notification.NotificationType
 import git4idea.history.browser.CherryPicker
 import git4idea.history.browser.GitCommit
-import git4idea.tests.TestDialogHandler
+import git4idea.test.MockGit
+import git4idea.test.MockVcsHelper
 import org.junit.Before
 import org.junit.Test
-import git4idea.test.MockGit
 
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import java.util.concurrent.atomic.AtomicInteger
-
-import static junit.framework.Assert.assertEquals
+import static junit.framework.Assert.*
+import git4idea.test.GitLightRepository
 
 /**
  * 
@@ -46,18 +42,16 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
   @Test
   void "clean tree, no conflicts, then show commit dialog, commit on ok"() {
     GitCommit commit = commit()
-    myDialogManager.registerDialogHandler(CommitChangeListDialog, new TestDialogHandler<CommitChangeListDialog>() {
-      @Override
-      int handleDialog(CommitChangeListDialog dialog) {
-        return DialogWrapper.OK_EXIT_CODE
-      }
-    })
+
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit))
+    OKCommitDialogHandler handler = new OKCommitDialogHandler(myRepository)
+    myVcsHelper.registerHandler(handler)
 
     invokeCherryPick(commit)
 
-    assertCommitDialogShown()
     assertHeadCommit(commit)
     assertOnlyDefaultChangelist()
+    assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
     // notification is shown from the successful commit, can't check from here
   }
 
@@ -65,57 +59,92 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
   void "dirty tree, conflicting with commit, then show error"() {
     myGit.registerOperationExecutors(new MockGit.SimpleErrorOperationExecutor(CHERRY_PICK, LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK))
 
-    invokeCherryPick(commit())
+    def commit = commit()
+    OKCommitDialogHandler handler = new OKCommitDialogHandler(myRepository)
+    myVcsHelper.registerHandler(handler)
+
+    invokeCherryPick(commit)
 
     assertNotCherryPicked()
+    assertFalse "Commit dialog was shown, but it shouldn't", handler.wasCommitDialogShown()
     assertOnlyDefaultChangelist()
-    assertNotificationShown(new Notification(TEST_NOTIFICATION_GROUP, "Cherry-pick failed",
-                                             "Your local changes to some files would be overwritten by cherry-pick. View them",
-                                             NotificationType.ERROR))
+    assertNotificationShown("Cherry-pick failed",
+                            """
+                            ${commitDetails(commit)}<br/>
+                            Your local changes would be overwritten by cherry-pick.<br/>
+                            Commit your changes or stash them to proceed.
+                            """,
+                            NotificationType.ERROR)
   }
 
   @Test
   void "conflict, merge ok, commit cancelled, then new & active changelist"() {
     prepareConflict()
 
-    myDialogManager.registerDialogHandler(CommitChangeListDialog, new TestDialogHandler<CommitChangeListDialog>() {
-      @Override
-      int handleDialog(CommitChangeListDialog dialog) {
-        return DialogWrapper.CANCEL_EXIT_CODE
-      }
-    })
+    CancelCommitDialogHandler handler = new CancelCommitDialogHandler()
+    myVcsHelper.registerHandler(handler)
 
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertCommitDialogShown()
-    assertChangeLists([DEFAULT, commit.getSubject()], commit.getSubject())
+    assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
+    assertChangeLists([DEFAULT, newCommitMessage(commit)], newCommitMessage(commit))
+  }
+  
+  @Test
+  void "2 simple commits in a row, then 2 commit dialogs in a row"() {
+    GitCommit commit1 = commit()
+    GitCommit commit2 = commit()
+
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1),
+                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit2))
+
+    CountingOKCommitHandler handler = new CountingOKCommitHandler(myRepository)
+    myVcsHelper.registerHandler(handler)
+
+    invokeCherryPick([commit1, commit2])
+
+    assertLastCommits(commit2, commit1)
+    assertOnlyDefaultChangelist()
+    assertEquals "Commit dialog shown wrong number of times", 2, handler.myCommitDialogs
   }
 
   @Test
-  void "3 commits in a row, 2nd with conflict"() {
+  void "3 commits, 2nd conflicts with committed, then 1st success, on 2nd show merge dialog"() {
     GitCommit commit1 = commit("First")
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1.subject),
-                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit2.subject),
-                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3.subject))
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1))
     prepareConflict()
+    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3))
 
-    AtomicInteger commitDialogShown = new AtomicInteger()
-    myDialogManager.registerDialogHandler(CommitChangeListDialog, new TestDialogHandler<CommitChangeListDialog>() {
-      @Override
-      int handleDialog(CommitChangeListDialog dialog) {
-        commitDialogShown.incrementAndGet()
-        return DialogWrapper.OK_EXIT_CODE
-      }
-    })
+    CountingOKCommitHandler handler = new CountingOKCommitHandler(myRepository)
+    myVcsHelper.registerHandler(handler)
 
-    assertEquals "Commit dialog wasn't shown necessary number of times", 3, commitDialogShown.get()
+    invokeCherryPick([commit1, commit2, commit3])
+
     assertMergeDialogShown()
-    assertCommitDialogShown()
+    assertEquals "Commit dialog shown wrong number of times", 3, handler.myCommitDialogs
     assertLastCommits commit3, commit2, commit1
+  }
+
+  private static class CountingOKCommitHandler implements MockVcsHelper.CommitHandler {
+
+    GitLightRepository myRepository
+    int myCommitDialogs;
+
+    CountingOKCommitHandler(GitLightRepository repository) {
+      myRepository = repository
+    }
+
+    @Override
+    boolean commit(String commitMessage) {
+      myCommitDialogs++
+      myRepository.commit(commitMessage)
+      return true;
+    }
+
   }
 
 }
