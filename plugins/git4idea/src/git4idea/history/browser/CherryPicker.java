@@ -232,7 +232,9 @@ public class CherryPicker {
    * cherry-pick, i.e. until the CHERRY_PICK_HEAD exists.
    */
   private void cancelCherryPick(@NotNull GitRepository repository) {
-    removeCherryPickHead(repository);
+    if (myAutoCommit) {
+      removeCherryPickHead(repository);
+    }
   }
 
   private void removeCherryPickHead(@NotNull GitRepository repository) {
