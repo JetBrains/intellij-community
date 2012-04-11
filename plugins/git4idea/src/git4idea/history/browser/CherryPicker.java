@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -44,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static git4idea.commands.GitSimpleEventDetector.Event.CHERRY_PICK_CONFLICT;
 import static git4idea.commands.GitSimpleEventDetector.Event.LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK;
 
@@ -90,11 +90,15 @@ public class CherryPicker {
           boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
                                                                   commit.getShortHash().getString(), commit.getAuthor(),
                                                                   commit.getSubject()).merge();
+          NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
+                                                                            commit.getShortHash().getString(), commit.getAuthor(),
+                                                                            commit.getSubject());
+
           if (mergeCompleted) {
             CherryPickData data = updateChangeListManager(commit);
             boolean committed = showCommitDialog(repository, commit, data.myChangeList, data.myCommitMessage);
             if (!committed) {
-              notifyConflictWarning(commit, successfulCommits);
+              notifyConflictWarning(commit, successfulCommits, resolveLinkListener);
               return false;
             }
             else {
@@ -104,7 +108,7 @@ public class CherryPicker {
           }
           else {
             updateChangeListManager(commit);
-            notifyConflictWarning(commit, successfulCommits);
+            notifyConflictWarning(commit, successfulCommits, resolveLinkListener);
             return false;
           }
         }
@@ -127,10 +131,15 @@ public class CherryPicker {
     myChangeListManager.removeChangeList(list.myChangeList);
   }
 
-  private void notifyConflictWarning(GitCommit commit, List<GitCommit> successfulCommits) {
-    String description = commitDetails(commit);
+  // resolveLinkListener is created in the above code and passed in the params (although it should be created inside the method to preserve
+  // the context), not to pass all bunch of parameters needed for the CherryPickConflictResolver and thus for the listener, which invokes
+  // the conflict resolver.
+  private void notifyConflictWarning(@NotNull GitCommit commit, @NotNull List<GitCommit> successfulCommits,
+                                     @NotNull NotificationListener resolveLinkListener) {
+    String description = commitDetails(commit)
+                         + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>";
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
-    myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-picked with conflicts", description);
+    myPlatformFacade.getNotificator(myProject).notifyStrongWarning("Cherry-picked with conflicts", description, resolveLinkListener);
   }
 
   private CherryPickData updateChangeListManager(@NotNull final GitCommit commit) {
@@ -221,7 +230,7 @@ public class CherryPicker {
   }
 
   private void notifyError(@NotNull String content, @NotNull GitCommit failedCommit, @NotNull List<GitCommit> successfulCommits) {
-    String description = "Cherry-pick failed for " + commitDetails(failedCommit) + "<br/>" + content;
+    String description = "Cherry-pick failed for " + commitDetails(failedCommit) + ":<br/>" + content;
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyError("Cherry-pick failed", description);
   }
@@ -230,7 +239,7 @@ public class CherryPicker {
   private static String getSuccessfulCommitDetailsIfAny(@NotNull List<GitCommit> successfulCommits) {
     String description = "";
     if (!successfulCommits.isEmpty()) {
-      description += "<br/>However it succeeded for the following " + StringUtil.pluralize("commit", successfulCommits.size()) + ": <br/>";
+      description += "<hr/>However cherry-pick succeeded for the following " + pluralize("commit", successfulCommits.size()) + ": <br/>";
       description += getCommitsDetails(successfulCommits);
     }
     return description;
@@ -245,7 +254,7 @@ public class CherryPicker {
   private static String getCommitsDetails(@NotNull List<GitCommit> successfulCommits) {
     String description = "";
     for (GitCommit commit : successfulCommits) {
-      description += commitDetails(commit);
+      description += commitDetails(commit) + "<br/>";
     }
     return description;
   }
@@ -289,22 +298,9 @@ public class CherryPicker {
 
   private static class CherryPickConflictResolver extends GitConflictResolver {
 
-    @NotNull private final VirtualFile myRoot;
-    @NotNull private final String myCommitHash;
-    @NotNull private final String myCommitAuthor;
-    @NotNull private final String myCommitMessage;
-    @NotNull private final Git myGit;
-    @NotNull private final PlatformFacade myPlatformFacade;
-
     public CherryPickConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade facade, @NotNull VirtualFile root,
                                       @NotNull String commitHash, @NotNull String commitAuthor, @NotNull String commitMessage) {
       super(project, git, facade, Collections.singleton(root), makeParams(commitHash, commitAuthor, commitMessage));
-      myGit = git;
-      myPlatformFacade = facade;
-      myRoot = root;
-      myCommitHash = commitHash;
-      myCommitAuthor = commitAuthor;
-      myCommitMessage = commitMessage;
     }
 
     private static Params makeParams(String commitHash, String commitAuthor, String commitMessage) {
@@ -316,24 +312,40 @@ public class CherryPicker {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      myPlatformFacade.getNotificator(myProject).notifyStrongWarning("Conflicts were not resolved during cherry-pick",
-                                                                     "Cherry-pick is not complete, you have unresolved merges in your working tree<br/>" +
-                                                                     "<a href='resolve'>Resolve</a> conflicts.",
-                                                                     new NotificationListener() {
-                                                                       @Override
-                                                                       public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                                                   @NotNull HyperlinkEvent event) {
-                                                                         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                                                                           if (event.getDescription().equals("resolve")) {
-                                                                             new CherryPickConflictResolver(myProject, myGit,
-                                                                                                            myPlatformFacade, myRoot,
-                                                                                                            myCommitHash, myCommitAuthor,
-                                                                                                            myCommitMessage)
-                                                                               .mergeNoProceed();
-                                                                           }
-                                                                         }
-                                                                       }
-                                                                     });
+      // we show a [possibly] compound notification after cherry-picking all commits.
+    }
+
+  }
+
+  private static class ResolveLinkListener implements NotificationListener {
+    @NotNull private final Project myProject;
+    @NotNull private final Git myGit;
+    @NotNull private final PlatformFacade myFacade;
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final String myHash;
+    @NotNull private final String myAuthor;
+    @NotNull private final String myMessage;
+
+    public ResolveLinkListener(@NotNull Project project, @NotNull Git git, @NotNull PlatformFacade facade, @NotNull VirtualFile root,
+                               @NotNull String commitHash, @NotNull String commitAuthor, @NotNull String commitMessage) {
+
+      myProject = project;
+      myGit = git;
+      myFacade = facade;
+      myRoot = root;
+      myHash = commitHash;
+      myAuthor = commitAuthor;
+      myMessage = commitMessage;
+    }
+
+    @Override
+    public void hyperlinkUpdate(@NotNull Notification notification,
+                                @NotNull HyperlinkEvent event) {
+      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+        if (event.getDescription().equals("resolve")) {
+          new CherryPickConflictResolver(myProject, myGit, myFacade, myRoot, myHash, myAuthor, myMessage).mergeNoProceed();
+        }
+      }
     }
   }
 

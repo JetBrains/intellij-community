@@ -75,8 +75,8 @@ public class Notificator {
     notify(GitVcs.NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION,  null);
   }
 
-  public void notifyWeakWarning(@NotNull String title, @NotNull String message) {
-    notify(GitVcs.MINOR_NOTIFICATION, title, message, NotificationType.WARNING, null);
+  public void notifyWeakWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+    notify(GitVcs.MINOR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
   public void notifyStrongWarning(@NotNull String title, @NotNull String content, @Nullable NotificationListener listener) {

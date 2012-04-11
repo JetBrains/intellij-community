@@ -153,8 +153,12 @@ public class GitConflictResolver {
   protected boolean proceedAfterAllMerged() throws VcsException {
     return true;
   }
-  
-  protected final boolean mergeNoProceed() {
+
+  /**
+   * Invoke the merge dialog, but execute nothing after merge is completed.
+   * @return true if all changes were merged, false if unresolved merges remain.
+   */
+  public final boolean mergeNoProceed() {
     return merge(true);
   }
 

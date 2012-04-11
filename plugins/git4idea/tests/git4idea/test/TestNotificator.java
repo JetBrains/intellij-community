@@ -55,7 +55,7 @@ public class TestNotificator extends Notificator {
   }
 
   @Override
-  public void notifyWeakWarning(@NotNull String title, @NotNull String message) {
+  public void notifyWeakWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
     myLastNotification = createNotification(title, message, NotificationType.WARNING);
   }
 
