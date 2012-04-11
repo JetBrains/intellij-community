@@ -20,7 +20,10 @@ import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
@@ -679,11 +682,19 @@ public class FileUtil extends FileUtilRt {
     return next1 == '/' || next1 == File.separatorChar;
   }
 
-  public static boolean pathsEqual(@NotNull String path1, @NotNull String path2) {
+  public static boolean filesEqual(@Nullable File file1, @Nullable File file2) {
+    // on MacOS java.io.File.equals() is incorrectly case-sensitive
+    return pathsEqual(file1 == null ? null : file1.getPath(), file2 == null ? null : file2.getPath(), true);
+  }
+
+  public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
     return pathsEqual(path1, path2, false);
   }
 
-  public static boolean pathsEqual(@NotNull String path1, @NotNull String path2, boolean convertSeparators) {
+  public static boolean pathsEqual(@Nullable String path1, @Nullable String path2, boolean convertSeparators) {
+    if (path1 == path2) return true;
+    if (path1 == null || path2 == null) return false;
+
     if (convertSeparators) {
       path1 = toSystemIndependentName(path1);
       path2 = toSystemIndependentName(path2);
@@ -691,12 +702,13 @@ public class FileUtil extends FileUtilRt {
     return SystemInfo.isFileSystemCaseSensitive ? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
-  public static int comparePaths(@NotNull String path1, @NotNull String path2) {
-    return SystemInfo.isFileSystemCaseSensitive ? path1.compareTo(path2) : path1.compareToIgnoreCase(path2);
+  public static int comparePaths(@Nullable String path1, @Nullable String path2) {
+    return StringUtil.compare(path1, path2, !SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public static int pathHashCode(@NotNull String path) {
-    return SystemInfo.isFileSystemCaseSensitive ? path.hashCode() : path.toLowerCase().hashCode();
+  public static int pathHashCode(@Nullable String path) {
+    if (path == null) return 0;
+    return SystemInfo.isFileSystemCaseSensitive ? path.hashCode() : StringUtil.toLowerCase(path).hashCode();
   }
 
   @NotNull
