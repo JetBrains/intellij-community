@@ -21,9 +21,11 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public abstract class EditorFactoryAdapter implements EditorFactoryListener {
+  @Override
   public void editorCreated(@NotNull EditorFactoryEvent event) {
   }
 
+  @Override
   public void editorReleased(@NotNull EditorFactoryEvent event) {
   }
 }
