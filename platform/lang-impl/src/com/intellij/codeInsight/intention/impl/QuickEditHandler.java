@@ -280,15 +280,14 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     for (PsiLanguageInjectionHost host : map.keySet()) {
       if (host == null) continue;
       final String hostText = host.getText();
-      TextRange insideHost = null;
+      ProperTextRange insideHost = null;
       final StringBuilder sb = new StringBuilder();
       for (Map.Entry<SmartPsiElementPointer, Pair<RangeMarker, RangeMarker>> entry : map.get(host)) {
         final RangeMarker origMarker = entry.getValue().first;
         final int hostOffset = host.getTextRange().getStartOffset();
-        final TextRange localInsideHost =
-          new TextRange(origMarker.getStartOffset() - hostOffset, origMarker.getEndOffset() - hostOffset);
-        final RangeMarker rangeMarker = entry.getValue().second;
-        final TextRange localInsideFile = new TextRange(Math.max(localInsideFileCursor, rangeMarker.getStartOffset()), rangeMarker.getEndOffset());
+        ProperTextRange localInsideHost = new ProperTextRange(origMarker.getStartOffset() - hostOffset, origMarker.getEndOffset() - hostOffset);
+        RangeMarker rangeMarker = entry.getValue().second;
+        ProperTextRange localInsideFile = new ProperTextRange(Math.max(localInsideFileCursor, rangeMarker.getStartOffset()), rangeMarker.getEndOffset());
         if (insideHost != null) {
           //append unchanged inter-markers fragment
           sb.append(hostText.substring(insideHost.getEndOffset(), localInsideHost.getStartOffset()));
