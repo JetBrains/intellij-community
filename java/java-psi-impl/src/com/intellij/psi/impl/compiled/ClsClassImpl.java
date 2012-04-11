@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,31 +30,31 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.source.ClassInnerStuffCache;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.PsiClassImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement, Queryable {
+public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> implements PsiExtensibleClass, PsiQualifiedNamedElement, Queryable {
+  public static final Key<PsiClass> DELEGATE_KEY = Key.create("DELEGATE");
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsClassImpl");
 
-  private final ClassInnerStuffCache innersCache = new ClassInnerStuffCache(this);
+  private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
   private final PsiIdentifier myNameIdentifier;
   private final PsiDocComment myDocComment;
-  public static final Key<PsiClass> DELEGATE_KEY = Key.create("DELEGATE");
 
   public ClsClassImpl(final PsiClassStub stub) {
     super(stub);
@@ -70,9 +70,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     PsiModifierList modifierList = getModifierList();
     PsiReferenceList extendsList = getExtendsList();
     PsiReferenceList implementsList = getImplementsList();
-    PsiField[] fields = getFields();
-    PsiMethod[] methods = getMethods();
-    PsiClass[] classes = getInnerClasses();
+    List<PsiField> fields = getOwnFields();
+    List<PsiMethod> methods = getOwnMethods();
+    List<PsiClass> classes = getOwnInnerClasses();
 
     int count =
       (docComment != null ? 1 : 0)
@@ -80,9 +80,9 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
       + 1 // name
       + 1 // extends list
       + 1 // implementsList
-      + fields.length
-      + methods.length
-      + classes.length;
+      + fields.size()
+      + methods.size()
+      + classes.size();
     PsiElement[] children = new PsiElement[count];
 
     int offset = 0;
@@ -95,12 +95,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     children[offset++] = extendsList;
     children[offset++] = implementsList;
 
-    System.arraycopy(fields, 0, children, offset, fields.length);
-    offset += fields.length;
-    System.arraycopy(methods, 0, children, offset, methods.length);
-    offset += methods.length;
-    System.arraycopy(classes, 0, children, offset, classes.length);
-    /*offset += classes.length;*/
+    ArrayUtil.copy(fields, children, offset);
+    offset += fields.size();
+    ArrayUtil.copy(methods, children, offset);
+    offset += methods.size();
+    ArrayUtil.copy(classes, children, offset);
+    /*offset += classes.size();*/
 
     return children;
   }
@@ -166,7 +166,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     return getStub().findChildStubByType(JavaStubElementTypes.EXTENDS_LIST).getPsi();
   }
 
-
   @Override
   @NotNull
   public PsiReferenceList getImplementsList() {
@@ -222,25 +221,43 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   @Override
   @NotNull
   public PsiField[] getFields() {
-    return getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY);
+    return myInnersCache.getFields();
   }
 
   @Override
   @NotNull
   public PsiMethod[] getMethods() {
-    return getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY);
+    return myInnersCache.getMethods();
   }
 
   @Override
   @NotNull
   public PsiMethod[] getConstructors() {
-    return PsiImplUtil.getConstructors(this);
+    return myInnersCache.getConstructors();
   }
 
   @Override
   @NotNull
   public PsiClass[] getInnerClasses() {
-    return getStub().getChildrenByType(JavaStubElementTypes.CLASS, ARRAY_FACTORY);
+    return myInnersCache.getInnerClasses();
+  }
+
+  @NotNull
+  @Override
+  public List<PsiField> getOwnFields() {
+    return Arrays.asList(getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY));
+  }
+
+  @NotNull
+  @Override
+  public List<PsiMethod> getOwnMethods() {
+    return Arrays.asList(getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY));
+  }
+
+  @NotNull
+  @Override
+  public List<PsiClass> getOwnInnerClasses() {
+    return Arrays.asList(getStub().getChildrenByType(JavaStubElementTypes.CLASS, ARRAY_FACTORY));
   }
 
   @Override
@@ -275,7 +292,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   @Override
   public PsiField findFieldByName(String name, boolean checkBases) {
-    return innersCache.findFieldByName(name, checkBases);
+    return myInnersCache.findFieldByName(name, checkBases);
   }
 
   @Override
@@ -292,7 +309,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   @Override
   @NotNull
   public PsiMethod[] findMethodsByName(String name, boolean checkBases) {
-    return innersCache.findMethodsByName(name, checkBases);
+    return myInnersCache.findMethodsByName(name, checkBases);
   }
 
   @Override
@@ -309,7 +326,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
   @Override
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
-    return innersCache.findInnerClassByName(name, checkBases);
+    return myInnersCache.findInnerClassByName(name, checkBases);
   }
 
   @Override
@@ -386,50 +403,50 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     }
     buffer.append('{');
     final int newIndentLevel = indentLevel + getIndentSize();
-    PsiField[] fields = getFields();
-    if (fields.length > 0) {
+    List<PsiField> fields = getOwnFields();
+    if (fields.size() > 0) {
       goNextLine(newIndentLevel, buffer);
-      for (int i = 0; i < fields.length; i++) {
-        PsiField field = fields[i];
+      for (int i = 0; i < fields.size(); i++) {
+        PsiField field = fields.get(i);
         ((ClsElementImpl)field).appendMirrorText(newIndentLevel, buffer);
         if (field instanceof ClsEnumConstantImpl) {
-          if (i < fields.length - 1 && fields[i + 1] instanceof ClsEnumConstantImpl) {
+          if (i < fields.size() - 1 && fields.get(i + 1) instanceof ClsEnumConstantImpl) {
             buffer.append(", ");
           }
           else {
             buffer.append(";");
-            if (i < fields.length - 1) {
+            if (i < fields.size() - 1) {
               goNextLine(newIndentLevel, buffer);
             }
           }
-        } else if (i < fields.length - 1) {
+        } else if (i < fields.size() - 1) {
           goNextLine(newIndentLevel, buffer);
         }
       }
     }
 
-    PsiMethod[] methods = getMethods();
-    if (methods.length > 0) {
+    List<PsiMethod> methods = getOwnMethods();
+    if (methods.size() > 0) {
       goNextLine(newIndentLevel, buffer);
       goNextLine(newIndentLevel, buffer);
-      for (int i = 0; i < methods.length; i++) {
-        PsiMethod method = methods[i];
+      for (int i = 0; i < methods.size(); i++) {
+        PsiMethod method = methods.get(i);
         ((ClsElementImpl)method).appendMirrorText(newIndentLevel, buffer);
-        if (i < methods.length - 1) {
+        if (i < methods.size() - 1) {
           goNextLine(newIndentLevel, buffer);
           goNextLine(newIndentLevel, buffer);
         }
       }
     }
 
-    PsiClass[] classes = getInnerClasses();
-    if (classes.length > 0) {
+    List<PsiClass> classes = getOwnInnerClasses();
+    if (classes.size() > 0) {
       goNextLine(newIndentLevel, buffer);
       goNextLine(newIndentLevel, buffer);
-      for (int i = 0; i < classes.length; i++) {
-        PsiClass aClass = classes[i];
+      for (int i = 0; i < classes.size(); i++) {
+        PsiClass aClass = classes.get(i);
         ((ClsElementImpl)aClass).appendMirrorText(newIndentLevel, buffer);
-        if (i < classes.length - 1) {
+        if (i < classes.size() - 1) {
           goNextLine(newIndentLevel, buffer);
           goNextLine(newIndentLevel, buffer);
         }
@@ -459,37 +476,37 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
 
     Ref<Boolean> extLog = Ref.create(true);
 
-    PsiField[] fields = getFields();
+    List<PsiField> fields = getOwnFields();
     PsiField[] mirrorFields = mirror.getFields();
-    if (fields.length == mirrorFields.length) {
-      for (int i = 0; i < fields.length; i++) {
-        ((ClsElementImpl)fields[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorFields[i]));
+    if (fields.size() == mirrorFields.length) {
+      for (int i = 0; i < fields.size(); i++) {
+        ((ClsElementImpl)fields.get(i)).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorFields[i]));
       }
     }
     else {
-      log(this, mirror, "fields:" + fields.length + "!=" + mirrorFields.length, extLog);
+      log(this, mirror, "fields:" + fields.size() + "!=" + mirrorFields.length, extLog);
     }
 
-    PsiMethod[] methods = getMethods();
+    List<PsiMethod> methods = getOwnMethods();
     PsiMethod[] mirrorMethods = mirror.getMethods();
-    if (methods.length == mirrorMethods.length) {
-      for (int i = 0; i < methods.length; i++) {
-        ((ClsElementImpl)methods[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorMethods[i]));
+    if (methods.size() == mirrorMethods.length) {
+      for (int i = 0; i < methods.size(); i++) {
+        ((ClsElementImpl)methods.get(i)).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorMethods[i]));
       }
     }
     else {
-      log(this, mirror, "methods:" + methods.length + "!=" + mirrorMethods.length, extLog);
+      log(this, mirror, "methods:" + methods.size() + "!=" + mirrorMethods.length, extLog);
     }
 
-    PsiClass[] classes = getInnerClasses();
+    List<PsiClass> classes = getOwnInnerClasses();
     PsiClass[] mirrorClasses = mirror.getInnerClasses();
-    if (classes.length == mirrorClasses.length) {
-      for (int i = 0; i < classes.length; i++) {
-        ((ClsElementImpl)classes[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorClasses[i]));
+    if (classes.size() == mirrorClasses.length) {
+      for (int i = 0; i < classes.size(); i++) {
+        ((ClsElementImpl)classes.get(i)).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorClasses[i]));
       }
     }
     else {
-      log(this, mirror, "classes:" + classes.length + "!=" + mirrorClasses.length, extLog);
+      log(this, mirror, "classes:" + classes.size() + "!=" + mirrorClasses.length, extLog);
     }
   }
 
@@ -628,5 +645,4 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   protected boolean isVisibilitySupported() {
     return true;
   }
-
 }
