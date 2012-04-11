@@ -37,7 +37,9 @@ public class AndroidCommonUtils {
   private static final Pattern WARNING_PATTERN = Pattern.compile(".*warning.*");
   private static final Pattern ERROR_PATTERN = Pattern.compile(".*error.*");
   private static final Pattern EXCEPTION_PATTERN = Pattern.compile(".*exception.*");
+
   private static Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
+  private static Pattern MANIFEST_PATTERN = Pattern.compile("Manifest(\\$.*)?\\.class");
 
   public static final Pattern COMPILER_MESSAGE_PATTERN = Pattern.compile("(.+):(\\d+):.+");
 
@@ -189,7 +191,7 @@ public class AndroidCommonUtils {
 
   private static void addFileToJar(@NotNull File file,
                                    @NotNull File rootDirectory,
-                                   boolean packRClasses,
+                                   boolean packRAndManifestClasses,
                                    @NotNull List<Pair<File, String>> files)
     throws IOException {
 
@@ -198,7 +200,7 @@ public class AndroidCommonUtils {
 
       if (children != null) {
         for (File child : children) {
-          addFileToJar(child, rootDirectory, packRClasses, files);
+          addFileToJar(child, rootDirectory, packRAndManifestClasses, files);
         }
       }
     }
@@ -207,7 +209,9 @@ public class AndroidCommonUtils {
         return;
       }
 
-      if (!packRClasses && R_PATTERN.matcher(file.getName()).matches()) {
+      if (!packRAndManifestClasses &&
+          (R_PATTERN.matcher(file.getName()).matches() ||
+           MANIFEST_PATTERN.matcher(file.getName()).matches())) {
         return;
       }
 
