@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,10 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
   }
 
   public <F extends Facet> void unregisterListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
-    myDispatchers.get(typeId).removeListener(listener);
+    final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
+    if (dispatcher != null) {
+      dispatcher.removeListener(listener);
+    }
   }
 
   public <F extends Facet> void registerListener(@NotNull final FacetTypeId<F> typeId, @NotNull final ProjectWideFacetListener<? extends F> listener,
