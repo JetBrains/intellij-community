@@ -1,56 +1,56 @@
-object path entity ('myObject')
-( ('(')
+OBJECT_PATH_ENTITY ('myObject')
+MULTILINE_OPEN ('(')
 WHITE_SPACE ('
   ')
-multiline value ('some value')
+MULTILINE_VALUE ('some value')
 WHITE_SPACE ('
 ')
-) (')')
+MULTILINE_CLOSE (')')
 WHITE_SPACE ('
 
 ')
-object path entity ('myObject')
-. ('.')
-object path entity ('nextProperty')
+OBJECT_PATH_ENTITY ('myObject')
+OBJECT_PATH_SEPARATOR ('.')
+OBJECT_PATH_ENTITY ('nextProperty')
 WHITE_SPACE (' ')
-( ('(')
-ignored text ('ignored text')
+MULTILINE_OPEN ('(')
+IGNORED_TEXT ('IGNORED_TEXT')
 WHITE_SPACE ('
   ')
-multiline value ('some other value ))')
+MULTILINE_VALUE ('some other value ))')
 WHITE_SPACE ('
   ')
-multiline value ('and one more string with provocations{')
+MULTILINE_VALUE ('and one more string with provocations{')
 WHITE_SPACE ('
     ')
-multiline value ('[GLOBAL]')
+MULTILINE_VALUE ('[GLOBAL]')
 WHITE_SPACE ('
   ')
-multiline value ('}')
+MULTILINE_VALUE ('}')
 WHITE_SPACE ('
 ')
-) (')')
+MULTILINE_CLOSE (')')
 WHITE_SPACE ('
 
 ')
-object path entity ('myObject3')
+OBJECT_PATH_ENTITY ('myObject3')
 WHITE_SPACE (' ')
-( ('(')
+MULTILINE_OPEN ('(')
 WHITE_SPACE ('
  ')
-multiline value ('prop{')
+MULTILINE_VALUE ('prop{')
 WHITE_SPACE ('
   ')
-multiline value ('p1 = 2')
+MULTILINE_VALUE ('p1 = 2')
 WHITE_SPACE ('
   ')
-multiline value ('p4 = 5')
+MULTILINE_VALUE ('p4 = 5')
 WHITE_SPACE ('
  ')
-multiline value ('}')
+MULTILINE_VALUE ('}')
 WHITE_SPACE ('
 ')
-) (')')
-ignored text ('also ignored text')
+MULTILINE_CLOSE (')')
+IGNORED_TEXT ('also IGNORED_TEXT')
 WHITE_SPACE ('
 ')

@@ -1,21 +1,21 @@
-include ('<INCLUDE_TYPOSCRIPT : source="FILE: fileadmin/html/mainmenu_typoscript.txt">')
+INCLUDE ('<INCLUDE_TYPOSCRIPT : source="FILE: fileadmin/html/mainmenu_typoscript.txt">')
 WHITE_SPACE ('
 ')
-include ('<INCLUDE_TYPOSCRIPT : source="EXT:myext/directory/file.txt">')
+INCLUDE ('<INCLUDE_TYPOSCRIPT : source="EXT:myext/directory/file.txt">')
 WHITE_SPACE ('
 ')
-include ('<INCLUDE_TYPOSCRIPT : source="FILE: fileadmin/html/mainmenu_typoscript.txt"> t = 8')
+INCLUDE ('<INCLUDE_TYPOSCRIPT : source="FILE: fileadmin/html/mainmenu_typoscript.txt"> t = 8')
 WHITE_SPACE ('
 ')
-include ('<')
+INCLUDE ('<')
 WHITE_SPACE ('
 ')
-include ('< INCLsome strange text>')
+INCLUDE ('< INCLsome strange text>')
 WHITE_SPACE ('
 ')
-include ('< f = 34')
+INCLUDE ('< f = 34')
 WHITE_SPACE ('
 ')
-include ('< fff.dsfs')
+INCLUDE ('< fff.dsfs')
 WHITE_SPACE ('
 ')

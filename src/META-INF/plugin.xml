@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<idea-plugin version="2">
+
+  <id>com.jetbrains.typoscript</id>
+  <name>TypoScript Support</name>
+
+  <description>Typo3 language TypoScript support</description>
+
+  <version>1.0</version>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+  <depends>com.intellij.modules.ultimate</depends>
+  <resource-bundle>resources.messages.TypoScriptBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="com.jetbrains.typoscript.lang.TypoScriptFileTypeFactory"/>
+    <syntaxHighlighter key="TypoScript" implementationClass="com.jetbrains.typoscript.lang.highlighter.TypoScriptSyntaxHighlighter"/>
+  </extensions>
+
+</idea-plugin>

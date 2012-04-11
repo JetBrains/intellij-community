@@ -1,9 +1,9 @@
 myObject {
 field = title
-   ifEmpty {  ignored text
+   ifEmpty {  IGNORED_TEXT
        data = leveltitle:0  } bracket is ignored
      [i = 5]
-    }    some ignored text
+    }    some IGNORED_TEXT
 }
 } this brace is also ignored by parser
 
