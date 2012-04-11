@@ -211,6 +211,14 @@ public class IconUtil {
     return getToolbarDecoratorIcon("addClass.png");
   }
 
+  public static Icon getImportIcon() {
+    return IconLoader.getIcon("/toolbarDecorator/import.png");
+  }
+
+  public static Icon getExportIcon() {
+    return IconLoader.getIcon("/toolbarDecorator/export.png");
+  }
+
   public static Icon getToolbarDecoratorIcon(String name) {
     return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + name);
   }
