@@ -25,11 +25,17 @@
     <presentation title="Unknown (%tag%)" icon="/com/intellij/android/designer/icons/unknown.png"/>
   </meta>
 
-  <meta class="android.view.View">
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.view.View"
+        tag="View">
+
+    <palette title="View" icon="/com/intellij/android/designer/icons/View.png"/>
+
     <properties
         important="id background"
         expert="tag scrollX scrollY fitsSystemWindows scrollbars scrollbarStyle isScrollContainer fadeScrollbars scrollbarFadeDuration scrollbarDefaultDelayBeforeFade scrollbarSize scrollbarThumbHorizontal scrollbarThumbVertical scrollbarTrackHorizontal scrollbarTrackVertical scrollbarAlwaysDrawHorizontalTrack scrollbarAlwaysDrawVerticalTrack fadingEdge requiresFadingEdge fadingEdgeLength nextFocusLeft nextFocusRight nextFocusUp nextFocusDown nextFocusForward saveEnabled filterTouchesWhenObscured drawingCacheQuality keepScreenOn duplicateParentState soundEffectsEnabled hapticFeedbackEnabled contentDescription overScrollMode translationX translationY transformPivotX transformPivotY rotation rotationX rotationY scaleX scaleY verticalScrollbarPosition layerType layoutDirection textDirection"
         />
+
   </meta>
 
   <meta class="android.view.ViewGroup">
@@ -1038,6 +1044,7 @@
              tooltip="A Layout that arranges its children in a single column or a single row."/>
 
     <properties important="orientation gravity baselineAligned measureWithLargestChild showDividers"
+                expert="layout:gravity.fill layout:gravity.fill_horizontal layout:gravity.fill_vertical layout:gravity.clip_vertical layout:gravity.clip_horizontal"
                 top="gravity orientation"
         />
 
@@ -1088,6 +1095,44 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent">
           </AbsoluteLayout>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
+        layout="com.intellij.android.designer.model.layout.RadTableLayout"
+        class="android.widget.TableLayout"
+        tag="TableLayout">
+
+    <properties important="stretchColumns shrinkColumns collapseColumns"/>
+
+    <palette title="TableLayout" icon="/com/intellij/android/designer/icons/TableLayout.png"
+             tooltip="A layout that arranges its children into rows and columns. A TableLayout consists of a number of TableRow objects, each defining a row (actually, you can have other children, which will be explained below). TableLayout containers do not display border lines for their rows, columns, or cells. Each row has zero or more cells; each cell can hold one View object. The table has as many columns as the row with the most cells. A table can leave cells empty. Cells can span columns, as they can in HTML."/>
+
+    <creation>
+      <![CDATA[
+          <TableLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </TableLayout>
+      ]]>
+    </creation>
+  </meta>
+
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
+        layout="com.intellij.android.designer.model.layout.RadTableRowLayout"
+        class="android.widget.TableRow"
+        tag="TableRow">
+
+    <palette title="TableRow" icon="/com/intellij/android/designer/icons/TableRow.png"
+             tooltip="A layout that arranges its children horizontally. A TableRow should always be used as a child of a TableLayout. If a TableRow's parent is not a TableLayout, the TableRow will behave as an horizontal LinearLayout."/>
+
+    <creation>
+      <![CDATA[
+          <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </TableRow>
       ]]>
     </creation>
   </meta>
@@ -1153,6 +1198,8 @@
     <group name="Layouts">
       <item tag="FrameLayout"/>
       <item tag="LinearLayout"/>
+      <item tag="TableLayout"/>
+      <item tag="TableRow"/>
     </group>
   </palette>
 
