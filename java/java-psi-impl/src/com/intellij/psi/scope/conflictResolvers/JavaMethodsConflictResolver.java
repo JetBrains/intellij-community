@@ -336,9 +336,18 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                           PsiMethod method2,
                                           boolean boxingHappening) {
     boolean noBoxing = boxingHappening || type1 instanceof PsiPrimitiveType == type2 instanceof PsiPrimitiveType;
-    final boolean allowUncheckedConversion =
-      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC) ||
-       method1.getContainingClass() == method2.getContainingClass();
+    boolean allowUncheckedConversion =
+      !method1.hasModifierProperty(PsiModifier.STATIC) && !method2.hasModifierProperty(PsiModifier.STATIC);
+
+    if (!allowUncheckedConversion) {
+      final PsiClass containingClass1 = method1.getContainingClass();
+      final PsiClass containingClass2 = method2.getContainingClass();
+      if (containingClass1 != null && containingClass2 != null) {
+        allowUncheckedConversion = !containingClass1.isInheritor(containingClass2, true) &&
+                                   !containingClass2.isInheritor(containingClass1, true);
+      }
+    }
+
     final boolean assignable2From1 = noBoxing && TypeConversionUtil.isAssignable(type2, type1, allowUncheckedConversion);
     final boolean assignable1From2 = noBoxing && TypeConversionUtil.isAssignable(type1, type2, allowUncheckedConversion);
     if (assignable1From2 || assignable2From1) {
@@ -411,7 +420,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     Specifics isMoreSpecific = null;
     for (int i = 0; i < types1.length; i++) {
-      Specifics specifics = checkSubstitutorSpecific(method1, method2, classSubstitutor1, classSubstitutor2, types1[i], types2[i], isMoreSpecific);
+      Specifics specifics = checkSubstitutorSpecific(method1, method2, classSubstitutor1, classSubstitutor2, types1[i], types2[i]);
       if (specifics == null) {
         PsiSubstitutor methodSubstitutor1 = PsiSubstitutor.EMPTY;
         PsiSubstitutor methodSubstitutor2 = PsiSubstitutor.EMPTY;
@@ -488,7 +497,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                     PsiSubstitutor classSubstitutor1,
                                                     PsiSubstitutor classSubstitutor2,
                                                     PsiType type1,
-                                                    PsiType type2, Specifics moreSpecific) {
+                                                    PsiType type2) {
     final Map<PsiTypeParameter, PsiType> map1 = classSubstitutor1.getSubstitutionMap();
     final Map<PsiTypeParameter, PsiType> map2 = classSubstitutor2.getSubstitutionMap();
 
@@ -506,14 +515,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       else {
         final PsiTypeParameter p1 = map1.keySet().iterator().next();
         final PsiTypeParameter p2 = map2.keySet().iterator().next();
-        return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2, moreSpecific);
+        return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2);
       }
     } else {
       final PsiClass aClass1 = PsiUtil.resolveClassInClassTypeOnly(type1);
       final PsiClass aClass2 = PsiUtil.resolveClassInClassTypeOnly(type2);
       if (aClass1 instanceof PsiTypeParameter && aClass2 instanceof PsiTypeParameter) {
-        return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, (PsiTypeParameter)aClass1, (PsiTypeParameter)aClass2,
-                               moreSpecific);
+        return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, (PsiTypeParameter)aClass1, (PsiTypeParameter)aClass2);
       }
     }
     return null;
@@ -527,7 +535,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                            PsiType type1,
                                            PsiType type2,
                                            PsiTypeParameter p1,
-                                           PsiTypeParameter p2, Specifics moreSpecific) {
+                                           PsiTypeParameter p2) {
     Specifics specifics = checkSubtyping(TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p1)),
                                          TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p2)), method1, method2);
     if (specifics == Specifics.NEITHER) {
@@ -555,8 +563,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     } else {               
       final PsiType ctype1 = classSubstitutor1.substitute(type1);
       final PsiType ctype2 = classSubstitutor2.substitute(type2);
-      specifics = checkSubtyping(ctype1, ctype2, method1, method2);
-      return specifics == null && moreSpecific == null ? Specifics.NEITHER : specifics;
+      return checkSubtyping(ctype1, ctype2, method1, method2);
     }
   }
 

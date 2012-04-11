@@ -108,6 +108,7 @@ public class IdeaProjectLoader {
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
     loadProjectLibraries(getComponent(root, "libraryTable"))
     loadModules(getComponent(root, "ProjectModuleManager"))
+    loadUiDesignerConfiguration(root)
     loadArtifacts(getComponent(root, "ArtifactManager"))
     loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
   }
@@ -154,6 +155,10 @@ public class IdeaProjectLoader {
       errorReporter.error("Cannot find modules.xml in $dir")
     }
 
+    def uiDesignerXml = new File(dir, "uiDesigner.xml")
+    if (uiDesignerXml.exists()) {
+      loadUiDesignerConfiguration(new XmlParser(false, false).parse(uiDesignerXml))
+    }
 
     def artifactsFolder = new File(dir, "artifacts")
     if (artifactsFolder.isDirectory()) {
@@ -258,7 +263,11 @@ public class IdeaProjectLoader {
     if (addNotNullTag != null) {
       project.compilerConfiguration.addNotNullAssertions = parseBoolean(addNotNullTag."@enabled", true);
     }
+  }
 
+  private def loadUiDesignerConfiguration(Node root) {
+    def options = loadOptions(getComponent(root, "uidesigner-configuration"))
+    project.uiDesignerConfiguration.copyFormsRuntimeToOutput = parseBoolean(options["COPY_FORMS_RUNTIME_TO_OUTPUT"], true)
   }
 
   private File getFileByUrl(final String url) {

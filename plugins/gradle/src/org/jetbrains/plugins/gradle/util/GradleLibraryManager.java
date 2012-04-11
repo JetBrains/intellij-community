@@ -254,10 +254,19 @@ public class GradleLibraryManager {
     }
     final File libs = new File(file, "lib");
     if (!libs.isDirectory()) {
+      if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+        GradleLog.LOG.info(String.format(
+          "Gradle sdk check failed for the path '%s'. Reason: it doesn't have a child directory named 'lib'", file.getAbsolutePath()
+        ));
+      }
       return false;
     }
 
-    return isGradleSdk(libs.listFiles());
+    final boolean found = isGradleSdk(libs.listFiles());
+    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+      GradleLog.LOG.info(String.format("Gradle home check %s for the path '%s'", found ? "passed" : "failed", file.getAbsolutePath()));
+    }
+    return found;
   }
 
   /**
@@ -291,6 +300,21 @@ public class GradleLibraryManager {
         return file;
       }
     }
+
+    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+      StringBuilder filesInfo = new StringBuilder();
+      for (File file : files) {
+        filesInfo.append(file.getAbsolutePath()).append(';');
+      }
+      if (filesInfo.length() > 0) {
+        filesInfo.setLength(filesInfo.length() - 1);
+      }
+      GradleLog.LOG.info(String.format(
+        "Gradle sdk check fails. Reason: no one of the given files matches gradle jar pattern (%s). Files: %s",
+        GRADLE_JAR_FILE_PATTERN.toString(), filesInfo
+      ));
+    }
+    
     return null;
   }
 

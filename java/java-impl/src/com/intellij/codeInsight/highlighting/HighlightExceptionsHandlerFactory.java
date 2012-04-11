@@ -30,6 +30,7 @@ import java.util.Collection;
  * @author yole
  */
 public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandlerFactory {
+  @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(final Editor editor, final PsiFile file) {
     int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
     PsiElement target = file.findElementAt(offset);
@@ -79,6 +80,7 @@ public class HighlightExceptionsHandlerFactory implements HighlightUsagesHandler
     final Collection<PsiClassType> allThrownExceptions = ExceptionUtil.collectUnhandledExceptions(tryStatement.getTryBlock(),
                                                                                         tryStatement.getTryBlock());
     Condition<PsiType> filter = new Condition<PsiType>() {
+      @Override
       public boolean value(PsiType type) {
         for (PsiParameter parameter : catchBlockParameters) {
           boolean isAssignable = parameter.getType().isAssignableFrom(type);

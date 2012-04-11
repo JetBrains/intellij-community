@@ -48,6 +48,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private final HintAction myHintAction;
   private TextAttributesKey myEnforcedTextAttributes;
   private int myLineNumber = -1;
+  private String myProblemGroup;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
@@ -204,6 +205,15 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public HintAction getHintAction() {
     return myHintAction;
+  }
+
+  @Nullable
+  public String getProblemGroup() {
+    return myProblemGroup;
+  }
+
+  public void setProblemGroup(@Nullable String problemGroup) {
+    myProblemGroup = problemGroup;
   }
 
   public boolean showTooltip() {

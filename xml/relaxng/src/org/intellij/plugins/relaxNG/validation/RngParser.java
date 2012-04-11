@@ -42,7 +42,7 @@ import org.kohsuke.rngom.ast.builder.BuildException;
 import org.kohsuke.rngom.ast.builder.IncludedGrammar;
 import org.kohsuke.rngom.ast.builder.SchemaBuilder;
 import org.kohsuke.rngom.ast.om.ParsedPattern;
-import org.kohsuke.rngom.ast.util.CheckingSchemaBuilder;
+import org.kohsuke.rngom.binary.SchemaBuilderImpl;
 import org.kohsuke.rngom.digested.DPattern;
 import org.kohsuke.rngom.digested.DSchemaBuilderImpl;
 import org.kohsuke.rngom.parse.IllegalSchemaException;
@@ -90,9 +90,11 @@ public class RngParser {
   public static DPattern parsePattern(final PsiFile file, final ErrorHandler eh, boolean checking) {
     try {
       final Parseable p = createParsable(file, eh);
-      final SchemaBuilder sb = new DSchemaBuilderImpl();
-
-      return (DPattern)p.parse(checking ? new CheckingSchemaBuilder(sb, eh) : sb);
+      if (checking) {
+        p.parse(new SchemaBuilderImpl(eh));
+      } else {
+        return p.parse(new DSchemaBuilderImpl());
+      }
     } catch (BuildException e) {
       LOG.info(e);
     } catch (IllegalSchemaException e) {

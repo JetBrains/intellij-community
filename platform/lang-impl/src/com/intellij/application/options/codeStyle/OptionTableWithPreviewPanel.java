@@ -211,6 +211,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
     ListTreeTableModel model = new ListTreeTableModel(rootNode, COLUMNS);
     TreeTable treeTable = new TreeTable(model) {
+      @Override
       public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
         TreeTableCellRenderer tableRenderer = super.createTableRenderer(treeTableModel);
         UIUtil.setLineStyleAngled(tableRenderer);
@@ -220,6 +221,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         return tableRenderer;
       }
 
+      @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
         TreePath treePath = getTree().getPathForRow(row);
         if (treePath == null) return super.getCellRenderer(row, column);
@@ -230,6 +232,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         return renderer == null ? super.getCellRenderer(row, column) : renderer;
       }
 
+      @Override
       public TableCellEditor getCellEditor(int row, int column) {
         TreePath treePath = getTree().getPathForRow(row);
         if (treePath == null) return super.getCellEditor(row, column);
@@ -397,6 +400,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
     }
 
+    @Override
     public Object getValue(CodeStyleSettings settings) {
       try {
         return field.getBoolean(getSettings(settings)) ? Boolean.TRUE : Boolean.FALSE;
@@ -406,6 +410,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       }
     }
 
+    @Override
     public void setValue(Object value, CodeStyleSettings settings) {
       try {
         field.setBoolean(getSettings(settings), ((Boolean)value).booleanValue());
@@ -445,6 +450,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       return null;
     }
 
+    @Override
     public void setValue(Object value, CodeStyleSettings settings) {
       try {
         for (int i = 0; i < values.length; i++) {
@@ -461,6 +467,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
+    @Override
     public Object valueOf(Object o) {
       if (o instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)o;
@@ -469,6 +476,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       return o.toString();
     }
 
+    @Override
     public Class getColumnClass() {
       return TreeTableModel.class;
     }
@@ -479,6 +487,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     private final TableCellEditor myEditor = new MyValueEditor();
     private final TableCellRenderer myRenderer = new MyValueRenderer();
 
+    @Override
     public Object valueOf(Object o) {
       if (o instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)o;
@@ -488,18 +497,22 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       return null;
     }
 
+    @Override
     public TableCellRenderer getRenderer(Object o) {
       return myRenderer;
     }
 
+    @Override
     public TableCellEditor getEditor(Object item) {
       return myEditor;
     }
 
+    @Override
     public boolean isCellEditable(Object o) {
       return (o instanceof MyTreeNode) && (((MyTreeNode)o).isEnabled());
     }
 
+    @Override
     public void setValue(Object o, Object o1) {
       MyTreeNode node = (MyTreeNode)o;
       node.setValue(o1);
@@ -511,6 +524,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
   private final TreeCellRenderer myTitleRenderer = new TreeCellRenderer() {
     private final JLabel myLabel = new JLabel();
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -586,6 +600,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     private final JCheckBox myCheckBox = new JCheckBox();
     private final JPanel myEmptyLabel = new JPanel();
 
+    @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
                                                    boolean isSelected,
@@ -636,6 +651,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
 
     public MyValueEditor() {
       final ActionListener itemChoosen = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myCurrentNode != null) {
             myCurrentNode.setValue(getCellEditorValue());
@@ -649,6 +665,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
     }
 
+    @Override
     public Object getCellEditorValue() {
       if (myCurrentEditor == myOptionsEditor) {
         //new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
@@ -666,6 +683,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       return null;
     }
 
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       final DefaultMutableTreeNode defaultNode = (DefaultMutableTreeNode)((TreeTable)table).getTree().
         getPathForRow(row).getLastPathComponent();
@@ -693,12 +711,14 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     applyNode(root, settings);
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
@@ -708,10 +728,12 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     return false;
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();

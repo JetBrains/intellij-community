@@ -40,50 +40,62 @@ public abstract class TextAttributesDescription extends ColorAndFontDescription 
     initCheckedStatus();
   }
 
+  @Override
   public int getFontType() {
     return myAttributes.getFontType();
   }
 
+  @Override
   public void setFontType(int type) {
     myAttributes.setFontType(type);
   }
 
+  @Override
   public Color getExternalEffectColor() {
     return myAttributes.getEffectColor();
   }
 
+  @Override
   public EffectType getExternalEffectType() {
     return myAttributes.getEffectType();
   }
 
+  @Override
   public void setExternalEffectColor(Color color) {
     myAttributes.setEffectColor(color);
   }
 
+  @Override
   public void setExternalEffectType(EffectType type) {
     myAttributes.setEffectType(type);
   }
 
+  @Override
   public Color getExternalForeground() {
     return myAttributes.getForegroundColor();
   }
 
+  @Override
   public void setExternalForeground(Color col) {
     myAttributes.setForegroundColor(col);
   }
 
+  @Override
   public Color getExternalBackground() {
     return myAttributes.getBackgroundColor();
   }
 
+  @Override
   public Color getExternalErrorStripe() {
     return myAttributes.getErrorStripeColor();
   }
 
+  @Override
   public void setExternalBackground(Color col) {
     myAttributes.setBackgroundColor(col);
   }
 
+  @Override
   public void setExternalErrorStripe(Color col) {
     myAttributes.setErrorStripeColor(col);
   }

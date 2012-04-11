@@ -118,6 +118,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     return unescapeStringCharacters(text);
   }
 
+  @Override
   public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);

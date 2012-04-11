@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
  * @author max
  */
 public class MissingIfBranchesFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiIfStatement)) return;
 

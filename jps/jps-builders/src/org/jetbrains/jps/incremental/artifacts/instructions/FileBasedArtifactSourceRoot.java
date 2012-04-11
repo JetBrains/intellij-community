@@ -6,6 +6,7 @@ import org.jetbrains.jps.PathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +30,8 @@ public class FileBasedArtifactSourceRoot extends ArtifactSourceRoot {
   }
 
   @Override
-  public boolean containsFile(String filePath) {
-    return FileUtil.isAncestor(myFile, new File(FileUtil.toSystemDependentName(filePath)), false) && getFilter().accept(filePath);
+  public boolean containsFile(String filePath, BuildDataManager dataManager) throws IOException {
+    return FileUtil.isAncestor(myFile, new File(FileUtil.toSystemDependentName(filePath)), false) && getFilter().accept(filePath, dataManager);
   }
 
   @Override

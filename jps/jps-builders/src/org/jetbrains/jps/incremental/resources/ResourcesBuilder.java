@@ -13,7 +13,6 @@ import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
@@ -45,9 +44,9 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
           if (finalPatterns.isResourceFile(file, sourceRoot)) {
             try {
               context.processMessage(new ProgressMessage("Copying " + file.getPath()));
-              final String moduleName = module.getName().toLowerCase(Locale.US);
               doneSomething.set(true);
-              copyResource(context, module, file, sourceRoot, context.getDataManager().getSourceToOutputMap(moduleName, context.isCompilingTests()));
+              copyResource(context, module, file, sourceRoot,
+                           context.getDataManager().getSourceToOutputMap(module.getName(), context.isCompilingTests()));
             }
             catch (IOException e) {
               LOG.info(e);

@@ -215,6 +215,13 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     panel.add(myInnerClassNameField.getComponent(), gbc);
     innerClassNameLabel.setText(RefactoringBundle.message("inner.class.name"));
 
+    boolean innerClassNeeded = false;
+    for (PsiClass superClass : mySuperClasses) {
+      innerClassNeeded |= InheritanceToDelegationUtil.isInnerClassNeeded(myClass, superClass);
+    }
+    myInnerClassNameField.setVisible(innerClassNeeded);
+    innerClassNameLabel.setVisible(innerClassNeeded);
+    
     return panel;
   }
 

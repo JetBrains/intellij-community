@@ -26,10 +26,12 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class IfStatementSelectioner extends BasicSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiIfStatement;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = new ArrayList<TextRange>();
     result.addAll(expandToWholeLine(editorText, e.getTextRange(), false));

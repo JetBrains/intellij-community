@@ -21,14 +21,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeTooltipManager;
@@ -685,7 +679,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       keySetList.addAll(SearchUtil.findKeys(filter, quated));
     }
     for (Descriptor descriptor : myDescriptors.keySet()) {
-      if (filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
+      if (!descriptor.shouldBeShown() || filter != null && filter.length() > 0 && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quated)) {
         continue;
       }
       final List<ScopeToolState> nonDefaultTools = mySelectedProfile.getNonDefaultTools(descriptor.getKey().toString());
@@ -752,7 +746,18 @@ public class SingleInspectionProfilePanel extends JPanel {
       final NamedScope scope = node.getScope();
       if (scope != null || node.isInspectionNode()) {
         final HighlightDisplayKey key = descriptor.getKey();
-        final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar());
+        final LevelChooser chooser = new LevelChooser(((SeverityProvider)mySelectedProfile.getProfileManager()).getOwnSeverityRegistrar()) {
+          @Override
+          public Dimension getPreferredSize() {
+            Dimension preferredSize = super.getPreferredSize();
+            return new Dimension(Math.min(300, preferredSize.width), preferredSize.height);
+          }
+
+          @Override
+          public Dimension getMinimumSize() {
+            return getPreferredSize();
+          }
+        };
         chooser.getComboBox().addActionListener(new ActionListener() {
           public void actionPerformed(ActionEvent e) {
             boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope) != chooser.getLevel();
@@ -761,7 +766,6 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         });
         chooser.setLevel(mySelectedProfile.getErrorLevel(key, scope));
-        chooser.setMinimumSize(new Dimension(150, chooser.getPreferredSize().height));
 
         final JPanel withSeverity = new JPanel(new GridBagLayout());
         withSeverity.add(new JLabel(InspectionsBundle.message("inspection.severity")),

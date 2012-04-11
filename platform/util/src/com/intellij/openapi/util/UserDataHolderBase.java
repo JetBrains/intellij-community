@@ -16,44 +16,26 @@
 package com.intellij.openapi.util;
 
 
+import com.intellij.util.SmartFMap;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
-import com.intellij.util.containers.StripedLockConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ConcurrentModificationException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
 
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
-  private static final Key<Map<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+  private static final Key<SmartFMap<Key, Object>> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   /**
    * Concurrent writes to this field are via CASes only, using the {@link #updater}
-   * When map becomes empty, this field set to null atomically
-   *
-   * Basic state transitions are as follows:
-   *
-   * (adding keyvalue)            (putUserData(key,value))
-   * [myUserMap=null]                  ->              [myUserMap=(key->value)]
-   *
-   * (adding another)             (putUserData(key2,value2))
-   * [myUserMap=(key->value)]          ->              [myUserMap=(key->value, key2->value2)]
-   *
-   * (removing keyvalue)          (putUserData(k2,null))
-   * [myUserMap=(key->value, k2->v2)]  ->              [myUserMap=(key->value)]
-   *
-   * (removing last entry)        (putUserData(key,null))
-   * [myUserMap=(key->value)]          ->              [myUserMap=null]
-   *
    */
-  private volatile ConcurrentMap<Key, Object> myUserMap = null;
+  @NotNull private volatile SmartFMap<Key, Object> myUserMap = SmartFMap.emptyMap();
 
   protected Object clone() {
     try {
       UserDataHolderBase clone = (UserDataHolderBase)super.clone();
-      clone.myUserMap = null;
+      clone.myUserMap = SmartFMap.emptyMap();
       copyCopyableDataTo(clone);
       return clone;
     }
@@ -65,207 +47,86 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
 
   @TestOnly
   public String getUserDataString() {
-    final ConcurrentMap<Key, Object> userMap = myUserMap;
-    if (userMap == null) {
-      return "";
-    }
+    final SmartFMap<Key, Object> userMap = myUserMap;
     final Map copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
     return userMap.toString() + (copyableMap == null ? "" : copyableMap.toString());
   }
 
   public void copyUserDataTo(UserDataHolderBase other) {
-    ConcurrentMap<Key, Object> map = myUserMap;
-    if (map == null) {
-      other.myUserMap = null;
-    }
-    else {
-      ConcurrentMap<Key, Object> fresh = createDataMap(map.size());
-      fresh.putAll(map);
-      other.myUserMap = fresh;
-    }
+    other.myUserMap = myUserMap;
   }
 
   public <T> T getUserData(@NotNull Key<T> key) {
-    final Map<Key, Object> map = myUserMap;
     //noinspection unchecked
-    return map == null ? null : (T)map.get(key);
+    return (T)myUserMap.get(key);
   }
 
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     while (true) {
-      try {
-        if (value == null) {
-          ConcurrentMap<Key, Object> map = myUserMap;
-          if (map == null) break;
-          @SuppressWarnings("unchecked")
-          T previous = (T)map.remove(key);
-          boolean removed = previous != null;
-          if (removed) {
-            nullifyMapFieldIfEmpty();
-          }
-        }
-        else {
-          getOrCreateMap().put(key, value);
-        }
-        break;
-      }
-      catch (ConcurrentModificationException ignored) {
+      SmartFMap<Key, Object> map = myUserMap;
+      SmartFMap<Key, Object> newMap = value == null ? map.minus(key) : map.plus(key, value);
+      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+        return;
       }
     }
   }
 
-  private static ConcurrentMap<Key, Object> createDataMap(int initialCapacity) {
-    return new StripedLockConcurrentHashMap<Key, Object>(initialCapacity);
-  }
-
   public <T> T getCopyableUserData(Key<T> key) {
-    return getCopyableUserDataImpl(key);
-  }
-
-  protected final <T> T getCopyableUserDataImpl(Key<T> key) {
-    Map map = getUserData(COPYABLE_USER_MAP_KEY);
-    //noinspection unchecked
+    SmartFMap<Key, Object> map = getUserData(COPYABLE_USER_MAP_KEY);
+    //noinspection unchecked,ConstantConditions
     return map == null ? null : (T)map.get(key);
   }
 
   public <T> void putCopyableUserData(Key<T> key, T value) {
-    putCopyableUserDataImpl(key, value);
-  }
-
-  private Map<Key, Object> getOrCreateCopyableMap(boolean create) {
-    Map<Key, Object> copyMap = getUserData(COPYABLE_USER_MAP_KEY);
-    if (copyMap == null && create) {
-      copyMap = createDataMap(1);
-      copyMap = putUserDataIfAbsent(COPYABLE_USER_MAP_KEY, copyMap);
-    }
-
-    return copyMap;
-  }
-
-  protected final <T> void putCopyableUserDataImpl(Key<T> key, T value) {
     while (true) {
-      try {
-        Map<Key, Object> copyMap = getOrCreateCopyableMap(value != null);
-        if (copyMap == null) break;
-
-        if (value == null) {
-          copyMap.remove(key);
-          if (copyMap.isEmpty()) {
-            ((StripedLockConcurrentHashMap<Key, Object>)copyMap).blockModification();
-            ConcurrentMap<Key, Object> newCopyMap;
-            if (copyMap.isEmpty()) {
-              newCopyMap = null;
-            }
-            else {
-              newCopyMap = createDataMap(copyMap.size());
-              newCopyMap.putAll(copyMap);
-            }
-            boolean replaced = replace(COPYABLE_USER_MAP_KEY, copyMap, newCopyMap);
-            if (!replaced) continue;
-          }
-        }
-        else {
-          copyMap.put(key, value);
-        }
-        break;
+      SmartFMap<Key, Object> map = myUserMap;
+      @SuppressWarnings("unchecked") SmartFMap<Key, Object> copyableMap = (SmartFMap<Key, Object>)map.get(COPYABLE_USER_MAP_KEY);
+      if (copyableMap == null) {
+        copyableMap = SmartFMap.emptyMap();
       }
-      catch (ConcurrentModificationException ignored) {
-        // someone blocked modification, retry
-      }
-    }
-  }
-
-  private ConcurrentMap<Key, Object> getOrCreateMap() {
-    while (true) {
-      ConcurrentMap<Key, Object> map = myUserMap;
-      if (map != null) return map;
-      map = createDataMap(2);
-      boolean updated = updater.compareAndSet(this, null, map);
-      if (updated) {
-        return map;
+      SmartFMap<Key, Object> newCopyableMap = value == null ? copyableMap.minus(key) : copyableMap.plus(key, value);
+      SmartFMap<Key, Object> newMap = newCopyableMap.isEmpty() ? map.minus(COPYABLE_USER_MAP_KEY) : map.plus(COPYABLE_USER_MAP_KEY, newCopyableMap);
+      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+        return;
       }
     }
   }
 
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
     while (true) {
-      try {
-        ConcurrentMap<Key, Object> map = getOrCreateMap();
-        if (oldValue == null) {
-          return newValue == null || map.putIfAbsent(key, newValue) == null;
-        }
-        if (newValue == null) {
-          boolean removed = map.remove(key, oldValue);
-          if (removed) {
-            nullifyMapFieldIfEmpty();
-          }
-          return removed;
-        }
-        return map.replace(key, oldValue, newValue);
+      SmartFMap<Key, Object> map = myUserMap;
+      if (map.get(key) != oldValue) {
+        return false;
       }
-      catch (ConcurrentModificationException ignored) {
-        // someone blocked modification, retry
+      SmartFMap<Key, Object> newMap = newValue == null ? map.minus(key) : map.plus(key, newValue);
+      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+        return true;
       }
     }
   }
                                                             
   @NotNull
   public <T> T putUserDataIfAbsent(@NotNull final Key<T> key, @NotNull final T value) {
-    Object v = getOrCreateMap().get(key);
-    if (v != null) {
-      //noinspection unchecked
-      return (T)v;
-    }
     while (true) {
-      try {
-        @SuppressWarnings("unchecked")
-        T prev = (T)getOrCreateMap().putIfAbsent(key, value);
-        return prev == null ? value : prev;
+      SmartFMap<Key, Object> map = myUserMap;
+      @SuppressWarnings("unchecked") T oldValue = (T)map.get(key);
+      if (oldValue != null) {
+        return oldValue;
       }
-      catch (ConcurrentModificationException ignored) {
-        // someone blocked modification, retry
+      SmartFMap<Key, Object> newMap = map.plus(key, value);
+      if (newMap == map || updater.compareAndSet(this, map, newMap)) {
+        return value;
       }
     }
   }
 
   public void copyCopyableDataTo(@NotNull UserDataHolderBase clone) {
-    Map<Key, Object> copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
-    if (copyableMap != null) {
-      ConcurrentMap<Key, Object> copy = createDataMap(copyableMap.size());
-      copy.putAll(copyableMap);
-      copyableMap = copy;
-    }
-    clone.putUserData(COPYABLE_USER_MAP_KEY, copyableMap);
+    clone.putUserData(COPYABLE_USER_MAP_KEY, getUserData(COPYABLE_USER_MAP_KEY));
   }
 
   protected void clearUserData() {
-    myUserMap = null;
+    myUserMap = SmartFMap.emptyMap();
   }
 
-  private static final AtomicFieldUpdater<UserDataHolderBase, ConcurrentMap> updater = AtomicFieldUpdater.forFieldOfType(UserDataHolderBase.class, ConcurrentMap.class);
-  private void nullifyMapFieldIfEmpty() {
-    try {
-      while (true) {
-        StripedLockConcurrentHashMap<Key, Object> map = (StripedLockConcurrentHashMap<Key, Object>)myUserMap;
-        if (map == null || !map.isEmpty()) break;
-        map.blockModification(); // we block the map and either replace it with null or fail with replace, in both cases the map is thrown away
-        ConcurrentMap<Key, Object> newMap;
-        if (map.isEmpty()) {
-          newMap = null;
-        }
-        else {
-          // someone managed to add something in the meantime
-          // atomically replace the blocked map with newly created map filled with the data sneaked in
-          newMap = createDataMap(map.size());
-          newMap.putAll(map);
-        }
-        boolean replaced = updater.compareAndSet(this, map, newMap);
-        if (replaced) break;
-        // else someone has replaced map already and pushing back the changes is his responsibility
-      }
-    }
-    catch (ConcurrentModificationException ignored) {
-      // somebody has already blocked the map, back off  
-    }
-  }
+  private static final AtomicFieldUpdater<UserDataHolderBase, SmartFMap> updater = AtomicFieldUpdater.forFieldOfType(UserDataHolderBase.class, SmartFMap.class);
 }

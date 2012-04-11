@@ -61,6 +61,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     myLangSelector = langSelector;
 
     model.addListener(new CodeStyleSettingsListener(){
+      @Override
       public void currentSchemeChanged(final Object source) {
         if (source != mySchemesPanel) {
           mySchemesPanel.onSelectedSchemeChanged();
@@ -68,18 +69,22 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
         onCurrentSchemeChanged();
       }
 
+      @Override
       public void schemeListChanged() {
         mySchemesPanel.resetSchemesCombo();
       }
 
+      @Override
       public void currentSettingsChanged() {
         ensureCurrentPanel().onSomethingChanged();
       }
 
+      @Override
       public void usePerProjectSettingsOptionChanged() {
         mySchemesPanel.usePerProjectSettingsOptionChanged();
       }
 
+      @Override
       public void schemeChanged(final CodeStyleScheme scheme) {
         ensurePanel(scheme).reset();
       }
@@ -118,6 +123,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   public void onCurrentSchemeChanged() {
     myLayout.show(mySettingsPanel, WAIT_CARD);
     final Runnable replaceLayout = new Runnable() {
+      @Override
       public void run() {
         if (!myIsDisposed) {
           ensureCurrentPanel().onSomethingChanged();
@@ -133,6 +139,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     } else {
       myAlarm.cancelAllRequests();
       final Runnable request = new Runnable() {
+        @Override
         public void run() {
           SwingUtilities.invokeLater(replaceLayout);
         }
@@ -244,6 +251,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     return mySettingsPanels.get(scheme.getName()).isModified();
   }
 
+  @Override
   public void languageChanged(Language lang) {
     for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
       panel.setLanguage(lang);

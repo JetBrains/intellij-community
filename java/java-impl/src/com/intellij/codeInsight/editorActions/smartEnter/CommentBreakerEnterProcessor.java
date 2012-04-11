@@ -34,6 +34,7 @@ import com.intellij.psi.util.PsiTreeUtil;
  * To change this template use Options | File Templates.
  */
 public class CommentBreakerEnterProcessor implements EnterProcessor {
+  @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     if (isModified) return false;
     final PsiElement atCaret = psiElement.getContainingFile().findElementAt(editor.getCaretModel().getOffset());

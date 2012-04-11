@@ -44,6 +44,7 @@ import java.util.List;
 public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.InvertIfConditionAction");
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
 
     int offset = editor.getCaretModel().getOffset();
@@ -66,16 +67,19 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     return block != null;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return getFamilyName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.invert.if.condition");
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 

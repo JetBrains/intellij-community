@@ -20,6 +20,7 @@
  */
 package com.intellij.internal;
 
+import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
@@ -40,6 +41,8 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -48,9 +51,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -147,12 +152,10 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE ||
         dialog.getSelectedPackage() == null ||
         dialog.getSelectedPackage().getQualifiedName().length() == 0 ||
-        parentClassRef.isNull()) return;
-    final PsiPackage aPackage = dialog.getSelectedPackage();
-    final PsiClass psiClass = parentClassRef.get();
-    final String visitorName = visitorNameRef.get();
-    final String visitorQName = PsiNameHelper.getShortClassName(visitorName).equals(visitorName)? aPackage.getQualifiedName()+"."+visitorName : visitorName;
-    generateVisitorClass(visitorQName, aPackage, psiClass);
+        parentClassRef.isNull()) {
+      return;
+    }
+    final String visitorQName = generateEverything(dialog.getSelectedPackage(), parentClassRef.get(), visitorNameRef.get());
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
     final PsiClass visitorClass = JavaPsiFacade.getInstance(project).findClass(visitorQName, GlobalSearchScope.projectScope(project));
     if (ideView != null && visitorClass != null) {
@@ -160,13 +163,26 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     }
   }
 
+  public static String generateEverything(final PsiPackage psiPackage, final PsiClass rootClass, final String visitorName) {
+    final String visitorQName = PsiNameHelper.getShortClassName(visitorName).equals(visitorName)?
+                                psiPackage.getQualifiedName()+"."+ visitorName : visitorName;
+    final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(rootClass.getProject(),
+                                                                               StringUtil.getPackageName(visitorQName), null, false);
+    generateVisitorClass(visitorQName, rootClass, directory, new PackageScope(psiPackage, false, false));
+    return visitorQName;
+  }
+
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
   }
 
-  private static void generateVisitorClass(final String visitorName, final PsiPackage aPackage, final PsiClass baseClass) {
+  private static void generateVisitorClass(final String visitorName,
+                                           final PsiClass baseClass,
+                                           final PsiDirectory directory,
+                                           final GlobalSearchScope scope) {
+
     final THashMap<PsiClass, Set<PsiClass>> classes = new THashMap<PsiClass, Set<PsiClass>>();
-    for (PsiClass aClass : ClassInheritorsSearch.search(baseClass, new PackageScope(aPackage, false, false), true).findAll()) {
+    for (PsiClass aClass : ClassInheritorsSearch.search(baseClass, scope, true).findAll()) {
       if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) == baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final List<PsiClass> implementors =
           ContainerUtil.findAll(ClassInheritorsSearch.search(aClass).findAll(), new Condition<PsiClass>() {
@@ -206,19 +222,18 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     if (visitorClass != null) {
       psiFiles.add(visitorClass.getContainingFile());
     }
+    final int finalDetectedPrefix = detectClassPrefix(classes.keySet()).length();
     new WriteCommandAction(project, PsiUtilCore.toPsiFileArray(psiFiles)) {
       protected void run(final Result result) throws Throwable {
         if (visitorClass == null) {
           final String shortClassName = PsiNameHelper.getShortClassName(visitorName);
-          final String packageName = visitorName.substring(0, visitorName.length() - shortClassName.length() - 1);
-          final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(project, packageName, null, false);
           if (directory != null) {
             final PsiClass visitorClass = JavaDirectoryService.getInstance().createClass(directory, shortClassName);
-            generateVisitorClass(visitorClass, classes, pathMap);
+            generateVisitorClass(visitorClass, classes, pathMap, finalDetectedPrefix);
           }
         }
         else {
-          generateVisitorClass(visitorClass, classes, pathMap);
+          generateVisitorClass(visitorClass, classes, pathMap, finalDetectedPrefix);
         }
       }
 
@@ -229,12 +244,29 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     }.execute();
   }
 
+  @NotNull
+  private static String detectClassPrefix(Collection<PsiClass> classes) {
+    String detectedPrefix = "";
+    List<TextRange> range = new SmartList<TextRange>();
+    for (PsiClass aClass : classes) {
+      String className = aClass.getName();
+      SelectWordUtil.addWordSelection(true, className, 0, range);
+      TextRange prefixRange = ContainerUtil.getFirstItem(range);
+      if (prefixRange != null) {
+        String prefix = prefixRange.substring(className);
+        detectedPrefix = detectedPrefix == "" ? prefix : detectedPrefix.equals(prefix) ? detectedPrefix : null;
+      }
+      if (detectedPrefix == null) return "";
+    }
+    return detectedPrefix;
+  }
+
   private static void generateVisitorClass(final PsiClass visitorClass, final Map<PsiClass, Set<PsiClass>> classes,
-                                    final THashMap<PsiClass, Set<PsiClass>> pathMap) throws Throwable {
+                                           final THashMap<PsiClass, Set<PsiClass>> pathMap, int classPrefix) throws Throwable {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(visitorClass.getProject()).getElementFactory();
     for (PsiClass psiClass : classes.keySet()) {
       final PsiMethod method = elementFactory.createMethodFromText(
-        "public void accept(final " + visitorClass.getQualifiedName() + " visitor) { visitor.visit" + psiClass.getName() + "(this); }", psiClass);
+        "public void accept(final " + visitorClass.getQualifiedName() + " visitor) { visitor.visit" + psiClass.getName().substring(classPrefix) + "(this); }", psiClass);
       for (PsiClass implementor : classes.get(psiClass)) {
         addOrReplaceMethod(method, implementor);
       }
@@ -249,12 +281,16 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       toProcess.addAll(pathClasses);
       final StringBuilder methodText = new StringBuilder();
 
-      methodText.append("public void visit").append(psiClass.getName()).append("(final ").append(psiClass.getQualifiedName()).append(" o) {");
+      methodText.append("public void visit").append(psiClass.getName().substring(classPrefix)).append("(final ").append(psiClass.getQualifiedName()).append(" o) {");
       boolean first = true;
       for (PsiClass pathClass : pathClasses) {
-        if (first) first = false;
-        else methodText.append("// ");
-        methodText.append("visit").append(pathClass.getName()).append("(o);\n");
+        if (first) {
+          first = false;
+        }
+        else {
+          methodText.append("// ");
+        }
+        methodText.append("visit").append(pathClass.getName().substring(classPrefix)).append("(o);\n");
       }
       methodText.append("}");
       final PsiMethod method = elementFactory.createMethodFromText(methodText.toString(), psiClass);

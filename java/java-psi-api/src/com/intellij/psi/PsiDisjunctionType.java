@@ -104,7 +104,7 @@ public class PsiDisjunctionType extends PsiType {
   }
 
   @Override
-  public <A> A accept(final PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull final PsiTypeVisitor<A> visitor) {
     return visitor.visitDisjunctionType(this);
   }
 

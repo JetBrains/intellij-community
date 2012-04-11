@@ -23,6 +23,7 @@ import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 
 public class BasicSelectioner extends ExtendWordSelectionHandlerBase {
 
+  @Override
   public boolean canSelect(PsiElement e) {
     return canSelectBasic(e);
   }

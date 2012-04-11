@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -465,14 +465,14 @@ public class TemplateState implements Disposable {
     if (currentSegmentNumber < 0) return;
     final int start = mySegments.getSegmentStart(currentSegmentNumber);
     final int end = mySegments.getSegmentEnd(currentSegmentNumber);
-    myEditor.getCaretModel().moveToOffset(end);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    myEditor.getSelectionModel().removeSelection();
-
-
-    myEditor.getSelectionModel().setSelection(start, end);
+    if (end >= 0) {
+      myEditor.getCaretModel().moveToOffset(end);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      myEditor.getSelectionModel().removeSelection();
+      myEditor.getSelectionModel().setSelection(start, end);
+    }
+    
     Expression expressionNode = myTemplate.getExpressionAt(myCurrentVariableNumber);
-
     final ExpressionContext context = createExpressionContext(start);
     final LookupElement[] lookupItems = expressionNode.calculateLookupItems(context);
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);

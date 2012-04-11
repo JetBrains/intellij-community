@@ -107,6 +107,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
       final TextRange textRange = aClass.getTextRange();
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           new WriteCommandAction(project, getText(), getText()) {
             @Override

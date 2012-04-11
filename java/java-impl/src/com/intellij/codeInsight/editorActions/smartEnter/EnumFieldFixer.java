@@ -30,6 +30,7 @@ import com.intellij.util.text.CharArrayUtil;
  * To change this template use Options | File Templates.
  */
 public class EnumFieldFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiEnumConstant) {
       int insertionOffset = psiElement.getTextRange().getEndOffset();

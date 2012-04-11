@@ -202,8 +202,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           success = false;
         }
         else {
-          final String moduleName = getCannonicalModuleName(module);
-          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(moduleName, false);
+          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(module.getName(), false);
           sourceToOutputMap.update(filePath, outputFilePath);
           context.markDirty(outputFile);
         }
@@ -282,8 +281,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           }
           final List<String> newFilePaths = Arrays.asList(AndroidJpsUtil.toPaths(newFiles.toArray(new File[newFiles.size()])));
 
-          final String moduleName = getCannonicalModuleName(module);
-          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(moduleName, false);
+          final SourceToOutputMapping sourceToOutputMap = context.getDataManager().getSourceToOutputMap(module.getName(), false);
           sourceToOutputMap.update(filePath, newFilePaths);
 
           for (File newFile : newFiles) {
@@ -602,11 +600,6 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     finally {
       inputStream.close();
     }
-  }
-
-  @NotNull
-  private static String getCannonicalModuleName(@NotNull Module module) {
-    return module.getName().toLowerCase(Locale.US);
   }
 
   @Nullable

@@ -188,7 +188,8 @@ public class GrMapType extends GrLiteralClassType {
     return true;
   }
 
-  public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
+  @NotNull
+  public PsiClassType setLanguageLevel(@NotNull final LanguageLevel languageLevel) {
     return new GrMapType(myFacade, getResolveScope(), myStringEntries, myOtherEntries, languageLevel);
   }
 

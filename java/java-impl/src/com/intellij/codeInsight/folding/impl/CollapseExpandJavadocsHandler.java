@@ -33,6 +33,7 @@ public class CollapseExpandJavadocsHandler implements CodeInsightActionHandler {
     myExpand = isExpand;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file){
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -40,6 +41,7 @@ public class CollapseExpandJavadocsHandler implements CodeInsightActionHandler {
     foldingManager.updateFoldRegions(editor);
     final FoldRegion[] allFoldRegions = editor.getFoldingModel().getAllFoldRegions();
     Runnable processor = new Runnable() {
+      @Override
       public void run() {
         for (FoldRegion region : allFoldRegions) {
           PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
@@ -52,6 +54,7 @@ public class CollapseExpandJavadocsHandler implements CodeInsightActionHandler {
     editor.getFoldingModel().runBatchFoldingOperation(processor);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

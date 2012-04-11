@@ -318,6 +318,10 @@ public class GradleModulesImporter {
           writeLock.finish();
         }
 
+        if (intellijProject.isDisposed()) {
+          return;
+        }
+        
         // Force refresh the infrastructure in order to apply newly introduce intellij project structure changes
         final GradleProjectStructureChangesModel changesModel = intellijProject.getComponent(GradleProjectStructureChangesModel.class);
         if (changesModel != null) {

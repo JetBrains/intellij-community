@@ -38,6 +38,7 @@ public class RadViewComponent extends RadComponent {
   private ViewInfo myViewInfo;
   private Component myNativeComponent;
   private final Rectangle myBounds = new Rectangle();
+  private Rectangle myMargins;
   private XmlTag myTag;
   private List<Property> myProperties;
 
@@ -60,6 +61,26 @@ public class RadViewComponent extends RadComponent {
 
   public void setViewInfo(ViewInfo viewInfo) {
     myViewInfo = viewInfo;
+    myMargins = null;
+  }
+
+  public Rectangle getMargins() {
+    if (myMargins == null) {
+      myMargins = new Rectangle();
+
+      try {
+        Object layoutParams = myViewInfo.getLayoutParamsObject();
+        Class<?> layoutClass = layoutParams.getClass();
+
+        myMargins.x = layoutClass.getField("leftMargin").getInt(layoutParams);
+        myMargins.y = layoutClass.getField("topMargin").getInt(layoutParams);
+        myMargins.width = layoutClass.getField("rightMargin").getInt(layoutParams);
+        myMargins.height = layoutClass.getField("bottomMargin").getInt(layoutParams);
+      }
+      catch (Throwable e) {
+      }
+    }
+    return myMargins;
   }
 
   @Override

@@ -31,9 +31,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
+  @Override
   public NewColorAndFontPanel createPanel(ColorAndFontOptions options) {
     final JPanel scopePanel = createChooseScopePanel();
     return NewColorAndFontPanel.create(new PreviewPanel.Empty(){
+      @Override
       public Component getPanel() {
         return scopePanel;
       }
@@ -41,6 +43,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     }, ColorAndFontOptions.SCOPES_GROUP, options, null, null);
   }
 
+  @Override
   public String getPanelDisplayName() {
     return ColorAndFontOptions.SCOPES_GROUP;
   }
@@ -67,6 +70,7 @@ class ScopeColorsPageFactory implements ColorAndFontPanelFactory {
     gc.weighty = 1;
     panel.add(new JPanel(), gc);
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final OptionsEditor optionsEditor = OptionsEditor.KEY.getData(DataManager.getInstance().getDataContext());
         if (optionsEditor != null) {

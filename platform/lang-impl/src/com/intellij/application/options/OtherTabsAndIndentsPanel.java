@@ -101,6 +101,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
   }
 
 
+  @Override
   protected void somethingChanged() {
     super.somethingChanged();
     update();
@@ -136,6 +137,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
     }
 
     myIndentOptionsTabs.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(final ChangeEvent e) {
         final int selIndex = myIndentOptionsTabs.getSelectedIndex();
         if (selIndex != myLastSelectedTab) {
@@ -162,10 +164,12 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
   }
 
 
+  @Override
   protected int getRightMargin() {
     return myRightMargin;
   }
 
+  @Override
   @NotNull
   protected FileType getFileType() {
     FileTypeIndentOptionsProvider provider = getSelectedIndentProvider();
@@ -173,6 +177,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
     return provider.getFileType();
   }
 
+  @Override
   protected String getPreviewText() {
     final FileTypeIndentOptionsProvider provider = getSelectedIndentProvider();
     if (provider != null) return provider.getPreviewText();
@@ -195,6 +200,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
     return providers.length == 0 ? null : providers[0];
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     settings.USE_SAME_INDENTS = myCbUseSameIndents.isSelected();
     if (!settings.USE_SAME_INDENTS) {
@@ -212,6 +218,7 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
   }
 
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     if (myCbUseSameIndents.isSelected() != settings.USE_SAME_INDENTS) {
       return true;
@@ -232,10 +239,12 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
     return false;
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     myCbUseSameIndents.setSelected(settings.USE_SAME_INDENTS);
 
@@ -251,11 +260,13 @@ public class OtherTabsAndIndentsPanel extends CodeStyleAbstractPanel {
     update();
   }
 
+  @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     //noinspection NullableProblems
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 
+  @Override
   protected void prepareForReformat(final PsiFile psiFile) {
     final FileTypeIndentOptionsProvider provider = getSelectedIndentProvider();
     if (provider != null) {

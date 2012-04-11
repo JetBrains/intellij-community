@@ -48,14 +48,17 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     return myName;
   }
 
+  @Override
   public String getGroup() {
     return myGroup;
   }
 
+  @Override
   public String getType() {
     return myType;
   }
 
+  @Override
   public EditorColorsScheme getScheme() {
     return myScheme;
   }
@@ -100,6 +103,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
 
   public abstract void setExternalEffectType(EffectType type);
 
+  @Override
   public final void setForegroundColor(Color col) {
     super.setForegroundColor(col);
     if (isForegroundChecked) {
@@ -109,6 +113,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     }
   }
 
+  @Override
   public final void setBackgroundColor(Color col) {
     super.setBackgroundColor(col);
     if (isBackgroundChecked) {
@@ -118,6 +123,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     }
   }
 
+  @Override
   public void setErrorStripeColor(Color color) {
     super.setErrorStripeColor(color);
     if (isErrorStripeChecked) {
@@ -128,6 +134,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     }
   }
 
+  @Override
   public final void setEffectColor(Color col) {
     super.setEffectColor(col);
     if (isEffectsColorChecked) {
@@ -137,6 +144,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     }
   }
 
+  @Override
   public final void setEffectType(EffectType effectType) {
     super.setEffectType(effectType);
     setExternalEffectType(effectType);
@@ -179,8 +187,10 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     setEffectType(getEffectType());
   }
 
+  @Override
   public abstract int getFontType();
 
+  @Override
   public abstract void setFontType(int type);
 
   public boolean isFontEnabled() {
@@ -203,6 +213,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     return true;
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }

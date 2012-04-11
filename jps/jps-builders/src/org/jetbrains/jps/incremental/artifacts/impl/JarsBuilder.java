@@ -303,7 +303,7 @@ public class JarsBuilder {
                                        @NotNull String relativePath,
                                        String targetJarPath, @NotNull Set<String> writtenItemRelativePaths, int rootIndex) throws IOException {
     final String filePath = FileUtil.toSystemIndependentName(file.getAbsolutePath());
-    if (!filter.accept(filePath)) {
+    if (!filter.accept(filePath, myContext.getDataManager())) {
       return;
     }
 

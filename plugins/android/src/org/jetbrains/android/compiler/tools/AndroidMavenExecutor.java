@@ -50,8 +50,6 @@ public class AndroidMavenExecutor {
   public static Map<CompilerMessageCategory, List<String>> generateResources(Module module) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(module.getProject());
 
-    assert projectsManager != null;
-
     MavenRunnerParameters parameters =
       new MavenRunnerParameters(true, projectsManager.findProject(module).getDirectory(),
                                 Collections.singletonList("process-resources"),
@@ -61,9 +59,7 @@ public class AndroidMavenExecutor {
     result.put(CompilerMessageCategory.ERROR, new ArrayList<String>());
 
     try {
-      JavaParameters javaParams = MavenExternalParameters.createJavaParameters(module.getProject(), parameters,
-                                                                               projectsManager.getGeneralSettings(),
-                                                                               MavenRunner.getInstance(module.getProject()).getSettings());
+      JavaParameters javaParams = MavenExternalParameters.createJavaParameters(module.getProject(), parameters);
 
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParams);
       StringBuilder messageBuilder = new StringBuilder();

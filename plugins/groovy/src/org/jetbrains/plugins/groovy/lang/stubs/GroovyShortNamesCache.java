@@ -152,6 +152,12 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
     return getMethodsByName(name, scope);
   }
 
+  @NotNull
+  @Override
+  public PsiField[] getFieldsByNameIfNotMoreThan(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, int maxCount) {
+    return getFieldsByName(name, scope);
+  }
+
   @Override
   @NotNull
   public String[] getAllMethodNames() {

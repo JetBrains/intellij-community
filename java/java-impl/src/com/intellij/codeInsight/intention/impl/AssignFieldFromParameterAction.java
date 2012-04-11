@@ -46,6 +46,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return type;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
     final PsiType type = getType(myParameter);
@@ -70,11 +71,13 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     return true;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("intention.assign.field.from.parameter.family");
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiParameter myParameter = CreateFieldFromParameterAction.findParameterAtCursor(file, editor);
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;

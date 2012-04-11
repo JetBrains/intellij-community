@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
  * To change this template use Options | File Templates.
  */
 public class BlockBraceFixer implements Fixer{
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (psiElement instanceof PsiCodeBlock && afterUnmatchedBrace(editor,psiElement.getContainingFile().getFileType())) {
       PsiCodeBlock block = (PsiCodeBlock) psiElement;

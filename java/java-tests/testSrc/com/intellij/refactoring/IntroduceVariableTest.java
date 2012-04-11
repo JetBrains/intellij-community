@@ -269,6 +269,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testCantCollapsedToDiamond() throws Exception {
     doTest(new MockIntroduceVariableHandler("a", true, true, true, "Foo<java.lang.Number>"));
   }
+  
+  public void testPolyadic() throws Exception {
+    doTest(new MockIntroduceVariableHandler("b1", true, true, true, "boolean"));
+  }
 
   public void testSiblingInnerClassType() throws Exception {
     doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B") {

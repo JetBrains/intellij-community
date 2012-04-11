@@ -40,14 +40,17 @@ public class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiEl
     myTarget = target;
   }
 
+  @Override
   public List<PsiElement> getTargets() {
     return Collections.singletonList(myTarget);
   }
 
+  @Override
   protected void selectTargets(final List<PsiElement> targets, final Consumer<List<PsiElement>> selectionConsumer) {
     selectionConsumer.consume(targets);
   }
 
+  @Override
   public void computeUsages(final List<PsiElement> targets) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN);
 

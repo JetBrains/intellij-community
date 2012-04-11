@@ -125,20 +125,24 @@ public class MavenArtifactUtil {
       if (!file.exists()) return null;
 
       ZipFile jar = new ZipFile(file);
-      ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
-
-      if (entry == null) {
-        MavenLog.LOG.info(IndicesBundle.message("repository.plugin.corrupt", file));
-        return null;
-      }
-
-      InputStream is = jar.getInputStream(entry);
       try {
-        byte[] bytes = FileUtil.loadBytes(is);
-        return new MavenPluginInfo(bytes);
+        ZipEntry entry = jar.getEntry(MAVEN_PLUGIN_DESCRIPTOR);
+
+        if (entry == null) {
+          MavenLog.LOG.info(IndicesBundle.message("repository.plugin.corrupt", file));
+          return null;
+        }
+
+        InputStream is = jar.getInputStream(entry);
+        try {
+          byte[] bytes = FileUtil.loadBytes(is);
+          return new MavenPluginInfo(bytes);
+        }
+        finally {
+          is.close();
+        }
       }
       finally {
-        is.close();
         jar.close();
       }
     }

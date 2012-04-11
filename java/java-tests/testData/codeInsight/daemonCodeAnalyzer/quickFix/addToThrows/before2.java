@@ -1,4 +1,4 @@
-// "Add Exception(s) to Method Signature" "true"
+// "Add Exception to Method Signature" "true"
 class C {
     static class E1 extends Exception { }
     static class E2 extends Exception { }

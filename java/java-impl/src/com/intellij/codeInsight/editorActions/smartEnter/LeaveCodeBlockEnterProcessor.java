@@ -46,6 +46,7 @@ public class LeaveCodeBlockEnterProcessor implements EnterProcessor {
     JavaElementType.FOREACH_STATEMENT
   );
   
+  @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     PsiElement parent = psiElement.getParent();
     if (!(parent instanceof PsiCodeBlock)) {

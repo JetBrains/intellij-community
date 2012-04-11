@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
   private boolean myToDeleteGt;
 
+  @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
     int offset = editor.getCaretModel().getOffset() - 1;
     myToDeleteGt = c =='<' &&
@@ -36,6 +37,7 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
                         && JavaTypedHandler.isAfterClassLikeIdentifierOrDot(offset, editor);
   }
 
+  @Override
   public boolean charDeleted(final char c, final PsiFile file, final Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     final CharSequence chars = editor.getDocument().getCharsSequence();

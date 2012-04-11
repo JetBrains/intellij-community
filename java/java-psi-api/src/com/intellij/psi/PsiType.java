@@ -181,7 +181,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    * @param visitor the visitor to accept the type.
    * @return the value returned by the visitor.
    */
-  public abstract <A> A accept(PsiTypeVisitor<A> visitor);
+  public abstract <A> A accept(@NotNull PsiTypeVisitor<A> visitor);
 
   /**
    * Returns the number of array dimensions for the type.

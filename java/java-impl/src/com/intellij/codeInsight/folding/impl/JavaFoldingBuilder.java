@@ -635,6 +635,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
               }
 
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
+                @Override
                 public String fun(final PsiParameter psiParameter) {
                   String typeName;
                   if (quick) {

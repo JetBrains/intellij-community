@@ -23,10 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiCodeBlock || e instanceof PsiArrayInitializerExpression;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = new ArrayList<TextRange>();
 

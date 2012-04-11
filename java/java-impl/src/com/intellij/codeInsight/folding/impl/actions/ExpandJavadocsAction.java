@@ -20,6 +20,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.folding.impl.CollapseExpandJavadocsHandler;
 
 public class ExpandJavadocsAction extends BaseCodeInsightAction{
+  @Override
   protected CodeInsightActionHandler getHandler(){
     return new CollapseExpandJavadocsHandler(true);
   }

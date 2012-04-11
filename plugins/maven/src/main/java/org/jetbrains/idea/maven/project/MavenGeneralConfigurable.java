@@ -139,7 +139,7 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
     getData(getState());
   }
 
-  private void setData(MavenGeneralSettings data) {
+  protected void setData(MavenGeneralSettings data) {
     data.beginUpdate();
 
     data.setWorkOffline(checkboxWorkOffline.isSelected());
@@ -158,7 +158,7 @@ public abstract class MavenGeneralConfigurable implements SearchableConfigurable
     data.endUpdate();
   }
 
-  private void getData(MavenGeneralSettings data) {
+  protected void getData(MavenGeneralSettings data) {
     checkboxWorkOffline.setSelected(data.isWorkOffline());
 
     mavenPathsForm.getData(data);

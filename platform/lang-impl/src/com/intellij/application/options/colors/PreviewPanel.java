@@ -26,21 +26,26 @@ public interface PreviewPanel {
   void disposeUIResources();
 
   class Empty implements PreviewPanel{
+    @Override
     public Component getPanel() {
       return null;
     }
 
+    @Override
     public void updateView() {
     }
 
+    @Override
     public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
 
     }
 
+    @Override
     public void blinkSelectedHighlightType(final Object selected) {
 
     }
 
+    @Override
     public void disposeUIResources() {
 
     }

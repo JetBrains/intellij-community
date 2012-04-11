@@ -55,6 +55,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }));
     myEditorTabPlacement.setRenderer(new MyTabsPlacementComboBoxRenderer(myEditorTabPlacement.getRenderer()));
     myEditorTabPlacement.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         revalidateSingleRowCheckbox();
       }
@@ -88,23 +89,28 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Editor Tabs";
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.tabs";
   }
 
+  @Override
   public JComponent createComponent() {
     return myRootPanel;
   }
 
+  @Override
   public void reset() {
     UISettings uiSettings=UISettings.getInstance();
 
@@ -133,6 +139,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     UISettings uiSettings=UISettings.getInstance();
 
@@ -176,6 +183,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
+  @Override
   public boolean isModified() {
     final UISettings uiSettings = UISettings.getInstance();
     boolean isModified = isModified(myCbModifiedTabsMarkedWithAsterisk, uiSettings.MARK_MODIFIED_TABS_WITH_ASTERISK);
@@ -195,6 +203,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     return isModified;
   }
 
+  @Override
   public void disposeUIResources() {
   }
 
@@ -244,11 +253,13 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     }
   }
 
+  @Override
   @NotNull
   public String getId() {
     return "editor.preferences.tabs";
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return null;
   }

@@ -131,6 +131,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   private static class MyLiteralHandler extends Handler {
     private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
 
+    @Override
     public PsiElement findApplicable(final PsiElement element) {
       final PsiElement parent = element.getParent();
       return element instanceof PsiJavaToken &&
@@ -139,10 +140,12 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
              ? parent : null;
     }
 
+    @Override
     public PsiElement createReplacement(final PsiElement element, final String newText) {
       return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(newText, element.getParent());
     }
 
+    @Override
     protected void convert(final StringBuilder sb, final char ch) {
       sb.append(String.format("\\u%04x", (int)ch));
     }
@@ -151,6 +154,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   private static class MyDocCommentHandler extends Handler {
     private static Map<Character, String> ourEntities = null;
 
+    @Override
     public PsiElement findApplicable(final PsiElement element) {
       if (element instanceof PsiDocComment) return element;
       if (element instanceof PsiDocToken) return element.getParent();
@@ -167,6 +171,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
       return super.processText(element);
     }
 
+    @Override
     protected void convert(final StringBuilder sb, final char ch) {
       assert ourEntities != null;
       final String entity = ourEntities.get(ch);
@@ -178,6 +183,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
       }
     }
 
+    @Override
     public PsiElement createReplacement(final PsiElement element, final String newText) {
       return JavaPsiFacade.getElementFactory(element.getProject()).createDocCommentFromText(newText);
     }
@@ -202,6 +208,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
       ourEntities = new HashMap<Character, String>();
       final Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, new PsiElementProcessor() {
+        @Override
         public boolean execute(@NotNull PsiElement element) {
           if (element instanceof XmlEntityDecl) {
             final XmlEntityDecl entity = (XmlEntityDecl)element;
@@ -220,10 +227,12 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   }
 
   private static class MyCommentHandler extends MyDocCommentHandler {
+    @Override
     public PsiElement findApplicable(final PsiElement element) {
       return element instanceof PsiComment ? element : null;
     }
 
+    @Override
     public PsiElement createReplacement(final PsiElement element, final String newText) {
       return JavaPsiFacade.getElementFactory(element.getProject()).createCommentFromText(newText, element.getParent());
     }

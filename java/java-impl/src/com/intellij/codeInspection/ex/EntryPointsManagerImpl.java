@@ -44,8 +44,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -434,6 +433,10 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   }
   
   public boolean isEntryPoint(@NotNull PsiModifierListOwner element) {
+    if (!ADDITIONAL_ANNOTATIONS.isEmpty() && ADDITIONAL_ANNOTATIONS.contains(Deprecated.class.getName()) && 
+        element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated()) {
+      return true;
+    }
     return AnnotationUtil.isAnnotated(element, ADDITIONAL_ANNOTATIONS) ||
            AnnotationUtil.isAnnotated(element, getAdditionalAnnotations());
   }

@@ -276,6 +276,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     return true;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
   }

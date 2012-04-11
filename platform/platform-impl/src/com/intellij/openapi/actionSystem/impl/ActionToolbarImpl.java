@@ -251,7 +251,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
-      mySecondaryActionsButton = new SecondaryButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize());
+      mySecondaryActionsButton = new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize());
       mySecondaryActionsButton.setNoIconsInPopup(true);
       add(mySecondaryActionsButton);
     }
@@ -678,7 +678,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public Dimension getMinimumSize() {
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
-      return new Dimension(myAutoPopupIcon.getIconWidth(), myMinimumButtonSize.height);
+      final Insets i = getInsets();
+      return new Dimension(myAutoPopupIcon.getIconWidth() + i.left + i.right, myMinimumButtonSize.height + i.top + i.bottom);
     }
     else {
       return super.getMinimumSize();
@@ -1086,26 +1087,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   public void setSecondaryActionsTooltip(String secondaryActionsTooltip) {
     mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
-  }
-
-  private static class SecondaryButton extends ActionButton {
-    private SecondaryButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
-      super(action, presentation, place, minimumSize);
-    }
-
-    @Override
-    protected void paintButtonLook(Graphics g) {
-      final Color bright = new Color(255, 255, 255, 200);
-
-      g.setColor(bright);
-      int padding = 3;
-      g.drawLine(0, padding, 0, getHeight() - padding - 1);
-      final Color dark = new Color(64, 64, 64, 110);
-      g.setColor(dark);
-      g.drawLine(1, padding, 1, getHeight() - padding - 1);
-
-      super.paintButtonLook(g);
-    }
   }
 
   public List<SwitchTarget> getTargets(boolean onlyVisible, boolean originalProvider) {

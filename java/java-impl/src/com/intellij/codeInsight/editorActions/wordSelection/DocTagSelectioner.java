@@ -28,10 +28,12 @@ import com.intellij.util.text.CharArrayUtil;
 import java.util.List;
 
 public class DocTagSelectioner extends WordSelectioner {
+  @Override
   public boolean canSelect(PsiElement e) {
     return e instanceof PsiDocTag;
   }
 
+  @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
 

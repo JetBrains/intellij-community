@@ -57,6 +57,7 @@ public class SchemesPanel extends JPanel {
     add(schemesGroup, BorderLayout.CENTER);
 
     mySchemeComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           EditorColorsScheme selected = myOptions.selectScheme((String)mySchemeComboBox.getSelectedItem());
@@ -117,6 +118,7 @@ public class SchemesPanel extends JPanel {
 
     JButton saveAsButton = new JButton(ApplicationBundle.message("button.save.as"));
     saveAsButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         showSaveAsDialog();
       }
@@ -127,6 +129,7 @@ public class SchemesPanel extends JPanel {
 
     myDeleteButton = new JButton(ApplicationBundle.message("button.delete"));
     myDeleteButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (mySchemeComboBox.getSelectedIndex() != -1) {
           myOptions.removeScheme((String)mySchemeComboBox.getSelectedItem());
@@ -141,6 +144,7 @@ public class SchemesPanel extends JPanel {
     if (schemesManager.isExportAvailable()) {
       myExportButton = new JButton("Share...");
       myExportButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           EditorColorsScheme selected = myOptions.getOriginalSelectedScheme();
           ExportSchemeAction
@@ -158,9 +162,11 @@ public class SchemesPanel extends JPanel {
       JButton myImportButton = new JButton("Import Shared...");
       myImportButton.setMnemonic('I');
       myImportButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl> popup =
             new SchemesToImportPopup<EditorColorsScheme, EditorColorsSchemeImpl>(SchemesPanel.this) {
+              @Override
               protected void onSchemeSelected(final EditorColorsSchemeImpl scheme) {
                 if (scheme != null) {
                   myOptions.addImportedScheme(scheme);

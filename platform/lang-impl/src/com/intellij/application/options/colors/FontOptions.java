@@ -71,6 +71,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     add(schemesGroup, BorderLayout.CENTER);
   }
 
+  @Override
   public void updateOptionsList() {
     myIsInSchemeChange = true;
 
@@ -112,14 +113,17 @@ public class FontOptions extends JPanel implements OptionsPanel{
     getCurrentScheme().setLineSpacing(lineSpacing);
   }
 
+  @Override
   public Runnable showOption(final String option) {
     return null;
   }
 
+  @Override
   public void applyChangesToScheme() {
 
   }
 
+  @Override
   public void selectOption(final String typeToSelect) {
   }
 
@@ -176,6 +180,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     editorFontPanel.add(new TailPanel(), gbConstraints);
 
     myFontNameButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         EditorColorsScheme current = getCurrentScheme();
         if (ColorAndFontOptions.isReadOnly(current) || ColorSettingsUtil.isSharedScheme(current)) {
@@ -188,6 +193,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     });
 
     myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         if (myIsInSchemeChange) return;
         int fontSize = OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
@@ -208,6 +214,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     });
 
     myLineSpacingField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         if (myIsInSchemeChange) return;
         float lineSpacing = 1;
@@ -299,6 +306,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
   }
 
   private class InitFontsRunnable implements Runnable {
+    @Override
     public void run() {
       ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
@@ -341,19 +349,23 @@ public class FontOptions extends JPanel implements OptionsPanel{
       super(size);
     }
 
+    @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
   }
 
+  @Override
   public void addListener(ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
+  @Override
   public JPanel getPanel() {
     return this;
   }
 
+  @Override
   public Set<String> processListOptions() {
     return new HashSet<String>();
   }

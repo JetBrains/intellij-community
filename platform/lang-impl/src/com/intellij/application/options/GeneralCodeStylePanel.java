@@ -88,6 +88,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myRightMargin = settings.RIGHT_MARGIN;
 
     myRightMarginField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(final DocumentEvent e) {
         int valueFromControl = getRightMarginImpl();
         if (valueFromControl > 0) {
@@ -106,25 +107,30 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
 
+  @Override
   protected void somethingChanged() {
     super.somethingChanged();
   }
 
 
+  @Override
   protected int getRightMargin() {
     return myRightMargin;
   }
 
+  @Override
   @NotNull
   protected FileType getFileType() {
     return FileTypes.PLAIN_TEXT;
   }
 
+  @Override
   protected String getPreviewText() {
     return "";
   }
 
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
@@ -163,6 +169,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     if (!Comparing.equal(getSelectedLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
@@ -177,10 +184,12 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
 
     String lineSeparator = settings.LINE_SEPARATOR;
@@ -203,11 +212,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myIndentOptionsEditor.setEnabled(true);
   }
 
+  @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     //noinspection NullableProblems
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 
+  @Override
   protected void prepareForReformat(final PsiFile psiFile) {
   }
 

@@ -349,10 +349,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public final void setIcon(final Icon icon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!(icon instanceof LayeredIcon) && (icon.getIconHeight() != 13 || icon.getIconWidth() != 13)) {
+    final Icon oldIcon = getIcon();
+    if (oldIcon != icon && !(icon instanceof LayeredIcon) && (icon.getIconHeight() != 13 || icon.getIconWidth() != 13)) {
       LOG.warn("ToolWindow icons should be 13x13. Please fix " + icon);
     }
-    final Icon oldIcon = getIcon();
     getSelectedContent().setIcon(icon);
     myIcon = icon;
     myChangeSupport.firePropertyChange(PROP_ICON, oldIcon, icon);

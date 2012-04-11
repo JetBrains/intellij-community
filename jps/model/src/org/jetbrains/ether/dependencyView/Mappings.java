@@ -1514,6 +1514,7 @@ public class Mappings {
 
         debug("Processing added classes:");
         for (final ClassRepr c : classDiff.added()) {
+          debug("Class name: ", c.name);
           delta.addChangedClass(c.name);
 
           final TIntHashSet depClasses = myClassToClassDependency.get(c.name);

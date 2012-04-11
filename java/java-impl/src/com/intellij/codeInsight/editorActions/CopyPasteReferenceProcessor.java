@@ -42,6 +42,7 @@ import java.util.Comparator;
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> implements CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
   
+  @Override
   public ReferenceTransferableData collectTransferableData(PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets) {
     if (file instanceof PsiCompiledFile) {
       file = ((PsiCompiledFile) file).getDecompiledPsiFile();
@@ -67,6 +68,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
 
   protected abstract void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceTransferableData.ReferenceData> to);
 
+  @Override
   @Nullable
   public ReferenceTransferableData extractTransferableData(final Transferable content) {
     ReferenceTransferableData referenceData = null;
@@ -90,6 +92,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     return null;
   }
 
+  @Override
   public void processTransferableData(final Project project,
                                       final Editor editor,
                                       final RangeMarker bounds,
@@ -113,6 +116,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         restoreReferences(referenceData, refs);
       }
@@ -170,6 +174,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
     Arrays.sort(
       selectedObjects,
       new Comparator<Object>() {
+        @Override
         public int compare(Object o1, Object o2) {
           String fqName1 = getFQName(o1);
           String fqName2 = getFQName(o2);

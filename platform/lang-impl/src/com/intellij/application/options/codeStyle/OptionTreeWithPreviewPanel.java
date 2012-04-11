@@ -93,11 +93,13 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     updateOptionsTree();
   }
 
+  @Override
   public void showAllStandardOptions() {
     myShowAllStandardOptions = true;
     updateOptions(true);
   }
 
+  @Override
   public void showStandardOptions(String... optionNames) {
     if (isFirstUpdate) {
       Collections.addAll(myAllowedOptions, optionNames);
@@ -197,6 +199,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
 
     optionsTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (!optionsTree.isEnabled()) return;
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
@@ -208,6 +211,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     });
 
     optionsTree.addMouseListener(new MouseAdapter() {
+      @Override
       public void mouseClicked(MouseEvent e) {
         if (!optionsTree.isEnabled()) return;
         TreePath treePath = optionsTree.getPathForLocation(e.getX(), e.getY());
@@ -243,6 +247,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
 
   protected abstract void initTables();
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
@@ -274,6 +279,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
@@ -296,6 +302,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     key.setValue(settings, childNode.isSelected() ? Boolean.TRUE : Boolean.FALSE);
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
@@ -390,6 +397,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
       myCheckBox.setMargin(new Insets(0, 0, 0, 0));
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean isSelected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
       if (value instanceof MyToggleTreeNode) {
@@ -567,6 +575,7 @@ public abstract class OptionTreeWithPreviewPanel extends MultilanguageCodeStyleA
     }
   }
 
+  @Override
   public JComponent getPanel() {
     return myPanel;
   }

@@ -559,11 +559,11 @@ public abstract class AbstractLayoutCodeProcessor {
         }
       }
       catch (InterruptedException e) {
-        LOG.error("Got unexpected during formatting", e);
+        LOG.error("Got unexpected exception during formatting", e);
         return true;
       }
       catch (ExecutionException e) {
-        LOG.error("Got unexpected during formatting", e);
+        LOG.error("Got unexpected exception during formatting", e);
         return true;
       }
       if (myCompositeTask != null) {

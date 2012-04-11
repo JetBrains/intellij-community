@@ -29,6 +29,7 @@ import java.util.ArrayList;
 public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor<PsiJavaCodeReferenceElement> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor");
 
+  @Override
   protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceTransferableData.ReferenceData> to) {
     if (element instanceof PsiJavaCodeReferenceElement) {
       if (!((PsiJavaCodeReferenceElement)element).isQualified()) {
@@ -57,6 +58,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
 
+  @Override
   protected PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
                                                                        RangeMarker bounds,
                                                                        ReferenceTransferableData.ReferenceData[] referenceData) {
@@ -102,6 +104,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
     return refs;
   }
 
+  @Override
   protected void restoreReferences(ReferenceTransferableData.ReferenceData[] referenceData,
                                         PsiJavaCodeReferenceElement[] refs) {
     for (int i = 0; i < refs.length; i++) {

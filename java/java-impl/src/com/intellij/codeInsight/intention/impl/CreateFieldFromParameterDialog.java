@@ -63,6 +63,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected void doOKAction() {
     if (myCbFinal.isEnabled()) {
       PropertiesComponent.getInstance().setValue(PROPERTY_NAME, ""+myCbFinal.isSelected());
@@ -88,6 +89,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     close(OK_EXIT_CODE);
   }
 
+  @Override
   protected void init() {
     super.init();
     updateOkStatus();
@@ -111,6 +113,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     return false;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     if (myNames.length > 1) {
       final ComboBox combobox = new ComboBox(myNames, 200);
@@ -121,6 +124,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
       combobox.registerKeyboardAction(
           new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
               if (combobox.isPopupVisible()) {
                 combobox.setPopupVisible(false);
@@ -136,6 +140,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
       combobox.addItemListener(
           new ItemListener() {
+            @Override
             public void itemStateChanged(ItemEvent e) {
               updateOkStatus();
             }
@@ -143,14 +148,17 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
       );
       combobox.getEditor().getEditorComponent().addKeyListener(
           new KeyAdapter() {
+            @Override
             public void keyPressed(KeyEvent e) {
               updateOkStatus();
             }
 
+            @Override
             public void keyReleased(KeyEvent e) {
               updateOkStatus();
             }
 
+            @Override
             public void keyTyped(KeyEvent e) {
               updateOkStatus();
             }
@@ -159,6 +167,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     }
     else {
       JTextField field = new JTextField() {
+        @Override
         public Dimension getPreferredSize() {
           Dimension size = super.getPreferredSize();
           return new Dimension(200, size.height);
@@ -168,6 +177,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
       field.setText(myNames[0]);
 
       field.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
         protected void textChanged(DocumentEvent e) {
           updateOkStatus();
         }
@@ -215,6 +225,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -237,6 +248,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
     myCbFinal.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         requestFocusInNameWindow();
         if (myCbFinal.isEnabled()) {
@@ -261,6 +273,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
     setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text));
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField;
   }

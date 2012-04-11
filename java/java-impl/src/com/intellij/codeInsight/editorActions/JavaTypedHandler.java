@@ -51,6 +51,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   private static void autoPopupMemberLookup(Project project, final Editor editor) {
     AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, new Condition<PsiFile>() {
+      @Override
       public boolean value(final PsiFile file) {
         int offset = editor.getCaretModel().getOffset();
 
@@ -81,6 +82,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     });
   }
 
+  @Override
   public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
     if (c == '@' && file instanceof PsiJavaFile) {
       autoPopupJavadocLookup(project, editor);
@@ -141,6 +143,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
+  @Override
   public Result charTyped(final char c, final Project project, final Editor editor, @NotNull final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;

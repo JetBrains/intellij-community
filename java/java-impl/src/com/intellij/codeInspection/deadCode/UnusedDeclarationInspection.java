@@ -341,16 +341,18 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       @Override public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
-          final PsiElement element = refElement.getElement();
-          if (element == null) return;
+          if (!refElement.isSuspicious()) return;
+
+          PsiFile file = refElement.getContainingFile();
+
+          if (file == null) return;
           final boolean isSuppressed = refElement.isSuppressed(getShortName());
-          if (!getContext().isToCheckMember(element, UnusedDeclarationInspection.this) || isSuppressed) {
-            if (isSuppressed || !scope.contains(element)) {
+          if (!getContext().isToCheckFile(file, UnusedDeclarationInspection.this) || isSuppressed) {
+            if (isSuppressed || !scope.contains(file)) {
               getEntryPointsManager().addEntryPoint(refElement, false);
             }
             return;
           }
-          if (!refElement.isSuspicious()) return;
           refElement.accept(new RefJavaVisitor() {
             @Override public void visitElement(final RefEntity elem) {
               if (elem instanceof RefElement) {
@@ -371,6 +373,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
             @Override public void visitClass(RefClass aClass) {
               final PsiClass psiClass = aClass.getElement();
+              if (psiClass == null) return;
               if (
                 isAddAppletEnabled() && aClass.isApplet() ||
                 isAddServletEnabled() && aClass.isServlet()) {

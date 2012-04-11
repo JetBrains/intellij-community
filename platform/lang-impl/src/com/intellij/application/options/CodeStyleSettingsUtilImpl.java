@@ -28,11 +28,13 @@ public class CodeStyleSettingsUtilImpl extends CodeStyleSettingsUtil {
    * @param project
    * @return Returns true if settings were modified during editing session.
    */
+  @Override
   public boolean showCodeStyleSettings(Project project, final Class pageToSelect) {
     CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
     CodeStyleSettings savedSettings = settingsManager.getCurrentSettings().clone();
     final CodeStyleSchemesConfigurable configurable = new CodeStyleSchemesConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
+      @Override
       public void run() {
         if (pageToSelect != null) {
           configurable.selectPage(pageToSelect);

@@ -105,7 +105,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
           PsiParameter parameter = parameters[i];
           final PsiExpression expression = expressions[i];
           if (expression instanceof PsiLiteralExpression && PsiType.FLOAT.equals(parameter.getType()) && PsiType.DOUBLE.equals(expression.getType())) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ConvertDoubleToFloatFix(expression), null);
+            QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new ConvertDoubleToFloatFix(expression));
           }
         }
       }

@@ -173,6 +173,7 @@ public abstract class BaseRefactoringProcessor {
         }
         catch (Throwable e) {
           anyException.set(Boolean.TRUE);
+          LOG.error(e);
         }
       }
     };

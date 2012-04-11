@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class MissingReturnExpressionFixer implements Fixer {
+  @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
     if (!(psiElement instanceof PsiReturnStatement)) {
       return;

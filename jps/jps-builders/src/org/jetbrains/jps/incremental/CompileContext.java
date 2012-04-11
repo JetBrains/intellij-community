@@ -320,8 +320,7 @@ public class CompileContext extends UserDataHolderBase implements MessageHandler
     final HashSet<File> currentFiles = new HashSet<File>();
     markDirtyFiles(module, myTsStorage, false, isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, currentFiles);
 
-    final String moduleName = module.getName().toLowerCase(Locale.US);
-    final SourceToOutputMapping sourceToOutputMap = getDataManager().getSourceToOutputMap(moduleName, isCompilingTests());
+    final SourceToOutputMapping sourceToOutputMap = getDataManager().getSourceToOutputMap(module.getName(), isCompilingTests());
     for (final Iterator<String> it = sourceToOutputMap.getKeysIterator(); it.hasNext();) {
       final String path = it.next();
       // can check if the file exists
