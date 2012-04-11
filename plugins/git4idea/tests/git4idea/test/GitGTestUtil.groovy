@@ -37,4 +37,8 @@ class GitGTestUtil {
     StringUtil.stripHtml(s, true).replace('\n', '');
   }
 
+  static String stripLineBreaksAndMultiSpaces(String s) {
+    s.replace('\n', '').replaceAll(" {3,}", " ")
+  }
+
 }

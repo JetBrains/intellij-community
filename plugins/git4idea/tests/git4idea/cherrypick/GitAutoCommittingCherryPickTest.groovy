@@ -68,7 +68,7 @@ Otherwise, please use 'git reset'
 
     assertHeadCommit(commit)
     assertOnlyDefaultChangelist()
-    assertNotificationShown("Cherry-pick successful", notificationContent(commit), NotificationType.INFORMATION)
+    assertNotificationShown("Cherry-pick successful", commitDetails(commit), NotificationType.INFORMATION)
   }
 
   @Test
@@ -81,19 +81,28 @@ Otherwise, please use 'git reset'
     assertNotCherryPicked()
     assertOnlyDefaultChangelist()
     assertNotificationShown("Cherry-pick failed",
-                            "Cherry-pick failed for ${notificationContent(commit)}" +
-                            "Your local changes would be overwritten by cherry-pick.<br/>Commit your changes or stash them to proceed.",
+                            """
+                            ${commitDetails(commit)}<br/>
+                            Your local changes would be overwritten by cherry-pick.<br/>
+                            Commit your changes or stash them to proceed.
+                            """,
                             NotificationType.ERROR)
   }
 
   @Test
-  void "conflict, merge dialog, not all merged, then new & active changelist"() {
+  void "conflict, merge dialog, not all merged, then new & active changelist, notification"() {
     prepareConflict()
     myGit.registerOperationExecutors(new SimpleSuccessOperationExecutor(GET_UNMERGED_FILES, UNMERGED_FILE))
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
     assertChangeLists([DEFAULT, newCommitMessage(commit)], newCommitMessage(commit))
+    assertNotificationShown "Cherry-picked with conflicts",
+                            """
+                            ${commitDetails(commit)}<br/>
+                            Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
+                            """,
+                            NotificationType.WARNING
   }
 
   String newCommitMessage(GitCommit commit) {
@@ -184,10 +193,15 @@ Otherwise, please use 'git reset'
     invokeCherryPick([commit1, commit2, commit3])
 
     assertHeadCommit(commit1)
-    assertNotificationShown("Cherry-picked with errors",
-                            """Successfully cherry-picked ${notificationContent(commit1)}<br/>
-Couldn't cherry-pick ${notificationContent(commit2)} because local changes prevent it. View them. <br/>
-Didn't cherry-pick others""", NotificationType.ERROR)
+    assertNotificationShown("Cherry-pick failed",
+                            """
+                            ${commitDetails(commit2)}<br/>
+                            Your local changes would be overwritten by cherry-pick.<br/>
+                            Commit your changes or stash them to proceed.
+                            <hr/>
+                            However cherry-pick succeeded for the following commit:<br/>
+                            ${commitDetails(commit1)}
+                            """, NotificationType.ERROR)
   }
 
   @Test
@@ -225,7 +239,7 @@ Didn't cherry-pick others""", NotificationType.ERROR)
     invokeCherryPick(commit)
 
     assertNotCherryPicked()
-    assertNotificationShown("Nothing to cherry-pick", "All changes from ${notificationContent(commit)} have already been applied",
+    assertNotificationShown("Nothing to cherry-pick", "All changes from ${commitDetails(commit)} have already been applied",
                             NotificationType.WARNING)
   }
 
@@ -241,8 +255,8 @@ Didn't cherry-pick others""", NotificationType.ERROR)
 
     assertHeadCommit(commit1)
     assertNotificationShown("Cherry-picked with problems",
-"""Successfully cherry-picked ${notificationContent(commit1)}<br/>
-Not cherry-picked ${notificationContent(commit2)} - all changes have already been applied""", NotificationType.WARNING)
+"""Successfully cherry-picked ${commitDetails(commit1)}<br/>
+Not cherry-picked ${commitDetails(commit2)} - all changes have already been applied""", NotificationType.WARNING)
   }
 
 }

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.FileUtil
 import git4idea.tests.TestDialogManager
 import org.junit.Before
 
-import static git4idea.test.GitGTestUtil.stripLineBreaksAndHtml
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertNotNull
 
@@ -61,10 +60,18 @@ class GitFastTest {
     if (expected) {
       Notification actualNotification = (myPlatformFacade.getNotificator(myProject) as TestNotificator).lastNotification
       assertNotNull "No notification was shown", actualNotification
-      assertEquals "Notification has wrong content", stripLineBreaksAndHtml(expected.content),
-                   stripLineBreaksAndHtml(actualNotification.content)
       assertEquals "Notification has wrong title", expected.title, actualNotification.title
+      assertEquals "Notification has wrong type", expected.type, actualNotification.type
+      assertEquals "Notification has wrong content", adjustTestContent(expected.content), actualNotification.content
     }
+  }
+
+  // we allow more spaces and line breaks in tests to make them more readable.
+  // After all, notifications display html, so all line breaks and extra spaces are ignored.
+  String adjustTestContent(String s) {
+    StringBuilder res = new StringBuilder()
+    s.split("\n").each { res.append it.trim() }
+    res.toString()
   }
 
   void assertNotificationShown(String title, String message, NotificationType type) {

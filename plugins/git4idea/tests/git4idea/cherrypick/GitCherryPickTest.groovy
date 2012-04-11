@@ -118,12 +118,12 @@ hint: and commit the result with 'git commit'
     assertEquals "Wrong active changelist", activeChangelist, changeListManager.defaultChangeList.name
   }
 
-  String notificationContent(GitCommit commit) {
+  String commitDetails(GitCommit commit) {
     "${commit.shortHash.toString()} \"${commit.subject}\""
   }
 
   String notificationContent(GitCommit... commits) {
-    commits.collect { notificationContent(it) }.join("<br/>")
+    commits.collect { commitDetails(it) }.join("<br/>")
   }
 
   void assertNotCherryPicked() {

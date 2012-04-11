@@ -230,7 +230,7 @@ public class CherryPicker {
   }
 
   private void notifyError(@NotNull String content, @NotNull GitCommit failedCommit, @NotNull List<GitCommit> successfulCommits) {
-    String description = "Cherry-pick failed for " + commitDetails(failedCommit) + ":<br/>" + content;
+    String description = commitDetails(failedCommit) + "<br/>" + content;
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyError("Cherry-pick failed", description);
   }
@@ -239,7 +239,7 @@ public class CherryPicker {
   private static String getSuccessfulCommitDetailsIfAny(@NotNull List<GitCommit> successfulCommits) {
     String description = "";
     if (!successfulCommits.isEmpty()) {
-      description += "<hr/>However cherry-pick succeeded for the following " + pluralize("commit", successfulCommits.size()) + ": <br/>";
+      description += "<hr/>However cherry-pick succeeded for the following " + pluralize("commit", successfulCommits.size()) + ":<br/>";
       description += getCommitsDetails(successfulCommits);
     }
     return description;
@@ -256,7 +256,7 @@ public class CherryPicker {
     for (GitCommit commit : successfulCommits) {
       description += commitDetails(commit) + "<br/>";
     }
-    return description;
+    return description.substring(0, description.length() - "<br/>".length());
   }
 
   @NotNull
