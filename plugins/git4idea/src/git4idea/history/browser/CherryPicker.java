@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -158,7 +159,9 @@ public class CherryPicker {
 
   private void removeChangeList(CherryPickData list) {
     myChangeListManager.setDefaultChangeList(list.myPreviouslyDefaultChangeList);
-    myChangeListManager.removeChangeList(list.myChangeList);
+    if (!myChangeListManager.getDefaultChangeList().equals(list.myChangeList)) {
+      myChangeListManager.removeChangeList(list.myChangeList);
+    }
   }
 
   // resolveLinkListener is created in the above code and passed in the params (although it should be created inside the method to preserve
