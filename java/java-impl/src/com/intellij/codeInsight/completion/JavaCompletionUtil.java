@@ -459,7 +459,7 @@ public class JavaCompletionUtil {
       }
     }
 
-    if (javaReference instanceof PsiReferenceExpression && !((PsiReferenceExpression)javaReference).isQualified()) {
+    if (javaReference instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)javaReference).isQualified()) {
       final StaticMemberProcessor memberProcessor = JavaGlobalMemberNameCompletionContributor.completeStaticMembers(parameters);
       memberProcessor.processMembersOfRegisteredClasses(matcher, new PairConsumer<PsiMember, PsiClass>() {
         @Override

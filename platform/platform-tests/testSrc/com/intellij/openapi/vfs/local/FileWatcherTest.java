@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.idea.Bombed;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.TimeoutUtil;
@@ -35,6 +37,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class FileWatcherTest extends PlatformLangTestCase {
@@ -104,7 +107,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoot(request);
-      FileUtil.delete(file);
+      delete(file);
     }
   }
 
@@ -131,7 +134,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoot(request);
-      FileUtil.delete(file);
+      delete(file);
     }
   }
 
@@ -159,7 +162,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoot(request);
-      FileUtil.delete(topDir);
+      delete(topDir);
     }
   }
 
@@ -180,7 +183,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoot(request);
-      FileUtil.delete(topDir);
+      delete(topDir);
     }
   }
 
@@ -201,7 +204,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoot(request);
-      FileUtil.delete(topDir);
+      delete(topDir);
     }
   }
 
@@ -246,7 +249,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoots(Arrays.asList(request1, request2));
-      FileUtil.delete(topDir);
+      delete(topDir);
     }
   }
 
@@ -273,8 +276,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoot(request);
-      FileUtil.delete(topLink);
-      FileUtil.delete(topDir);
+      delete(topLink);
+      delete(topDir);
     }
   }
 
@@ -302,8 +305,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       myFileSystem.removeWatchedRoot(request);
-      FileUtil.delete(linkDir);
-      FileUtil.delete(targetDir);
+      delete(linkDir);
+      delete(targetDir);
     }
   }
 
@@ -334,32 +337,40 @@ public class FileWatcherTest extends PlatformLangTestCase {
     final int rv = new GeneralCommandLine("subst", subst + ":", targetDir.getAbsolutePath()).createProcess().waitFor();
     assertEquals(0, rv);
 
-    final File substDir = new File((subst + ":\\").toUpperCase(Locale.US), subDir.getName());
-    final File substFile = new File(substDir, file.getName());
-    refresh(targetDir);
-    refresh(substDir);
+    final String substRoot = (subst + ":\\").toUpperCase(Locale.US);
+    VirtualDirectoryImpl.allowRootAccess(substRoot);
 
-    final LocalFileSystem.WatchRequest request = watch(substDir);
     try {
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, substFile.getAbsolutePath());
+      final File substDir = new File(substRoot, subDir.getName());
+      final File substFile = new File(substDir, file.getName());
+      refresh(targetDir);
+      refresh(substDir);
 
-      final LocalFileSystem.WatchRequest request2 = watch(targetDir);
+      final LocalFileSystem.WatchRequest request = watch(substDir);
       try {
-        FileUtil.delete(file);
-        assertEvent(VFileDeleteEvent.class, file.getAbsolutePath(), substFile.getAbsolutePath());
+        FileUtil.writeToFile(file, "new content");
+        assertEvent(VFileContentChangeEvent.class, substFile.getAbsolutePath());
+
+        final LocalFileSystem.WatchRequest request2 = watch(targetDir);
+        try {
+          FileUtil.delete(file);
+          assertEvent(VFileDeleteEvent.class, file.getAbsolutePath(), substFile.getAbsolutePath());
+        }
+        finally {
+          unwatch(request2);
+        }
+
+        FileUtil.writeToFile(file, "re-creation");
+        assertEvent(VFileCreateEvent.class, substFile.getAbsolutePath());
       }
       finally {
-        unwatch(request2);
+        myFileSystem.removeWatchedRoot(request);
       }
-
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, substFile.getAbsolutePath());
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
+      VirtualDirectoryImpl.disallowRootAccess(substRoot);
+      delete(targetDir);
       new GeneralCommandLine("subst", subst + ":", "/d").createProcess().waitFor();
-      FileUtil.delete(targetDir);
     }
   }
 
@@ -413,6 +424,22 @@ public class FileWatcherTest extends PlatformLangTestCase {
       }
     });
     return vFile;
+  }
+
+  private void delete(@NotNull final File file) throws IOException {
+    final VirtualFile vFile = myFileSystem.findFileByIoFile(file);
+    if (vFile != null) {
+      final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(getClass());
+      try {
+        vFile.delete(this);
+      }
+      finally {
+        token.finish();
+      }
+    }
+    if (file.exists()) {
+      FileUtil.delete(file);
+    }
   }
 
   private void assertEvent(final Class<? extends VFileEvent> type, final String... paths) throws InterruptedException {

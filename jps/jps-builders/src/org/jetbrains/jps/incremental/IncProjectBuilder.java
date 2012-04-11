@@ -208,6 +208,8 @@ public class IncProjectBuilder {
   private void runBuild(CompileContext context) throws ProjectBuildException {
     context.setDone(0.0f);
 
+    LOG.info("Building project '" + context.getProject().getProjectName() + "'; isRebuild:" +context.isProjectRebuild() + "; isMake:" + context.isMake());
+
     if (context.isProjectRebuild()) {
       cleanOutputRoots(context);
     }

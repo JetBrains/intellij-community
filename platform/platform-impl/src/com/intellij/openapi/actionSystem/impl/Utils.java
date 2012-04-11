@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -135,7 +135,9 @@ public class Utils{
           if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
             continue;
           }
-          presentation.setEnabled(actionGroup.canBePerformed(context) || visibleChildren);
+          if (!actionGroup.canBePerformed(context) && !visibleChildren) {
+            presentation.setEnabled(false);
+          }
           list.add(child);
         }
         else {

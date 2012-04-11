@@ -85,6 +85,11 @@ class MethodRepr extends ProtoMember {
       public boolean hadValue() {
         return ((MethodRepr)past).hasValue();
       }
+
+      @Override
+      public boolean weakedAccess() {
+        return diff.weakedAccess();
+      }
     };
   }
 

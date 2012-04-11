@@ -23,7 +23,9 @@ import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ToggleProfileAction extends MavenAction {
   public void update(AnActionEvent e) {
@@ -55,7 +57,7 @@ public class ToggleProfileAction extends MavenAction {
     return activeCount == 0 || activeCount == selectedProfiles.size();
   }
 
-  private boolean isActive(MavenProjectsManager projectsManager, List<String> profiles) {
+  private static boolean isActive(MavenProjectsManager projectsManager, List<String> profiles) {
     return projectsManager.getExplicitProfiles().contains(profiles.get(0));
   }
 
@@ -64,7 +66,7 @@ public class ToggleProfileAction extends MavenAction {
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(e.getDataContext());
     List<String> selectedProfiles = e.getData(MavenDataKeys.MAVEN_PROFILES);
 
-    Collection<String> activeProfiles = manager.getExplicitProfiles();
+    Set<String> activeProfiles = new HashSet<String>(manager.getExplicitProfiles());
     if (isActive(manager, selectedProfiles)) {
       activeProfiles.removeAll(selectedProfiles);
     }

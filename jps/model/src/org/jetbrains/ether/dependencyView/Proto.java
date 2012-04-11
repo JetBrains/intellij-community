@@ -1,6 +1,6 @@
 package org.jetbrains.ether.dependencyView;
 
-import groovyjarjarasm.asm.Opcodes;
+import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.ether.RW;
 
 import java.io.DataInput;
@@ -86,16 +86,18 @@ class Proto implements RW.Savable {
       public boolean packageLocalOn() {
         return ((past.access & Opcodes.ACC_PRIVATE) != 0 ||
                 (past.access & Opcodes.ACC_PUBLIC) != 0 ||
-                (past.access & Opcodes.ACC_PROTECTED) != 0)
-
-               &&
-
-               ((access & Opcodes.ACC_PRIVATE) == 0 && (access & Opcodes.ACC_PROTECTED) == 0 && (access & Opcodes.ACC_PUBLIC) == 0);
+                (past.access & Opcodes.ACC_PROTECTED) != 0) &&
+               Difference.isPackageLocal(access);
       }
 
       @Override
       public boolean hadValue() {
         return false;
+      }
+
+      @Override
+      public boolean weakedAccess() {
+        return Difference.weakerAccess(past.access, access);
       }
     };
   }
