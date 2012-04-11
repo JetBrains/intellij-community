@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -40,13 +41,14 @@ public class UntrackedFilesNotifier {
   /**
    * Displays notification about {@code untracked files would be overwritten by checkout} error.
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
-   * @param operation the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
+   * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
+   * @param description the content of the notification or null if the deafult content is to be used.
    */
   public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project, @NotNull PlatformFacade platformFacade,
                                                        @NotNull final Collection<VirtualFile> untrackedFiles,
-                                                       @NotNull final String operation) {
+                                                       @NotNull final String operation, @Nullable String description) {
     final String notificationTitle = StringUtil.capitalize(operation) + " error";
-    final String notificationDesc = createUntrackedFilesOverwrittenDescription(operation, false);
+    final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, false) : description;
     final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, true);
 
     platformFacade.getNotificator(project).notifyError(notificationTitle, notificationDesc,

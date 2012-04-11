@@ -89,6 +89,24 @@ Otherwise, please use 'git reset'
   }
 
   @Test
+  void "untracked files, conflicting with commit, then show error"() {
+    myGit.registerOperationExecutors(new SimpleErrorOperationExecutor(CHERRY_PICK, UNTRACKED_FILES_OVERWRITTEN_BY_CHERRY_PICK))
+
+    def commit = commit()
+    invokeCherryPick(commit)
+
+    assertNotCherryPicked()
+    assertOnlyDefaultChangelist()
+    assertNotificationShown("Cherry-pick error",
+                            """
+                            ${commitDetails(commit)}<br/>
+                            Some untracked working tree files would be overwritten by cherry-pick.<br/>
+                            Please move, remove or add them before you can cherry-pick. <a href='view'>View them</a>
+                            """,
+                            NotificationType.ERROR)
+  }
+
+  @Test
   void "conflict, merge dialog, not all merged, then new & active changelist, notification"() {
     prepareConflict()
     myGit.registerOperationExecutors(new SimpleSuccessOperationExecutor(GET_UNMERGED_FILES, UNMERGED_FILE))

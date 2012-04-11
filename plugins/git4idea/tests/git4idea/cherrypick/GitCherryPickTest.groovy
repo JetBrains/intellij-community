@@ -70,6 +70,14 @@ hint: and commit the result with 'git commit'
     Aborting
     """;
 
+  static final UNTRACKED_FILES_OVERWRITTEN_BY_CHERRY_PICK =
+    """
+    error: The following untracked working tree files would be overwritten by merge:
+    \tcp.txt
+    Please move or remove them before you can merge.
+    Aborting
+    """
+
   void setUp() {
     super.setUp()
 
