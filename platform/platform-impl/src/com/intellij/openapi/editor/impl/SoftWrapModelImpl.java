@@ -222,7 +222,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    if (!myUseSoftWraps || myEditor.isOneLineMode()) {
+    if (!myUseSoftWraps || myEditor.isOneLineMode() || myEditor.isPurePaintingMode()) {
       return false;
     }
 
