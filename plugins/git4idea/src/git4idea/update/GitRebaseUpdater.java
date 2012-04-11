@@ -109,7 +109,7 @@ public class GitRebaseUpdater extends GitUpdater {
     } else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
       UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
-                                                               untrackedWouldBeOverwrittenDetector.getFiles(), "rebase");
+                                                               untrackedWouldBeOverwrittenDetector.getFiles(), "rebase", null);
       return GitUpdateResult.ERROR;
     } else {
       LOG.info("handleRebaseFailure error " + pullHandler.errors());
