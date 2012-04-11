@@ -468,11 +468,6 @@ public class HighlightInfo implements Segment {
     private final String myDisplayName;
     private final Icon myIcon;
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, final HighlightDisplayKey key) {
-      this(action, null, HighlightDisplayKey.getDisplayNameByKey(key), null);
-      myKey = key;
-    }
-
     public IntentionActionDescriptor(@NotNull IntentionAction action, final List<IntentionAction> options, final String displayName) {
       this(action, options, displayName, null);
     }

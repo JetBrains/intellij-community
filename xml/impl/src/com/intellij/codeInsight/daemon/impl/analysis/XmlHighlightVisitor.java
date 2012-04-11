@@ -242,7 +242,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, null);
+        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction);
       }
       addToResults(highlightInfo);
     }

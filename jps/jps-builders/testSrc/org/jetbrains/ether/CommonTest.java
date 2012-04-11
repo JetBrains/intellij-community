@@ -77,6 +77,10 @@ public class CommonTest extends IncrementalTestCase {
   }
 
   public void testDeleteClass4() throws Exception {
-        doTest();
+      doTest();
+  }
+
+  public void testAddClass() throws Exception {
+      doTest();
   }
 }

@@ -381,15 +381,18 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected VirtualFile copyFileInCommand(final VirtualFile file, final VirtualFile newParent) {
-    return copyFileInCommand(myProject, file, newParent);
+    return copyFileInCommand(myProject, file, newParent, file.getName());
   }
                                           
-  public static VirtualFile copyFileInCommand(final Project project, final VirtualFile file, final VirtualFile newParent) {
+  public static VirtualFile copyFileInCommand(final Project project,
+                                              final VirtualFile file,
+                                              final VirtualFile newParent,
+                                              final String newName) {
     return new WriteCommandAction<VirtualFile>(project) {
       @Override
       protected void run(Result<VirtualFile> result) throws Throwable {
         try {
-          result.setResult(file.copy(this, newParent, file.getName()));
+          result.setResult(file.copy(this, newParent, newName));
         }
         catch (IOException e) {
           throw new RuntimeException(e);

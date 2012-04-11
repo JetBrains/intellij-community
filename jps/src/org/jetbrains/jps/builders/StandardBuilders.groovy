@@ -4,7 +4,6 @@ import com.intellij.ant.InstrumentationUtil
 import com.intellij.ant.InstrumentationUtil.FormInstrumenter
 import com.intellij.ant.PrefixedPath
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder
-import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 import org.jetbrains.jps.*
 
 /**
@@ -26,17 +25,6 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     String sourceLevel = module.languageLevel
     String targetLevel = module.languageLevel
     String customArgs = module["javac_args"]; // it seems javac_args property is not set, can we drop it?
-    if (projectBuilder.useInProcessJavac) {
-      String version = System.getProperty("java.version")
-      if (true) {
-        if (Java16ApiCompilerRunner.compile(module, projectBuilder, state, sourceLevel, targetLevel, customArgs)) {
-          return
-        }
-      }
-      else {
-        projectBuilder.info("In-process Javac won't be used for '${module.name}', because Java version ($version) doesn't match to source level ($sourceLevel)")
-      }
-    }
 
     def params = [:]
     params.destdir = state.targetFolder

@@ -45,16 +45,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
   private final String myShortName;
-  private final String myDisplayName;
 
   public RunInspectionIntention(final InspectionProfileEntry tool) {
     myShortName = tool.getShortName();
-    myDisplayName = tool.getDisplayName();
   }
 
   public RunInspectionIntention(final HighlightDisplayKey key) {
     myShortName = key.toString();
-    myDisplayName = HighlightDisplayKey.getDisplayNameByKey(key);
   }
 
   @NotNull
