@@ -573,5 +573,12 @@ public class SSHConfig {
     private static <T> T mergeValue(T first, T second) {
       return first == null ? second : first;
     }
+
+    @Override
+    public String toString() {
+      return String.format("Host{myUser='%s', myHostName='%s', myPort=%d, myIdentityFile='%s'}",
+                           myUser, myHostName, myPort, myIdentityFile);
+    }
+
   }
 }

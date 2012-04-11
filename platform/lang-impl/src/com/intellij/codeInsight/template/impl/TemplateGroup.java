@@ -17,12 +17,22 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.openapi.options.CompoundScheme;
+import org.jetbrains.annotations.Nullable;
 
 public class TemplateGroup extends CompoundScheme<TemplateImpl> {
 
+  private final String myReplace;
 
   public TemplateGroup(final String name) {
-    super(name);
+    this(name, null);
   }
 
+  public TemplateGroup(String name, @Nullable String replace) {
+    super(name);
+    myReplace = replace;
+  }
+
+  public String getReplace() {
+    return myReplace;
+  }
 }

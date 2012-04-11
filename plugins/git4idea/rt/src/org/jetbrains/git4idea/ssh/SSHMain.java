@@ -191,8 +191,9 @@ public class SSHMain {
    */
   private void authenticate(final Connection c) throws IOException {
     LinkedList<String> methods = new LinkedList<String>(myHost.getPreferredMethods());
+    //log("authenticating... " + this);
     String lastSuccessfulMethod = myXmlRpcClient.getLastSuccessful(myHandlerNo, getUserHostString());
-    System.err.println("SSH: authentication methods: " + methods + " last successful method: " + lastSuccessfulMethod);
+    //log("SSH: authentication methods: " + methods + " last successful method: " + lastSuccessfulMethod);
     if (lastSuccessfulMethod != null && lastSuccessfulMethod.length() > 0 && methods.remove(lastSuccessfulMethod)) {
       methods.addFirst(lastSuccessfulMethod);
     }
@@ -587,5 +588,16 @@ public class SSHMain {
         return false;
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return String
+      .format("SSHMain{myHost=%s, myHandlerNo=%d, myCommand='%s', myExitCode=%d, myLastError='%s'}", myHost, myHandlerNo, myCommand,
+              myExitCode, myLastError);
+  }
+
+  private static void log(String s) {
+    System.err.println(s);
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -136,25 +137,10 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel fileTypePanel = new JPanel(new BorderLayout());
-    JPanel info = new JPanel(new GridBagLayout());
-    GridBagConstraints gc = new GridBagConstraints();
-    gc.gridx = 0;
-    gc.gridy = 0;
-    gc.anchor = GridBagConstraints.WEST;
-    gc.fill = GridBagConstraints.BOTH;
-    info.add(new JLabel(IdeBundle.message("editbox.customfiletype.name")), gc);
-    gc.gridx = 1;
-    gc.gridy = 0;
-    gc.weightx = 1;
-    info.add(myFileTypeName, gc);
-
-    gc.weightx = 0;
-    gc.gridx = 0;
-    gc.gridy = 1;
-    info.add(new JLabel(IdeBundle.message("editbox.customfiletype.description")), gc);
-    gc.gridx = 1;
-    info.add(myFileTypeDescr, gc);
-    info.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
+    JPanel info = FormBuilder.createFormBuilder()
+      .addLabeledComponent(IdeBundle.message("editbox.customfiletype.name"), myFileTypeName)
+      .addLabeledComponent(IdeBundle.message("editbox.customfiletype.description"), myFileTypeDescr).getPanel();
+    info.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
     fileTypePanel.add(info, BorderLayout.NORTH);
 
     JPanel highlighterPanel = new JPanel();
@@ -164,10 +150,11 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     commentsAndNumbersPanel.setLayout(new GridBagLayout());
 
     JPanel _panel1 = new JPanel(new BorderLayout());
-    GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.HORIZONTAL).setDefaultAnchor(GridBagConstraints.WEST).setDefaultInsets(1,
-                                                                                                                                        5,
-                                                                                                                                        1,
-                                                                                                                                        5);
+    GridBag gb = new GridBag()
+      .setDefaultFill(GridBagConstraints.HORIZONTAL)
+      .setDefaultAnchor(GridBagConstraints.WEST)
+      .setDefaultInsets(1, 5, 1, 5);
+
     commentsAndNumbersPanel.add(new JLabel(IdeBundle.message("editbox.customfiletype.line.comment")), gb.nextLine().next());
     commentsAndNumbersPanel.add(myLineComment, gb.next());
     commentsAndNumbersPanel.add(myCommentAtLineStart, gb.next().coverLine(2));

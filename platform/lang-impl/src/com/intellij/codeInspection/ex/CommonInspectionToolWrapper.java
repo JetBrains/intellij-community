@@ -22,6 +22,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -109,5 +110,8 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     return getTool().queryExternalUsagesRequests(manager);
   }
 
-
+  @Override
+  public void exportResults(@NotNull Element parentNode) {
+    getTool().exportResults(parentNode);
+  }
 }

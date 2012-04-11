@@ -197,7 +197,6 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
         final String[] text = messageElement.getText();
         if (text.length > 0) {
           if (text[0].startsWith("[") && text[0].indexOf("]") != -1) {
-            presentation.setVisible(true);
             final Navigatable navigatable = messageElement.getNavigatable();
             if (navigatable instanceof OpenFileDescriptor) {
               final OpenFileDescriptor fileDescriptor = (OpenFileDescriptor)navigatable;
@@ -217,6 +216,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
               final SuppressFix suppressInspectionFix = getSuppressAction(id);
               final boolean available = suppressInspectionFix.isAvailable(project, null, context);
               presentation.setEnabled(available);
+              presentation.setVisible(available);
               if (available) {
                 presentation.setText(suppressInspectionFix.getText());
               }

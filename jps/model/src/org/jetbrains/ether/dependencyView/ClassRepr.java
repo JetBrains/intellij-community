@@ -136,6 +136,11 @@ public class ClassRepr extends Proto {
       public boolean hadValue() {
         return false;
       }
+
+      @Override
+      public boolean weakedAccess() {
+        return diff.weakedAccess();
+      }
     };
   }
 
