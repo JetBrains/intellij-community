@@ -229,11 +229,7 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
 
     public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout(4, 2));
-      myChooser = new JComboBox() {
-        public Dimension getMinimumSize() {
-          return new Dimension(0, 0);
-        }
-      };
+      myChooser = new JComboBox();
       myChooser.setRenderer(new HtmlListCellRenderer<LocalChangeList>(myChooser.getRenderer()) {
         @Override
         protected void doCustomize(JList list, LocalChangeList value, int index, boolean selected, boolean hasFocus) {
