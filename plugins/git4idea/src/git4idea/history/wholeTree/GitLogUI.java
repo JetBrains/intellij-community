@@ -63,6 +63,7 @@ import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchOperationsProcessor;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
+import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.*;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -1615,10 +1616,10 @@ public class GitLogUI implements Disposable {
       final Application application = ApplicationManager.getApplication();
       application.executeOnPooledThread(new Runnable() {
         public void run() {
-          boolean autoCommit = true;
+          boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
           Map<GitRepository, List<GitCommit>> commitsInRoots = prepareCommitsForCherryPick(commits);
-          new CherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), autoCommit).cherryPick(
-            commitsInRoots);
+          new CherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), autoCommit)
+            .cherryPick(commitsInRoots);
 
           application.invokeLater(new Runnable() {
             public void run() {
