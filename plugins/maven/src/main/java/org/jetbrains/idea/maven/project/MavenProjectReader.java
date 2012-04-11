@@ -145,7 +145,7 @@ public class MavenProjectReader {
     return new RawModelReadResult(result, problems, alwaysOnProfiles);
   }
 
-  private void readModelBody(MavenModelBase mavenModelBase, MavenBuildBase mavenBuildBase, Element xmlModel) {
+  private static void readModelBody(MavenModelBase mavenModelBase, MavenBuildBase mavenBuildBase, Element xmlModel) {
     mavenModelBase.setModules(MavenJDOMUtil.findChildrenValuesByPath(xmlModel, "modules", "module"));
     collectProperties(MavenJDOMUtil.findChildByPath(xmlModel, "properties"), mavenModelBase);
 
