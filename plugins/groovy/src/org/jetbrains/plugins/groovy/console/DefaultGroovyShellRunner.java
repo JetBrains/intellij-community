@@ -21,6 +21,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
@@ -46,13 +48,13 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   @Override
   public JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", true);
+    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !hasGroovyAll(module));
     PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, res, true);
     if (list != null) {
       res.getClassPath().addAll(list.getPathList());
     }
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
-    //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
+    //res.getVMParametersList().add("-Xdebug"); res.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
     res.setWorkingDirectory(getWorkingDirectory(module));
 
     return res;
@@ -69,12 +71,19 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   public String getTitle(@NotNull Module module) {
     String homePath = LibrariesUtil.getGroovyHomePath(module);
     boolean bundled = false;
-    if (homePath == null) {
+    if (homePath == null || !hasGroovyAll(module)) {
       homePath = GroovyUtils.getBundledGroovyJar().getParentFile().getParent();
       bundled = true;
     }
     String version = GroovyConfigUtils.getInstance().getSDKVersion(homePath);
     return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : " (" + (bundled ? "Bundled " : "") + "Groovy " + version + ")";
+  }
+
+  private static boolean hasGroovyAll(Module module) {
+    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
+    return facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null &&
+           facade.findClass("groovy.ui.GroovyMain", scope) != null;
   }
 
   @NotNull
