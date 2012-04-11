@@ -373,6 +373,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
             @Override public void visitClass(RefClass aClass) {
               final PsiClass psiClass = aClass.getElement();
+              if (psiClass == null) return;
               if (
                 isAddAppletEnabled() && aClass.isApplet() ||
                 isAddServletEnabled() && aClass.isServlet()) {
