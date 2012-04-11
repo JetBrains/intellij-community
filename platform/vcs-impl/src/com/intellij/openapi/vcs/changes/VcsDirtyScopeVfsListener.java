@@ -20,12 +20,15 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.ConstantZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -49,10 +53,45 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
   private final MessageBusConnection myMessageBusConnection;
   // for tests only
   private boolean myForbid;
+  private final ConstantZipperUpdater myZipperUpdater;
+  private final List<FileAndDirsCollector> myQueue;
+  private final Object myLock;
 
   public VcsDirtyScopeVfsListener() {
     myProjectLocator = ProjectLocator.getInstance();
     myMessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    myLock = new Object();
+    myQueue = new ArrayList<FileAndDirsCollector>();
+    myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.SHARED_THREAD, ApplicationManager.getApplication(),
+                                                new Runnable() {
+                                                  @Override
+                                                  public void run() {
+                                                    ArrayList<FileAndDirsCollector> list;
+                                                    synchronized (myLock) {
+                                                      list = new ArrayList<FileAndDirsCollector>(myQueue);
+                                                      myQueue.clear();
+                                                    }
+                                                    Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> map =
+                                                      new HashMap<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>>();
+                                                    for (FileAndDirsCollector collector : list) {
+                                                      Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> pairMap =
+                                                        collector.map;
+                                                      for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : pairMap
+                                                        .entrySet()) {
+                                                        final VcsDirtyScopeManager key = entry.getKey();
+                                                        Pair<HashSet<FilePath>, HashSet<FilePath>> existing = map.get(key);
+                                                        Pair<HashSet<FilePath>, HashSet<FilePath>> value = entry.getValue();
+                                                        if (existing != null) {
+                                                          existing.getFirst().addAll(value.getFirst());
+                                                          existing.getSecond().addAll(value.getSecond());
+                                                        } else {
+                                                          map.put(key, value);
+                                                        }
+                                                      }
+                                                    }
+                                                    new FileAndDirsCollector().markDirty(map);
+                                                  }
+                                                });
   }
 
   public void setForbid(boolean forbid) {
@@ -130,14 +169,10 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
   }
 
   private void markDirtyOnPooled(final FileAndDirsCollector dirtyFilesAndDirs) {
-    if (! dirtyFilesAndDirs.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          dirtyFilesAndDirs.markDirty();
-        }
-      });
+    synchronized (myLock) {
+      myQueue.add(dirtyFilesAndDirs);
     }
+    myZipperUpdater.request();
   }
 
   @Nullable
@@ -201,7 +236,11 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     }
 
     void markDirty() {
-      for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : map.entrySet()) {
+      markDirty(map);
+    }
+
+    void markDirty(final Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> outerMap) {
+      for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : outerMap.entrySet()) {
         VcsDirtyScopeManager manager = entry.getKey();
         HashSet<FilePath> files = entry.getValue().first;
         HashSet<FilePath> dirs = entry.getValue().second;
