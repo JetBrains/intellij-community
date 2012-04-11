@@ -53,15 +53,17 @@ public class UntrackedFilesNotifier {
                                                   new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
-                                                      StringUtil.stripHtml(dialogDesc, true), null, false, false) {
-          @Override
-          protected Action[] createActions() {
-            return new Action[]{getOKAction()};
-          }
-        };
-        dlg.setTitle("Untracked Files Preventing " + StringUtil.capitalize(operation));
-        dlg.show();
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
+                                                        StringUtil.stripHtml(dialogDesc, true), null, false, false) {
+            @Override
+            protected Action[] createActions() {
+              return new Action[]{getOKAction()};
+            }
+          };
+          dlg.setTitle("Untracked Files Preventing " + StringUtil.capitalize(operation));
+          dlg.show();
+        }
       }
     });
   }
@@ -74,7 +76,7 @@ public class UntrackedFilesNotifier {
       notificationDesc = "These" + description1 + "<br/>" + description2;
     }
     else {
-      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href=''>View them</a>";
+      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href='view'>View them</a>";
     }
     return notificationDesc;
   }
