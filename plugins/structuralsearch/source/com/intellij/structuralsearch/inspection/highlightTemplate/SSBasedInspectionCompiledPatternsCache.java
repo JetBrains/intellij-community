@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.inspection.highlightTemplate;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -12,7 +11,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -32,41 +30,31 @@ public class SSBasedInspectionCompiledPatternsCache implements StartupActivity, 
   }
 
   static void precompileConfigurations(final Project project, @Nullable final SSBasedInspection ssBasedInspection) {
-    final Runnable precompile = new Runnable() {
-      public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-        final MatcherImpl.CompiledOptions currentCompiledOptions = getCompiledOptions(project);
-
-        final SSBasedInspection inspection = ssBasedInspection != null ? ssBasedInspection : getInspection(project);
-        if (inspection == null) {
-          return;
-        }
-
-        List<Configuration> configurations = inspection.getConfigurations();
-        if (configurations == null) {
-          configurations = Collections.emptyList();
-        }
-
-        if ((currentCompiledOptions == null || currentCompiledOptions.getMatchContexts().isEmpty()) &&
-            configurations.isEmpty()) {
-          return;
-        }
-
-        final Matcher matcher = new Matcher(project);
-        final MatcherImpl.CompiledOptions compiledOptions = matcher.precompileOptions(configurations);
-
-        if (compiledOptions != null) {
-          project.putUserData(COMPILED_OPTIONS_KEY, compiledOptions);
-        }
-      }
-    };
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      precompile.run();
+    if (project.isDisposed()) {
+      return;
     }
-    else {
-      UIUtil.invokeLaterIfNeeded(precompile);
+    final MatcherImpl.CompiledOptions currentCompiledOptions = getCompiledOptions(project);
+
+    final SSBasedInspection inspection = ssBasedInspection != null ? ssBasedInspection : getInspection(project);
+    if (inspection == null) {
+      return;
+    }
+
+    List<Configuration> configurations = inspection.getConfigurations();
+    if (configurations == null) {
+      configurations = Collections.emptyList();
+    }
+
+    if ((currentCompiledOptions == null || currentCompiledOptions.getMatchContexts().isEmpty()) &&
+        configurations.isEmpty()) {
+      return;
+    }
+
+    final Matcher matcher = new Matcher(project);
+    final MatcherImpl.CompiledOptions compiledOptions = matcher.precompileOptions(configurations);
+
+    if (compiledOptions != null) {
+      project.putUserData(COMPILED_OPTIONS_KEY, compiledOptions);
     }
   }
 

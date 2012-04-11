@@ -2,15 +2,13 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
@@ -20,7 +18,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
@@ -28,7 +26,6 @@ import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
@@ -38,15 +35,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.*;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Compiles the handlers for usability
  */
 public class PatternCompiler {
   private static CompileContext lastTestingContext;
-  public static final Key<List<PsiElement>> ALTERNATIVE_PATTERN_ROOTS = new Key<List<PsiElement>>("ALTERNATIVE_PATTERN_ROOTS");
 
   public static void transformOldPattern(MatchOptions options) {
     StringToConstraintsTransformer.transformOldPattern(options);
@@ -54,18 +50,6 @@ public class PatternCompiler {
 
   public static CompiledPattern compilePattern(final Project project, final MatchOptions options) throws MalformedPatternException,
                                                                                                          UnsupportedOperationException {
-    return new WriteAction<CompiledPattern>() {
-      protected void run(Result<CompiledPattern> result) throws Throwable {
-        result.setResult(compilePatternImpl(project, options));
-      }
-    }.execute().getResultObject();
-  }
-
-  public static String getLastFindPlan() {
-    return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
-  }
-
-  private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
     FileType fileType = options.getFileType();
     assert fileType instanceof LanguageFileType;
     Language language = ((LanguageFileType)fileType).getLanguage();
@@ -89,7 +73,7 @@ public class PatternCompiler {
       List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
 
       context.getPattern().setNodes(
-        new ArrayBackedNodeIterator(PsiUtilBase.toPsiElementArray(elements))
+        new ArrayBackedNodeIterator(PsiUtilCore.toPsiElementArray(elements))
       );
 
       if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
@@ -112,7 +96,7 @@ public class PatternCompiler {
           throw new MalformedPatternException(SSRBundle.message("ssr.will.not.find.anything"));
         }
         result.setScope(
-          new LocalSearchScope(PsiUtilBase.toPsiElementArray(filesToScan))
+          new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan))
         );
       }
     } finally {
@@ -120,6 +104,10 @@ public class PatternCompiler {
     }
 
     return result;
+  }
+
+  public static String getLastFindPlan() {
+    return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
   }
 
   @NotNull
@@ -273,6 +261,7 @@ public class PatternCompiler {
    * Null: there are only error elements located exactly after template variables or at the end of the pattern
    * True: otherwise
    */
+  @Nullable
   private static Boolean checkErrorElements(PsiElement element,
                                             final int offset,
                                             final int patternEndOffset,
@@ -531,10 +520,7 @@ public class PatternCompiler {
       }
     }
 
-    // delete last brace
-    ApplicationManager.getApplication().runWriteAction(
-      new DeleteNodesAction(compilingVisitor.getLexicalNodes())
-    );
+    new DeleteNodesAction(compilingVisitor.getLexicalNodes()).run();
     return elements;
   }
 
