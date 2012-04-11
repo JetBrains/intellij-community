@@ -22,6 +22,7 @@ public class InternalInspectionToolsProvider {
   public static final String GROUP_NAME = "IDEA Platform Inspections";
   private static final Class[] CLASSES = new Class[] {
     UndesirableClassUsageInspection.class,
+    FileEqualsUsageInspection.class,
     GtkPreferredJComboBoxRendererInspection.class
   };
 
