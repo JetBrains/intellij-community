@@ -89,7 +89,8 @@ public class ComponentConfig {
   }
 
   public void setHeadlessImplementationClass(String headlessImplementationClass) {
-    this.headlessImplementationClass = headlessImplementationClass == null ? null : headlessImplementationClass.trim();
+    headlessImplementationClass = headlessImplementationClass == null ? null : headlessImplementationClass.trim();
+    this.headlessImplementationClass = headlessImplementationClass == null ? null : StringUtil.isEmpty(headlessImplementationClass) ? "" : headlessImplementationClass;
   }
 
   public void setLoadForDefaultProject(boolean loadForDefaultProject) {
