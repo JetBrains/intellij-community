@@ -62,7 +62,18 @@ public class DictCreationQuickFix implements LocalQuickFix {
             final PySubscriptionExpression subscription = (PySubscriptionExpression)targetToValue.first;
             final PyExpression indexExpression = subscription.getIndexExpression();
             assert indexExpression != null;
-            statements.add(indexExpression.getText() + ": " + targetToValue.second.getText());
+            final String indexText;
+            if (indexExpression instanceof PyTupleExpression)
+              indexText = "("+indexExpression.getText()+")";
+            else
+              indexText = indexExpression.getText();
+
+            final String valueText;
+            if (targetToValue.second instanceof PyTupleExpression)
+             valueText = "("+targetToValue.second.getText()+")";
+            else
+              valueText = targetToValue.second.getText();
+            statements.add(indexText + ": " + valueText);
             statement.delete();
           }
           statement = nextStatement;
