@@ -17,13 +17,11 @@ package git4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitVcs;
-import git4idea.Notificator;
+import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,16 +42,21 @@ public class UntrackedFilesNotifier {
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
    * @param operation the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
    */
-  public static void notifyUntrackedFilesOverwrittenBy(final @NotNull Project project, final @NotNull Collection<VirtualFile> untrackedFiles, @NotNull final String operation) {
+  public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project, @NotNull PlatformFacade platformFacade,
+                                                       @NotNull final Collection<VirtualFile> untrackedFiles,
+                                                       @NotNull final String operation) {
     final String notificationTitle = StringUtil.capitalize(operation) + " error";
     final String notificationDesc = createUntrackedFilesOverwrittenDescription(operation, false);
     final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, true);
 
-    Notificator.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, notificationTitle, notificationDesc, NotificationType.ERROR, new NotificationListener() {
-      @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+    platformFacade.getNotificator(project).notifyError(notificationTitle, notificationDesc,
+                                                  new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
                                                       StringUtil.stripHtml(dialogDesc, true), null, false, false) {
-          @Override protected Action[] createActions() {
+          @Override
+          protected Action[] createActions() {
             return new Action[]{getOKAction()};
           }
         };

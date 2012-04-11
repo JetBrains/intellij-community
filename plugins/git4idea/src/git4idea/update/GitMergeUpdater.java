@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
+import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
@@ -134,7 +135,8 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge");
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
+                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge");
       return GitUpdateResult.ERROR;
     }
     else {

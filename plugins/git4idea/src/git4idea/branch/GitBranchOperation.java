@@ -333,7 +333,8 @@ abstract class GitBranchOperation {
   }
 
   private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFiles, getOperationName());
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
+                                                             untrackedFiles, getOperationName());
   }
 
   private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
