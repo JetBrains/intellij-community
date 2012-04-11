@@ -96,17 +96,17 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
     GitCommit commit1 = commit()
     GitCommit commit2 = commit()
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1),
-                                     new MockGit.SuccessfulCherryPickExecutor(myRepository, commit2))
+    myGit.registerOperationExecutors(new MockGit.SimpleSuccessOperationExecutor(CHERRY_PICK, ""),
+                                     new MockGit.SimpleSuccessOperationExecutor(CHERRY_PICK, ""))
 
     CountingOKCommitHandler handler = new CountingOKCommitHandler(myRepository)
     myVcsHelper.registerHandler(handler)
 
     invokeCherryPick([commit1, commit2])
 
-    assertLastCommits(commit2, commit1)
     assertOnlyDefaultChangelist()
     assertEquals "Commit dialog shown wrong number of times", 2, handler.myCommitDialogs
+    assertLastCommits(commit2, commit1)
   }
 
   @Test
@@ -115,9 +115,9 @@ class GitNotCommittingCherryPickTest extends GitCherryPickTest {
     GitCommit commit2 = commit("Second")
     GitCommit commit3 = commit("Third")
 
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit1))
+    myGit.registerOperationExecutors(new MockGit.SimpleSuccessOperationExecutor(CHERRY_PICK, ""))
     prepareConflict()
-    myGit.registerOperationExecutors(new MockGit.SuccessfulCherryPickExecutor(myRepository, commit3))
+    myGit.registerOperationExecutors(new MockGit.SimpleSuccessOperationExecutor(CHERRY_PICK, ""))
 
     CountingOKCommitHandler handler = new CountingOKCommitHandler(myRepository)
     myVcsHelper.registerHandler(handler)
