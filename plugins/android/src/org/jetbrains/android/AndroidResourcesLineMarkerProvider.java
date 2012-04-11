@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -174,8 +175,9 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
   private static Map<MyResourceEntry, List<PsiElement>> buildLocalResourceMap(@NotNull Project project,
                                                                               @NotNull final LocalResourceManager resManager) {
     final Map<MyResourceEntry, List<PsiElement>> result = new HashMap<MyResourceEntry, List<PsiElement>>();
-    Collection<Resources> resourceFiles = resManager.getResourceElements();
-    for (Resources res : resourceFiles) {
+    List<Pair<Resources,VirtualFile>> resourceFiles = resManager.getResourceElements();
+    for (Pair<Resources, VirtualFile> pair : resourceFiles) {
+      final Resources res = pair.getFirst();
       for (ResourceType valueResourceType : AndroidResourceUtil.VALUE_RESOURCE_TYPES) {
         for (ResourceElement valueResource : AndroidResourceUtil.getValueResourcesFromElement(valueResourceType.getName(), res)) {
           addResource(valueResourceType.getName(), valueResource, result);
