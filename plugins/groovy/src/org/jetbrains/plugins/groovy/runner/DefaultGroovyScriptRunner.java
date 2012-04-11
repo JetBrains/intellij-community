@@ -81,21 +81,20 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
     params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
   }
 
-  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass, boolean mayUseBundled) {
+  public static void configureGenericGroovyRunner(@NotNull JavaParameters params, @NotNull Module module, @NotNull String mainClass, boolean useBundled) {
     final VirtualFile groovyJar = findGroovyJar(module);
-    if (groovyJar != null) {
-      params.getClassPath().add(groovyJar);
-    } else if (mayUseBundled) {
+    if (useBundled) {
       params.getClassPath().add(GroovyUtils.getBundledGroovyJar());
+    }
+    else if (groovyJar != null) {
+      params.getClassPath().add(groovyJar);
     }
 
     setToolsJar(params);
 
-    String groovyHome = LibrariesUtil.getGroovyHomePath(module);
+    String groovyHome = useBundled ? FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
     if (groovyHome != null) {
       groovyHome = FileUtil.toSystemDependentName(groovyHome);
-    } else if (mayUseBundled) {
-      groovyHome = FileUtil.toCanonicalPath(GroovyUtils.getBundledGroovyJar().getParentFile().getParent());
     }
     setGroovyHome(params, groovyHome);
 
