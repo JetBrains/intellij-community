@@ -173,9 +173,7 @@ public abstract class BaseRefactoringProcessor {
         }
         catch (Throwable e) {
           anyException.set(Boolean.TRUE);
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            LOG.error(e);
-          }
+          LOG.error(e);
         }
       }
     };
