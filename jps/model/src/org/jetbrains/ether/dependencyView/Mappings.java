@@ -733,19 +733,9 @@ public class Mappings {
     }
   }
 
-  private static boolean isPackageLocal(final int access) {
-    return (access & (Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) == 0;
-  }
-
-  private static boolean weakerAccess(final int me, final int then) {
-    return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
-           ((me & Opcodes.ACC_PROTECTED) > 0 && (then & Opcodes.ACC_PUBLIC) > 0) ||
-           (isPackageLocal(me) && (then & Opcodes.ACC_PROTECTED) > 0);
-  }
-
   private static boolean isVisibleIn(final ClassRepr c, final ProtoMember m, final ClassRepr scope) {
     final boolean privacy = ((m.access & Opcodes.ACC_PRIVATE) > 0) && c.name != scope.name;
-    final boolean packageLocality = isPackageLocal(m.access) && !c.getPackageName().equals(scope.getPackageName());
+    final boolean packageLocality = Difference.isPackageLocal(m.access) && !c.getPackageName().equals(scope.getPackageName());
 
     return !privacy && !packageLocality;
   }
@@ -1080,7 +1070,7 @@ public class Mappings {
 
                     final Option<Boolean> subtypeOf = u.isSubtypeOf(mm.type, m.type);
 
-                    if (weakerAccess(mm.access, m.access) ||
+                    if (Difference.weakerAccess(mm.access, m.access) ||
                         ((m.access & Opcodes.ACC_STATIC) > 0 && (mm.access & Opcodes.ACC_STATIC) == 0) ||
                         ((m.access & Opcodes.ACC_STATIC) == 0 && (mm.access & Opcodes.ACC_STATIC) > 0) ||
                         ((m.access & Opcodes.ACC_FINAL) > 0) ||
@@ -1382,7 +1372,7 @@ public class Mappings {
               final boolean ffPrivate = (ff.access & Opcodes.ACC_PRIVATE) > 0;
               final boolean ffProtected = (ff.access & Opcodes.ACC_PROTECTED) > 0;
               final boolean ffPublic = (ff.access & Opcodes.ACC_PUBLIC) > 0;
-              final boolean ffPLocal = isPackageLocal(ff.access);
+              final boolean ffPLocal = Difference.isPackageLocal(ff.access);
 
               if (!ffPrivate) {
                 final TIntHashSet propagated = o.propagateFieldAccess(ff.name, cc.name);
@@ -1444,12 +1434,17 @@ public class Mappings {
             debug("Field: ", it.name);
 
             if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
-              if ((d.base() & Difference.ACCESS) > 0 || ((d.base() & Difference.VALUE) > 0 && d.hadValue())) {
-                debug("Inline field changed its access or value => a switch to non-incremental mode requested");
-                if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
-                  debug("End of Differentiate, returning false");
-                  return false;
-                }
+              final int changedModifiers = d.addedModifiers() | d.removedModifiers();
+              final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) > 0;
+              final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) > 0;
+              final boolean valueChanged = (d.base() & Difference.VALUE) > 0 && d.hadValue();
+
+              if (harmful || valueChanged || (accessChanged && !d.weakedAccess())) {
+                debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
+                                if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
+                                  debug("End of Differentiate, returning false");
+                                  return false;
+                                }
               }
             }
 

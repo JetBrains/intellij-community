@@ -172,6 +172,11 @@ abstract class ProtoMember extends Proto {
       public boolean hadValue() {
         return ((ProtoMember)past).hasValue();
       }
+
+      @Override
+      public boolean weakedAccess() {
+        return diff.weakedAccess();
+      }
     };
   }
 }
