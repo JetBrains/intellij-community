@@ -62,7 +62,7 @@ private List platformImplementationModules() {
           "spellchecker",
           "dom-impl",
           "yaml",
-          "coverage-impl"
+          "coverage-common"
   ]
 }
 
@@ -158,7 +158,7 @@ target('default': "Build artifacts") {
           if (path.endsWith(".jar") && (path.startsWith("$normalizedHome/lib/") ||
                                         path.startsWith("$normalizedHome/community/lib/") ||
                                         path.startsWith("$normalizedHome/python/lib") ||
-                                        path.startsWith("$normalizedHome/plugins/coverage-impl/lib") ||
+                                        path.startsWith("$normalizedHome/plugins/coverage-common/lib") ||
                                         path.startsWith("$normalizedHome/community/xml/relaxng/lib"))
               && !path.contains("/dev/") && !path.contains("/rt/") && !path.contains("/ant/")
               && !forbiddenJars.any { path.contains(it) }) {
