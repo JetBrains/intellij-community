@@ -37,6 +37,7 @@ import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
 import static git4idea.test.MockGit.commitMessageForCherryPick
+import git4idea.test.MockVcsHelper
 
 /**
  * Common parent for all tests on cherry-pick
@@ -145,6 +146,42 @@ hint: and commit the result with 'git commit'
 
   void assertMergeDialogShown() {
     assertTrue "Merge dialog was not shown", myVcsHelper.mergeDialogWasShown()
+  }
+
+  protected static class OKCommitDialogHandler implements MockVcsHelper.CommitHandler {
+
+    private final GitLightRepository myRepository;
+    boolean myCommitDialogShown
+
+    OKCommitDialogHandler(GitLightRepository repository) {
+      myRepository = repository
+    }
+
+    @Override
+    boolean commit(String commitMessage) {
+      myCommitDialogShown = true;
+      myRepository.commit(commitMessage) // answering OK in the dialog => committing
+      return true;
+    }
+
+    boolean wasCommitDialogShown() {
+      myCommitDialogShown
+    }
+  }
+
+  protected static class CancelCommitDialogHandler implements MockVcsHelper.CommitHandler {
+
+    boolean myCommitDialogShown
+
+    @Override
+    boolean commit(String commitMessage) {
+      myCommitDialogShown = true;
+      return false;
+    }
+
+    boolean wasCommitDialogShown() {
+      myCommitDialogShown
+    }
   }
 
 }

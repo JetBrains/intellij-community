@@ -18,7 +18,6 @@ package git4idea.cherrypick
 import com.intellij.notification.NotificationType
 import git4idea.history.browser.CherryPicker
 import git4idea.history.browser.GitCommit
-import git4idea.test.MockVcsHelper
 import org.junit.Before
 import org.junit.Test
 
@@ -26,7 +25,6 @@ import static git4idea.test.MockGit.*
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
 import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
 import static junit.framework.Assert.assertTrue
-import git4idea.test.GitLightRepository
 
 /**
  * Cherry-pick of one or multiple commits with "commit at once" option enabled.
@@ -115,37 +113,26 @@ Otherwise, please use 'git reset'
     prepareConflict()
     GitCommit commit = commit()
 
-    boolean commitDialogShown = false;
-    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
-      @Override
-      boolean commit(String commitMessage) {
-        commitDialogShown = true;
-        return true;
-      }
-    })
+    OKCommitDialogHandler handler = new OKCommitDialogHandler(myRepository)
+    myVcsHelper.registerHandler(handler)
 
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertTrue "Commit dialog was not shown", commitDialogShown
+    assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
   }
 
   @Test
   void "conflict, merge finished, commit succeeded, no new changelists"() {
     prepareConflict()
 
-    boolean commitDialogShown = false;
-    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
-      @Override
-      boolean commit(String commitMessage) {
-        commitDialogShown = true;
-        return true;
-      }
-    })
+    OKCommitDialogHandler handler = new OKCommitDialogHandler(myRepository)
+    myVcsHelper.registerHandler(handler)
 
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertTrue "Commit dialog was not shown", commitDialogShown
+    assertHeadCommit(commit)
+    assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
     assertOnlyDefaultChangelist()
   }
 
@@ -153,19 +140,13 @@ Otherwise, please use 'git reset'
   void "conflict, merge ok, commit cancelled, then new & active changelist"() {
     prepareConflict()
 
-    boolean commitDialogShown = false;
-    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
-      @Override
-      boolean commit(String commitMessage) {
-        commitDialogShown = true;
-        return false;
-      }
-    })
+    CancelCommitDialogHandler handler = new CancelCommitDialogHandler()
+    myVcsHelper.registerHandler(handler)
 
     GitCommit commit = commit()
     invokeCherryPick(commit)
     assertMergeDialogShown()
-    assertTrue "Commit dialog was not shown", commitDialogShown
+    assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
     assertChangeLists([DEFAULT, newCommitMessage(commit)], newCommitMessage(commit))
   }
 
@@ -215,21 +196,12 @@ Otherwise, please use 'git reset'
     prepareConflict()
     myGit.registerOperationExecutors(new SuccessfulCherryPickExecutor(myRepository, commit3))
 
-    boolean commitDialogShown = false;
-    GitLightRepository repository = myRepository;
-    myVcsHelper.registerHandler(new MockVcsHelper.CommitHandler() {
-      @Override
-      boolean commit(String commitMessage) {
-        commitDialogShown = true;
-        repository.commit(commitMessage) // answering OK in the dialog => committing
-        return true;
-      }
-    })
-
+    OKCommitDialogHandler handler = new OKCommitDialogHandler(myRepository)
+    myVcsHelper.registerHandler(handler)
     invokeCherryPick([commit1, commit2, commit3])
 
     assertMergeDialogShown()
-    assertTrue "Commit dialog was not shown", commitDialogShown
+    assertTrue "Commit dialog was not shown", handler.wasCommitDialogShown()
     assertLastCommits commit3, commit2, commit1
   }
 
