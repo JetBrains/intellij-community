@@ -75,55 +75,70 @@ public class CherryPicker {
     notifySuccess(successfulCommits);
   }
 
+  // return true to continue with other roots, false to break execution
   private boolean cherryPick(@NotNull GitRepository repository, @NotNull List<GitCommit> commits,
                              @NotNull List<GitCommit> successfulCommits) {
-    if (myAutoCommit) {
+    for (GitCommit commit : commits) {
       GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(CHERRY_PICK_CONFLICT);
       GitSimpleEventDetector localChangesOverwrittenDetector = new GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK);
-      for (GitCommit commit : commits) {
-        GitCommandResult result = myGit.cherryPick(repository, commit.getHash().getValue(), true,
-                                                   conflictDetector, localChangesOverwrittenDetector);
-        if (result.success()) {
+      GitCommandResult result = myGit.cherryPick(repository, commit.getHash().getValue(), myAutoCommit,
+                                                 conflictDetector, localChangesOverwrittenDetector);
+      if (result.success()) {
+        if (myAutoCommit) {
           successfulCommits.add(commit);
         }
-        else if (conflictDetector.hasHappened()) {
-          boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                  commit.getShortHash().getString(), commit.getAuthor(),
-                                                                  commit.getSubject()).merge();
-          NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                            commit.getShortHash().getString(), commit.getAuthor(),
-                                                                            commit.getSubject());
-
-          if (mergeCompleted) {
-            CherryPickData data = updateChangeListManager(commit);
-            boolean committed = showCommitDialog(repository, commit, data.myChangeList, data.myCommitMessage);
-            if (!committed) {
-              notifyConflictWarning(commit, successfulCommits, resolveLinkListener);
-              return false;
-            }
-            else {
-              removeChangeList(data);
-              successfulCommits.add(commit);
-            }
+        else {
+          boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commit, successfulCommits);
+          if (!committed) {
+            return false;
           }
-          else {
-            updateChangeListManager(commit);
+        }
+      }
+      else if (conflictDetector.hasHappened()) {
+        boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
+                                                                commit.getShortHash().getString(), commit.getAuthor(),
+                                                                commit.getSubject()).merge();
+        NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
+                                                                          commit.getShortHash().getString(), commit.getAuthor(),
+                                                                          commit.getSubject());
+
+        if (mergeCompleted) {
+          boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commit, successfulCommits);
+          if (!committed) {
             notifyConflictWarning(commit, successfulCommits, resolveLinkListener);
             return false;
           }
         }
-        else if (localChangesOverwrittenDetector.hasHappened()) {
-          notifyError("Your local changes would be overwritten by cherry-pick.<br/>Commit your changes or stash them to proceed.",
-                      commit, successfulCommits);
-          return false;
-        }
         else {
-          notifyError(result.getErrorOutputAsHtmlString(), commit, successfulCommits);
+          updateChangeListManager(commit);
+          notifyConflictWarning(commit, successfulCommits, resolveLinkListener);
           return false;
         }
       }
+      else if (localChangesOverwrittenDetector.hasHappened()) {
+        notifyError("Your local changes would be overwritten by cherry-pick.<br/>Commit your changes or stash them to proceed.",
+                    commit, successfulCommits);
+        return false;
+      }
+      else {
+        notifyError(result.getErrorOutputAsHtmlString(), commit, successfulCommits);
+        return false;
+      }
     }
     return true;
+  }
+
+  private boolean updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(@NotNull GitRepository repository,
+                                                                                      @NotNull GitCommit commit,
+                                                                                      @NotNull List<GitCommit> successfulCommits) {
+    CherryPickData data = updateChangeListManager(commit);
+    boolean committed = showCommitDialog(repository, commit, data.myChangeList, data.myCommitMessage);
+    if (committed) {
+      removeChangeList(data);
+      successfulCommits.add(commit);
+      return true;
+    }
+    return false;
   }
 
   private void removeChangeList(CherryPickData list) {
