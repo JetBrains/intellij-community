@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiClass, PsiQualifiedNamedElement, Queryable {
+public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiExtensibleClass, PsiQualifiedNamedElement, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
@@ -75,7 +76,6 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   public void subtreeChanged() {
     dropCaches();
-
     super.subtreeChanged();
   }
 
@@ -87,9 +87,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   @Override
   protected Object clone() {
     PsiClassImpl clone = (PsiClassImpl)super.clone();
-
     clone.dropCaches();
-
     return clone;
   }
 
@@ -299,8 +297,21 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   }
 
   @NotNull
-  public PsiClass[] getInnerClassesRaw() {
-    return getStubOrPsiChildren(JavaStubElementTypes.CLASS, ARRAY_FACTORY);
+  @Override
+  public List<PsiField> getOwnFields() {
+    return Arrays.asList(getStubOrPsiChildren(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY));
+  }
+
+  @NotNull
+  @Override
+  public List<PsiMethod> getOwnMethods() {
+    return Arrays.asList(getStubOrPsiChildren(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY));
+  }
+
+  @NotNull
+  @Override
+  public List<PsiClass> getOwnInnerClasses() {
+    return Arrays.asList(getStubOrPsiChildren(JavaStubElementTypes.CLASS, ARRAY_FACTORY));
   }
 
   @Override
@@ -577,6 +588,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     final StubElement parentStub = stub.getParentStub();
 
     final StubBasedPsiElementBase<?> context = (StubBasedPsiElementBase)parentStub.getPsi();
+    @SuppressWarnings("unchecked")
     PsiClass[] classesInScope = (PsiClass[])parentStub.getChildrenByType(Constants.CLASS_BIT_SET, ARRAY_FACTORY);
 
     boolean needPreciseContext = false;
