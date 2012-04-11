@@ -18,11 +18,15 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class ConfigurationArgumentsHelpArea extends JPanel {
   private JTextArea myHelpArea;
@@ -32,6 +36,8 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
 
   public ConfigurationArgumentsHelpArea() {
     super(new BorderLayout());
+    add(myPanel);
+
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new MyCopyAction());
     myHelpArea.addMouseListener(
@@ -41,10 +47,17 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
         }
       }
     );
-    add(myPanel);
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    toolbar.setMiniMode(true);
-    myToolbarPanel.add(toolbar.getComponent(), BorderLayout.SOUTH);
+
+    FixedSizeButton copyButton = new FixedSizeButton(22);
+    copyButton.setIcon(PlatformIcons.DUPLICATE_ICON);
+    copyButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final StringSelection contents = new StringSelection(myHelpArea.getText().trim());
+        CopyPasteManager.getInstance().setContents(contents);
+      }
+    });
+    myToolbarPanel.add(copyButton, BorderLayout.CENTER);
     myToolbarPanel.setVisible(false);
   }
 
