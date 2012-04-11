@@ -1431,7 +1431,7 @@ public class Mappings {
             final Difference d = f.second;
             final FieldRepr field = f.first;
 
-            debug("Field: ", it.name);
+            debug("Field: ", field.name);
 
             if ((field.access & Opcodes.ACC_PRIVATE) == 0 && (field.access & mask) == mask) {
               final int changedModifiers = d.addedModifiers() | d.removedModifiers();
@@ -1441,10 +1441,10 @@ public class Mappings {
 
               if (harmful || valueChanged || (accessChanged && !d.weakedAccess())) {
                 debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-                                if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
-                                  debug("End of Differentiate, returning false");
-                                  return false;
-                                }
+                if (!incrementalDecision(it.name, field, affectedFiles, filter)) {
+                  debug("End of Differentiate, returning false");
+                  return false;
+                }
               }
             }
 
@@ -1638,7 +1638,10 @@ public class Mappings {
     }
   }
 
-  private void cleanupRemovedClass(@NotNull ClassRepr cr, Collection<UsageRepr.Cluster> clusters, IntIntMultiMaplet subclassesTrashBin, IntIntMultiMaplet dependenciesTrashBin) {
+  private void cleanupRemovedClass(@NotNull ClassRepr cr,
+                                   Collection<UsageRepr.Cluster> clusters,
+                                   IntIntMultiMaplet subclassesTrashBin,
+                                   IntIntMultiMaplet dependenciesTrashBin) {
     final int className = cr.name;
 
     for (final int superSomething : cr.getSupers()) {
@@ -1806,7 +1809,6 @@ public class Mappings {
             return true;
           }
         });
-
       }
       finally {
         delta.close();
@@ -2021,7 +2023,7 @@ public class Mappings {
 
   @NotNull
   private Set<ClassRepr> getDeletedClasses() {
-    return myDeletedClasses != null? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
+    return myDeletedClasses != null ? Collections.<ClassRepr>emptySet() : Collections.unmodifiableSet(myDeletedClasses);
   }
 
   private TIntHashSet getChangedClasses() {
@@ -2047,5 +2049,4 @@ public class Mappings {
   private void debug(final String comment, final boolean s) {
     myDebugS.debug(comment, s);
   }
-
 }
