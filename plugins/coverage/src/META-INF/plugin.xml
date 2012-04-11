@@ -10,7 +10,7 @@
   </description>
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
 
-  <xi:include href="/META-INF/coverage-impl-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/coverage-common-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationExtension implementation="com.intellij.execution.coverage.CoverageJavaRunConfigurationExtension"/>
     <!--<coverageRunner implementation="com.intellij.coverage.CoberturaCoverageRunner"/>-->

@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="coverage-impl" exported="" />
+    <orderEntry type="module" module-name="coverage-common" exported="" />
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="execution-impl" />
@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="j2ee-openapi" />
     <orderEntry type="module" module-name="web-openapi" />
+    <orderEntry type="library" name="JaCoCo" level="project" />
   </component>
 </module>
 
