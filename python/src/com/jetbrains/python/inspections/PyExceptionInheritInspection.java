@@ -48,7 +48,8 @@ public class PyExceptionInheritInspection extends PyInspection {
           if (psiElement instanceof PyClass) {
             PyClass aClass = (PyClass) psiElement;
             for (PyClassRef pyClass : aClass.iterateAncestors()) {
-              if ("BaseException".equals(pyClass.getClassName())) {
+              final String name = pyClass.getClassName();
+              if ("BaseException".equals(name) || "Exception".equals(name)) {
                 return;
               }
             }

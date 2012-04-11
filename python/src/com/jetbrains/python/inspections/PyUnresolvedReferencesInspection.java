@@ -481,15 +481,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           final Module module = ModuleUtil.findModuleForPsiElement(node);
           final Sdk sdk = PythonSdkType.findPythonSdk(module);
           if (module != null && sdk != null) {
-            final Map<String, String> pyPIPackages = PyPIPackageUtil.getPyPIPackages();
-            boolean found = false;
-            // TODO: Cache the set of lower-cased package names and search via Set.contains()
-            for (String s : pyPIPackages.keySet()) {
-              if (s.compareToIgnoreCase(packageName) == 0) {
-                found = true;
-              }
-            }
-            if (found) {
+            if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
               final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
               final String name = "Install package " + packageName;
               if (PyPackageManager.getInstance(sdk).hasPip()) {
