@@ -288,7 +288,7 @@ public class HighlightUtil {
           if (ref != null) {
             fixRange = fixRange.union(ref.getTextRange());
           }
-          QuickFixAction.registerQuickFixAction(errorResult, fixRange, fix, null);
+          QuickFixAction.registerQuickFixAction(errorResult, fixRange, fix);
         }
       }
     }

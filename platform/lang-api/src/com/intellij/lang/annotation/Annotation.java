@@ -62,8 +62,6 @@ public final class Annotation implements Segment {
     public final IntentionAction quickFix;
     public final TextRange textRange;
     public final List<IntentionAction> options;
-    @Deprecated
-    public final String displayName;
     public final HighlightDisplayKey key;
 
     @Deprecated
@@ -71,7 +69,6 @@ public final class Annotation implements Segment {
       key = null;
       this.quickFix = quickFix;
       this.textRange = textRange;
-      this.displayName = quickFix.getText();
       this.options = options;
     }
 
@@ -79,7 +76,6 @@ public final class Annotation implements Segment {
       this.key = key;
       quickFix = fix;
       textRange = range;
-      displayName = key != null ? HighlightDisplayKey.getDisplayNameByKey(key) : fix.getText();
       options = null;
     }
 

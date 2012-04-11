@@ -145,7 +145,7 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction {
         if (substitutedType != null && TypeConversionUtil.isAssignable(lType, substitutedType)) {
           QuickFixAction.registerQuickFixAction(highlightInfo,
                                                 thenExpression.getTextRange(),
-                                                new AddTypeArgumentsConditionalFix(substitutor, (PsiMethodCallExpression)thenExpression, method), null);
+                                                new AddTypeArgumentsConditionalFix(substitutor, (PsiMethodCallExpression)thenExpression, method));
         }
       }
     }
