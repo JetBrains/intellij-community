@@ -546,6 +546,26 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewComponent"
+        class="android.gesture.GestureOverlayView"
+        tag="GestureOverlayView">
+
+    <palette title="GestureOverlayView" icon="/com/intellij/android/designer/icons/GestureOverlayView.png"
+             tooltip="A transparent overlay for gesture input that can be placed on top of other widgets or contain other widgets."/>
+
+    <properties important="gestureColor orientation"/>
+
+    <creation>
+      <![CDATA[
+          <GestureOverlayView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+          </GestureOverlayView>
+      ]]>
+    </creation>
+  </meta>
+
+
+  <meta model="com.intellij.android.designer.model.RadViewComponent"
         class="android.view.ViewStub"
         tag="ViewStub">
 
@@ -983,6 +1003,28 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
+        layout="com.intellij.android.designer.model.layout.RadRadioGroupLayout"
+        class="android.widget.RadioGroup"
+        tag="RadioGroup">
+
+    <presentation title=" (%orientation%)"/>
+
+    <palette title="RadioGroup" icon="/com/intellij/android/designer/icons/RadioGroup.png"
+             tooltip="This class is used to create a multiple-exclusion scope for a set of radio buttons. Checking one radio button that belongs to a radio group unchecks any previously checked radio button within the same group."/>
+
+    <properties important="orientation checkedButton" top="gravity orientation"/>
+
+    <creation>
+      <![CDATA[
+          <RadioGroup
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </RadioGroup>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Layouts ================= -->
 
   <meta model="com.intellij.android.designer.model.RadViewContainer"
@@ -1032,6 +1074,24 @@
     </creation>
   </meta>
 
+  <meta model="com.intellij.android.designer.model.RadViewContainer"
+        layout="com.intellij.android.designer.model.layout.RadAbsoluteLayout"
+        class="android.widget.AbsoluteLayout"
+        tag="AbsoluteLayout">
+
+    <palette title="AbsoluteLayout" icon="/com/intellij/android/designer/icons/AbsoluteLayout.png"
+             tooltip="A layout that lets you specify exact locations (x/y coordinates) of its children. Absolute layouts are less flexible and harder to maintain than other types of layouts without absolute positioning."/>
+
+    <creation>
+      <![CDATA[
+          <AbsoluteLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+          </AbsoluteLayout>
+      ]]>
+    </creation>
+  </meta>
+
   <!-- ================= Palette ================= -->
 
   <palette>
@@ -1063,6 +1123,7 @@
       <item tag="MediaController"/>
       <item tag="WebView"/>
       <item tag="KeyboardView"/>
+      <item tag="GestureOverlayView"/>
       <item tag="SurfaceView"/>
       <item tag="TextureView"/>
     </group>
@@ -1073,6 +1134,7 @@
       <item tag="NumberPicker"/>
       <item tag="ZoomControls"/>
       <item tag="SearchView"/>
+      <item tag="RadioGroup"/>
       <item tag="ListView"/>
       <item tag="GridView"/>
       <item tag="Gallery"/>

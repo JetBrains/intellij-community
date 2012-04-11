@@ -16,10 +16,7 @@
 package com.intellij.android.designer.model.layout;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.designSurface.layout.FlowStaticDecorator;
-import com.intellij.android.designer.designSurface.layout.LayoutMarginOperation;
-import com.intellij.android.designer.designSurface.layout.LinearLayoutOperation;
-import com.intellij.android.designer.designSurface.layout.ResizeOperation;
+import com.intellij.android.designer.designSurface.layout.*;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.actions.AbstractComboBoxAction;
@@ -64,7 +61,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     return LAYOUT_PARAMS;
   }
 
-  private boolean isHorizontal() {
+  protected boolean isHorizontal() {
     return !"vertical".equals(((RadViewComponent)myContainer).getTag().getAttributeValue("android:orientation"));
   }
 
@@ -81,6 +78,9 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     }
     else if (context.is(LayoutMarginOperation.TYPE)) {
       return new LayoutMarginOperation(context);
+    }
+    else if (context.is(LayoutWeightOperation.TYPE)) {
+      return new LayoutWeightOperation(context);
     }
     return null;
   }
@@ -115,6 +115,8 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     }
   }
 
+  private static final int POINTS_SIZE = 16;
+
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
     if (mySelectionDecorator == null) {
@@ -125,18 +127,31 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
             boolean horizontal = isHorizontal();
             Pair<Gravity, Gravity> gravity = Gravity.getSides(component);
             int direction = ((DirectionResizePoint)point).getDirection();
+            Rectangle bounds = component.getBounds();
+            boolean goodWidth = bounds.width >= POINTS_SIZE;
+            boolean goodHeight = bounds.height >= POINTS_SIZE;
 
             if (direction == Position.WEST) { // left
-              return horizontal || gravity.first != Gravity.right;
+              return (horizontal || gravity.first != Gravity.right) && goodHeight;
             }
             if (direction == Position.EAST) { // right
-              return horizontal || gravity.first != Gravity.left;
+              return (horizontal || gravity.first != Gravity.left) && goodHeight;
             }
             if (direction == Position.NORTH) { // top
-              return !horizontal || gravity.second != Gravity.bottom;
+              return (!horizontal || gravity.second != Gravity.bottom) && goodWidth;
             }
             if (direction == Position.SOUTH) { // bottom
-              return !horizontal || gravity.second != Gravity.top;
+              return (!horizontal || gravity.second != Gravity.top) && goodWidth;
+            }
+          }
+          if (point.getType() == LayoutWeightOperation.TYPE) {
+            int direction = ((DirectionResizePoint)point).getDirection();
+
+            if (direction == Position.EAST) { // right
+              return isHorizontal() && component.getBounds().height >= POINTS_SIZE;
+            }
+            if (direction == Position.SOUTH) { // bottom
+              return !isHorizontal() && component.getBounds().width >= POINTS_SIZE;
             }
           }
           return true;
@@ -147,6 +162,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
     mySelectionDecorator.clear();
     if (selection.size() == 1) {
       LayoutMarginOperation.points(mySelectionDecorator);
+      LayoutWeightOperation.point(mySelectionDecorator);
     }
     ResizeOperation.points(mySelectionDecorator);
 

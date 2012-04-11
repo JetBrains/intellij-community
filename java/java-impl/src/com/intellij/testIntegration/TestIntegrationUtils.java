@@ -118,7 +118,7 @@ public class TestIntegrationUtils {
         public boolean includeMember(PsiMember member) {
           if (!(member instanceof PsiMethod)) return false;
           PsiModifierList list = member.getModifierList();
-          return list.hasModifierProperty(PsiModifier.PUBLIC);
+          return !list.hasModifierProperty(PsiModifier.PRIVATE);
         }
       }, false);
       clazz = clazz.getSuperClass();

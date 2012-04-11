@@ -648,13 +648,16 @@ public class ArrayUtil extends ArrayUtilRt {
     return indexOf(objects, o) >= 0;
   }
 
+  @NotNull
   public static int[] newIntArray(int count) {
     return count == 0 ? EMPTY_INT_ARRAY : new int[count];
   }
 
+  @NotNull
   public static String[] newStringArray(int count) {
     return count == 0 ? EMPTY_STRING_ARRAY : new String[count];
   }
+
   @NotNull
   public static Object[] newObjectArray(int count) {
     return count == 0 ? EMPTY_OBJECT_ARRAY : new Object[count];
@@ -664,7 +667,9 @@ public class ArrayUtil extends ArrayUtilRt {
   public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
 
-    return (E[])Array.newInstance(sample.getClass().getComponentType(), count);
+    @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+    final E[] array = (E[])Array.newInstance(sample.getClass().getComponentType(), count);
+    return array;
   }
 
   @Nullable
@@ -677,13 +682,15 @@ public class ArrayUtil extends ArrayUtilRt {
     return array.length > 0 ? array[array.length - 1] : null;
   }
 
-  /** @deprecated use {@linkplain #mergeArrays(Object[], Object[])} (to remove in IDEA 12) */
-  public static <T> T[] join(T[] array1, T[] array2) {
-    return mergeArrays(array1, array2);
-  }
-
   @NotNull
   public static String[] toStringArray(@NotNull Collection<String> collection) {
     return ArrayUtilRt.toStringArray(collection);
+  }
+
+  public static <T> void copy(@NotNull final Collection<? extends T> src, @NotNull final T[] dst, final int dstOffset) {
+    int i = dstOffset;
+    for (T t : src) {
+      dst[i++] = t;
+    }
   }
 }

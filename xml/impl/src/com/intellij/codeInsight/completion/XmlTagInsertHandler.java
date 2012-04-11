@@ -31,6 +31,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -170,6 +171,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (myAttrValueMarker == null) {
           return;
         }
+
+        final UndoManager manager = UndoManager.getInstance(project);
+        if (manager.isUndoInProgress() || manager.isRedoInProgress()) {
+          return;
+        }
+
         if (chooseAttributeName) {
           final int startOffset = myAttrValueMarker.getStartOffset();
           final int endOffset = myAttrValueMarker.getEndOffset();

@@ -148,20 +148,20 @@ class DaemonListeners implements Disposable {
       @Override
       public void activeEditorsChanged(@NotNull List<Editor> editors) {
         List<Editor> activeEditors = getActiveEditors();
-        if (!myActiveEditors.equals(activeEditors)) {
-          myActiveEditors = activeEditors;
-          stopDaemon(true);  // do not stop daemon if idea loses/gains focus
-          if (LaterInvocator.isInModalContext()) {
-            // editor appear in modal context, reenable the daemon
-            myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-          }
-          myDaemonCodeAnalyzer.hideLastIntentionHint(); // mem leak after closing last editor otherwise
+        if (myActiveEditors.equals(activeEditors)) {
+          return;
+        }
+        myActiveEditors = activeEditors;
+        stopDaemon(true);  // do not stop daemon if idea loses/gains focus
+        if (LaterInvocator.isInModalContext()) {
+          // editor appear in modal context, re-enable the daemon
+          myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
       }
     };
     myEditorTracker.addEditorTrackerListener(editorTrackerListener, this);
 
-    EditorFactoryListener editorFactoryListener = new EditorFactoryAdapter() {
+    EditorFactoryListener editorFactoryListener = new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         Editor editor = event.getEditor();
@@ -174,6 +174,12 @@ class DaemonListeners implements Disposable {
           return;
         }
         myDaemonCodeAnalyzer.repaintErrorStripeRenderer(editor);
+      }
+
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        // mem leak after closing last editor otherwise
+        myDaemonCodeAnalyzer.hideLastIntentionHint();
       }
     };
     EditorFactory.getInstance().addEditorFactoryListener(editorFactoryListener, this);
