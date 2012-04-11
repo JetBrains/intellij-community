@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.XmlRecursiveElementVisitor;
@@ -167,6 +168,10 @@ public class ModelParser extends XmlRecursiveElementVisitor {
         movedComponent.setTag(newXmlTag);
       }
     });
+
+    XmlFile xmlFile = container.getRoot().getClientProperty(XML_FILE_KEY);
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(xmlFile.getProject());
+    psiDocumentManager.commitDocument(psiDocumentManager.getDocument(xmlFile));
 
     PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
     propertyParser.load(movedComponent);

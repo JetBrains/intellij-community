@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.TimeoutUtil;
@@ -334,32 +335,40 @@ public class FileWatcherTest extends PlatformLangTestCase {
     final int rv = new GeneralCommandLine("subst", subst + ":", targetDir.getAbsolutePath()).createProcess().waitFor();
     assertEquals(0, rv);
 
-    final File substDir = new File((subst + ":\\").toUpperCase(Locale.US), subDir.getName());
-    final File substFile = new File(substDir, file.getName());
-    refresh(targetDir);
-    refresh(substDir);
+    final String substRoot = (subst + ":\\").toUpperCase(Locale.US);
+    VirtualDirectoryImpl.allowRootAccess(substRoot);
 
-    final LocalFileSystem.WatchRequest request = watch(substDir);
     try {
-      FileUtil.writeToFile(file, "new content");
-      assertEvent(VFileContentChangeEvent.class, substFile.getAbsolutePath());
+      final File substDir = new File(substRoot, subDir.getName());
+      final File substFile = new File(substDir, file.getName());
+      refresh(targetDir);
+      refresh(substDir);
 
-      final LocalFileSystem.WatchRequest request2 = watch(targetDir);
+      final LocalFileSystem.WatchRequest request = watch(substDir);
       try {
-        FileUtil.delete(file);
-        assertEvent(VFileDeleteEvent.class, file.getAbsolutePath(), substFile.getAbsolutePath());
+        FileUtil.writeToFile(file, "new content");
+        assertEvent(VFileContentChangeEvent.class, substFile.getAbsolutePath());
+
+        final LocalFileSystem.WatchRequest request2 = watch(targetDir);
+        try {
+          FileUtil.delete(file);
+          assertEvent(VFileDeleteEvent.class, file.getAbsolutePath(), substFile.getAbsolutePath());
+        }
+        finally {
+          unwatch(request2);
+        }
+
+        FileUtil.writeToFile(file, "re-creation");
+        assertEvent(VFileCreateEvent.class, substFile.getAbsolutePath());
       }
       finally {
-        unwatch(request2);
+        myFileSystem.removeWatchedRoot(request);
       }
-
-      FileUtil.writeToFile(file, "re-creation");
-      assertEvent(VFileCreateEvent.class, substFile.getAbsolutePath());
     }
     finally {
-      myFileSystem.removeWatchedRoot(request);
-      new GeneralCommandLine("subst", subst + ":", "/d").createProcess().waitFor();
+      VirtualDirectoryImpl.disallowRootAccess(substRoot);
       FileUtil.delete(targetDir);
+      new GeneralCommandLine("subst", subst + ":", "/d").createProcess().waitFor();
     }
   }
 
