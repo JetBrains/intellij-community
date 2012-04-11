@@ -23,6 +23,7 @@ import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -36,6 +37,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
@@ -134,6 +136,18 @@ public class InitialConfigurationDialog extends DialogWrapper {
     if (canCreateDesktopEntry) {
       myGlobalEntryCheckBox.setSelected(!PathManager.getHomePath().startsWith("/home"));
     }
+
+    Disposer.register(myDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myPreviewEditor != null) {
+          myPreviewEditor.disposeUIResources();
+        }
+        if (myPreviewOptions != null) {
+          myPreviewOptions.disposeUIResources();
+        }
+      }
+    });
   }
 
   private void preselectKeyMap(ArrayList<Keymap> keymaps) {
@@ -287,12 +301,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
     super.doOKAction();
 
-    if (myPreviewEditor != null) {
-      myPreviewEditor.disposeUIResources();
-    }
-    if (myPreviewOptions != null) {
-      myPreviewOptions.disposeUIResources();
-    }
     // set keymap
     ((KeymapManagerImpl)KeymapManager.getInstance()).setActiveKeymap((Keymap)myKeymapComboBox.getSelectedItem());
     // set color scheme
