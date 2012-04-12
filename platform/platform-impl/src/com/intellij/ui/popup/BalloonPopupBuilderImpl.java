@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean mySmallVariant = false;
 
   private Balloon.Layer myLayer;
+  private boolean myBlockClicks = false;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -122,6 +123,12 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   }
 
   @NotNull
+  public BalloonBuilder setBlockClicksThroughBalloon(boolean block) {
+    myBlockClicks = block;
+    return this;
+  }
+
+  @NotNull
   @Override
   public BalloonBuilder setAnimationCycle(int time) {
     myAnimationCycle = time;
@@ -151,7 +158,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @NotNull
   public Balloon createBalloon() {
     return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
-                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow, mySmallVariant, myLayer);
+                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow, mySmallVariant, myBlockClicks, myLayer);
   }
 
   @NotNull
