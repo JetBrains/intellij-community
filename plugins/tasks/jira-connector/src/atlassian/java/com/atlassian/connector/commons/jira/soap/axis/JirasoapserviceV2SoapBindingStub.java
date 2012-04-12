@@ -11,6 +11,9 @@
 
 package com.atlassian.connector.commons.jira.soap.axis;
 
+import javax.annotation.Generated;
+
+@Generated(value = "")
 public class JirasoapserviceV2SoapBindingStub extends org.apache.axis.client.Stub
 		implements JiraSoapService {
 	private java.util.Vector cachedSerClasses = new java.util.Vector();
