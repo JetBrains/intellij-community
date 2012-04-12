@@ -59,9 +59,6 @@ public class FileUtil extends FileUtilRt {
 
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
 
-  private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
-  private static final Object JAVA_IO_FILESYSTEM; // java.io.FileSystem
-
   @NotNull
   public static String join(@NotNull final String... parts) {
     return StringUtil.join(parts, File.separator);
@@ -603,28 +600,43 @@ public class FileUtil extends FileUtilRt {
     return (SystemInfo.isFileSystemCaseSensitive ? name : name.toLowerCase()).replace('\\', '/');
   }
 
-  public static String toCanonicalPath(String path) {
+  @Nullable
+  public static String toCanonicalPath(@Nullable String path) {
+    return toCanonicalPath(path, File.separatorChar);
+  }
+
+  @Nullable
+  public static String toCanonicalPath(@Nullable String path, final char separator) {
     if (path == null || path.isEmpty()) {
       return path;
     }
-    path = path.replace(File.separatorChar, '/');
+
+    path = path.replace(separator, '/');
     final StringTokenizer tok = new StringTokenizer(path, "/");
     final Stack<String> stack = new Stack<String>();
     while (tok.hasMoreTokens()) {
       final String token = tok.nextToken();
       if ("..".equals(token)) {
-        if (stack.isEmpty()) {
-          return null;
+        if (!stack.isEmpty()) {
+          stack.pop();
         }
-        stack.pop();
       }
       else if (!token.isEmpty() && !".".equals(token)) {
         stack.push(token);
       }
     }
+
     final StringBuilder result = new StringBuilder(path.length());
     if (path.charAt(0) == '/') {
       result.append("/");
+    }
+    else if (separator == '\\' &&
+             path.length() > 1 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':' &&
+             (stack.isEmpty() || !path.startsWith(stack.get(0)))) {
+      result.append(path.substring(0, 2));
+      if (!stack.isEmpty()) {
+        result.append('/');
+      }
     }
     for (int i = 0; i < stack.size(); i++) {
       String str = stack.get(i);
@@ -1200,6 +1212,9 @@ public class FileUtil extends FileUtilRt {
 
   @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
   public @interface FileBooleanAttributes {}
+
+  private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
+  private static final Object JAVA_IO_FILESYSTEM;
 
   // todo[r.sh] use NIO2 API after migration to JDK 7
   // returns -1 if could not get attributes
