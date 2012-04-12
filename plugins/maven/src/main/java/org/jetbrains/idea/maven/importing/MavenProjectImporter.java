@@ -34,6 +34,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -368,8 +369,8 @@ public class MavenProjectImporter {
   private void configSettings() {
     MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
       public void run() {
-        String level = calcTargetLevel();
-        if (level == null) return;
+        String minPossibleTargetLevel = calcMinPossibleTargetLevel();
+        if (minPossibleTargetLevel == null) return;
 
         String options = JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING;
         Pattern pattern = Pattern.compile("(-target (\\S+))");
@@ -378,23 +379,24 @@ public class MavenProjectImporter {
         if (matcher.find()) {
           String currentValue = MavenProject.normalizeCompilerLevel(matcher.group(2));
 
-          if (currentValue == null || compareCompilerLevel(level, currentValue) < 0) {
+          if (currentValue == null || compareCompilerLevel(minPossibleTargetLevel, currentValue) > 0) {
             StringBuffer buffer = new StringBuffer();
-            matcher.appendReplacement(buffer, "-target " + level);
+            matcher.appendReplacement(buffer, "-target " + minPossibleTargetLevel);
             matcher.appendTail(buffer);
             options = buffer.toString();
           }
         }
         else {
           if (!StringUtil.isEmptyOrSpaces(options)) options += " ";
-          options += "-target " + level;
+          options += "-target " + minPossibleTargetLevel;
         }
         JavacSettings.getInstance(myProject).ADDITIONAL_OPTIONS_STRING = options;
       }
     });
   }
 
-  private String calcTargetLevel() {
+  @Nullable
+  private String calcMinPossibleTargetLevel() {
     String maxSource = null;
     String minTarget = null;
     for (MavenProject each : myAllProjects) {
@@ -406,7 +408,7 @@ public class MavenProjectImporter {
     return (maxSource != null && compareCompilerLevel(minTarget, maxSource) < 0) ? maxSource : minTarget;
   }
 
-  private int compareCompilerLevel(String left, String right) {
+  private static int compareCompilerLevel(String left, String right) {
     if (left == null && right == null) return 0;
     if (left == null) return -1;
     if (right == null) return 1;
