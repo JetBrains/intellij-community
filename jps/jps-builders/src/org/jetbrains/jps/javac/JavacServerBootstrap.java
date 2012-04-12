@@ -33,7 +33,7 @@ public class JavacServerBootstrap {
 
     // debugging
     //appendParam(cmdLine, "-XX:+HeapDumpOnOutOfMemoryError");
-    //appendParam(cmdLine, "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
+    //appendParam(cmdLine, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5009");
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     final String lang = System.getProperty("user.language");
