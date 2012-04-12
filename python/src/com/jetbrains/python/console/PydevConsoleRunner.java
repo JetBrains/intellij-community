@@ -8,7 +8,10 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CommandLineArgumentsProvider;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -26,7 +29,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -38,7 +40,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
@@ -523,7 +524,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   @Nullable
   public static ConsoleCommunication getConsoleCommunication(final PsiElement element) {
-    return element.getContainingFile().getCopyableUserData(CONSOLE_KEY);
+    final PsiFile containingFile = element.getContainingFile();
+    return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_KEY) : null;
   }
 
   @Override
