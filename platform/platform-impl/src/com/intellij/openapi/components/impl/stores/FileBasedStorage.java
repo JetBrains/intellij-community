@@ -57,7 +57,7 @@ public class FileBasedStorage extends XmlElementStorage {
   protected final String myRootElementName;
 
   private static boolean myConfigDirectoryRefreshed = false;
-  private volatile  VirtualFile myCachedVirtualFile;
+  private volatile VirtualFile myCachedVirtualFile;
 
   public FileBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroManager,
                           StreamProvider streamProvider,

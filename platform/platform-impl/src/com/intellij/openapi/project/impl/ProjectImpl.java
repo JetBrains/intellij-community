@@ -77,7 +77,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   private ProjectManagerImpl myManager;
 
-  private IProjectStore myComponentStore;
+  private volatile IProjectStore myComponentStore;
 
   private MyProjectManagerListener myProjectManagerListener;
 
@@ -129,6 +129,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @Override
   protected void bootstrapPicoContainer() {
     Extensions.instantiateArea(PluginManager.AREA_IDEA_PROJECT, this, null);
     super.bootstrapPicoContainer();
@@ -153,22 +154,27 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         return myDelegate;
       }
 
+      @Override
       public Object getComponentKey() {
         return IComponentStore.class;
       }
 
+      @Override
       public Class getComponentImplementation() {
         return getDelegate().getComponentImplementation();
       }
 
+      @Override
       public Object getComponentInstance(final PicoContainer container) throws PicoInitializationException, PicoIntrospectionException {
         return getDelegate().getComponentInstance(container);
       }
 
+      @Override
       public void verify(final PicoContainer container) throws PicoIntrospectionException {
         getDelegate().verify(container);
       }
 
+      @Override
       public void accept(final PicoVisitor visitor) {
         visitor.visitComponentAdapter(this);
         getDelegate().accept(visitor);
@@ -179,11 +185,16 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   @NotNull
   @Override
-  public synchronized IProjectStore getStateStore() {
-    if (myComponentStore == null) {
-      myComponentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+  public IProjectStore getStateStore() {
+    IProjectStore componentStore = myComponentStore;
+    if (componentStore != null) return componentStore;
+    synchronized (this) {
+      componentStore = myComponentStore;
+      if (componentStore == null) {
+        myComponentStore = componentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
+      }
+      return componentStore;
     }
-    return myComponentStore;
   }
 
   @Override
@@ -218,6 +229,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @Override
   @NotNull
   public String getProjectFilePath() {
     return getStateStore().getProjectFilePath();
@@ -271,6 +283,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     return isDisposed() ? null : getStateStore().getLocation();
   }
 
+  @Override
   @Nullable
   public VirtualFile getWorkspaceFile() {
     return getStateStore().getWorkspaceFile();
@@ -430,17 +443,20 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   private class MyProjectManagerListener extends ProjectManagerAdapter {
+    @Override
     public void projectOpened(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
       ProjectImpl.this.projectOpened();
     }
 
+    @Override
     public void projectClosed(Project project) {
       LOG.assertTrue(project == ProjectImpl.this);
       ProjectImpl.this.projectClosed();
     }
   }
 
+  @Override
   protected MutablePicoContainer createPicoContainer() {
     return Extensions.getArea(this).getPicoContainer();
   }
@@ -467,7 +483,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
         for (Iterator it = macros2invalidate.iterator(); it.hasNext();) {
           final String macro = (String)it.next();
           final String value = pathMacros.getValue(macro);
-          if ((null == value || value.trim().length() == 0) && !pathMacros.isIgnoredMacroName(macro)) {
+          if ((value == null || value.trim().isEmpty()) && !pathMacros.isIgnoredMacroName(macro)) {
             it.remove();
           }
         }
@@ -490,6 +506,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
             }
 
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 stateStore.reinitComponents(components, true);
               }
@@ -506,6 +523,7 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
     }
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "Project" +
