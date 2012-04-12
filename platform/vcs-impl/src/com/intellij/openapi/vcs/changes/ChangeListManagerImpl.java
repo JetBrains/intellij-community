@@ -1317,6 +1317,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @TestOnly
   public void waitUntilRefreshed() {
+    myVfsListener.flushDirt();
     myUpdater.waitUntilRefreshed();
     waitUpdateAlarm();
   }
