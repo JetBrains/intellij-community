@@ -592,20 +592,11 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       if (!(otherState instanceof MyValididtyState)) return false;
       MyValididtyState that = (MyValididtyState)otherState;
 
-      if (mySourceFileTimestamp != that.mySourceFileTimestamp
-          || myOutputFileTimestamp != that.myOutputFileTimestamp
-          || myFiltered != that.myFiltered) {
-        return false;
-      }
-
-      if (myFiltered) {
-        if (myPropertiesHashCode != that.myPropertiesHashCode
-            || !Comparing.strEqual(myEscapeString, that.myEscapeString)) {
-          return false;
-        }
-      }
-
-      return true;
+      return mySourceFileTimestamp == that.mySourceFileTimestamp
+             && myOutputFileTimestamp == that.myOutputFileTimestamp
+             && myFiltered == that.myFiltered
+             && myPropertiesHashCode == that.myPropertiesHashCode
+             && Comparing.strEqual(myEscapeString, that.myEscapeString);
     }
 
     public void save(DataOutput out) throws IOException {
