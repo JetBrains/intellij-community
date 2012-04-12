@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.Gray;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
@@ -40,6 +37,10 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * @author peter
+ * @author Konstantin Bulenkov
+ */
 public class LookupCellRenderer implements ListCellRenderer {
   private static final int AFTER_TAIL = 10;
   private static final int AFTER_TYPE = 6;
@@ -72,6 +73,8 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   public static final Color PREFERRED_BACKGROUND_COLOR = new Color(220, 245, 220);
   private static final String ELLIPSIS = "\u2026";
+  private boolean myFullSize;
+  private int myMaxWidth = -1;
 
   public LookupCellRenderer(LookupImpl lookup) {
     EditorColorsScheme scheme = lookup.getEditor().getColorsScheme();
@@ -121,7 +124,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     final Color background = getItemBackground(list, index, isSelected);
 
     int allowedWidth = list.getWidth() - AFTER_TAIL - AFTER_TYPE - getIconIndent();
-    final LookupElementPresentation presentation = new RealLookupElementPresentation(allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
+    final LookupElementPresentation presentation = new RealLookupElementPresentation(myFullSize ? getMaxWidth() : allowedWidth, myNormalMetrics, myBoldMetrics, myLookup);
     if (item.isValid()) {
       item.renderElement(presentation);
     } else {
@@ -136,16 +139,25 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTypeLabel.clear();
     if (allowedWidth > 0) {
-      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, allowedWidth, isSelected);
+      allowedWidth -= setTypeTextLabel(item, background, foreground, presentation, myFullSize ? getMaxWidth() : allowedWidth, isSelected);
     }
 
     myTailComponent.clear();
     myTailComponent.setBackground(background);
-    if (allowedWidth >= 0) {
-      setTailTextLabel(isSelected, presentation, foreground, allowedWidth);
+    if (myFullSize || allowedWidth >= 0) {
+      setTailTextLabel(isSelected, presentation, foreground, myFullSize ? getMaxWidth() : allowedWidth);
     }
 
     return myPanel;
+  }
+
+  private int getMaxWidth() {
+    if (myMaxWidth < 0) {
+      final Point p = myLookup.getComponent().getLocationOnScreen();
+      final Rectangle rectangle = ScreenUtil.getScreenRectangle(p);
+      myMaxWidth = rectangle.x + rectangle.width - p.x - 111;
+    }
+    return myMaxWidth;
   }
 
   private Color getItemBackground(JList list, int index, boolean isSelected) {
@@ -168,6 +180,10 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     myTailComponent.append(trimLabelText(tailText, allowedWidth, myNormalMetrics), attributes);
+  }
+
+  public void setFullSize(boolean fullSize) {
+    myFullSize = fullSize;
   }
 
   private static String trimLabelText(@Nullable String text, int maxWidth, FontMetrics metrics) {
