@@ -210,9 +210,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static long calculateHashCode(MavenProject project, Properties properties) {
-    Set<String> sorted = new TreeSet<String>();
+    Map<String, String> sorted = new TreeMap<String, String>();
     for (Map.Entry<Object, Object> each : properties.entrySet()) {
-      sorted.add(each.getKey().toString() + "->" + each.getValue().toString());
+      sorted.put(each.getKey().toString(), each.getValue().toString());
     }
     return project.getLastReadStamp() + 31 * sorted.hashCode();
   }
