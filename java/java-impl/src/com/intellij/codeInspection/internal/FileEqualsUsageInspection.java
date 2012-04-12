@@ -27,7 +27,7 @@ public class FileEqualsUsageInspection extends InternalInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "File.equals() Usage";
+    return "File.equals()/hashCode()/compareTo() Usage";
   }
 
   @NotNull
