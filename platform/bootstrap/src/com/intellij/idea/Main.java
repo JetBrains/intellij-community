@@ -46,39 +46,17 @@ public class Main {
       System.setProperty("jna.nounpack", "false");
     }
 
-    // pre-load class before installing the patch to prevent class loader problems
-    Restarter.isSupported();
+    int restartCode = Restarter.getRestartCode();
 
     if (installPatch()) {
-      boolean restarted = false;
-      int restartCode = 0;
-      try {
-        restarted = Restarter.restart();
-        restartCode = Restarter.getRestartCode();
-      }
-      catch (Throwable e) {
-        // can be either CannotRestartException
-        //  or something like class/method not found if they has been changed during update
+      if (restartCode == 0) {
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Throwable ignore) { }
 
-        //noinspection CallToPrintStackTrace
-        e.printStackTrace();
-      }
-
-      if (!restarted && restartCode == 0) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignore) { }
-        String msg = "The application cannot start right away since some critical files have been changed.\nPlease restart it manually.";
+        String msg = "Patch was applied successfully, please restart application.";
         JOptionPane.showMessageDialog(null, msg, "Update", JOptionPane.INFORMATION_MESSAGE);
       }
 
-      final int finalRestartCode = restartCode;
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          System.exit(finalRestartCode);
-        }
-      });
-
+      System.exit(restartCode);
       return;
     }
 
@@ -160,8 +138,7 @@ public class Main {
         errThread.start();
 
         try {
-          boolean requiresRestart = process.waitFor() == 42;
-          return requiresRestart;
+          return process.waitFor() == 42;
         }
         finally {
           outThread.join();
