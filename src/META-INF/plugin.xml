@@ -15,6 +15,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.jetbrains.typoscript.lang.TypoScriptFileTypeFactory"/>
     <syntaxHighlighter key="TypoScript" implementationClass="com.jetbrains.typoscript.lang.highlighter.TypoScriptSyntaxHighlighter"/>
+    <colorSettingsPage implementation="com.jetbrains.typoscript.lang.highlighter.TypoScriptColorsAndFontsPage"/>
+
+    <lang.parserDefinition language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptParserDefinition"/>
   </extensions>
 
 </idea-plugin>

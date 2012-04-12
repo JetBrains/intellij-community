@@ -32,14 +32,18 @@ public interface TypoScriptTokenTypes extends TokenType {
   IElementType MODIFICATION_OPERATOR_FUNCTION_PARAM_END = new TypoScriptTokenType("MODIFICATION_CLOSE");
   IElementType MODIFICATION_OPERATOR_FUNCTION_ARGUMENT = new TypoScriptTokenType("MODIFICATION_VALUE");
 
-  TokenSet OPERATORS = TokenSet.create(MODIFICATION_OPERATOR, ASSIGNMENT_OPERATOR,
-                                       MULTILINE_VALUE_OPERATOR_BEGIN, MULTILINE_VALUE_OPERATOR_END,
-                                       CODE_BLOCK_OPERATOR_BEGIN, CODE_BLOCK_OPERATOR_END,
-                                       UNSETTING_OPERATOR, COPYING_OPERATOR);
-
   IElementType OBJECT_PATH_ENTITY = new TypoScriptTokenType("OBJECT_PATH_ENTITY");
   IElementType OBJECT_PATH_SEPARATOR = new TypoScriptTokenType("OBJECT_PATH_SEPARATOR");
 
   IElementType INCLUDE_STATEMENT = new TypoScriptTokenType("INCLUDE");
   IElementType CONDITION = new TypoScriptTokenType("CONDITION");
+
+  TokenSet OPERATORS = TokenSet.create(MODIFICATION_OPERATOR, ASSIGNMENT_OPERATOR,
+                                       MULTILINE_VALUE_OPERATOR_BEGIN, MULTILINE_VALUE_OPERATOR_END,
+                                       CODE_BLOCK_OPERATOR_BEGIN, CODE_BLOCK_OPERATOR_END,
+                                       UNSETTING_OPERATOR, COPYING_OPERATOR);
+
+  TokenSet WHITESPACES = TokenSet.create(WHITE_SPACE);
+  TokenSet COMMENTS = TokenSet.create(ONE_LINE_COMMENT, C_STYLE_COMMENT, IGNORED_TEXT);
+  TokenSet STRING_LITERALS = TokenSet.create(ASSIGNMENT_VALUE, MULTILINE_VALUE);
 }

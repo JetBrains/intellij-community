@@ -13,14 +13,18 @@ public class TypoScriptHighlightingData {
     TextAttributesKey.createTextAttributesKey("TS_ONE_LINE_COMMENT", SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
   public static final TextAttributesKey MULTILINE_COMMENT =
     TextAttributesKey.createTextAttributesKey("TS_MULTILINE_COMMENT", SyntaxHighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
+  public static final TextAttributesKey IGNORED_TEXT =
+    TextAttributesKey.createTextAttributesKey("TS_IGNORED_TEXT", SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
   public static final TextAttributesKey OPERATOR_SIGN =
     TextAttributesKey.createTextAttributesKey("TS_OPERATOR_SIGN", SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes());
   public static final TextAttributesKey STRING_VALUE =
     TextAttributesKey.createTextAttributesKey("STRING_VALUE", SyntaxHighlighterColors.STRING.getDefaultAttributes());
+  public static final TextAttributesKey ASSIGNED_VALUE =
+    TextAttributesKey.createTextAttributesKey("ASSIGNED_VALUE", HighlighterColors.TEXT.getDefaultAttributes());
   public static final TextAttributesKey OBJECT_PATH_ENTITY =
-    TextAttributesKey.createTextAttributesKey("TS_OBJECT_PATH_ENTITY", HighlighterColors.TEXT.getDefaultAttributes());
+    TextAttributesKey.createTextAttributesKey("TS_OBJECT_PATH_ENTITY", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
   public static final TextAttributesKey OBJECT_PATH_SEPARATOR =
-    TextAttributesKey.createTextAttributesKey("TS_OBJECT_PATH_SEPARATOR", SyntaxHighlighterColors.DOT.getDefaultAttributes());
+    TextAttributesKey.createTextAttributesKey("TS_OBJECT_PATH_SEPARATOR", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
 
 
   /*
