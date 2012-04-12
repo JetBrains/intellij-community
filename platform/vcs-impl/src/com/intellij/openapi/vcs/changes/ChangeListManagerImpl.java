@@ -112,6 +112,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   };
   private final ChangelistConflictTracker myConflictTracker;
   private VcsDirtyScopeManager myDirtyScopeManager;
+  private VcsDirtyScopeVfsListener myVfsListener;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
@@ -126,6 +127,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myFreezeName = new AtomicReference<String>(null);
     myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
+    myVfsListener = ApplicationManager.getApplication().getComponent(VcsDirtyScopeVfsListener.class);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
@@ -1336,6 +1338,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    * Can be called only from not AWT thread; to do smthg after ChangeListManager refresh, call invokeAfterUpdate
    */
   public boolean ensureUpToDate(final boolean canBeCanceled) {
+    myVfsListener.flushDirt();
     final EnsureUpToDateFromNonAWTThread worker = new EnsureUpToDateFromNonAWTThread(myProject);
     worker.execute();
     myUpdater.waitUntilRefreshed();
