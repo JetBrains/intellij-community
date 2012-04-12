@@ -7,6 +7,9 @@
 
 package com.intellij.tasks.mantis.model;
 
+import javax.annotation.Generated;
+
+@Generated(value = "WSDL2Java")
 public class IssueData  implements java.io.Serializable {
     private java.math.BigInteger id;
 

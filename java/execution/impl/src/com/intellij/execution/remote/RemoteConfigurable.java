@@ -51,6 +51,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JPanel mySocketPanel;
   private ConfigurationArgumentsHelpArea myHelpArea;
   @NonNls private ConfigurationArgumentsHelpArea myJDK13HelpArea;
+  private ConfigurationArgumentsHelpArea myJDK14HelpArea;
   private LabeledComponent<JComboBox> myModule;
   private String myHostName = "";
   @NonNls
@@ -63,6 +64,8 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     myJDK13HelpArea.setLabelText(ExecutionBundle.message("environment.variables.helper.use.arguments.jdk13.label"));
     myJDK13HelpArea.setToolbarVisible();
+    myJDK14HelpArea.setLabelText(ExecutionBundle.message("environment.variables.helper.use.arguments.jdk14.label"));
+    myJDK14HelpArea.setToolbarVisible();
 
     final ButtonGroup transportGroup = new ButtonGroup();
     transportGroup.add(myRbSocket);
@@ -190,8 +193,10 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       myRbListen.isSelected()
     );
     final String cmdLine = connection.getLaunchCommandLine();
-    
-    myHelpArea.updateText(cmdLine);
+    // -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=7007
+    final String jvmtiCmdLine = cmdLine.replace("-Xdebug", "").replace("-Xrunjdwp:", "-agentlib:jdwp=").trim();
+    myHelpArea.updateText(jvmtiCmdLine);
+    myJDK14HelpArea.updateText(cmdLine);
     myJDK13HelpArea.updateText("-Xnoagent -Djava.compiler=NONE " + cmdLine);
   }
 

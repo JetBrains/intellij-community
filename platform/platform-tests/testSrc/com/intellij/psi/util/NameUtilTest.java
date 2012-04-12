@@ -129,6 +129,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("#", "#.php");
     assertMatches("a", "a.php");
   }
+
+  public void testIgnoreCaseWhenCompleteMatch() {
+    assertMatches("comboBox", "combobox");
+    assertMatches("combobox", "comboBox");
+  }
   
   public void testStartsWithDot() throws Exception {
     assertMatches(".foo", ".foo");
@@ -201,7 +206,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("foo", "fOo");
     assertMatches("foo", "fxOo");
     assertDoesntMatch("foo", "fXOo");
-    assertDoesntMatch("fOo", "foo");
+    assertMatches("fOo", "foo");
     assertMatches("fOo", "FaOaOaXXXX");
     assertMatches("ncdfoe", "NoClassDefFoundException");
     assertMatches("fob", "FOO_BAR");
@@ -217,7 +222,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("bui.gr", "BuildConfig.groovy");
     assertMatches("*fz", "azzzfzzz");
 
-    assertDoesntMatch("WebLogic", "Weblogic");
+    assertMatches("WebLogic", "Weblogic");
     assertMatches("WebLOgic", "WebLogic");
     assertMatches("WEbLogic", "WebLogic");
     assertDoesntMatch("WebLogic", "Webologic");
@@ -251,7 +256,7 @@ public class NameUtilTest extends UsefulTestCase {
   public void testMinusculeFirstLetter() {
     assertTrue(new NameUtil.MinusculeMatcher("WebLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
     assertFalse(new NameUtil.MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
-    assertFalse(new NameUtil.MinusculeMatcher("cL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("class"));
+    assertTrue(new NameUtil.MinusculeMatcher("cL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("class"));
     assertTrue(new NameUtil.MinusculeMatcher("CL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("Class"));
     assertFalse(new NameUtil.MinusculeMatcher("abc", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("_abc"));
   }
@@ -304,6 +309,8 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("getCU", "getCurrentSomething", "getCurrentUser");
+    assertPreference("cL", "class", "coreLoader");
+    assertPreference("cL", "class", "classLoader");
   }
 
   private static void assertPreference(@NonNls String pattern,

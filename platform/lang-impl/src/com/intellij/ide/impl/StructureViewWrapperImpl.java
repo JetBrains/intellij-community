@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,15 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -57,6 +60,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
+import java.util.List;
 
 /**
  * @author Eugene Belyaev
@@ -79,6 +83,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   // -------------------------------------------------------------------------
 
   private Runnable myPendingSelection;
+  private boolean myFirstRun = true;
 
   public StructureViewWrapperImpl(Project project, ToolWindow toolWindow) {
     myProject = project;
@@ -115,10 +120,10 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void checkUpdate() {
-    if (myProject.isDisposed()) return;
+    if (myProject.isDisposed() || !myToolWindow.isVisible()) return;
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner) || JBPopupFactory.getInstance().isPopupActive()) return;
+    if (/*SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner) || */JBPopupFactory.getInstance().isPopupActive()) return;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
     if (dataContext.getData(myKey) == this) return;
@@ -130,7 +135,15 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     }
     else if (files != null && files.length > 1) {
       setFile(null);
+    } else if (myFirstRun) {
+      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
+      final List<Pair<VirtualFile,EditorWindow>> history = editorManager.getSelectionHistory();
+      if (! history.isEmpty()) {
+        setFile(history.get(0).getFirst());
+      }
     }
+
+    myFirstRun = false;
   }
 
   private void setFile(VirtualFile file) {

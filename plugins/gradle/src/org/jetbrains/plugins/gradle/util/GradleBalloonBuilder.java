@@ -194,4 +194,11 @@ class GradleBalloonBuilder implements BalloonBuilder {
     myDelegate.setLayer(layer);
     return this;
   }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setBlockClicksThroughBalloon(boolean block) {
+    myDelegate.setBlockClicksThroughBalloon(block);
+    return this;
+  }
 }

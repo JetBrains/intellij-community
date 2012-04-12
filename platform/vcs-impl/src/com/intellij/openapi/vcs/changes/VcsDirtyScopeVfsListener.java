@@ -56,47 +56,54 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
   private final ConstantZipperUpdater myZipperUpdater;
   private final List<FileAndDirsCollector> myQueue;
   private final Object myLock;
+  private final Runnable myDirtReporter;
 
   public VcsDirtyScopeVfsListener() {
     myProjectLocator = ProjectLocator.getInstance();
     myMessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
     myLock = new Object();
     myQueue = new ArrayList<FileAndDirsCollector>();
+    myDirtReporter = new Runnable() {
+      @Override
+      public void run() {
+        ArrayList<FileAndDirsCollector> list;
+        synchronized (myLock) {
+          list = new ArrayList<FileAndDirsCollector>(myQueue);
+          myQueue.clear();
+        }
+        Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> map =
+          new HashMap<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>>();
+        for (FileAndDirsCollector collector : list) {
+          Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> pairMap =
+            collector.map;
+          for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : pairMap
+            .entrySet()) {
+            final VcsDirtyScopeManager key = entry.getKey();
+            Pair<HashSet<FilePath>, HashSet<FilePath>> existing = map.get(key);
+            Pair<HashSet<FilePath>, HashSet<FilePath>> value = entry.getValue();
+            if (existing != null) {
+              existing.getFirst().addAll(value.getFirst());
+              existing.getSecond().addAll(value.getSecond());
+            }
+            else {
+              map.put(key, value);
+            }
+          }
+        }
+        new FileAndDirsCollector().markDirty(map);
+      }
+    };
     myZipperUpdater = new ConstantZipperUpdater(300, Alarm.ThreadToUse.SHARED_THREAD, ApplicationManager.getApplication(),
-                                                new Runnable() {
-                                                  @Override
-                                                  public void run() {
-                                                    ArrayList<FileAndDirsCollector> list;
-                                                    synchronized (myLock) {
-                                                      list = new ArrayList<FileAndDirsCollector>(myQueue);
-                                                      myQueue.clear();
-                                                    }
-                                                    Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> map =
-                                                      new HashMap<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>>();
-                                                    for (FileAndDirsCollector collector : list) {
-                                                      Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> pairMap =
-                                                        collector.map;
-                                                      for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : pairMap
-                                                        .entrySet()) {
-                                                        final VcsDirtyScopeManager key = entry.getKey();
-                                                        Pair<HashSet<FilePath>, HashSet<FilePath>> existing = map.get(key);
-                                                        Pair<HashSet<FilePath>, HashSet<FilePath>> value = entry.getValue();
-                                                        if (existing != null) {
-                                                          existing.getFirst().addAll(value.getFirst());
-                                                          existing.getSecond().addAll(value.getSecond());
-                                                        } else {
-                                                          map.put(key, value);
-                                                        }
-                                                      }
-                                                    }
-                                                    new FileAndDirsCollector().markDirty(map);
-                                                  }
-                                                });
+                                                myDirtReporter);
   }
 
   public void setForbid(boolean forbid) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myForbid = forbid;
+  }
+
+  public void flushDirt() {
+    myDirtReporter.run();
   }
 
   @Override

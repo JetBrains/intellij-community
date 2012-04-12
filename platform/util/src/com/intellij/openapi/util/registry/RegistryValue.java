@@ -111,9 +111,12 @@ public class RegistryValue {
       if (myStringCachedValue == null) {
         myStringCachedValue = _get(key, defaultValue, isValue);
       }
-
+      if (isBoolean()) {
+        myStringCachedValue = Boolean.valueOf(myStringCachedValue).toString();
+      }
       return myStringCachedValue;
-    } else {
+    }
+    else {
       return _get(key, defaultValue, isValue);
     }
   }

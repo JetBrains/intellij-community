@@ -87,7 +87,7 @@ public abstract class JavaContentEntryEditor extends ContentEntryEditor {
     if (myCompilerExtension.isCompilerOutputPathInherited()) {
       final ProjectStructureConfigurable instance = ProjectStructureConfigurable.getInstance(getModel().getModule().getProject());
       final String compilerOutput = VfsUtil.urlToPath(instance.getProjectConfig().getCompilerOutputUrl());
-      if (FileUtil.pathsEqual(compilerOutput, path, true)) {
+      if (FileUtil.pathsEqual(compilerOutput, path)) {
         return true;
       }
     }

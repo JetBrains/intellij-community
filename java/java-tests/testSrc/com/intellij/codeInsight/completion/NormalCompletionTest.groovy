@@ -1330,4 +1330,9 @@ public class ListUtils {
   public void testInterfaceImplementationNoCast() { doTest() }
   public void testStaticallyImportedMethodsBeforeExpression() { doTest() }
 
+  public void testCompatibleInterfacesCast() {
+    configure()
+    assert myFixture.lookupElementStrings.containsAll(['foo', 'bar'])
+  }
+
 }

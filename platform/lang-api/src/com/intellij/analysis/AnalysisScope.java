@@ -368,8 +368,8 @@ public class AnalysisScope {
     return indicator == null || !indicator.isCanceled();
   }
 
-  protected boolean shouldHighlightFile(PsiFile file) {
-    return ProblemHighlightFilter.shouldHighlightFile(file);
+  protected static boolean shouldHighlightFile(PsiFile file) {
+    return ProblemHighlightFilter.shouldProcessFileInBatch(file);
   }
 
   public boolean containsModule(Module module) {

@@ -79,11 +79,7 @@ public class MavenDomUtil {
   public static boolean isProfilesFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
-    String name = file.getName();
-    if (!name.equals(MavenConstants.PROFILES_XML)) return false;
-
-    XmlTag rootTag = ((XmlFile)file).getRootTag();
-    return rootTag != null && "profilesXml".equals(rootTag.getName());
+    return MavenConstants.PROFILES_XML.equals(file.getName());
   }
 
   public static boolean isSettingsFile(PsiFile file) {

@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -90,12 +89,11 @@ class AnchorElementInfo extends SelfElementInfo {
   @Override
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (other instanceof AnchorElementInfo) {
-      return super.pointsToTheSameElementAs(other) &&
-             stubId == ((AnchorElementInfo)other).stubId &&
-             myStubElementType == ((AnchorElementInfo)other).myStubElementType;
+      AnchorElementInfo otherAnchor = (AnchorElementInfo)other;
+      if (stubId != -1 && otherAnchor.stubId != -1 && stubId != otherAnchor.stubId) return false;
+      if (myStubElementType != null && otherAnchor.myStubElementType != null && myStubElementType != otherAnchor.myStubElementType) return false;
     }
-
-    return Comparing.equal(restoreElement(), other.restoreElement());
+    return super.pointsToTheSameElementAs(other);
   }
 
   @Override

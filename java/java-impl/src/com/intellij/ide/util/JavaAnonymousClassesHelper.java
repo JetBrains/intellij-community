@@ -17,31 +17,38 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaAnonymousClassesHelper {
-  private static final Key<CachedValue<Map<PsiAnonymousClass, String>>> ANONYMOUS_CLASS_NAME = Key.create("ANONYMOUS_CLASS_NAME");
+  private static final Key<ParameterizedCachedValue<Map<PsiAnonymousClass, String>, PsiClass>> ANONYMOUS_CLASS_NAME = Key.create("ANONYMOUS_CLASS_NAME");
+  public static final AnonClassProvider ANON_CLASS_PROVIDER = new AnonClassProvider();
 
   @Nullable
   public static String getName(@NotNull PsiAnonymousClass cls) {
     final PsiClass upper = PsiTreeUtil.getParentOfType(cls, PsiClass.class);
-    if (upper != null) {
-      final CachedValue<Map<PsiAnonymousClass, String>> value = upper.getUserData(ANONYMOUS_CLASS_NAME);
-      if (value != null && value.hasUpToDateValue()) {
-        return value.getValue().get(cls);
-      }
-      final HashMap<PsiAnonymousClass, String> map = new HashMap<PsiAnonymousClass, String>();
+    if (upper == null) {
+      return null;
+    }
+    ParameterizedCachedValue<Map<PsiAnonymousClass, String>, PsiClass> value = upper.getUserData(ANONYMOUS_CLASS_NAME);
+    if (value == null) {
+      value = CachedValuesManager.getManager(upper.getProject()).createParameterizedCachedValue(ANON_CLASS_PROVIDER, false);
+      upper.putUserData(ANONYMOUS_CLASS_NAME, value);
+    }
+    return value.getValue(upper).get(cls);
+  }
+
+  private static class AnonClassProvider implements ParameterizedCachedValueProvider<Map<PsiAnonymousClass, String>, PsiClass> {
+    @Override
+    public CachedValueProvider.Result<Map<PsiAnonymousClass, String>> compute(final PsiClass upper) {
+      final Map<PsiAnonymousClass, String> map = new THashMap<PsiAnonymousClass, String>();
       upper.accept(new JavaRecursiveElementWalkingVisitor() {
         int index = 0;
 
@@ -58,14 +65,14 @@ public class JavaAnonymousClassesHelper {
                 @Override
                 public void visitAnonymousClass(PsiAnonymousClass aClass) {
                   index++;
-                  map.put(aClass, "$" + String.valueOf(index));
+                  map.put(aClass, "$" + index);
                 }
               });
             }
           }
 
           index++;
-          map.put(aClass, "$" + String.valueOf(index));
+          map.put(aClass, "$" + index);
         }
 
         @Override
@@ -75,17 +82,7 @@ public class JavaAnonymousClassesHelper {
           }
         }
       });
-
-      final CachedValue<Map<PsiAnonymousClass, String>> cachedValue =
-        CachedValuesManager.getManager(cls.getProject()).createCachedValue(new CachedValueProvider<Map<PsiAnonymousClass, String>>() {
-          @Override
-          public Result<Map<PsiAnonymousClass, String>> compute() {
-            return new Result<Map<PsiAnonymousClass, String>>(map, upper);
-          }
-      });
-      upper.putUserData(ANONYMOUS_CLASS_NAME, cachedValue);
-      return map.get(cls);
+      return CachedValueProvider.Result.create(map, upper);
     }
-    return null;
   }
 }
