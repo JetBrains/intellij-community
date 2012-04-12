@@ -16,6 +16,7 @@
 package com.intellij.compiler.impl.javaCompiler.api;
 
 import com.intellij.compiler.OutputParser;
+import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.TaskEvent;
 import com.sun.source.util.TaskListener;
@@ -112,6 +113,15 @@ class CompAPIDriver {
         }
       });
       task.call();
+    }
+    catch (IllegalArgumentException e) {
+      final String message = "Javac in-process compiler error: " + e.getMessage();
+      myCompilationResults.offer(new CompilationEvent() {
+        @Override
+        protected void process(OutputParser.Callback callback) {
+          callback.message(CompilerMessageCategory.ERROR, message, null, -1, -1);
+        }
+      });
     }
     finally {
       compiling = false;
