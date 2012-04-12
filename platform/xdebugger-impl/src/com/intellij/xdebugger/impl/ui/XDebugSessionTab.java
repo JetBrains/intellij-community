@@ -48,6 +48,7 @@ import com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,9 +58,11 @@ import java.util.List;
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   private XWatchesView myWatchesView;
   private final List<XDebugViewBase> myViews = new ArrayList<XDebugViewBase>();
+  private final Icon myIcon;
 
-  public XDebugSessionTab(@NotNull final Project project, @NotNull final String sessionName) {
+  public XDebugSessionTab(@NotNull final Project project, @NotNull final String sessionName, final @Nullable Icon icon) {
     super(project, "Debug", sessionName);
+    myIcon = icon;
   }
 
   private static ActionGroup getActionGroup(final String id) {
@@ -129,7 +132,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final XDebugProcess debugProcess = session.getDebugProcess();
     ProcessHandler processHandler = debugProcess.getProcessHandler();
     myConsole = consoleView;
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), mySessionName);
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, processHandler, myUi.getComponent(), mySessionName, myIcon);
 
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);

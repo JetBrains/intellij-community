@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -181,8 +182,16 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
+    return startSessionAndShowTab(sessionName, null, contentToReuse, showToolWindowOnSuspendOnly, starter);
+  }
+
+  @NotNull
+  @Override
+  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, final Icon icon, @Nullable RunContentDescriptor contentToReuse,
+                                              boolean showToolWindowOnSuspendOnly,
+                                              @NotNull XDebugProcessStarter starter) throws ExecutionException {
     XDebugSessionImpl session = startSession(contentToReuse, starter, new XDebugSessionImpl(null, null, this, sessionName,
-                                                                                        showToolWindowOnSuspendOnly));
+                                                                                            icon, showToolWindowOnSuspendOnly));
     if (!showToolWindowOnSuspendOnly) {
       session.showSessionTab();
     }
