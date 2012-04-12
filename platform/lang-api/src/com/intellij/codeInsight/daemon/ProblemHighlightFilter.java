@@ -35,12 +35,24 @@ public abstract class ProblemHighlightFilter {
    */
   public abstract boolean shouldHighlight(@NotNull PsiFile psiFile);
 
+  public boolean shouldProcessInBatch(@NotNull PsiFile psiFile) {
+    return shouldHighlight(psiFile);
+  }
+
   public static boolean shouldHighlightFile(@Nullable final PsiFile psiFile) {
+    return shouldProcess(psiFile, true);
+  }
+
+  public static boolean shouldProcessFileInBatch(@Nullable final PsiFile psiFile) {
+    return shouldProcess(psiFile, false);
+  }
+
+  private static boolean shouldProcess(PsiFile psiFile, boolean onTheFly) {
     if (psiFile == null) return true;
 
     final ProblemHighlightFilter[] filters = EP_NAME.getExtensions();
     for (ProblemHighlightFilter filter : filters) {
-      if (!filter.shouldHighlight(psiFile)) return false;
+      if (onTheFly ? !filter.shouldHighlight(psiFile) : !filter.shouldProcessInBatch(psiFile)) return false;
     }
 
     return true;

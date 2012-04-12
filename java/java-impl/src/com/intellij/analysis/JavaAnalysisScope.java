@@ -21,7 +21,6 @@
 package com.intellij.analysis;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -109,17 +108,6 @@ public class JavaAnalysisScope extends AnalysisScope {
       return;
     }
     super.initFilesSet();
-  }
-
-  @Override
-  protected boolean shouldHighlightFile(PsiFile file) {
-    final boolean shouldHighlight = super.shouldHighlightFile(file);
-    if (!shouldHighlight) return false;
-    if (file.getFileType() == StdFileTypes.JAVA) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile != null && ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInLibrarySource(virtualFile)) return false;
-    }
-    return shouldHighlight;
   }
 
   @Override
