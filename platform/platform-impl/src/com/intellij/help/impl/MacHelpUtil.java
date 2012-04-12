@@ -19,21 +19,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Dennis.Ushakov
  */
 public class MacHelpUtil {
-  private static final Map<String, String> PRODUCT_BUNDLES = new HashMap<String, String>();
-  static {
-    PRODUCT_BUNDLES.put(PlatformUtils.RUBY_PREFIX, "");
-  }
-
   static boolean invokeHelp(@NonNls String id) {
     id = "top".equals(id) ? "startpage" : id;
 
@@ -48,7 +39,6 @@ public class MacHelpUtil {
   }
 
   static boolean isApplicable() {
-    return SystemInfo.isMac && Registry.is("ide.mac.show.native.help", false) &&
-           PRODUCT_BUNDLES.containsKey(PlatformUtils.getPlatformPrefix());
+    return SystemInfo.isMac && Registry.is("ide.mac.show.native.help", false); 
   }
 }
