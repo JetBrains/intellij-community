@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root inherit-compiler-output="false">
+  <output url="file://$MODULE_DIR$/bin" />
+  <exclude-output />
+  <content url="file://$MODULE_DIR$" />
+  <orderEntry type="inheritedJdk" />
+  <orderEntry type="sourceFolder" forTests="false" />
+  <orderEntry type="module-library" exported="">
+    <library name="3rdParty">
+      <CLASSES>
+        <root url="file://$variable$/project1" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+  </orderEntry>
+</root>
