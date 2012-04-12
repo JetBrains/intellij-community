@@ -72,10 +72,10 @@ public class PyUnionType implements PyType {
   }
 
   @Override
-  public void assertValid() {
+  public void assertValid(String message) {
     for (PyType member : myMembers) {
       if (member != null) {
-        member.assertValid();
+        member.assertValid(null);
       }
     }
   }

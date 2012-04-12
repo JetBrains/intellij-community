@@ -66,6 +66,6 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
   }
 
   @Override
-  public void assertValid() {
+  public void assertValid(String message) {
   }
 }
