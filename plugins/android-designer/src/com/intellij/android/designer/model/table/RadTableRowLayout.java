@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.layout;
+package com.intellij.android.designer.model.table;
 
+import com.intellij.android.designer.designSurface.TreeDropToOperation;
+import com.intellij.android.designer.designSurface.layout.FlowStaticDecorator;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.model.RadComponent;
@@ -30,20 +32,60 @@ import java.util.List;
 public class RadTableRowLayout extends RadViewLayoutWithData implements ILayoutDecorator {
   private static final String[] LAYOUT_PARAMS = {"TableRow_Cell", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
+  private FlowStaticDecorator myLineDecorator;
+
   @Override
   @NotNull
   public String[] getLayoutParams() {
     return LAYOUT_PARAMS;
   }
 
+  private boolean isTableParent() {
+    return myContainer.getParent() instanceof RadTableLayoutComponent;
+  }
+
   @Override
   public EditOperation processChildOperation(OperationContext context) {
-    return super.processChildOperation(context); // TODO: Auto-generated method stub
+    if (context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) {
+      if (context.isTree()) {
+        return new TreeDropToOperation(myContainer, context);
+      }
+      // XXX
+    }
+    // XXX
+    return null;
+  }
+
+  private StaticDecorator getLineDecorator() {
+    if (myLineDecorator == null) {
+      myLineDecorator = new FlowStaticDecorator(myContainer) {
+        @Override
+        protected boolean isHorizontal() {
+          return true;
+        }
+      };
+    }
+    return myLineDecorator;
   }
 
   @Override
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
-    super.addStaticDecorators(decorators, selection); // TODO: Auto-generated method stub
+    if (!isTableParent()) {
+      if (selection.contains(myContainer)) {
+        if (!(myContainer.getParent().getLayout() instanceof ILayoutDecorator)) {
+          decorators.add(getLineDecorator());
+        }
+      }
+      else {
+        for (RadComponent component : selection) {
+          if (component.getParent() == myContainer) {
+            decorators.add(getLineDecorator());
+            return;
+          }
+        }
+        super.addStaticDecorators(decorators, selection);
+      }
+    }
   }
 
   @Override

@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.layout;
+package com.intellij.android.designer.model.table;
 
+import com.intellij.android.designer.designSurface.TreeDropToOperation;
+import com.intellij.android.designer.designSurface.layout.TableLayoutDecorator;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.model.RadComponent;
@@ -30,6 +32,8 @@ import java.util.List;
 public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDecorator {
   private static final String[] LAYOUT_PARAMS = {"", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
+  private TableLayoutDecorator myGridDecorator;
+
   @Override
   @NotNull
   public String[] getLayoutParams() {
@@ -38,12 +42,40 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
   @Override
   public EditOperation processChildOperation(OperationContext context) {
-    return super.processChildOperation(context); // TODO: Auto-generated method stub
+    if (context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) {
+      if (context.isTree()) {
+        return new TreeDropToOperation(myContainer, context);
+      }
+      // XXX
+    }
+    // XXX
+    return null;
+  }
+
+  private StaticDecorator getGridDecorator() {
+    if (myGridDecorator == null) {
+      myGridDecorator = new TableLayoutDecorator(myContainer);
+    }
+    return myGridDecorator;
   }
 
   @Override
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
-    super.addStaticDecorators(decorators, selection); // TODO: Auto-generated method stub
+    if (selection.contains(myContainer)) {
+      if (!(myContainer.getParent().getLayout() instanceof ILayoutDecorator)) {
+        decorators.add(getGridDecorator());
+      }
+    }
+    else {
+      for (RadComponent component : selection) {
+        RadComponent parent = component.getParent();
+        if (parent == myContainer || (parent != null && parent.getParent() == myContainer)) {
+          decorators.add(getGridDecorator());
+          return;
+        }
+      }
+      super.addStaticDecorators(decorators, selection);
+    }
   }
 
   @Override
