@@ -1059,18 +1059,16 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
-  /**
-   * Treats C: as absolute file path.
-   */
+  /** @deprecated use {@linkplain #isAbsolute(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isAbsoluteFilePath(String path) {
-    return isWindowsAbsolutePath(path) || isAbsolute(path);
+    return isAbsolute(path);
   }
 
-  public static boolean isWindowsAbsolutePath(String pathString) {
-    if (SystemInfo.isWindows && pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':') {
-      return true;
-    }
-    return false;
+  /** @deprecated use {@linkplain #isAbsolute(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isWindowsAbsolutePath(String path) {
+    return isAbsolute(path);
   }
 
   @Nullable
