@@ -15,14 +15,13 @@
  */
 package com.intellij.profile;
 
-import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
  * Date: 30-Nov-2005
  */
-public abstract class ProjectProfileManager implements ProfileManager, JDOMExternalizable {
+public abstract class ProjectProfileManager implements ProfileManager {
   public abstract String getProfileName();
 
   public abstract String getProjectProfile();
