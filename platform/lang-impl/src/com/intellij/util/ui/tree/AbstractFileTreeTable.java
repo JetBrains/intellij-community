@@ -37,6 +37,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -200,7 +201,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
     getTree().setModel(myModel);
   }
 
-  public void select(final VirtualFile toSelect) {
+  public void select(final @Nullable VirtualFile toSelect) {
     if (toSelect != null) {
       select(toSelect, (TreeNode)myModel.getRoot());
     }

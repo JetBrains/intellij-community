@@ -218,9 +218,11 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
       return (String)myClient.execute(methodName("getLastSuccessful"), parameters);
     }
     catch (XmlRpcException e) {
+      log("getLastSuccessful failed. handlerNo: " + handlerNo + ", userName: " + userName + ", client: " + myClient.getURL());
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
     catch (IOException e) {
+      log("getLastSuccessful failed. handlerNo: " + handlerNo + ", userName: " + userName + ", client: " + myClient.getURL());
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -247,5 +249,9 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
   @Nullable
   private static <T> Vector<T> adjustNull(final Vector<T> s) {
     return s.size() == 0 ? null : s;
+  }
+
+  private static void log(String s) {
+    System.err.println(s);
   }
 }

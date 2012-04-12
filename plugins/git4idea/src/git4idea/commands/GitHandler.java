@@ -399,7 +399,9 @@ public abstract class GitHandler {
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
         myEnvironmentCleanedUp = false;
         myEnv.put(GitSSHHandler.SSH_HANDLER_ENV, Integer.toString(myHandlerNo));
-        myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(ssh.getXmlRcpPort()));
+        int port = ssh.getXmlRcpPort();
+        myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
+        LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
       }
       myCommandLine.setEnvParams(myEnv);
       // start process

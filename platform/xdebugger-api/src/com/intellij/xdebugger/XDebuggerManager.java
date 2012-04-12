@@ -26,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -78,8 +79,18 @@ public abstract class XDebuggerManager {
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
    */
   @NotNull
-  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName,
-                                                       @Nullable RunContentDescriptor contentToReuse,
+  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                                        boolean showToolWindowOnSuspendOnly,
+                                                       @NotNull XDebugProcessStarter starter) throws ExecutionException;
+
+  /**
+   * Start a new debugging session and open 'Debug' tool window
+   * @param sessionName title of 'Debug' tool window
+   * @param icon icon of 'Debug' tool window
+   * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
+   */
+  @NotNull
+  public abstract XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable Icon icon,
+                                                       @Nullable RunContentDescriptor contentToReuse, boolean showToolWindowOnSuspendOnly,
                                                        @NotNull XDebugProcessStarter starter) throws ExecutionException;
 }

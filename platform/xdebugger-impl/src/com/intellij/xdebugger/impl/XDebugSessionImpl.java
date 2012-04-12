@@ -85,29 +85,28 @@ public class XDebugSessionImpl implements XDebugSession {
   private boolean myPaused;
   private MyDependentBreakpointListener myDependentBreakpointListener;
   private XValueMarkers<?,?> myValueMarkers;
-  private String mySessionName;
+  private final String mySessionName;
   private XDebugSessionTab mySessionTab;
   private XDebugSessionData mySessionData;
   private XBreakpoint<?> myActiveNonLineBreakpoint;
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
-  private Project myProject;
-  private @Nullable ExecutionEnvironment myEnvironment;
-  private ProgramRunner myRunner;
+  private final Project myProject;
+  private final @Nullable ExecutionEnvironment myEnvironment;
+  private final ProgramRunner myRunner;
   private boolean myStopped;
   private boolean myPauseActionSupported;
   private boolean myShowTabOnSuspend;
   private ConsoleView myConsoleView;
+  private final Icon myIcon;
 
-  public XDebugSessionImpl(final @NotNull ExecutionEnvironment env,
-                           final @NotNull ProgramRunner runner,
+  public XDebugSessionImpl(final @NotNull ExecutionEnvironment env, final @NotNull ProgramRunner runner,
                            XDebuggerManagerImpl debuggerManager) {
-    this(env, runner, debuggerManager, env.getRunProfile().getName(), false);
+    this(env, runner, debuggerManager, env.getRunProfile().getName(), env.getRunProfile().getIcon(), false);
   }
 
-  public XDebugSessionImpl(final @Nullable ExecutionEnvironment env,
-                           final @Nullable ProgramRunner runner,
-                           XDebuggerManagerImpl debuggerManager,
-                           final @NotNull String sessionName, final boolean showTabOnSuspend) {
+  public XDebugSessionImpl(final @Nullable ExecutionEnvironment env, final @Nullable ProgramRunner runner,
+                           XDebuggerManagerImpl debuggerManager, final @NotNull String sessionName,
+                           final @Nullable Icon icon, final boolean showTabOnSuspend) {
     myEnvironment = env;
     myRunner = runner;
     mySessionName = sessionName;
@@ -115,6 +114,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myShowTabOnSuspend = showTabOnSuspend;
     myProject = debuggerManager.getProject();
     ValueLookupManager.getInstance(myProject).startListening();
+    myIcon = icon;
   }
 
   @NotNull
@@ -232,7 +232,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   private void initSessionTab() {
-    mySessionTab = new XDebugSessionTab(myProject, mySessionName);
+    mySessionTab = new XDebugSessionTab(myProject, mySessionName, myIcon);
     if (myEnvironment != null) {
       mySessionTab.setEnvironment(myEnvironment);
     }

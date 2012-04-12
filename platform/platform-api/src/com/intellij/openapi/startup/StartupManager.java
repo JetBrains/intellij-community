@@ -58,6 +58,7 @@ public abstract class StartupManager {
    * progress bar is displayed. You may access the PSI structures from the activity.
    *
    * @param runnable the activity to execute.
+   * @see StartupActivity#POST_STARTUP_ACTIVITY
    */
   public abstract void registerPostStartupActivity(@NotNull Runnable runnable);
 

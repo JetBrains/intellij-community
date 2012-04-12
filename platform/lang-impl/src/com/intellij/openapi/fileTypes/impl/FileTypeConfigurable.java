@@ -22,6 +22,7 @@ import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -35,7 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -134,13 +133,13 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   public void reset() {
     myTempPatternsTable = myManager.getExtensionMap().copy();
     myTempTemplateDataLanguages = TemplateDataLanguagePatterns.getInstance().getAssocTable();
-    
+
     myTempFileTypes = new HashSet<FileType>(Arrays.asList(getModifiableFileTypes()));
     myOriginalToEditedMap.clear();
 
     updateFileTypeList();
     updateExtensionList();
-    
+
     myFileTypePanel.myIgnoreFilesField.setText(myManager.getIgnoredFilesList());
   }
 
@@ -148,7 +147,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
     HashSet types = new HashSet(Arrays.asList(getModifiableFileTypes()));
     return !myTempPatternsTable.equals(myManager.getExtensionMap()) || !myTempFileTypes.equals(types) ||
-           !myOriginalToEditedMap.isEmpty() || !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
+           !myOriginalToEditedMap.isEmpty() ||
+           !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
   }
 
   public void disposeUIResources() {
@@ -194,7 +194,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     UserFileType ftToEdit = myOriginalToEditedMap.get(fileType);
     if (ftToEdit == null) ftToEdit = ((UserFileType)fileType).clone();
     TypeEditor editor =
-      new TypeEditor(myRecognizedFileType.myEditButton, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
+      new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
     editor.show();
     if (editor.isOK()) {
       myOriginalToEditedMap.put((UserFileType)fileType, ftToEdit);
@@ -220,7 +220,8 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   private void addFileType() {
     //TODO: support adding binary file types...
     AbstractFileType type = new AbstractFileType(new SyntaxTable());
-    TypeEditor<AbstractFileType> editor = new TypeEditor<AbstractFileType>(myRecognizedFileType.myAddButton, type, FileTypesBundle.message("filetype.edit.new.title"));
+    TypeEditor<AbstractFileType> editor =
+      new TypeEditor<AbstractFileType>(myRecognizedFileType.myFileTypesList, type, FileTypesBundle.message("filetype.edit.new.title"));
     editor.show();
     if (editor.isOK()) {
       myTempFileTypes.add(type);
@@ -242,7 +243,9 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     if (type == null) return;
 
     final String title =
-      item == null ? FileTypesBundle.message("filetype.edit.add.pattern.title") : FileTypesBundle.message("filetype.edit.edit.pattern.title");
+      item == null
+      ? FileTypesBundle.message("filetype.edit.add.pattern.title")
+      : FileTypesBundle.message("filetype.edit.edit.pattern.title");
 
     final Language oldLanguage = item == null ? null : myTempTemplateDataLanguages.findAssociatedFileType(item);
     final FileTypePatternDialog dialog = new FileTypePatternDialog(item, type, oldLanguage);
@@ -259,20 +262,21 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       FileType registeredFileType = findExistingFileType(matcher);
       if (registeredFileType != null && registeredFileType != type) {
         if (registeredFileType.isReadOnly()) {
-          Messages.showMessageDialog(myPatterns.myAddButton,
+          Messages.showMessageDialog(myPatterns.myPatternsList,
                                      FileTypesBundle.message("filetype.edit.add.pattern.exists.error", registeredFileType.getDescription()),
                                      title, Messages.getErrorIcon());
           return;
         }
         else {
-          if (0 == Messages.showOkCancelDialog(myPatterns.myAddButton, FileTypesBundle.message("filetype.edit.add.pattern.exists.message",
-                                                                                       registeredFileType.getDescription()),
-                                       FileTypesBundle.message("filetype.edit.add.pattern.exists.title"),
-                                         FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
-                                         CommonBundle.getCancelButtonText(), Messages.getQuestionIcon())) {
+          if (0 == Messages.showOkCancelDialog(myPatterns.myPatternsList, FileTypesBundle.message("filetype.edit.add.pattern.exists.message",
+                                                                                               registeredFileType.getDescription()),
+                                               FileTypesBundle.message("filetype.edit.add.pattern.exists.title"),
+                                               FileTypesBundle.message("filetype.edit.add.pattern.reassign.button"),
+                                               CommonBundle.getCancelButtonText(), Messages.getQuestionIcon())) {
             myTempPatternsTable.removeAssociation(matcher, registeredFileType);
             myTempTemplateDataLanguages.removeAssociation(matcher, oldLanguage);
-          } else {
+          }
+          else {
             return;
           }
         }
@@ -345,16 +349,13 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   public static class RecognizedFileTypes extends JPanel {
     private JList myFileTypesList;
-    private JButton myAddButton;
-    private JButton myEditButton;
-    private JButton myRemoveButton;
-    private JPanel myWholePanel;
-    private JButton myExportButton;
-    private JButton myImportButton;
+    private FileTypeConfigurable myController;
 
     public RecognizedFileTypes() {
       super(new BorderLayout());
-      add(myWholePanel, BorderLayout.CENTER);
+
+      myFileTypesList = new JBList(new DefaultListModel());
+      myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myFileTypesList.setCellRenderer(new FileTypeRenderer(myFileTypesList.getCellRenderer(), new FileTypeRenderer.FileTypeListProvider() {
         public Iterable<FileType> getCurrentFileTypeList() {
           ArrayList<FileType> result = new ArrayList<FileType>();
@@ -364,16 +365,80 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
           return result;
         }
       }));
-      myFileTypesList.setModel(new DefaultListModel());
+      myFileTypesList.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(MouseEvent e) {
+          if (e.getClickCount() == 2) myController.editFileType();
+        }
+      });
 
-      if (getSchemesManager().isImportAvailable()) {
-        myImportButton.setVisible(true);
-      }
 
-      if (getSchemesManager().isExportAvailable()) {
-        myExportButton.setVisible(true);
-      }
+      ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myFileTypesList)
+        .setAddAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myController.addFileType();
+          }
+        }).setRemoveAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myController.removeFileType();
+          }
+        }).setEditAction(new AnActionButtonRunnable() {
+          @Override
+          public void run(AnActionButton button) {
+            myController.editFileType();
+          }
+        }).setEditActionUpdater(new AnActionButtonUpdater() {
+          @Override
+          public boolean isEnabled(AnActionEvent e) {
+            final FileType fileType = getSelectedFileType();
+            return canBeModified(fileType);
+          }
+        }).setRemoveActionUpdater(new AnActionButtonUpdater() {
+          @Override
+          public boolean isEnabled(AnActionEvent e) {
+            final FileType fileType = getSelectedFileType();
+            final boolean modified = canBeModified(fileType);
+            final boolean shared = getSchemesManager().isShared(fileType);
+            return shared || modified;
+          }
+        }).disableUpDownActions();
 
+      //if (getSchemesManager().isImportAvailable()) {
+        toolbarDecorator.addExtraAction(new AnActionButton("Import Shared...", IconUtil.getImportIcon()) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            new SchemesToImportPopup<FileType, AbstractFileType>(myFileTypesList) {
+              protected void onSchemeSelected(final AbstractFileType scheme) {
+                myController.importFileType(scheme);
+              }
+            }.show(getSchemesManager(), collectRegisteredFileTypes());
+          }
+        });
+      //}
+
+      //if (getSchemesManager().isExportAvailable()) {
+        toolbarDecorator.addExtraAction(new AnActionButton("Share...", IconUtil.getExportIcon()) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            FileType selected = (FileType)myFileTypesList.getSelectedValue();
+            if (selected instanceof AbstractFileType) {
+              ExportSchemeAction.doExport((AbstractFileType)selected, getSchemesManager());
+            }
+          }
+
+          @Override
+          public void updateButton(AnActionEvent e) {
+            FileType fileType = getSelectedFileType();
+            boolean b = canBeModified(fileType);
+            boolean shared = getSchemesManager().isShared(fileType);
+            setEnabled(b && !shared);
+          }
+        });
+      //}
+
+      add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetypes.recognized.group"), false));
     }
 
     private SchemesManager<FileType, AbstractFileType> getSchemesManager() {
@@ -381,58 +446,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
 
     public void attachActions(final FileTypeConfigurable controller) {
-      myAddButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          controller.addFileType();
-        }
-      });
-      myEditButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          controller.editFileType();
-        }
-      });
-      myFileTypesList.addListSelectionListener(new ListSelectionListener() {
-        public void valueChanged(ListSelectionEvent e) {
-          FileType fileType = getSelectedFileType();
-          boolean b = canBeModified(fileType);
-          myEditButton.setEnabled(b);
-          myRemoveButton.setEnabled(b);
-          boolean shared = getSchemesManager().isShared(fileType);
-          myExportButton.setEnabled(b && !shared);
-          if (shared) {
-            myRemoveButton.setEnabled(true);
-          }
-        }
-      });
-      myRemoveButton.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          controller.removeFileType();
-        }
-      });
-      myFileTypesList.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(MouseEvent e) {
-          if (e.getClickCount() == 2) controller.editFileType();
-        }
-      });
-
-      myImportButton.addActionListener(new ActionListener(){
-        public void actionPerformed(final ActionEvent e) {
-          new SchemesToImportPopup<FileType, AbstractFileType>(myWholePanel){
-            protected void onSchemeSelected(final AbstractFileType scheme) {
-              controller.importFileType(scheme);
-            }
-          }.show(getSchemesManager(), collectRegisteredFileTypes());
-        }
-      });
-
-      myExportButton.addActionListener(new ActionListener(){
-        public void actionPerformed(final ActionEvent e) {
-          FileType selected = (FileType)myFileTypesList.getSelectedValue();
-          if (selected instanceof AbstractFileType) {
-            ExportSchemeAction.doExport((AbstractFileType)selected, getSchemesManager());
-          }
-        }
-      });
+      myController = controller;
     }
 
     private Collection<FileType> collectRegisteredFileTypes() {
@@ -448,7 +462,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
 
     public JComponent getComponent() {
-      return myWholePanel;
+      return this;
     }
 
     public void setFileTypes(FileType[] types) {
@@ -489,13 +503,10 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     updateFileTypeList();
     updateExtensionList();
     myRecognizedFileType.selectFileType(type);
-
   }
 
   public static class PatternsPanel extends JPanel {
     private JBList myPatternsList;
-    private JComponent myAddButton;
-    private JPanel myWholePanel;
     private FileTypeConfigurable myController;
 
     public PatternsPanel() {
@@ -505,27 +516,25 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
       myPatternsList.setCellRenderer(new ExtensionRenderer());
       myPatternsList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
 
-      myWholePanel = ToolbarDecorator.createDecorator(myPatternsList)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            myController.addPattern();
-          }
-        }).setEditAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            myController.editPattern();
-          }
-        }).setRemoveAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            myController.removePattern();
-          }
-        }).disableUpDownActions().createPanel();
-      UIUtil.addBorder(myWholePanel, IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false));
-      myAddButton = ToolbarDecorator.findAddButton(myWholePanel).getContextComponent();
+      add(ToolbarDecorator.createDecorator(myPatternsList)
+            .setAddAction(new AnActionButtonRunnable() {
+              @Override
+              public void run(AnActionButton button) {
+                myController.addPattern();
+              }
+            }).setEditAction(new AnActionButtonRunnable() {
+              @Override
+              public void run(AnActionButton button) {
+                myController.editPattern();
+              }
+            }).setRemoveAction(new AnActionButtonRunnable() {
+              @Override
+              public void run(AnActionButton button) {
+                myController.removePattern();
+              }
+            }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
-      add(myWholePanel, BorderLayout.CENTER);
+      setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.registered.patterns.group"), false));
     }
 
     public void attachActions(final FileTypeConfigurable controller) {
@@ -533,7 +542,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     }
 
     public JComponent getComponent() {
-      return myWholePanel;
+      return this;
     }
 
     public void clearList() {

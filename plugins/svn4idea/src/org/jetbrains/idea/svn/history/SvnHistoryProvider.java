@@ -101,7 +101,7 @@ public class SvnHistoryProvider
         @Override
         protected void updateButtons() {
         }
-      }.initPositionAndBorder()
+      }.initPosition()
         .addExtraAction(AnActionButton.fromAction(sourceAction))
         .createPanel();
       fieldPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP));

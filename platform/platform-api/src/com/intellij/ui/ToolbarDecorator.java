@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ElementProducer;
@@ -78,6 +79,7 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   private Dimension myPreferredSize;
   private CommonActionsPanel myPanel;
   private Comparator<AnActionButton> myButtonComparator;
+  private boolean myAsTopToolbar = false;
 
   protected abstract JComponent getComponent();
 
@@ -87,33 +89,31 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     return myPanel;
   }
 
-  public ToolbarDecorator initPositionAndBorder() {
-    myToolbarPosition = UIUtil.isUnderAquaLookAndFeel() ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT;
-    myBorder = new CustomLineBorder(0,
-                                    myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
-                                    myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
-                                    myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
-    final JComponent c = getComponent();
-    if (c != null) {
-      c.setBorder(IdeBorderFactory.createEmptyBorder(0));
-    }
+  public ToolbarDecorator initPosition() {
+    setToolbarPosition(SystemInfo.isMac ? ActionToolbarPosition.BOTTOM : ActionToolbarPosition.RIGHT);
+    return this;
+  }
+
+  public ToolbarDecorator setAsTopToolbar() {
+    myAsTopToolbar = true;
+    setToolbarPosition(ActionToolbarPosition.TOP);
     return this;
   }
 
   public static ToolbarDecorator createDecorator(@NotNull JTable table) {
-    return new TableToolbarDecorator(table, null).initPositionAndBorder();
+    return new TableToolbarDecorator(table, null).initPosition();
   }
   
   public static ToolbarDecorator createDecorator(@NotNull JTree tree) {
-    return new TreeToolbarDecorator(tree).initPositionAndBorder();
+    return new TreeToolbarDecorator(tree).initPosition();
   }
 
   public static ToolbarDecorator createDecorator(@NotNull JList list) {
-    return new ListToolbarDecorator(list).initPositionAndBorder();
+    return new ListToolbarDecorator(list).initPosition();
   }
 
   public static <T> ToolbarDecorator  createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
-    return new TableToolbarDecorator(table, producer).initPositionAndBorder();
+    return new TableToolbarDecorator(table, producer).initPosition();
   }
 
   public ToolbarDecorator disableAddAction() {
@@ -301,9 +301,15 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     installUpdaters();
     updateButtons();
     installDnD();
-    panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myPanel.getComponent(0));
     DataManager.registerDataProvider(panel, this);
+    if (!myAsTopToolbar) {
+      panel.setBorder(new LineBorder(UIUtil.getBorderColor()));
+      final JComponent c = getComponent();
+      if (contextComponent != null) {
+        contextComponent.setBorder(IdeBorderFactory.createEmptyBorder(0));
+      }
+    }
     return panel;
   }
 
