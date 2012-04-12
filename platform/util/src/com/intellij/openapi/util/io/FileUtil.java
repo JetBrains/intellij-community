@@ -387,7 +387,7 @@ public class FileUtil extends FileUtilRt {
         final File parentFile = new File(parentDirPath);
         int parentAttributes = getBooleanAttributes(parentFile);
         boolean ok = parentAttributes != -1 ? (parentAttributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
-                     : parentFile.exists() && parentFile.isDirectory();
+                                            : parentFile.exists() && parentFile.isDirectory();
         return ok || parentFile.mkdirs();
       }
     }
@@ -704,8 +704,9 @@ public class FileUtil extends FileUtilRt {
     if (path1 == path2) return true;
     if (path1 == null || path2 == null) return false;
 
-    path1 = toSystemIndependentName(path1);
-    path2 = toSystemIndependentName(path2);
+    path1 = toCanonicalPath(path1);
+    path2 = toCanonicalPath(path2);
+    //noinspection ConstantConditions
     return SystemInfo.isFileSystemCaseSensitive ? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
@@ -1071,7 +1072,7 @@ public class FileUtil extends FileUtilRt {
     }
     return false;
   }
-  
+
   @Nullable
   public static String getLocationRelativeToUserHome(@Nullable final String path) {
     if (path == null) return null;
