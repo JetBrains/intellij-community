@@ -454,7 +454,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   @Override
   @NotNull
-  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
+  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively, final boolean shouldUpdateFileWatcher) {
     if (!FileWatcher.getInstance().isOperational()) return Collections.emptySet();
 
     final Set<WatchRequest> result = new HashSet<WatchRequest>();
@@ -480,7 +480,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
             }
           }
           myCachedNormalizedRequests = null;
-          setUpFileWatcher();
+          if (shouldUpdateFileWatcher) {
+            setUpFileWatcher();
+          }
         }
         finally {
           WRITE_LOCK.unlock();
@@ -519,13 +521,17 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @Override
-  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
+  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch, final boolean forceUpdateFileWatcher) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         WRITE_LOCK.lock();
         try {
+          boolean rootsChanged = false;
           if (myRootsToWatch.removeAll(rootsToWatch)) {
             myCachedNormalizedRequests = null;
+            rootsChanged = true;
+          }
+          if (rootsChanged || forceUpdateFileWatcher) {
             setUpFileWatcher();
           }
         }

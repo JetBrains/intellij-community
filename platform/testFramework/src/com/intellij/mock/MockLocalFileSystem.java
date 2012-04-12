@@ -98,12 +98,12 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   @NotNull
-  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
+  public Set<WatchRequest> addRootsToWatch(final @NotNull Collection<String> rootPaths, final boolean toWatchRecursively, final boolean shouldUpdateFileWatcher) {
     throw new UnsupportedOperationException("'addRootsToWatch' not implemented in " + getClass().getName());
   }
 
   @Override
-  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
+  public void removeWatchedRoots(final @NotNull Collection<WatchRequest> rootsToWatch, final boolean forceUpdateFileWatcher) {
   }
 
   @Override

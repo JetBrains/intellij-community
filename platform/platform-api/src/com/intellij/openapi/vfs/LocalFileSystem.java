@@ -129,9 +129,18 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively);
 
   @NotNull
-  public abstract Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively);
+  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
+    return addRootsToWatch(rootPaths, toWatchRecursively, true);
+  }
 
-  public abstract void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch);
+  @NotNull
+  public abstract Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively, final boolean shouldUpdateFileWatcher);
+
+  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
+    removeWatchedRoots(rootsToWatch, false);
+  }
+
+  public abstract void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch, final boolean forceUpdateFileWatcher);
 
   public abstract void removeWatchedRoot(@NotNull final WatchRequest watchRequest);
 
