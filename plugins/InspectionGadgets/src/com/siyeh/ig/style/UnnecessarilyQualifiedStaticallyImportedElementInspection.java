@@ -99,6 +99,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection
       if (parent instanceof PsiImportStatementBase) {
         return;
       }
+      if (UnnecessarilyQualifiedStaticUsageInspection.isGenericReference(reference, (PsiJavaCodeReferenceElement)qualifier)) return;
       final PsiElement target = reference.resolve();
       if (!(target instanceof PsiMember)) {
         return;
