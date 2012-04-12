@@ -116,7 +116,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       @Override
       public void updateFinished(@NotNull Document doc) {
         if (doc != myEditor.getDocument() || myIsInUpdate) return;
-        if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()) {
+        if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()
+            && savedBeforeBulkCaretMarker.getStartOffset() != myOffset)
+        {
           moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());
         }
         releaseBulkCaretMarker();
@@ -210,9 +212,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
     assertIsDispatchThread();
     validateCallContext();
-    if (offset == myOffset) {
-      return;
-    }
     final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
     final CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, true);
     final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(myOffset);
