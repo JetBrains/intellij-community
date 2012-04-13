@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +179,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       processHandler = result.getProcessHandler();
     }
     catch (Exception e) {
-      handleProcessTerminated(key, e.getMessage());
+      handleProcessTerminated(key, ExceptionUtil.getUserStackTrace(e, LOG));
       return;
     }
     processHandler.addProcessListener(getProcessListener(key));
