@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,6 +11,7 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -107,5 +109,10 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       }
     }
     return false;
+  }
+
+  @Override
+  public Icon getIcon() {
+    return IconLoader.getIcon("/com/jetbrains/python/icons/virtualenv.png");
   }
 }

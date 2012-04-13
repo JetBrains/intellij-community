@@ -379,9 +379,9 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   @Override
-  public void assertValid() {
+  public void assertValid(String message) {
     if (myClass != null && !myClass.isValid()) {
-      throw new PsiInvalidElementAccessException(myClass);
+      throw new PsiInvalidElementAccessException(myClass, myClass.getClass().toString() + ": " + message);
     }
   }
 

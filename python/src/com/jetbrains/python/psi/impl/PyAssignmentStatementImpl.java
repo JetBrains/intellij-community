@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -163,10 +164,16 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     else if (lhs_tuple != null && rhs_one != null) { // multiple LHS, single RHS: unpacking
       // PY-2648, PY-2649
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(rhs_one.getProject());
+      final LanguageLevel languageLevel = LanguageLevel.forElement(lhs);
       int counter = 0;
       for (PyExpression tuple_elt : lhs_tuple.getElements()) {
-        map.add(new Pair<PyExpression, PyExpression>(tuple_elt,
-                                                     elementGenerator.createExpressionFromText(rhs_one.getText() + "[" + counter + "]")));
+        try {
+          final PyExpression expression = elementGenerator.createExpressionFromText(languageLevel, rhs_one.getText() + "[" + counter + "]");
+          map.add(new Pair<PyExpression, PyExpression>(tuple_elt, expression));
+        }
+        catch (IncorrectOperationException e) {
+          // not parsed, no problem
+        }
         ++counter;
       }
       //  map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), new RepeatIterable<PyExpression>(rhs_one)));

@@ -130,12 +130,12 @@ public class ResolveImportUtil {
     List<PsiElement> resultList = new ArrayList<PsiElement>();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
-        throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates()");
+        throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " + candidate.getClass());
       }
       PsiElement result = resolveChild(PyUtil.turnDirIntoInit(candidate), name, file, false, true);
       if (result != null) {
         if (!result.isValid()) {
-          throw new PsiInvalidElementAccessException(result, "Got an invalid candidate from resolveChild()");
+          throw new PsiInvalidElementAccessException(result, "Got an invalid candidate from resolveChild(): " + result.getClass());
         }
         resultList.add(result);
       }
@@ -334,7 +334,11 @@ public class ResolveImportUtil {
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
       if (initPy instanceof PyFile) {
-        return ((PyFile)initPy).getElementNamed(referencedName);
+        final PsiElement element = ((PyFile)initPy).getElementNamed(referencedName);
+        if (element != null && !element.isValid()) {
+          throw new PsiInvalidElementAccessException(element);
+        }
+        return element;
       }
     }
     return null;

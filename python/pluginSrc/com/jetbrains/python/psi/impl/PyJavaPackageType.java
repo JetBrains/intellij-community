@@ -84,6 +84,6 @@ public class PyJavaPackageType implements PyType {
   }
 
   @Override
-  public void assertValid() {
+  public void assertValid(String message) {
   }
 }
