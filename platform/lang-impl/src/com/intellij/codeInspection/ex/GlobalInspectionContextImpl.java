@@ -636,12 +636,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profileEntry;
         InspectionProfileEntry inspectionTool = toolWrapper.getTool();
 
-        if (inspectionTool instanceof LocalDummyInspectionTool) {
+        if (inspectionTool instanceof DummyInspectionTool) {
           if (toolWrappers == null) {
             toolWrappers = new HashMap<String, DescriptorProviderInspection>();
           }
 
-          toolWrappers.put(((LocalDummyInspectionTool)inspectionTool).getProblemGroup(), toolWrapper);
+          toolWrappers.put(((DummyInspectionTool)inspectionTool).getProblemGroup(), toolWrapper);
         }
       }
     }
