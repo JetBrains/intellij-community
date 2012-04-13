@@ -115,7 +115,7 @@ public abstract class RadComponent {
   }
   //////////////////////////////////////////////////////////////////////////////////////////
   //
-  // layout
+  // Layout
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,9 +123,11 @@ public abstract class RadComponent {
     return myLayout;
   }
 
-  public void setLayout(RadLayout layout) {
+  public void setLayout(@Nullable RadLayout layout) {
     myLayout = layout;
-    myLayout.setContainer(this);
+    if (myLayout != null) {
+      myLayout.setContainer(this);
+    }
   }
 
   @Nullable

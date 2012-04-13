@@ -21,8 +21,8 @@ import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.componentTree.TreeEditableArea;
 import com.intellij.designer.designSurface.tools.*;
+import com.intellij.designer.model.FindComponentVisitor;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.palette.Item;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
@@ -70,12 +70,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
-  protected static final Integer LAYER_STATIC_DECORATION = JLayeredPane.POPUP_LAYER;
-  protected static final Integer LAYER_DECORATION = JLayeredPane.DRAG_LAYER;
-  protected static final Integer LAYER_FEEDBACK = LAYER_DECORATION + 100;
+  protected static final Integer LAYER_DECORATION = JLayeredPane.POPUP_LAYER;
+  protected static final Integer LAYER_FEEDBACK = JLayeredPane.DRAG_LAYER;
   protected static final Integer LAYER_GLASS = LAYER_FEEDBACK + 100;
-  protected static final Integer LAYER_BUTTONS = LAYER_GLASS + 100;
-  protected static final Integer LAYER_INPLACE_EDITING = LAYER_BUTTONS + 100;
+  protected static final Integer LAYER_INPLACE_EDITING = LAYER_GLASS + 100;
   private static final Integer LAYER_PROGRESS = LAYER_INPLACE_EDITING + 100;
 
   private final static String DESIGNER_CARD = "designer";
@@ -134,24 +132,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private void createDesignerCard() {
-    JPanel content = new JPanel(new GridBagLayout());
-
-    GridBagConstraints gbc = new GridBagConstraints();
-
-    gbc.gridx = 0;
-    gbc.gridy = 1;
-    gbc.fill = GridBagConstraints.VERTICAL;
-
-    myVerticalCaption = new CaptionPanel(this, false);
-    content.add(myVerticalCaption, gbc);
-
-    gbc.gridx = 1;
-    gbc.gridy = 0;
-    gbc.fill = GridBagConstraints.HORIZONTAL;
-
-    myHorizontalCaption = new CaptionPanel(this, true);
-    content.add(myHorizontalCaption, gbc);
-
     myLayeredPane = new MyLayeredPane();
 
     mySurfaceArea = new ComponentEditableArea(myLayeredPane) {
@@ -165,7 +145,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       @Override
       public RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter) {
         if (myRootComponent != null) {
-          FindComponentVisitor visitor = new FindComponentVisitor(filter, x, y);
+          FindComponentVisitor visitor = new FindComponentVisitor(myLayeredPane, filter, x, y);
           myRootComponent.accept(visitor, false);
           return visitor.getResult();
         }
@@ -267,6 +247,24 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myFeedbackLayer = new FeedbackLayer();
     myLayeredPane.add(myFeedbackLayer, LAYER_FEEDBACK);
 
+    JPanel content = new JPanel(new GridBagLayout());
+
+    GridBagConstraints gbc = new GridBagConstraints();
+
+    gbc.gridx = 0;
+    gbc.gridy = 1;
+    gbc.fill = GridBagConstraints.VERTICAL;
+
+    myVerticalCaption = new CaptionPanel(this, false);
+    content.add(myVerticalCaption, gbc);
+
+    gbc.gridx = 1;
+    gbc.gridy = 0;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+
+    myHorizontalCaption = new CaptionPanel(this, true);
+    content.add(myHorizontalCaption, gbc);
+
     gbc.gridx = 1;
     gbc.gridy = 1;
     gbc.weightx = 1;
@@ -276,6 +274,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
     myScrollPane.setBackground(Color.WHITE);
     content.add(myScrollPane, gbc);
+
+    myHorizontalCaption.attachToScrollPane(myScrollPane);
+    myVerticalCaption.attachToScrollPane(myScrollPane);
 
     myActionPanel = new DesignerActionPanel(this, myGlassLayer);
 
@@ -765,37 +766,6 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     public boolean getScrollableTracksViewportHeight() {
       return false;
-    }
-  }
-
-  private class FindComponentVisitor extends RadComponentVisitor {
-    @Nullable private final ComponentTargetFilter myFilter;
-    private RadComponent myResult;
-    private final int myX;
-    private final int myY;
-
-    public FindComponentVisitor(@Nullable ComponentTargetFilter filter, int x, int y) {
-      myFilter = filter;
-      myX = x;
-      myY = y;
-    }
-
-    public RadComponent getResult() {
-      return myResult;
-    }
-
-    @Override
-    public boolean visit(RadComponent component) {
-      return myResult == null &&
-             component.getBounds(myLayeredPane).contains(myX, myY) &&
-             (myFilter == null || myFilter.preFilter(component));
-    }
-
-    @Override
-    public void endVisit(RadComponent component) {
-      if (myResult == null && (myFilter == null || myFilter.resultFilter(component))) {
-        myResult = component;
-      }
     }
   }
 
