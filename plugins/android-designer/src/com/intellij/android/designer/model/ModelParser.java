@@ -97,12 +97,9 @@ public class ModelParser extends XmlRecursiveElementVisitor {
       if (myRootComponent == null) {
         myRootComponent = component;
       }
-
-      component.setParent(myComponent);
       if (myComponent != null) {
-        myComponent.getChildren().add(component);
+        myComponent.add(component, null);
       }
-
       myComponent = component;
       super.visitXmlTag(tag);
       myComponent = (RadViewComponent)component.getParent();
@@ -138,16 +135,8 @@ public class ModelParser extends XmlRecursiveElementVisitor {
                                    final RadViewComponent movedComponent,
                                    @Nullable final RadViewComponent insertBefore)
     throws Exception {
-    movedComponent.getParent().getChildren().remove(movedComponent);
-    movedComponent.setParent(container);
-
-    List<RadComponent> children = container.getChildren();
-    if (insertBefore == null) {
-      children.add(movedComponent);
-    }
-    else {
-      children.add(children.indexOf(insertBefore), movedComponent);
-    }
+    movedComponent.removeFromParent();
+    container.add(movedComponent, insertBefore);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -179,15 +168,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
   public static void addComponent(RadViewComponent container, final RadViewComponent newComponent, @Nullable RadViewComponent insertBefore)
     throws Exception {
-    newComponent.setParent(container);
-
-    List<RadComponent> children = container.getChildren();
-    if (insertBefore == null) {
-      children.add(newComponent);
-    }
-    else {
-      children.add(children.indexOf(insertBefore), newComponent);
-    }
+    container.add(newComponent, insertBefore);
 
     addComponentTag(container.getTag(), newComponent, insertBefore == null ? null : insertBefore.getTag(), new Computable<String>() {
       @Override
@@ -202,15 +183,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
   public static void pasteComponent(RadViewComponent container, RadViewComponent newComponent, @Nullable RadViewComponent insertBefore)
     throws Exception {
-    newComponent.setParent(container);
-
-    List<RadComponent> children = container.getChildren();
-    if (insertBefore == null) {
-      children.add(newComponent);
-    }
-    else {
-      children.add(children.indexOf(insertBefore), newComponent);
-    }
+    container.add(newComponent, insertBefore);
 
     PropertyParser propertyParser = container.getRoot().getClientProperty(PropertyParser.KEY);
     pasteComponent(newComponent, container.getTag(), insertBefore == null ? null : insertBefore.getTag(), propertyParser);
@@ -351,8 +324,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     else if (session.getRootViews().size() == 1) {
       RadViewComponent rootComponent = myRootComponent;
       myRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
-      myRootComponent.getChildren().add(rootComponent);
-      rootComponent.setParent(myRootComponent);
+      myRootComponent.add(rootComponent, null);
     }
 
     updateRootComponent(myRootComponent, session, nativeComponent);

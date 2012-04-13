@@ -16,6 +16,7 @@
 package com.intellij.designer.model;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.ICaption;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.designSurface.tools.DragTracker;
@@ -80,6 +81,37 @@ public abstract class RadComponent {
     return getChildren().toArray();
   }
 
+  public void add(@NotNull RadComponent component, @Nullable RadComponent insertBefore) {
+    component.setParent(this);
+
+    int index;
+    List<RadComponent> children = getChildren();
+    if (insertBefore == null) {
+      index = children.size();
+      children.add(component);
+    }
+    else {
+      index = children.indexOf(insertBefore);
+      children.add(index, component);
+    }
+
+    if (myLayout != null) {
+      myLayout.addComponentToContainer(component, index);
+    }
+  }
+
+  public void remove(@NotNull RadComponent component) {
+    getChildren().remove(component);
+
+    if (myLayout != null) {
+      myLayout.removeComponentFromContainer(component);
+    }
+  }
+
+  public void removeFromParent() {
+    getParent().remove(this);
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
@@ -112,6 +144,11 @@ public abstract class RadComponent {
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
+  }
+
+  @Nullable
+  public ICaption getCaption() {
+    return null;
   }
   //////////////////////////////////////////////////////////////////////////////////////////
   //

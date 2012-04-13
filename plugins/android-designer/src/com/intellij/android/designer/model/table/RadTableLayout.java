@@ -17,19 +17,23 @@ package com.intellij.android.designer.model.table;
 
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.TableLayoutDecorator;
+import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadLayout;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDecorator {
+public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDecorator, ICaption, ICaptionDecorator {
   private static final String[] LAYOUT_PARAMS = {"", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
   private TableLayoutDecorator myGridDecorator;
@@ -103,5 +107,56 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
     super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Caption
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  public ICaption getCaption(RadComponent component) {
+    return myContainer == component && myContainer.getParent().getLayout() instanceof ICaptionDecorator ? null : this;
+  }
+
+  @Override
+  @NotNull
+  public RadLayout getCaptionLayout(EditableArea mainArea, boolean horizontal) {
+    return RadViewLayout.INSTANCE;
+  }
+
+  @Override
+  @NotNull
+  public List<RadComponent> getCaptionChildren(EditableArea mainArea, boolean horizontal) {
+    RadTableLayoutComponent container = (RadTableLayoutComponent)myContainer;
+    List<RadComponent> children = container.getChildren();
+    List<RadComponent> components = new ArrayList<RadComponent>();
+
+    if (horizontal) {
+      if (children.isEmpty()) {
+        components.add(new RadCaptionTableColumn(container, 0, container.getBounds().width, mainArea));
+      }
+      else {
+        int columnOffset = 0;
+        for (int columnWidth : container.getColumnWidths()) {
+          components.add(new RadCaptionTableColumn(container, columnOffset, Math.max(columnWidth, 2), mainArea));
+
+          if (columnWidth > 0) {
+            columnOffset += columnWidth;
+          }
+        }
+      }
+    }
+    else if (children.isEmpty()) {
+      components.add(new RadCaptionTableRow(container, container, mainArea));
+    }
+    else {
+      for (RadComponent component : children) {
+        components.add(new RadCaptionTableRow(container, (RadViewComponent)component, mainArea));
+      }
+    }
+
+    return components;
   }
 }

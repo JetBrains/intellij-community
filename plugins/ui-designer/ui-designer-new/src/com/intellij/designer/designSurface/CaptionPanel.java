@@ -34,26 +34,35 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JLayeredPane implements DataProvider, DeleteProvider, ComponentSelectionListener {
+public class CaptionPanel extends JLayeredPane implements DataProvider, DeleteProvider {
   private final boolean myHorizontal;
+  private final EditableArea myMainArea;
   private final EditableArea myArea;
   private final DecorationLayer myDecorationLayer;
   private final FeedbackLayer myFeedbackLayer;
   private final CommonEditActionsProvider myActionsProvider;
   private final RadVisualComponent myRootComponent;
+  private List<RadComponent> myRootChildren = Collections.emptyList();
 
   public CaptionPanel(DesignerEditorPanel designer, boolean horizontal) {
     setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
     setFocusable(true);
 
     myHorizontal = horizontal;
+    myMainArea = designer.getSurfaceArea();
 
     myRootComponent = new RadVisualComponent() {
+      @Override
+      public List<RadComponent> getChildren() {
+        return myRootChildren;
+      }
+
       @Override
       public boolean canDelete() {
         return false;
@@ -123,7 +132,12 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
       }
     };
 
-    designer.getSurfaceArea().addSelectionListener(this);
+    myMainArea.addSelectionListener(new ComponentSelectionListener() {
+      @Override
+      public void selectionChanged(EditableArea area) {
+        update();
+      }
+    });
   }
 
   public void attachToScrollPane(JScrollPane scrollPane) {
@@ -169,35 +183,34 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
     myActionsProvider.deleteElement(dataContext);
   }
 
-  @Override
-  public void selectionChanged(EditableArea area) {
-    List<RadComponent> selection = area.getSelection();
+  public void update() {
+    List<RadComponent> selection = myMainArea.getSelection();
     if (selection.size() != 1) {
       return;
     }
 
-    List<RadComponent> children = myRootComponent.getChildren();
-    boolean update = !children.isEmpty();
+    boolean update = !myRootChildren.isEmpty();
 
-    children.clear();
     myRootComponent.setLayout(null);
 
     ICaption caption = null;
     RadComponent component = selection.get(0);
     RadComponent parent = component.getParent();
 
-    if (parent != null && parent.getLayout() instanceof ICaption) {
-      caption = (ICaption)parent.getLayout();
+    if (parent != null) {
+      caption = parent.getLayout().getCaption(component);
+    }
+    if (caption == null) {
+      caption = component.getCaption();
     }
 
-    if (caption == null && component instanceof ICaption) {
-      caption = (ICaption)component;
+    if (caption == null) {
+      myRootChildren = Collections.emptyList();
     }
-
-    if (caption != null) {
-      myRootComponent.setLayout(caption.getCaptionLayout(area, myHorizontal));
-      caption.addCaptionChildren(area, myHorizontal, children);
-      update = true;
+    else {
+      myRootComponent.setLayout(caption.getCaptionLayout(myMainArea, myHorizontal));
+      myRootChildren = caption.getCaptionChildren(myMainArea, myHorizontal);
+      update |= !myRootChildren.isEmpty();
     }
 
     if (update) {

@@ -16,8 +16,10 @@
 package com.intellij.android.designer.model;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.designSurface.ICaption;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadLayout;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
 import javax.swing.*;
@@ -44,5 +46,11 @@ public class RadViewContainer extends RadViewComponent {
     if (layout != null) {
       layout.addContainerSelectionActions(designer, actionGroup, shortcuts, selection);
     }
+  }
+
+  @Override
+  public ICaption getCaption() {
+    RadLayout layout = getLayout();
+    return layout == null ? null : layout.getCaption(this);
   }
 }

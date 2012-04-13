@@ -90,4 +90,15 @@ public class RadTableRowLayout extends RadLinearLayout {
       super.addSelectionActions(designer, actionGroup, shortcuts, selection);
     }
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Caption
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  public ICaption getCaption(RadComponent component) {
+    return isTableParent() ? myContainer.getParent().getLayout().getCaption(component) : null;
+  }
 }

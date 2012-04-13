@@ -89,8 +89,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   protected DesignerActionPanel myActionPanel;
 
-  private CaptionPanel myHorizontalCaption;
-  private CaptionPanel myVerticalCaption;
+  protected CaptionPanel myHorizontalCaption;
+  protected CaptionPanel myVerticalCaption;
 
   private JScrollPane myScrollPane;
   protected JLayeredPane myLayeredPane;
@@ -292,6 +292,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorMessages.removeAll();
     myErrorStack.setText(null);
     myLayeredPane.revalidate();
+    myHorizontalCaption.update();
+    myVerticalCaption.update();
     myLayout.show(this, DESIGNER_CARD);
   }
 

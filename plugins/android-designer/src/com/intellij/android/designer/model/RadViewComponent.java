@@ -26,6 +26,7 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Element;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,10 +34,16 @@ import java.util.Map;
  * @author Alexander Lobas
  */
 public class RadViewComponent extends RadVisualComponent {
+  private final List<RadComponent> myChildren = new ArrayList<RadComponent>();
   protected ViewInfo myViewInfo;
   private Rectangle myMargins;
   private XmlTag myTag;
   private List<Property> myProperties;
+
+  @Override
+  public List<RadComponent> getChildren() {
+    return myChildren;
+  }
 
   public XmlTag getTag() {
     return myTag;
@@ -76,7 +83,7 @@ public class RadViewComponent extends RadVisualComponent {
 
   @Override
   public void delete() throws Exception {
-    getParent().getChildren().remove(this);
+    removeFromParent();
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

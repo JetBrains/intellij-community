@@ -65,11 +65,8 @@ public class AndroidPasteFactory implements ComponentPasteFactory {
     RadViewComponent component = ModelParser.createComponent(null, metaModel);
     component.setClientProperty(KEY, element.getChild("properties"));
 
-    List<RadComponent> children = component.getChildren();
     for (Object childElement : element.getChildren("component")) {
-      RadComponent childComponent = createComponent((Element)childElement);
-      childComponent.setParent(component);
-      children.add(childComponent);
+      component.add(createComponent((Element)childElement), null);
     }
 
     return component;

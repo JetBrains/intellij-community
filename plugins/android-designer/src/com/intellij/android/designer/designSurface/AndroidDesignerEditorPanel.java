@@ -359,6 +359,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         myParseTime = false;
 
         myLayeredPane.revalidate();
+        myHorizontalCaption.update();
+        myVerticalCaption.update();
 
         DesignerToolWindowManager.getInstance(getProject()).refresh(updateProperties);
       }

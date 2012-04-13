@@ -32,6 +32,12 @@ public abstract class RadLayout {
     myContainer = container;
   }
 
+  public void addComponentToContainer(RadComponent component, int index) {
+  }
+
+  public void removeComponentFromContainer(RadComponent component) {
+  }
+
   public abstract ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection);
 
   @Nullable
@@ -46,5 +52,10 @@ public abstract class RadLayout {
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
+  }
+
+  @Nullable
+  public ICaption getCaption(RadComponent component) {
+    return null;
   }
 }

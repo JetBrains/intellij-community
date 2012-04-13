@@ -17,22 +17,13 @@ package com.intellij.designer.model;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class RadVisualComponent extends RadComponent {
-  protected final List<RadComponent> myChildren = new ArrayList<RadComponent>();
-
   private Component myNativeComponent;
   private final Rectangle myBounds = new Rectangle();
-
-  @Override
-  public List<RadComponent> getChildren() {
-    return myChildren;
-  }
 
   @Override
   public Rectangle getBounds() {
@@ -42,8 +33,8 @@ public abstract class RadVisualComponent extends RadComponent {
   @Override
   public Rectangle getBounds(Component relativeTo) {
     return myNativeComponent == relativeTo
-           ? new Rectangle(myBounds) :
-           SwingUtilities.convertRectangle(myNativeComponent, myBounds, relativeTo);
+           ? new Rectangle(getBounds()) :
+           SwingUtilities.convertRectangle(myNativeComponent, getBounds(), relativeTo);
   }
 
   public void setBounds(int x, int y, int width, int height) {
@@ -53,7 +44,7 @@ public abstract class RadVisualComponent extends RadComponent {
   @Override
   public Point convertPoint(Component relativeFrom, int x, int y) {
     return myNativeComponent == relativeFrom
-           ? myBounds.getLocation() :
+           ? new Point(x, y) :
            SwingUtilities.convertPoint(relativeFrom, x, y, myNativeComponent);
   }
 
