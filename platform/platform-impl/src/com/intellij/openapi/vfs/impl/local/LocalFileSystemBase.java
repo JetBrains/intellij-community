@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.util.io.fs.IFile;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
@@ -308,12 +310,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
-    List<VirtualFile> list = new ArrayList<VirtualFile>();
-    for (VirtualFile file : files) {
-      list.add(file);
+    final Collection<VirtualFile> collection;
+    if (files instanceof Collection) {
+      collection = (Collection<VirtualFile>)files;
     }
-
-    RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtil.toVirtualFileArray(list));
+    else {
+      collection = new ArrayList<VirtualFile>();
+      ContainerUtil.addAll(collection, files);
+    }
+    RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtil.toVirtualFileArray(collection));
   }
 
   @Override
@@ -538,9 +543,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     assert parent != null;
 
     if (!auxRename(file, newName)) {
-      final File dest = new File(convertToIOFile(parent), newName);
-      if (!convertToIOFile(file).renameTo(dest)) {
-        if (dest.exists()) {
+      final File target = new File(convertToIOFile(parent), newName);
+      if (!convertToIOFile(file).renameTo(target)) {
+        if (target.exists()) {
           throw new IOException("Destination already exists: " + parent.getPath() + "/" + newName);
         } else {
           throw new IOException("Unable to rename " + file.getPath());

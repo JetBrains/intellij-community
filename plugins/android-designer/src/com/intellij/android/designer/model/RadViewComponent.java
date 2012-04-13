@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class RadViewComponent extends RadComponent {
   private final List<RadComponent> myChildren = new ArrayList<RadComponent>();
-  private ViewInfo myViewInfo;
+  protected ViewInfo myViewInfo;
   private Component myNativeComponent;
   private final Rectangle myBounds = new Rectangle();
   private Rectangle myMargins;

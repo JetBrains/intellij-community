@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -505,6 +506,7 @@ public class NameUtil {
         }
       }
 
+      int startMatchLen = matchLen;
       while (matchLen > 0) {
         if (matchLen != lastUpper) {
           FList<TextRange> ranges = matchName(name, patternIndex + matchLen, matchLen == star ? matchLen + lastUpper : nextStart);
@@ -513,6 +515,11 @@ public class NameUtil {
           }
         }
         matchLen--;
+      }
+
+      FList<TextRange> ranges = matchName(name, patternIndex + startMatchLen, nameIndex + startMatchLen);
+      if (ranges != null) {
+        return prependRange(ranges, nameIndex, startMatchLen);
       }
       return null;
     }
@@ -591,21 +598,30 @@ public class NameUtil {
       Iterable<TextRange> iterable = matchingFragments(name);
       if (iterable == null) return Integer.MIN_VALUE;
 
-      int matchingCaps = 0;
       int fragmentCount = 0;
+      int matchingCaps = 0;
+      CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
+      int p = -1;
       for (TextRange range : iterable) {
-        matchingCaps += StringUtil.capitalsOnly(name.substring(range.getStartOffset(), range.getEndOffset())).length();
+        for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+          char c = name.charAt(i);
+          p = StringUtil.indexOf(seq, c, p + 1, myPattern.length, false);
+          if (p < 0) {
+            break;
+          }
+          if (Character.isUpperCase(myPattern[p])) {
+            matchingCaps += c == myPattern[p] ? 1 : -1;
+          }
+        }
         fragmentCount++;
       }
-
-      int patternCaps = StringUtil.capitalsOnly(new String(myPattern)).length();
 
       int commonStart = 0;
       while (commonStart < name.length() && commonStart < myPattern.length && name.charAt(commonStart) == myPattern[commonStart]) {
         commonStart++;
       }
 
-      return -fragmentCount - Math.max(0, patternCaps - matchingCaps) * 10 + commonStart;
+      return -fragmentCount + matchingCaps * 10 + commonStart;
     }
 
     @Override

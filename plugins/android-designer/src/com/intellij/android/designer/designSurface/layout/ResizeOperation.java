@@ -66,9 +66,9 @@ public class ResizeOperation implements EditOperation {
   }
 
   public static void points(ResizeSelectionDecorator decorator) {
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE));
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE));
-    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE));
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.EAST, TYPE, "Change layout:width"));
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
   }
 
   @Override

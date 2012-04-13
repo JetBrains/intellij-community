@@ -155,6 +155,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private boolean myAnimationEnabled = true;
   private boolean myShadow = false;
   private Layer myLayer;
+  private boolean myBlockClicks;
 
   public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
@@ -212,6 +213,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
                      Insets contentInsets,
                      boolean shadow,
                      boolean smallVariant,
+                     boolean blockClicks,
                      Layer layer) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
@@ -230,6 +232,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myDialogMode = dialogMode;
     myTitle = title;
     myLayer = layer != null ? layer : Layer.normal;
+    myBlockClicks = blockClicks;
     
     if (!myDialogMode) {
       new AwtVisitor(content) {
@@ -532,22 +535,24 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myLayeredPane.add(myComp);
     myLayeredPane.setLayer(myComp, getLayer());
     myPosition.updateBounds(this);
-    myComp.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        e.consume();
-      }
+    if (myBlockClicks) {
+      myComp.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          e.consume();
+        }
 
-      @Override
-      public void mousePressed(MouseEvent e) {
-        e.consume();
-      }
+        @Override
+        public void mousePressed(MouseEvent e) {
+          e.consume();
+        }
 
-      @Override
-      public void mouseReleased(MouseEvent e) {
-        e.consume();
-      }
-    });
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          e.consume();
+        }
+      });
+    }
   }
 
 
@@ -1519,7 +1524,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           //pane.setBorder(new LineBorder(Color.blue));
 
           balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 25, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true, false, Layer.normal));
+                                      new Insets(2, 2, 2, 2), true, false, false, Layer.normal));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

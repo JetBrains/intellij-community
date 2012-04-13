@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,17 +36,17 @@ public interface LineWrapPositionStrategy {
    *
    * @param document                          target document which text is being processed
    * @param project                           target project
-   * @param startOffset                       start offset to use with the given text holder (inclusive)
+   * @param startOffset                       start offset to use with the given text holder (exclusive)
    * @param endOffset                         end offset to use with the given text holder (exclusive)
    * @param maxPreferredOffset                this method is expected to do its best to return offset that belongs to
    *                                          <code>(startOffset; maxPreferredOffset]</code> interval. However, it's allowed
-   *                                          to return value from <code>(maxPreferredOffset; endOffset]</code> interval
+   *                                          to return value from <code>(maxPreferredOffset; endOffset)</code> interval
    *                                          unless <code>'allowToBeyondMaxPreferredOffset'</code> if <code>'false'</code>
    * @param allowToBeyondMaxPreferredOffset   indicates if it's allowed to return value from
    *                                          <code>(maxPreferredOffset; endOffset]</code> interval in case of inability to
    *                                          find appropriate offset from <code>(startOffset; maxPreferredOffset]</code> interval
    * @param virtual                           identifies if current request is for virtual wrap (soft wrap) position 
-   * @return                                  offset from <code>(startOffset; endOffset]</code> interval where
+   * @return                                  offset from <code>(startOffset; endOffset)</code> interval where
    *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
    */
   int calculateWrapPosition(

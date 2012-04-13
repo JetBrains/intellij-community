@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,13 @@ public class EditorFragmentComponent extends JPanel {
     textGraphics.translate(0, -y1);
     textGraphics.setClip(0, y1, textWidth, height);
     final boolean wasVisible = editor.setCaretVisible(false);
-    editor.getContentComponent().paint(textGraphics);
+    editor.setPurePaintingMode(true);
+    try {
+      editor.getContentComponent().paint(textGraphics);
+    }
+    finally {
+      editor.setPurePaintingMode(false);
+    }
     if (wasVisible) {
       editor.setCaretVisible(true);
     }

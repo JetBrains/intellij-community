@@ -413,15 +413,19 @@ public class FileWatcher {
               continue;
             }
 
+            final ChangeKind kind;
+            try {
+              kind = ChangeKind.valueOf(command);
+            }
+            catch (IllegalArgumentException e) {
+              LOG.error("Illegal watcher command: " + command);
+              continue;
+            }
+
             synchronized (LOCK) {
-              final Collection<String> watchedPaths = checkWatchable(path);
+              final Collection<String> watchedPaths = checkWatchable(path, !(kind == ChangeKind.DIRTY || kind == ChangeKind.RECDIRTY));
               if (!watchedPaths.isEmpty()) {
-                try {
-                  onPathChange(ChangeKind.valueOf(command), watchedPaths);
-                }
-                catch (IllegalArgumentException e) {
-                  LOG.error("Illegal watcher command: " + command);
-                }
+                onPathChange(kind, watchedPaths);
               }
               else if (LOG.isDebugEnabled()) {
                 LOG.debug("Not watchable, filtered: " + path);
@@ -489,14 +493,14 @@ public class FileWatcher {
   public boolean isWatched(@NotNull final VirtualFile file) {
     if (isOperational()) {
       synchronized (LOCK) {
-        return !checkWatchable(file.getPresentableUrl()).isEmpty();
+        return !checkWatchable(file.getPresentableUrl(), true).isEmpty();
       }
     }
     return false;
   }
 
   @NotNull
-  private Collection<String> checkWatchable(final String reportedPath) {
+  private Collection<String> checkWatchable(final String reportedPath, final boolean checkParent) {
     if (reportedPath == null) return Collections.emptyList();
 
     myAllPaths.clear();
@@ -525,10 +529,12 @@ public class FileWatcher {
           myWatchedPaths.add(path);
           continue ext;
         }
-        final File parentFile = new File(path).getParentFile();
-        if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
-          myWatchedPaths.add(path);
-          continue ext;
+        if (checkParent) {
+          final File parentFile = new File(path).getParentFile();
+          if (parentFile != null && FileUtil.pathsEqual(parentFile.getPath(), root)) {
+            myWatchedPaths.add(path);
+            continue ext;
+          }
         }
       }
     }

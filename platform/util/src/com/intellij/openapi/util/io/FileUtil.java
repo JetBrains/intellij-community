@@ -59,9 +59,6 @@ public class FileUtil extends FileUtilRt {
 
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
 
-  private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
-  private static final Object JAVA_IO_FILESYSTEM; // java.io.FileSystem
-
   @NotNull
   public static String join(@NotNull final String... parts) {
     return StringUtil.join(parts, File.separator);
@@ -390,7 +387,7 @@ public class FileUtil extends FileUtilRt {
         final File parentFile = new File(parentDirPath);
         int parentAttributes = getBooleanAttributes(parentFile);
         boolean ok = parentAttributes != -1 ? (parentAttributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
-                     : parentFile.exists() && parentFile.isDirectory();
+                                            : parentFile.exists() && parentFile.isDirectory();
         return ok || parentFile.mkdirs();
       }
     }
@@ -603,28 +600,43 @@ public class FileUtil extends FileUtilRt {
     return (SystemInfo.isFileSystemCaseSensitive ? name : name.toLowerCase()).replace('\\', '/');
   }
 
-  public static String toCanonicalPath(String path) {
+  @Nullable
+  public static String toCanonicalPath(@Nullable String path) {
+    return toCanonicalPath(path, File.separatorChar);
+  }
+
+  @Nullable
+  public static String toCanonicalPath(@Nullable String path, final char separator) {
     if (path == null || path.isEmpty()) {
       return path;
     }
-    path = path.replace(File.separatorChar, '/');
+
+    path = path.replace(separator, '/');
     final StringTokenizer tok = new StringTokenizer(path, "/");
     final Stack<String> stack = new Stack<String>();
     while (tok.hasMoreTokens()) {
       final String token = tok.nextToken();
       if ("..".equals(token)) {
-        if (stack.isEmpty()) {
-          return null;
+        if (!stack.isEmpty()) {
+          stack.pop();
         }
-        stack.pop();
       }
       else if (!token.isEmpty() && !".".equals(token)) {
         stack.push(token);
       }
     }
+
     final StringBuilder result = new StringBuilder(path.length());
     if (path.charAt(0) == '/') {
       result.append("/");
+    }
+    else if (separator == '\\' &&
+             path.length() > 1 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':' &&
+             (stack.isEmpty() || !path.startsWith(stack.get(0)))) {
+      result.append(path.substring(0, 2));
+      if (!stack.isEmpty()) {
+        result.append('/');
+      }
     }
     for (int i = 0; i < stack.size(); i++) {
       String str = stack.get(i);
@@ -684,30 +696,37 @@ public class FileUtil extends FileUtilRt {
 
   public static boolean filesEqual(@Nullable File file1, @Nullable File file2) {
     // on MacOS java.io.File.equals() is incorrectly case-sensitive
-    return pathsEqual(file1 == null ? null : file1.getPath(), file2 == null ? null : file2.getPath(), true);
+    return pathsEqual(file1 == null ? null : file1.getPath(),
+                      file2 == null ? null : file2.getPath());
   }
 
   public static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {
-    return pathsEqual(path1, path2, false);
-  }
-
-  public static boolean pathsEqual(@Nullable String path1, @Nullable String path2, boolean convertSeparators) {
     if (path1 == path2) return true;
     if (path1 == null || path2 == null) return false;
 
-    if (convertSeparators) {
-      path1 = toSystemIndependentName(path1);
-      path2 = toSystemIndependentName(path2);
-    }
+    path1 = toCanonicalPath(path1);
+    path2 = toCanonicalPath(path2);
+    //noinspection ConstantConditions
     return SystemInfo.isFileSystemCaseSensitive ? path1.equals(path2) : path1.equalsIgnoreCase(path2);
   }
 
+  public static int compareFiles(@Nullable File file1, @Nullable File file2) {
+    return comparePaths(file1 == null ? null : file1.getPath(), file2 == null ? null : file2.getPath());
+  }
+
   public static int comparePaths(@Nullable String path1, @Nullable String path2) {
+    path1 = path1 == null ? null : toSystemIndependentName(path1);
+    path2 = path2 == null ? null : toSystemIndependentName(path2);
     return StringUtil.compare(path1, path2, !SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public static int fileHashCode(@Nullable File file) {
+    return pathHashCode(file == null ? null : file.getPath());
   }
 
   public static int pathHashCode(@Nullable String path) {
     if (path == null) return 0;
+    path = toSystemIndependentName(path);
     return SystemInfo.isFileSystemCaseSensitive ? path.hashCode() : StringUtil.toLowerCase(path).hashCode();
   }
 
@@ -1040,20 +1059,18 @@ public class FileUtil extends FileUtilRt {
     return null;
   }
 
-  /**
-   * Treats C: as absolute file path.
-   */
+  /** @deprecated use {@linkplain #isAbsolute(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isAbsoluteFilePath(String path) {
-    return isWindowsAbsolutePath(path) || isAbsolute(path);
+    return isAbsolute(path);
   }
 
-  public static boolean isWindowsAbsolutePath(String pathString) {
-    if (SystemInfo.isWindows && pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':') {
-      return true;
-    }
-    return false;
+  /** @deprecated use {@linkplain #isAbsolute(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean isWindowsAbsolutePath(String path) {
+    return isAbsolute(path);
   }
-  
+
   @Nullable
   public static String getLocationRelativeToUserHome(@Nullable final String path) {
     if (path == null) return null;
@@ -1200,6 +1217,9 @@ public class FileUtil extends FileUtilRt {
 
   @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
   public @interface FileBooleanAttributes {}
+
+  private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
+  private static final Object JAVA_IO_FILESYSTEM;
 
   // todo[r.sh] use NIO2 API after migration to JDK 7
   // returns -1 if could not get attributes

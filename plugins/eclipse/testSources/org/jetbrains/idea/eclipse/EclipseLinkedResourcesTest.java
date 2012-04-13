@@ -41,4 +41,8 @@ public class EclipseLinkedResourcesTest extends EclipseVarsTest{
   public void testResolvedVarsInOutputImlCheck() throws Exception {
     EclipseImlTest.doTest("/test", getProject());
   }
+  
+  public void testResolvedVarsInLibImlCheck() throws Exception {
+    EclipseImlTest.doTest("/test", getProject());
+  }
 }

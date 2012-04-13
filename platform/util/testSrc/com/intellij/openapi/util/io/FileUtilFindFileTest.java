@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,26 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.text.StringUtil;
-import junit.framework.TestCase;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
- * Created by IntelliJ IDEA.
- * User: lene
- * Date: 29.03.11
- * Time: 17:16
+ * @author lene
+ * @since 29.03.11
  */
-public class FileUtilFindFileTest extends TestCase {
-  private final File myTempFile;
-  private final File myFirstFile;
-  private final File mySecondFile;
+public class FileUtilFindFileTest {
+  private static File myTempFile;
+  private static File myFirstFile;
+  private static File mySecondFile;
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
-  public FileUtilFindFileTest() throws IOException {
+  @BeforeClass
+  public static void setUp() throws Exception {
     myTempFile = FileUtil.createTempDirectory("tEF", ""); //NON-NLS
     myFirstFile = new File(myTempFile, "first");
     mySecondFile = new File(myTempFile, "second"); //NON-NLS
@@ -41,48 +43,62 @@ public class FileUtilFindFileTest extends TestCase {
     assertTrue(mySecondFile.createNewFile());
   }
 
-  public void testNonExistingFileInNonExistentDirectory() throws Exception {
+  @AfterClass
+  public static void tearDown() throws Exception {
+    FileUtil.delete(myTempFile);
+  }
+
+  @Test
+  public void nonExistingFileInNonExistentDirectory() throws Exception {
     String path = FileUtil.findFileInProvidedPath("123", "zero");//NON-NLS
     assertTrue(StringUtil.isEmpty(path));
   }
 
-  public void testNonExistingFileInDirectory() throws Exception {
+  @Test
+  public void nonExistingFileInDirectory() throws Exception {
     String path = FileUtil.findFileInProvidedPath(myTempFile.getAbsolutePath(), "zero");//NON-NLS
     assertTrue(StringUtil.isEmpty(path));
   }
 
-  public void testNonExistingFile() throws Exception {
+  @Test
+  public void nonExistingFile() throws Exception {
     String path =
       FileUtil.findFileInProvidedPath(myFirstFile.getAbsolutePath() + "123", myFirstFile.getName() + "123");
     assertTrue(StringUtil.isEmpty(path));
   }
 
-  public void testExistingFileInDirectory() throws Exception {
+  @Test
+  public void existingFileInDirectory() throws Exception {
     String path = FileUtil.findFileInProvidedPath(myTempFile.getAbsolutePath(), "first");
     assertEquals(path, myFirstFile.getAbsolutePath());
   }
 
-  public void testExistingFile() throws Exception {
+  @Test
+  public void existingFile() throws Exception {
     String path = FileUtil.findFileInProvidedPath(myFirstFile.getAbsolutePath(), "first");
     assertEquals(path, myFirstFile.getAbsolutePath());
   }
 
-  public void testTwoFilesOrderInDirectory() throws Exception {
+  @Test
+  public void twoFilesOrderInDirectory() throws Exception {
     String path = FileUtil.findFileInProvidedPath(myTempFile.getAbsolutePath(), "first", "second"); //NON-NLS
     assertEquals(path, myFirstFile.getAbsolutePath());
   }
 
-  public void testTwoFilesOrderInDirectory2() throws Exception {
+  @Test
+  public void twoFilesOrderInDirectory2() throws Exception {
     String path = FileUtil.findFileInProvidedPath(myTempFile.getAbsolutePath(), "second", "first"); //NON-NLS
     assertEquals(path, mySecondFile.getAbsolutePath());
   }
 
-  public void testTwoFilesOrder() throws Exception {
+  @Test
+  public void twoFilesOrder() throws Exception {
     String path = FileUtil.findFileInProvidedPath(myFirstFile.getAbsolutePath(), "first", "second");//NON-NLS
     assertEquals(path, myFirstFile.getAbsolutePath());
   }
 
-  public void testTwoFilesOrder2() throws Exception {
+  @Test
+  public void twoFilesOrder2() throws Exception {
     String path = FileUtil.findFileInProvidedPath(myFirstFile.getAbsolutePath(), "second", "first"); //NON-NLS
     assertEquals(path, myFirstFile.getAbsolutePath());
   }

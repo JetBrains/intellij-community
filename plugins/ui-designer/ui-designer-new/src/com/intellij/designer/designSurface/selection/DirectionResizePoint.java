@@ -20,6 +20,7 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.designSurface.tools.ResizeTracker;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Position;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -28,19 +29,22 @@ import java.awt.*;
  */
 public class DirectionResizePoint extends ResizePoint {
   private int myDirection;
-  private Object myType;
+  final private Object myType;
   private double myXSeparator;
   private double myYSeparator;
+  private final String myDescription;
 
-  public DirectionResizePoint(int direction, Object type) {
+  public DirectionResizePoint(int direction, Object type, @Nullable String description) {
     setDirection(direction);
     myType = type;
+    myDescription = description;
   }
 
-  public DirectionResizePoint(Color color, Color border, int direction, Object type) {
+  public DirectionResizePoint(Color color, Color border, int direction, Object type, @Nullable String description) {
     super(color, border);
     setDirection(direction);
     myType = type;
+    myDescription = description;
   }
 
   private void setDirection(int direction) {
@@ -86,7 +90,7 @@ public class DirectionResizePoint extends ResizePoint {
 
   @Override
   protected InputTool createTool(RadComponent component) {
-    return new ResizeTracker(myDirection, myType);
+    return new ResizeTracker(myDirection, myType, myDescription);
   }
 
   @Override

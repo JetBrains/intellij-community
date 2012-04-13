@@ -1099,8 +1099,8 @@
     </creation>
   </meta>
 
-  <meta model="com.intellij.android.designer.model.RadViewContainer"
-        layout="com.intellij.android.designer.model.layout.RadTableLayout"
+  <meta model="com.intellij.android.designer.model.table.RadTableLayoutComponent"
+        layout="com.intellij.android.designer.model.table.RadTableLayout"
         class="android.widget.TableLayout"
         tag="TableLayout">
 
@@ -1120,7 +1120,7 @@
   </meta>
 
   <meta model="com.intellij.android.designer.model.RadViewContainer"
-        layout="com.intellij.android.designer.model.layout.RadTableRowLayout"
+        layout="com.intellij.android.designer.model.table.RadTableRowLayout"
         class="android.widget.TableRow"
         tag="TableRow">
 

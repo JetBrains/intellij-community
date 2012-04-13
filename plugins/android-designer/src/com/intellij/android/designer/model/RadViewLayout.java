@@ -31,10 +31,11 @@ import java.util.List;
  */
 public class RadViewLayout extends RadLayout {
   public static final RadLayout INSTANCE = new RadViewLayout();
+  public static final ComponentDecorator NON_RESIZE_DECORATOR = new NonResizeSelectionDecorator(Color.RED, 1);
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    return new NonResizeSelectionDecorator(Color.RED, 1);
+    return NON_RESIZE_DECORATOR;
   }
 
   public void addContainerSelectionActions(DesignerEditorPanel designer,

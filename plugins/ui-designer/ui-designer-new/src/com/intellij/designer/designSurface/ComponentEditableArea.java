@@ -16,6 +16,7 @@
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.model.RadComponent;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +111,11 @@ public abstract class ComponentEditableArea implements EditableArea {
 
   public void setCursor(@Nullable Cursor cursor) {
     myComponent.setCursor(cursor);
+  }
+
+  @Override
+  public void setDescription(@Nullable String text) {
+    ActionMenu.showDescriptionInStatusBar(true, myComponent, text);
   }
 
   @NotNull

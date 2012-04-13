@@ -496,8 +496,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
   private static boolean shouldAddXdebugKey(Sdk jdk) {
-    if (jdk == null || DebuggerSettings.getInstance().DISABLE_JIT) {
+    if (DebuggerSettings.getInstance().DISABLE_JIT) {
       return true;
+    }
+    if (jdk == null) {
+      return false; // assume newer jdk by default
     }
 
     //if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -517,7 +520,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
   private static boolean isJVMTIAvailable(Sdk jdk) {
     if (jdk == null) {
-      return false;
+      return true; // assume newer jdk by default
     }
 
     final String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);

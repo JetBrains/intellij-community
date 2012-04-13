@@ -60,6 +60,8 @@ public interface EditableArea {
 
   void setCursor(@Nullable Cursor cursor);
 
+  void setDescription(@Nullable String text);
+
   @NotNull
   JComponent getNativeComponent();
 

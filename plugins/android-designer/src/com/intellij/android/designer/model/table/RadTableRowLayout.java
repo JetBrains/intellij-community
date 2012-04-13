@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model.layout;
+package com.intellij.android.designer.model.table;
 
-import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.android.designer.model.layout.RadLinearLayout;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class RadTableRowLayout extends RadViewLayoutWithData implements ILayoutDecorator {
+public class RadTableRowLayout extends RadLinearLayout {
   private static final String[] LAYOUT_PARAMS = {"TableRow_Cell", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
   @Override
@@ -36,19 +36,33 @@ public class RadTableRowLayout extends RadViewLayoutWithData implements ILayoutD
     return LAYOUT_PARAMS;
   }
 
+  private boolean isTableParent() {
+    return myContainer.getParent() instanceof RadTableLayoutComponent;
+  }
+
+  @Override
+  protected boolean isHorizontal() {
+    return true;
+  }
+
   @Override
   public EditOperation processChildOperation(OperationContext context) {
-    return super.processChildOperation(context); // TODO: Auto-generated method stub
+    if (!isTableParent() || context.isTree()) {
+      return super.processChildOperation(context);
+    }
+    return null;
   }
 
   @Override
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
-    super.addStaticDecorators(decorators, selection); // TODO: Auto-generated method stub
+    if (!isTableParent()) {
+      super.addStaticDecorators(decorators, selection);
+    }
   }
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    return super.getChildSelectionDecorator(component, selection); // TODO: Auto-generated method stub
+    return isTableParent() ? NON_RESIZE_DECORATOR : super.getChildSelectionDecorator(component, selection);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +76,9 @@ public class RadTableRowLayout extends RadViewLayoutWithData implements ILayoutD
                                            DefaultActionGroup actionGroup,
                                            JComponent shortcuts,
                                            List<RadComponent> selection) {
-    super.addContainerSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+    if (!isTableParent()) {
+      super.addContainerSelectionActions(designer, actionGroup, shortcuts, selection);
+    }
   }
 
   @Override
@@ -70,6 +86,8 @@ public class RadTableRowLayout extends RadViewLayoutWithData implements ILayoutD
                                   DefaultActionGroup actionGroup,
                                   JComponent shortcuts,
                                   List<RadComponent> selection) {
-    super.addSelectionActions(designer, actionGroup, shortcuts, selection); // TODO: Auto-generated method stub
+    if (!isTableParent()) {
+      super.addSelectionActions(designer, actionGroup, shortcuts, selection);
+    }
   }
 }

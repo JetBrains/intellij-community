@@ -285,7 +285,11 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
 
   @Override
   public void revertToOffset(final int offset, int visualLine) {
-    // Do nothing in assumption that we store only information about start and end visual line positions and
+    final CacheEntry entry = getCacheEntryForVisualLine(visualLine, false);
+    if (entry != null) {
+      entry.removeAllFoldDataAtOrAfter(offset);
+    }
+    // Do nothing more in assumption that we store only information about start and end visual line positions and
     // that start information remains the same and end of line is not reached yet.
   }
 

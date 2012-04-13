@@ -155,6 +155,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (mavenProject == null) continue;
 
         Properties properties = loadPropertiesAndFilters(context, mavenProject);
+
+        long propertiesHashCode = calculateHashCode(mavenProject, properties); // hash code MUST NOT contain maven.build.timestamp property!
+
         String timestampFormat = properties.getProperty("maven.build.timestamp.format");
         if (timestampFormat == null) {
           timestampFormat = "yyyyMMdd-HHmm"; // See ModelInterpolator.DEFAULT_BUILD_TIMESTAMP_FORMAT
@@ -167,8 +170,6 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         String escapeString = MavenJDOMUtil.findChildValueByPath(mavenProject.getPluginConfiguration("org.apache.maven.plugins",
                                                                                                      "maven-resources-plugin"),
                                                                  "escapeString", "\\");
-
-        long propertiesHashCode = calculateHashCode(mavenProject, properties);
 
         List<MyProcessingItem> moduleItemsToProcess = new ArrayList<MyProcessingItem>();
         collectProcessingItems(eachModule, mavenProject, context, properties, propertiesHashCode,
@@ -209,9 +210,9 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
   }
 
   private static long calculateHashCode(MavenProject project, Properties properties) {
-    Set<String> sorted = new TreeSet<String>();
+    Map<String, String> sorted = new TreeMap<String, String>();
     for (Map.Entry<Object, Object> each : properties.entrySet()) {
-      sorted.add(each.getKey().toString() + "->" + each.getValue().toString());
+      sorted.put(each.getKey().toString(), each.getValue().toString());
     }
     return project.getLastReadStamp() + 31 * sorted.hashCode();
   }
@@ -342,12 +343,12 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
         if (outputFile.exists()) {
           outputFileTimestamp = outputFile.lastModified();
         }
-        boolean isFileterd = isSourceRootFiltered && !nonFilteredExtensions.contains(eachSourceFile.getExtension());
+        boolean isFiltered = isSourceRootFiltered && !nonFilteredExtensions.contains(eachSourceFile.getExtension());
         result.add(new MyProcessingItem(module,
                                         eachSourceFile,
                                         outputPath,
                                         outputFileTimestamp,
-                                        isFileterd,
+                                        isFiltered,
                                         properties,
                                         propertiesHashCode,
                                         escapeString));
@@ -568,8 +569,14 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
       mySourceFileTimestamp = sourceFileTimestamp;
       myOutputFileTimestamp = outputFileTimestamp;
       myFiltered = isFiltered;
-      myPropertiesHashCode = propertiesHashCode;
-      myEscapeString = escapeString;
+      if (isFiltered) {
+        myPropertiesHashCode = propertiesHashCode;
+        myEscapeString = escapeString;
+      }
+      else {
+        myPropertiesHashCode = 0;
+        myEscapeString = "";
+      }
     }
 
     @Override

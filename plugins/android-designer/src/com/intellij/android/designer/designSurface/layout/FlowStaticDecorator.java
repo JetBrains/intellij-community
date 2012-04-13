@@ -26,7 +26,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public abstract class FlowStaticDecorator extends StaticDecorator {
-  private static final BasicStroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{3, 1}, 0);
+  public static final BasicStroke STROKE = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 1, new float[]{3, 1}, 0);
 
   public FlowStaticDecorator(RadComponent component) {
     super(component);
