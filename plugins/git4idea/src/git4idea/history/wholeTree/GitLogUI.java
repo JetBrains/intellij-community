@@ -17,13 +17,14 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.CaptionIcon;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -1613,15 +1614,14 @@ public class GitLogUI implements Disposable {
         myIdsInProgress.add(commit.getShortHash());
       }
 
-      final Application application = ApplicationManager.getApplication();
-      application.executeOnPooledThread(new Runnable() {
-        public void run() {
+      new Task.Backgroundable(myProject, "Cherry-picking", false) {
+        public void run(@NotNull ProgressIndicator indicator) {
           boolean autoCommit = GitVcsSettings.getInstance(myProject).isAutoCommitOnCherryPick();
           Map<GitRepository, List<GitCommit>> commitsInRoots = prepareCommitsForCherryPick(commits);
           new CherryPicker(myProject, ServiceManager.getService(Git.class), ServiceManager.getService(PlatformFacade.class), autoCommit)
             .cherryPick(commitsInRoots);
 
-          application.invokeLater(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               for (GitCommit commit : commits.values()) {
                 myIdsInProgress.remove(commit.getShortHash());
@@ -1629,7 +1629,7 @@ public class GitLogUI implements Disposable {
             }
           });
         }
-      });
+      }.queue();
     }
 
     private Map<GitRepository, List<GitCommit>> prepareCommitsForCherryPick(MultiMap<VirtualFile, GitCommit> commits) {
