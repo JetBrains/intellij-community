@@ -19,12 +19,16 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ui.VcsBackgroundTaskWithLocalHistory;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -40,6 +44,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 public class AddAction extends BasicAction {
   static final Logger log = Logger.getInstance("org.jetbrains.idea.svn.action.AddAction");
@@ -57,22 +62,47 @@ public class AddAction extends BasicAction {
     return true;
   }
 
-  protected void batchPerform(final Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
+  protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] files, DataContext context)
     throws VcsException {
     log.debug("enter: batchPerform");
 
-    SvnVcs vcs = SvnVcs.getInstance(project);
-    SVNWCClient wcClient = vcs.createWCClient();
-    wcClient.setEventHandler(new AddEventListener(project));
+    addFiles(project, activeVcs, files);
+  }
 
-    Collection<SVNException> exceptions = SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(files), true);
-    if (! exceptions.isEmpty()) {
-      final Collection<String> messages = new ArrayList<String>(exceptions.size());
-      for (SVNException exception : exceptions) {
-        messages.add(exception.getMessage());
-      }
-      throw new VcsException(messages);
-    }
+  private void addFiles(final Project project, final SvnVcs activeVcs, final VirtualFile[] files) {
+    // passed parameter serves only for ""
+    VcsBackgroundTaskWithLocalHistory taskWithLocalHistory =
+      new VcsBackgroundTaskWithLocalHistory<VirtualFile[]>(project, getActionName(activeVcs), BackgroundFromStartOption.getInstance(),
+                                            Collections.singleton(files), true, SvnBundle.message("action.Subversion.Add.text")) {
+        @Override
+        protected void process(VirtualFile[] items) throws VcsException {
+          ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+          manager.startBackgroundVcsOperation();
+          try {
+
+            SVNWCClient wcClient = activeVcs.createWCClient();
+            wcClient.setEventHandler(new AddEventListener(project));
+
+            Collection<SVNException> exceptions =
+              SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(items), true);
+            if (!exceptions.isEmpty()) {
+              final Collection<String> messages = new ArrayList<String>(exceptions.size());
+              for (SVNException exception : exceptions) {
+                messages.add(exception.getMessage());
+              }
+              throw new VcsException(messages);
+            }
+          } finally {
+            manager.stopBackgroundVcsOperation();
+          }
+        }
+      };
+    ProgressManager.getInstance().run(taskWithLocalHistory);
+  }
+
+  @Override
+  protected boolean witeLocalHistory() {
+    return false;
   }
 
   protected boolean isBatchAction() {
@@ -82,16 +112,7 @@ public class AddAction extends BasicAction {
 
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
-    try {
-      SVNWCClient wcClient = activeVcs.createWCClient();
-      wcClient.setEventHandler(new AddEventListener(project));
-      wcClient.doAdd(new File(file.getPath()), false, false, true, true);
-    }
-    catch (SVNException e) {
-      VcsException ve = new VcsException(e);
-      ve.setVirtualFile(file);
-      throw ve;
-    }
+    addFiles(project, activeVcs, new VirtualFile[] {file});
   }
 
   private static class AddEventListener implements ISVNEventHandler {
