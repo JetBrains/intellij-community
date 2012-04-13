@@ -439,9 +439,10 @@ private layoutMac(Map _args, String target) {
   args.icns = "$home/python/resources/PyCharm.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "Python"
+  args.help_id = "PY"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
   layoutMacApp(target, "$home/community", args)
 
-  ant.copy(file: "$home/python/help/pycharmhelp_mac.jar", tofile: "$target/help/pycharmhelp.jar", failonerror: false)
+  ant.unzip(src: "$home/python/help/JetBrains.PY.help.zip", dest: "$target/Contents/Resources")
 }
