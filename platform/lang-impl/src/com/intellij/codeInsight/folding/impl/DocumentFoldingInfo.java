@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,9 +182,9 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         if (!psiElement.equals(restoredElement)){
           StringBuilder trace = new StringBuilder();
           PsiElement restoredAgain = FoldingPolicy.restoreBySignature(psiElement.getContainingFile(), signature, trace);
-          LOG.error("element: " + psiElement +"; restoredElement: "+ restoredElement+"; signature: '" + signature
-                    + "'; file: " + psiElement.getContainingFile() + "; restored again: " + restoredAgain + 
-                    "; restore produces same results: " + (restoredAgain == restoredElement) + "; trace:\n" + trace);
+          LOG.error("element: " + psiElement +"(" + psiElement.getText() + "); restoredElement: " + restoredElement
+                    + "; signature: '" + signature + "'; file: " + psiElement.getContainingFile() + "; restored again: "
+                    + restoredAgain + "; restore produces same results: " + (restoredAgain == restoredElement) + "; trace:\n" + trace);
         }
 
         Element e = new Element(ELEMENT_TAG);

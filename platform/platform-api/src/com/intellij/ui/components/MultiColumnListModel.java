@@ -32,6 +32,8 @@ public abstract class MultiColumnListModel extends AbstractTableModel implements
   }
 
   public abstract int toListIndex(int row, int column);
+  public abstract int getColumn(int listIndex);
+  public abstract int getRow(int listIndex);
 
   public int getSize() {
     return myModel.getSize();

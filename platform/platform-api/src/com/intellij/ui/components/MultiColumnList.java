@@ -19,6 +19,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -58,6 +59,44 @@ public class MultiColumnList extends JTable {
       }
     };
     getColumnModel().setColumnMargin(0);
+  }
+
+  @Override
+  protected void processKeyEvent(KeyEvent e) {
+    final int key = e.getKeyCode();
+    final int col = getSelectedColumn();
+    final int row = getSelectedRow();
+    final MultiColumnListModel model = getModel();
+    int r = row;
+    int c = col;
+    if (key == KeyEvent.VK_RIGHT) {
+      if (c + 1 < getColumnCount()) {
+        c++;
+      }
+    } else if (key == KeyEvent.VK_DOWN) {
+      if (r + 1 < getRowCount()) {
+        r++;
+        if (model.toListIndex(r, c ) >= model.getSize()) {
+          r = 0; c++;
+        }
+      } else {
+        r = 0; c++;
+      }
+    }
+    if (col != c || row != r) {
+      if (e.getID() == KeyEvent.KEY_RELEASED) return;
+      int index = model.toListIndex(r, c);
+      if (index >= model.getSize() || r >= getRowCount() || c >= getColumnCount()) {
+        e.consume();
+        final int last = model.getSize() - 1;
+        changeSelection(model.getRow(last), model.getColumn(last), false, false);
+      } else {
+        changeSelection(r, c, false, false);
+        e.consume();
+      }
+    } else {
+      super.processKeyEvent(e);
+    }
   }
 
   public MultiColumnList(Object...elements) {

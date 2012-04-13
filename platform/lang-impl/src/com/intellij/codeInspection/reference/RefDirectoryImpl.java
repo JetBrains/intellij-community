@@ -25,7 +25,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 
 public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
@@ -58,7 +57,6 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   }
 
   protected void initialize() {
-    getRefManager().fireNodeInitialized(this);
   }
 
   public String getQualifiedName() {

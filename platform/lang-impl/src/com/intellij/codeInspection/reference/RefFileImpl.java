@@ -60,7 +60,6 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
   }
 
   protected void initialize() {
-    getRefManager().fireNodeInitialized(this);
   }
 
   @Nullable

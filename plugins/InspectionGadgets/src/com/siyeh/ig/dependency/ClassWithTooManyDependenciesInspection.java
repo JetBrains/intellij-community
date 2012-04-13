@@ -21,13 +21,12 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,8 +57,7 @@ public class ClassWithTooManyDependenciesInspection
       @Override
       public void visitClass(RefClass refClass) {
         super.visitClass(refClass);
-        final PsiClass aClass = refClass.getElement();
-        if (ClassUtils.isInnerClass(aClass)) {
+        if (!(refClass.getOwner() instanceof RefFile)) {
           return;
         }
         final Set<RefClass> dependencies =

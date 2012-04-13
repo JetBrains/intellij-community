@@ -187,6 +187,5 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   protected void initialize() {
-    getRefManager().fireNodeInitialized(this);
   }
 }

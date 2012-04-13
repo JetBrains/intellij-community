@@ -127,7 +127,6 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       updateThrowsList(null);
     }
     collectUncaughtExceptions(method);
-    getRefManager().fireNodeInitialized(this);
   }
 
   private static boolean isAppMain(PsiMethod psiMethod, RefMethod refMethod) {

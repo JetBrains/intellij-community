@@ -46,6 +46,10 @@
     <string>@@build@@</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
+    <key>CFBundleHelpBookName</key>
+    <string>JetBrains.@@help_id@@.help</string>
+    <key>CFBundleHelpBookFolder</key>
+    <string>@@help_id@@.help</string>
 
     <key>LSArchitecturePriority</key>
     <array>
