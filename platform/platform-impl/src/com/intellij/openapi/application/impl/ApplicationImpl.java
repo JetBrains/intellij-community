@@ -763,23 +763,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
         myDisposeInProgress = true;
-
-        FileDocumentManager.getInstance().saveAllDocuments();
-
-        saveSettings();
-
-        if (allowListenersToCancel && !canExit()) {
+        if (!doExit(allowListenersToCancel)) {
+          myDisposeInProgress = false;
           myExitCode = 0;
-          return;
         }
-
-        final boolean success = disposeSelf(allowListenersToCancel);
-        if (!success || isUnitTestMode()) {
-          myExitCode = 0;
-          return;
-        }
-
-        System.exit(myExitCode);
       }
     };
 
@@ -789,6 +776,23 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     else {
       runnable.run();
     }
+  }
+
+  private boolean doExit(boolean allowListenersToCancel) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    saveSettings();
+
+    if (allowListenersToCancel && !canExit()) {
+      return false;
+    }
+
+    final boolean success = disposeSelf(allowListenersToCancel);
+    if (!success || isUnitTestMode()) {
+      return false;
+    }
+
+    System.exit(myExitCode);
+    return true;
   }
 
   private static boolean showConfirmation() {

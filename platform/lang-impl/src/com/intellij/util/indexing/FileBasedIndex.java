@@ -2265,7 +2265,7 @@ public class FileBasedIndex implements ApplicationComponent {
   }
 
   private static void iterateRecursively(@Nullable final VirtualFile root, @NotNull final ContentIterator processor, @Nullable ProgressIndicator indicator) {
-    if (root != null) {
+    if (root != null && root.isValid()) {
       if (indicator != null) {
         indicator.checkCanceled();
         indicator.setText2(root.getPresentableUrl());

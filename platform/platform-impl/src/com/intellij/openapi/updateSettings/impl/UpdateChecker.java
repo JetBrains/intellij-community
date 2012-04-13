@@ -29,7 +29,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
@@ -599,13 +598,13 @@ public final class UpdateChecker {
     OutputStream out = null;
 
     String platform = PlatformUtils.getPlatformPrefix();
-    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
-    File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
+
+    File tempFile = FileUtil.createTempFile(platform, "patch", true);
 
     try {
       connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
       in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
-      out = new BufferedOutputStream(new FileOutputStream(patchFile));
+      out = new BufferedOutputStream(new FileOutputStream(tempFile));
 
       i.setIndeterminate(false);
 
@@ -622,23 +621,16 @@ public final class UpdateChecker {
         i.setText2((read / 1024) + "/" + (total / 1024) + " KB");
       }
     }
-    catch (IOException e) {
-      patchFile.delete();
-      throw e;
-    }
-    catch (ProcessCanceledException e) {
-      patchFile.delete();
-      throw e;
-    }
-    catch (Throwable e) {
-      patchFile.delete();
-      throw new RuntimeException(e);
-    }
     finally {
       if (out != null) out.close();
       if (in != null) in.close();
       if (connection instanceof HttpURLConnection) ((HttpURLConnection)connection).disconnect();
     }
+
+    String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
+    File patchFile = new File(FileUtil.getTempDirectory(), patchFileName);
+    FileUtil.copy(tempFile, patchFile);
+    FileUtil.delete(tempFile);
   }
 
   public static Set<String> getDisabledToUpdatePlugins() {

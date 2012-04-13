@@ -39,6 +39,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private String prevElementTail;
   private int shredNo;
   private String hostText;
+  private TextRange rangeInHost;
   private final Place myShreds;
   private final List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> myEscapers;
   final Map<LeafElement, String> newTexts = new THashMap<LeafElement, String>();
@@ -74,7 +75,11 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
 
   private StringBuilder constructTextFromHostPSI(int startOffset, int endOffset) {
     PsiLanguageInjectionHost.Shred current = myShreds.get(shredNo);
-    if (hostText == null) hostText = current.getHost().getText();
+    if (hostText == null) {
+      hostText = current.getHost().getText();
+      rangeInHost = current.getRangeInsideHost();
+    }
+
     StringBuilder text = new StringBuilder(endOffset-startOffset);
     while (startOffset < endOffset) {
       TextRange shredRange = current.getRange();
@@ -82,6 +87,7 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
       if (startOffset >= shredRange.getEndOffset()) {
         current = myShreds.get(++shredNo);
         hostText = current.getHost().getText();
+        rangeInHost = current.getRangeInsideHost();
         continue;
       }
       assert startOffset >= shredRange.getStartOffset();
@@ -96,9 +102,11 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
       String suffix = current.getSuffix();
       if (startOffset < shredRange.getEndOffset() - suffix.length()) {
         // inside host body, cut out from the host text
-        int startOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(startOffset - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
+        int startOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(
+          startOffset - shredRange.getStartOffset() - prefix.length(), rangeInHost);
         int endOffsetCut = Math.min(endOffset, shredRange.getEndOffset() - suffix.length());
-        int endOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(endOffsetCut - shredRange.getStartOffset() - prefix.length(), current.getRangeInsideHost());
+        int endOffsetInHost = myEscapers.get(shredNo).getOffsetInHost(
+          endOffsetCut - shredRange.getStartOffset() - prefix.length(), rangeInHost);
         if (endOffsetInHost != -1) {
           text.append(hostText, startOffsetInHost, endOffsetInHost);
           startOffset = endOffsetCut;

@@ -25,7 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.WaitForProgressToShow;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -182,7 +182,7 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
       if (key.get() == null) {
         final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
           public void run() {
             if (key.get() == null) {
               try {

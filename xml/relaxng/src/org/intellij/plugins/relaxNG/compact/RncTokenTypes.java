@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 
 /**
  * Created by IntelliJ IDEA.
@@ -52,7 +53,7 @@ public class RncTokenTypes {
       for (int i = 0; i < tokens.length; i++) {
         String token = tokens[i];
         if (token.matches("\"\\w*\"")) {
-          token = "KEYWORD_" + token.substring(1, token.length() - 1).toUpperCase();
+          token = "KEYWORD_" + token.substring(1, token.length() - 1).toUpperCase(Locale.US);
         } else if (token.matches("\".*\"")) {
           token = token.substring(1, token.length() - 1);
         }

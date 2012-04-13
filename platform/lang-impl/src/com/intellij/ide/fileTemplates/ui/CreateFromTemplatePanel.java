@@ -119,7 +119,7 @@ public class CreateFromTemplatePanel{
     if(myMustEnterName || Arrays.asList(myUnsetAttributes).contains(FileTemplate.ATTRIBUTE_NAME)){
       final JLabel filenameLabel = new JLabel(IdeBundle.message("label.file.name"));
       myAttrPanel.add(filenameLabel, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, insets, 0, 0));
-      myFilenameField = new JTextField();
+      myFilenameField = new JTextField(20);
 
       // if default settings specified
       if (myAttributesDefaults != null) {

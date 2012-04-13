@@ -914,6 +914,14 @@ public class FileUtil {
     return next1 == '/' || next1 == File.separatorChar;
   }
 
+  public static boolean filesEqual(@Nullable File file1, @Nullable File file2) {
+    // on MacOS java.io.File.equals() is incorrectly case-sensitive
+    if (file1 == file2) return true;
+    if (file1 == null || file2 == null) return false;
+
+    return pathsEqual(file1.getPath(), file2.getPath(), true);
+  }
+
   public static boolean pathsEqual(@NotNull String path1, @NotNull String path2) {
     return pathsEqual(path1, path2, false);
   }

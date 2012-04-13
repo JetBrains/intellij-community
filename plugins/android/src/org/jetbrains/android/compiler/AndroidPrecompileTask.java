@@ -19,10 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.CompilationStatusAdapter;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +28,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +58,8 @@ public class AndroidPrecompileTask implements CompileTask {
 
   @Override
   public boolean execute(CompileContext context) {
+    checkAndroidDependencies(context);
+
     final Project project = context.getProject();
     
     ExcludedEntriesConfiguration configuration =
@@ -108,6 +111,42 @@ public class AndroidPrecompileTask implements CompileTask {
       context.getCompileScope().putUserData(LIGHT_BUILD_KEY, Boolean.toString(true));
     }
     return true;
+  }
+
+  private static void checkAndroidDependencies(@NotNull CompileContext context) {
+    for (Module module : context.getCompileScope().getAffectedModules()) {
+      final AndroidFacet facet = AndroidFacet.getInstance(module);
+
+      if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
+
+        for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+          if (entry instanceof ModuleOrderEntry) {
+            final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
+
+            if (moduleOrderEntry.getScope() == DependencyScope.COMPILE) {
+              final Module depModule = moduleOrderEntry.getModule();
+
+              if (depModule != null) {
+                final AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
+
+                if (depFacet != null && !depFacet.getConfiguration().LIBRARY_PROJECT) {
+                  String message = "Suspicious module dependency " +
+                                   module.getName() +
+                                   " -> " +
+                                   depModule.getName() +
+                                   ": Android application module depends on other application module. Possibly, you should ";
+                  if (AndroidMavenUtil.isMavenizedModule(depModule)) {
+                    message += "change packaging type of module " + depModule.getName() + " to 'apklib' in pom.xml file or ";
+                  }
+                  message += "change dependency scope to 'Provided'.";
+                  context.addMessage(CompilerMessageCategory.WARNING, message, null, -1, -1);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
   
   private static void clearResCache(@NotNull AndroidFacet facet, @NotNull CompileContext context) {

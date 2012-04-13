@@ -729,8 +729,9 @@ public class AndroidCompileUtil {
       }
     }
 
-    for (final Resources resources : manager.getResourceElements()) {
-        waitForSmartMode(project);
+    for (final Pair<Resources, VirtualFile> pair : manager.getResourceElements()) {
+      final Resources resources = pair.getFirst();
+      waitForSmartMode(project);
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override

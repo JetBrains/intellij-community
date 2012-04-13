@@ -65,11 +65,16 @@ public abstract class HeaderHidingTabbedModuleEditor extends TabbedModuleEditor 
   }
 
   @Override
+  @Nullable
   public ModuleConfigurationEditor getEditor(@NotNull String displayName) {
     ModuleConfigurationEditor singleEditor = getSingleEditor();
     if (singleEditor != null) {
-      assert singleEditor.getDisplayName().equals(displayName);
-      return singleEditor;
+      if (displayName.equals(singleEditor.getDisplayName())) {
+        return singleEditor;
+      }
+      else {
+        return null;
+      }
     }
     else {
       return super.getEditor(displayName);
