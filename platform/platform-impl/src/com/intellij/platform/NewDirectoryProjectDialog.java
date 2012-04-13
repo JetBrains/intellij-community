@@ -69,7 +69,7 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
     }
     else {
       DefaultComboBoxModel model = new DefaultComboBoxModel();
-      model.addElement(EMPTY_PROJECT_GENERATOR);
+      model.addElement(getEmptyProjectGenerator());
       for (DirectoryProjectGenerator generator : generators) {
         model.addElement(generator);
       }
@@ -96,6 +96,10 @@ public class NewDirectoryProjectDialog extends DialogWrapper {
         checkValid();
       }
     });
+  }
+
+  protected Object getEmptyProjectGenerator() {
+    return EMPTY_PROJECT_GENERATOR;
   }
 
   protected DirectoryProjectGenerator[] getGenerators() {
