@@ -132,7 +132,7 @@ public class PythonTask {
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);
 
-    PythonSdkType.patchCommandLineForVirtualenv(cmd, homePath, false);
+    PythonSdkType.patchCommandLineForVirtualenv(cmd, homePath, true);
     BuildoutFacet facet = BuildoutFacet.getInstance(myModule);
     if (facet != null) {
       facet.patchCommandLineForBuildout(cmd);
