@@ -79,7 +79,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
       if (unusedParameters.isEmpty()) return null;
 
-      if (RefUtil.isEntryPoint(refMethod)) return null;
+      if (refMethod.isEntry()) return null;
 
       final PsiModifierListOwner element = refMethod.getElement();
       if (element != null && EntryPointsManagerImpl.getInstance(manager.getProject()).isEntryPoint(element)) return null;

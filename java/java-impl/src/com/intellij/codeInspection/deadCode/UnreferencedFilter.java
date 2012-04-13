@@ -26,8 +26,6 @@ package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiElement;
 
 public class UnreferencedFilter extends RefUnreachableFilter {
   public UnreferencedFilter(final InspectionTool tool) {
@@ -38,8 +36,8 @@ public class UnreferencedFilter extends RefUnreachableFilter {
     if (refElement instanceof RefParameter) return 0;
     if (refElement.isEntry() || !((RefElementImpl)refElement).isSuspicious() || refElement.isSyntheticJSP()) return 0;
 
-    final PsiElement element = refElement.getElement();
-    if (!(element instanceof PsiDocCommentOwner) || !myTool.getContext().isToCheckMember(refElement, myTool)) return 0;
+    if (!(refElement instanceof RefMethod || refElement instanceof RefClass || refElement instanceof RefField)) return 0;
+    if (!myTool.getContext().isToCheckMember(refElement, myTool)) return 0;
 
     if (refElement instanceof RefField) {
       RefField refField = (RefField) refElement;

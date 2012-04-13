@@ -127,7 +127,6 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   protected void initialize() {
-    getRefManager().fireNodeInitialized(this);
   }
 
   public String getExternalName() {
