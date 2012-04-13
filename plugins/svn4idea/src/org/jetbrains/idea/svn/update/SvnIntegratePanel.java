@@ -32,6 +32,7 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
   private JCheckBox myUseAncestry;
   private DepthCombo myDepthCombo;
   private JLabel myDepthLabel;
+  private JPanel myAdditionalPanel;
 
   public SvnIntegratePanel(final SvnVcs vcs, Collection<FilePath> roots) {
     super(vcs);
@@ -55,6 +56,11 @@ public class SvnIntegratePanel extends AbstractSvnUpdatePanel{
 
   protected JPanel getRootsPanel() {
     return myRootOptionsPanel;
+  }
+
+  @Override
+  protected JPanel getAdditionalPanel() {
+    return myAdditionalPanel;
   }
 
   public void reset(final SvnConfiguration configuration) {
