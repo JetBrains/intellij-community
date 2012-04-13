@@ -84,7 +84,10 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   @Override
   public int getLineNumber(int offset) {
-    LOG.assertTrue (offset <= myDocument.getTextLength());
+    if (offset > myDocument.getTextLength()) {
+      LOG.error(String.format("Invalid offset detected (%d). Document length: %d. Target file: %s",
+                              offset, myDocument.getTextLength(), myFile));
+    }
     return myDocument.getLineNumber(offset);
   }
 
