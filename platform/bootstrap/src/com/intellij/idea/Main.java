@@ -20,12 +20,16 @@ import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.Restarter;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -46,39 +50,30 @@ public class Main {
       System.setProperty("jna.nounpack", "false");
     }
 
-    // pre-load class before installing the patch to prevent class loader problems
-    Restarter.isSupported();
+    final int[] restartCode = {Restarter.getRestartCode()};
 
-    if (installPatch()) {
-      boolean restarted = false;
-      int restartCode = 0;
-      try {
-        restarted = Restarter.restart();
-        restartCode = Restarter.getRestartCode();
+    Runnable restart = new Runnable() {
+      @Override
+      public void run() {
+        if (restartCode[0] == 0) {
+          try {
+            if (Restarter.restart()) restartCode[0] = 1;
+          }
+          catch (Throwable ignore) {
+          }
+        }
       }
-      catch (Throwable e) {
-        // can be either CannotRestartException
-        //  or something like class/method not found if they has been changed during update
+    };
 
-        //noinspection CallToPrintStackTrace
-        e.printStackTrace();
-      }
+    if (installPatch(restart)) {
+      if (restartCode[0] == 0) {
+        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Throwable ignore) { }
 
-      if (!restarted && restartCode == 0) {
-        try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception ignore) { }
-        String msg = "The application cannot start right away since some critical files have been changed.\nPlease restart it manually.";
+        String msg = "Patch has been applied successfully, please restart application.";
         JOptionPane.showMessageDialog(null, msg, "Update", JOptionPane.INFORMATION_MESSAGE);
       }
 
-      final int finalRestartCode = restartCode;
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          System.exit(finalRestartCode);
-        }
-      });
-
+      System.exit(restartCode[0]);
       return;
     }
 
@@ -124,7 +119,7 @@ public class Main {
     return isHeadless;
   }
 
-  private static boolean installPatch() {
+  private static boolean installPatch(Runnable restart) {
     try {
       File ideaHomeDir = getIdeaHomeDir();
       if (ideaHomeDir == null) return false;
@@ -141,9 +136,11 @@ public class Main {
           File launcherFile = new File(ideaHomeDir, "bin/vistalauncher.exe");
           File launcherCopy = FileUtil.createTempFile("vistalauncher", ".exe");
           launcherCopy.deleteOnExit();
-          copyFile(launcherFile, launcherCopy);
+          FileUtil.copy(launcherFile, launcherCopy);
           args.add(launcherCopy.getPath());
         }
+
+        restart.run();
 
         Collections.addAll(args,
                            System.getProperty("java.home") + "/bin/java",
@@ -160,13 +157,14 @@ public class Main {
         errThread.start();
 
         try {
-          boolean requiresRestart = process.waitFor() == 42;
-          return requiresRestart;
+          process.waitFor();
         }
         finally {
           outThread.join();
           errThread.join();
         }
+
+        return true;
       }
       finally {
         patchFile.delete();
@@ -189,7 +187,7 @@ public class Main {
 
     public void run() {
       try {
-        copyStream(myIn, myOut);
+        StreamUtil.copyStreamContent(myIn, myOut);
       }
       catch (IOException e) {
         e.printStackTrace();
@@ -215,46 +213,6 @@ public class Main {
     }
     catch (URISyntaxException e) {
       return null;
-    }
-  }
-
-  public static void copyFile(File from, File to) throws IOException {
-    to.getParentFile().mkdirs();
-
-    FileInputStream is = null;
-    FileOutputStream os = null;
-    try {
-      is = new FileInputStream(from);
-      os = new FileOutputStream(to);
-
-      copyStream(is, os);
-    }
-    finally {
-      if (is != null) {
-        try {
-          is.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-      if (os != null) {
-        try {
-          os.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-  }
-
-  public static void copyStream(InputStream from, OutputStream to) throws IOException {
-    byte[] buffer = new byte[65536];
-    while (true) {
-      int read = from.read(buffer);
-      if (read < 0) break;
-      to.write(buffer, 0, read);
     }
   }
 }
