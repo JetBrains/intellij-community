@@ -392,6 +392,26 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
     Collections.sort(files, FilePathComparator.getInstance());
 
+    wcClient.setEventHandler(new ISVNEventHandler() {
+      @Override
+      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        final ProgressManager pm = ProgressManager.getInstance();
+        final ProgressIndicator pi = pm.getProgressIndicator();
+        if (pi != null && event.getFile() != null) {
+          File file = event.getFile();
+          pi.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
+        }
+      }
+
+      @Override
+      public void checkCancelled() throws SVNCancelException {
+        final ProgressManager pm = ProgressManager.getInstance();
+        final ProgressIndicator pi = pm.getProgressIndicator();
+        if (pi != null) {
+          if (pi.isCanceled()) throw new SVNCancelException();
+        }
+      }
+    });
     for (VirtualFile file : files) {
       try {
         wcClient.doAdd(new File(FileUtil.toSystemDependentName(file.getPath())), true, false, true, recursive);

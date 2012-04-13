@@ -36,9 +36,14 @@ public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
   private final List<VcsException> myExceptions = new ArrayList<VcsException>();
 
   public VcsBackgroundTask(final Project project, @NotNull final String title, @NotNull final PerformInBackgroundOption backgroundOption,
-                           final Collection<T> itemsToProcess) {
-    super(project, title, false, backgroundOption);
+                           final Collection<T> itemsToProcess, final boolean canBeCanceled) {
+    super(project, title, canBeCanceled, backgroundOption);
     myItems = itemsToProcess;
+  }
+
+  public VcsBackgroundTask(final Project project, @NotNull final String title, @NotNull final PerformInBackgroundOption backgroundOption,
+                           final Collection<T> itemsToProcess) {
+    this(project, title, backgroundOption, itemsToProcess, false);
   }
 
   public void run(@NotNull ProgressIndicator indicator) {
