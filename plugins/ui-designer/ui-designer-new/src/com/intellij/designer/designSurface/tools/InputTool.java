@@ -155,6 +155,11 @@ public abstract class InputTool {
     }
   }
 
+  @Nullable
+  protected String getDescription() {
+    return null;
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Keyboard

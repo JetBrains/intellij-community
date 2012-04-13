@@ -89,9 +89,11 @@ public class SelectionTool extends InputTool {
       InputTool tracker = myArea.findTargetTool(myCurrentScreenX, myCurrentScreenY);
       if (tracker == null) {
         refreshCursor();
+        myArea.setDescription(null);
       }
       else {
         myArea.setCursor(tracker.getDefaultCursor());
+        myArea.setDescription(tracker.getDescription());
       }
     }
   }

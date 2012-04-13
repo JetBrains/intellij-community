@@ -482,9 +482,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     return myTreeDecorator;
   }
 
+  private static final ComponentDecorator NON_RESIZE_DECORATOR = new NonResizeSelectionDecorator(Color.RED, 2);
+
   @Override
   protected ComponentDecorator getRootSelectionDecorator() {
-    return new NonResizeSelectionDecorator(Color.RED, 2);
+    return NON_RESIZE_DECORATOR;
   }
 
   @Override

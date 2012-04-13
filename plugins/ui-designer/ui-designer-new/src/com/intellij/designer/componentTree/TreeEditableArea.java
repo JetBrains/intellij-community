@@ -161,6 +161,10 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     myTree.setCursor(cursor);
   }
 
+  @Override
+  public void setDescription(@Nullable String text) {
+  }
+
   @NotNull
   @Override
   public JComponent getNativeComponent() {

@@ -116,7 +116,7 @@ public class LayoutWeightOperation extends LayoutMarginOperation {
 
   public static void point(ResizeSelectionDecorator decorator) {
     pointFeedback(decorator);
-    pointRight(decorator, Color.cyan, 0.75, TYPE);
-    pointBottom(decorator, Color.cyan, 0.75, TYPE);
+    pointRight(decorator, Color.cyan, 0.75, TYPE, "Change layout:weight");
+    pointBottom(decorator, Color.cyan, 0.75, TYPE, "Change layout:weight");
   }
 }

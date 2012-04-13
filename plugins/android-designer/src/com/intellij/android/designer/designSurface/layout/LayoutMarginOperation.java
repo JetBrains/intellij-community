@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -198,7 +199,7 @@ public class LayoutMarginOperation implements EditOperation {
   public static void points(ResizeSelectionDecorator decorator) {
     pointFeedback(decorator);
 
-    decorator.addPoint(new DirectionResizePoint(Color.orange, Color.black, Position.WEST, TYPE) { // left
+    decorator.addPoint(new DirectionResizePoint(Color.orange, Color.black, Position.WEST, TYPE, "Change layout:margin.left") { // left
       @Override
       protected Point getLocation(DecorationLayer layer, RadComponent component) {
         Point location = super.getLocation(layer, component);
@@ -207,9 +208,9 @@ public class LayoutMarginOperation implements EditOperation {
       }
     });
 
-    pointRight(decorator, Color.orange, 0.25, TYPE);
+    pointRight(decorator, Color.orange, 0.25, TYPE, "Change layout:margin.right");
 
-    decorator.addPoint(new DirectionResizePoint(Color.orange, Color.black, Position.NORTH, TYPE) { // top
+    decorator.addPoint(new DirectionResizePoint(Color.orange, Color.black, Position.NORTH, TYPE, "Change layout:margin.top") { // top
       @Override
       protected Point getLocation(DecorationLayer layer, RadComponent component) {
         Point location = super.getLocation(layer, component);
@@ -218,7 +219,7 @@ public class LayoutMarginOperation implements EditOperation {
       }
     });
 
-    pointBottom(decorator, Color.orange, 0.25, TYPE);
+    pointBottom(decorator, Color.orange, 0.25, TYPE, "Change layout:margin.bottom");
   }
 
   protected static void pointFeedback(ResizeSelectionDecorator decorator) {
@@ -255,8 +256,12 @@ public class LayoutMarginOperation implements EditOperation {
     });
   }
 
-  protected static void pointRight(ResizeSelectionDecorator decorator, Color color, double ySeparator, Object type) {
-    decorator.addPoint(new DirectionResizePoint(color, Color.black, Position.EAST, type) {
+  protected static void pointRight(ResizeSelectionDecorator decorator,
+                                   Color color,
+                                   double ySeparator,
+                                   Object type,
+                                   @Nullable String description) {
+    decorator.addPoint(new DirectionResizePoint(color, Color.black, Position.EAST, type, description) {
       @Override
       protected Point getLocation(DecorationLayer layer, RadComponent component) {
         Point location = super.getLocation(layer, component);
@@ -266,8 +271,12 @@ public class LayoutMarginOperation implements EditOperation {
     }.move(1, ySeparator));
   }
 
-  protected static void pointBottom(ResizeSelectionDecorator decorator, Color color, double xSeparator, Object type) {
-    decorator.addPoint(new DirectionResizePoint(color, Color.black, Position.SOUTH, type) {
+  protected static void pointBottom(ResizeSelectionDecorator decorator,
+                                    Color color,
+                                    double xSeparator,
+                                    Object type,
+                                    @Nullable String description) {
+    decorator.addPoint(new DirectionResizePoint(color, Color.black, Position.SOUTH, type, description) {
       @Override
       protected Point getLocation(DecorationLayer layer, RadComponent component) {
         Point location = super.getLocation(layer, component);
