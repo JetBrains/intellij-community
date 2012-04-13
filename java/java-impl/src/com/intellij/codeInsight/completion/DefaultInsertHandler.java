@@ -27,8 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class DefaultInsertHandler extends TemplateInsertHandler implements Cloneable {
@@ -94,7 +93,7 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
         }
       }
       else{
-        final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+        final CommonCodeStyleSettings styleSettings = context.getCodeStyleSettings();
         myState.tailOffset = context.getSelectionEndOffset();
         myState.caretOffset = context.getSelectionEndOffset();
 

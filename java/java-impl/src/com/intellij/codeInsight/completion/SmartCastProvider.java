@@ -14,8 +14,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -100,7 +99,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
                                 context.getOffsetMap().getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET));
         }
 
-        final CodeStyleSettings csSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+        final CommonCodeStyleSettings csSettings = context.getCodeStyleSettings();
         final int oldTail = context.getTailOffset();
         context.setTailOffset(RParenthTailType.addRParenth(editor, oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
 

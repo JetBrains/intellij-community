@@ -12,10 +12,12 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
@@ -92,15 +94,9 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testParenAfterCall1_SpaceWithinMethodCallParens() throws Exception {
     String path = "/parenAfterCall";
 
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
     myFixture.configureByFile(path + "/before1.java");
-    styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
-    try{
-      complete();
-    }
-    finally{
-      styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
-    }
+    getCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    complete();
     checkResultByFile(path + "/after1_space.java");
   }
 
@@ -659,14 +655,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testUseIntConstantsInOr() throws Throwable { doTest(); }
 
   public void testExtraSemicolonAfterMethodParam() throws Throwable {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
-    styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
-    try{
-      doTest();
-    }
-    finally{
-      styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
-    }
+    getCodeStyleSettings().SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    doTest();
   }
 
   public void testAssignFromTheSameFieldOfAnotherObject() throws Throwable {
@@ -1132,7 +1122,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest(Lookup.NORMAL_SELECT_CHAR);
   }
 
-  private void doTest(final char c) throws Exception {
+  private void doTest(final char c) {
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION;
     if (c != Lookup.NORMAL_SELECT_CHAR) {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = false;
@@ -1173,4 +1163,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     }
   }
 
+  public void testSpaceAfterCommaInMethodCall() {
+    getCodeStyleSettings().SPACE_AFTER_COMMA = false;
+    doTest(',');
+  }
+
+  private CommonCodeStyleSettings getCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+  }
 }

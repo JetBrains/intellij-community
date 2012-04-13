@@ -22,11 +22,12 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.*
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
@@ -287,12 +288,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testMethodCallBeforeAnotherStatementWithParen2() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
-    boolean oldvalue = settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE;
-    settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    codeStyleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
     configureByFile("MethodLookup2.java");
     checkResultByFile("MethodLookup2_After2.java");
-    settings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = oldvalue;
   }
 
   public void testSwitchEnumLabel() throws Exception {
@@ -494,16 +492,14 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testPrivateInAnonymous() throws Throwable { doTest() }
 
   public void testMethodParenthesesSpaces() throws Throwable {
-    final settings = CodeStyleSettingsManager.getSettings(getProject())
-    settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
-    settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    codeStyleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
+    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
     doTest();
   }
 
   public void testMethodParenthesesSpacesArgs() throws Throwable {
-    final settings = CodeStyleSettingsManager.getSettings(getProject())
-    settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
-    settings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    codeStyleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true
+    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
     doTest();
   }
 
@@ -601,23 +597,18 @@ public class ListUtils {
   }
 
   public void testNoSpaceInParensWithoutParams() throws Throwable {
-    CodeStyleSettingsManager.getSettings(getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
     try {
       doTest();
     }
     finally {
-      CodeStyleSettingsManager.getSettings(getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
+      codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
     }
   }
   
   public void testTwoSpacesInParensWithParams() throws Throwable {
-    CodeStyleSettingsManager.getSettings(getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
-    try {
-      doTest();
-    }
-    finally {
-      CodeStyleSettingsManager.getSettings(getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES = false;
-    }
+    codeStyleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    doTest();
   }
 
   public void testFillCommonPrefixOnSecondCompletion() throws Throwable {
@@ -1329,6 +1320,10 @@ public class ListUtils {
   public void testListArrayListCast() { doTest('\n') }
   public void testInterfaceImplementationNoCast() { doTest() }
   public void testStaticallyImportedMethodsBeforeExpression() { doTest() }
+
+  private CommonCodeStyleSettings getCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+  }
 
   public void testCompatibleInterfacesCast() {
     configure()

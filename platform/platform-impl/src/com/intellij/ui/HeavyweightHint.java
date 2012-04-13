@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -45,7 +46,11 @@ public class HeavyweightHint implements Hint {
   /**
    * Shows the hint as the window
    */
-  public void show(@NotNull JComponent parentComponent, int x, int y, JComponent focusBackComponent, @NotNull HintHint hintInfo) {
+  public void show(@NotNull JComponent parentComponent, int x, int y, @Nullable JComponent focusBackComponent, @Nullable HintHint hintInfo) {
+    show(parentComponent, new Point(x, y));
+  }
+
+  public void show(@NotNull JComponent parentComponent, Point p) {
     myParentComponent = parentComponent;
     LOG.assertTrue(parentComponent.isShowing());
 
@@ -59,9 +64,11 @@ public class HeavyweightHint implements Hint {
     myWindow.getContentPane().setLayout(new BorderLayout());
     myWindow.getContentPane().add(myComponent, BorderLayout.CENTER);
 
-    updateBounds(x, y);
+    updateBounds(p.x, p.y);
     myWindow.setVisible(true);
   }
+
+
 
   protected void fireHintHidden() {
     final EventListener[] listeners = myListenerList.getListeners(HintListener.class);

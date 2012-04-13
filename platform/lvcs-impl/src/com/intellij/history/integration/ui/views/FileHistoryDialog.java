@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.ex.DiffPanelEx;
 import com.intellij.openapi.diff.ex.DiffPanelOptions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExcludingTraversalPolicy;
@@ -61,6 +62,14 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected void setDiffBorder(Border border) {
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    if (myDiffPanel != null) {
+      Disposer.dispose(myDiffPanel);
+    }
   }
 
   @Override

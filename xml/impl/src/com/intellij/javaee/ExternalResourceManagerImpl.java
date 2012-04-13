@@ -35,6 +35,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jdom.Element;
@@ -75,7 +76,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   };
 
-  private String myDefaultHtmlDoctype = XmlUtil.XHTML_URI;
+  private String myDefaultHtmlDoctype = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
 
   protected Map<String, Map<String, Resource>> computeStdResources() {
     ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();

@@ -20,8 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -64,7 +63,7 @@ public class CastingLookupElementDecorator extends LookupElementDecorator<Lookup
 
   @Override
   public void handleInsert(InsertionContext context) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(context.getProject());
+    final CommonCodeStyleSettings settings = context.getCodeStyleSettings();
     String spaceWithin = settings.SPACE_WITHIN_CAST_PARENTHESES ? " " : "";
     String spaceAfter = settings.SPACE_AFTER_TYPE_CAST ? " " : "";
     final Editor editor = context.getEditor();

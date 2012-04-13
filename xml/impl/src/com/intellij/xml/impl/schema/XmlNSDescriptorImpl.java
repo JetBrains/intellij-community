@@ -37,6 +37,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
@@ -50,7 +51,7 @@ import java.util.*;
  * @author Mike
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument>, DumbAware, XmlNSTypeDescriptorProvider {
+public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocument>, DumbAware, XmlNSTypeDescriptorProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.impl.schema.XmlNSDescriptorImpl");
   @NonNls private static final Set<String> STD_TYPES = new HashSet<String>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<String>();

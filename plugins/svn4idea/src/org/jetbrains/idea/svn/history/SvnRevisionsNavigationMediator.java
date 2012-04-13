@@ -57,9 +57,9 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     final SVNURL[] repositoryRoot = new SVNURL[1];
     final long[] youngRevision = new long[1];
-    final SVNException[] exception = new SVNException[1];
+    final VcsException[] exception = new VcsException[1];
 
-    final boolean succeeded = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    Runnable process = new Runnable() {
       @Override
       public void run() {
         SVNRepository repository = null;
@@ -69,7 +69,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
           repositoryRoot[0] = repository.getRepositoryRoot(false);
         }
         catch (SVNException e) {
-          exception[0] = e;
+          exception[0] = new VcsException(e);
         }
         finally {
           if (repository != null) {
@@ -77,14 +77,8 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
           }
         }
       }
-    }, "Getting latest repository revision", true, myProject);
-
-    if (exception[0] != null) {
-      throw new VcsException(exception[0]);
-    }
-    if (! succeeded) {
-      throw new ProcessCanceledException();
-    }
+    };
+    underProgress(exception, process);
 
     final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
         CommittedChangesCache.getInstance(project).getBackBunchedIterator(vcs, vcsRoot, location, CHUNK_SIZE);
@@ -97,8 +91,31 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
                                       new LiveProvider(vcs, location, youngRevision[0], new SvnLogUtil(myProject, vcs, location, repositoryRoot[0])));
 
     myCurrentIdx = -1;
-    // init first screen
-    goBack();
+
+    underProgress(exception, new Runnable() {
+      @Override
+      public void run() {
+        // init first screen
+        try {
+          goBack();
+        }
+        catch (VcsException e) {
+          exception[0] = e;
+        }
+      }
+    });
+  }
+
+  private void underProgress(final VcsException[] exception, final Runnable process) throws VcsException {
+    final boolean succeeded = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      process, "Getting latest repository revision", true, myProject);
+
+    if (exception[0] != null) {
+      throw exception[0];
+    }
+    if (! succeeded) {
+      throw new ProcessCanceledException();
+    }
   }
 
   public boolean canGoBack() {
