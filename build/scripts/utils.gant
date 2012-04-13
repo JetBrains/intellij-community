@@ -236,11 +236,16 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   String executable = args.executable != null ? args.executable : p("component.names.product").toLowerCase()
+  String helpId = args.help_id != null ? args.help_id : "IJ"
   String icns = "idea.icns"
+  String helpIcns = "$path/Contents/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
   if (args.icns != null) {
     ant.delete(file: "$path/Contents/Resources/idea.icns")
     ant.copy(file: args.icns, todir: "$path/Contents/Resources")
+    ant.copy(file: args.icns, tofile: helpIcns)
     icns = new File((String)args.icns).getName();
+  } else {
+    ant.copy(file: "$path/Contents/Resources/idea.icns", tofile: helpIcns)
   }
 
   String fullName = args.fullName != null ? args.fullName : p("component.names.fullname")
@@ -270,6 +275,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOops")
     replacefilter(token: "@@idea_properties@@", value: properties)
     replacefilter(token: "@@class_path@@", value: classPath)
+    replacefilter(token: "@@help_id@@", value: helpId)
   }
 
   if (executable != "idea") {
