@@ -625,7 +625,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     }
   }
 
-  private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, VcsFileRevision> {
+  private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, String> {
     private final MergeSourceRenderer myRenderer;
 
     private MergeSourceColumnInfo(final MyHistorySession session) {
@@ -638,8 +638,8 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       return myRenderer;
     }
 
-    public VcsFileRevision valueOf(final VcsFileRevision vcsFileRevision) {
-      return vcsFileRevision;
+    public String valueOf(final VcsFileRevision vcsFileRevision) {
+      return vcsFileRevision == null ? "" : getText(vcsFileRevision);
     }
 
     public String getText(final VcsFileRevision vcsFileRevision) {
@@ -742,6 +742,10 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       if (myListener == null) {
         myListener = new MergeSourceDetailsLinkListener(MERGE_SOURCE_DETAILS_TAG, myFile);
         myListener.install(table);
+      }
+      if (value instanceof String) {
+        append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        return;
       }
       if (! (value instanceof SvnFileRevision)) {
         append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
