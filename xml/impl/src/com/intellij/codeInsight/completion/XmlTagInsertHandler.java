@@ -141,7 +141,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     template.setToReformat(!htmlCode);
 
     StringBuilder indirectRequiredAttrs = addRequiredAttributes(descriptor, tag, template, containingFile);
-    final boolean chooseAttributeName = addTail(completionChar, descriptor, tag, template, indirectRequiredAttrs);
+    final boolean chooseAttributeName = addTail(completionChar, descriptor, htmlCode, tag, template, indirectRequiredAttrs);
 
     templateManager.startTemplate(editor, template, new TemplateEditingAdapter() {
       private RangeMarker myAttrValueMarker;
@@ -246,6 +246,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
   protected static boolean addTail(char completionChar,
                                    XmlElementDescriptor descriptor,
+                                   boolean isHtmlCode,
                                    XmlTag tag,
                                    Template template,
                                    StringBuilder indirectRequiredAttrs) {
@@ -290,7 +291,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
-      if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && HtmlUtil.isSingleHtmlTag(tag.getName())) {
+      if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag.getName())) {
         template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
       }
       else {
