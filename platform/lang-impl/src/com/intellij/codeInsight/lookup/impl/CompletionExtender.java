@@ -17,7 +17,6 @@ package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ui.HeavyweightHint;
-import com.intellij.ui.HintHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ import java.awt.*;
  */
 public class CompletionExtender extends HeavyweightHint {
   private LookupElement myElement;
-  @NotNull private LookupImpl myLookup;
+  private LookupImpl myLookup;
   private int myIndex;
 
   public CompletionExtender(@NotNull LookupElement element, @NotNull LookupImpl lookup) {
@@ -68,18 +67,11 @@ public class CompletionExtender extends HeavyweightHint {
       SwingUtilities.convertPointFromScreen(p, rootPane);
 
       if (rootPane != null) {
-        show(rootPane, p.x, p.y, null, new HintHint(rootPane, p));
+        show(rootPane, p);
         return true;
       }
     }
     return false;
-  }
-
-  private static Point getPoint(JList list, JComponent rootPane) {
-    final Point p = list.getLocationOnScreen();
-    p.y += list.indexToLocation(list.getSelectedIndex()).y;
-    SwingUtilities.convertPointFromScreen(p, rootPane);
-    return p;
   }
 
   @Override
