@@ -44,4 +44,9 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   public String getDocString() {
     return myDocString;
   }
+
+  @Override
+  public String toString() {
+    return "PyClassStub(" + myName + ")";
+  }
 }
