@@ -165,8 +165,6 @@ class ServerState {
       pd.incUsageCounter();
     }
 
-    final Project project = pd.project;
-
     try {
       final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
