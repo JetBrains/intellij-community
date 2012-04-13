@@ -238,9 +238,24 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
 
     // Define start of the visual line that holds target range start.
     int start = event.getNewStartOffset();
-    LogicalPosition logical = myDataMapper.offsetToLogicalPosition(start);
-    VisualPosition visual = new VisualPosition(myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line, 0);
-    start = myEditor.logicalPositionToOffset(logical);
+    
+    final LogicalPosition logical;
+    final Point point;
+    
+    if (start == 0 && myEditor.getPrefixTextWidthInPixels() <= 0) {
+      logical = new LogicalPosition(0, 0, 0, 0, 0, 0, 0);
+      point = new Point(0, 0);
+    }
+    else {
+      logical = myDataMapper.offsetToLogicalPosition(start);
+      VisualPosition visual = new VisualPosition(
+        myDataMapper.logicalToVisualPosition(logical, myEditor.logicalToVisualPosition(logical, false)).line,
+        0
+      );
+      point = myEditor.visualPositionToXY(visual);
+      start = myEditor.logicalPositionToOffset(logical);
+    }
+    
     Document document = myEditor.getDocument();
     myContext.text = document.getCharsSequence();
     myContext.tokenStartOffset = start;
@@ -251,7 +266,6 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       myContext.rangeEndOffset = event.getNewEndOffset();
 
       EditorPosition position = new EditorPosition(logical, start, myEditor, myRepresentationHelper);
-      Point point = myEditor.visualPositionToXY(visual);
       position.x = point.x;
       int spaceWidth = EditorUtil.getSpaceWidth(myContext.fontType, myEditor);
 
