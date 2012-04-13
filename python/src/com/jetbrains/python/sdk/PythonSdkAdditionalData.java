@@ -33,6 +33,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private Set<VirtualFile> myExcludedPaths = Sets.newHashSet();
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedProjectPath;
+  private boolean myAssociateWithNewProject;
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
@@ -79,6 +80,16 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     final String path = project.getBasePath();
     if (path != null) {
       myAssociatedProjectPath = FileUtil.toSystemIndependentName(path);
+    }
+  }
+
+  public void associateWithNewProject() {
+    myAssociateWithNewProject = true;
+  }
+
+  public void reassociateWithCreatedProject(Project project) {
+    if (myAssociateWithNewProject) {
+      associateWithProject(project);
     }
   }
 
