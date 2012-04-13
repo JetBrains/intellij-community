@@ -462,20 +462,42 @@ public class CommitHelper {
   }
 
   private void markCommittingDocuments() {
-    for (Change change : myIncludedChanges) {
-      Document doc = ChangesUtil.getFilePath(change).getDocument();
-      if (doc != null) {
-        doc.putUserData(DOCUMENT_BEING_COMMITTED_KEY, myProject);
-        myCommittingDocuments.add(doc);
-      }
-    }
+    myCommittingDocuments.addAll(markCommittingDocuments(myProject, myIncludedChanges));
   }
 
   private void unmarkCommittingDocuments() {
-    for (Document doc : myCommittingDocuments) {
+    unmarkCommittingDocuments(myCommittingDocuments);
+    myCommittingDocuments.clear();
+  }
+
+  /**
+   * Marks {@link Document documents} related to the given changes as "being committed".
+   * @return documents which were marked that way.
+   * @see #unmarkCommittingDocuments(java.util.Collection)
+   * @see VetoSavingCommittingDocumentsAdapter
+   */
+  @NotNull
+  public static Collection<Document> markCommittingDocuments(@NotNull Project project, @NotNull List<Change> changes) {
+    Collection<Document> committingDocs = new ArrayList<Document>();
+    for (Change change : changes) {
+      Document doc = ChangesUtil.getFilePath(change).getDocument();
+      if (doc != null) {
+        doc.putUserData(DOCUMENT_BEING_COMMITTED_KEY, project);
+        committingDocs.add(doc);
+      }
+    }
+    return committingDocs;
+  }
+
+  /**
+   * Removes the "being committed marker" from the given {@link Document documents}.
+   * @see #markCommittingDocuments(com.intellij.openapi.project.Project, java.util.List)
+   * @see VetoSavingCommittingDocumentsAdapter
+   */
+  public static void unmarkCommittingDocuments(@NotNull Collection<Document> committingDocs) {
+    for (Document doc : committingDocs) {
       doc.putUserData(DOCUMENT_BEING_COMMITTED_KEY, null);
     }
-    myCommittingDocuments.clear();
   }
 
   private void commitCompleted(final List<VcsException> allExceptions, final GeneralCommitProcessor processor) {
