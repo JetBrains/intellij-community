@@ -135,7 +135,19 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     data.setAssociatedProjectPath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
   }
 
-  private static Set<VirtualFile> loadStringList(@Nullable Element element, @NotNull String rootName, @NotNull String attrName) {
+  protected static Set<VirtualFile> loadStringList(@Nullable Element element, @NotNull String rootName, @NotNull String attrName) {
+    final List<String> paths = loadPaths(element, rootName, attrName);
+    final Set<VirtualFile> files = Sets.newHashSet();
+    for (String path : paths) {
+      VirtualFile vf = VirtualFileUtil.findFile(path);
+      if (vf != null) {
+        files.add(vf);
+      }
+    }
+    return files;
+  }
+
+  protected static List<String> loadPaths(Element element, String rootName, String attrName) {
     final List<String> paths = new LinkedList<String>();
     if (element != null) {
       final List list = element.getChildren(rootName);
@@ -145,13 +157,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
         }
       }
     }
-    final Set<VirtualFile> files = Sets.newHashSet();
-    for (String path : paths) {
-      VirtualFile vf = VirtualFileUtil.findFile(path);
-      if (vf != null) {
-        files.add(vf);
-      }
-    }
-    return files;
+    return paths;
   }
 }

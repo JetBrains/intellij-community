@@ -1,8 +1,10 @@
 package com.jetbrains.python.remote;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
@@ -40,6 +42,11 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
   private final static String HELPERS_DIR = "pycharm_helpers";
 
+  private final static String SKELETONS_PATH = "SKELETONS_PATH";
+
+  private static final String REMOTE_ROOTS = "REMOTE_ROOTS";
+  private static final String REMOTE_PATH = "REMOTE_PATH";
+
   private String myHost;
   private int myPort;
   private boolean myAnonymous;
@@ -56,6 +63,11 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
   private String myPyCharmTempFilesPath;
 
   private boolean myHelpersVersionChecked = false;
+
+  private List<String> myRemoteRoots = Lists.newArrayList();
+
+  private String mySkeletonsPath;
+
 
 
   public PythonRemoteSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
@@ -244,6 +256,30 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     myUseKeyPair = useKeyPair;
   }
 
+  public void addRemoteRoot(String remoteRoot) {
+    myRemoteRoots.add(remoteRoot);
+  }
+
+  public void clearRemoteRoots() {
+    myRemoteRoots.clear();
+  }
+
+  public void setSkeletonsPath(String path) {
+    mySkeletonsPath = path;
+  }
+
+  public String getSkeletonsPath() {
+    return mySkeletonsPath;
+  }
+
+  public List<String> getRemoteRoots() {
+    return myRemoteRoots;
+  }
+
+  public void setRemoteRoots(List<String> remoteRoots) {
+    myRemoteRoots = remoteRoots;
+  }
+
   public static boolean isRemoteSdk(@Nullable String path) {
     if (path != null) {
       return path.startsWith(SSH_PREFIX);
@@ -271,6 +307,9 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
       data.setInterpreterPath(StringUtil.nullize(element.getAttributeValue(INTERPRETER_PATH)));
       data.setPyCharmTempFilesPath(StringUtil.nullize(element.getAttributeValue(PYCHARM_HELPERS_PATH)));
+      data.setSkeletonsPath(StringUtil.nullize(element.getAttributeValue(SKELETONS_PATH)));
+
+      data.setRemoteRoots(loadPaths(element, REMOTE_ROOTS, REMOTE_PATH));
     }
 
     return data;
@@ -319,6 +358,13 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
 
     rootElement.setAttribute(INTERPRETER_PATH, StringUtil.notNullize(getInterpreterPath()));
     rootElement.setAttribute(PYCHARM_HELPERS_PATH, StringUtil.notNullize(getPyCharmTempFilesPath()));
+    rootElement.setAttribute(SKELETONS_PATH, StringUtil.notNullize(getSkeletonsPath()));
+
+    for (String remoteRoot : getRemoteRoots()) {
+      final Element child = new Element(REMOTE_ROOTS);
+      child.setAttribute(REMOTE_PATH, remoteRoot);
+      rootElement.addContent(child);
+    }
   }
 
 
@@ -348,7 +394,10 @@ public class PythonRemoteSdkAdditionalData extends PythonSdkAdditionalData imple
     copy.setInterpreterPath(getInterpreterPath());
     copy.setStorePassword(isStorePassword());
     copy.setStorePassphrase(isStorePassphrase());
-    copy.setHelpersVersionChecked(copy.isHelpersVersionChecked());
+    copy.setHelpersVersionChecked(isHelpersVersionChecked());
+
+    copy.setSkeletonsPath(getSkeletonsPath());
+    copy.setRemoteRoots(getRemoteRoots());
   }
 
 

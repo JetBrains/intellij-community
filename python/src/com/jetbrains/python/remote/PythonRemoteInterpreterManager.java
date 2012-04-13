@@ -63,7 +63,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
 
-  public abstract boolean ensureCanWrite(Object o, PythonRemoteSdkAdditionalData data, String path);
+  public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, PythonRemoteSdkAdditionalData data, String path);
 
   @Nullable
   public abstract PyRemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir);
