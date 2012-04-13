@@ -10,8 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
+import com.jetbrains.python.remote.ui.PyRemoteProjectSettings;
 import com.jetbrains.python.sdk.PySkeletonGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +64,14 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
 
   public abstract boolean ensureCanWrite(Object o, PythonRemoteSdkAdditionalData data, String path);
+
+  @Nullable
+  public abstract PyRemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir);
+
+  public abstract void createDeployment(Project project,
+                                        VirtualFile projectDir,
+                                        PyRemoteProjectSettings settings,
+                                        PythonRemoteSdkAdditionalData data);
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
