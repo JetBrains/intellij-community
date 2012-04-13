@@ -102,6 +102,7 @@ public class CherryPicker {
         else {
           boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commit, successfulCommits);
           if (!committed) {
+            notifyCommitCancelled(commit, successfulCommits);
             return false;
           }
         }
@@ -110,20 +111,17 @@ public class CherryPicker {
         boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
                                                                 commit.getShortHash().getString(), commit.getAuthor(),
                                                                 commit.getSubject()).merge();
-        NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                          commit.getShortHash().getString(), commit.getAuthor(),
-                                                                          commit.getSubject());
 
         if (mergeCompleted) {
           boolean committed = updateChangeListManagerShowCommitDialogAndRemoveChangeListOnSuccess(repository, commit, successfulCommits);
           if (!committed) {
-            notifyConflictWarning(commit, successfulCommits, resolveLinkListener);
+            notifyCommitCancelled(commit, successfulCommits);
             return false;
           }
         }
         else {
           updateChangeListManager(commit);
-          notifyConflictWarning(commit, successfulCommits, resolveLinkListener);
+          notifyConflictWarning(repository, commit, successfulCommits);
           return false;
         }
       }
@@ -170,15 +168,21 @@ public class CherryPicker {
     }
   }
 
-  // resolveLinkListener is created in the above code and passed in the params (although it should be created inside the method to preserve
-  // the context), not to pass all bunch of parameters needed for the CherryPickConflictResolver and thus for the listener, which invokes
-  // the conflict resolver.
-  private void notifyConflictWarning(@NotNull GitCommit commit, @NotNull List<GitCommit> successfulCommits,
-                                     @NotNull NotificationListener resolveLinkListener) {
+  private void notifyConflictWarning(@NotNull GitRepository repository, @NotNull GitCommit commit,
+                                     @NotNull List<GitCommit> successfulCommits) {
+    NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
+                                                                       commit.getShortHash().getString(), commit.getAuthor(),
+                                                                       commit.getSubject());
     String description = commitDetails(commit)
                          + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>";
     description += getSuccessfulCommitDetailsIfAny(successfulCommits);
     myPlatformFacade.getNotificator(myProject).notifyStrongWarning("Cherry-picked with conflicts", description, resolveLinkListener);
+  }
+
+  private void notifyCommitCancelled(@NotNull GitCommit commit, @NotNull List<GitCommit> successfulCommits) {
+    String description = commitDetails(commit);
+    description += getSuccessfulCommitDetailsIfAny(successfulCommits);
+    myPlatformFacade.getNotificator(myProject).notifyWeakWarning("Cherry-pick cancelled", description, null);
   }
 
   private CherryPickData updateChangeListManager(@NotNull final GitCommit commit) {
