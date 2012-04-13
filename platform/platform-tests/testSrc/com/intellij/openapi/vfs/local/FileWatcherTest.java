@@ -368,9 +368,10 @@ public class FileWatcherTest extends PlatformLangTestCase {
       }
     }
     finally {
-      VirtualDirectoryImpl.disallowRootAccess(substRoot);
       delete(targetDir);
       new GeneralCommandLine("subst", subst + ":", "/d").createProcess().waitFor();
+      myFileSystem.refresh(false);
+      VirtualDirectoryImpl.disallowRootAccess(substRoot);
     }
   }
 
