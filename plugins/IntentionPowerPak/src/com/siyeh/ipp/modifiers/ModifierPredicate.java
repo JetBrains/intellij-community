@@ -22,7 +22,13 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 /**
  * @author Bas Leijdekkers
  */
-class MakePublicPredicate implements PsiElementPredicate {
+class ModifierPredicate implements PsiElementPredicate {
+
+  private final String myModifier;
+
+  public ModifierPredicate(@PsiModifier.ModifierConstant String modifier) {
+    myModifier = modifier;
+  }
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
@@ -42,6 +48,9 @@ class MakePublicPredicate implements PsiElementPredicate {
     }
     final PsiModifierListOwner owner = (PsiModifierListOwner)parent;
     final PsiModifierList modifierList = owner.getModifierList();
-    return !(modifierList == null || modifierList.hasModifierProperty(PsiModifier.PUBLIC));
+    if (modifierList == null) {
+      return false;
+    }
+    return !modifierList.hasModifierProperty(myModifier);
   }
 }

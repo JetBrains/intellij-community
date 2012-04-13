@@ -319,6 +319,18 @@
       <className>com.siyeh.ipp.modifiers.MakePublicIntention</className>
       <categoryKey>intention.category.modifiers</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePackagePrivateIntention</className>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakeProtectedIntention</className>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.modifiers.MakePrivateIntention</className>
+      <categoryKey>intention.category.modifiers</categoryKey>
+    </intentionAction>
 
     <!-- Other -->
     <intentionAction>
