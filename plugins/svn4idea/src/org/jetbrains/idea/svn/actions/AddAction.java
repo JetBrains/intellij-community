@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.util.ui.VcsBackgroundTaskWithLocalHistory;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
@@ -71,9 +72,9 @@ public class AddAction extends BasicAction {
 
   private void addFiles(final Project project, final SvnVcs activeVcs, final VirtualFile[] files) {
     // passed parameter serves only for ""
-    VcsBackgroundTaskWithLocalHistory taskWithLocalHistory =
-      new VcsBackgroundTaskWithLocalHistory<VirtualFile[]>(project, getActionName(activeVcs), BackgroundFromStartOption.getInstance(),
-                                            Collections.singleton(files), true, SvnBundle.message("action.Subversion.Add.text")) {
+    VcsBackgroundTask task =
+      new VcsBackgroundTask<VirtualFile[]>(project, getActionName(activeVcs), BackgroundFromStartOption.getInstance(),
+                                            Collections.singleton(files), true) {
         @Override
         protected void process(VirtualFile[] items) throws VcsException {
           ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
@@ -97,7 +98,7 @@ public class AddAction extends BasicAction {
           }
         }
       };
-    ProgressManager.getInstance().run(taskWithLocalHistory);
+    ProgressManager.getInstance().run(task);
   }
 
   @Override
