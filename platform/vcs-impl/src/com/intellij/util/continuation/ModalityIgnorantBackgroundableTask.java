@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,9 @@ import javax.swing.*;
  * Time: 12:14 PM
  */
 public abstract class ModalityIgnorantBackgroundableTask extends Task.Backgroundable {
+  private Consumer<Task.Backgroundable> myRunner;
+  private int myCnt;
+
   public ModalityIgnorantBackgroundableTask(@Nullable Project project,
                                             @NotNull String title,
                                             boolean canBeCancelled,
@@ -38,7 +42,9 @@ public abstract class ModalityIgnorantBackgroundableTask extends Task.Background
     super(project, title, canBeCancelled, backgroundOption);
   }
 
-  public ModalityIgnorantBackgroundableTask(@Nullable Project project, @NotNull String title, boolean canBeCancelled) {
+  public ModalityIgnorantBackgroundableTask(@Nullable Project project,
+                                            @NotNull String title,
+                                            boolean canBeCancelled) {
     super(project, title, canBeCancelled);
   }
 
@@ -51,10 +57,35 @@ public abstract class ModalityIgnorantBackgroundableTask extends Task.Background
   protected abstract void doInAwtIfSuccess();
   protected abstract void runImpl(@NotNull ProgressIndicator indicator);
 
+  public void runSteadily(final Consumer<Backgroundable> consumer) {
+    myRunner = consumer;
+    myCnt = 100;
+    consumer.consume(this);
+  }
+
   @Override
   public void run(@NotNull final ProgressIndicator indicator) {
     try {
       runImpl(indicator);
+    } catch (final ToBeRepeatedException tbre) {
+      if (myRunner != null && myCnt > 0) {
+        -- myCnt;
+        // we are on some background thread and do not want to reschedule too often
+        try {
+          Thread.sleep(100);
+        }
+        catch (InterruptedException e) {
+          //
+        }
+        myRunner.consume(this);
+        return;
+      }
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          doInAwtIfFail(tbre);
+        }
+      });
     } catch (final Exception e) {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -76,4 +107,6 @@ public abstract class ModalityIgnorantBackgroundableTask extends Task.Background
       }
     });
   }
+
+  public static class ToBeRepeatedException extends RuntimeException {}
 }
