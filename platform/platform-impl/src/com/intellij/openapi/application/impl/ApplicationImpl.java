@@ -73,8 +73,6 @@ import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -768,21 +766,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
         getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appClosing();
         myDisposeInProgress = true;
-
-        saveSettings();
-
-        if (allowListenersToCancel && !canExit()) {
+        if (!doExit(allowListenersToCancel)) {
+          myDisposeInProgress = false;
           myExitCode = 0;
-          return;
         }
-
-        final boolean success = disposeSelf(allowListenersToCancel);
-        if (!success || isUnitTestMode()) {
-          myExitCode = 0;
-          return;
-        }
-
-        System.exit(myExitCode);
       }
     };
 
@@ -792,6 +779,22 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     else {
       runnable.run();
     }
+  }
+
+  private boolean doExit(boolean allowListenersToCancel) {
+    saveSettings();
+
+    if (allowListenersToCancel && !canExit()) {
+      return false;
+    }
+
+    final boolean success = disposeSelf(allowListenersToCancel);
+    if (!success || isUnitTestMode()) {
+      return false;
+    }
+
+    System.exit(myExitCode);
+    return true;
   }
 
   private static boolean showConfirmation() {
