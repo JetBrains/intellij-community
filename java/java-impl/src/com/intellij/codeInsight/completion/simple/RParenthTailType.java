@@ -24,8 +24,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -50,10 +49,10 @@ public abstract class RParenthTailType extends TailType {
     return element == null ? new TextRange(0, document.getTextLength()) : element.getTextRange();
   }
 
-  protected abstract boolean isSpaceWithinParentheses(CodeStyleSettings styleSettings, Editor editor, final int tailOffset);
+  protected abstract boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
 
   public int processTail(final Editor editor, int tailOffset) {
-    return addRParenth(editor, tailOffset, isSpaceWithinParentheses(CodeStyleSettingsManager.getSettings(editor.getProject()), editor, tailOffset));
+    return addRParenth(editor, tailOffset, isSpaceWithinParentheses(getLocalCodeStyleSettings(editor, tailOffset), editor, tailOffset));
   }
 
   public static int addRParenth(Editor editor, int offset, boolean spaceWithinParens) {

@@ -16,11 +16,16 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -72,11 +77,11 @@ public abstract class TailType {
   };
 
   public static final TailType SEMICOLON = new CharTailType(';');
-  public static final TailType EXCLAMATION = new CharTailType('!');
+  @Deprecated public static final TailType EXCLAMATION = new CharTailType('!');
 
   public static final TailType COMMA = new TailType(){
     public int processTail(final Editor editor, int tailOffset) {
-      CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(editor.getProject());
+      CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
       if (styleSettings.SPACE_BEFORE_COMMA) tailOffset = insertChar(editor, tailOffset, ' ');
       tailOffset = insertChar(editor, tailOffset, ',');
       if (styleSettings.SPACE_AFTER_COMMA) tailOffset = insertChar(editor, tailOffset, ' ');
@@ -87,6 +92,17 @@ public abstract class TailType {
       return "COMMA";
     }
   };
+
+  protected static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
+    Project project = editor.getProject();
+    assert project != null;
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    assert psiFile != null;
+    Language language = PsiUtilBase.getLanguageAtOffset(psiFile, tailOffset);
+
+    return CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+  }
+
   /**
    * insert a space, overtype if already present
    */

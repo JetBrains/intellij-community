@@ -18,13 +18,13 @@ package com.intellij.codeInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class is for the inspections that are gathered by another inspection,
+ * This interface is for the inspections that are gathered by another inspection,
  * but should be shown under this inspection in the inspections result view.
  * This inspection is identified by the problem group, which is stored in the Annotation, HighlightInfo and ProblemDescriptor classes.
  */
-public abstract class LocalDummyInspectionTool extends LocalInspectionTool {
+public interface DummyInspectionTool {
   @NotNull
-  public abstract String getProblemGroup();
+  String getProblemGroup();
 
-  public abstract boolean shouldBeShownInInspectionProfile();
+  boolean shouldBeShownInInspectionProfile();
 }

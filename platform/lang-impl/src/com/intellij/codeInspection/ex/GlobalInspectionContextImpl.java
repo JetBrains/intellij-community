@@ -354,7 +354,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
   public boolean isToCheckFile(PsiFile file, final InspectionProfileEntry tool) {
     final Tools tools = myTools.get(tool.getShortName());
-    if (tools != null) {
+    if (tools != null && file != null) {
       for (ScopeToolState state : tools.getTools()) {
         final NamedScope namedScope = state.getScope(file.getProject());
         if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
@@ -636,12 +636,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         InspectionToolWrapper toolWrapper = (InspectionToolWrapper)profileEntry;
         InspectionProfileEntry inspectionTool = toolWrapper.getTool();
 
-        if (inspectionTool instanceof LocalDummyInspectionTool) {
+        if (inspectionTool instanceof DummyInspectionTool) {
           if (toolWrappers == null) {
             toolWrappers = new HashMap<String, DescriptorProviderInspection>();
           }
 
-          toolWrappers.put(((LocalDummyInspectionTool)inspectionTool).getProblemGroup(), toolWrapper);
+          toolWrappers.put(((DummyInspectionTool)inspectionTool).getProblemGroup(), toolWrapper);
         }
       }
     }

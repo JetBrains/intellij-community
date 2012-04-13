@@ -95,7 +95,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private final Project myProject;
   private final Editor myEditor;
-  private Hint tip;
+  private CompletionExtender extender;
   private String myInitialPrefix;
 
   private boolean myStableStart;
@@ -1029,10 +1029,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       public void valueChanged(ListSelectionEvent e){
         myHintAlarm.cancelAllRequests();
 
-        if (tip != null && tip.isVisible()) {
-          tip.hide();
-        }
-
         final LookupElement item = getCurrentItem();
         if (oldItem != item) {
           mySelectionInvariant = item == null ? null : myPresentableModel.getItemPresentationInvariant(item);
@@ -1043,26 +1039,18 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         }
         if (item != null) {
           updateHint(item);
-          if (myList.getModel().getSize() > 1 && isVisible()) {
-            final LookupCellRenderer renderer = new LookupCellRenderer(LookupImpl.this);
-            renderer.setFullSize(true);
-            final JComponent component = (JComponent)renderer.getListCellRendererComponent(myList, item,
-                                                                                           myList
-                                                                                             .getSelectedIndex(),
-                                                                                           true, false);
-            component.setSize(component.getPreferredSize());
-            if (component.getWidth() > myList.getWidth()) {
-              tip = new HeavyweightHint(component, false);
-              final Point p = myList.getLocationOnScreen();
-              p.y += myList.indexToLocation(myList.getSelectedIndex()).y;
+        }
+        oldItem = item;
 
-              final JComponent editor = UIUtil.getRootPane(myEditor.getContentComponent());
-              SwingUtilities.convertPointFromScreen(p, editor);
-              tip.show(editor, p.x, p.y, null, new HintHint(editor, p));
+        if (item != null && LookupImpl.this.isVisible()) {
+          if (extender == null || !extender.isVisible() || !extender.sameAsFor(item)) {
+            if (extender != null) extender.hide();
+            extender = new CompletionExtender(item, LookupImpl.this);
+            if (!extender.show()) {
+              extender.hide();
             }
           }
         }
-        oldItem = item;
       }
     });
 
@@ -1390,8 +1378,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
-    if (tip != null) {
-      tip.hide();
+    if (extender != null) {
+      extender.hide();
     }
     myDisposed = true;
     disposeTrace = DebugUtil.currentStackTrace() + "\n============";

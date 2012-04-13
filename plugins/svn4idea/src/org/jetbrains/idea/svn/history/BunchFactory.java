@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.history;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.tmatesoft.svn.core.SVNException;
@@ -88,6 +89,7 @@ public class BunchFactory {
         if (defender == 0) {
           return;
         }
+        ProgressManager.checkCanceled();
         final Fragment fragment = myCurrentProvider.getEarliestBunchInInterval(myYoungest, 0,
                                   (myYoungest == -1) ? myBunchSize : (myBunchSize + 1), (myYoungest == -1), true);
         if ((fragment == null) || (fragment.getList().isEmpty())) {
@@ -95,6 +97,7 @@ public class BunchFactory {
           break;
         }
 
+        ProgressManager.checkCanceled();
         final List<CommittedChangeList> bunchLists = fragment.getList();
         if (! fragment.isConsistentWithYounger()) {
           final long endRevision = bunchLists.get(0).getNumber();

@@ -59,4 +59,6 @@ public interface RefManagerExtension<T> {
   boolean belongsToScope(final PsiElement psiElement);
 
   void export(final RefEntity refEntity, final Element element);
+
+  void onEntityInitialized(RefElement refEntity, PsiElement psiElement);
 }
