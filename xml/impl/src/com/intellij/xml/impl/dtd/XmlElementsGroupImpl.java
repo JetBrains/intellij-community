@@ -39,7 +39,7 @@ public class XmlElementsGroupImpl implements XmlElementsGroup {
       return ContainerUtil.map(myParticle.getSubParticles(), new Function<XmlContentParticle, XmlElementsGroup>() {
         @Override
         public XmlElementsGroup fun(XmlContentParticle xmlContentParticle) {
-          return new XmlElementsGroupImpl(xmlContentParticle, XmlElementsGroupImpl.this);
+          return new  XmlElementsGroupImpl(xmlContentParticle, XmlElementsGroupImpl.this);
         }
       });
     }
