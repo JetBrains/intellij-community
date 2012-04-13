@@ -53,6 +53,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -872,6 +873,29 @@ public class AndroidCompileUtil {
       final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
       final String proguardCfgPath = proguardCfgFile != null ? FileUtil.toSystemDependentName(proguardCfgFile.getPath()) : null;
       return new ProguardRunningOptions(proguardCfgPath, configuration.isIncludeSystemProguardCfgPath());
+    }
+    return null;
+  }
+
+  @Nullable
+  public static Module findCircularDependencyOnLibraryWithSamePackage(@NotNull AndroidFacet facet) {
+    final Manifest manifest = facet.getManifest();
+    final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
+    if (aPackage == null) {
+      return null;
+    }
+
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(facet.getModule(), true)) {
+      final Manifest depManifest = depFacet.getManifest();
+      final String depPackage = depManifest != null ? depManifest.getPackage().getValue() : null;
+      if (aPackage.equals(depPackage)) {
+        final List<AndroidFacet> depDependencies = AndroidUtils.getAllAndroidDependencies(depFacet.getModule(), false);
+
+        if (depDependencies.contains(facet)) {
+          // circular dependency on library with the same package
+          return depFacet.getModule();
+        }
+      }
     }
     return null;
   }
