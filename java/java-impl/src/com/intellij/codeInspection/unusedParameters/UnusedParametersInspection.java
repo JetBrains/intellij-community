@@ -73,16 +73,16 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
       if ((refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) && refMethod.getDerivedMethods().isEmpty()) return null;
 
-      if (RefUtil.isEntryPoint(refMethod)) return null;
-
-      final PsiModifierListOwner element = refMethod.getElement();
-      if (element != null && EntryPointsManagerImpl.getInstance(manager.getProject()).isEntryPoint(element)) return null;
-
       if (refMethod.isAppMain()) return null;
 
       final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
 
       if (unusedParameters.isEmpty()) return null;
+
+      if (RefUtil.isEntryPoint(refMethod)) return null;
+
+      final PsiModifierListOwner element = refMethod.getElement();
+      if (element != null && EntryPointsManagerImpl.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
       final List<ProblemDescriptor> result = new ArrayList<ProblemDescriptor>();
       for (RefParameter refParameter : unusedParameters) {
