@@ -46,7 +46,7 @@ public class PyGenericType implements PyType {
   }
 
   @Override
-  public void assertValid() {
+  public void assertValid(String message) {
   }
 
   @Override

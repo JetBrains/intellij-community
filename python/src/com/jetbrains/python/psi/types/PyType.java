@@ -60,5 +60,5 @@ public interface PyType {
    */
   boolean isBuiltin(TypeEvalContext context);
 
-  void assertValid();
+  void assertValid(String message);
 }
