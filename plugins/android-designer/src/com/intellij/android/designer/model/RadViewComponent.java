@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlAttribute;
@@ -24,20 +25,15 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.hash.HashMap;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author Alexander Lobas
  */
-public class RadViewComponent extends RadComponent {
-  private final List<RadComponent> myChildren = new ArrayList<RadComponent>();
+public class RadViewComponent extends RadVisualComponent {
   protected ViewInfo myViewInfo;
-  private Component myNativeComponent;
-  private final Rectangle myBounds = new Rectangle();
   private Rectangle myMargins;
   private XmlTag myTag;
   private List<Property> myProperties;
@@ -48,11 +44,6 @@ public class RadViewComponent extends RadComponent {
 
   public void setTag(XmlTag tag) {
     myTag = tag;
-  }
-
-  @Override
-  public List<RadComponent> getChildren() {
-    return myChildren;
   }
 
   public ViewInfo getViewInfo() {
@@ -81,33 +72,6 @@ public class RadViewComponent extends RadComponent {
       }
     }
     return myMargins;
-  }
-
-  @Override
-  public Rectangle getBounds() {
-    return myBounds;
-  }
-
-  @Override
-  public Rectangle getBounds(Component relativeTo) {
-    return SwingUtilities.convertRectangle(myNativeComponent, myBounds, relativeTo);
-  }
-
-  public void setBounds(int x, int y, int width, int height) {
-    myBounds.setBounds(x, y, width, height);
-  }
-
-  public Component getNativeComponent() {
-    return myNativeComponent;
-  }
-
-  public void setNativeComponent(Component nativeComponent) {
-    myNativeComponent = nativeComponent;
-  }
-
-  @Override
-  public Point convertPoint(Component component, int x, int y) {
-    return SwingUtilities.convertPoint(component, x, y, myNativeComponent);
   }
 
   @Override

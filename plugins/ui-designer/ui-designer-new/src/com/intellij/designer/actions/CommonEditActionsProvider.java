@@ -51,6 +51,11 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   public CommonEditActionsProvider(DesignerEditorPanel designer) {
     myDesigner = designer;
   }
+
+  protected EditableArea getArea() {
+    return myDesigner.getActionsArea();
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Delete
@@ -60,7 +65,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
     // TODO: InplaceEditing
-    List<RadComponent> selection = myDesigner.getActionsArea().getSelection();
+    List<RadComponent> selection = getArea().getSelection();
     if (selection.isEmpty()) {
       return false;
     }
@@ -77,7 +82,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
     myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {
-        EditableArea area = myDesigner.getActionsArea();
+        EditableArea area = getArea();
         List<RadComponent> selection = area.getSelection();
         List<RadComponent> components = RadComponent.getPureSelection(selection);
         RadComponent newSelection = getNewSelection(components.get(0), selection);
@@ -128,7 +133,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     // TODO: InplaceEditing
-    return !myDesigner.getActionsArea().getSelection().isEmpty();
+    return !getArea().getSelection().isEmpty();
   }
 
   @Override
@@ -141,7 +146,7 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
       Element root = new Element("designer");
       root.setAttribute("target", myDesigner.getPlatformTarget());
 
-      List<RadComponent> components = RadComponent.getPureSelection(myDesigner.getActionsArea().getSelection());
+      List<RadComponent> components = RadComponent.getPureSelection(getArea().getSelection());
       for (RadComponent component : components) {
         component.copyTo(root);
       }

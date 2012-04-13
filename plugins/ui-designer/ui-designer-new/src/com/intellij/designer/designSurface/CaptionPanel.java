@@ -15,22 +15,130 @@
  */
 package com.intellij.designer.designSurface;
 
+import com.intellij.designer.actions.CommonEditActionsProvider;
+import com.intellij.designer.designSurface.tools.InputTool;
+import com.intellij.designer.model.FindComponentVisitor;
+import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadVisualComponent;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public class CaptionPanel extends JComponent implements DataProvider {
+public class CaptionPanel extends JLayeredPane implements DataProvider, DeleteProvider, ComponentSelectionListener {
+  private final boolean myHorizontal;
+  private final EditableArea myArea;
+  private final DecorationLayer myDecorationLayer;
+  private final FeedbackLayer myFeedbackLayer;
+  private final CommonEditActionsProvider myActionsProvider;
+  private final RadVisualComponent myRootComponent;
+
   public CaptionPanel(DesignerEditorPanel designer, boolean horizontal) {
     setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
-
     setFocusable(true);
+
+    myHorizontal = horizontal;
+
+    myRootComponent = new RadVisualComponent() {
+      @Override
+      public boolean canDelete() {
+        return false;
+      }
+    };
+    myRootComponent.setNativeComponent(this);
+    myRootComponent.setBounds(0, 0, 100000, 100000);
+
+    myArea = new ComponentEditableArea(this) {
+      @Override
+      protected void fireSelectionChanged() {
+        super.fireSelectionChanged();
+        revalidate();
+        repaint();
+      }
+
+      @Override
+      public RadComponent findTarget(int x, int y, @Nullable ComponentTargetFilter filter) {
+        FindComponentVisitor visitor = new FindComponentVisitor(CaptionPanel.this, filter, x, y);
+        myRootComponent.accept(visitor, false);
+        return visitor.getResult();
+      }
+
+      @Override
+      public InputTool findTargetTool(int x, int y) {
+        return myDecorationLayer.findTargetTool(x, y);
+      }
+
+      @Override
+      public void showSelection(boolean value) {
+        myDecorationLayer.showSelection(value);
+      }
+
+      @Override
+      public ComponentDecorator getRootSelectionDecorator() {
+        return EmptyComponentDecorator.INSTANCE;
+      }
+
+      @Override
+      public EditOperation processRootOperation(OperationContext context) {
+        return null;
+      }
+
+      @Override
+      public FeedbackLayer getFeedbackLayer() {
+        return myFeedbackLayer;
+      }
+
+      @Override
+      public RadComponent getRootComponent() {
+        return myRootComponent;
+      }
+    };
+
+    add(new GlassLayer(designer.getToolProvider(), myArea), DesignerEditorPanel.LAYER_GLASS);
+
+    myDecorationLayer = new DecorationLayer(myArea);
+    add(myDecorationLayer, DesignerEditorPanel.LAYER_DECORATION);
+
+    myFeedbackLayer = new FeedbackLayer();
+    add(myFeedbackLayer, DesignerEditorPanel.LAYER_FEEDBACK);
+
+    myActionsProvider = new CommonEditActionsProvider(designer) {
+      @Override
+      protected EditableArea getArea() {
+        return myArea;
+      }
+    };
+
+    designer.getSurfaceArea().addSelectionListener(this);
+  }
+
+  public void attachToScrollPane(JScrollPane scrollPane) {
+    scrollPane.getViewport().addChangeListener(new ChangeListener() {
+      public void stateChanged(ChangeEvent e) {
+        repaint();
+      }
+    });
+  }
+
+  public void doLayout() {
+    for (int i = getComponentCount() - 1; i >= 0; i--) {
+      Component component = getComponent(i);
+      component.setBounds(0, 0, getWidth(), getHeight());
+    }
   }
 
   @Override
@@ -45,6 +153,56 @@ public class CaptionPanel extends JComponent implements DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
-    return null;  // TODO: Auto-generated method stub
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return this;
+    }
+    return null;
+  }
+
+  @Override
+  public boolean canDeleteElement(@NotNull DataContext dataContext) {
+    return myActionsProvider.canDeleteElement(dataContext);
+  }
+
+  @Override
+  public void deleteElement(@NotNull DataContext dataContext) {
+    myActionsProvider.deleteElement(dataContext);
+  }
+
+  @Override
+  public void selectionChanged(EditableArea area) {
+    List<RadComponent> selection = area.getSelection();
+    if (selection.size() != 1) {
+      return;
+    }
+
+    List<RadComponent> children = myRootComponent.getChildren();
+    boolean update = !children.isEmpty();
+
+    children.clear();
+    myRootComponent.setLayout(null);
+
+    ICaption caption = null;
+    RadComponent component = selection.get(0);
+    RadComponent parent = component.getParent();
+
+    if (parent != null && parent.getLayout() instanceof ICaption) {
+      caption = (ICaption)parent.getLayout();
+    }
+
+    if (caption == null && component instanceof ICaption) {
+      caption = (ICaption)component;
+    }
+
+    if (caption != null) {
+      myRootComponent.setLayout(caption.getCaptionLayout(area, myHorizontal));
+      caption.addCaptionChildren(area, myHorizontal, children);
+      update = true;
+    }
+
+    if (update) {
+      revalidate();
+      repaint();
+    }
   }
 }

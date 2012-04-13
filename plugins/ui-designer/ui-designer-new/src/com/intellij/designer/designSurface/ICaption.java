@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.startup;
+package com.intellij.designer.designSurface;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
+import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadLayout;
+
+import java.util.List;
 
 /**
- * @author Dmitry Avdeev
- *
- * This may implement {@link com.intellij.openapi.project.DumbAware}.
+ * @author Alexander Lobas
  */
-public interface StartupActivity {
+public interface ICaption {
+  RadLayout getCaptionLayout(EditableArea mainArea, boolean horizontal);
 
-  ExtensionPointName<StartupActivity> POST_STARTUP_ACTIVITY = ExtensionPointName.create("com.intellij.postStartupActivity");
-
-  void runActivity(Project project);
+  void addCaptionChildren(EditableArea mainArea, boolean horizontal, List<RadComponent> children);
 }

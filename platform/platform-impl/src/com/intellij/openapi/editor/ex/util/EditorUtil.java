@@ -141,12 +141,14 @@ public class EditorUtil {
       editorInfo = ((EditorImpl)editor).dumpState();
     }
     else {
-      editorInfo = "all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()) 
-      + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
+      editorInfo = "editor's class: " + editor.getClass()
+                   + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()) 
+                   + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
     }
-    LOG.error(String.format(
+    LogMessageEx.error(LOG, "Can't calculate last visual column", String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
-      + "the target logical line: %s. Editor info: %s", line, resultLogLine, resVisStart, resVisEnd, softWraps, editorInfo
+      + "the target logical line: %s. Editor info: %s",
+      line, resultLogLine, resVisStart, resVisEnd, softWraps, editorInfo
     ));
     
     return resVisEnd.column;

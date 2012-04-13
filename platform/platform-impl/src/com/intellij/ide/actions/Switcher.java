@@ -275,8 +275,8 @@ public class Switcher extends AnAction implements DumbAware {
       toolWindows.addMouseMotionListener(this);
       toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-          if (!toolWindows.getSelectionModel().isSelectionEmpty()) {
-            files.getSelectionModel().clearSelection();
+          if (!toolWindows.isSelectionEmpty() && !files.isSelectionEmpty()) {
+            files.clearSelection();
           }
         }
       });
@@ -411,7 +411,7 @@ public class Switcher extends AnAction implements DumbAware {
       files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       files.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-          if (!files.getSelectionModel().isSelectionEmpty()) {
+          if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
             toolWindows.getSelectionModel().clearSelection();
           }
         }
@@ -693,12 +693,20 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     public JList getSelectedList() {
+      return getSelectedList(files);
+    }
+
+    JList getSelectedList(JList preferable) {
       if (toolWindows.isSelectionEmpty() && files.isSelectionEmpty()) {
-        if (files.getModel().getSize() > 1) {
+        if (preferable != null && preferable.getModel().getSize() > 0) {
+          preferable.setSelectedIndex(0);
+          return preferable;
+        } else
+
+        if (files.getModel().getSize() > 0) {
           files.setSelectedIndex(0);
           return files;
-        }
-        else {
+        } else {
           toolWindows.setSelectedIndex(0);
           return toolWindows;
         }
@@ -709,8 +717,8 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     void navigate() {
-      myPopup.closeOk(null);
       final Object value = getSelectedList().getSelectedValue();
+      myPopup.closeOk(null);
       if (value instanceof ToolWindow) {
         ((ToolWindow)value).activate(null, true, true);
       }
@@ -847,21 +855,23 @@ public class Switcher extends AnAction implements DumbAware {
       @Override
       protected void selectElement(Object element, String selectedText) {
         if (element instanceof FileInfo) {
-          toolWindows.getSelectionModel().clearSelection();
+          if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
           files.setSelectedValue(element, false);
         } else {
-          files.clearSelection();
+          if (!files.isSelectionEmpty()) files.clearSelection();
           toolWindows.setSelectedValue(element, false);
         }
       }
 
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
+        final JList list = getSelectedList();
+        final Object value = list.getSelectedValue();
         ((NameFilteringListModel)files.getModel()).refilter();
         ((NameFilteringListModel)toolWindows.getModel()).refilter();
         files.repaint();
         toolWindows.repaint();
-        getSelectedList();
+        getSelectedList(list).setSelectedValue(value, true);
       }
     }
 
