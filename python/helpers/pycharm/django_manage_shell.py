@@ -24,5 +24,5 @@ def run():
 
   fixGetpass()
 
-  run_module(manage_file, None, '__main__', True)
+#  run_module(manage_file, None, '__main__', True)
 
