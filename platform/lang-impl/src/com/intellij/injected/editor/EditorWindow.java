@@ -775,6 +775,16 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @Override
+  public boolean isPurePaintingMode() {
+    return myDelegate.isPurePaintingMode();
+  }
+
+  @Override
+  public void setPurePaintingMode(boolean enabled) {
+    myDelegate.setPurePaintingMode(enabled); 
+  }
+
+  @Override
   public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
     myDelegate.setPrefixTextAndAttributes(prefixText, attributes);
   }

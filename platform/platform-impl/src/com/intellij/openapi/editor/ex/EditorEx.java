@@ -204,6 +204,12 @@ public interface EditorEx extends Editor {
   void setStickySelection(boolean enable);
 
   /**
+   * @return  width in pixels of the {@link #setPrefixTextAndAttributes(String, TextAttributes) prefix} used with the current editor if any;
+   *          zero otherwise
+   */
+  int getPrefixTextWidthInPixels();
+
+  /**
    * Allows to define prefix to be displayed on every editor line and text attributes to use for its coloring.
    * 
    * @param prefixText  target prefix text
@@ -212,8 +218,21 @@ public interface EditorEx extends Editor {
   void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes);
 
   /**
-   * @return  width in pixels of the {@link #setPrefixTextAndAttributes(String, TextAttributes) prefix} used with the current editor if any;
-   * zero otherwise
+   * @return    current 'pure painting mode' status
+   * @see #setPurePaintingMode(boolean)
    */
-  int getPrefixTextWidthInPixels();
+  boolean isPurePaintingMode();
+  
+  /**
+   * We often re-use the logic encapsulated at the editor. For example, every time we show editor fragment (folding, preview etc) we
+   * create a dedicated graphics object and ask the editor to paint into it.
+   * <p/>
+   * The thing is that the editor itself may change its state if any postponed operation is triggered by the painting request
+   * (e.g. soft wraps recalculation is triggered by the paint request and newly calculated soft wraps cause caret to change its position).
+   * <p/>
+   * This method allows to inform the editor that all subsequent painting request should not change the editor state.
+   * 
+   * @param enabled  'pure painting mode' status to use
+   */
+  void setPurePaintingMode(boolean enabled);
 }
