@@ -21,7 +21,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -30,6 +32,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.WaitForProgressToShow;
 import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -229,7 +232,8 @@ public class CherryPicker {
         cancelCherryPick(repository);
         List<Change> changes = commit.getChanges();
         CherryPickCommitExecutor executor = new CherryPickCommitExecutor(myProject, myPlatformFacade, changes, commitMessage);
-        commitSucceeded.set(myPlatformFacade.getVcsHelper(myProject).commitChanges(changes, changeList, commitMessage, executor));
+        boolean commitNotCancelled = myPlatformFacade.getVcsHelper(myProject).commitChanges(changes, changeList, commitMessage, executor);
+        commitSucceeded.set(commitNotCancelled && !executor.hasCommitFailed());
       }
     }, ModalityState.NON_MODAL);
     return commitSucceeded.get();
@@ -431,6 +435,7 @@ public class CherryPicker {
     @NotNull private final PlatformFacade myPlatformFacade;
     @NotNull private final List<Change> myChanges;
     @NotNull private final String myCommitMessage;
+    private boolean myCommitFailed;
 
     CherryPickCommitExecutor(@NotNull Project project, @NotNull PlatformFacade platformFacade,
                              @NotNull List<Change> changes, @NotNull String commitMessage) {
@@ -450,6 +455,10 @@ public class CherryPicker {
     @Override
     public CommitSession createCommitSession() {
       return new CherryPickCommitSession();
+    }
+
+    public boolean hasCommitFailed() {
+      return myCommitFailed;
     }
 
     private class CherryPickCommitSession implements CommitSession {
@@ -474,12 +483,32 @@ public class CherryPicker {
         try {
           CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
           if (ce != null) {
-            ce.commit(myChanges, myCommitMessage);
+            try {
+              List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
+              if (exceptions != null && !exceptions.isEmpty()) {
+                VcsException exception = exceptions.get(0);
+                handleError(exception);
+              }
+            }
+            catch (Throwable e) {
+              LOG.error(e);
+              handleError(e);
+            }
           }
         }
         finally {
           unmarkCommittingDocs(committingDocs);
         }
+      }
+
+      private void handleError(Throwable exception) {
+        myCommitFailed = true;
+        final String errorMessage = exception.getMessage();
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          public void run() {
+            Messages.showErrorDialog(myProject, errorMessage, "Commit Failed");
+          }
+        }, null, myProject);
       }
 
       @Override
@@ -514,8 +543,5 @@ public class CherryPicker {
 
     }
   }
-
-
-
 
 }
