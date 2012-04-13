@@ -5,10 +5,11 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -208,8 +209,9 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
   }
 
   public void testParensInSynchronized() throws Exception{
-    CodeStyleSettingsManager.getSettings(getProject()).SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
-    CodeStyleSettingsManager.getSettings(getProject()).SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = true;
+    CommonCodeStyleSettings styleSettings = getCodeStyleSettings();
+    styleSettings.SPACE_BEFORE_SYNCHRONIZED_PARENTHESES = false;
+    styleSettings.SPACE_WITHIN_SYNCHRONIZED_PARENTHESES = true;
     final String path = BASE_PATH;
 
     configureByFile(path + "/before22.java");
@@ -254,22 +256,17 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
 
   public void testCastParensStyle1() throws Exception{
     final String path = BASE_PATH;
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
-    final boolean space_within_cast_parentheses = styleSettings.SPACE_WITHIN_CAST_PARENTHESES;
-    final boolean space_after_type_cast = styleSettings.SPACE_AFTER_TYPE_CAST;
 
-    styleSettings.SPACE_WITHIN_CAST_PARENTHESES = true;
-    styleSettings.SPACE_AFTER_TYPE_CAST = false;
+    getCodeStyleSettings().SPACE_WITHIN_CAST_PARENTHESES = true;
+    getCodeStyleSettings().SPACE_AFTER_TYPE_CAST = false;
     configureByFile(path + "/before31.java");
     performSmartCompletion();
     checkResultByFile(path + "/after31.java");
-    styleSettings.SPACE_WITHIN_CAST_PARENTHESES = space_within_cast_parentheses;
-    styleSettings.SPACE_AFTER_TYPE_CAST = space_after_type_cast;
   }
 
   public void testMethodParensStyle2() throws Exception{
     final String path = BASE_PATH;
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings styleSettings = getCodeStyleSettings();
     final boolean space_before_method_call_parentheses = styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES;
     styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = true;
     configureByFile(path + "/before32.java");
@@ -278,9 +275,14 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES = space_before_method_call_parentheses;
   }
 
+  private static CommonCodeStyleSettings getCodeStyleSettings() {
+    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+  }
+
+
   public void testMethodParensStyle3() throws Exception{
     final String path = BASE_PATH;
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings styleSettings = getCodeStyleSettings();
     final boolean space_before_method_call_parentheses = styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES;
     final boolean space_within_method_call_parentheses = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
 

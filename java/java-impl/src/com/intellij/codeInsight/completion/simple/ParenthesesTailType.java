@@ -18,20 +18,19 @@ package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * @author peter
  */
 public abstract class ParenthesesTailType extends TailType {
 
-  protected abstract boolean isSpaceBeforeParentheses(CodeStyleSettings styleSettings, Editor editor, final int tailOffset);
+  protected abstract boolean isSpaceBeforeParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
 
-  protected abstract boolean isSpaceWithinParentheses(CodeStyleSettings styleSettings, Editor editor, final int tailOffset);
+  protected abstract boolean isSpaceWithinParentheses(CommonCodeStyleSettings styleSettings, Editor editor, final int tailOffset);
 
   public int processTail(final Editor editor, int tailOffset) {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(editor.getProject());
+    CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
     if (isSpaceBeforeParentheses(styleSettings, editor, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');
     }

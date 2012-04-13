@@ -99,6 +99,10 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
+  public GlobalInspectionContextImpl getContext() {
+    return myContext;
+  }
+
   public void iterate(RefVisitor visitor) {
     myLock.readLock().lock();
     try {
@@ -440,6 +444,9 @@ public class RefManagerImpl extends RefManager {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         refElement.initialize();
+        for (RefManagerExtension extension : myExtensions.values()) {
+          extension.onEntityInitialized(refElement, elem);
+        }
       }
     });
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
         final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
         final int newCol = newPos - lineStart;
         final int lineInc = document.getLineEndOffset(line) - initLineEnd;
-        if (newCol >= col + lineInc) {
+        if (newCol >= col + lineInc && newCol >= 0) {
           final LogicalPosition pos = new LogicalPosition(line, newCol);
           editor.getCaretModel().moveToLogicalPosition(pos);
           editor.getSelectionModel().removeSelection();

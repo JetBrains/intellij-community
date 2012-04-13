@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
@@ -41,6 +42,9 @@ import static com.intellij.util.containers.CollectionFactory.newTroveMap;
  * @author cdr
  */
 class UpdateFoldRegionsOperation implements Runnable {
+  
+  private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
+  
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
@@ -104,6 +108,11 @@ class UpdateFoldRegionsOperation implements Runnable {
         FoldingGroup group = descriptor.getGroup();
         TextRange range = descriptor.getRange();
         String placeholder = descriptor.getPlaceholderText();
+        if (range.getEndOffset() > myEditor.getDocument().getTextLength()) {
+          LOG.error(String.format("Invalid folding descriptor detected (%s). It ends beyond the document range (%d)",
+                                  descriptor, myEditor.getDocument().getTextLength()));
+          continue;
+        }
         FoldRegion region = foldingModel.createFoldRegion(range.getStartOffset(), range.getEndOffset(),
                                                           placeholder == null ? "..." : placeholder,
                                                           group,

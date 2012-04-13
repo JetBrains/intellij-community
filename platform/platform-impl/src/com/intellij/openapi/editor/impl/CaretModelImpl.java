@@ -117,7 +117,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       public void updateFinished(@NotNull Document doc) {
         if (doc != myEditor.getDocument() || myIsInUpdate) return;
         if (savedBeforeBulkCaretMarker != null && savedBeforeBulkCaretMarker.isValid()
-            && savedBeforeBulkCaretMarker.getStartOffset() != myOffset)
+            && savedBeforeBulkCaretMarker.getStartOffset() != myOffset && !myReportCaretMoves)
         {
           moveToOffset(savedBeforeBulkCaretMarker.getStartOffset());
         }

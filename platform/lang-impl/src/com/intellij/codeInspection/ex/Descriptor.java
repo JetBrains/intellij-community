@@ -18,8 +18,8 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.DummyInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalDummyInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -62,8 +62,8 @@ public class Descriptor {
     if (tool instanceof InspectionToolWrapper) {
       InspectionProfileEntry inspection = ((InspectionToolWrapper)tool).getTool();
 
-      if (inspection instanceof LocalDummyInspectionTool) {
-        myShouldBeShown = ((LocalDummyInspectionTool)inspection).shouldBeShownInInspectionProfile();
+      if (inspection instanceof DummyInspectionTool) {
+        myShouldBeShown = ((DummyInspectionTool)inspection).shouldBeShownInInspectionProfile();
       }
     }
   }

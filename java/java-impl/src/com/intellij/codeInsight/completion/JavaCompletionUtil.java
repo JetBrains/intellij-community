@@ -30,7 +30,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NullableLazyKey;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
@@ -66,7 +69,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -272,7 +278,7 @@ public class JavaCompletionUtil {
 
     if (element instanceof PsiWhiteSpace &&
         ( !element.textContains('\n') ||
-          CodeStyleSettingsManager.getInstance(project).getCurrentSettings().METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
+          CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE
         )
        ){
       element = file.findElementAt(element.getTextRange().getEndOffset());
@@ -541,7 +547,7 @@ public class JavaCompletionUtil {
         if (ref != null) {
           final PsiElement qualifier = ref.getQualifier();
           if (qualifier != null) {
-            final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(qualifier.getProject());
+            final CommonCodeStyleSettings settings = context.getCodeStyleSettings();
 
             final String parenSpace = settings.SPACE_WITHIN_PARENTHESES ? " " : "";
             document.insertString(qualifier.getTextRange().getEndOffset(), parenSpace + ")");
@@ -821,7 +827,7 @@ public class JavaCompletionUtil {
 
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
 
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+    final CommonCodeStyleSettings styleSettings = context.getCodeStyleSettings();
     ParenthesesInsertHandler.getInstance(hasParams,
                                          styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES,
                                          styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES && hasParams,

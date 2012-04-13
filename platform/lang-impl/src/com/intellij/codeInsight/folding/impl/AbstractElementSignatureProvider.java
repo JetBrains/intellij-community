@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
 
   @Nullable
   public PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature, @Nullable StringBuilder processingInfoStorage) {
-    int semicolonIndex = signature.indexOf(';');
+    int semicolonIndex = signature.indexOf(ELEMENTS_SEPARATOR);
     PsiElement parent;
 
     if (semicolonIndex >= 0) {
