@@ -23,9 +23,8 @@ import com.intellij.openapi.paths.PathReference;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
-import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
+import org.jetbrains.idea.maven.dom.references.MavenDirectoryPathReferenceConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Build interface.
@@ -47,7 +46,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenPathReferenceConverter.class, soft = false)
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getSourceDirectory();
 
   /**
@@ -61,7 +60,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenPathReferenceConverter.class, soft = false)
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getScriptSourceDirectory();
 
   /**
@@ -75,7 +74,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenPathReferenceConverter.class, soft = false)
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getTestSourceDirectory();
 
   /**
@@ -89,7 +88,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenPathReferenceConverter.class, soft = true)
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = true)
   GenericDomValue<PathReference> getOutputDirectory();
 
   /**
@@ -103,7 +102,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = MavenPathReferenceConverter.class, soft = true)
+  @Convert(value = MavenDirectoryPathReferenceConverter.class, soft = true)
   GenericDomValue<PathReference> getTestOutputDirectory();
 
   /**

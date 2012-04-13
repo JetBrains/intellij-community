@@ -92,4 +92,30 @@ class MavenDomPathWithPropertyTest extends MavenDomTestCase {
 """)
   }
 
+  public void testCompletionDirectoriesOnly() {
+    createProjectPom("""
+    <groupId>test</groupId>
+    <artifactId>project</artifactId>
+    <version>1</version>
+
+    <properties>
+      <ppp>aaa</ppp>
+    </properties>
+
+    <build>
+      <resources>
+        <resource>
+          <directory>aaa/<caret></directory>
+        </resource>
+      </resources>
+    </build>
+    """)
+
+    createProjectSubFile("aaa/a.txt")
+    createProjectSubFile("aaa/b.txt")
+    createProjectSubDir("aaa/res1")
+    createProjectSubDir("aaa/res2")
+
+    assertCompletionVariants(myProjectPom, "res1", "res2")
+  }
 }

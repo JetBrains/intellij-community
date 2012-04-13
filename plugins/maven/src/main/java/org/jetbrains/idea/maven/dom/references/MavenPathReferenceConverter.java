@@ -15,16 +15,14 @@
  */
 package org.jetbrains.idea.maven.dom.references;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.util.PathUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -40,6 +38,16 @@ import java.util.Collection;
  */
 public class MavenPathReferenceConverter extends PathReferenceConverter {
 
+  private final Condition<PsiFileSystemItem> myCondition;
+
+  public MavenPathReferenceConverter() {
+    this(Condition.TRUE);
+  }
+
+  public MavenPathReferenceConverter(@NotNull Condition<PsiFileSystemItem> condition) {
+    myCondition = condition;
+  }
+
   @NotNull
   @Override
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
@@ -50,6 +58,11 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, SystemInfo.isFileSystemCaseSensitive, true) {
 
       private MavenDomProjectModel model;
+
+      @Override
+      protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
+        return myCondition;
+      }
 
       @Override
       protected boolean isSoft() {
