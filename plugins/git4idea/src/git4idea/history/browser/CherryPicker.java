@@ -19,16 +19,17 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -37,8 +38,10 @@ import git4idea.commands.GitSimpleEventDetector;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.UntrackedFilesNotifier;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
@@ -224,7 +227,9 @@ public class CherryPicker {
       @Override
       public void run() {
         cancelCherryPick(repository);
-        commitSucceeded.set(myPlatformFacade.getVcsHelper(myProject).commitChanges(commit.getChanges(), changeList, commitMessage));
+        List<Change> changes = commit.getChanges();
+        CherryPickCommitExecutor executor = new CherryPickCommitExecutor(myProject, myPlatformFacade, changes, commitMessage);
+        commitSucceeded.set(myPlatformFacade.getVcsHelper(myProject).commitChanges(changes, changeList, commitMessage, executor));
       }
     }, ModalityState.NON_MODAL);
     return commitSucceeded.get();
@@ -311,7 +316,7 @@ public class CherryPicker {
   @NotNull
   private LocalChangeList createChangeList(@NotNull List<Change> changes, @NotNull String commitMessage) {
     if (!changes.isEmpty()) {
-      final LocalChangeList changeList = myChangeListManager.addChangeList(commitMessage, null);
+      final LocalChangeList changeList = myChangeListManager.addChangeList(commitMessage, commitMessage);
       myChangeListManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
       myChangeListManager.setDefaultChangeList(changeList);
       return changeList;
@@ -412,5 +417,105 @@ public class CherryPicker {
       return "<html>Changes from cherry-pick <code>" + myCommitHash + "</code>";
     }
   }
+
+  /*
+    Commit procedure is overridden by the executor with its own CommitSession.
+    The reason of that is the asynchronous nature of the CommitHelper: it returns, we continue cherry-picking and occasionally pick
+    the next commit in the queue, and only then Git is called for commit. Thus it commits two cherry-picks at once, which is wrong.
+
+    Here we call GitCheckinEnvironment manually
+   */
+  private static class CherryPickCommitExecutor implements CommitExecutor {
+
+    @NotNull private final Project myProject;
+    @NotNull private final PlatformFacade myPlatformFacade;
+    @NotNull private final List<Change> myChanges;
+    @NotNull private final String myCommitMessage;
+
+    CherryPickCommitExecutor(@NotNull Project project, @NotNull PlatformFacade platformFacade,
+                             @NotNull List<Change> changes, @NotNull String commitMessage) {
+      myProject = project;
+      myPlatformFacade = platformFacade;
+      myChanges = changes;
+      myCommitMessage = commitMessage;
+    }
+
+    @Nls
+    @Override
+    public String getActionText() {
+      return "Commit";
+    }
+
+    @NotNull
+    @Override
+    public CommitSession createCommitSession() {
+      return new CherryPickCommitSession();
+    }
+
+    private class CherryPickCommitSession implements CommitSession {
+      @Override
+      public JComponent getAdditionalConfigurationUI() {
+        return null;
+      }
+
+      @Override
+      public JComponent getAdditionalConfigurationUI(Collection<Change> changes, String commitMessage) {
+        return null;
+      }
+
+      @Override
+      public boolean canExecute(Collection<Change> changes, String commitMessage) {
+        return true;
+      }
+
+      @Override
+      public void execute(Collection<Change> changes, String commitMessage) {
+        final Collection<Document> committingDocs = markCommittingDocs();
+        try {
+          CheckinEnvironment ce = myPlatformFacade.getVcs(myProject).getCheckinEnvironment();
+          if (ce != null) {
+            ce.commit(myChanges, myCommitMessage);
+          }
+        }
+        finally {
+          unmarkCommittingDocs(committingDocs);
+        }
+      }
+
+      @Override
+      public void executionCanceled() {
+      }
+
+      @Override
+      public String getHelpId() {
+        return null;
+      }
+
+      private void unmarkCommittingDocs(final Collection<Document> committingDocs) {
+        myPlatformFacade.runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            CommitHelper.unmarkCommittingDocuments(committingDocs);
+          }
+        });
+      }
+
+      @NotNull
+      private Collection<Document> markCommittingDocs() {
+        final Collection<Document> committingDocs = new ArrayList<Document>();
+        myPlatformFacade.runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            committingDocs.addAll(CommitHelper.markCommittingDocuments(myProject, myChanges));
+          }
+        });
+        return committingDocs;
+      }
+
+    }
+  }
+
+
+
 
 }
