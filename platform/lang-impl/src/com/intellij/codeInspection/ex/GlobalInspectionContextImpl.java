@@ -354,7 +354,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
   public boolean isToCheckFile(PsiFile file, final InspectionProfileEntry tool) {
     final Tools tools = myTools.get(tool.getShortName());
-    if (tools != null) {
+    if (tools != null && file != null) {
       for (ScopeToolState state : tools.getTools()) {
         final NamedScope namedScope = state.getScope(file.getProject());
         if (namedScope == null || namedScope.getValue().contains(file, getCurrentProfile().getProfileManager().getScopesManager())) {
