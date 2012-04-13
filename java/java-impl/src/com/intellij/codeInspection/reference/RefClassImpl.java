@@ -176,7 +176,6 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
     final PsiClass applet = getRefJavaManager().getApplet();
     setApplet(applet != null && psiClass.isInheritor(applet, true));
-    getRefManager().fireNodeInitialized(this);
     PsiManager psiManager = getRefManager().getPsiManager();
     psiManager.dropResolveCaches();
     PsiFile file = psiClass.getContainingFile();

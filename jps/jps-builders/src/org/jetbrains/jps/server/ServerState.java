@@ -165,8 +165,6 @@ class ServerState {
       pd.incUsageCounter();
     }
 
-    final Project project = pd.project;
-
     try {
       final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs);
@@ -285,53 +283,60 @@ class ServerState {
   }
 
   private Project loadProject(String projectPath) {
-    final Project project = new Project();
-    // setup JDKs and global libraries
-    final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
-    for (GlobalLibrary library : myGlobalLibraries) {
-      if (library instanceof SdkLibrary) {
-        final SdkLibrary sdk = (SdkLibrary)library;
-        Node additionalData = null;
-        final String additionalXml = sdk.getAdditionalDataXml();
-        if (additionalXml != null) {
-          try {
-            additionalData = new XmlParser(false, false).parseText(additionalXml);
+    final long start = System.currentTimeMillis();
+    try {
+      final Project project = new Project();
+      // setup JDKs and global libraries
+      final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
+      for (GlobalLibrary library : myGlobalLibraries) {
+        if (library instanceof SdkLibrary) {
+          final SdkLibrary sdk = (SdkLibrary)library;
+          Node additionalData = null;
+          final String additionalXml = sdk.getAdditionalDataXml();
+          if (additionalXml != null) {
+            try {
+              additionalData = new XmlParser(false, false).parseText(additionalXml);
+            }
+            catch (Exception e) {
+              LOG.info(e);
+            }
           }
-          catch (Exception e) {
-            LOG.info(e);
+          final Sdk jdk = project.createSdk(sdk.getTypeName(), sdk.getName(), sdk.getVersion(), sdk.getHomePath(), additionalData);
+          if (jdk != null) {
+            jdk.setClasspath(sdk.getPaths());
           }
-        }
-        final Sdk jdk = project.createSdk(sdk.getTypeName(), sdk.getName(), sdk.getVersion(), sdk.getHomePath(), additionalData);
-        if (jdk != null) {
-          jdk.setClasspath(sdk.getPaths());
+          else {
+            LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
+          }
         }
         else {
-          LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
+          final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
+          if (lib != null) {
+            lib.setClasspath(library.getPaths());
+          }
+          else {
+            LOG.info("Failed to load global library " + library.getName());
+          }
         }
       }
-      else {
-        final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
-        if (lib != null) {
-          lib.setClasspath(library.getPaths());
-        }
-        else {
-          LOG.info("Failed to load global library " + library.getName());
-        }
+
+      final File projectFile = new File(projectPath);
+
+      //String root = dirBased ? projectPath : projectFile.getParent();
+
+      final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
+      IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript(), new SystemOutErrorReporter(false));
+      final String globalEncoding = myGlobalEncoding;
+      if (globalEncoding != null && project.getProjectCharset() == null) {
+        project.setProjectCharset(globalEncoding);
       }
+      project.getIgnoredFilePatterns().loadFromString(myIgnoredFilesPatterns);
+      return project;
     }
-
-    final File projectFile = new File(projectPath);
-
-    //String root = dirBased ? projectPath : projectFile.getParent();
-
-    final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
-    IdeaProjectLoader.loadFromPath(project, loadPath, myPathVariables, getStartupScript(), new SystemOutErrorReporter(false));
-    final String globalEncoding = myGlobalEncoding;
-    if (globalEncoding != null && project.getProjectCharset() == null) {
-      project.setProjectCharset(globalEncoding);
+    finally {
+      final long loadTime = System.currentTimeMillis() - start;
+      LOG.info("Project " + projectPath + " loaded in " + loadTime + " ms");
     }
-    project.getIgnoredFilePatterns().loadFromString(myIgnoredFilesPatterns);
-    return project;
   }
 
   private static boolean isDirectoryBased(File projectFile) {

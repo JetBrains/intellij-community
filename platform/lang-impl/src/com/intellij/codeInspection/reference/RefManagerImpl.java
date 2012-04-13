@@ -447,6 +447,7 @@ public class RefManagerImpl extends RefManager {
         for (RefManagerExtension extension : myExtensions.values()) {
           extension.onEntityInitialized(refElement, elem);
         }
+        fireNodeInitialized(refElement);
       }
     });
 

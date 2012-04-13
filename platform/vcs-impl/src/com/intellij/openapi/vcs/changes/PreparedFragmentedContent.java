@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.highlighter.*;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
+import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,9 +110,13 @@ public class PreparedFragmentedContent {
   }
 
   private void fromFragmentedContent(final FragmentedContent fragmentedContent) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    ApplicationManager.getApplication().runReadAction(new Runnable() { // todo
       @Override
       public void run() {
+        if (DumbService.isDumb(myProject)) {
+          throw new ModalityIgnorantBackgroundableTask.ToBeRepeatedException();
+        }
+
         myOneSide = fragmentedContent.isOneSide();
         myIsAddition = fragmentedContent.isAddition();
         List<BeforeAfter<TextRange>> expandedRanges =

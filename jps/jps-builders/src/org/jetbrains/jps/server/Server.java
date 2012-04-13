@@ -35,11 +35,32 @@ import java.util.concurrent.TimeUnit;
  */
 public class Server {
   public static final int DEFAULT_SERVER_PORT = 7777;
-  private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS = Math.max(2, Runtime.getRuntime().availableProcessors());
   public static final String SERVER_SUCCESS_START_MESSAGE = "Compile Server started successfully. Listening on port: ";
   public static final String SERVER_ERROR_START_MESSAGE = "Error starting Compile Server: ";
   private static final String LOG_FILE_NAME = "log.xml";
-  private static final long PING_INTERVAL = Long.parseLong(System.getProperty(GlobalOptions.PING_INTERVAL_MS_OPTION, "-1")); 
+
+  private static final long PING_INTERVAL;
+  private static final int MAX_SIMULTANEOUS_BUILD_SESSIONS;
+  static {
+    long ping = -1L;
+    try {
+      ping = Long.parseLong(System.getProperty(GlobalOptions.PING_INTERVAL_MS_OPTION, "-1"));
+    }
+    catch (NumberFormatException ignored) {
+    }
+    PING_INTERVAL = ping;
+
+    int builds = 1;
+    try {
+      builds = Math.min(
+        Integer.parseInt(System.getProperty(GlobalOptions.MAX_SIMULTANEOUS_BUILDS_OPTION, "1")),
+        Runtime.getRuntime().availableProcessors()
+      );
+    }
+    catch (NumberFormatException ignored) {
+    }
+    MAX_SIMULTANEOUS_BUILD_SESSIONS = builds;
+  }
 
   private final ChannelGroup myAllOpenChannels = new DefaultChannelGroup("compile-server");
   private final ChannelFactory myChannelFactory;

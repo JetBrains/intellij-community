@@ -158,13 +158,13 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       if (refElement instanceof RefMethod) {
         RefMethod refMethod = (RefMethod) refElement;
         if (refMethod.isExternalOverride()) return null;
-        if (RefUtil.isEntryPoint(refMethod)) return null;
+        if (refMethod.isEntry()) return null;
       }
 
       //ignore anonymous classes. They do not have access modifiers.
       if (refElement instanceof RefClass) {
         RefClass refClass = (RefClass) refElement;
-        if (refClass.isAnonymous() || RefUtil.isEntryPoint(refClass) || refClass.isTestCase() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
+        if (refClass.isAnonymous() || refClass.isEntry() || refClass.isTestCase() || refClass.isServlet() || refClass.isApplet() || refClass.isLocalClass()) return null;
         if (isTopLevelClass(refClass) && !SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES) return null;
       }
 

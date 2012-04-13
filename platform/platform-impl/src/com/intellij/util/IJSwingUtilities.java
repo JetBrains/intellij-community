@@ -26,8 +26,6 @@ import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Iterator;
 
@@ -179,16 +177,28 @@ public class IJSwingUtilities {
     return (T)ContainerUtil.find(getParents(focusOwner), (FilteringIterator.InstanceOf<T>)FilteringIterator.instanceOf(aClass));
   }
 
-  public static void adjustComponentsOnMac(JLabel label, JComponent component) {
-    if (label == null || component == null) return;
+  public static void adjustComponentsOnMac(@Nullable JComponent component) {
+    adjustComponentsOnMac(null, component);
+  }
+
+
+  public static void adjustComponentsOnMac(@Nullable JLabel label, @Nullable JComponent component) {
+    if (component == null) return;
     if (!UIUtil.isUnderAquaLookAndFeel()) return;
 
     if (component instanceof JComboBox) {
       UIUtil.addInsets(component, new Insets(0,-2,0,0));
-      UIUtil.addInsets(label, new Insets(0,2,0,0));
+      if (label != null) {
+        UIUtil.addInsets(label, new Insets(0,2,0,0));
+      }
+    }
+    if (component instanceof JCheckBox) {
+      UIUtil.addInsets(component, new Insets(0,-5,0,0));
     }
     if (component instanceof JTextField || component instanceof EditorTextField) {
-      UIUtil.addInsets(label, new Insets(0,3,0,0));
+      if (label != null) {
+        UIUtil.addInsets(label, new Insets(0,3,0,0));
+      }
     }
   }
 }

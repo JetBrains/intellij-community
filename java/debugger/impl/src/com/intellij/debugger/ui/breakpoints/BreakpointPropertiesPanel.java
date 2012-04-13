@@ -43,6 +43,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -207,9 +208,11 @@ public abstract class BreakpointPropertiesPanel {
       }
     });
 
+
     mySuspendAllRadio.addItemListener(suspendPolicyChangeListener);
     mySuspendThreadRadio.addItemListener(suspendPolicyChangeListener);
-    
+
+
     myMakeDefaultButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
@@ -314,6 +317,10 @@ public abstract class BreakpointPropertiesPanel {
     DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
+
+    IJSwingUtilities.adjustComponentsOnMac(mySuspendJBCheckBox);
+    IJSwingUtilities.adjustComponentsOnMac(myLogExpressionCheckBox);
+    IJSwingUtilities.adjustComponentsOnMac(myLogMessageCheckBox);
   }
 
   private String getSelectedSuspendPolicy() {

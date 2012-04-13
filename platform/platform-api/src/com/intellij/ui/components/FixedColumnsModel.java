@@ -44,4 +44,14 @@ public class FixedColumnsModel  extends MultiColumnListModel {
     final int columns = getColumnCount();
     return columns == 0 ? -1 : row * columns + column;
   }
+
+  @Override
+  public int getColumn(int listIndex) {
+    return listIndex % myMaxColumns;
+  }
+
+  @Override
+  public int getRow(int listIndex) {
+    return listIndex / myMaxColumns;
+  }
 }

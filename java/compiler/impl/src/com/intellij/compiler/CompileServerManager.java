@@ -586,6 +586,7 @@ public class CompileServerManager implements ApplicationComponent{
     cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
     cmdLine.addParameter("-Xmx" + Registry.intValue("compiler.server.heap.size") + "m");
     cmdLine.addParameter("-Djava.awt.headless=true");
+
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
     if (shouldGenerateIndex != null) {
       cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
@@ -594,6 +595,12 @@ public class CompileServerManager implements ApplicationComponent{
     if (pingInterval > 0L) {
       cmdLine.addParameter("-D" + GlobalOptions.PING_INTERVAL_MS_OPTION + "=" + pingInterval);
     }
+
+    final String maxBuilds = Registry.stringValue("compiler.server.max.simultaneous.builds");
+    if (!StringUtil.isEmpty(maxBuilds)) {
+      cmdLine.addParameter("-D" + GlobalOptions.MAX_SIMULTANEOUS_BUILDS_OPTION + "=" + maxBuilds);
+    }
+
     final String additionalOptions = Registry.stringValue("compiler.server.vm.options");
     if (!StringUtil.isEmpty(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);

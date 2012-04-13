@@ -15,11 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -29,21 +26,8 @@ import com.intellij.psi.PsiElement;
  * @author anna
  * @since 6.0
  */
-public abstract class RefUtil {
-  public static RefUtil getInstance() {
-    return ServiceManager.getService(RefUtil.class);
-  }
-
-  public static boolean isEntryPoint(final RefElement refElement) {
-    final PsiElement element = refElement.getElement();
-    final ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
-    for (EntryPoint entryPoint : point.getExtensions()) {
-      if (entryPoint.isEntryPoint(refElement, element)) {
-        return true;
-      }
-    }
-    return isImplicitUsage(element);
-  }
+public class RefUtil {
+  private RefUtil() {}
 
   public static boolean isImplicitUsage(PsiElement element) {
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);

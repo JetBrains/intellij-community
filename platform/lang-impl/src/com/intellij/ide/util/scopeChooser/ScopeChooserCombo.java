@@ -227,6 +227,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       result.add(GlobalSearchScopes.projectTestScope(project));
     }
 
+    result.add(GlobalSearchScopes.openFilesScope(project));
+
     if (dataContext != null) {
       PsiElement dataContextElement = getDataContextElement(dataContext);
 

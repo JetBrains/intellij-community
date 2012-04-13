@@ -252,13 +252,33 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @NotNull
   public static GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile) {
-    return new FileScope(project, virtualFile);
+    return fileScope(project, virtualFile, null);
+  }
+
+  @NotNull
+  public static GlobalSearchScope fileScope(@NotNull Project project, final VirtualFile virtualFile, @Nullable final String displayName) {
+    return new FileScope(project, virtualFile) {
+      @Override
+      public String getDisplayName() {
+        return displayName == null ? super.getDisplayName() : displayName;
+      }
+    };
   }
 
   @NotNull
   public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    return filesScope(project, files, null);
+  }
+
+  @NotNull
+  public static GlobalSearchScope filesScope(@NotNull Project project, @NotNull Collection<VirtualFile> files, @Nullable final String displayName) {
     if (files.isEmpty()) return EMPTY_SCOPE;
-    return files.size() == 1? fileScope(project, files.iterator().next()) : new FilesScope(project, files);
+    return files.size() == 1? fileScope(project, files.iterator().next(), displayName) : new FilesScope(project, files) {
+      @Override
+      public String getDisplayName() {
+        return displayName == null ? super.getDisplayName() : displayName;
+      }
+    };
   }
 
   static class IntersectionScope extends GlobalSearchScope {
