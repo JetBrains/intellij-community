@@ -25,6 +25,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
 import com.intellij.util.xml.converters.PathReferenceConverter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.dom.references.MavenPathReferenceConverter;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Build interface.
@@ -46,7 +47,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = false)
+  @Convert(value = MavenPathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getSourceDirectory();
 
   /**
@@ -60,7 +61,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = false)
+  @Convert(value = MavenPathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getScriptSourceDirectory();
 
   /**
@@ -74,7 +75,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = false)
+  @Convert(value = MavenPathReferenceConverter.class, soft = false)
   GenericDomValue<PathReference> getTestSourceDirectory();
 
   /**
@@ -88,7 +89,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = MavenPathReferenceConverter.class, soft = true)
   GenericDomValue<PathReference> getOutputDirectory();
 
   /**
@@ -102,7 +103,7 @@ public interface MavenDomBuild extends MavenDomBuildBase {
    */
   @NotNull
   @Required(value = false, nonEmpty = true)
-  @Convert(value = PathReferenceConverter.class, soft = true)
+  @Convert(value = MavenPathReferenceConverter.class, soft = true)
   GenericDomValue<PathReference> getTestOutputDirectory();
 
   /**
