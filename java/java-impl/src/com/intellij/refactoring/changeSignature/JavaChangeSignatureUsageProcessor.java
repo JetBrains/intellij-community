@@ -909,7 +909,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                           RefactoringUIUtil.getDescription(method, true),
-                                          myChangeInfo.getNewVisibility(),
+                                          VisibilityUtil.toPresentableText(myChangeInfo.getNewVisibility()),
                                           RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
               conflictDescriptions.putValue(method, message);
               if (!needToChangeCalls()) {
