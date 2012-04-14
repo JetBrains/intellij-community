@@ -130,7 +130,6 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   public void dispose() {
     myPrinter = null;
     myProperties = null;
-    Disposer.dispose(myConsole);
     myConsole = null;
   }
 
