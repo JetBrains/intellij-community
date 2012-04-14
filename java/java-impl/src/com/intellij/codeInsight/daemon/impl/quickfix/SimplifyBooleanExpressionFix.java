@@ -181,6 +181,13 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       throw exception[0];
     }
     PsiExpression newExpression = (PsiExpression)expression.replace(result[0]);
+    if (newExpression instanceof PsiLiteralExpression) {
+      final PsiElement parent = newExpression.getParent();
+      if (parent instanceof PsiAssertStatement && ((PsiLiteralExpression)newExpression).getValue() == Boolean.TRUE) {
+        parent.delete();
+        return;
+      }
+    }
     simplifyIfStatement(newExpression);
   }
 
