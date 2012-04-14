@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.modifiers;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -36,7 +37,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-abstract class ModifierIntention extends Intention {
+abstract class ModifierIntention extends Intention implements LowPriorityAction {
 
   @NotNull
   @Override
