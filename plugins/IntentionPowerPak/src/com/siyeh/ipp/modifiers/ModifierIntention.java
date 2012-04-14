@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -83,9 +84,10 @@ abstract class ModifierIntention extends Intention {
     for (PsiElement reference : problemReferences) {
       final PsiElement context =
         PsiTreeUtil.getParentOfType(reference, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
-      conflicts.putValue(reference, RefactoringUIUtil.getDescription(member, false) +
-                                    " with " + getModifier() + " visibility won't be accessible from " +
-                                    RefactoringUIUtil.getDescription(context, true));
+      conflicts.putValue(reference, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                               RefactoringUIUtil.getDescription(member, false),
+                                                               PsiBundle.visibilityPresentation(getModifier()),
+                                                               RefactoringUIUtil.getDescription(context, true)));
     }
     final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts);
     conflictsDialog.show();
