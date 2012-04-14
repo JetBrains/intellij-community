@@ -81,7 +81,8 @@ abstract class ModifierIntention extends Intention {
     }
     final MultiMap<PsiElement, String> conflicts = new MultiMap();
     for (PsiElement reference : problemReferences) {
-      final PsiNameIdentifierOwner context = PsiTreeUtil.getParentOfType(reference, PsiMethod.class, PsiField.class, PsiClass.class);
+      final PsiElement context =
+        PsiTreeUtil.getParentOfType(reference, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
       conflicts.putValue(reference, RefactoringUIUtil.getDescription(member, false) +
                                     " with " + getModifier() + " visibility won't be accessible from " +
                                     RefactoringUIUtil.getDescription(context, true));
