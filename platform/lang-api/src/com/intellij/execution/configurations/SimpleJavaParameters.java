@@ -39,7 +39,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private final ParametersList myVmParameters = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myUseDynamicClasspath;
-
+  private boolean myUseDynamicVMOptions;
+  
   public String getMainClass() {
     return myMainClass;
   }
@@ -81,6 +82,14 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
 
   public void setUseDynamicClasspath(final boolean useDynamicClasspath) {
     myUseDynamicClasspath = useDynamicClasspath;
+  }
+
+  public void setUseDynamicVMOptions(boolean useDynamicVMOptions) {
+    myUseDynamicVMOptions = useDynamicVMOptions;
+  }
+
+  public boolean isDynamicVMOptions() {
+    return myUseDynamicVMOptions;
   }
 
   public OSProcessHandler createOSProcessHandler() throws ExecutionException {
