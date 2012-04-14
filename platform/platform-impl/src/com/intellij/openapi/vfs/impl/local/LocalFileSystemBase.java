@@ -212,7 +212,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (file.getParent() == null) {
       final File[] roots = File.listRoots();
       if (roots.length == 1 && roots[0].getName().isEmpty()) {
-        return roots[0].list();
+        final String[] list = roots[0].list();
+        return list != null ? list : ArrayUtil.EMPTY_STRING_ARRAY;
       }
       if (file.getName().isEmpty()) {
         // return drive letter names for the 'fake' root on windows
