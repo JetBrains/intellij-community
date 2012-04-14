@@ -103,11 +103,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
 
     if (SystemInfo.isWindows) {
-      if (path.startsWith("//") || path.startsWith("\\\\")) {
-        return path;
+      if (path.charAt(0) == '/' && !path.startsWith("//")) {
+        path = path.substring(1);  // hack over new File(path).toUrl().getFile()
       }
 
-      if (path.charAt(0) == '/') path = path.substring(1); //hack over new File(path).toUrl().getFile()
       if (path.contains("~")) {
         try {
           return new File(path.replace('/', File.separatorChar)).getCanonicalPath().replace(File.separatorChar, '/');
@@ -122,7 +121,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         path = new File(path).getAbsolutePath();
       }
     }
-
 
     return path.replace(File.separatorChar, '/');
   }
