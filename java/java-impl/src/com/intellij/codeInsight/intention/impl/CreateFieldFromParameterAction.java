@@ -18,10 +18,12 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.ClassMember;
+import com.intellij.codeInsight.generation.MemberChooserObject;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -120,10 +122,17 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       }
     }
     if (method == null) return false;
+
+    final List<PsiParameter> parameters = new ArrayList<PsiParameter>();
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      if (isAvailable(parameter)) {
+        parameters.add(parameter);
+      }
+    }
+
     synchronized (LOCK) {
       final Collection<SmartPsiElementPointer<PsiParameter>> params = getUnboundedParams(method);
       params.clear();
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
       for (PsiParameter parameter : parameters) {
         params.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter));
       }
@@ -141,7 +150,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     final PsiType[] types = getTypes(psiParameter);
     PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
     return psiParameter.isValid()
-           && psiParameter.getLanguage().isKindOf(StdLanguages.JAVA)
+           && psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE)
            && psiParameter.getDeclarationScope() instanceof PsiMethod
            && ((PsiMethod)psiParameter.getDeclarationScope()).getBody() != null
            && psiParameter.getManager().isInProject(psiParameter)
@@ -161,8 +170,6 @@ public class CreateFieldFromParameterAction implements IntentionAction {
     return new AbstractCollection<SmartPsiElementPointer<PsiParameter>>() {
       @Override
       public boolean add(SmartPsiElementPointer<PsiParameter> psiVariable) {
-        PsiParameter psiParameter = psiVariable.getElement();
-        if (psiParameter == null || !isAvailable(psiParameter)) return false;
         return finalParams.put(psiVariable, Boolean.TRUE) == null;
       }
 
