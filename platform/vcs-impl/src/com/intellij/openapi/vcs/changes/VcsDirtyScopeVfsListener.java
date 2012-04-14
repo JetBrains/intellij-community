@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ConstantZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.ZipperUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -43,8 +42,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these
- * files dirty.
+ * Listens to file system events and notifies VcsDirtyScopeManagers responsible for changed files to mark these files dirty.
+ *
  * @author Irina Chernushina
  * @author Kirill Likhodedov
  */
@@ -150,6 +149,8 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     final FileAndDirsCollector dirtyFilesAndDirs = new FileAndDirsCollector();
     // collect files and directories - sources of events
     for (VFileEvent event : events) {
+      if (event instanceof VFileDeleteEvent) continue;
+
       final VirtualFile file = getFileForEvent(event);
       if (file == null) {
         continue;
@@ -204,7 +205,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
      * @param file        file which path is to be added.
      * @param addToFiles  If true, then add to dirty files even if it is a directory. Otherwise add to the proper set.
      */
-    public void add(VirtualFile file, boolean addToFiles, final boolean forDelete) {
+    private void add(VirtualFile file, boolean addToFiles, final boolean forDelete) {
       if (file == null) { return; }
       final boolean isDirectory = file.isDirectory();
       // need to create FilePath explicitly without referring to VirtualFile because the path of VirtualFile may change
@@ -230,7 +231,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     /**
      * Adds files to the collection of files and directories - to the collection of directories (which are handled recursively).
      */
-    void add(VirtualFile file, final boolean forDelete) {
+    private void add(VirtualFile file, final boolean forDelete) {
       add(file, false, forDelete);
     }
 
@@ -238,25 +239,17 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
      * Adds to the collection of files. A file (even if it is a directory) is marked dirty alone (not recursively).
      * Use this method, when you want directory not to be marked dirty recursively.
      */
-    void addToFiles(VirtualFile file, final boolean forDelete) {
+    private void addToFiles(VirtualFile file, final boolean forDelete) {
       add(file, true, forDelete);
     }
 
-    void markDirty() {
-      markDirty(map);
-    }
-
-    void markDirty(final Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> outerMap) {
+    private void markDirty(final Map<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> outerMap) {
       for (Map.Entry<VcsDirtyScopeManager, Pair<HashSet<FilePath>, HashSet<FilePath>>> entry : outerMap.entrySet()) {
         VcsDirtyScopeManager manager = entry.getKey();
         HashSet<FilePath> files = entry.getValue().first;
         HashSet<FilePath> dirs = entry.getValue().second;
         manager.filePathsDirty(files, dirs);
       }
-    }
-
-    public boolean isEmpty() {
-      return map.isEmpty();
     }
   }
 
@@ -283,5 +276,4 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
     });
     return result;
   }
-
 }
