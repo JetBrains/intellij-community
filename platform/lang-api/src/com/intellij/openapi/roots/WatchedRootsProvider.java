@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 27-Dec-2007
- */
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,9 +20,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+/**
+ * @author anna
+ * @since 27-Dec-2007
+ */
 public interface WatchedRootsProvider {
-
   ExtensionPointName<WatchedRootsProvider> EP_NAME = new ExtensionPointName<WatchedRootsProvider>("com.intellij.roots.watchedRootsProvider");
+
   @NotNull
   Set<String> getRootsToWatch();
 }
