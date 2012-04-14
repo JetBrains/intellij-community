@@ -18,6 +18,7 @@ package com.siyeh.ipp.modifiers;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -26,7 +27,7 @@ class ModifierPredicate implements PsiElementPredicate {
 
   private final String myModifier;
 
-  public ModifierPredicate(@PsiModifier.ModifierConstant String modifier) {
+  public ModifierPredicate(@NotNull @PsiModifier.ModifierConstant String modifier) {
     myModifier = modifier;
   }
 
@@ -43,6 +44,9 @@ class ModifierPredicate implements PsiElementPredicate {
       final PsiClass aClass = (PsiClass)parent;
       final PsiElement brace = aClass.getLBrace();
       if (brace != null && brace.getTextOffset() < element.getTextOffset()) {
+        return false;
+      }
+      if (myModifier.equals(PsiModifier.PRIVATE) && aClass.getContainingClass() == null) {
         return false;
       }
     }
