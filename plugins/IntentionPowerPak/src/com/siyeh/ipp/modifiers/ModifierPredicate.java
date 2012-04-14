@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 class ModifierPredicate implements PsiElementPredicate {
 
+  @PsiModifier.ModifierConstant
   private final String myModifier;
 
   public ModifierPredicate(@NotNull @PsiModifier.ModifierConstant String modifier) {
@@ -46,7 +47,8 @@ class ModifierPredicate implements PsiElementPredicate {
       if (brace != null && brace.getTextOffset() < element.getTextOffset()) {
         return false;
       }
-      if (myModifier.equals(PsiModifier.PRIVATE) && aClass.getContainingClass() == null) {
+      if (aClass.getContainingClass() == null &&
+          (myModifier.equals(PsiModifier.PRIVATE) || myModifier.equals(PsiModifier.PROTECTED))) {
         return false;
       }
     }
