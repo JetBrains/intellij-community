@@ -499,6 +499,10 @@ public class RefactoringUtil {
           return initType.createArrayType();
         }
       }
+
+      if (expr instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand(expr)) {
+        return getTypeByExpression(((PsiAssignmentExpression)expr.getParent()).getRExpression());
+      }
       return null;
     }
     PsiClass refClass = PsiUtil.resolveClassInType(type);

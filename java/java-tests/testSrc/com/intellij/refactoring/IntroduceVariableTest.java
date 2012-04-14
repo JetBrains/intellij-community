@@ -273,6 +273,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testPolyadic() throws Exception {
     doTest(new MockIntroduceVariableHandler("b1", true, true, true, "boolean"));
   }
+  
+  public void testAssignmentToUnresolvedReference() throws Exception {
+    doTest(new MockIntroduceVariableHandler("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"));
+  }
 
   public void testSiblingInnerClassType() throws Exception {
     doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B") {
