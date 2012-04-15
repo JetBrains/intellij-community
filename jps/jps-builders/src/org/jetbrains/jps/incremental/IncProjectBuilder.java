@@ -7,13 +7,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.MappingFailedException;
 import com.intellij.util.io.PersistentEnumerator;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
 import org.jetbrains.jps.api.SharedThreadPool;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -164,7 +164,7 @@ public class IncProjectBuilder {
     return context;
   }
 
-  private static void flushContext(CompileContext context) {
+  private static void flushContext(@Nullable CompileContext context) {
     if (context != null) {
       context.getTimestampStorage().force();
       context.getDataManager().flush(false);
@@ -181,14 +181,16 @@ public class IncProjectBuilder {
       }
       ExternalJavacDescriptor.KEY.set(context, null);
     }
-    cleanupJavacNameTable();
+    if (context == null || context.getBuilderParameter(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null) {
+      cleanupJavacNameTable();
+    }
   }
 
   private static boolean ourClenupFailed = false;
 
   private static void cleanupJavacNameTable() {
     try {
-      if (JavaBuilder.USE_EMBEDDED_JAVAC && !ourClenupFailed) {
+      if (!ourClenupFailed) {
         final Field freelistField = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
         freelistField.setAccessible(true);
         freelistField.set(null, com.sun.tools.javac.util.List.nil());

@@ -91,7 +91,7 @@ public class CompileServerManager implements ApplicationComponent{
   private static final String COMPILE_SERVER_SYSTEM_ROOT = "compile-server";
   private static final String LOGGER_CONFIG = "log.xml";
   private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.xml";
-  private volatile OSProcessHandler myProcessHandler;
+  private volatile ServerWrapper myProcessHandler;
   private final File mySystemDirectory;
   @Nullable
   private volatile CompileServerClient myClient;
@@ -335,7 +335,7 @@ public class CompileServerManager implements ApplicationComponent{
   public RequestFuture submitCompilationTask(final Project project, final boolean isRebuild, final boolean isMake,
                                              final Collection<String> modules, final Collection<String> artifacts,
                                              final Collection<String> paths,
-                                             final Map<String, String> userData, final JpsServerResponseHandler handler) {
+                                             final Map<String, String> _userData, final JpsServerResponseHandler handler) {
     final String projectId = getProjectPath(project);
     final Ref<RequestFuture> futureRef = new Ref<RequestFuture>(null);
     final RunnableFuture future = myTaskExecutor.submit(new Runnable() {
@@ -344,9 +344,14 @@ public class CompileServerManager implements ApplicationComponent{
         try {
           final CompileServerClient client = ensureServerRunningAndClientConnected(true);
           if (client != null) {
+            final Map<String, String> userData = new LinkedHashMap<String, String>();
+            userData.putAll(_userData);
+            if (Registry.is("compiler.server.use.external.javac.process")) {
+              userData.put(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION, "true");
+            }
             final RequestFuture requestFuture = isRebuild ?
-              client.sendRebuildRequest(projectId, handler) :
-              client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, userData, handler);
+                                                client.sendRebuildRequest(projectId, handler) :
+                                                client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, userData, handler);
             futureRef.set(requestFuture);
           }
           else {
@@ -390,9 +395,9 @@ public class CompileServerManager implements ApplicationComponent{
   // executed in one thread at a time
   @Nullable
   private CompileServerClient ensureServerRunningAndClientConnected(boolean forceRestart) throws Throwable {
-    final OSProcessHandler ph = myProcessHandler;
+    final ServerWrapper ph = myProcessHandler;
     final CompileServerClient cl = myClient;
-    final boolean processNotRunning = ph == null || ph.isProcessTerminated() || ph.isProcessTerminating();
+    final boolean processNotRunning = ph == null || ph.isDead();
     final boolean clientNotConnected = cl == null || !cl.isConnected();
 
     if (processNotRunning || clientNotConnected) {
@@ -405,68 +410,13 @@ public class CompileServerManager implements ApplicationComponent{
         return null;
       }
 
+      final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
+      workDirectory.mkdirs();
+      ensureLogConfigExists(workDirectory);
+
       final int port = NetUtils.findAvailableSocketPort();
-      final long serverPingInterval = Registry.intValue("compiler.server.ping.interval", -1) * 1000L; 
-      final Process process = launchServer(port, serverPingInterval);
-
-      final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
-        @Override
-        protected boolean shouldDestroyProcessRecursively() {
-          return true;
-        }
-      };
-      final StringBuilder serverStartMessage = new StringBuilder();
-      final Semaphore semaphore  = new Semaphore();
-      semaphore.down();
-      processHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          // re-translate server's output to idea.log
-          final String text = event.getText();
-          if (!StringUtil.isEmpty(text)) {
-            LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text.trim());
-          }
-        }
-      });
-      processHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void processTerminated(ProcessEvent event) {
-          try {
-            processHandler.removeProcessListener(this);
-          }
-          finally {
-            semaphore.up();
-          }
-        }
-
-        @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
-          if (outputType == ProcessOutputTypes.STDERR) {
-            try {
-              final String text = event.getText();
-              if (text != null) {
-                if (text.contains(Server.SERVER_SUCCESS_START_MESSAGE) || text.contains(Server.SERVER_ERROR_START_MESSAGE)) {
-                  processHandler.removeProcessListener(this);
-                }
-                if (serverStartMessage.length() > 0) {
-                  serverStartMessage.append("\n");
-                }
-                serverStartMessage.append(text);
-              }
-            }
-            finally {
-              semaphore.up();
-            }
-          }
-        }
-      });
-      processHandler.startNotify();
-      semaphore.waitFor();
-
-      final String startupMsg = serverStartMessage.toString();
-      if (!startupMsg.contains(Server.SERVER_SUCCESS_START_MESSAGE)) {
-        throw new Exception("Server startup failed: " + startupMsg);
-      }
+      final long serverPingInterval = Registry.intValue("compiler.server.ping.interval", -1) * 1000L;
+      ServerWrapper wrapper = Registry.is("compiler.server.in.process") ? launchServerThread(workDirectory, port) : launchServerProcess(port, serverPingInterval, workDirectory);
 
       CompileServerClient client = new CompileServerClient(serverPingInterval, myAsyncExec);
       boolean connected = false;
@@ -475,17 +425,88 @@ public class CompileServerManager implements ApplicationComponent{
         if (connected) {
           final RequestFuture setupFuture = sendSetupRequest(client);
           setupFuture.waitFor();
-          myProcessHandler = processHandler;
+          myProcessHandler = wrapper;
           myClient = client;
         }
       }
       finally {
         if (!connected) {
-          shutdownServer(cl, processHandler);
+          shutdownServer(cl, wrapper);
         }
       }
     }
     return myClient;
+  }
+
+  private static ServerWrapper launchServerThread(final File workDirectory, final int port) {
+    final Server server = new Server(workDirectory, Registry.is("compiler.server.use.memory.temp.cache"));
+    //todo hostname
+    server.start(port);
+    return new ServerWrapper(null, server);
+  }
+
+  private ServerWrapper launchServerProcess(int port, long serverPingInterval, File workDirectory) throws Exception {
+    final Process process = launchServer(port, serverPingInterval, workDirectory);
+
+    final OSProcessHandler processHandler = new OSProcessHandler(process, null) {
+      @Override
+      protected boolean shouldDestroyProcessRecursively() {
+        return true;
+      }
+    };
+    final StringBuilder serverStartMessage = new StringBuilder();
+    final Semaphore semaphore  = new Semaphore();
+    semaphore.down();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        // re-translate server's output to idea.log
+        final String text = event.getText();
+        if (!StringUtil.isEmpty(text)) {
+          LOG.info("COMPILE_SERVER [" +outputType.toString() +"]: "+ text.trim());
+        }
+      }
+    });
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        try {
+          processHandler.removeProcessListener(this);
+        }
+        finally {
+          semaphore.up();
+        }
+      }
+
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (outputType == ProcessOutputTypes.STDERR) {
+          try {
+            final String text = event.getText();
+            if (text != null) {
+              if (text.contains(Server.SERVER_SUCCESS_START_MESSAGE) || text.contains(Server.SERVER_ERROR_START_MESSAGE)) {
+                processHandler.removeProcessListener(this);
+              }
+              if (serverStartMessage.length() > 0) {
+                serverStartMessage.append("\n");
+              }
+              serverStartMessage.append(text);
+            }
+          }
+          finally {
+            semaphore.up();
+          }
+        }
+      }
+    });
+    processHandler.startNotify();
+    semaphore.waitFor();
+
+    final String startupMsg = serverStartMessage.toString();
+    if (!startupMsg.contains(Server.SERVER_SUCCESS_START_MESSAGE)) {
+      throw new Exception("Server startup failed: " + startupMsg);
+    }
+    return new ServerWrapper(processHandler, null);
   }
 
   private static RequestFuture sendSetupRequest(final @NotNull CompileServerClient client) throws Exception {
@@ -570,7 +591,7 @@ public class CompileServerManager implements ApplicationComponent{
   //  commandLine.add((launcherUsed? "-J" : "") + "-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + CharsetToolkit.getDefaultSystemCharset().name());
   //}
 
-  private Process launchServer(final int port, long pingInterval) throws ExecutionException {
+  private Process launchServer(final int port, long pingInterval, File workDirectory) throws ExecutionException {
     // validate tools.jar presence
     final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
     if (systemCompiler == null) {
@@ -619,9 +640,6 @@ public class CompileServerManager implements ApplicationComponent{
     if (Registry.is("compiler.server.use.memory.temp.cache")) {
       cmdLine.addParameter("-D"+ GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION + "=true");
     }
-    if (Registry.is("compiler.server.use.external.javac.process")) {
-      cmdLine.addParameter("-D"+ GlobalOptions.USE_EXTERNAL_JAVAC_OPTION + "=true");
-    }
     cmdLine.addParameter("-D"+ GlobalOptions.HOSTNAME_OPTION + "=" + NetUtils.getLocalHostString());
 
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
@@ -651,10 +669,6 @@ public class CompileServerManager implements ApplicationComponent{
 
     cmdLine.addParameter(org.jetbrains.jps.server.Server.class.getName());
     cmdLine.addParameter(Integer.toString(port));
-
-    final File workDirectory = new File(mySystemDirectory, COMPILE_SERVER_SYSTEM_ROOT);
-    workDirectory.mkdirs();
-    ensureLogConfigExists(workDirectory);
 
     cmdLine.addParameter(FileUtil.toSystemIndependentName(workDirectory.getPath()));
 
@@ -695,7 +709,7 @@ public class CompileServerManager implements ApplicationComponent{
     shutdownServer(myClient, myProcessHandler);
   }
 
-  private static void shutdownServer(final CompileServerClient client, final OSProcessHandler processHandler) {
+  private static void shutdownServer(final CompileServerClient client, final ServerWrapper processHandler) {
     try {
       if (client != null && client.isConnected()) {
         final Future future = client.sendShutdownRequest();
@@ -868,4 +882,28 @@ public class CompileServerManager implements ApplicationComponent{
       }
     }
   }
+
+  private static class ServerWrapper {
+    final @Nullable OSProcessHandler myHandler;
+    final @Nullable Server myServer;
+
+    ServerWrapper(OSProcessHandler handler, Server server) {
+      myHandler = handler;
+      myServer = server;
+    }
+
+    public void destroyProcess() {
+      if (myHandler != null) {
+        myHandler.destroyProcess();
+      } else if (myServer != null) {
+        myServer.stop();
+      }
+    }
+
+    public boolean isDead() {
+      return myHandler != null && (myHandler.isProcessTerminated() || myHandler.isProcessTerminating()) ||
+             myServer != null && myServer.isStopped();
+    }
+  }
 }
+
