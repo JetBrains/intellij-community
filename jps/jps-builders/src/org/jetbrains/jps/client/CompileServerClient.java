@@ -44,9 +44,9 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
   }
 
   @NotNull
-  public RequestFuture sendRebuildRequest(String projectId, JpsServerResponseHandler handler) throws Exception{
+  public RequestFuture sendRebuildRequest(String projectId, JpsServerResponseHandler handler, Map<String, String> userData) throws Exception{
     checkConnected();
-    return sendRequest(ProtoUtil.createRebuildRequest(projectId, Collections.<String, String>emptyMap()), handler);
+    return sendRequest(ProtoUtil.createRebuildRequest(projectId, userData), handler);
   }
 
   @NotNull

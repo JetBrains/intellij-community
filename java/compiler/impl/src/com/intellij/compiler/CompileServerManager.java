@@ -345,12 +345,14 @@ public class CompileServerManager implements ApplicationComponent{
           final CompileServerClient client = ensureServerRunningAndClientConnected(true);
           if (client != null) {
             final Map<String, String> userData = new LinkedHashMap<String, String>();
-            userData.putAll(_userData);
+            if (!isRebuild) { //todo pass user data on rebuild as well?
+              userData.putAll(_userData);
+            }
             if (Registry.is("compiler.server.use.external.javac.process")) {
               userData.put(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION, "true");
             }
             final RequestFuture requestFuture = isRebuild ?
-                                                client.sendRebuildRequest(projectId, handler) :
+                                                client.sendRebuildRequest(projectId, handler, userData) :
                                                 client.sendCompileRequest(isMake, projectId, modules, artifacts, paths, userData, handler);
             futureRef.set(requestFuture);
           }
