@@ -16,59 +16,15 @@
 
 package com.siyeh.ipp.modifiers;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.*;
-import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.MultiMap;
-import com.siyeh.ipp.base.Intention;
-import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiModifier;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MakePublicIntention extends Intention {
-
-  @NotNull
-  @Override
-  protected PsiElementPredicate getElementPredicate() {
-    return new MakePublicPredicate();
-  }
+public class MakePublicIntention extends ModifierIntention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiModifierListOwner owner = (PsiModifierListOwner)element.getParent();
-    final PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList == null) {
-      return;
-    }
-    if (!checkForConflicts(owner)) return;
-    modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-  }
-
-  private static boolean checkForConflicts(PsiModifierListOwner owner) {
-    if (!(owner instanceof PsiClass)) {
-      return true;
-    }
-    final PsiClass aClass = (PsiClass)owner;
-    final PsiElement parent = aClass.getParent();
-    if (!(parent instanceof PsiJavaFile)) {
-      return true;
-    }
-    final PsiJavaFile javaFile = (PsiJavaFile)parent;
-    final String name = FileUtil.getNameWithoutExtension(javaFile.getName());
-    final String className = aClass.getName();
-    if (name.equals(className)) {
-      return true;
-    }
-    final MultiMap<PsiElement, String> conflicts = new MultiMap();
-    conflicts.putValue(aClass, "The " + RefactoringUIUtil.getDescription(aClass, false) + " is declared in " +
-                               RefactoringUIUtil.getDescription(javaFile, false) +
-                               " but when public should be declared in a file named '" + className + '\'');
-    final ConflictsDialog conflictsDialog = new ConflictsDialog(owner.getProject(), conflicts);
-    conflictsDialog.show();
-    return conflictsDialog.isOK();
+  protected String getModifier() {
+    return PsiModifier.PUBLIC;
   }
 }
