@@ -35,11 +35,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class Advertiser {
   private final List<String> myTexts = new CopyOnWriteArrayList<String>();
+  private volatile Dimension myCachedPrefSize;
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
     private JLabel mySample = createLabel();
 
     @Override
     public Dimension getPreferredSize() {
+      Dimension dimension = myCachedPrefSize;
+      if (dimension == null) {
+        dimension = myCachedPrefSize = calcPreferredSize();
+      }
+      return dimension;
+    }
+
+    private Dimension calcPreferredSize() {
       if (myTexts.isEmpty()) {
         return new Dimension(-1, 0);
       }
@@ -85,6 +94,7 @@ public class Advertiser {
     } else {
       myTextPanel.setText("");
     }
+    myCachedPrefSize = null;
     myComponent.revalidate();
     myComponent.repaint();
   }
