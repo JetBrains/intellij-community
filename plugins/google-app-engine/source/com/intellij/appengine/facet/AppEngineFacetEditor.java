@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -81,7 +80,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
     final ModuleRootModel rootModel = myContext.getRootModel();
     descriptor.setRoots(rootModel.getSourceRoots());
-    final VirtualFile[] files = FileChooser.chooseFiles(myContext.getProject(), descriptor);
+    final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myContext.getProject(), null);
     for (VirtualFile file : files) {
       myFilesListModel.addElement(file.getPath());
     }
