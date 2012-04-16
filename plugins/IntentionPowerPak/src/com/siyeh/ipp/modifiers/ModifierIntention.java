@@ -59,20 +59,26 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       return;
     }
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(member);
-    final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts, new Runnable() {
-      @Override
-      public void run() {
-        final AccessToken token = WriteAction.start();
-        try {
-          modifierList.setModifierProperty(getModifier(), true);
+    final boolean conflictsDialogOK;
+    if (conflicts.isEmpty()) {
+      conflictsDialogOK = true;
+    } else {
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts, new Runnable() {
+        @Override
+        public void run() {
+          final AccessToken token = WriteAction.start();
+          try {
+            modifierList.setModifierProperty(getModifier(), true);
+          }
+          finally {
+            token.finish();
+          }
         }
-        finally {
-          token.finish();
-        }
-      }
-    });
-    conflictsDialog.show();
-    if (conflictsDialog.isOK()) {
+      });
+      conflictsDialog.show();
+      conflictsDialogOK = conflictsDialog.isOK();
+    }
+    if (conflictsDialogOK) {
       modifierList.setModifierProperty(getModifier(), true);
     }
   }
