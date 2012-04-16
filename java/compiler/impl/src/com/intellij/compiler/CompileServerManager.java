@@ -76,10 +76,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -95,22 +92,17 @@ public class CompileServerManager implements ApplicationComponent{
   private final File mySystemDirectory;
   @Nullable
   private volatile CompileServerClient myClient;
-  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(new AsyncTaskExecutor() {
-    @Override
-    public void submit(Runnable runnable) {
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
-    }
-  });
   private final ProjectManager myProjectManager;
   private static final int MAKE_TRIGGER_DELAY = 5 * 1000 /*5 seconds*/;
   private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
   private final CompileServerClasspathManager myClasspathManager = new CompileServerClasspathManager();
-  private final AsyncTaskExecutor myAsyncExec = new AsyncTaskExecutor() {
+  private final Executor myPooledThreadExecutor = new Executor() {
     @Override
-    public void submit(Runnable runnable) {
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    public void execute(Runnable command) {
+      ApplicationManager.getApplication().executeOnPooledThread(command);
     }
   };
+  private final SequentialTaskExecutor myTaskExecutor = new SequentialTaskExecutor(myPooledThreadExecutor);
 
   public CompileServerManager(final ProjectManager projectManager) {
     myProjectManager = projectManager;
@@ -468,7 +460,7 @@ public class CompileServerManager implements ApplicationComponent{
         throw new Exception("Server startup failed: " + startupMsg);
       }
 
-      CompileServerClient client = new CompileServerClient(serverPingInterval, myAsyncExec);
+      CompileServerClient client = new CompileServerClient(serverPingInterval, myPooledThreadExecutor);
       boolean connected = false;
       try {
         connected = client.connect(NetUtils.getLocalHostString(), port);

@@ -17,7 +17,7 @@ import java.util.*;
 public class JavacServerClient extends SimpleProtobufClient<JavacServerResponseHandler>{
 
   public JavacServerClient() {
-    super(JavacRemoteProto.Message.getDefaultInstance(), SharedThreadPool.ASYNC_EXEC, new UUIDGetter() {
+    super(JavacRemoteProto.Message.getDefaultInstance(), SharedThreadPool.INSTANCE, new UUIDGetter() {
       @NotNull
       public UUID getSessionUUID(@NotNull MessageEvent e) {
         final JavacRemoteProto.Message message = (JavacRemoteProto.Message)e.getMessage();

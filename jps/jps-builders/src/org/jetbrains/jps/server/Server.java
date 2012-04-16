@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 //import com.intellij.openapi.diagnostic.Logger;
+
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import org.apache.log4j.Level;
@@ -17,17 +18,13 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -77,14 +74,14 @@ public class Server {
     myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);
     myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    myMessageHandler = new ServerMessageHandler(this, new AsyncTaskExecutor() {
+    myMessageHandler = new ServerMessageHandler(this, new Executor() {
       @Override
-      public void submit(final Runnable runnable) {
+      public void execute(final Runnable command) {
         myBuildsExecutor.submit(new Runnable() {
           @Override
           public void run() {
             try {
-              runnable.run();
+              command.run();
             }
             finally {
               Thread.interrupted(); // clear interrupted status before returning to pull
