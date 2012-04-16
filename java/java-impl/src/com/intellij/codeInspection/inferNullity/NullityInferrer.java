@@ -31,14 +31,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   private int numAnnotationsAdded = 0;
-  private final HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
-  private final HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new HashSet<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNotNullSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
+  private final List<SmartPsiElementPointer<? extends PsiModifierListOwner>> myNullableSet = new ArrayList<SmartPsiElementPointer<? extends PsiModifierListOwner>>();
   private final boolean myAnnotateLocalVariables;
   private final SmartPointerManager myPointerManager;
 
@@ -139,29 +140,60 @@ public class NullityInferrer {
   public void apply(final Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNullableSet) {
-      final PsiModifierListOwner element = pointer.getElement();
-      if (element != null) {
-        if (shouldIgnore(element)) continue;
-        new AddAnnotationFix(manager.getDefaultNullable(), element, manager.getDefaultNotNull()).invoke(project, null, element.getContainingFile());
-      }
+      annotateNullable(project, manager, pointer);
     }
 
     for (SmartPsiElementPointer<? extends PsiModifierListOwner> pointer : myNotNullSet) {
-      final PsiModifierListOwner element = pointer.getElement();
-      if (element != null) {
-        if (shouldIgnore(element)) continue;
-        if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) continue;
-        new AddAnnotationFix(manager.getDefaultNotNull(), element, manager.getDefaultNullable()).invoke(project, null,
-                                                                                                        element.getContainingFile());
-      }
+      annotateNotNull(project, manager, pointer);
     }
 
+    nothingFoundMessage(project);
+  }
+
+  public boolean nothingFoundMessage(final Project project) {
     if (myNullableSet.isEmpty() && myNotNullSet.isEmpty()) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
         }
       });
+      return true;
+    }
+    return false;
+  }
+
+  private void annotateNotNull(Project project,
+                               NullableNotNullManager manager,
+                               SmartPsiElementPointer<? extends PsiModifierListOwner> pointer) {
+    final PsiModifierListOwner element = pointer.getElement();
+    if (element != null) {
+      if (shouldIgnore(element)) return;
+      if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) return;
+      new AddAnnotationFix(manager.getDefaultNotNull(), element, manager.getDefaultNullable()).invoke(project, null,
+                                                                                                      element.getContainingFile());
+    }
+  }
+
+  private void annotateNullable(Project project,
+                                NullableNotNullManager manager,
+                                SmartPsiElementPointer<? extends PsiModifierListOwner> pointer) {
+    final PsiModifierListOwner element = pointer.getElement();
+    if (element != null) {
+      if (shouldIgnore(element)) return;
+      new AddAnnotationFix(manager.getDefaultNullable(), element, manager.getDefaultNotNull()).invoke(project, null, element.getContainingFile());
+    }
+  }
+
+  public int getCount() {
+    return myNotNullSet.size() + myNullableSet.size();
+  }
+
+  public void apply(int i, Project project, NullableNotNullManager manager) {
+    if (i < myNullableSet.size()) {
+      annotateNullable(project, manager, myNullableSet.get(i));
+    } else {
+      i -= myNullableSet.size();
+      annotateNotNull(project, manager, myNotNullSet.get(i));
     }
   }
 

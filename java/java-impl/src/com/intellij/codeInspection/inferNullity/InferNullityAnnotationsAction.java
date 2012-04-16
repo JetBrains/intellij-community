@@ -49,6 +49,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Function;
+import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -196,7 +197,12 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         new WriteCommandAction(project, INFER_NULLITY_ANNOTATIONS) {
           @Override
           protected void run(Result result) throws Throwable {
-            inferrer.apply(project);
+            if (!inferrer.nothingFoundMessage(project)) {
+              final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, INFER_NULLITY_ANNOTATIONS, false);
+              progressTask.setMinIterationTime(200);
+              progressTask.setTask(new AnnotateTask(project, inferrer, progressTask));
+              ProgressManager.getInstance().run(progressTask);
+            }
           }
         }.execute();
       }
