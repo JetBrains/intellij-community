@@ -614,12 +614,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private void addRootsToWatch() {
     final Set<String> rootPaths = getAllRoots(false);
     if (rootPaths == null) return;
-
-    final Set<LocalFileSystem.WatchRequest> newRootsToWatch = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
-
-    //remove old requests after adding new ones, helps avoiding unnecessary synchronizations
-    LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
-    myRootsToWatch = newRootsToWatch;
+    myRootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(myRootsToWatch, rootPaths, true);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +32,7 @@ import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -166,26 +168,23 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     });
   }
 
-  private void fetchDtd(final Project project, final String dtdUrl, final String url, final ProgressIndicator indicator)
-    throws IOException {
-
+  private void fetchDtd(final Project project, final String dtdUrl, final String url, final ProgressIndicator indicator) throws IOException {
     final String extResourcesPath = getExternalResourcesPath();
     final File extResources = new File(extResourcesPath);
-    final boolean alreadyExists = extResources.exists();
-    extResources.mkdirs();
-    LOG.assertTrue(extResources.exists());
+    LOG.assertTrue(extResources.mkdirs() || extResources.exists(), extResources);
 
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(
-              extResources.getAbsolutePath().replace(File.separatorChar, '/'));
-            LOG.assertTrue(vFile != null);
-            if (!alreadyExists) LocalFileSystem.getInstance().addRootToWatch(vFile.getPath(), true);
-          }
-        });
+        final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(FetchExtResourceAction.class);
+        try {
+          final String path = FileUtil.toSystemIndependentName(extResources.getAbsolutePath());
+          final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+          LOG.assertTrue(vFile != null, path);
+        }
+        finally {
+          token.finish();
+        }
       }
     }, indicator.getModalityState());
 
