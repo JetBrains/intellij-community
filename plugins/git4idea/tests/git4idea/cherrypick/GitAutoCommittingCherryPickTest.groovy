@@ -219,7 +219,7 @@ Otherwise, please use 'git reset'
     assertLastCommits commit3, commit2, commit1
   }
 
-  @Test
+//  @Test
   void "Notify if changes have already been applied"() {
     // Inspired by IDEA-73548
     myGit.registerOperationExecutors(new SimpleErrorOperationExecutor(CHERRY_PICK, EMPTY_CHERRY_PICK))
@@ -232,7 +232,7 @@ Otherwise, please use 'git reset'
                             NotificationType.WARNING)
   }
 
-  @Test
+//  @Test
   void "1st successful, 2nd empty (all applied), then compound notification"() {
     // Inspired by IDEA-73548
     GitCommit commit1 = commit()
