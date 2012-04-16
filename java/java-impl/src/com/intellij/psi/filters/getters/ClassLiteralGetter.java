@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class ClassLiteralGetter {
     PsiElement position = parameters.getPosition();
     if (classParameter instanceof PsiWildcardType) {
       final PsiWildcardType wildcardType = (PsiWildcardType)classParameter;
-      classParameter = wildcardType.getBound();
+      classParameter = wildcardType.isSuper() ? wildcardType.getSuperBound() : wildcardType.getExtendsBound();
       addInheritors = wildcardType.isExtends() && classParameter instanceof PsiClassType;
     } else if (!matcher.getPrefix().isEmpty()) {
       addInheritors = true;

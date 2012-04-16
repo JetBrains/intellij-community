@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import java.util.Iterator;
+import java.util.*;
 
 public class Test {
     public static void bar() {
@@ -25,3 +25,15 @@ public class Test {
       return null;
     }
 }
+
+class Example {
+    static List<? extends AbstractTreeNode> treeNodes = null;
+
+    public static void main(String[] args) {
+        for (AbstractTreeNode<String> treeNode : treeNodes) {
+
+        }
+    }
+
+}
+class AbstractTreeNode<T> {}

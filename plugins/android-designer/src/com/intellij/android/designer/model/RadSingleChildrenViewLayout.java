@@ -32,7 +32,7 @@ public class RadSingleChildrenViewLayout extends RadViewLayout {
       if (context.isTree()) {
         return new TreeDropToOperation(myContainer, context);
       }
-      return new DropToOperation((RadViewComponent)myContainer, context);
+      return new DropToOperation(myContainer, context);
     }
 
     return null;

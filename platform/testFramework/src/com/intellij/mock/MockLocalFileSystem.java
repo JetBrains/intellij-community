@@ -82,23 +82,19 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  @Nullable
-  public WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively) {
-    throw new UnsupportedOperationException("'addRootToWatch' not implemented in " + getClass().getName());
-  }
-
-  @Override
   @NotNull
-  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively) {
-    throw new UnsupportedOperationException("'addRootsToWatch' not implemented in " + getClass().getName());
+  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean watchRecursively) {
+    throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
   }
 
   @Override
   public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
+    throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
   }
 
   @Override
-  public void removeWatchedRoot(@NotNull final WatchRequest watchRequest) {
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests, @NotNull Collection<String> rootPaths, boolean watchRecursively) {
+    throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
   }
 
   @Override

@@ -17,10 +17,10 @@ package com.intellij.lang.ant.refactoring;
 
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.lang.ant.config.AntConfiguration;
+import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
 import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
 import com.intellij.lang.ant.psi.AntTarget;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -45,11 +45,10 @@ public class AntTargetRenameListenerProvider implements RefactoringElementListen
             final AntConfiguration configuration = AntConfiguration.getInstance(newElement.getProject());
             ((AntConfigurationImpl)configuration).handleTargetRename(oldName, newName);
 
-            for (BeforeRunTaskProvider provider : Extensions.getExtensions(AntBeforeRunTaskProvider.EXTENSION_POINT_NAME, newElement.getProject())) {
-              if (AntBeforeRunTaskProvider.ID.equals(provider.getId())) {
-                ((AntBeforeRunTaskProvider)provider).handleTargetRename(oldName, newName);
-                break;
-              }
+            BeforeRunTaskProvider<AntBeforeRunTask> provider =
+              BeforeRunTaskProvider.getProvider(newElement.getProject(), AntBeforeRunTaskProvider.ID);
+            if (provider instanceof AntBeforeRunTaskProvider) {
+              ((AntBeforeRunTaskProvider)provider).handleTargetRename(oldName, newName);
             }
           }
         }

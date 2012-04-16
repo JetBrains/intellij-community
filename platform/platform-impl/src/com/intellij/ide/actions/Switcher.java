@@ -154,13 +154,15 @@ public class Switcher extends AnAction implements DumbAware {
     }
 
     assert SWITCHER != null;
-    if (e.getInputEvent().isShiftDown()) {
-      SWITCHER.goBack();
-    } else {
-      if (selectFirstItem) {
-        SWITCHER.files.setSelectedIndex(0);
+    if (!SWITCHER.isPinnedMode()) {
+      if (e.getInputEvent().isShiftDown()) {
+        SWITCHER.goBack();
       } else {
-        SWITCHER.goForward();
+        if (selectFirstItem) {
+          SWITCHER.files.setSelectedIndex(0);
+        } else {
+          SWITCHER.goForward();
+        }
       }
     }
   }
@@ -247,7 +249,7 @@ public class Switcher extends AnAction implements DumbAware {
           public boolean value(String s) {
             return !mySpeedSearch.isPopupActive()
                    || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                   || mySpeedSearch.matchingFragments(s) != null;
+                   || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null;
           }
         }, mySpeedSearch);
       }
@@ -291,6 +293,7 @@ public class Switcher extends AnAction implements DumbAware {
       };
       separator.setBackground(Color.WHITE);
 
+      int selectionIndex = -1;
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
       final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
@@ -321,6 +324,7 @@ public class Switcher extends AnAction implements DumbAware {
             if (!firstRecentMarked) {
               firstRecentMarked = true;
               info.isSeparator = true;
+              selectionIndex = filesData.size() - 2;
             }
           }
         }
@@ -403,7 +407,7 @@ public class Switcher extends AnAction implements DumbAware {
           public boolean value(String s) {
             return !mySpeedSearch.isPopupActive()
                    || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                   || mySpeedSearch.matchingFragments(s) != null;
+                   || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null;
           }
         }, mySpeedSearch);
       }
@@ -436,6 +440,9 @@ public class Switcher extends AnAction implements DumbAware {
           this.add(pane, BorderLayout.EAST);
         } else {
           this.add(files, BorderLayout.EAST);
+        }
+        if (selectionIndex > -1) {
+          files.setSelectedIndex(selectionIndex);
         }
         this.add(separator, BorderLayout.CENTER);
       }
@@ -553,6 +560,12 @@ public class Switcher extends AnAction implements DumbAware {
           break;
         case VK_ESCAPE:
           cancel();
+          break;
+        case VK_PAGE_DOWN:
+          ListScrollingUtil.movePageDown(getSelectedList());
+          break;
+        case VK_PAGE_UP:
+          ListScrollingUtil.movePageUp(getSelectedList());
           break;
         case VK_DELETE:
         case VK_BACK_SPACE: // Mac users
@@ -863,6 +876,7 @@ public class Switcher extends AnAction implements DumbAware {
         }
       }
 
+      int tab = 0;
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         final JList list = getSelectedList();
@@ -872,6 +886,7 @@ public class Switcher extends AnAction implements DumbAware {
         files.repaint();
         toolWindows.repaint();
         getSelectedList(list).setSelectedValue(value, true);
+        tab++;
       }
     }
 

@@ -18,6 +18,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.JDOMUtil;
@@ -42,11 +43,22 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     return myId;
   }
 
-  public String getDescription(RunConfiguration runConfiguration, UnknownTask task) {
-    return "Unknown task " + myId.toString();
+  @Override
+  public String getName() {
+    return ExecutionBundle.message("before.launch.run.unknown.task");
+  }
+
+  @Override
+  public String getDescription(UnknownTask task) {
+    return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString();
   }
 
   public boolean configureTask(RunConfiguration runConfiguration, UnknownTask task) {
+    return false;
+  }
+
+  @Override
+  public boolean canExecuteTask(RunConfiguration configuration, UnknownTask task) {
     return false;
   }
 
@@ -54,18 +66,19 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     return true;
   }
 
-  public boolean hasConfigurationButton() {
+  public boolean isConfigurable() {
     return false;
   }
 
   public UnknownTask createTask(RunConfiguration runConfiguration) {
-    return new UnknownTask();
+    return new UnknownTask(getId());
   }
 
-  public static final class UnknownTask extends BeforeRunTask {
+  public static final class UnknownTask extends BeforeRunTask<UnknownTask> {
     private Element myConfig;
 
-    public UnknownTask() {
+    public UnknownTask(Key<UnknownTask> providerId) {
+      super(providerId);
     }
 
     public void readExternal(Element element) {

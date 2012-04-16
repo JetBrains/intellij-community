@@ -154,7 +154,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
         }
 
         xmlTag.delete();
-        movedComponent.setTag(newXmlTag);
+        movedComponent.updateTag(newXmlTag);
       }
     });
 

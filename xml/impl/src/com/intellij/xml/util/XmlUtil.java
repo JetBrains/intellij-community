@@ -602,6 +602,14 @@ public class XmlUtil {
 
     compositeElement.addChildren(children[2].getNode(), null, null);
   }
+
+  public static String getDefaultXhtmlNamespace(Project project) {
+    String defaultHtmlDoctype = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(project);
+    if (Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(defaultHtmlDoctype)) {
+      defaultHtmlDoctype = Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
+    }
+    return defaultHtmlDoctype;
+  }
   //
   //public static void expandTag(@NotNull XmlTag tag) {
   //  final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());

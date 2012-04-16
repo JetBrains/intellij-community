@@ -15,10 +15,10 @@
  */
 package com.intellij.android.designer.designSurface;
 
-import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.FeedbackLayer;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
+import com.intellij.designer.model.RadComponent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,7 +29,7 @@ import java.awt.*;
 public class DropToOperation extends AbstractEditOperation {
   private JComponent myFeedback;
 
-  public DropToOperation(RadViewComponent container, OperationContext context) {
+  public DropToOperation(RadComponent container, OperationContext context) {
     super(container, context);
   }
 

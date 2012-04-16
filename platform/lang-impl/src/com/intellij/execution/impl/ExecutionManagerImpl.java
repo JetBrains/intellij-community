@@ -31,7 +31,6 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -41,9 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author dyoma
@@ -99,24 +96,25 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       final RunConfiguration runConfiguration = (RunConfiguration)configuration;
       final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
 
-      final Map<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask> activeProviders = new LinkedHashMap<BeforeRunTaskProvider<BeforeRunTask>, BeforeRunTask>();
-      for (final BeforeRunTaskProvider<BeforeRunTask> provider : Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, myProject)) {
-        final BeforeRunTask task = runManager.getBeforeRunTask(runConfiguration, provider.getId());
-        if (task != null && task.isEnabled()) {
-          activeProviders.put(provider, task);
+      final List<BeforeRunTask> activeTasks = new ArrayList<BeforeRunTask>();
+        final List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(runConfiguration);
+        for (BeforeRunTask task : tasks) {
+          if (task != null && task.isEnabled()) {
+            activeTasks.add(task);
+          }
         }
-      }
 
       ConfigurationPerRunnerSettings configurationSettings = state != null ? state.getConfigurationSettings() : null;
       final DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
       final DataContext dataContext = configurationSettings != null ? SimpleDataContext
         .getSimpleContext(BeforeRunTaskProvider.RUNNER_ID, configurationSettings.getRunnerId(), projectContext) : projectContext;
 
-      if (!activeProviders.isEmpty()) {
+      if (!activeTasks.isEmpty()) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            for (BeforeRunTaskProvider<BeforeRunTask> provider : activeProviders.keySet()) {
-              if(!provider.executeTask(dataContext, runConfiguration, activeProviders.get(provider))) {
+            for (BeforeRunTask task : activeTasks) {
+              BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
+              if(provider != null && !provider.executeTask(dataContext, runConfiguration, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
                 }

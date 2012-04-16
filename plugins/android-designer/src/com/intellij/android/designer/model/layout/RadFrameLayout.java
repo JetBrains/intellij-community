@@ -63,7 +63,7 @@ public class RadFrameLayout extends RadViewLayoutWithData {
       if (context.isTree()) {
         return new TreeDropToOperation(myContainer, context);
       }
-      return new FrameLayoutOperation((RadViewComponent)myContainer, context);
+      return new FrameLayoutOperation(myContainer, context);
     }
     else if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);

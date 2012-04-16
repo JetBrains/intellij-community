@@ -70,7 +70,7 @@ public class Server {
   private final ScheduledExecutorService myScheduler;
   private final ServerMessageHandler myMessageHandler;
 
-  public Server(File systemDir, boolean cachesInMemory) {
+  public Server(File systemDir) {
     Utils.setSystemRoot(systemDir);
     final ExecutorService threadPool = Executors.newCachedThreadPool();
     myScheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Client activity checker", Thread.MIN_PRIORITY);
@@ -105,17 +105,6 @@ public class Server {
         );
       }
     };
-    ServerState.getInstance().setKeepTempCachesInMemory(cachesInMemory);
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
-      public void run() {
-        try {
-          myMessageHandler.cancelAllBuildsAndClearState();
-        }
-        finally {
-          Server.this.stop();
-        }
-      }
-    });
   }
 
   public void start(int listenPort) {
@@ -192,10 +181,6 @@ public class Server {
     myLastPingTime = System.currentTimeMillis();
   }
 
-  public boolean isStopped() {
-    return myScheduler.isShutdown();
-  }
-
   public static void main(String[] args) {
     try {
       int port = DEFAULT_SERVER_PORT;
@@ -212,10 +197,21 @@ public class Server {
         systemDir = new File(args[1]);
       }
 
-      final Server server = new Server(systemDir, System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null);
+      final Server server = new Server(systemDir);
+      Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
+        public void run() {
+          try {
+            server.myMessageHandler.cancelAllBuildsAndClearState();
+          }
+          finally {
+            server.stop();
+          }
+        }
+      });
 
       initLoggers();
       server.start(port);
+      ServerState.getInstance().setKeepTempCachesInMemory(System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null);
 
       System.out.println("Server classpath: " + System.getProperty("java.class.path"));
       System.err.println(SERVER_SUCCESS_START_MESSAGE + port);

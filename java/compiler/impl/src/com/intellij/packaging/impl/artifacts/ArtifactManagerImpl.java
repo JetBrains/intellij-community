@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,9 +284,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
       ContainerUtil.addIfNotNull(request, requestsToRemove);
     }
 
-    final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-    fileSystem.removeWatchedRoots(requestsToRemove);
-    final Set<LocalFileSystem.WatchRequest> newRequests = fileSystem.addRootsToWatch(toAdd, true);
+    Set<LocalFileSystem.WatchRequest> newRequests = LocalFileSystem.getInstance().replaceWatchedRoots(requestsToRemove, toAdd, true);
     for (LocalFileSystem.WatchRequest request : newRequests) {
       myWatchedOutputs.put(request.getRootPath(), request);
     }

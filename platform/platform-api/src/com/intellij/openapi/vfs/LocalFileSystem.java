@@ -25,7 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
+
+import static java.util.Collections.singleton;
 
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "file";
@@ -125,14 +128,34 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   }
 
   @Nullable
-  public abstract WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean toWatchRecursively);
+  public WatchRequest addRootToWatch(@NotNull final String rootPath, final boolean watchRecursively) {
+    final Set<WatchRequest> result = addRootsToWatch(singleton(rootPath), watchRecursively);
+    return result.size() == 1 ? result.iterator().next() : null;
+  }
 
   @NotNull
-  public abstract Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean toWatchRecursively);
+  public abstract Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean watchRecursively);
 
-  public abstract void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch);
+  public void removeWatchedRoot(@Nullable final WatchRequest watchRequest) {
+    if (watchRequest != null) {
+      removeWatchedRoots(singleton(watchRequest));
+    }
+  }
 
-  public abstract void removeWatchedRoot(@NotNull final WatchRequest watchRequest);
+  public abstract void removeWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests);
+
+  @Nullable
+  public WatchRequest replaceWatchedRoot(@Nullable final WatchRequest watchRequest,
+                                         @NotNull final String rootPath,
+                                         final boolean watchRecursively) {
+    final Set<WatchRequest> requests = watchRequest != null ? singleton(watchRequest) : Collections.<WatchRequest>emptySet();
+    final Set<WatchRequest> result = replaceWatchedRoots(requests, singleton(rootPath), watchRecursively);
+    return result.size() == 1 ? result.iterator().next() : null;
+  }
+
+  public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
+                                                        @NotNull final Collection<String> rootPaths,
+                                                        final boolean watchRecursively);
 
   public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 

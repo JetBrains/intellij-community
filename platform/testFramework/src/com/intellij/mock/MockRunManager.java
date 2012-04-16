@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author gregsh
@@ -100,9 +100,7 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
-  public void addConfiguration(RunnerAndConfigurationSettings settings,
-                               boolean isShared,
-                               Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks) {
+  public void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks) {
   }
 
   @Override
@@ -116,19 +114,26 @@ public class MockRunManager extends RunManagerEx {
 
   @NotNull
   @Override
-  public <T extends BeforeRunTask> Map<Key<T>, BeforeRunTask> getBeforeRunTasks(RunConfiguration settings) {
-    return Collections.emptyMap();
-  }
-
-  @Override
-  public <T extends BeforeRunTask> T getBeforeRunTask(RunConfiguration settings, Key<T> taskProviderID) {
+  public List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings) {
     return null;
   }
 
   @NotNull
   @Override
-  public <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks) {
-    return null;
+  public List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings, boolean includeOnlyActiveTasks) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
+    return Collections.emptyList();
   }
 
   @Override

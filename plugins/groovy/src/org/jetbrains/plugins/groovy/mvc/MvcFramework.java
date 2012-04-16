@@ -353,9 +353,9 @@ public abstract class MvcFramework {
     runManager.addConfiguration(runSettings, false);
     runManager.setActiveConfiguration(runSettings);
 
-    final CompileStepBeforeRun.MakeBeforeRunTask runTask = runManager.getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
-    if (runTask != null) {
-      runTask.setEnabled(false);
+    final List<CompileStepBeforeRun.MakeBeforeRunTask> runTasks = runManager.getBeforeRunTasks(configuration, CompileStepBeforeRun.ID);
+    for (CompileStepBeforeRun.MakeBeforeRunTask task : runTasks) {
+      task.setEnabled(false);
     }
   }
 
