@@ -22,6 +22,7 @@ import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.actions.AbstractComboBoxAction;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditOperation;
@@ -61,7 +62,10 @@ public class RadFrameLayout extends RadViewLayoutWithData {
   public EditOperation processChildOperation(OperationContext context) {
     if (context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) {
       if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
+        if (TreeEditOperation.isTarget(myContainer, context)) {
+          return new TreeDropToOperation(myContainer, context);
+        }
+        return null;
       }
       return new FrameLayoutOperation(myContainer, context);
     }

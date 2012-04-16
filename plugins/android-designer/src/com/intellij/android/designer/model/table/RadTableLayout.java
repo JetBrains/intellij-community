@@ -22,6 +22,7 @@ import com.intellij.android.designer.designSurface.layout.TableLayoutDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
@@ -54,7 +55,10 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
   public EditOperation processChildOperation(OperationContext context) {
     if (context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) {
       if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
+        if (TreeEditOperation.isTarget(myContainer, context)) {
+          return new TreeDropToOperation(myContainer, context);
+        }
+        return null;
       }
       // XXX
     }

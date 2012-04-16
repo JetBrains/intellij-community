@@ -19,6 +19,7 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
@@ -29,7 +30,7 @@ public class TreeDropToOperation extends TreeEditOperation {
   }
 
   @Override
-  protected void execute(RadComponent insertBefore) throws Exception {
+  protected void execute(@Nullable RadComponent insertBefore) throws Exception {
     AbstractEditOperation.execute(myContext, (RadViewComponent)myContainer, myComponents, (RadViewComponent)insertBefore);
   }
 }

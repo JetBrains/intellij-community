@@ -19,6 +19,7 @@ import com.intellij.android.designer.designSurface.TreeDropToOperation;
 import com.intellij.android.designer.designSurface.layout.AbsoluteLayoutOperation;
 import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.ComponentDecorator;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
@@ -47,7 +48,10 @@ public class RadAbsoluteLayout extends RadViewLayoutWithData {
   public EditOperation processChildOperation(OperationContext context) {
     if (context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) {
       if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
+        if (TreeEditOperation.isTarget(myContainer, context)) {
+          return new TreeDropToOperation(myContainer, context);
+        }
+        return null;
       }
       return new AbsoluteLayoutOperation(myContainer, context);
     }
