@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,8 @@ public class SelectRepositoryAndShowLogAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, true, false, true));
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, true, false, true);
+    final VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, project, null);
     if (virtualFiles.length == 0) return;
     if (virtualFiles.length > MAX_REPOS) {
       VcsBalloonProblemNotifier.showOverVersionControlView(project, "Too many roots (more than " + MAX_REPOS +

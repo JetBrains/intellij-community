@@ -76,19 +76,6 @@ public class FileChooserDescriptor implements Cloneable {
     myChooseMultiple = chooseMultiple;
   }
 
-  /** @deprecated use {@linkplain FileChooserDescriptorFactory} (to remove in IDEA 12) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileChooserDescriptor() {
-    this(false, false, false, false, false, false);
-  }
-
-  /** @deprecated use {@linkplain FileChooserDescriptorFactory} (to remove in IDEA 12) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileChooserDescriptor chooseFolders() {
-    myChooseFolders = true;
-    return this;
-  }
-
   public final String getTitle() {
     return myTitle;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
@@ -148,7 +149,8 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     }
     chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModule);
 
-    final VirtualFile[] files = FileChooser.chooseFiles(myParentComponent, chooserDescriptor, myModule.getProject().getBaseDir());
+    final Project project = myModule.getProject();
+    final VirtualFile[] files = FileChooser.chooseFiles(chooserDescriptor, myParentComponent, project, project.getBaseDir());
     if (files.length == 0) return Collections.emptyList();
 
     List<LibraryRootsComponentDescriptor> suitableDescriptors = new ArrayList<LibraryRootsComponentDescriptor>();
@@ -167,8 +169,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     else {
       rootsComponentDescriptor = myDefaultDescriptor;
     }
-    List<OrderRoot> chosenRoots = RootDetectionUtil.detectRoots(Arrays.asList(files), myParentComponent, myModule.getProject(),
-                                                                rootsComponentDescriptor);
+    List<OrderRoot> chosenRoots = RootDetectionUtil.detectRoots(Arrays.asList(files), myParentComponent, project, rootsComponentDescriptor);
 
     final List<OrderRoot> roots = filterAlreadyAdded(chosenRoots);
     if (roots.isEmpty()) {

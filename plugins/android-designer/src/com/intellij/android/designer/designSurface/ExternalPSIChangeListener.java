@@ -26,26 +26,29 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 /**
  * @author Alexander Lobas
  */
 public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   private final Alarm myAlarm = new Alarm();
-  private final JComponent myComponent;
+  private final AndroidDesignerEditorPanel myDesigner;
   private final PsiFile myFile;
   private final int myDelayMillis;
   private final Runnable myRunnable;
   private volatile boolean myRunState;
+  private volatile boolean myInitialize;
   private String myContent;
 
-  public ExternalPSIChangeListener(JComponent component, PsiFile file, int delayMillis, Runnable runnable) {
-    myComponent = component;
+  public ExternalPSIChangeListener(AndroidDesignerEditorPanel designer, PsiFile file, int delayMillis, Runnable runnable) {
+    myDesigner = designer;
     myFile = file;
     myDelayMillis = delayMillis;
     myRunnable = runnable;
     myContent = getContent();
+  }
+
+  public void setInitialize() {
+    myInitialize = true;
   }
 
   public void start() {
@@ -66,7 +69,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   public void activate() {
     if (!myRunState) {
       start();
-      if (!ComparatorUtil.equalsNullable(myContent, getContent())) {
+      if (!ComparatorUtil.equalsNullable(myContent, getContent()) || myDesigner.getRootComponent() == null) {
         addRequest();
       }
       myContent = null;
@@ -104,11 +107,11 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (myRunState) {
+        if (myRunState && myInitialize) {
           runnable.run();
         }
       }
-    }, myDelayMillis, ModalityState.stateForComponent(myComponent));
+    }, myDelayMillis, ModalityState.stateForComponent(myDesigner));
   }
 
   public void clear() {

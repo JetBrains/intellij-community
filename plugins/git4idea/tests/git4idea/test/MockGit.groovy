@@ -40,11 +40,6 @@ class MockGit implements Git {
   public static final GitCommandResult FAKE_SUCCESS_RESULT = new GitCommandResult(true, 0, Collections.emptyList(), Collections.emptyList())
   private final Map<OperationName, Queue<OperationExecutor>> myExecutors = new HashMap<OperationName, Queue<OperationExecutor>>()
 
-  public static interface OperationExecutor {
-    GitCommandResult execute();
-    OperationName getName();
-  }
-
   public enum OperationName {
     CHERRY_PICK,
     GET_UNMERGED_FILES;
@@ -201,7 +196,7 @@ class MockGit implements Git {
     return null;
   }
 
-  public static class SimpleErrorOperationExecutor implements MockGit.OperationExecutor {
+  public static class SimpleErrorOperationExecutor implements OperationExecutor {
 
     String myOutput
     MockGit.OperationName myOperationName
@@ -222,7 +217,7 @@ class MockGit implements Git {
     }
   }
 
-  public static class SimpleSuccessOperationExecutor implements MockGit.OperationExecutor {
+  public static class SimpleSuccessOperationExecutor implements OperationExecutor {
 
     String myOutput
     MockGit.OperationName myOperationName
@@ -273,4 +268,9 @@ class MockGit implements Git {
     "$commit.subject\n(cherry-picked from ${commit.shortHash.getString()})"
   }
 
+}
+
+interface OperationExecutor {
+  GitCommandResult execute();
+  MockGit.OperationName getName();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -48,8 +47,7 @@ public class AddManagedFilesAction extends MavenAction {
     Project project = MavenActionUtil.getProject(e.getDataContext());
     VirtualFile fileToSelect = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
-    FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(singlePomSelection, project);
-    VirtualFile[] files = dialog.choose(fileToSelect, project);
+    VirtualFile[] files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect);
     if (files.length == 0) return;
 
     manager.addManagedFiles(Arrays.asList(files));

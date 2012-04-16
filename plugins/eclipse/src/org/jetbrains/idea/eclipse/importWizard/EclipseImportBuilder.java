@@ -347,7 +347,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         };
         descriptor.setDescription(buf.toString());
         descriptor.setTitle(getTitle());
-        final VirtualFile selectedFile = FileChooser.chooseFile(project, descriptor, project.getBaseDir());
+        final VirtualFile selectedFile = FileChooser.chooseFile(descriptor, project, project.getBaseDir());
         if (selectedFile != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -387,7 +387,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       };
       fileChooserDescriptor.setTitle(EclipseBundle.message("eclipse.create.library.title"));
       fileChooserDescriptor.setDescription(EclipseBundle.message("eclipse.create.library.description", libraryName));
-      final VirtualFile file = FileChooser.chooseFile(project, fileChooserDescriptor, null);
+      final VirtualFile file = FileChooser.chooseFile(fileChooserDescriptor, project, null);
       if (file != null) {
         final VirtualFile pluginsDir = file.findChild("plugins");
         if (pluginsDir != null) {

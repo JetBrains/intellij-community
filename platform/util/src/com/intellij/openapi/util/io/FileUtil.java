@@ -901,18 +901,6 @@ public class FileUtil extends FileUtilRt {
     return file.canExecute();
   }
 
-  /** @deprecated use {@link FileSystemUtil#isSymLink(File)} (to remove in IDEA 12) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isSymbolicLink(File file) {
-    return FileSystemUtil.isSymLink(file);
-  }
-
-  /** @deprecated use {@link FileSystemUtil#isSymLink(File)} (to remove in IDEA 12) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isSymbolicLink(File parent, String name) {
-    return FileSystemUtil.isSymLink(new File(parent, name));
-  }
-
   public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyFlag) throws IOException {
     final boolean writableFlag = !readOnlyFlag;
     final File file = new File(path);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,15 +67,4 @@ public interface GroupNames {
   String JAVAEE_GROUP_NAME = InspectionsBundle.message("group.names.javaee.issues");
   String CONCURRENCY_ANNOTATION_ISSUES = InspectionsBundle.message("group.names.concurrency.annotation.issues");
   String JAVADOC_GROUP_NAME = InspectionsBundle.message("group.names.javadoc.issues");
-
-  /** @deprecated use #CLASS_LAYOUT_GROUP_NAME (todo: remove in IDEA 12) */
-  String CLASSLAYOUT_GROUP_NAME = CLASS_LAYOUT_GROUP_NAME;
-  /** @deprecated use #CLASS_METRICS_GROUP_NAME (todo: remove in IDEA 12) */
-  String CLASSMETRICS_GROUP_NAME = CLASS_METRICS_GROUP_NAME;
-  /** @deprecated use #ERROR_HANDLING_GROUP_NAME (todo: remove in IDEA 12) */
-  String ERRORHANDLING_GROUP_NAME = ERROR_HANDLING_GROUP_NAME;
-  /** @deprecated use #METHOD_METRICS_GROUP_NAME (todo: remove in IDEA 12) */
-  String METHODMETRICS_GROUP_NAME = METHOD_METRICS_GROUP_NAME;
-  /** @deprecated use #LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME (todo: remove in IDEA 12) */
-  String JDK15_SPECIFIC_GROUP_NAME = LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
 }

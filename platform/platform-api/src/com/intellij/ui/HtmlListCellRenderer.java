@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
-import com.intellij.openapi.roots.ui.CellAppearanceEx;
-import com.intellij.openapi.roots.ui.util.ModifiableCellAppearance;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
@@ -124,10 +122,5 @@ public abstract class HtmlListCellRenderer<T> extends ListCellRendererWrapper<T>
       builder.append("text-decoration:line-through;");
     }
     builder.append('"');
-  }
-
-  /** @deprecated use {@linkplain com.intellij.openapi.roots.ui.CellAppearanceEx#customize(HtmlListCellRenderer)} (to remove in IDEA 12) */
-  public void render(@NotNull final ModifiableCellAppearance appearance) {
-    ((CellAppearanceEx)appearance).customize(this);
   }
 }

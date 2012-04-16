@@ -46,7 +46,7 @@ public class EncodingViewer extends DialogWrapper {
     initEncodings();
     myLoadFile.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        VirtualFile file = FileChooser.chooseFile(myPanel, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+        VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), myPanel, null, null);
         if (file != null) {
           loadFrom(file);
         }

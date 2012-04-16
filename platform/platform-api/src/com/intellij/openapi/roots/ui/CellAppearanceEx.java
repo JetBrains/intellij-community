@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,15 @@
  */
 package com.intellij.openapi.roots.ui;
 
-import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.ui.HtmlListCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
 import org.jetbrains.annotations.NotNull;
 
-public interface CellAppearanceEx extends CellAppearance {
+public interface CellAppearanceEx {
+  @NotNull
+  String getText();
+
   void customize(@NotNull HtmlListCellRenderer renderer);
+
+  void customize(@NotNull SimpleColoredComponent component);
 }

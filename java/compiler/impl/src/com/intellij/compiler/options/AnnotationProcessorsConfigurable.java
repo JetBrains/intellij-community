@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -105,8 +106,8 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
 
     myProcessorPathField = new TextFieldWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final VirtualFile[] files =
-          FileChooser.chooseFiles(myProcessorPathField, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
+        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
+        final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myProcessorPathField, myProject, null);
         if (files.length > 0) {
           final StringBuilder builder = new StringBuilder();
           for (VirtualFile file : files) {

@@ -27,17 +27,16 @@ import git4idea.history.browser.CherryPicker
 import git4idea.history.browser.GitCommit
 import git4idea.history.browser.SHAHash
 import git4idea.history.wholeTree.AbstractHash
-import git4idea.repo.GitRepository
 import git4idea.test.GitFastTest
 import git4idea.test.GitLightRepository
 import git4idea.test.MockGit
+import git4idea.test.MockVcsHelper
 import sun.security.provider.SHA
 
 import static git4idea.test.MockGit.OperationName.CHERRY_PICK
+import static git4idea.test.MockGit.commitMessageForCherryPick
 import static junit.framework.Assert.assertEquals
 import static junit.framework.Assert.assertTrue
-import static git4idea.test.MockGit.commitMessageForCherryPick
-import git4idea.test.MockVcsHelper
 
 /**
  * Common parent for all tests on cherry-pick
@@ -103,7 +102,7 @@ hint: and commit the result with 'git commit'
   }
 
   void invokeCherryPick(List<GitCommit> commits) {
-    myCherryPicker.cherryPick(Collections.<GitRepository, List<GitCommit>> singletonMap(myRepository, commits))
+    myCherryPicker.cherryPick(Collections.singletonMap(myRepository, commits))
   }
 
   void assertHeadCommit(GitCommit commit) {

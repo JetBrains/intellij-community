@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
 
     LOG.assertTrue(project != null);
 
-    final VirtualFile virtualFile = FileChooser.chooseFile(project, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+    final VirtualFile virtualFile = FileChooser.chooseFile(BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR, project, null);
     if (virtualFile == null || !virtualFile.isDirectory()) return;
 
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =

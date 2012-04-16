@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,13 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -116,7 +118,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
           return getContentRootPath(module);
         }
       });
-    
+
+    final Project project = wizard.getProject();
     myProguardConfigFilePathField.getButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -129,8 +132,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
         if (defaultFile == null && facet != null) {
           defaultFile = AndroidRootUtil.getMainContentRoot(facet);
         }
-        final VirtualFile file = FileChooser.chooseFile(myContentPanel, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-                                                        defaultFile);
+        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+        final VirtualFile file = FileChooser.chooseFile(descriptor, myContentPanel, project, defaultFile);
         if (file != null) {
           myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(file.getPath()));
         }
