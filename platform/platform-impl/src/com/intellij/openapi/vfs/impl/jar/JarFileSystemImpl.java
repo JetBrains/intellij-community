@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,9 @@ import java.util.*;
 import java.util.zip.ZipFile;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
+
+  private final static Logger LOG = Logger.getInstance(JarFileSystemImpl.class);
+
   private final Set<String> myNoCopyJarPaths = new ConcurrentHashSet<String>();
   @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
   private File myNoCopyJarDir;
@@ -75,6 +79,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
                                       SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
+                  LOG.info(jarPath + " will be refreshed due to " + event);
                   rootsToRefresh.add(jarRootToRefresh);
                 }
               }
