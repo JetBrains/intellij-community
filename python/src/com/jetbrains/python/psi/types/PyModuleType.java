@@ -90,7 +90,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         final PyQualifiedName resolvedQName = packageQName.append(name);
         if ((importedQName != null && importedQName.matchesPrefix(resolvedQName)) ||
             (implicitSubmoduleQName != null && implicitSubmoduleQName.equals(resolvedQName))) {
-          final PsiElement submodule = ResolveImportUtil.resolveChild(myModule, name, myModule, null, null, false, true);
+          final PsiElement submodule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);
           if (submodule != null) {
             final ResolveResultList results = new ResolveResultList();
             results.add(new ImportedResolveResult(submodule, RatedResolveResult.RATE_NORMAL,
@@ -296,7 +296,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Override
-  public void assertValid() {
+  public void assertValid(String message) {
   }
 
   @NotNull

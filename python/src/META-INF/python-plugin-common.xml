@@ -721,7 +721,7 @@
 
     <!-- Jinja2 -->
     <fileTypeFactory implementation="com.jetbrains.jinja2.Jinja2FileTypeFactory"/>
-    <editorHighlighterProvider filetype="Jinja2" implementationClass="com.jetbrain  s.jinja2.highlighting.Jinja2EditorHighlighterProvider"/>
+    <editorHighlighterProvider filetype="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2EditorHighlighterProvider"/>
     <lang.syntaxHighlighterFactory key="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2HighlighterFactory"/>
     <lang.parserDefinition language="Jinja2"
                            implementationClass="com.jetbrains.jinja2.parsing.Jinja2ParserDefinition"/>

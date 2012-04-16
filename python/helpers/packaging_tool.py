@@ -8,7 +8,7 @@ ERROR_EXCEPTION = 3
 def exit(retcode):
     major, minor, micro, release, serial = sys.version_info
     version = major * 10 + minor
-    if 'java' in sys.platform and version < 25:
+    if version < 25:
         import os
         os._exit(retcode)
     else:

@@ -33,6 +33,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private Set<VirtualFile> myExcludedPaths = Sets.newHashSet();
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedProjectPath;
+  private boolean myAssociateWithNewProject;
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
@@ -82,6 +83,16 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     }
   }
 
+  public void associateWithNewProject() {
+    myAssociateWithNewProject = true;
+  }
+
+  public void reassociateWithCreatedProject(Project project) {
+    if (myAssociateWithNewProject) {
+      associateWithProject(project);
+    }
+  }
+
   @Override
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
 
@@ -124,7 +135,19 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     data.setAssociatedProjectPath(element.getAttributeValue(ASSOCIATED_PROJECT_PATH));
   }
 
-  private static Set<VirtualFile> loadStringList(@Nullable Element element, @NotNull String rootName, @NotNull String attrName) {
+  protected static Set<VirtualFile> loadStringList(@Nullable Element element, @NotNull String rootName, @NotNull String attrName) {
+    final List<String> paths = loadPaths(element, rootName, attrName);
+    final Set<VirtualFile> files = Sets.newHashSet();
+    for (String path : paths) {
+      VirtualFile vf = VirtualFileUtil.findFile(path);
+      if (vf != null) {
+        files.add(vf);
+      }
+    }
+    return files;
+  }
+
+  protected static List<String> loadPaths(Element element, String rootName, String attrName) {
     final List<String> paths = new LinkedList<String>();
     if (element != null) {
       final List list = element.getChildren(rootName);
@@ -134,13 +157,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
         }
       }
     }
-    final Set<VirtualFile> files = Sets.newHashSet();
-    for (String path : paths) {
-      VirtualFile vf = VirtualFileUtil.findFile(path);
-      if (vf != null) {
-        files.add(vf);
-      }
-    }
-    return files;
+    return paths;
   }
 }

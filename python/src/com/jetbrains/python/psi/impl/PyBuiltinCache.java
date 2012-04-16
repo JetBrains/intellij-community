@@ -186,18 +186,30 @@ public class PyBuiltinCache {
    */
   private final Map<String, PyClassType> myTypeCache = new HashMap<String, PyClassType>();
   private final Map<String, Ref<PyType>> myStdlibTypeCache = new HashMap<String, Ref<PyType>>();
+  private long myModStamp = -1;
 
   /**
   @return
   */
   @Nullable
   public PyClassType getObjectType(@NonNls String name) {
-    PyClassType val = myTypeCache.get(name);
+    PyClassType val;
+    synchronized (myTypeCache) {
+      if (myBuiltinsFile != null) {
+        if (myBuiltinsFile.getModificationStamp() != myModStamp) {
+          myTypeCache.clear();
+          myModStamp = myBuiltinsFile.getModificationStamp();
+        }
+      }
+      val = myTypeCache.get(name);
+    }
     if (val == null) {
       PyClass cls = getClass(name);
       if (cls != null) { // null may happen during testing
         val = new PyClassType(cls, false);
-        myTypeCache.put(name, val);
+        synchronized (myTypeCache) {
+          myTypeCache.put(name, val);
+        }
       }
     }
     return val;

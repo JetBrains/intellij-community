@@ -18,6 +18,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
@@ -129,7 +130,8 @@ public class StatementMover extends LineMover {
     PyElement statementPart = getStatementParts(info, editor, file, down).first;
     if (statementPart instanceof PyStatementPart) {
       PyStatementList statementList = ((PyStatementPart)statementPart).getStatementList();
-      if (statementList != null && statementList.getStatements().length == 1 && !(myStatementToMove instanceof PsiComment)) {
+      if (statementList != null && statementList.getStatements().length == 1 && !(myStatementToMove instanceof PsiComment) &&
+          !isMoveToEmptyLine(editor, info, down)) {
         if (theSameLevel) {
           myStatementListToAddPassAfter = statementList;
         }
@@ -274,13 +276,14 @@ public class StatementMover extends LineMover {
     PsiElement element2 = file.findElementAt(offset2-1);
     if (element2 instanceof PsiWhiteSpace) {
       if (down) {
-        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
+        final PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
         if (tmp != null &&
-            editor.offsetToLogicalPosition(tmp.getTextRange().getStartOffset()).line == info.toMove2.startLine)
+            (editor.offsetToLogicalPosition(tmp.getTextRange().getStartOffset()).line == info.toMove2.startLine ||
+            tmp.getNode().getElementType() == PyTokenTypes.ELSE_KEYWORD || tmp.getNode().getElementType() == PyTokenTypes.EXCEPT_KEYWORD ||
+            tmp.getNode().getElementType() == PyTokenTypes.FINALLY_KEYWORD))
           element2 = tmp;
-
       } else {
-        PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
+        final PsiElement tmp = PyPsiUtils.getSignificantToTheRight(element2, false);
         if (tmp != null) {
           int start = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getStartOffset()).line;
           int end = editor.offsetToLogicalPosition(tmp.getParent().getTextRange().getEndOffset()).line;

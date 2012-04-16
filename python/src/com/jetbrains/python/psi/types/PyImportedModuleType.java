@@ -67,7 +67,7 @@ public class PyImportedModuleType implements PyType {
   }
 
   @Override
-  public void assertValid() {
+  public void assertValid(String message) {
   }
 
   @NotNull
