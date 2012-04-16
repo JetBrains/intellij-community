@@ -2127,7 +2127,7 @@ def buildOutputName(subdir, name):
     global action
     quals = name.split(".")
     dirname = subdir
-    if dirname:
+    if dirname and not dirname.endswith(os.path.sep):
         dirname += os.path.sep # "a -> a/"
     for pathindex in range(len(quals) - 1): # create dirs for all quals but last
         subdirname = dirname + os.path.sep.join(quals[0: pathindex + 1])
