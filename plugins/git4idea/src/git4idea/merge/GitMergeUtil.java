@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
-import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,6 @@ import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -189,25 +187,4 @@ public class GitMergeUtil {
   public static boolean isMergeInProgress(@NotNull VirtualFile root) {
     return getMergeHead(root) != null;
   }
-
-  /**
-   * @return unmerged files in the given Git roots, all in a single collection.
-   * @see #getUnmergedFiles(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
-   */
-  public static Collection<VirtualFile> getUnmergedFiles(@NotNull Project project, @NotNull Collection<VirtualFile> roots) throws VcsException {
-    final Collection<VirtualFile> unmergedFiles = new HashSet<VirtualFile>();
-    for (VirtualFile root : roots) {
-      unmergedFiles.addAll(getUnmergedFiles(project, root));
-    }
-    return unmergedFiles;
-  }
-
-  /**
-   * @return unmerged files in the given Git root.
-   * @see #getUnmergedFiles(com.intellij.openapi.project.Project, java.util.Collection)
-   */
-  public static Collection<VirtualFile> getUnmergedFiles(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
-    return GitChangeUtils.unmergedFiles(project, root);
-  }
-
 }

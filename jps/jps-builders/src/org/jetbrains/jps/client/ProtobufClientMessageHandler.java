@@ -6,12 +6,12 @@ import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.RequestFuture;
 
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 
 /**
 * @author Eugene Zhuravlev
@@ -22,9 +22,9 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   @NotNull
   private final UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;
-  private final AsyncTaskExecutor myAsyncExec;
+  private final Executor myAsyncExec;
 
-  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, AsyncTaskExecutor asyncExec) {
+  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, Executor asyncExec) {
     myUuidGetter = uuidGetter;
     myClient = client;
     myAsyncExec = asyncExec;
@@ -92,7 +92,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
     }
     finally {
       // make sure the client is in disconnected state
-      myAsyncExec.submit(new Runnable() {
+      myAsyncExec.execute(new Runnable() {
         @Override
         public void run() {
           myClient.disconnect();

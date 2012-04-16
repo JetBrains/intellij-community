@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +43,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class CaptionPanel extends JLayeredPane implements DataProvider, DeleteProvider {
+  private static final int SIZE = 16;
+
   private final boolean myHorizontal;
   private final EditableArea myMainArea;
   private final EditableArea myArea;
@@ -49,6 +53,7 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
   private final CommonEditActionsProvider myActionsProvider;
   private final RadVisualComponent myRootComponent;
   private List<RadComponent> myRootChildren = Collections.emptyList();
+  private ICaption myCaption;
 
   public CaptionPanel(DesignerEditorPanel designer, boolean horizontal) {
     setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
@@ -69,7 +74,12 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
       }
     };
     myRootComponent.setNativeComponent(this);
-    myRootComponent.setBounds(0, 0, 100000, 100000);
+    if (horizontal) {
+      myRootComponent.setBounds(0, 0, 100000, SIZE);
+    }
+    else {
+      myRootComponent.setBounds(0, 0, SIZE, 100000);
+    }
 
     myArea = new ComponentEditableArea(this) {
       @Override
@@ -157,7 +167,7 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
 
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(16, 16);
+    return new Dimension(SIZE, SIZE);
   }
 
   @Override
@@ -191,6 +201,15 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
 
     boolean update = !myRootChildren.isEmpty();
 
+    IntArrayList oldSelection = null;
+    if (myCaption != null) {
+      oldSelection = new IntArrayList();
+      for (RadComponent component : myArea.getSelection()) {
+        oldSelection.add(myRootChildren.indexOf(component));
+      }
+    }
+
+    myArea.deselectAll();
     myRootComponent.setLayout(null);
 
     ICaption caption = null;
@@ -209,9 +228,33 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
     }
     else {
       myRootComponent.setLayout(caption.getCaptionLayout(myMainArea, myHorizontal));
+
       myRootChildren = caption.getCaptionChildren(myMainArea, myHorizontal);
+      for (RadComponent child : myRootChildren) {
+        child.setParent(myRootComponent);
+      }
+
+      if (myCaption == caption) {
+        List<RadComponent> newSelection = new ArrayList<RadComponent>();
+        int componentSize = myRootChildren.size();
+        int selectionSize = oldSelection.size();
+
+        for (int i = 0; i < selectionSize; i++) {
+          int index = oldSelection.get(i);
+          if (0 <= index && index < componentSize) {
+            newSelection.add(myRootChildren.get(index));
+          }
+        }
+
+        if (!newSelection.isEmpty()) {
+          myArea.setSelection(newSelection);
+        }
+      }
+
       update |= !myRootChildren.isEmpty();
     }
+
+    myCaption = caption;
 
     if (update) {
       revalidate();

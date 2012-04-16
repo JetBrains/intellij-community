@@ -15,20 +15,23 @@
  */
 package git4idea.test;
 
+import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import git4idea.Notificator;
-import git4idea.PlatformFacade;
-import git4idea.tests.TestDialogManager;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
-import git4idea.config.GitVcsSettings;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.testFramework.vcs.MockChangeListManager;
+import git4idea.Notificator;
+import git4idea.PlatformFacade;
+import git4idea.repo.GitRepositoryManager;
+import git4idea.tests.TestDialogManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * 
@@ -41,10 +44,15 @@ public class GitTestPlatformFacade implements PlatformFacade {
   private TestNotificator myNotificator;
   private TestDialogManager myTestDialogManager;
   private GitMockProjectRootManager myProjectRootManager;
+  private ChangeListManager myChangeListManager;
+  private GitTestRepositoryManager myRepositoryManager;
+  private MockVcsHelper myVcsHelper;
 
   public GitTestPlatformFacade() {
     myTestDialogManager = new TestDialogManager();
     myProjectRootManager = new GitMockProjectRootManager();
+    myChangeListManager = new MockChangeListManager();
+    myRepositoryManager = new GitTestRepositoryManager();
   }
 
   @NotNull
@@ -95,18 +103,38 @@ public class GitTestPlatformFacade implements PlatformFacade {
   }
 
   @Override
-  public GitVcsSettings getGitWorkspaceSettings(@NotNull Project project) {
-    throw new UnsupportedOperationException();
+  public void runWriteAction(@NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @Override
+  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    runnable.run();
   }
 
   @Override
   public ChangeListManager getChangeListManager(@NotNull Project project) {
-    throw new UnsupportedOperationException();
+    return myChangeListManager;
   }
 
   @Override
   public LocalFileSystem getLocalFileSystem() {
     return new MockLocalFileSystem();
+  }
+
+  @NotNull
+  @Override
+  public AbstractVcsHelper getVcsHelper(@NotNull Project project) {
+    if (myVcsHelper == null) {
+      myVcsHelper = new MockVcsHelper();
+    }
+    return myVcsHelper;
+  }
+
+  @NotNull
+  @Override
+  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+    return myRepositoryManager;
   }
 
   @NotNull

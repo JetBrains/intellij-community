@@ -31,7 +31,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -42,7 +45,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
@@ -142,25 +144,25 @@ public class Switcher extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
-    boolean selectFirstItem = false;
     if (SWITCHER == null) {
       synchronized (Switcher.class) {
         if (SWITCHER == null) {
           SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
-          selectFirstItem = !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile();
         }
       }
     }
 
     assert SWITCHER != null;
-    if (e.getInputEvent().isShiftDown()) {
-      SWITCHER.goBack();
-    } else {
-      if (selectFirstItem) {
-        SWITCHER.files.setSelectedIndex(0);
+    if (!SWITCHER.isPinnedMode()) {
+      if (e.getInputEvent().isShiftDown()) {
+        SWITCHER.goBack();
       } else {
-        SWITCHER.goForward();
+        if (!FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
+          SWITCHER.files.setSelectedIndex(0);
+        } else {
+          SWITCHER.goForward();
+        }
       }
     }
   }
@@ -247,7 +249,7 @@ public class Switcher extends AnAction implements DumbAware {
           public boolean value(String s) {
             return !mySpeedSearch.isPopupActive()
                    || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                   || mySpeedSearch.matchingFragments(s) != null;
+                   || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null;
           }
         }, mySpeedSearch);
       }
@@ -291,6 +293,7 @@ public class Switcher extends AnAction implements DumbAware {
       };
       separator.setBackground(Color.WHITE);
 
+      int selectionIndex = -1;
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       final ArrayList<FileInfo> filesData = new ArrayList<FileInfo>();
       final ArrayList<FileInfo> editors = new ArrayList<FileInfo>();
@@ -320,12 +323,13 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               firstRecentMarked = true;
-              info.isSeparator = true;
+              selectionIndex = filesData.size() - 1;
             }
           }
         }
         if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
           filesData.add(0, editors.get(0));
+          selectionIndex--;
         }
       } else {
         for (int i = 0; i < Math.min(MAX_FILES_IN_SWITCHER, editors.size()); i++) {
@@ -338,22 +342,7 @@ public class Switcher extends AnAction implements DumbAware {
         filesModel.addElement(editor);
       }
 
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project, mySpeedSearch) {
-        @Override
-        public Component getListCellRendererComponent(JList list,
-                                                      Object value,
-                                                      int index,
-                                                      boolean selected,
-                                                      boolean hasFocus) {
-          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-          if (selected) {
-            return renderer;
-          }
-          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ? ON_MOUSE_OVER_BG_COLOR : Color.WHITE;
-          UIUtil.changeBackGround(renderer, bgColor);
-          return renderer;
-        }
-      };
+      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project);
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private String getTitle2Text(String fullText) {
@@ -403,7 +392,7 @@ public class Switcher extends AnAction implements DumbAware {
           public boolean value(String s) {
             return !mySpeedSearch.isPopupActive()
                    || StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                   || mySpeedSearch.matchingFragments(s) != null;
+                   || mySpeedSearch.getComparator().matchingFragments(mySpeedSearch.getEnteredPrefix(), s) != null;
           }
         }, mySpeedSearch);
       }
@@ -436,6 +425,9 @@ public class Switcher extends AnAction implements DumbAware {
           this.add(pane, BorderLayout.EAST);
         } else {
           this.add(files, BorderLayout.EAST);
+        }
+        if (selectionIndex > -1) {
+          files.setSelectedIndex(selectionIndex);
         }
         this.add(separator, BorderLayout.CENTER);
       }
@@ -553,6 +545,12 @@ public class Switcher extends AnAction implements DumbAware {
           break;
         case VK_ESCAPE:
           cancel();
+          break;
+        case VK_PAGE_DOWN:
+          ListScrollingUtil.movePageDown(getSelectedList());
+          break;
+        case VK_PAGE_UP:
+          ListScrollingUtil.movePageUp(getSelectedList());
           break;
         case VK_DELETE:
         case VK_BACK_SPACE: // Mac users
@@ -886,49 +884,30 @@ public class Switcher extends AnAction implements DumbAware {
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
     private final Project myProject;
-    private final SpeedSearchBase mySearch;
-    private boolean hide = false;
-    private boolean separator = false;
 
-    public VirtualFilesRenderer(Project project, SpeedSearchBase search) {
+    public VirtualFilesRenderer(Project project) {
       myProject = project;
-      mySearch = search;
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      hide = false;
       if (value instanceof FileInfo) {
-        final VirtualFile virtualFile = ((FileInfo)value).first;
-        final String name = virtualFile.getPresentableName();
+        VirtualFile virtualFile = ((FileInfo)value).getFirst();
+        String name = virtualFile.getPresentableName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
-        separator = ((FileInfo)value).isSeparator;
 
-        if ( mySearch != null && mySearch.isPopupActive()) {
-          hide = mySearch.matchingFragments(name) == null && !StringUtil.isEmpty(mySearch.getEnteredPrefix());
-        }
-
-        final FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-        final TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+        FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE,
+                                                       Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
-      }
-    }
 
-    @Override
-    protected void doPaint(Graphics2D g) {
-      GraphicsConfig config = new GraphicsConfig(g);
-      if (hide) {
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
-      }
-      super.doPaint(g);
-      config.restore();
-      if (separator) {
-        UIUtil.drawDottedLine(g, 0, 0, getWidth(), 0, Color.WHITE, Color.BLACK);
+        if (!selected && FileEditorManager.getInstance(myProject).isFileOpen(virtualFile)) {
+          setBackground(LightColors.SLIGHTLY_GREEN);
+        }
       }
     }
   }
 
   private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
-    boolean isSeparator = false;
     public FileInfo(VirtualFile first, EditorWindow second) {
       super(first, second);
     }

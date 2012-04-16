@@ -93,6 +93,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myProfileAction = new ProfileAction(this, new Runnable() {
       @Override
       public void run() {
+        myPSIChangeListener.setInitialize();
         myActionPanel.update();
         if (myRootComponent == null) {
           myPSIChangeListener.activate();
@@ -403,7 +404,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         if (StringUtil.isEmpty(exception.getPresentableMessage())) {
           Throwable[] causes = exception.getCauses();
           if (causes.length == 0) {
-            info.myThrowable = new RenderingException(AndroidBundle.message("android.layout.preview.default.error.message"));
+            info.myThrowable = new Exception(AndroidBundle.message("android.layout.preview.default.error.message"), exception);
           }
           else if (causes.length == 1) {
             info.myThrowable = causes[0];

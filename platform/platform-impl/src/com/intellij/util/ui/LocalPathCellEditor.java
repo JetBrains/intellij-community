@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
         final FileChooserDescriptor d = getFileChooserDescriptor();
         String initial = (String)getCellEditorValue();
         VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? LocalFileSystem.getInstance().findFileByPath(initial) : null;
-        VirtualFile file =
-          myProject != null ? FileChooser.chooseFile(myProject, d, initialFile) : FileChooser.chooseFile(table, d, initialFile);
+        VirtualFile file = FileChooser.chooseFile(d, table, myProject, initialFile);
         if (file != null) {
           String path = file.getPresentableUrl();
           if (SystemInfo.isWindows && path.length() == 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,23 +113,19 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     JPanel wholePanel = new JPanel(new GridBagLayout());
     wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST,
                                                               GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome,
-                                                           new ActionListener() {
-                                                             public void actionPerformed(ActionEvent e) {
-                                                               FileChooserDescriptor descriptor = FileChooserDescriptorFactory
-                                                                 .createSingleFolderDescriptor();
-                                                               descriptor.setTitle(DevKitBundle.message("sandbox.home"));
-                                                               descriptor.setDescription(
-                                                                 DevKitBundle.message("sandbox.purpose"));
-                                                               VirtualFile file = FileChooser.chooseFile(mySandboxHome, descriptor, null);
-                                                               if (file != null) {
-                                                                 mySandboxHome.setText(FileUtil.toSystemDependentName(file.getPath()));
-                                                               }
-                                                               myModified = true;
-                                                             }
-                                                           }),
-                   new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.EAST,
-                                          GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+    wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome, new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        descriptor.setTitle(DevKitBundle.message("sandbox.home"));
+        descriptor.setDescription(DevKitBundle.message("sandbox.purpose"));
+        VirtualFile file = FileChooser.chooseFile(descriptor, mySandboxHome, null, null);
+        if (file != null) {
+          mySandboxHome.setText(FileUtil.toSystemDependentName(file.getPath()));
+        }
+        myModified = true;
+      }
+    }), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.EAST,
+                               GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
 
     wholePanel.add(myInternalJreLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 1, GridBagConstraints.WEST,
                                                               GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));

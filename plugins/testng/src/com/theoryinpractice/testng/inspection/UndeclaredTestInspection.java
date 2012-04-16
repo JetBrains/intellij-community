@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          final VirtualFile file = FileChooser.chooseFile(project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+          final VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);
           if (file != null) {
             final PsiManager psiManager = PsiManager.getInstance(project);
             final PsiDirectory directory = psiManager.findDirectory(file);

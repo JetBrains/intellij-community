@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Manages {@link RunConfiguration}s.
@@ -55,20 +55,23 @@ public abstract class RunManagerEx extends RunManager {
   @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, Map<Key<? extends BeforeRunTask>, BeforeRunTask> tasks);
+  public abstract void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks);
 
   public abstract void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared);
 
   public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
 
   @NotNull
-  public abstract <T extends BeforeRunTask> Map<Key<T>, BeforeRunTask> getBeforeRunTasks(RunConfiguration settings);
-
-  @Nullable
-  public abstract <T extends BeforeRunTask> T getBeforeRunTask(RunConfiguration settings, Key<T> taskProviderID);
+  public abstract List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings);
 
   @NotNull
-  public abstract <T extends BeforeRunTask> Collection<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
+  public abstract List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings, boolean includeOnlyActiveTasks);
+
+  @NotNull
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID);
+
+  @NotNull
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID, boolean includeOnlyActiveTasks);
 
   public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.ant.config.impl.AntInstallation;
 import com.intellij.lang.ant.config.impl.AntReference;
 import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -214,7 +215,8 @@ public class AntSetPanel {
     }
 
     public AntInstallation create() {
-      VirtualFile file = FileChooser.chooseFile(myParent, FileChooserDescriptorFactory.createSingleFolderDescriptor(), null);
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      VirtualFile file = FileChooser.chooseFile(descriptor, myParent, null, null);
       if (file == null) return null;
       try {
         final AntInstallation inst = AntInstallation.fromHome(file.getPresentableUrl());

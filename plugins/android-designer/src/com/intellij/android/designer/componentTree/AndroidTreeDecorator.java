@@ -61,7 +61,10 @@ public final class AndroidTreeDecorator extends TreeComponentDecorator {
             value = ((RadViewComponent)component).getTag().getName();
           }
           else {
-            value = StringUtil.shortenTextWithEllipsis(getPropertyValue(component, variable), 30, 5);
+            value = getPropertyValue(component, variable);
+            if (!StringUtil.isEmpty(value)) {
+              value = StringUtil.shortenTextWithEllipsis(value, 30, 5);
+            }
           }
 
           if (!StringUtil.isEmpty(value)) {

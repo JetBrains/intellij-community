@@ -96,6 +96,21 @@ public class ReferenceExpressionCompletionContributor {
       ));
     }
 
+    final PsiForeachStatement foreach = PsiTreeUtil.getParentOfType(element, PsiForeachStatement.class);
+    if (foreach != null && !PsiTreeUtil.isAncestor(foreach.getBody(), element, false)) {
+      return new ElementExtractorFilter(new ElementFilter() {
+        @Override
+        public boolean isAcceptable(Object element, @Nullable PsiElement context) {
+          return element != foreach.getIterationParameter();
+        }
+
+        @Override
+        public boolean isClassAcceptable(Class hintClass) {
+          return true;
+        }
+      });
+    }
+
     if (!allowRecursion) {
       final ElementFilter filter = RecursionWeigher.recursionFilter(element);
       if (filter != null) {

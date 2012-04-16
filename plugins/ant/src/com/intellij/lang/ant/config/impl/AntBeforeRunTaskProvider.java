@@ -19,6 +19,7 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.AntIcons;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
@@ -29,6 +30,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Vladislav.Kaznacheev
  */
@@ -38,13 +41,31 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   public AntBeforeRunTaskProvider(Project project) {
     myProject = project;
+    AntConfigurationImpl.getInstance(myProject);//Prevent too lazy initialization
   }
 
   public Key<AntBeforeRunTask> getId() {
     return ID;
   }
 
-  public String getDescription(final RunConfiguration runConfiguration, AntBeforeRunTask task) {
+  @Override
+  public String getName() {
+    return AntBundle.message("ant.target.before.run.description.empty");
+  }
+
+  @Override
+  public Icon getIcon() {
+    return AntIcons.ANT_TARGET_ICON;
+  }
+
+  @Override
+  public Icon getTaskIcon(AntBeforeRunTask task) {
+    AntBuildTarget antTarget = findTargetToExecute(task);
+    return antTarget instanceof MetaTarget ? AntIcons.ANT_META_TARGET_ICON : AntIcons.ANT_TARGET_ICON;
+  }
+
+  @Override
+  public String getDescription(AntBeforeRunTask task) {
     final String targetName = task.getTargetName();
     if (targetName == null && !task.isEnabled()) {
       return AntBundle.message("ant.target.before.run.description.empty");
@@ -52,7 +73,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return AntBundle.message("ant.target.before.run.description", targetName != null? targetName : "<not selected>");
   }
 
-  public boolean hasConfigurationButton() {
+  public boolean isConfigurable() {
     return true;
   }
 
@@ -78,6 +99,11 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   public AntBeforeRunTask createTask(RunConfiguration runConfiguration) {
     return new AntBeforeRunTask();
+  }
+
+  @Override
+  public boolean canExecuteTask(RunConfiguration configuration, AntBeforeRunTask task) {
+    return findTargetToExecute(task) != null;
   }
 
   public boolean executeTask(DataContext context, RunConfiguration configuration, AntBeforeRunTask task) {

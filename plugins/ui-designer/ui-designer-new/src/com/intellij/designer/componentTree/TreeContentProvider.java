@@ -19,7 +19,6 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,13 +42,11 @@ public final class TreeContentProvider extends AbstractTreeStructure {
     if (element == myTreeRoot) {
       return myDesigner.getTreeRoots();
     }
-    else if (element instanceof RadComponent) {
+    if (element instanceof RadComponent) {
       RadComponent component = (RadComponent)element;
       return component.getTreeChildren();
     }
-    else {
-      throw new IllegalArgumentException("Unknown element: " + element);
-    }
+    throw new IllegalArgumentException("Unknown element: " + element);
   }
 
   @Override
@@ -67,9 +64,7 @@ public final class TreeContentProvider extends AbstractTreeStructure {
     if (element == myTreeRoot || element instanceof RadComponent) {
       return new TreeNodeDescriptor(parentDescriptor, element);
     }
-    else {
-      throw new IllegalArgumentException("Unknown element: " + element);
-    }
+    throw new IllegalArgumentException("Unknown element: " + element);
   }
 
   @Override

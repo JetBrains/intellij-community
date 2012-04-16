@@ -50,6 +50,8 @@ public class CollectionListModel<T> extends AbstractListModel {
   }
 
   public void add(@NotNull final List<? extends T> elements) {
+    if (elements.isEmpty())
+      return;
     int i = myItems.size();
     myItems.addAll(elements);
     fireIntervalAdded(this, i, i + elements.size() - 1);
@@ -93,8 +95,7 @@ public class CollectionListModel<T> extends AbstractListModel {
   }
 
   public void replaceAll(@NotNull final List<? extends T> elements) {
-    myItems.clear();
-    myItems.addAll(elements);
-    fireIntervalAdded(this, 0, elements.size() - 1);
+    removeAll();
+    add(elements);
   }
 }

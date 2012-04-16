@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -65,6 +64,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -895,7 +895,7 @@ class RunConfigurable extends BaseConfigurable {
       });
       final ListPopup popup =
           popupFactory.createListPopup(new BaseListPopupStep<ConfigurationType>(
-              ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
+            ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
 
             @NotNull
             public String getTextFor(final ConfigurationType type) {
@@ -953,7 +953,7 @@ class RunConfigurable extends BaseConfigurable {
                 }
               });
               return new BaseListPopupStep<ConfigurationFactory>(
-                  ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
+                ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 
                 @NotNull
                 public String getTextFor(final ConfigurationFactory value) {
@@ -1168,15 +1168,15 @@ class RunConfigurable extends BaseConfigurable {
   private static class RunConfigurationBean {
     private final RunnerAndConfigurationSettings mySettings;
     private final boolean myShared;
-    private final Map<Key<? extends BeforeRunTask>, BeforeRunTask> myStepsBeforeLaunch;
+    private final List<BeforeRunTask> myStepsBeforeLaunch;
     private final SingleConfigurationConfigurable myConfigurable;
 
     public RunConfigurationBean(final RunnerAndConfigurationSettings settings,
                                 final boolean shared,
-                                final Map<Key<? extends BeforeRunTask>, BeforeRunTask> stepsBeforeLaunch) {
+                                final List<BeforeRunTask> stepsBeforeLaunch) {
       mySettings = settings;
       myShared = shared;
-      myStepsBeforeLaunch = Collections.unmodifiableMap(stepsBeforeLaunch);
+      myStepsBeforeLaunch = Collections.unmodifiableList(stepsBeforeLaunch);
       myConfigurable = null;
     }
 
@@ -1196,7 +1196,7 @@ class RunConfigurable extends BaseConfigurable {
       return myShared;
     }
 
-    public Map<Key<? extends BeforeRunTask>, BeforeRunTask> getStepsBeforeLaunch() {
+    public List<BeforeRunTask> getStepsBeforeLaunch() {
       return myStepsBeforeLaunch;
     }
 

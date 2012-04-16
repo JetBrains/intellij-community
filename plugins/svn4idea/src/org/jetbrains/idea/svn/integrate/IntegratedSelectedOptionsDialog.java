@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       }
 
       public void actionPerformed(final AnActionEvent e) {
-        final VirtualFile vFile = FileChooser.chooseFile(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+        final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
           final File file = new File(vFile.getPath());
           if (hasDuplicate(file)) {

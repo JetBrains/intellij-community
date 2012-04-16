@@ -25,8 +25,12 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   public static final ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>> EXTENSION_POINT_NAME = new ExtensionPointName<BeforeRunTaskProvider<BeforeRunTask>>("com.intellij.stepsBeforeRunProvider");
@@ -35,9 +39,22 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
 
   public abstract Key<T> getId();
 
-  public abstract String getDescription(final RunConfiguration runConfiguration, T task);
+  public abstract String getName();
 
-  public abstract boolean hasConfigurationButton();
+  @Nullable
+  public Icon getIcon() {
+    return null;
+  };
+
+  public abstract String getDescription(T task);
+
+
+  @Nullable
+  public Icon getTaskIcon(T task) {
+    return null;
+  }
+
+  public abstract boolean isConfigurable();
 
   /**
    * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration 
@@ -50,7 +67,17 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
    */
   public abstract boolean configureTask(final RunConfiguration runConfiguration, T task);
 
+  public abstract boolean canExecuteTask(RunConfiguration configuration, T task);
+
   public abstract boolean executeTask(DataContext context, RunConfiguration configuration, T task);
+
+  /**
+   *
+   * @return <code>true</code> if at most one task may be configured
+   */
+  public boolean isSingleton() {
+    return false;
+  }
 
   /**
    * Get runner id that current run is about to be made by
@@ -60,5 +87,15 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
   @Nullable
   public static String getRunnerId(DataContext context) {
     return (String)context.getData(RUNNER_ID);
+  }
+
+  @Nullable
+  public static <T extends BeforeRunTask> BeforeRunTaskProvider<T> getProvider(Project project, Key<T> key) {
+    BeforeRunTaskProvider<BeforeRunTask>[] providers = Extensions.getExtensions(BeforeRunTaskProvider.EXTENSION_POINT_NAME, project);
+    for (BeforeRunTaskProvider<BeforeRunTask> provider : providers) {
+      if (provider.getId() == key)
+        return (BeforeRunTaskProvider<T>)provider;
+    }
+    return null;
   }
 }

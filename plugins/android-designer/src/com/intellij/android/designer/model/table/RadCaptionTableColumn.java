@@ -16,7 +16,6 @@
 package com.intellij.android.designer.model.table;
 
 import com.intellij.android.designer.designSurface.layout.CaptionStaticDecorator;
-import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
@@ -33,7 +32,7 @@ public class RadCaptionTableColumn extends RadVisualComponent {
   private final int myColumnWidth;
   private final StaticDecorator myDecorator = new CaptionStaticDecorator(this);
 
-  public RadCaptionTableColumn(RadTableLayoutComponent container, int columnOffset, int columnWidth, EditableArea mainArea) {
+  public RadCaptionTableColumn(RadTableLayoutComponent container, int columnOffset, int columnWidth) {
     myContainer = container;
     myColumnOffset = columnOffset;
     myColumnWidth = columnWidth;
@@ -43,13 +42,13 @@ public class RadCaptionTableColumn extends RadVisualComponent {
   @Override
   public Rectangle getBounds() {
     Rectangle bounds = myContainer.getBounds();
-    return new Rectangle(bounds.x + myColumnOffset, 3, myColumnWidth, 10);
+    return new Rectangle(bounds.x + myColumnOffset, 2, myColumnWidth, 10);
   }
 
   @Override
   public Rectangle getBounds(Component relativeTo) {
     Rectangle bounds = super.getBounds(relativeTo);
-    bounds.y = 3;
+    bounds.y = 2;
     bounds.height = 10;
     return bounds;
   }
@@ -57,5 +56,15 @@ public class RadCaptionTableColumn extends RadVisualComponent {
   @Override
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
     decorators.add(myDecorator);
+  }
+
+  @Override
+  public boolean canDelete() {
+    return false; // TODO: Auto-generated method stub
+  }
+
+  @Override
+  public void delete() throws Exception {
+    // TODO: Auto-generated method stub
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class SvnConfigurable implements Configurable {
 
         String oldValue = PropertiesComponent.getInstance().getValue("FileChooser.showHiddens");
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", Boolean.TRUE.toString());
-        VirtualFile file = FileChooser.chooseFile(myComponent, descriptor, root);
+        VirtualFile file = FileChooser.chooseFile(descriptor, myComponent, myProject, root);
         PropertiesComponent.getInstance().setValue("FileChooser.showHiddens", oldValue);
         if (file == null) {
           return;

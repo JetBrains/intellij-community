@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,7 +154,7 @@ public class ExcludedEntriesConfigurable implements UnnamedConfigurable {
         selected = myExcludeEntryDescriptions.size();
       }
       int savedSelected = selected;
-      VirtualFile[] chosen = FileChooser.chooseFiles(myProject, descriptor);
+      VirtualFile[] chosen = FileChooser.chooseFiles(descriptor, myProject, null);
       for (final VirtualFile chosenFile : chosen) {
         if (isFileExcluded(chosenFile)) {
           continue;

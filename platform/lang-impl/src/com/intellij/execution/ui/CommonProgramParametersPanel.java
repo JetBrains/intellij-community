@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
   protected void initComponents() {
     myProgramParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
-                                                  ExecutionBundle.message("run.configuration.program.parameters"));
+                                                           ExecutionBundle.message("run.configuration.program.parameters"));
 
     final JPanel panel = new JPanel(new BorderLayout());
     myWorkingDirectoryField = new TextFieldWithBrowseButton(new ActionListener() {
@@ -78,7 +78,8 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
         FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
         fileChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myModuleContext);
-        VirtualFile file = FileChooser.chooseFile(myWorkingDirectoryComponent, fileChooserDescriptor, null);
+        Project project = myModuleContext != null ? myModuleContext.getProject() : null;
+        VirtualFile file = FileChooser.chooseFile(fileChooserDescriptor, myWorkingDirectoryComponent, project, null);
         if (file != null) {
           setWorkingDirectory(file.getPresentableUrl());
         }

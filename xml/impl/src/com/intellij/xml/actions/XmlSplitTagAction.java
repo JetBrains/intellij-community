@@ -26,10 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
@@ -94,8 +91,22 @@ public class XmlSplitTagAction implements IntentionAction {
           final XmlTag xmlTag = (XmlTag)containingTag;
 
           final String s = xmlText.getText();
-          final String first = s.substring(0, offsetInElement);
-          final String second = s.substring(offsetInElement);
+          String first = s.substring(0, offsetInElement);
+          String second = s.substring(offsetInElement);
+
+          if (xmlText instanceof XmlTagChild) {
+            XmlTagChild prev = ((XmlTagChild)xmlText).getPrevSiblingInTag();
+            while(prev != null) {
+              first = prev.getText() + first;
+              prev = prev.getPrevSiblingInTag();
+            }
+
+            XmlTagChild next = ((XmlTagChild)xmlText).getNextSiblingInTag();
+            while(next != null) {
+              second += next.getText();
+              next = next.getNextSiblingInTag();
+            }
+          }
 
           final String filetext = buildNewText(xmlTag, first, second);
 

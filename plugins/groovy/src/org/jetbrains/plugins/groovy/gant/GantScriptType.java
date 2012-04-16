@@ -96,10 +96,10 @@ public class GantScriptType extends GroovyScriptType {
       configuration.setScriptParameters(target);
       configuration.setName(configuration.getName() + "." + target);
     }
-    final CompileStepBeforeRun.MakeBeforeRunTask runTask =
-      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
-    if (runTask != null) {
-      runTask.setEnabled(false);
+    final List<CompileStepBeforeRun.MakeBeforeRunTask> runTasks =
+      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTasks(configuration, CompileStepBeforeRun.ID);
+    for (CompileStepBeforeRun.MakeBeforeRunTask task : runTasks) {
+      task.setEnabled(false);
     }
   }
 

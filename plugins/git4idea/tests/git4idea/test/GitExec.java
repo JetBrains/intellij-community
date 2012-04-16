@@ -23,6 +23,7 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class GitExec {
   public static GitRepository init(@NotNull Project project, @NotNull VirtualFile root) throws IOException {
     new GitTestRunEnv(new File(root.getPath())).run("init");
     root.refresh(false, true);
-    return GitRepository.getLightInstance(root, project, project);
+    return GitRepositoryImpl.getLightInstance(root, project, project);
   }
 
   /**
@@ -57,7 +58,7 @@ public class GitExec {
     VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(destinationPath));
     assert root != null;
     root.refresh(false, true);
-    return bare ? null : GitRepository.getLightInstance(root, project, project);
+    return bare ? null : GitRepositoryImpl.getLightInstance(root, project, project);
   }
 
   public static String push(@NotNull GitRepository repository, String... args) throws IOException {

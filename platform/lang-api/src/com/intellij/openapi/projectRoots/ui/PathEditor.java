@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,13 +177,11 @@ public class PathEditor {
 
   private VirtualFile[] doAdd() {
     VirtualFile baseDir = myAddBaseDir;
-    if (baseDir == null) {
-      Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
-      if (project != null) {
-        baseDir = project.getBaseDir();
-      }
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+    if (baseDir == null && project != null) {
+      baseDir = project.getBaseDir();
     }
-    VirtualFile[] files = FileChooser.chooseFiles(myPanel, myDescriptor, baseDir);
+    VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myPanel, project, baseDir);
     files = adjustAddedFileSet(myPanel, files);
     List<VirtualFile> added = new ArrayList<VirtualFile>(files.length);
     for (VirtualFile vFile : files) {

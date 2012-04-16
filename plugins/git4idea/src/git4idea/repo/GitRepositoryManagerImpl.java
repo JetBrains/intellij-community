@@ -203,7 +203,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   }
 
   private GitRepository createGitRepository(VirtualFile root) {
-    GitRepository repository = GitRepository.getFullInstance(root, myProject, this);
+    GitRepository repository = GitRepositoryImpl.getFullInstance(root, myProject, this);
     for (GitRepositoryChangeListener listener : myListeners) {
       repository.addListener(listener);
     }

@@ -17,7 +17,6 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -33,48 +32,128 @@ public class FileChooser {
 
   private FileChooser() { }
 
+  /**
+   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
+   *                                          com.intellij.openapi.project.Project,
+   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor) {
-    return chooseFiles(project, descriptor, null);
+    return chooseFiles(descriptor, null, project, null);
   }
 
+  /**
+   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
+   *                                          java.awt.Component,
+   *                                          com.intellij.openapi.project.Project,
+   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor) {
-    return chooseFiles(parent, descriptor, null);
+    return chooseFiles(descriptor, parent, null, null);
+  }
+
+  /**
+   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
+   *                                          com.intellij.openapi.project.Project,
+   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  @NotNull
+  public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+    return chooseFiles(descriptor, null, project, toSelect);
+  }
+
+  /**
+   * @deprecated use {@linkplain #chooseFiles(FileChooserDescriptor,
+   *                                          java.awt.Component,
+   *                                          com.intellij.openapi.project.Project,
+   *                                          com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  @NotNull
+  public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+    return chooseFiles(descriptor, parent, null, toSelect);
   }
 
   @NotNull
-  public static VirtualFile[] chooseFiles(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
+  public static VirtualFile[] chooseFiles(@NotNull final FileChooserDescriptor descriptor,
+                                          @Nullable final Project project,
+                                          @Nullable final VirtualFile toSelect) {
+    return chooseFiles(descriptor, null, project, toSelect);
+  }
+
+  @NotNull
+  public static VirtualFile[] chooseFiles(@NotNull final FileChooserDescriptor descriptor,
+                                          @Nullable final Component parent,
+                                          @Nullable final Project project,
+                                          @Nullable final VirtualFile toSelect) {
+    final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent);
     return chooser.choose(toSelect, project);
   }
 
-  @NotNull
-  public static VirtualFile[] chooseFiles(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, parent);
-    return chooser.choose(toSelect, null);
-  }
-
+  /**
+   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
+   *                                         com.intellij.openapi.project.Project,
+   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor) {
-    return chooseFile(project, descriptor, null);
+    return chooseFile(descriptor, null, project, null);
   }
 
+  /**
+   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
+   *                                         java.awt.Component,
+   *                                         com.intellij.openapi.project.Project,
+   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor) {
-    return chooseFile(parent, descriptor, null);
+    return chooseFile(descriptor, parent, null, null);
   }
 
+  /**
+   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
+   *                                         com.intellij.openapi.project.Project,
+   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public static VirtualFile chooseFile(Project project, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
-    LOG.assertTrue(!descriptor.isChooseMultiple());
-    return ArrayUtil.getFirstElement(chooseFiles(project, descriptor, toSelect));
+    return chooseFile(descriptor, null, project, toSelect);
+  }
+
+  /**
+   * @deprecated use {@linkplain #chooseFile(FileChooserDescriptor,
+   *                                         java.awt.Component,
+   *                                         com.intellij.openapi.project.Project,
+   *                                         com.intellij.openapi.vfs.VirtualFile)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  @Nullable
+  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+    return chooseFile(descriptor, parent, null, toSelect);
   }
 
   @Nullable
-  public static VirtualFile chooseFile(Component parent, FileChooserDescriptor descriptor, @Nullable VirtualFile toSelect) {
+  public static VirtualFile chooseFile(@NotNull final FileChooserDescriptor descriptor,
+                                       @Nullable final Project project,
+                                       @Nullable final VirtualFile toSelect) {
+    return chooseFile(descriptor, null, project, toSelect);
+  }
+
+  @Nullable
+  public static VirtualFile chooseFile(@NotNull final FileChooserDescriptor descriptor,
+                                       @Nullable final Component parent,
+                                       @Nullable final Project project,
+                                       @Nullable final VirtualFile toSelect) {
     LOG.assertTrue(!descriptor.isChooseMultiple());
-    return ArrayUtil.getFirstElement(chooseFiles(parent, descriptor, toSelect));
+    return ArrayUtil.getFirstElement(chooseFiles(descriptor, parent, project, toSelect));
   }
 
   /**
@@ -153,12 +232,5 @@ public class FileChooser {
     final FileChooserFactory factory = FileChooserFactory.getInstance();
     final PathChooserDialog pathChooser = factory.createPathChooser(descriptor, project, parent);
     pathChooser.choose(toSelect, callback);
-  }
-
-  /** @deprecated internal method, to remove in IDEA 12 */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isNativeMacChooserEnabled() {
-    return "true".equalsIgnoreCase(System.getProperty("native.mac.file.chooser.enabled", "true")) &&
-           Registry.is("ide.mac.filechooser.native");
   }
 }

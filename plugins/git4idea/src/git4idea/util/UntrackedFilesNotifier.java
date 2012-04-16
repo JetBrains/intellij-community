@@ -17,14 +17,13 @@ package git4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitVcs;
-import git4idea.Notificator;
+import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -42,23 +41,31 @@ public class UntrackedFilesNotifier {
   /**
    * Displays notification about {@code untracked files would be overwritten by checkout} error.
    * Clicking on the link in the notification opens a simple dialog with the list of these files.
-   * @param operation the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
+   * @param operation   the name of the Git operation that caused the error: {@code rebase, merge, checkout}.
+   * @param description the content of the notification or null if the deafult content is to be used.
    */
-  public static void notifyUntrackedFilesOverwrittenBy(final @NotNull Project project, final @NotNull Collection<VirtualFile> untrackedFiles, @NotNull final String operation) {
+  public static void notifyUntrackedFilesOverwrittenBy(@NotNull final Project project, @NotNull PlatformFacade platformFacade,
+                                                       @NotNull final Collection<VirtualFile> untrackedFiles,
+                                                       @NotNull final String operation, @Nullable String description) {
     final String notificationTitle = StringUtil.capitalize(operation) + " error";
-    final String notificationDesc = createUntrackedFilesOverwrittenDescription(operation, false);
+    final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, false) : description;
     final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, true);
 
-    Notificator.getInstance(project).notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, notificationTitle, notificationDesc, NotificationType.ERROR, new NotificationListener() {
-      @Override public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
-                                                      StringUtil.stripHtml(dialogDesc, true), null, false, false) {
-          @Override protected Action[] createActions() {
-            return new Action[]{getOKAction()};
-          }
-        };
-        dlg.setTitle("Untracked Files Preventing " + StringUtil.capitalize(operation));
-        dlg.show();
+    platformFacade.getNotificator(project).notifyError(notificationTitle, notificationDesc,
+                                                  new NotificationListener() {
+      @Override
+      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
+                                                        StringUtil.stripHtml(dialogDesc, true), null, false, false) {
+            @Override
+            protected Action[] createActions() {
+              return new Action[]{getOKAction()};
+            }
+          };
+          dlg.setTitle("Untracked Files Preventing " + StringUtil.capitalize(operation));
+          dlg.show();
+        }
       }
     });
   }
@@ -71,7 +78,7 @@ public class UntrackedFilesNotifier {
       notificationDesc = "These" + description1 + "<br/>" + description2;
     }
     else {
-      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href=''>View them</a>";
+      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href='view'>View them</a>";
     }
     return notificationDesc;
   }

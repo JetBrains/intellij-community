@@ -20,16 +20,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.MavenProject;
 
-public class MavenBeforeRunTask extends BeforeRunTask {
+public class MavenBeforeRunTask extends BeforeRunTask<MavenBeforeRunTask> {
   private String myProjectPath;
   private String myGoal;
 
   public MavenBeforeRunTask() {
-  }
-
-  public MavenBeforeRunTask(String projectPath, String goal) {
-    myProjectPath = projectPath;
-    myGoal = goal;
+    super(MavenBeforeRunTasksProvider.ID);
   }
 
   public String getProjectPath() {

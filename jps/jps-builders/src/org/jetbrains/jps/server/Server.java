@@ -1,6 +1,7 @@
 package org.jetbrains.jps.server;
 
 //import com.intellij.openapi.diagnostic.Logger;
+
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import org.apache.log4j.Level;
@@ -17,17 +18,13 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.JpsRemoteProto;
 import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -70,21 +67,21 @@ public class Server {
   private final ScheduledExecutorService myScheduler;
   private final ServerMessageHandler myMessageHandler;
 
-  public Server(File systemDir, boolean cachesInMemory) {
+  public Server(File systemDir) {
     Utils.setSystemRoot(systemDir);
     final ExecutorService threadPool = Executors.newCachedThreadPool();
     myScheduler = ConcurrencyUtil.newSingleScheduledThreadExecutor("Client activity checker", Thread.MIN_PRIORITY);
     myBuildsExecutor = Executors.newFixedThreadPool(MAX_SIMULTANEOUS_BUILD_SESSIONS);
     myChannelFactory = new NioServerSocketChannelFactory(threadPool, threadPool, 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    myMessageHandler = new ServerMessageHandler(this, new AsyncTaskExecutor() {
+    myMessageHandler = new ServerMessageHandler(this, new Executor() {
       @Override
-      public void submit(final Runnable runnable) {
+      public void execute(final Runnable command) {
         myBuildsExecutor.submit(new Runnable() {
           @Override
           public void run() {
             try {
-              runnable.run();
+              command.run();
             }
             finally {
               Thread.interrupted(); // clear interrupted status before returning to pull
@@ -105,17 +102,6 @@ public class Server {
         );
       }
     };
-    ServerState.getInstance().setKeepTempCachesInMemory(cachesInMemory);
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
-      public void run() {
-        try {
-          myMessageHandler.cancelAllBuildsAndClearState();
-        }
-        finally {
-          Server.this.stop();
-        }
-      }
-    });
   }
 
   public void start(int listenPort) {
@@ -192,10 +178,6 @@ public class Server {
     myLastPingTime = System.currentTimeMillis();
   }
 
-  public boolean isStopped() {
-    return myScheduler.isShutdown();
-  }
-
   public static void main(String[] args) {
     try {
       int port = DEFAULT_SERVER_PORT;
@@ -212,10 +194,21 @@ public class Server {
         systemDir = new File(args[1]);
       }
 
-      final Server server = new Server(systemDir, System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null);
+      final Server server = new Server(systemDir);
+      Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook thread") {
+        public void run() {
+          try {
+            server.myMessageHandler.cancelAllBuildsAndClearState();
+          }
+          finally {
+            server.stop();
+          }
+        }
+      });
 
       initLoggers();
       server.start(port);
+      ServerState.getInstance().setKeepTempCachesInMemory(System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null);
 
       System.out.println("Server classpath: " + System.getProperty("java.class.path"));
       System.err.println(SERVER_SUCCESS_START_MESSAGE + port);

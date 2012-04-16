@@ -53,7 +53,7 @@ public final class AndroidApt {
                                                                       @NotNull String outDirOsPath,
                                                                       @NotNull String[] resourceDirsOsPaths,
                                                                       @NotNull String[] libPackages,
-                                                                      boolean isLibrary) throws IOException {
+                                                                      boolean nonConstantFields) throws IOException {
     final Map<AndroidCompilerMessageKind, List<String>> messages = new HashMap<AndroidCompilerMessageKind, List<String>>();
     messages.put(AndroidCompilerMessageKind.ERROR, new ArrayList<String>());
     messages.put(AndroidCompilerMessageKind.INFORMATION, new ArrayList<String>());
@@ -101,7 +101,7 @@ public final class AndroidApt {
 
     if (platformToolsRevision < 0 || platformToolsRevision > 7) {
       Map<AndroidCompilerMessageKind, List<String>> map =
-        doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, isLibrary);
+        doCompile(target, manifestFileOsPath, outDirOsPath, resourceDirsOsPaths, libPackages, null, nonConstantFields);
 
       if (map.get(AndroidCompilerMessageKind.ERROR).isEmpty()) {
         makeFieldsNotFinal(libRJavaFiles);

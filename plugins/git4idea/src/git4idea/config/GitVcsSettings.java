@@ -74,6 +74,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public String RECENT_GIT_ROOT_PATH = null;
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
     public String RECENT_COMMON_BRANCH = null;
+    public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -188,6 +189,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setRecentCommonBranch(@NotNull String branch) {
     myState.RECENT_COMMON_BRANCH = branch;
+  }
+
+  public void setAutoCommitOnCherryPick(boolean autoCommit) {
+    myState.AUTO_COMMIT_ON_CHERRY_PICK = autoCommit;
+  }
+
+  public boolean isAutoCommitOnCherryPick() {
+    return myState.AUTO_COMMIT_ON_CHERRY_PICK;
   }
 
 }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -317,7 +318,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
     processor.finish();
 
-    if(myEditor != null) {
+    if(myEditor != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
         @Override
         public void run() {

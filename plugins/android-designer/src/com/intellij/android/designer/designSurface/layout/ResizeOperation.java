@@ -71,6 +71,10 @@ public class ResizeOperation implements EditOperation {
     decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH_EAST, TYPE, "Change layout:width x layout:height"));
   }
 
+  public static void height(ResizeSelectionDecorator decorator) {
+    decorator.addPoint(new DirectionResizePoint(blue, Color.black, Position.SOUTH, TYPE, "Change layout:height"));
+  }
+
   @Override
   public void setComponent(RadComponent component) {
     myComponent = (RadViewComponent)component;
@@ -327,11 +331,9 @@ public class ResizeOperation implements EditOperation {
     if (size == wrap) {
       return "wrap_content";
     }
-    else if (size == fill) {
+    if (size == fill) {
       return "fill_parent";
     }
-    else {
-      return Integer.toString(size) + "dp";
-    }
+    return Integer.toString(size) + "dp";
   }
 }

@@ -17,7 +17,6 @@ package com.intellij.android.designer.model.table;
 
 import com.intellij.android.designer.designSurface.layout.CaptionStaticDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
@@ -32,21 +31,25 @@ public class RadCaptionTableRow extends RadVisualComponent {
   private final RadViewComponent myComponent;
   private final StaticDecorator myDecorator = new CaptionStaticDecorator(this);
 
-  public RadCaptionTableRow(RadTableLayoutComponent container, RadViewComponent component, EditableArea mainArea) {
+  public RadCaptionTableRow(RadViewComponent component) {
     myComponent = component;
-    setNativeComponent(container.getNativeComponent());
+    setNativeComponent(component.getNativeComponent());
+  }
+
+  public RadViewComponent getComponent() {
+    return myComponent;
   }
 
   @Override
   public Rectangle getBounds() {
     Rectangle bounds = myComponent.getBounds();
-    return new Rectangle(3, bounds.y, 10, bounds.height);
+    return new Rectangle(2, bounds.y, 10, bounds.height);
   }
 
   @Override
   public Rectangle getBounds(Component relativeTo) {
     Rectangle bounds = super.getBounds(relativeTo);
-    bounds.x = 3;
+    bounds.x = 2;
     bounds.width = 10;
     return bounds;
   }
@@ -54,5 +57,10 @@ public class RadCaptionTableRow extends RadVisualComponent {
   @Override
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
     decorators.add(myDecorator);
+  }
+
+  @Override
+  public void delete() throws Exception {
+    myComponent.delete();
   }
 }

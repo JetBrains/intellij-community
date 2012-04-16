@@ -15,34 +15,22 @@
  */
 package com.intellij.android.designer.designSurface;
 
-import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
  */
 public class TreeDropToOperation extends TreeEditOperation {
-  public TreeDropToOperation(RadComponent host, OperationContext context) {
-    super(host, context);
+  public TreeDropToOperation(RadComponent container, OperationContext context) {
+    super(container, context);
   }
 
   @Override
-  protected void execute(RadComponent insertBefore) throws Exception {
-    RadViewComponent host = (RadViewComponent)myHost;
-    RadViewComponent before = (RadViewComponent)insertBefore;
-
-    if (myContext.isAdd() || myContext.isMove()) {
-      for (RadComponent component : myComponents) {
-        ModelParser.moveComponent(host, (RadViewComponent)component, before);
-      }
-    }
-    else {
-      for (RadComponent component : myComponents) {
-        ModelParser.addComponent(host, (RadViewComponent)component, before);
-      }
-    }
+  protected void execute(@Nullable RadComponent insertBefore) throws Exception {
+    AbstractEditOperation.execute(myContext, (RadViewComponent)myContainer, myComponents, (RadViewComponent)insertBefore);
   }
 }

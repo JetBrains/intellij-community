@@ -181,24 +181,19 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     }
   }
 
-  @Override
-  public WatchRequest addRootToWatch(@NotNull String rootPath, boolean toWatchRecursively) {
-    throw new UnsupportedOperationException();
-  }
-
   @NotNull
   @Override
-  public Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean toWatchRecursively) {
+  public Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean watchRecursively) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeWatchedRoots(@NotNull Collection<WatchRequest> rootsToWatch) {
+  public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeWatchedRoot(@NotNull WatchRequest watchRequest) {
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests, @NotNull Collection<String> rootPaths, boolean watchRecursively) {
     throw new UnsupportedOperationException();
   }
 

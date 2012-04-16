@@ -15,6 +15,7 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -29,11 +30,11 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
+import git4idea.PlatformFacade;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
-import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.util.GitUIUtil;
 import git4idea.util.UntrackedFilesNotifier;
 import org.jetbrains.annotations.NotNull;
@@ -51,12 +52,12 @@ public class GitMergeUpdater extends GitUpdater {
 
   private final ChangeListManager myChangeListManager;
 
-  public GitMergeUpdater(Project project,
+  public GitMergeUpdater(Project project, @NotNull Git git,
                          VirtualFile root,
                          final Map<VirtualFile, GitBranchPair> trackedBranches,
                          ProgressIndicator progressIndicator,
                          UpdatedFiles updatedFiles) {
-    super(project, root, trackedBranches, progressIndicator, updatedFiles);
+    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -111,7 +112,7 @@ public class GitMergeUpdater extends GitUpdater {
     if (error == MergeError.CONFLICT) {
       LOG.info("Conflict detected");
       final boolean allMerged =
-        new MyConflictResolver(myProject, merger, myRoot).merge();
+        new MyConflictResolver(myProject, myGit, merger, myRoot).merge();
       return allMerged ? GitUpdateResult.SUCCESS : GitUpdateResult.INCOMPLETE;
     }
     else if (error == MergeError.LOCAL_CHANGES) {
@@ -134,7 +135,8 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else if (untrackedFilesWouldBeOverwrittenByMergeDetector.wasMessageDetected()) {
       LOG.info("handleMergeFailure: untracked files would be overwritten by merge");
-      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge");
+      UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
+                                                               untrackedFilesWouldBeOverwrittenByMergeDetector.getFiles(), "merge", null);
       return GitUpdateResult.ERROR;
     }
     else {
@@ -278,8 +280,8 @@ public class GitMergeUpdater extends GitUpdater {
     private final GitMerger myMerger;
     private final VirtualFile myRoot;
 
-    public MyConflictResolver(Project project, GitMerger merger, VirtualFile root) {
-      super(project, Collections.singleton(root), makeParams());
+    public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
+      super(project, git, ServiceManager.getService(git4idea.PlatformFacade.class), Collections.singleton(root), makeParams());
       myMerger = merger;
       myRoot = root;
     }
