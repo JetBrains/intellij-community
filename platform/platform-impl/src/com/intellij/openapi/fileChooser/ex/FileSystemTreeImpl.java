@@ -27,7 +27,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.impl.FileComparator;
@@ -359,14 +358,6 @@ public class FileSystemTreeImpl implements FileSystemTree {
       }
     });
     return VfsUtil.toVirtualFileArray(files);
-  }
-
-  /** @deprecated use {@linkplain FileChooserUtil#getChosenFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor, java.util.List)} (to remove in IDEA 12) */
-  @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  public VirtualFile[] getChosenFiles() {
-    final List<VirtualFile> selectedFiles = Arrays.asList(getSelectedFiles());
-    return VfsUtil.toVirtualFileArray(FileChooserUtil.getChosenFiles(myTreeStructure.getChooserDescriptor(), selectedFiles));
   }
 
   private <T> List<T> collectSelectedElements(final Function<FileElement, T> converter) {

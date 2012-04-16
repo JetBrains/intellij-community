@@ -2326,22 +2326,6 @@ public class UIUtil {
       myLineSpacing = 1.0f;
     }
 
-    /** @deprecated use {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
-    @SuppressWarnings("UnusedDeclaration")
-    public TextPainter(final float lineSpacing) {
-      myDrawShadow = isUnderAquaLookAndFeel();
-      myShadowColor = Gray._220;
-      myLineSpacing = lineSpacing;
-    }
-
-    /** @deprecated use {@linkplain #withShadow(boolean, java.awt.Color)} and {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
-    @SuppressWarnings("UnusedDeclaration")
-    public TextPainter(final boolean drawShadow, final Color shadowColor, final float lineSpacing) {
-      myDrawShadow = drawShadow;
-      myShadowColor = shadowColor;
-      myLineSpacing = lineSpacing;
-    }
-
     public TextPainter withShadow(final boolean drawShadow) {
       myDrawShadow = drawShadow;
       return this;

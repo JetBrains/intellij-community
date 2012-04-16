@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,14 +169,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     setText(value == null ? "" : getTextFor(value));
     setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
     setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
-  }
-
-  /** @deprecated use {@linkplain #customizeComponent(Object, javax.swing.JTable, boolean)} (to remove in IDEA 12) */
-  protected void customizeComponent(T value, boolean isSelected) {
-    setOpaque(true);
-    setText(value == null ? "" : getTextFor(value));
-    setBackground(isSelected ? UIUtil.getTableSelectionBackground() : UIUtil.getTableBackground());
-    setForeground(isSelected ? UIUtil.getTableSelectionForeground() : UIUtil.getTableForeground());
   }
 
   public Object getCellEditorValue() {

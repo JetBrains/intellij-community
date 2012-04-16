@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 // todo: move to lang-impl ?
-public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx, ModifiableCellAppearance {
+public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx {
   private Icon myIcon;
   private final SimpleTextAttributes myTextAttributes;
   private final String myText;
@@ -36,11 +36,6 @@ public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx, Mod
 
   public static SimpleTextCellAppearance invalid(@NotNull final String text, @Nullable final Icon icon) {
     return new SimpleTextCellAppearance(text, icon, SimpleTextAttributes.ERROR_ATTRIBUTES);
-  }
-
-  /** @deprecated use {@linkplain #regular(String, javax.swing.Icon)} (to remove in IDEA 12) */
-  public static CellAppearance normal(@NotNull final String text, @Nullable final Icon icon) {
-    return regular(text, icon);
   }
 
   public static SimpleTextCellAppearance synthetic(@NotNull final String text, @Nullable final Icon icon) {
@@ -76,12 +71,6 @@ public class SimpleTextCellAppearance implements ModifiableCellAppearanceEx, Mod
   @NotNull
   public SimpleTextAttributes getTextAttributes() {
     return myTextAttributes;
-  }
-
-  @Override
-  @Nullable
-  public Icon getIcon() {
-    return myIcon;
   }
 
   @Override
