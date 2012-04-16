@@ -130,7 +130,8 @@ class DaemonListeners implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         Editor editor = e.getEditor();
-        if (!editor.getComponent().isShowing() || !worthBothering(editor.getDocument(), editor.getProject())) {
+        if ((!editor.getComponent().isShowing() && !ApplicationManager.getApplication().isUnitTestMode()) ||
+            !worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
 
