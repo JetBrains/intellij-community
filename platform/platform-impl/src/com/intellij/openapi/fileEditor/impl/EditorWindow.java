@@ -588,7 +588,11 @@ public class EditorWindow {
     if (editor != null) {
       final int index = findFileIndex(editor.getFile());
       if (index != -1) {
-        myTabbedPane.setSelectedIndex(index, focusEditor);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          public void run() {
+            myTabbedPane.setSelectedIndex(index, focusEditor);
+          }
+        });
       }
     }
   }
@@ -995,13 +999,15 @@ public class EditorWindow {
   }
 
   public void setFilePinned(final VirtualFile file, final boolean pinned) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     final EditorComposite editorComposite = findFileComposite(file);
     if (editorComposite == null) {
       throw new IllegalArgumentException("file is not open: " + file.getPath());
     }
+    boolean wasPinned = editorComposite.isPinned();
     editorComposite.setPinned(pinned);
-    updateFileIcon(file);
+    if (wasPinned != pinned && ApplicationManager.getApplication().isDispatchThread()) {
+      updateFileIcon(file);
+    }
   }
 
   void trimToSize(final int limit, @Nullable final VirtualFile fileToIgnore, final boolean transferFocus) {

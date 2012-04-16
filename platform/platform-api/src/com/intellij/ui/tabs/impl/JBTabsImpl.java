@@ -652,10 +652,14 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   public TabInfo addTab(TabInfo info, int index) {
-    return addTab(info, index, false);
+    return addTab(info, index, false, true);
   }
 
-  private TabInfo addTab(TabInfo info, int index, boolean isDropTarget) {
+  public TabInfo addTabSilently(TabInfo info, int index) {
+    return addTab(info, index, false, false);
+  }
+
+  private TabInfo addTab(TabInfo info, int index, boolean isDropTarget, boolean fireEvents) {
     if (!isDropTarget && getTabs().contains(info)) {
       return getTabs().get(getTabs().indexOf(info));
     }
@@ -694,7 +698,7 @@ public class JBTabsImpl extends JComponent
       updateHiding();
     }
 
-    if (!isDropTarget) {
+    if (!isDropTarget && fireEvents) {
       if (getTabCount() == 1) {
         fireBeforeSelectionChanged(null, info);
         fireSelectionChanged(null, info);
@@ -3247,7 +3251,7 @@ public class JBTabsImpl extends JComponent
 
     int index = myLayout.getDropIndexFor(point.getPoint(this));
     setDropInfoIndex(index);
-    addTab(myDropInfo, index, true);
+    addTab(myDropInfo, index, true, true);
 
     TabLabel label = myInfo2Label.get(myDropInfo);
     Dimension size = label.getPreferredSize();

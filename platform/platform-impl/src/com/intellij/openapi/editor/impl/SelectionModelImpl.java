@@ -208,7 +208,9 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return result == null ? defaultPosition : result;
   }
 
-  private static void validateContext(boolean isWrite) {
+  private void validateContext(boolean isWrite) {
+
+    if (!myEditor.getComponent().isShowing()) return;
     if (isWrite) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }

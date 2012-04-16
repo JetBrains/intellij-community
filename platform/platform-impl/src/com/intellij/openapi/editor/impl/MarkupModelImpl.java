@@ -57,7 +57,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final RangeHighlighterTree myHighlighterTree;
 
   MarkupModelImpl(@NotNull DocumentImpl document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myDocument = document;
     myHighlighterTree = new RangeHighlighterTree(myDocument, this);
   }

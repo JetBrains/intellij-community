@@ -137,7 +137,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     myQueue.setTrackUiActivity(true);
   }
 
-  private void initDockableContentFactory() {
+  void initDockableContentFactory() {
     if (myContentFactory != null) return;
 
     myContentFactory = new DockableEditorContainerFactory(myProject, this, myDockManager);
@@ -770,7 +770,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
       if (state == null && !open) {
         // We have to try to get state from the history only in case
-        // if editor is not opened. Otherwise history enty might have a state
+        // if editor is not opened. Otherwise history entry might have a state
         // out of sync with the current editor state.
         state = editorHistoryManager.getState(file, provider);
       }
@@ -1032,7 +1032,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
 
   public boolean isFileOpen(@NotNull final VirtualFile file) {
-    return getEditors(file).length != 0;
+    return !getEditorComposites(file).isEmpty();
   }
 
   @NotNull
@@ -1253,13 +1253,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
+
+        setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
+
         ToolWindowManager.getInstance(myProject).invokeLater(new Runnable() {
           public void run() {
             CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
               public void run() {
-                setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
-                getMainSplitters().openFiles();
-                initDockableContentFactory();
 
                 LaterInvocator.invokeLater(new Runnable() {
                   public void run() {
