@@ -356,6 +356,10 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
     decls.put(Pair.create(new QName(null, value.getName()), value.getParameters().length), value);
   }
 
+  public static void addFunction(Map<Pair<QName, Integer>, Function> decls, String namespace, Function value) {
+    decls.put(Pair.create(new QName(namespace, value.getName()), value.getParameters().length), value);
+  }
+
   public boolean allowsExtensions() {
     return false;
   }
