@@ -35,7 +35,7 @@ public class AbsoluteLayoutOperation extends AbstractEditOperation {
   private Rectangle myBounds;
   private Point myStartLocation;
 
-  public AbsoluteLayoutOperation(RadViewComponent container, OperationContext context) {
+  public AbsoluteLayoutOperation(RadComponent container, OperationContext context) {
     super(container, context);
   }
 

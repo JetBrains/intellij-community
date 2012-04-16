@@ -41,7 +41,7 @@ public class LinearLayoutOperation extends FlowBaseOperation {
   private Gravity myExclude;
   private Gravity myGravity;
 
-  public LinearLayoutOperation(RadViewComponent container, OperationContext context, boolean horizontal) {
+  public LinearLayoutOperation(RadComponent container, OperationContext context, boolean horizontal) {
     super(container, context, horizontal);
 
     if (context.isMove() && context.getComponents().size() == 1) {

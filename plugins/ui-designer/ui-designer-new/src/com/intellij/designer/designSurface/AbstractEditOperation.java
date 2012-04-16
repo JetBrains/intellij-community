@@ -24,10 +24,12 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class AbstractEditOperation implements EditOperation {
+  protected final RadComponent myContainer;
   protected final OperationContext myContext;
   protected List<RadComponent> myComponents;
 
-  public AbstractEditOperation(OperationContext context) {
+  public AbstractEditOperation(RadComponent container, OperationContext context) {
+    myContainer = container;
     myContext = context;
   }
 

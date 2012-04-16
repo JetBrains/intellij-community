@@ -71,7 +71,7 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
       if (context.isTree()) {
         return new TreeDropToOperation(myContainer, context);
       }
-      return new LinearLayoutOperation((RadViewComponent)myContainer, context, isHorizontal());
+      return new LinearLayoutOperation(myContainer, context, isHorizontal());
     }
     else if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);

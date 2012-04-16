@@ -27,11 +27,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class AbstractEditOperation extends com.intellij.designer.designSurface.AbstractEditOperation {
-  protected final RadViewComponent myContainer;
-
-  public AbstractEditOperation(RadViewComponent container, OperationContext context) {
-    super(context);
-    myContainer = container;
+  public AbstractEditOperation(RadComponent container, OperationContext context) {
+    super(container, context);
   }
 
   @Override
@@ -40,7 +37,7 @@ public abstract class AbstractEditOperation extends com.intellij.designer.design
   }
 
   protected void execute(@Nullable RadViewComponent insertBefore) throws Exception {
-    execute(myContext, myContainer, myComponents, insertBefore);
+    execute(myContext, (RadViewComponent)myContainer, myComponents, insertBefore);
   }
 
   public static void execute(OperationContext context,

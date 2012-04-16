@@ -27,12 +27,10 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public abstract class TreeEditOperation extends AbstractEditOperation {
-  protected final RadComponent myHost;
-
-  public static boolean isTarget(RadComponent host, OperationContext context) {
+  public static boolean isTarget(RadComponent container, OperationContext context) {
     Point location = context.getLocation();
     RadComponent target = context.getArea().findTarget(location.x, location.y, null);
-    if (target == host) {
+    if (target == container) {
       FeedbackTreeLayer layer = context.getArea().getFeedbackTreeLayer();
       return !layer.isBeforeLocation(target, location.x, location.y) &&
              !layer.isAfterLocation(target, location.x, location.y);
@@ -40,9 +38,8 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     return true;
   }
 
-  public TreeEditOperation(RadComponent host, OperationContext context) {
-    super(context);
-    myHost = host;
+  public TreeEditOperation(RadComponent container, OperationContext context) {
+    super(container, context);
   }
 
   @Override
@@ -51,7 +48,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     RadComponent target = myContext.getArea().findTarget(location.x, location.y, null);
     FeedbackTreeLayer layer = myContext.getArea().getFeedbackTreeLayer();
 
-    if (myHost == target) {
+    if (myContainer == target) {
       layer.mark(target, FeedbackTreeLayer.INSERT_SELECTION);
     }
     else if (target != null && isChildren(target)) {
@@ -65,7 +62,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
   }
 
   private boolean isChildren(RadComponent component) {
-    for (Object child : myHost.getTreeChildren()) {
+    for (Object child : myContainer.getTreeChildren()) {
       if (child == component) {
         return true;
       }
@@ -84,7 +81,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     if (reference == null) {
       return false;
     }
-    return canExecute(myHost == reference ? null : reference);
+    return canExecute(myContainer == reference ? null : reference);
   }
 
   protected boolean canExecute(RadComponent insertBefore) {
@@ -94,7 +91,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
   @Override
   public void execute() throws Exception {
     RadComponent reference = getReference();
-    execute(myHost == reference ? null : reference);
+    execute(myContainer == reference ? null : reference);
   }
 
   protected abstract void execute(RadComponent insertBefore) throws Exception;
@@ -104,11 +101,11 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     Point location = myContext.getLocation();
     RadComponent target = myContext.getArea().findTarget(location.x, location.y, null);
 
-    if (myHost == target) {
-      return myHost;
+    if (myContainer == target) {
+      return myContainer;
     }
     if (target != null) {
-      Object[] children = myHost.getTreeChildren();
+      Object[] children = myContainer.getTreeChildren();
       int index = -1;
 
       for (int i = 0; i < children.length; i++) {
@@ -126,7 +123,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
       if (index < children.length) {
         return (RadComponent)children[index];
       }
-      return myHost;
+      return myContainer;
     }
     return null;
   }

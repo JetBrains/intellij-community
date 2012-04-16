@@ -27,7 +27,6 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class FlowBaseOperation extends AbstractEditOperation {
-  protected final RadComponent myContainer;
   protected final boolean myHorizontal;
   protected RectangleFeedback myFirstInsertFeedback;
   protected LineInsertFeedback myInsertFeedback;
@@ -36,8 +35,7 @@ public abstract class FlowBaseOperation extends AbstractEditOperation {
   protected boolean myInsertBefore;
 
   public FlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal) {
-    super(context);
-    myContainer = container;
+    super(container, context);
     myHorizontal = horizontal;
   }
 
