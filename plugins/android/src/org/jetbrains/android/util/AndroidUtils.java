@@ -97,6 +97,7 @@ public class AndroidUtils {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.util.AndroidUtils");
 
   // Icons
+  public static final Icon ANDROID_TOOLWINDOW_ICON = IconLoader.getIcon("/icons/androidToolWindow.png");
   public static final Icon ANDROID_ICON = IconLoader.getIcon("/icons/android.png");
   public static final Icon DDMS_ICON = IconLoader.getIcon("/icons/ddms.png");
   public static final Icon RESTART_LOGCAT_ICON = IconLoader.getIcon("/icons/restartLogcat.png");
