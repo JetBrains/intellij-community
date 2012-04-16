@@ -18,7 +18,6 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -41,6 +40,7 @@ public class ShutDownTracker implements Runnable {
     private static final ShutDownTracker ourInstance = new ShutDownTracker();
   }
 
+  @NotNull
   public static ShutDownTracker getInstance() {
     return ShutDownTrackerHolder.ourInstance;
   }
@@ -49,6 +49,7 @@ public class ShutDownTracker implements Runnable {
     return getInstance().myIsShutdownHookRunning;
   }
 
+  @Override
   public void run() {
     myIsShutdownHookRunning = true;
 
@@ -128,28 +129,27 @@ public class ShutDownTracker implements Runnable {
     myShutdownTasks.remove(task);
   }
   
-  @Nullable
-  private synchronized <T> T removeLast(LinkedList<T> list) {
+  private synchronized <T> T removeLast(@NotNull LinkedList<T> list) {
     return list.isEmpty()? null : list.removeLast();
   }
 
-  public static void invokeAndWait(boolean timed, boolean edt, final Runnable runnable) {
+  public static void invokeAndWait(boolean timed, boolean edt, @NotNull final Runnable runnable) {
     if (!edt) {
-      if (!timed) {
+      if (timed) {
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
+        new Thread(new Runnable() {
+          @Override
+          public void run() {
+            runnable.run();
+            semaphore.up();
+          }
+        }).start();
+        semaphore.waitFor(1000);
+      }
+      else {
         runnable.run();
       }
-
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      new Thread(new Runnable() {
-        @Override
-        public void run() {
-          runnable.run();
-          semaphore.up();
-        }
-      }).start();
-      semaphore.waitFor(1000);
-
       return;
     }
 
