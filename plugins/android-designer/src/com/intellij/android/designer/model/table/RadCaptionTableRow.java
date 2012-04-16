@@ -58,4 +58,9 @@ public class RadCaptionTableRow extends RadVisualComponent {
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
     decorators.add(myDecorator);
   }
+
+  @Override
+  public void delete() throws Exception {
+    myComponent.delete();
+  }
 }

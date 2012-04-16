@@ -19,6 +19,7 @@ import com.intellij.android.designer.designSurface.*;
 import com.intellij.android.designer.designSurface.AbstractEditOperation;
 import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.TableLayoutDecorator;
+import com.intellij.android.designer.designSurface.layout.TableLayoutOperation;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
@@ -60,8 +61,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
         }
         return null;
       }
-      // XXX
-      return null;
+      return new TableLayoutOperation(myContainer, context);
     }
     if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);
@@ -138,7 +138,23 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
   @Override
   public ICaption getCaption(RadComponent component) {
-    return myContainer == component && myContainer.getParent().getLayout() instanceof ICaptionDecorator ? null : this;
+    if (myContainer == component) {
+      // skip for caption parent, example: ...( Caption( TableLayout ) )
+      RadComponent parent = myContainer.getParent();
+      if (parent.getLayout() instanceof ICaptionDecorator) {
+        return null;
+      }
+
+      // skip for caption parent.parent, example: ...( TableLayout( TableRowLayout( TableLayout ) ) )
+      parent = parent.getParent();
+      if (parent != null && parent.getLayout() instanceof ICaptionDecorator) {
+        return null;
+      }
+    }
+    if (myContainer.getChildren().isEmpty()) {
+      return null;
+    }
+    return this;
   }
 
   @Override
@@ -149,19 +165,11 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
     List<RadComponent> components = new ArrayList<RadComponent>();
 
     if (horizontal) {
-      if (children.isEmpty()) {
-        components.add(new RadCaptionTableColumn(container, 0, container.getBounds().width));
+      int columnOffset = 0;
+      for (int columnWidth : container.getColumnWidths()) {
+        components.add(new RadCaptionTableColumn(container, columnOffset, Math.max(columnWidth, 2)));
+        columnOffset += columnWidth;
       }
-      else {
-        int columnOffset = 0;
-        for (int columnWidth : container.getColumnWidths()) {
-          components.add(new RadCaptionTableColumn(container, columnOffset, Math.max(columnWidth, 2)));
-          columnOffset += columnWidth;
-        }
-      }
-    }
-    else if (children.isEmpty()) {
-      components.add(new RadCaptionTableRow(container));
     }
     else {
       for (RadComponent component : children) {
@@ -179,6 +187,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
   @NotNull
   public RadLayout getCaptionLayout(final EditableArea mainArea, boolean horizontal) {
     if (horizontal) {
+      // TODO
       return myCaptionColumnLayout;
     }
 

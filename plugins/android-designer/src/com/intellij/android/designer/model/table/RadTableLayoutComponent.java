@@ -17,6 +17,7 @@ package com.intellij.android.designer.model.table;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.intellij.android.designer.model.RadViewContainer;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -44,6 +45,9 @@ public class RadTableLayoutComponent extends RadViewContainer {
         myColumnWidths = (int[])maxWidths.get(viewObject);
       }
       catch (Throwable e) {
+      }
+      if (myColumnWidths == null) {
+        myColumnWidths = ArrayUtil.EMPTY_INT_ARRAY;
       }
     }
     return myColumnWidths;

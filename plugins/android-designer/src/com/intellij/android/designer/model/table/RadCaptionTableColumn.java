@@ -57,4 +57,14 @@ public class RadCaptionTableColumn extends RadVisualComponent {
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
     decorators.add(myDecorator);
   }
+
+  @Override
+  public boolean canDelete() {
+    return false; // TODO: Auto-generated method stub
+  }
+
+  @Override
+  public void delete() throws Exception {
+    // TODO: Auto-generated method stub
+  }
 }
