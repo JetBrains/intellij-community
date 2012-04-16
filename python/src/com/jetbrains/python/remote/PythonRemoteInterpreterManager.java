@@ -66,7 +66,7 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, PythonRemoteSdkAdditionalData data, String path);
 
   @Nullable
-  public abstract PyRemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir);
+  public abstract PyRemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir, PythonRemoteSdkAdditionalData data);
 
   public abstract void createDeployment(Project project,
                                         VirtualFile projectDir,
