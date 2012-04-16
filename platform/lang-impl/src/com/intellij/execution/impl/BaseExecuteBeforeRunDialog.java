@@ -39,9 +39,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 
 public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extends DialogWrapper {
@@ -180,8 +179,12 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   }
 
   private boolean isConfigurationAssigned(RunConfiguration configuration) {
-    final T task = RunManagerEx.getInstanceEx(myProject).getBeforeRunTask(configuration, getTaskID());
-    return task != null && isRunning(task);
+    final java.util.List<T> tasks = RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(configuration, getTaskID());
+    for (T task : tasks) {
+      if (isRunning(task))
+        return true;
+    }
+    return false;
   }
 
   protected void doOKAction() {
@@ -215,20 +218,24 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   protected abstract boolean isRunning(T task);
 
   private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
-    T task = runManager.getBeforeRunTask(config, getTaskID());
-    if (task == null) return;
-
+    List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(config);
+    BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskID());
+    if (provider == null)
+      return;
+    T task = provider.createTask(config);
+    update(task);
+    task.setEnabled(true);
     if (enabled) {
-      task.setEnabled(true);
-      update(task);
+      if (!tasks.contains(task)) {
+        tasks.add(task);
+      }
     }
     else {
-      if (isRunning(task)) {
-        task.setEnabled(false);
-        clear(task);
+      if (tasks.contains(task)) {
+        tasks.remove(task);
       }
-      // do not change the task otherwise 
     }
+    runManager.setBeforeRunTasks(config, tasks);
   }
 
   protected abstract void update(T task);

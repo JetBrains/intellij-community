@@ -60,6 +60,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,10 +98,10 @@ public class GradleScriptType extends GroovyScriptType {
       configuration.setName(configuration.getName() + "." + target);
     }
     
-    final CompileStepBeforeRun.MakeBeforeRunTask runTask =
-      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
-    if (runTask != null) {
-      runTask.setEnabled(false);
+    final List<CompileStepBeforeRun.MakeBeforeRunTask> runTasks =
+      RunManagerEx.getInstanceEx(file.getProject()).getBeforeRunTasks(configuration, CompileStepBeforeRun.ID);
+    for (CompileStepBeforeRun.MakeBeforeRunTask task : runTasks) {
+      task.setEnabled(false);
     }
   }
 

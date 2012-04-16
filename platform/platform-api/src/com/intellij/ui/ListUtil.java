@@ -168,7 +168,27 @@ public class ListUtil {
     if (model instanceof FilteringListModel) {
       return (DefaultListModel)((FilteringListModel)model).getOriginalModel();
     }
+    if (model instanceof CollectionListModel) {
+      return getWrapperModel(((CollectionListModel)model));
+    }
     return (DefaultListModel)model;
+  }
+
+  private static DefaultListModel getWrapperModel(final CollectionListModel source) {
+      DefaultListModel model = new DefaultListModel() {
+        @Override
+        public Object set(int index, Object element) {
+          Object o = source.getElementAt(index);
+          source.setElementAt(element, index);
+          return o;
+        }
+
+        @Override
+        public Object get(int index) {
+          return source.getElementAt(index);
+        }
+      };
+    return model;
   }
 
   public static boolean canMoveSelectedItemsDown(JList list) {

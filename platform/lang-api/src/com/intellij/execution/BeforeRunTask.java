@@ -16,14 +16,27 @@
 
 package com.intellij.execution;
 
+import com.intellij.openapi.util.Key;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: May 18, 2009
  */
-public abstract class BeforeRunTask implements Cloneable{
+public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneable {
+  @NotNull
+  protected final Key<T> myProviderId;
   private boolean myIsEnabled;
+
+  protected BeforeRunTask(@NotNull Key<T> providerId) {
+    myProviderId = providerId;
+  }
+
+  @NotNull
+  public final Key<T> getProviderId() {
+    return myProviderId;
+  }
 
   public boolean isEnabled() {
     return myIsEnabled;
@@ -59,13 +72,13 @@ public abstract class BeforeRunTask implements Cloneable{
     if (o == null || getClass() != o.getClass()) return false;
 
     BeforeRunTask that = (BeforeRunTask)o;
-
+    if (myProviderId != that.myProviderId) return false;
     if (myIsEnabled != that.myIsEnabled) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return (myIsEnabled ? 1 : 0);
+    return 31 * myProviderId.hashCode() + (myIsEnabled ? 1 : 0);
   }
 }

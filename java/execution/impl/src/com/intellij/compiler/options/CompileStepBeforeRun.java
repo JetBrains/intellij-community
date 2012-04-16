@@ -32,11 +32,14 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author spleaner
@@ -47,6 +50,9 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   private static final Key<RunConfiguration> RUN_CONFIGURATION = Key.create("RUN_CONFIGURATION");
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
+
+  private static final Icon ICON = IconLoader.getIcon("/actions/compile.png");
+
   private final Project myProject;
 
   public CompileStepBeforeRun(@NotNull final Project project) {
@@ -57,8 +63,24 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return ID;
   }
 
-  public String getDescription(final RunConfiguration runConfiguration, MakeBeforeRunTask task) {
+  @Override
+  public String getName() {
     return ExecutionBundle.message("before.launch.compile.step");
+  }
+
+  @Override
+  public String getDescription(MakeBeforeRunTask task) {
+    return ExecutionBundle.message("before.launch.compile.step");
+  }
+
+  @Override
+  public Icon getIcon() {
+    return ICON;
+  }
+
+  @Override
+  public Icon getTaskIcon(MakeBeforeRunTask task) {
+    return ICON;
   }
 
   public MakeBeforeRunTask createTask(RunConfiguration runConfiguration) {
@@ -69,6 +91,11 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
   public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
     return false;
+  }
+
+  @Override
+  public boolean canExecuteTask(RunConfiguration configuration, MakeBeforeRunTask task) {
+    return true;
   }
 
   public boolean executeTask(DataContext context, final RunConfiguration configuration, MakeBeforeRunTask task) {
@@ -134,7 +161,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return result[0];
   }
 
-  public boolean hasConfigurationButton() {
+  public boolean isConfigurable() {
     return false;
   }
 
@@ -148,8 +175,9 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     return compileScope.getUserData(RUN_CONFIGURATION);
   }
 
-  public static class MakeBeforeRunTask extends BeforeRunTask {
+  public static class MakeBeforeRunTask extends BeforeRunTask<MakeBeforeRunTask> {
     private MakeBeforeRunTask() {
+      super(ID);
       setEnabled(true);
     }
   }
