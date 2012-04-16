@@ -20,8 +20,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.WaitFor;
 
 import java.io.File;
@@ -359,5 +365,64 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     String newText = StringUtil.repeat(toReplace + "\n",6);
     assertEquals(newText, getEditor().getDocument().getText());
   }
+
+  public void testFindInFileUnderLibraryUnderProject() throws Exception {
+    initProject("libUnderProject", "src");
+    PsiTestUtil.addLibrary(myModule, "lib", JavaTestUtil.getJavaTestDataPath() + "/find/libUnderProject/lib", new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("TargetWord");
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(true);
+
+    findModel.setWholeWordsOnly(false);
+    assertSize(2, findUsages(findModel));
+
+    /* todo
+    findModel.setWholeWordsOnly(true);
+    assertSize(2, findUsages(findModel));
+    */
+  }
+
+  public void testLocalScopeSearchPerformance() throws Exception {
+    final int count = 3000;
+    TempDirTestFixture fixture = new LightTempDirTestFixtureImpl();
+    fixture.setUp();
+
+    try {
+      String sampleText = StringUtil.repeat("zoo TargetWord foo bar goo\n", count);
+      for (int i = 0; i < count; i++) {
+        fixture.createFile("a" + i + ".txt", sampleText);
+      }
+      PsiTestUtil.addSourceContentToRoots(myModule, fixture.getFile(""));
+
+      VirtualFile file = fixture.createFile("target.txt", sampleText);
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+      final FindModel findModel = new FindModel();
+      findModel.setStringToFind("TargetWord");
+      findModel.setWholeWordsOnly(true);
+      findModel.setFromCursor(false);
+      findModel.setGlobal(true);
+      findModel.setMultipleFiles(true);
+
+      ThrowableRunnable test = new ThrowableRunnable() {
+        @Override
+        public void run() throws Throwable {
+          assertSize(count, findUsages(findModel));
+        }
+      };
+
+      findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
+      PlatformTestUtil.startPerformanceTest("slow", 500, test).attempts(1).cpuBound().usesAllCPUCores().assertTiming();
+
+      findModel.setCustomScope(new LocalSearchScope(psiFile));
+      PlatformTestUtil.startPerformanceTest("slow", 500, test).attempts(1).cpuBound().usesAllCPUCores().assertTiming();
+    }
+    finally {
+      fixture.tearDown();
+    }
+  }
+
 
 }
