@@ -99,18 +99,21 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
               if (value != null) {
                 configureEditor(getEditor(), value);
                 IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
+                assert myJBPopup != null;
+                ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
+                myJBPopup.cancel();
               }
             }
           })
+          .setFocusOwners(new Component[]{this})
           .setMinSize(new Dimension(getWidth(), -1))
-          .setMovable(false)
-          .setResizable(false)
           .createPopup();
         list.setBorder(IdeBorderFactory.createEmptyBorder(0));
         myJBPopup.showUnderneathOf(this);
         list.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
+            ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
             myJBPopup.cancel();
           }
         });
@@ -167,8 +170,10 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   public void removeNotify() {
     super.removeNotify();
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-    if (myJBPopup != null && myJBPopup.isVisible()) {
+    if (myJBPopup != null) {
+      getUI().setPopupVisible(this, false);
       myJBPopup.cancel();
+
     }
   }
 
