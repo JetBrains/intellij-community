@@ -659,7 +659,7 @@ public class TypeConversionUtil {
       return left.equals(right) || isAssignable(((PsiCapturedWildcardType)left).getLowerBound(), right, false);
     }
     if (right instanceof PsiCapturedWildcardType) {
-      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), false);
+      return isAssignable(left, ((PsiCapturedWildcardType)right).getUpperBound(), allowUncheckedConversion);
     }
 
     if (left instanceof PsiWildcardType) {

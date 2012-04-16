@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,12 +98,7 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
   public void setCompilerOutputUrl(String compilerOutputUrl) {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myProject, null);
     setCompilerOutputPointer(pointer);
-    final LocalFileSystem.WatchRequest watchRequest =
-      LocalFileSystem.getInstance().addRootToWatch(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl), true);
-    if (myCompilerOutputWatchRequest != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(myCompilerOutputWatchRequest);
-    }
-    myCompilerOutputWatchRequest = watchRequest;
+    myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, compilerOutputUrl, true);
   }
 
   @NotNull

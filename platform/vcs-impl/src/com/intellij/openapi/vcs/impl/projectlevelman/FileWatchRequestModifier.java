@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
 * @author irengrig
@@ -51,17 +48,25 @@ public class FileWatchRequestModifier implements Runnable {
     final List<VcsDirectoryMapping> deleted = new LinkedList<VcsDirectoryMapping>(myDirectoryMappingWatches.keySet());
     deleted.removeAll(copy);
 
+    final Map<String, VcsDirectoryMapping> toAdd = new HashMap<String, VcsDirectoryMapping>();
     for (VcsDirectoryMapping mapping : added) {
-      if (mapping.isDefaultMapping()) continue;
-      final LocalFileSystem.WatchRequest watchRequest = myLfs.addRootToWatch(mapping.getDirectory(), true);
-      myDirectoryMappingWatches.put(mapping, watchRequest);
+      if (!mapping.isDefaultMapping()) {
+        toAdd.put(mapping.getDirectory(), mapping);
+      }
     }
+
+    final Collection<LocalFileSystem.WatchRequest> toRemove = new ArrayList<LocalFileSystem.WatchRequest>();
     for (VcsDirectoryMapping mapping : deleted) {
       if (mapping.isDefaultMapping()) continue;
       final LocalFileSystem.WatchRequest removed = myDirectoryMappingWatches.remove(mapping);
       if (removed != null) {
-        myLfs.removeWatchedRoot(removed);
+        toRemove.add(removed);
       }
+    }
+
+    final Set<LocalFileSystem.WatchRequest> requests = myLfs.replaceWatchedRoots(toRemove, toAdd.keySet(), true);
+    for (LocalFileSystem.WatchRequest request : requests) {
+      myDirectoryMappingWatches.put(toAdd.get(request.getRootPath()), request);
     }
   }
 }

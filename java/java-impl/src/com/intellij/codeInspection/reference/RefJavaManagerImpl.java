@@ -300,9 +300,9 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   public void export(final RefEntity refEntity, final Element element) {
     if (refEntity instanceof RefElement) {
-      final PsiElement psiElement = ((RefElement)refEntity).getElement();
-      if (psiElement != null) {
-        final PsiFile psiFile = psiElement.getContainingFile();
+      final SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
+      if (pointer != null) {
+        final PsiFile psiFile = pointer.getContainingFile();
         if (psiFile instanceof PsiJavaFile) {
           appendPackageElement(element, ((PsiJavaFile)psiFile).getPackageName());
         }
