@@ -145,7 +145,9 @@ public class QueueProcessor<T> {
   }
 
   public void add(T t, ModalityState state) {
-    myModalityState.put(new MyOverrideEquals(t), state);
+    synchronized (myQueue) {
+      myModalityState.put(new MyOverrideEquals(t), state);
+    }
     doAdd(t, false);
   }
 
