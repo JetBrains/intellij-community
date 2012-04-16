@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class InsertPathAction extends AnAction {
     }
     //TODO use from openapi
     //FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.commandLine.insertPath");
-    VirtualFile[] files = FileChooser.chooseFiles(myTextField, myDescriptor, virtualFile);
+    VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTextField, getEventProject(e), virtualFile);
     if (files.length != 0) {
       myTextField.replaceSelection(files[0].getPresentableUrl());
     }

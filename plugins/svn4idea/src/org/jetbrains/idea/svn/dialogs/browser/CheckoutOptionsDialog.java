@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   private FixedSizeButton mySelectTarget;
   private final String myRelativePath;
 
-  public CheckoutOptionsDialog(Project project, SVNURL url, File target, final VirtualFile root, final String relativePath) {
+  public CheckoutOptionsDialog(final Project project, SVNURL url, File target, final VirtualFile root, final String relativePath) {
     super(project, true);
     myRelativePath = relativePath;
     final String urlText = url.toString();
@@ -74,7 +74,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
         fcd.setTitle(SvnBundle.message("checkout.directory.chooser.title"));
         fcd.setDescription(SvnBundle.message("checkout.directory.chooser.prompt"));
         fcd.setHideIgnored(false);
-        VirtualFile file = FileChooser.chooseFile(getContentPane(), fcd, null);
+        VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), project, null);
         if (file == null) {
           return;
         }

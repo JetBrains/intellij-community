@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class CheckoutHelper {
     descriptor.setTitle(CvsBundle.message("dialog.description.select.a.directory.to.check.out.the.files.to"));
     VirtualFile suggestedCheckoutFolder =
       LocalFileSystem.getInstance().findFileByPath(pathToSuggestedFolder.replace(File.separatorChar, '/'));
-    return FileChooser.chooseFile(myPanel, descriptor, suggestedCheckoutFolder);
+    return FileChooser.chooseFile(descriptor, myPanel, null, suggestedCheckoutFolder);
   }
 
   private boolean requestLocation() {

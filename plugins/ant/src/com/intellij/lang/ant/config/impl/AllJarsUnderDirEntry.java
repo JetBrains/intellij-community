@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package com.intellij.lang.ant.config.impl;
 
-import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,14 +36,17 @@ import java.util.List;
 
 public class AllJarsUnderDirEntry implements AntClasspathEntry {
   private static final Icon ALL_JARS_IN_DIR_ICON = IconLoader.getIcon("/ant/allJarsInDir.png");
-  private final File myDir;
-  @NonNls static final String DIR = "dir";
+  @NonNls private static final String JAR_SUFFIX = ".jar";
+
   private static final Function<VirtualFile, AntClasspathEntry> CREATE_FROM_VIRTUAL_FILE = new Function<VirtualFile, AntClasspathEntry>() {
     public AntClasspathEntry fun(VirtualFile file) {
       return fromVirtualFile(file);
     }
   };
-  @NonNls public static final String JAR_SUFFIX = ".jar";
+
+  @NonNls static final String DIR = "dir";
+
+  private final File myDir;
 
   public AllJarsUnderDirEntry(final File dir) {
     myDir = dir;
@@ -85,17 +86,10 @@ public class AllJarsUnderDirEntry implements AntClasspathEntry {
     return new AllJarsUnderDirEntry(file.getPath());
   }
 
-  public static class AddEntriesFactory implements Factory<List<AntClasspathEntry>> {
-    private final JComponent myParentComponent;
-
-    public AddEntriesFactory(final JComponent component) {
-      myParentComponent = component;
-    }
-
-    public List<AntClasspathEntry> create() {
-      VirtualFile[] files = FileChooser.chooseFiles(myParentComponent, FileChooserDescriptorFactory.createMultipleFoldersDescriptor());
-      if (files.length == 0) return null;
-      return ContainerUtil.map(files, CREATE_FROM_VIRTUAL_FILE);
+  @SuppressWarnings("ClassNameSameAsAncestorName")
+  public static class AddEntriesFactory extends AntClasspathEntry.AddEntriesFactory {
+    public AddEntriesFactory(final JComponent parentComponent) {
+      super(parentComponent, FileChooserDescriptorFactory.createMultipleFoldersDescriptor(), CREATE_FROM_VIRTUAL_FILE);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -63,8 +62,7 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
         return super.isFileSelectable(file);
       }
     };
-    final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, context.getProject());
-    final VirtualFile[] files = chooser.choose(null, context.getProject());
+    final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
     final List<PackagingElement<?>> list = new ArrayList<PackagingElement<?>>();
     final PackagingElementFactory factory = PackagingElementFactory.getInstance();
     for (VirtualFile file : files) {

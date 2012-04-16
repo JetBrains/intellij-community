@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,8 +151,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         if (defaultFile == null) {
           defaultFile = AndroidRootUtil.getMainContentRoot(facet);
         }
-        final VirtualFile file = FileChooser.chooseFile(myContentPanel, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-                                                        defaultFile);
+        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+        final VirtualFile file = FileChooser.chooseFile(descriptor, myContentPanel, project, defaultFile);
         if (file != null) {
           myProguardConfigFileTextField.setText(FileUtil.toSystemDependentName(file.getPath()));
         }
@@ -686,7 +686,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
           }
         }
       }
-      VirtualFile file = FileChooser.chooseFile(myContentPanel, FileChooserDescriptorFactory.createSingleFolderDescriptor(), initialFile);
+      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      VirtualFile file = FileChooser.chooseFile(descriptor, myContentPanel, myContext.getProject(), initialFile);
       if (file != null) {
         myTextField.setText(FileUtil.toSystemDependentName(file.getPath()));
       }
@@ -741,21 +742,21 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         initialFile = LocalFileSystem.getInstance().findFileByPath(p);
       }
     }
-    return FileChooser
-      .chooseFiles(myContentPanel, new FileChooserDescriptor(chooseFile, !chooseFile, false, false, false, chooseMultiple) {
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          if (!super.isFileVisible(file, showHiddenFiles)) {
-            return false;
-          }
-          
-          if (!file.isDirectory() && !chooseFile) {
-            return false;
-          }
-          
-          return filter == null || filter.value(file);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(chooseFile, !chooseFile, false, false, false, chooseMultiple) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        if (!super.isFileVisible(file, showHiddenFiles)) {
+          return false;
         }
-      }, initialFile);
+
+        if (!file.isDirectory() && !chooseFile) {
+          return false;
+        }
+
+        return filter == null || filter.value(file);
+      }
+    };
+    return FileChooser.chooseFiles(descriptor, myContentPanel, myContext.getProject(), initialFile);
   }
   
   private static class MyManifestFilter implements Condition<VirtualFile> {

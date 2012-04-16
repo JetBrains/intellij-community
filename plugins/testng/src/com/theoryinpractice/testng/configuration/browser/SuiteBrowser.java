@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class SuiteBrowser extends BrowseModuleValueActionListener
         };
         descriptor.setDescription("Please select the testng.xml suite file");
         descriptor.setTitle("Select Suite");
-        VirtualFile file = FileChooser.chooseFile(getProject(), descriptor);
+      VirtualFile file = FileChooser.chooseFile(descriptor, getProject(), null);
         return file != null ? file.getPath() : null;
     }
 

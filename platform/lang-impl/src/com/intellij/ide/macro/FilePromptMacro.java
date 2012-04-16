@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.ide.macro;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,8 +40,7 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
   protected String promptUser(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    final FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
-    final VirtualFile[] result = fileChooser.choose(null, project);
+    final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, null);
     return result.length == 1? FileUtil.toSystemDependentName(result[0].getPath()) : null;
   }
 

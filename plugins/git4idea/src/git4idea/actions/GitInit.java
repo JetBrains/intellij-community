@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class GitInit extends DumbAwareAction {
     if (baseDir == null) {
       baseDir = project.getBaseDir();
     }
-    final VirtualFile root = FileChooser.chooseFile(project, fcd, baseDir);
+    final VirtualFile root = FileChooser.chooseFile(fcd, project, baseDir);
     if (root == null) {
       return;
     }

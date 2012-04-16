@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -359,7 +359,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       if (myContextModule != null) {
         chooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, myContextModule);
       }
-      final VirtualFile[] files = FileChooser.chooseFiles(myPanel, chooserDescriptor, initialSelection);
+      final VirtualFile[] files = FileChooser.chooseFiles(chooserDescriptor, myPanel, myProject, initialSelection);
       if (files.length == 0) return Collections.emptyList();
 
       return RootDetectionUtil.detectRoots(Arrays.asList(files), myPanel, myProject, myDescriptor);

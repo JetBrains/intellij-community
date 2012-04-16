@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       new BrowseModuleValueActionListener(project) {
         @Override
         protected String showDialog() {
-          final VirtualFile virtualFile = FileChooser.chooseFile(project, FileChooserDescriptorFactory.createSingleFolderDescriptor(), null);
+          final VirtualFile virtualFile =
+            FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);
           if (virtualFile != null) {
             return FileUtil.toSystemDependentName(virtualFile.getPath());
           }

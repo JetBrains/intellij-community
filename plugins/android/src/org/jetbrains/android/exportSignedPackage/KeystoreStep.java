@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.android.exportSignedPackage;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -204,7 +205,8 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
         path = defaultLocation != null ? defaultLocation : "";
       }
       VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
-      VirtualFile file = FileChooser.chooseFile(myContentPanel, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(), f);
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+      VirtualFile file = FileChooser.chooseFile(descriptor, myContentPanel, myWizard.getProject(), f);
       if (file != null) {
         myKeystoreLocationField.setText(FileUtil.toSystemDependentName(file.getPath()));
       }

@@ -58,7 +58,7 @@ class AddAssociationAction extends AnAction {
             }
         };
 
-        final VirtualFile[] virtualFiles = FileChooser.chooseFiles(project, descriptor, psiFile.getVirtualFile());
+        final VirtualFile[] virtualFiles = FileChooser.chooseFiles(descriptor, project, psiFile.getVirtualFile());
         if (virtualFiles.length == 0) return; // cancel
 
         for (VirtualFile file : virtualFiles) {
