@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,7 +276,7 @@ public class AttachSourcesNotificationProvider implements EditorNotifications.Pr
       descriptor.setDescription(ProjectBundle.message("library.attach.sources.description"));
       final Library firstLibrary = libraries.get(0).getLibrary();
       VirtualFile[] roots = firstLibrary != null ? firstLibrary.getFiles(OrderRootType.CLASSES) : VirtualFile.EMPTY_ARRAY;
-      VirtualFile[] candidates = FileChooser.chooseFiles(myProject, descriptor, roots.length == 0 ? null : PathUtil.getLocalFile(roots[0]));
+      VirtualFile[] candidates = FileChooser.chooseFiles(descriptor, myProject, roots.length == 0 ? null : PathUtil.getLocalFile(roots[0]));
       final VirtualFile[] files = PathUIUtils.scanAndSelectDetectedJavaSourceRoots(myParentComponent, candidates);
       if (files.length == 0) {
         return new ActionCallback.Rejected();

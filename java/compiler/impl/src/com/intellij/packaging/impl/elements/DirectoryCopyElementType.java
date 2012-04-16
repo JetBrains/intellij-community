@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopy
   public List<? extends DirectoryCopyPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
-    final VirtualFile[] files = FileChooser.chooseFiles(context.getProject(), descriptor);
+    final VirtualFile[] files = FileChooser.chooseFiles(descriptor, context.getProject(), null);
     final List<DirectoryCopyPackagingElement> list = new ArrayList<DirectoryCopyPackagingElement>();
     for (VirtualFile file : files) {
       list.add(new DirectoryCopyPackagingElement(file.getPath()));

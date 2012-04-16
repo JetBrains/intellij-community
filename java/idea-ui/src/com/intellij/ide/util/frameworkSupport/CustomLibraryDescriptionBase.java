@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public abstract class CustomLibraryDescriptionBase extends CustomLibraryDescript
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, false, false, true);
     descriptor.setTitle(IdeBundle.message("new.library.file.chooser.title"));
     descriptor.setDescription(IdeBundle.message("new.library.file.chooser.description"));
-    final VirtualFile[] files = FileChooser.chooseFiles(parentComponent, descriptor, contextDirectory);
+    final VirtualFile[] files = FileChooser.chooseFiles(descriptor, parentComponent, null, contextDirectory);
     if (files.length == 0) {
       return null;
     }

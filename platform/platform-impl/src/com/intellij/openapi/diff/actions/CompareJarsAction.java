@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DirDiffManager;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author Konstantin Bulenkov
  */
 public class CompareJarsAction extends AnAction {
-  //
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
@@ -45,7 +44,8 @@ public class CompareJarsAction extends AnAction {
       if (files.length == 2 && isArchive(files[0]) && isArchive(files[1])) {
         src = new JarFileDiffElement(files[0]);
         trg = new JarFileDiffElement(files[1]);
-      } else if (files.length == 1 && isArchive(files[0])) {
+      }
+      else if (files.length == 1 && isArchive(files[0])) {
         src = new JarFileDiffElement(files[0]);
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, false) {
           @Override
@@ -54,8 +54,7 @@ public class CompareJarsAction extends AnAction {
                    || (!file.isDirectory() && isArchive(file));
           }
         };
-        final VirtualFile[] result = FileChooserFactory.getInstance()
-          .createFileChooser(descriptor, project).choose(project.getBaseDir(), project);
+        final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, project.getBaseDir());
         if (result.length == 1 && result[0] != null && isArchive(result[0])) {
           trg = new JarFileDiffElement(result[0]);
         }

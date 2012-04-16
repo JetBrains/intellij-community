@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,10 +68,8 @@ public class ChooseFileIntentionAction implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final MavenDomDependency dep = getDependency(file, editor);
     PsiFile currentValue = dep.getSystemPath().getValue();
-    FileChooserDialog dialog =
-      getFileChooserFactory().createFileChooser(new FileChooserDescriptor(true, false, true, true, false, false),
-                                                project);
-    VirtualFile[] files = dialog.choose(currentValue == null ? null : currentValue.getVirtualFile(), project);
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, false);
+    VirtualFile[] files = FileChooser.chooseFiles(descriptor,  project, currentValue == null ? null : currentValue.getVirtualFile());
     if (files.length == 0) return;
 
     final PsiFile selectedFile = PsiManager.getInstance(project).findFile(files[0]);

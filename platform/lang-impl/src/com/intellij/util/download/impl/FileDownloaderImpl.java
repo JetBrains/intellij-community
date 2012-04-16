@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,16 +177,8 @@ public class FileDownloaderImpl implements FileDownloader {
   private VirtualFile chooseDirectoryForFiles() {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(IdeBundle.message("dialog.directory.for.downloaded.files.title"));
-
-    final VirtualFile file;
-    if (myProject != null) {
-      file = FileChooser.chooseFile(myProject, descriptor, myProject.getBaseDir());
-    }
-    else {
-      file = FileChooser.chooseFile(myParent, descriptor, null);
-    }
-
-    return file;
+    final VirtualFile baseDir = myProject != null ? myProject.getBaseDir() : null;
+    return FileChooser.chooseFile(descriptor, myParent, myProject, baseDir);
   }
 
   @NotNull

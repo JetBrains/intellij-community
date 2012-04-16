@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ public class DetectionExcludesConfigurable implements Configurable {
   private void chooseDirectoryAndAdd(final @Nullable FrameworkType type) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setDescription((type != null ? type.getPresentableName() + " framework detection" : "Detection for all frameworks") + " will be disabled in selected directory");
-    final VirtualFile[] files = FileChooser.chooseFiles(myMainPanel, descriptor, myProject.getBaseDir());
+    final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myMainPanel, myProject, myProject.getBaseDir());
     final VirtualFile file = files.length > 0 ? files[0] : null;
     if (file != null) {
       addAndRemoveDuplicates(type, file);

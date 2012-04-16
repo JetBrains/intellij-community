@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -795,7 +795,7 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
     final SplitterProportionsData splitterData = new SplitterProportionsDataImpl();
     splitterData.externalizeFromDimensionService("IntelliLang.ImportSettingsKey.SplitterProportions");
 
-    final VirtualFile file = FileChooser.chooseFile(myProject, descriptor);
+    final VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
     if (file == null) return;
     try {
       final Configuration cfg = Configuration.load(file.getInputStream());

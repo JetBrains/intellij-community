@@ -29,11 +29,21 @@ public abstract class FileChooserFactory {
     return ServiceManager.getService(FileChooserFactory.class);
   }
 
+  /**
+   * @deprecated use {@linkplain #createFileChooser(FileChooserDescriptor, com.intellij.openapi.project.Project, java.awt.Component)}
+   * (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project) {
     return createFileChooser(descriptor, project, null);
   }
 
+  /**
+   * @deprecated use {@linkplain #createFileChooser(FileChooserDescriptor, com.intellij.openapi.project.Project, java.awt.Component)}
+   * (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @NotNull Component parent) {
     return createFileChooser(descriptor, null, parent);

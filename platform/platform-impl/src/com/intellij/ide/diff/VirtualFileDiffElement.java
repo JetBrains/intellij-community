@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -125,8 +125,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       @Override
       public DiffElement<VirtualFile> call() throws Exception {
         final FileChooserDescriptor descriptor = getChooserDescriptor();
-        final VirtualFile[] result = FileChooserFactory.getInstance()
-          .createFileChooser(descriptor, project).choose(getValue(), project);
+        final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, getValue());
         return result.length == 1 ? createElement(result[0]) : null;
       }
     };
