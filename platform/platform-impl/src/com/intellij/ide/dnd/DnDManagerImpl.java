@@ -736,7 +736,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     return myApp;
   }
 
-  public void setLastDropHandler(Component c) {
+  public void setLastDropHandler(@Nullable Component c) {
     if (c == null) {
       myLastDropHandler = null;
     } else {
@@ -744,6 +744,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     }
   }
 
+  @Nullable
   public Component getLastDropHandler() {
     return myLastDropHandler != null ? myLastDropHandler.get() : null;
   }
