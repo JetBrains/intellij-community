@@ -1,11 +1,3 @@
-Date: 16 Apr 2012
-   Changed classes:
-     gnu.trove.THash
-     gnu.trove.TPrimitiveHash
-     gnu.trove.TObjectHash
-     gnu.trove.benchmark.Main
-     - implement autocompact on removing keys. Failure to do so leads to linear access time
-
 Date: 15 Jan 2008
   Changed classes:
     gnu.trove.THashMap - fixed bug in put() method for null value
