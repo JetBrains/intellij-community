@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="community-resources" scope="RUNTIME" />
     <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="java-runtime" exported="" />
+    <orderEntry type="module" module-name="vcs-impl" />
   </component>
 </module>
 

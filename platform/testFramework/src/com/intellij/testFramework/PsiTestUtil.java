@@ -286,7 +286,7 @@ import java.util.Collection;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        final String parentUrl = VirtualFileManager.constructUrl(JarFileSystem.PROTOCOL, libDir);
+        final String parentUrl = VirtualFileManager.constructUrl(classRoots[0].endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
         final Library library = model.getModuleLibraryTable().createLibrary(libName);
         final Library.ModifiableModel libModifiableModel = library.getModifiableModel();
         for (String classRoot : classRoots) {

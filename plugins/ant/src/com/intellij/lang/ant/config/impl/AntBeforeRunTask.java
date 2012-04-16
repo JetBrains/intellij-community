@@ -26,9 +26,13 @@ import org.jdom.Element;
  * @author Eugene Zhuravlev
  *         Date: May 18, 2009
  */
-public class AntBeforeRunTask extends BeforeRunTask{
+public class AntBeforeRunTask extends BeforeRunTask<AntBeforeRunTask>{
   private String myTargetName;
   private String myAntFileUrl;
+
+  public AntBeforeRunTask() {
+    super(AntBeforeRunTaskProvider.ID);
+  }
 
   public String getAntFileUrl() {
     return myAntFileUrl;

@@ -16,15 +16,18 @@
 package git4idea;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import git4idea.config.GitVcsSettings;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -66,8 +69,13 @@ public class PlatformFacadeImpl implements PlatformFacade {
   }
 
   @Override
-  public GitVcsSettings getGitWorkspaceSettings(@NotNull Project project) {
-    return GitVcsSettings.getInstance(project);
+  public void runWriteAction(@NotNull Runnable runnable) {
+    ApplicationManager.getApplication().runWriteAction(runnable);
+  }
+
+  @Override
+  public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    ApplicationManager.getApplication().invokeAndWait(runnable, modalityState);
   }
 
   @Override
@@ -78,6 +86,18 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public LocalFileSystem getLocalFileSystem() {
     return LocalFileSystem.getInstance();
+  }
+
+  @NotNull
+  @Override
+  public AbstractVcsHelper getVcsHelper(@NotNull Project project) {
+    return AbstractVcsHelper.getInstance(project);
+  }
+
+  @NotNull
+  @Override
+  public GitRepositoryManager getRepositoryManager(@NotNull Project project) {
+    return ServiceManager.getService(project, GitRepositoryManager.class);
   }
 
   @NotNull

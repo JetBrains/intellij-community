@@ -20,6 +20,8 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
@@ -166,6 +168,12 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                                                        VcsShowConfirmationOption confirmationOption) {
     notifyListeners();
     return null;
+  }
+
+  @Override
+  public boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
+                               @NotNull String commitMessage, @Nullable CommitExecutor executor) {
+    throw new UnsupportedOperationException();
   }
 
   public void addListener(VcsHelperListener listener) {

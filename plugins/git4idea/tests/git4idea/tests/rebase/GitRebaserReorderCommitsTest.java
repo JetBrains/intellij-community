@@ -15,7 +15,9 @@
  */
 package git4idea.tests.rebase;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.commands.Git;
 import git4idea.rebase.GitRebaser;
 import git4idea.tests.GitTest;
 import org.testng.annotations.BeforeMethod;
@@ -41,7 +43,7 @@ public class GitRebaserReorderCommitsTest extends GitTest {
 
   @BeforeMethod @Override protected void setUp(Method testMethod) throws Exception {
     super.setUp(testMethod);
-    myRebaser = new GitRebaser(myProject, null);
+    myRebaser = new GitRebaser(myProject, ServiceManager.getService(Git.class), null);
     myRoot = myRepo.getVFRootDir();
     myFirstCommit = makeCommit();
   }

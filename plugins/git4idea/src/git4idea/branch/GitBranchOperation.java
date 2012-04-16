@@ -297,7 +297,7 @@ abstract class GitBranchOperation {
                 setMergeDescription("The following files have unresolved conflicts. You need to resolve them before " +
                                     getOperationName() + ".").
                 setErrorNotificationTitle("Unresolved files remain.");
-          new GitConflictResolver(myProject, GitUtil.getRoots(getRepositories()), params).merge();
+          new GitConflictResolver(myProject, myGit, ServiceManager.getService(PlatformFacade.class), GitUtil.getRoots(getRepositories()), params).merge();
         }
       }
     });
@@ -333,7 +333,8 @@ abstract class GitBranchOperation {
   }
 
   private void showUntrackedFilesNotification(@NotNull Collection<VirtualFile> untrackedFiles) {
-    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, untrackedFiles, getOperationName());
+    UntrackedFilesNotifier.notifyUntrackedFilesOverwrittenBy(myProject, ServiceManager.getService(myProject, PlatformFacade.class),
+                                                             untrackedFiles, getOperationName(), null);
   }
 
   private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
