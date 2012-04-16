@@ -489,6 +489,7 @@ public class CherryPicker {
           if (ce != null) {
             try {
               List<VcsException> exceptions = ce.commit(myChanges, myCommitMessage);
+              VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(ChangesUtil.getPaths(myChanges), null);
               if (exceptions != null && !exceptions.isEmpty()) {
                 VcsException exception = exceptions.get(0);
                 handleError(exception);
