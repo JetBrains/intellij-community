@@ -1385,6 +1385,13 @@ if __name__ == '__main__':
     else:
         pydev_log.info("pydev debugger: starting\n")
 
+        try:
+            pydev_monkey.patch_new_process_functions_with_warning()
+        except:
+            pydev_log.error("Error patching process functions\n")
+            traceback.print_exc()
+
+
     debugger = PyDB()
 
     debugger.connect(host, port)
