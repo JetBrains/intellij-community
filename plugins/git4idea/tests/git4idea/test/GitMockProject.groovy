@@ -23,6 +23,7 @@ import com.intellij.util.messages.MessageBus
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.NotNull
 
 /**
  * 
@@ -36,6 +37,7 @@ class GitMockProject implements Project {
     myProjectDir = projectDir
   }
 
+  @NotNull
   @Override
   String getName() {
     throw new UnsupportedOperationException()
@@ -56,6 +58,7 @@ class GitMockProject implements Project {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
   String getProjectFilePath() {
     throw new UnsupportedOperationException()
@@ -71,6 +74,7 @@ class GitMockProject implements Project {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
   String getLocationHash() {
     throw new UnsupportedOperationException()

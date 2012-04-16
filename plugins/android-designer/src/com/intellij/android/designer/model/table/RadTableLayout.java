@@ -15,18 +15,24 @@
  */
 package com.intellij.android.designer.model.table;
 
-import com.intellij.android.designer.designSurface.TreeDropToOperation;
+import com.intellij.android.designer.designSurface.*;
+import com.intellij.android.designer.designSurface.AbstractEditOperation;
+import com.intellij.android.designer.designSurface.layout.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.TableLayoutDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
+import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadLayout;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +43,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
   private static final String[] LAYOUT_PARAMS = {"", "LinearLayout_Layout", "ViewGroup_MarginLayout"};
 
   private TableLayoutDecorator myGridDecorator;
+  private ResizeSelectionDecorator myResizeDecorator;
 
   @Override
   @NotNull
@@ -48,11 +55,17 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
   public EditOperation processChildOperation(OperationContext context) {
     if (context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) {
       if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
+        if (TreeEditOperation.isTarget(myContainer, context)) {
+          return new TreeDropToOperation(myContainer, context);
+        }
+        return null;
       }
       // XXX
+      return null;
     }
-    // XXX
+    if (context.is(ResizeOperation.TYPE)) {
+      return new ResizeOperation(context);
+    }
     return null;
   }
 
@@ -84,7 +97,15 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    return super.getChildSelectionDecorator(component, selection); // TODO: Auto-generated method stub
+    if (component.getLayout() instanceof RadTableRowLayout) {
+      return super.getChildSelectionDecorator(component, selection);
+    }
+
+    if (myResizeDecorator == null) {
+      myResizeDecorator = new ResizeSelectionDecorator(Color.red, 1);
+      ResizeOperation.height(myResizeDecorator);
+    }
+    return myResizeDecorator;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -122,12 +143,6 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
   @Override
   @NotNull
-  public RadLayout getCaptionLayout(EditableArea mainArea, boolean horizontal) {
-    return RadViewLayout.INSTANCE;
-  }
-
-  @Override
-  @NotNull
   public List<RadComponent> getCaptionChildren(EditableArea mainArea, boolean horizontal) {
     RadTableLayoutComponent container = (RadTableLayoutComponent)myContainer;
     List<RadComponent> children = container.getChildren();
@@ -135,28 +150,127 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
     if (horizontal) {
       if (children.isEmpty()) {
-        components.add(new RadCaptionTableColumn(container, 0, container.getBounds().width, mainArea));
+        components.add(new RadCaptionTableColumn(container, 0, container.getBounds().width));
       }
       else {
         int columnOffset = 0;
         for (int columnWidth : container.getColumnWidths()) {
-          components.add(new RadCaptionTableColumn(container, columnOffset, Math.max(columnWidth, 2), mainArea));
-
-          if (columnWidth > 0) {
-            columnOffset += columnWidth;
-          }
+          components.add(new RadCaptionTableColumn(container, columnOffset, Math.max(columnWidth, 2)));
+          columnOffset += columnWidth;
         }
       }
     }
     else if (children.isEmpty()) {
-      components.add(new RadCaptionTableRow(container, container, mainArea));
+      components.add(new RadCaptionTableRow(container));
     }
     else {
       for (RadComponent component : children) {
-        components.add(new RadCaptionTableRow(container, (RadViewComponent)component, mainArea));
+        components.add(new RadCaptionTableRow((RadViewComponent)component));
       }
     }
 
     return components;
+  }
+
+  private RadLayout myCaptionColumnLayout = RadViewLayout.INSTANCE;
+  private RadLayout myCaptionRowLayout;
+
+  @Override
+  @NotNull
+  public RadLayout getCaptionLayout(final EditableArea mainArea, boolean horizontal) {
+    if (horizontal) {
+      return myCaptionColumnLayout;
+    }
+
+    if (myCaptionRowLayout == null) {
+      myCaptionRowLayout = new RadViewLayout() {
+        @Override
+        public EditOperation processChildOperation(OperationContext context) {
+          if (context.isMove()) {
+            return new CaptionFlowBaseOperation(myContainer, context, false, mainArea) {
+              @Override
+              public void setComponents(List<RadComponent> components) {
+                super.setComponents(components);
+                myMainContext.setComponents(getRowComponents(components));
+              }
+
+              @Override
+              public void showFeedback() {
+                myMainContext.setLocation(SwingUtilities.convertPoint(myContext.getArea().getFeedbackLayer(), myContext.getLocation(),
+                                                                      myMainContext.getArea().getFeedbackLayer()));
+                super.showFeedback();
+              }
+
+              @Override
+              protected void execute(@Nullable RadComponent insertBefore) throws Exception {
+                super.execute(insertBefore);
+                AbstractEditOperation.execute(myMainContext,
+                                              (RadViewComponent)RadTableLayout.this.myContainer,
+                                              getRowComponents(myComponents),
+                                              getRowComponent(insertBefore));
+              }
+            };
+          }
+          return null;
+        }
+      };
+    }
+    return myCaptionRowLayout;
+  }
+
+  private static List<RadComponent> getRowComponents(List<RadComponent> components) {
+    List<RadComponent> rowComponents = new ArrayList<RadComponent>();
+    for (RadComponent component : components) {
+      rowComponents.add(((RadCaptionTableRow)component).getComponent());
+    }
+    return rowComponents;
+  }
+
+  @Nullable
+  private static RadViewComponent getRowComponent(@Nullable RadComponent component) {
+    RadCaptionTableRow row = (RadCaptionTableRow)component;
+    return row == null ? null : row.getComponent();
+  }
+
+  private abstract class CaptionFlowBaseOperation extends FlowBaseOperation {
+    protected OperationContext myMainContext;
+    protected FlowBaseOperation myMainOperation;
+
+    public CaptionFlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal, EditableArea mainArea) {
+      super(container, context, horizontal);
+      myMainContext = new OperationContext(context.getType());
+      myMainContext.setArea(mainArea);
+      myMainOperation = new MainFlowBaseOperation(RadTableLayout.this.myContainer, myMainContext, horizontal);
+    }
+
+    @Override
+    public void showFeedback() {
+      super.showFeedback();
+      myMainOperation.showFeedback();
+    }
+
+    @Override
+    public void eraseFeedback() {
+      super.eraseFeedback();
+      myMainOperation.eraseFeedback();
+    }
+
+    @Override
+    protected void execute(@Nullable RadComponent insertBefore) throws Exception {
+      for (RadComponent component : myComponents) {
+        component.removeFromParent();
+        myContainer.add(component, insertBefore);
+      }
+    }
+  }
+
+  private static class MainFlowBaseOperation extends FlowBaseOperation {
+    public MainFlowBaseOperation(RadComponent container, OperationContext context, boolean horizontal) {
+      super(container, context, horizontal);
+    }
+
+    @Override
+    protected void execute(@Nullable RadComponent insertBefore) throws Exception {
+    }
   }
 }

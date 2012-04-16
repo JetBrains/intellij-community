@@ -56,6 +56,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String FORMS_BUILDER_NAME = "forms";
   private static final String JAVA_EXTENSION = ".java";
   private static final String FORM_EXTENSION = ".form";
+  public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
 
   public static final FileFilter JAVA_SOURCES_FILTER = new FileFilter() {
     public boolean accept(File file) {
@@ -385,7 +386,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final ClassProcessingConsumer classesConsumer = new ClassProcessingConsumer(context, outputSink);
     try {
       final boolean rc;
-      if (context.getBuilderParameter(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null) {
+      if (USE_EMBEDDED_JAVAC) {
         rc = JavacMain.compile(
           options, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus()
         );

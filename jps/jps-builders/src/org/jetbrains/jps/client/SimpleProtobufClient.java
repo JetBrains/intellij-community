@@ -10,13 +10,11 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.AsyncTaskExecutor;
 import org.jetbrains.jps.api.RequestFuture;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -25,7 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");
-  private final ExecutorService ourExecutor = Executors.newCachedThreadPool();
 
   private static enum State {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING
@@ -37,9 +34,9 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   protected volatile ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
-  public SimpleProtobufClient(final MessageLite msgDefaultInstance, final AsyncTaskExecutor asyncExec, final UUIDGetter uuidGetter) {
+  public SimpleProtobufClient(final MessageLite msgDefaultInstance, final Executor asyncExec, final UUIDGetter uuidGetter) {
     myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this, asyncExec);
-    myChannelFactory = new NioClientSocketChannelFactory(ourExecutor, ourExecutor, 1);
+    myChannelFactory = new NioClientSocketChannelFactory(asyncExec, asyncExec, 1);
     myPipelineFactory = new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
         return Channels.pipeline(
@@ -117,13 +114,8 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
           catch (Throwable e) {
             LOG.error(e);
           }
-          try {
-            final ChannelFuture closeFuture = future.getChannel().close();
-            closeFuture.awaitUninterruptibly();
-          }
-          finally {
-            myChannelFactory.releaseExternalResources();
-          }
+          final ChannelFuture closeFuture = future.getChannel().close();
+          closeFuture.awaitUninterruptibly();
         }
       }
       finally {

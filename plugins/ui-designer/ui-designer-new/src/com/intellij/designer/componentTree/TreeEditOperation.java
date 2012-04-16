@@ -22,17 +22,23 @@ import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class TreeEditOperation extends AbstractEditOperation {
-  protected final RadComponent myHost;
+  private RadComponent myTarget;
+  private boolean myInsertBefore;
 
-  public static boolean isTarget(RadComponent host, OperationContext context) {
+  public TreeEditOperation(RadComponent container, OperationContext context) {
+    super(container, context);
+  }
+
+  public static boolean isTarget(RadComponent container, OperationContext context) {
     Point location = context.getLocation();
     RadComponent target = context.getArea().findTarget(location.x, location.y, null);
-    if (target == host) {
+    if (target == container) {
       FeedbackTreeLayer layer = context.getArea().getFeedbackTreeLayer();
       return !layer.isBeforeLocation(target, location.x, location.y) &&
              !layer.isAfterLocation(target, location.x, location.y);
@@ -40,32 +46,28 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     return true;
   }
 
-  public TreeEditOperation(RadComponent host, OperationContext context) {
-    super(context);
-    myHost = host;
-  }
-
   @Override
   public void showFeedback() {
     Point location = myContext.getLocation();
-    RadComponent target = myContext.getArea().findTarget(location.x, location.y, null);
     FeedbackTreeLayer layer = myContext.getArea().getFeedbackTreeLayer();
 
-    if (myHost == target) {
-      layer.mark(target, FeedbackTreeLayer.INSERT_SELECTION);
+    myTarget = myContext.getArea().findTarget(location.x, location.y, null);
+
+    if (myContainer == myTarget) {
+      layer.mark(myTarget, FeedbackTreeLayer.INSERT_SELECTION);
     }
-    else if (target != null && isChildren(target)) {
-      layer.mark(target,
-                 layer.isBeforeLocation(target, location.x, location.y) ?
-                 FeedbackTreeLayer.INSERT_BEFORE : FeedbackTreeLayer.INSERT_AFTER);
+    else if (myTarget != null && isChildren(myTarget)) {
+      myInsertBefore = layer.isBeforeLocation(myTarget, location.x, location.y);
+      layer.mark(myTarget, myInsertBefore ? FeedbackTreeLayer.INSERT_BEFORE : FeedbackTreeLayer.INSERT_AFTER);
     }
     else {
+      myTarget = null;
       eraseFeedback();
     }
   }
 
   private boolean isChildren(RadComponent component) {
-    for (Object child : myHost.getTreeChildren()) {
+    for (Object child : myContainer.getTreeChildren()) {
       if (child == component) {
         return true;
       }
@@ -80,54 +82,42 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
 
   @Override
   public boolean canExecute() {
-    RadComponent reference = getReference();
-    if (reference == null) {
+    if (myTarget == null) {
       return false;
     }
-    return canExecute(myHost == reference ? null : reference);
-  }
+    if (myContext.isMove() && myTarget != myContainer) {
+      if (myComponents.contains(myTarget)) {
+        return false;
+      }
 
-  protected boolean canExecute(RadComponent insertBefore) {
+      List<RadComponent> children = myContainer.getChildren();
+      int index = children.indexOf(myTarget) + (myInsertBefore ? -1 : 1);
+      if (0 <= index && index < children.size()) {
+        return !myComponents.contains(children.get(index));
+      }
+    }
     return true;
   }
 
   @Override
   public void execute() throws Exception {
-    RadComponent reference = getReference();
-    execute(myHost == reference ? null : reference);
+    if (myTarget == myContainer) {
+      execute(null);
+    }
+    else if (myInsertBefore) {
+      execute(myTarget);
+    }
+    else {
+      List<RadComponent> children = myContainer.getChildren();
+      int index = children.indexOf(myTarget) + 1;
+      if (index < children.size()) {
+        execute(children.get(index));
+      }
+      else {
+        execute(null);
+      }
+    }
   }
 
-  protected abstract void execute(RadComponent insertBefore) throws Exception;
-
-  @Nullable
-  private RadComponent getReference() {
-    Point location = myContext.getLocation();
-    RadComponent target = myContext.getArea().findTarget(location.x, location.y, null);
-
-    if (myHost == target) {
-      return myHost;
-    }
-    if (target != null) {
-      Object[] children = myHost.getTreeChildren();
-      int index = -1;
-
-      for (int i = 0; i < children.length; i++) {
-        if (children[i] == target) {
-          index = i + 1;
-          break;
-        }
-      }
-      if (index == -1) {
-        return null;
-      }
-      if (myContext.getArea().getFeedbackTreeLayer().isBeforeLocation(target, location.x, location.y)) {
-        return target;
-      }
-      if (index < children.length) {
-        return (RadComponent)children[index];
-      }
-      return myHost;
-    }
-    return null;
-  }
+  protected abstract void execute(@Nullable RadComponent insertBefore) throws Exception;
 }

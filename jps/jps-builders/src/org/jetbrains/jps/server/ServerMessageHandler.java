@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RunnableFuture;
 
 /**
@@ -27,9 +28,9 @@ class ServerMessageHandler extends SimpleChannelHandler {
   private final Map<String, SequentialTaskExecutor> myTaskExecutors = new HashMap<String, SequentialTaskExecutor>();
   private final List<Pair<RunnableFuture, CompilationTask>> myBuildsInProgress = Collections.synchronizedList(new LinkedList<Pair<RunnableFuture, CompilationTask>>());
   private final Server myServer;
-  private final AsyncTaskExecutor myAsyncExecutor;
+  private final Executor myAsyncExecutor;
 
-  public ServerMessageHandler(Server server, final AsyncTaskExecutor asyncExecutor) {
+  public ServerMessageHandler(Server server, final Executor asyncExecutor) {
     myServer = server;
     myAsyncExecutor = asyncExecutor;
   }
@@ -80,13 +81,14 @@ class ServerMessageHandler extends SimpleChannelHandler {
               new GlobalLibrary(library.getName(), library.getPathList())
             );
           }
-          final String globalEncoding = setupCommand.isInitialized()? setupCommand.getGlobalEncoding() : null;
-          facade.setGlobals(libs, pathVars, globalEncoding, setupCommand.getIgnoredFilesPatterns());
+          final String globalEncoding = setupCommand.hasGlobalEncoding()? setupCommand.getGlobalEncoding() : null;
+          final String ignoredPatterns = setupCommand.hasIgnoredFilesPatterns()? setupCommand.getIgnoredFilesPatterns() : null;
+          facade.setGlobals(libs, pathVars, globalEncoding, ignoredPatterns);
           reply = ProtoUtil.toMessage(sessionId, ProtoUtil.createCommandCompletedEvent(null));
           break;
 
         case SHUTDOWN_COMMAND :
-          myAsyncExecutor.submit(new Runnable() {
+          myAsyncExecutor.execute(new Runnable() {
             public void run() {
               try {
                 cancelAllBuildsAndClearState();

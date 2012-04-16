@@ -51,6 +51,7 @@ public class GitImpl implements Git {
   /**
    * Calls 'git init' on the specified directory.
    */
+  @NotNull
   @Override
   public GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
@@ -153,6 +154,7 @@ public class GitImpl implements Git {
    * {@code git checkout &lt;reference&gt;} <br/>
    * {@code git checkout -b &lt;newBranch&gt; &lt;reference&gt;}
    */
+  @NotNull
   @Override
   public GitCommandResult checkout(@NotNull GitRepository repository,
                                           @NotNull String reference,
@@ -179,6 +181,7 @@ public class GitImpl implements Git {
   /**
    * {@code git checkout -b &lt;branchName&gt;}
    */
+  @NotNull
   @Override
   public GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                                    @Nullable GitLineHandlerListener listener) {
@@ -192,9 +195,10 @@ public class GitImpl implements Git {
     return run(h);
   }
 
+  @NotNull
   @Override
   public GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName,
-                                                     @Nullable GitLineHandlerListener listener, String reference) {
+                                                     @Nullable GitLineHandlerListener listener, @NotNull String reference) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.TAG);
     h.setSilent(false);
     h.addParameters(tagName);
@@ -210,6 +214,7 @@ public class GitImpl implements Git {
   /**
    * {@code git branch -d <reference>} or {@code git branch -D <reference>}
    */
+  @NotNull
   @Override
   public GitCommandResult branchDelete(@NotNull GitRepository repository,
                                               @NotNull String branchName,
@@ -272,6 +277,7 @@ public class GitImpl implements Git {
    * Returns the last (tip) commit on the given branch.<br/>
    * {@code git rev-list -1 <branchName>}
    */
+  @NotNull
   @Override
   public GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
@@ -287,9 +293,7 @@ public class GitImpl implements Git {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
                                                                                         GitCommand.PUSH);
     h.setSilent(false);
-    for (GitLineHandlerListener listener : listeners) {
-      h.addLineListener(listener);
-    }
+    addListeners(h, listeners);
     h.addParameters(remote);
     h.addParameters(spec);
     return run(h, true);
@@ -303,6 +307,36 @@ public class GitImpl implements Git {
     GitBranch remoteBranch = pushSpec.getDest();
     String destination = remoteBranch.getName().replaceFirst(remote.getName() + "/", "");
     return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination, listeners);
+  }
+
+  @Override
+  @NotNull
+  public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
+                                     @NotNull GitLineHandlerListener... listeners) {
+    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHERRY_PICK);
+    handler.addParameters("-x");
+    if (!autoCommit) {
+      handler.addParameters("-n");
+    }
+    handler.addParameters(hash);
+    addListeners(handler, listeners);
+    handler.setSilent(false);
+    return run(handler);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.LS_FILES);
+    h.addParameters("--unmerged");
+    h.setSilent(true);
+    return run(h);
+  }
+
+  private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
+    for (GitLineHandlerListener listener : listeners) {
+      handler.addLineListener(listener);
+    }
   }
 
   private GitCommandResult run(@NotNull GitLineHandler handler) {

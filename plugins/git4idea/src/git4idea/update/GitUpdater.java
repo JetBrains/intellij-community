@@ -26,6 +26,7 @@ import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchPair;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
@@ -44,7 +45,8 @@ import java.util.Map;
 public abstract class GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitUpdater.class);
 
-  protected final @NotNull Project myProject;
+  @NotNull protected final Project myProject;
+  @NotNull protected final Git myGit;
   protected final @NotNull VirtualFile myRoot;
   protected final @NotNull Map<VirtualFile, GitBranchPair> myTrackedBranches;
   protected final @NotNull ProgressIndicator myProgressIndicator;
@@ -54,9 +56,11 @@ public abstract class GitUpdater {
 
   protected GitRevisionNumber myBefore; // The revision that was before update
 
-  protected GitUpdater(@NotNull Project project, @NotNull VirtualFile root, @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
-                       @NotNull ProgressIndicator progressIndicator, @NotNull UpdatedFiles updatedFiles) {
+  protected GitUpdater(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root,
+                       @NotNull Map<VirtualFile, GitBranchPair> trackedBranches, @NotNull ProgressIndicator progressIndicator,
+                       @NotNull UpdatedFiles updatedFiles) {
     myProject = project;
+    myGit = git;
     myRoot = root;
     myTrackedBranches = trackedBranches;
     myProgressIndicator = progressIndicator;
@@ -70,39 +74,39 @@ public abstract class GitUpdater {
    * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
    */
   @NotNull
-  public static GitUpdater getUpdater(@NotNull Project project, @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
+  public static GitUpdater getUpdater(@NotNull Project project, @NotNull Git git, @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
                                       @NotNull VirtualFile root, @NotNull ProgressIndicator progressIndicator,
                                       @NotNull UpdatedFiles updatedFiles) {
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings == null) {
-      return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
+      return getDefaultUpdaterForBranch(project, git, root, trackedBranches, progressIndicator, updatedFiles);
     }
     switch (settings.getUpdateType()) {
       case REBASE:
-        return new GitRebaseUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
+        return new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
       case MERGE:
-        return new GitMergeUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
+        return new GitMergeUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
       case BRANCH_DEFAULT:
         // use default for the branch
-        return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
+        return getDefaultUpdaterForBranch(project, git, root, trackedBranches, progressIndicator, updatedFiles);
     }
-    return getDefaultUpdaterForBranch(project, root, trackedBranches, progressIndicator, updatedFiles);
+    return getDefaultUpdaterForBranch(project, git, root, trackedBranches, progressIndicator, updatedFiles);
   }
 
   @NotNull
-  private static GitUpdater getDefaultUpdaterForBranch(@NotNull Project project, @NotNull VirtualFile root,
+  private static GitUpdater getDefaultUpdaterForBranch(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root,
                                                        @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
                                                        @NotNull ProgressIndicator progressIndicator, @NotNull UpdatedFiles updatedFiles) {
     try {
       final GitBranch branchName = GitBranch.current(project, root);
       final String rebase = GitConfigUtil.getValue(project, root, "branch." + branchName + ".rebase");
       if (rebase != null && rebase.equalsIgnoreCase("true")) {
-        return new GitRebaseUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
+        return new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
       }
     } catch (VcsException e) {
       LOG.info("getDefaultUpdaterForBranch branch", e);
     }
-    return new GitMergeUpdater(project, root, trackedBranches, progressIndicator, updatedFiles);
+    return new GitMergeUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
   }
 
   @NotNull

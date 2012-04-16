@@ -15,27 +15,32 @@
  */
 package com.intellij.openapi.application.impl;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TransferToEDTQueue;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
 /**
- * Allows to process elements in the Application pooled thread.
- * Processes elements in batches, no longer than 200ms per batch, and reschedules processing later for longer batches.
+ * Passes elements for processing in the dedicated thread.
+ * Processes elements in batches, no longer than {maxUnitOfWorkThresholdMs}ms per batch, and reschedules processing later for longer batches.
  * Usage: {@link #offer(Object)} } : schedules element for processing in a pooled thread
  */
 public class TransferToPooledThreadQueue<T> extends TransferToEDTQueue<T> {
-  public TransferToPooledThreadQueue(@NotNull String name,
-                                     @NotNull Processor<T> processorInEDT,
+  private final ScheduledThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Encoding detection thread");
+
+  public TransferToPooledThreadQueue(@NonNls @NotNull String name,
                                      @NotNull Condition<?> shutUpCondition,
-                                     int maxUnitOfWorkThresholdMs) {
-    super(name, processorInEDT, shutUpCondition, maxUnitOfWorkThresholdMs);
+                                     int maxUnitOfWorkThresholdMs,
+                                     @NotNull Processor<T> processor) {
+    super(name, processor, shutUpCondition, maxUnitOfWorkThresholdMs);
   }
 
   @Override
   protected void schedule(@NotNull Runnable updateRunnable) {
-    JobScheduler.getScheduler().execute(updateRunnable);
+    myExecutor.execute(updateRunnable);
   }
 }

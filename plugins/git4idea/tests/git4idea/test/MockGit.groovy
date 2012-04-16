@@ -15,14 +15,21 @@
  */
 package git4idea.test
 
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.hash.HashMap
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
+import git4idea.history.browser.GitCommit
 import git4idea.push.GitPushSpec
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
+
+import static git4idea.test.MockGit.OperationName.CHERRY_PICK
+import static git4idea.test.MockGit.OperationName.GET_UNMERGED_FILES
 
 /**
  * 
@@ -30,84 +37,240 @@ import org.jetbrains.annotations.NotNull
  */
 class MockGit implements Git {
 
+  public static final GitCommandResult FAKE_SUCCESS_RESULT = new GitCommandResult(true, 0, Collections.emptyList(), Collections.emptyList())
+  private final Map<OperationName, Queue<OperationExecutor>> myExecutors = new HashMap<OperationName, Queue<OperationExecutor>>()
+
+  public static interface OperationExecutor {
+    GitCommandResult execute();
+    OperationName getName();
+  }
+
+  public enum OperationName {
+    CHERRY_PICK,
+    GET_UNMERGED_FILES;
+  }
+
+  /**
+   * Register executors for specific operations. These are put into queues, i.e. once operation is called, the executor is popped out of the
+   * queue. If the queue is empty or certain operation, then it is executed as by default.
+   */
+  void registerOperationExecutors(OperationExecutor... executors) {
+    for (OperationExecutor executor : executors) {
+      OperationName name = executor.getName()
+      Queue<OperationExecutor> exs = myExecutors.get(name)
+      if (exs == null) {
+        exs = new ArrayDeque<OperationExecutor>()
+        myExecutors.put(name, exs)
+      }
+      exs.add(executor)
+    }
+  }
+
+  @NotNull
   @Override
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners) {
     new File(root.path, ".git").mkdir()
-    new GitCommandResult(true, 0, Collections.emptyList(), Collections.emptyList())
+    FAKE_SUCCESS_RESULT
   }
 
+  @NotNull
   @Override
-  Set<VirtualFile> untrackedFiles(Project project, VirtualFile root, Collection<VirtualFile> files) {
+  Set<VirtualFile> untrackedFiles(@NotNull Project project, @NotNull VirtualFile root, Collection<VirtualFile> files) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  Collection<VirtualFile> untrackedFilesNoChunk(Project project, VirtualFile root, List<String> relativePaths) {
+  Collection<VirtualFile> untrackedFilesNoChunk(@NotNull Project project, @NotNull VirtualFile root, List<String> relativePaths) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult clone(Project project, File parentDirectory, String url, String clonedDirectoryName) {
+  GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult merge(GitRepository repository, String branchToMerge, GitLineHandlerListener... listeners) {
+  GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult checkout(GitRepository repository, String reference, String newBranch, boolean force, GitLineHandlerListener... listeners) {
+  GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, String newBranch, boolean force, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult checkoutNewBranch(GitRepository repository, String branchName, GitLineHandlerListener listener) {
+  GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName, GitLineHandlerListener listener) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult createNewTag(GitRepository repository, String tagName, GitLineHandlerListener listener, String reference) {
+  GitCommandResult createNewTag(@NotNull GitRepository repository, @NotNull String tagName, GitLineHandlerListener listener, @NotNull String reference) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult branchDelete(GitRepository repository, String branchName, boolean force, GitLineHandlerListener... listeners) {
+  GitCommandResult branchDelete(@NotNull GitRepository repository, @NotNull String branchName, boolean force, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult branchContains(GitRepository repository, String commit) {
+  GitCommandResult branchContains(@NotNull GitRepository repository, @NotNull String commit) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult branchCreate(GitRepository repository, String branchName) {
+  GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult resetHard(GitRepository repository, String revision) {
+  GitCommandResult resetHard(@NotNull GitRepository repository, @NotNull String revision) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult resetMerge(GitRepository repository, String revision) {
+  GitCommandResult resetMerge(@NotNull GitRepository repository, String revision) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult tip(GitRepository repository, String branchName) {
+  GitCommandResult tip(@NotNull GitRepository repository, @NotNull String branchName) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult push(GitRepository repository, String remote, String spec, GitLineHandlerListener... listeners) {
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @NotNull String spec, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
 
+  @NotNull
   @Override
-  GitCommandResult push(GitRepository repository, GitPushSpec pushSpec, GitLineHandlerListener... listeners) {
+  GitCommandResult push(@NotNull GitRepository repository, @NotNull GitPushSpec pushSpec, @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
   }
+
+  @NotNull
+  @Override
+  GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit, @NotNull GitLineHandlerListener... listeners) {
+    GitCommandResult result = callExecutor(CHERRY_PICK)
+    if (result != null) {
+      produceOutput(result.getOutputAsJoinedString(), listeners)
+      return result;
+    }
+    ((GitLightRepository)repository).cherryPick("cherry-pick from $hash")
+    return FAKE_SUCCESS_RESULT
+  }
+
+  @NotNull
+  @Override
+  GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
+    GitCommandResult result = callExecutor(GET_UNMERGED_FILES)
+    if (result != null) {
+      return result;
+    }
+    return FAKE_SUCCESS_RESULT
+  }
+
+  private void produceOutput(String output, GitLineHandlerListener... listeners) {
+    for (String line : output.split("\n")) { // for simplicity all output goes to OUTPUT, no ERROR
+      listeners.each { it.onLineAvailable(line, ProcessOutputTypes.STDOUT) }
+    }
+  }
+
+  @Nullable
+  private GitCommandResult callExecutor(OperationName operationName) {
+    Queue<OperationExecutor> cherryPickExecutors = myExecutors.get(operationName)
+    if (cherryPickExecutors != null && !cherryPickExecutors.isEmpty()) {
+      OperationExecutor executor = cherryPickExecutors.poll()
+      return executor.execute()
+    }
+    return null;
+  }
+
+  public static class SimpleErrorOperationExecutor implements MockGit.OperationExecutor {
+
+    String myOutput
+    MockGit.OperationName myOperationName
+
+    SimpleErrorOperationExecutor(MockGit.OperationName operationName, String output) {
+      myOutput = output;
+      myOperationName = operationName
+    }
+
+    @Override
+    GitCommandResult execute() {
+      return result(myOutput, false);
+    }
+
+    @Override
+    MockGit.OperationName getName() {
+      return myOperationName
+    }
+  }
+
+  public static class SimpleSuccessOperationExecutor implements MockGit.OperationExecutor {
+
+    String myOutput
+    MockGit.OperationName myOperationName
+
+    SimpleSuccessOperationExecutor(MockGit.OperationName operationName, String output) {
+      myOutput = output;
+      myOperationName = operationName
+    }
+
+    @Override
+    GitCommandResult execute() {
+      return result(myOutput, true);
+    }
+
+    @Override
+    MockGit.OperationName getName() {
+      return myOperationName
+    }
+  }
+
+  private static GitCommandResult result(String output, boolean success) {
+    new GitCommandResult(success, success ? 0 : 127, Collections.emptyList(), Collections.singletonList(output))
+  }
+
+  public static class SuccessfulCherryPickExecutor implements OperationExecutor {
+
+    GitRepository myRepository
+    GitCommit myOriginalCommit
+
+    SuccessfulCherryPickExecutor(GitRepository repository, GitCommit originalCommit) {
+      myRepository = repository;
+      myOriginalCommit = originalCommit
+    }
+
+    @Override
+    GitCommandResult execute() {
+      ((GitLightRepository)myRepository).cherryPick(commitMessageForCherryPick(myOriginalCommit))
+      return FAKE_SUCCESS_RESULT
+    }
+
+    @Override
+    OperationName getName() {
+      return CHERRY_PICK
+    }
+  }
+
+  static String commitMessageForCherryPick(GitCommit commit) {
+    "$commit.subject\n(cherry-picked from ${commit.shortHash.getString()})"
+  }
+
 }

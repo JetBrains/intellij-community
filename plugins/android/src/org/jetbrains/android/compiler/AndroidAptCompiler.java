@@ -102,7 +102,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
             AndroidApt.compile(aptItem.myAndroidTarget, aptItem.myPlatformToolsRevision,
                                aptItem.myManifestFile.getPath(), aptItem.myPackage,
                                outputDirOsPath, aptItem.myResourcesPaths,
-                               aptItem.myLibraryPackages, aptItem.myIsLibrary));
+                               aptItem.myLibraryPackages, aptItem.myNonConstantFields));
           toRefresh = true;
           AndroidCompileUtil.addMessages(context, messages);
           if (messages.get(CompilerMessageCategory.ERROR).isEmpty()) {
@@ -155,8 +155,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     
     final String myPackage;
     final String[] myLibraryPackages;
-    final boolean myIsLibrary;
-    
+    final boolean myNonConstantFields;
+
     final int myPlatformToolsRevision;
     private final MyValidityState myValidityState;
 
@@ -167,16 +167,16 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                               int platformToolsRevision,
                               @NotNull String aPackage,
                               @NotNull String[] libPackages,
-                              boolean isLibrary) {
+                              boolean nonConstantFields) {
       myModule = module;
       myManifestFile = manifestFile;
       myResourcesPaths = resourcesPaths;
       myAndroidTarget = target;
       myPackage = aPackage;
       myLibraryPackages = libPackages;
-      myIsLibrary = isLibrary;
+      myNonConstantFields = nonConstantFields;
       myPlatformToolsRevision = platformToolsRevision;
-      myValidityState = new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision);
+      myValidityState = new MyValidityState(myModule, Collections.<String>emptySet(), myPlatformToolsRevision, myNonConstantFields);
     }
 
     public String getPath() {
@@ -218,7 +218,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         AndroidFacet facet = AndroidFacet.getInstance(module);
         if (facet != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
-          if (!isToCompileModule(module, configuration) || hasBadCircularDependencies(facet)) {
+          if (!isToCompileModule(module, configuration) ||
+              (facet.getConfiguration().LIBRARY_PROJECT && hasBadCircularDependencies(facet))) {
             continue;
           }
 
@@ -261,16 +262,25 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           }
           final String[] libPackages = getLibPackages(module, packageName);
 
-          items.add(new AptGenerationItem(module, manifestFile, resPaths, target, platformToolsRevision,
-                                          packageName, libPackages, facet.getConfiguration().LIBRARY_PROJECT));
+          final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
+          if (circularDepLibWithSamePackage != null) {
+            myContext.addMessage(CompilerMessageCategory.WARNING,
+                                 AndroidBundle.message("android.compilation.warning.circular.app.dependency",
+                                                       packageName, module.getName(),
+                                                       circularDepLibWithSamePackage.getName()), null, -1, -1);
+          }
+          final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
+          items.add(new AptGenerationItem(module, manifestFile, resPaths, target, platformToolsRevision, packageName, libPackages,
+                                          generateNonFinalFields));
         }
       }
       return items.toArray(new GenerationItem[items.size()]);
     }
 
+    // support for lib<->lib and app<->lib circular dependencies
     // see IDEA-79737 for details
     private static boolean hasBadCircularDependencies(@NotNull AndroidFacet facet) {
-      final List<AndroidFacet> dependencies = AndroidUtils.getAllAndroidDependencies(facet.getModule(), true);
+      final List<AndroidFacet> dependencies = AndroidUtils.getAllAndroidDependencies(facet.getModule(), false);
 
       final Manifest manifest = facet.getManifest();
       if (manifest == null) {
@@ -283,18 +293,12 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       }
 
       for (AndroidFacet depFacet : dependencies) {
-        final Manifest depManifest = depFacet.getManifest();
-
-        if (depManifest != null) {
-          if (!aPackage.equals(depManifest.getPackage().getValue())) {
-            continue;
-          }
-        }
         final List<AndroidFacet> depDependencies = AndroidUtils.getAllAndroidDependencies(depFacet.getModule(), true);
 
         if (depDependencies.contains(facet) &&
             dependencies.contains(depFacet) &&
-            depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0) {
+            (depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0 ||
+             !depFacet.getConfiguration().LIBRARY_PROJECT)) {
           return true;
         }
       }
@@ -322,11 +326,13 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     private final String myCustomGenPathR;
     private final Set<String> myNonExistingFiles;
     private final int myPlatformToolsRevision;
+    private final boolean myNonConstantFields;
 
-    MyValidityState(@NotNull Module module, @NotNull Set<String> nonExistingFiles, int platformToolsRevision) {
+    MyValidityState(@NotNull Module module, @NotNull Set<String> nonExistingFiles, int platformToolsRevision, boolean nonConstantFields) {
       super(module);
       myNonExistingFiles = nonExistingFiles;
       myPlatformToolsRevision = platformToolsRevision;
+      myNonConstantFields = nonConstantFields;
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet == null) {
         myCustomGenPathR = "";
@@ -343,6 +349,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
       myNonExistingFiles = Collections.emptySet();
       myPlatformToolsRevision = is.readInt();
+      myNonConstantFields = is.readBoolean();
     }
 
     @Override
@@ -358,6 +365,9 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       if (myPlatformToolsRevision != otherState1.myPlatformToolsRevision) {
         return false;
       }
+      if (myNonConstantFields != otherState1.myNonConstantFields) {
+        return false;
+      }
       if (!super.equalsTo(otherState)) {
         return false;
       }
@@ -369,6 +379,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       super.save(os);
       os.writeUTF(myCustomGenPathR);
       os.writeInt(myPlatformToolsRevision);
+      os.writeBoolean(myNonConstantFields);
     }
   }
 }

@@ -21,15 +21,14 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Alexander Lobas
  */
 public abstract class AbstractEditOperation extends com.intellij.designer.designSurface.AbstractEditOperation {
-  protected final RadViewComponent myContainer;
-
-  public AbstractEditOperation(RadViewComponent container, OperationContext context) {
-    super(context);
-    myContainer = container;
+  public AbstractEditOperation(RadComponent container, OperationContext context) {
+    super(container, context);
   }
 
   @Override
@@ -38,19 +37,26 @@ public abstract class AbstractEditOperation extends com.intellij.designer.design
   }
 
   protected void execute(@Nullable RadViewComponent insertBefore) throws Exception {
-    if (myContext.isAdd() || myContext.isMove()) {
-      for (RadComponent component : myComponents) {
-        ModelParser.moveComponent(myContainer, (RadViewComponent)component, insertBefore);
+    execute(myContext, (RadViewComponent)myContainer, myComponents, insertBefore);
+  }
+
+  public static void execute(OperationContext context,
+                             RadViewComponent container,
+                             List<RadComponent> components,
+                             @Nullable RadViewComponent insertBefore) throws Exception {
+    if (context.isAdd() || context.isMove()) {
+      for (RadComponent component : components) {
+        ModelParser.moveComponent(container, (RadViewComponent)component, insertBefore);
       }
     }
-    else if (myContext.isCreate()) {
-      for (RadComponent component : myComponents) {
-        ModelParser.addComponent(myContainer, (RadViewComponent)component, insertBefore);
+    else if (context.isCreate()) {
+      for (RadComponent component : components) {
+        ModelParser.addComponent(container, (RadViewComponent)component, insertBefore);
       }
     }
-    else if (myContext.isPaste()) {
-      for (RadComponent component : myComponents) {
-        ModelParser.pasteComponent(myContainer, (RadViewComponent)component, insertBefore);
+    else if (context.isPaste()) {
+      for (RadComponent component : components) {
+        ModelParser.pasteComponent(container, (RadViewComponent)component, insertBefore);
       }
     }
   }

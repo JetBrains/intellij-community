@@ -17,8 +17,8 @@ package com.intellij.android.designer.model.viewAnimator;
 
 import com.intellij.android.designer.designSurface.DropToOperation;
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
-import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayout;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 
@@ -29,11 +29,13 @@ public class RadViewAnimatorLayout extends RadViewLayout {
   public EditOperation processChildOperation(OperationContext context) {
     if ((context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) && checkChildOperation(context)) {
       if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
+        if (TreeEditOperation.isTarget(myContainer, context)) {
+          return new TreeDropToOperation(myContainer, context);
+        }
+        return null;
       }
-      return new DropToOperation((RadViewComponent)myContainer, context);
+      return new DropToOperation(myContainer, context);
     }
-
     return null;
   }
 

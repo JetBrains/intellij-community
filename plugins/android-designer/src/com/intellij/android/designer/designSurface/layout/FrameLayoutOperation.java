@@ -44,7 +44,7 @@ public class FrameLayoutOperation extends AbstractEditOperation {
   private Rectangle myBounds;
   private String myGravity;
 
-  public FrameLayoutOperation(RadViewComponent container, OperationContext context) {
+  public FrameLayoutOperation(RadComponent container, OperationContext context) {
     super(container, context);
 
     if (context.isMove()) {

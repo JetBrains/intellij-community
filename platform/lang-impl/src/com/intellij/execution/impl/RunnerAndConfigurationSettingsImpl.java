@@ -368,7 +368,8 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
   @Override
   public String toString() {
-    return getType() + ": " + getName();
+    ConfigurationType type = getType();
+    return (type != null ? type.getDisplayName()  + ": " : "" ) + getName();
   }
 
   private class InfoProvider implements ConfigurationInfoProvider {

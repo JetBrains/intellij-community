@@ -53,6 +53,18 @@ public class RadViewComponent extends RadVisualComponent {
     myTag = tag;
   }
 
+  public void updateTag(XmlTag tag) {
+    setTag(tag);
+
+    int size = myChildren.size();
+    XmlTag[] tags = tag.getSubTags();
+
+    for (int i = 0; i < size; i++) {
+      RadViewComponent child = (RadViewComponent)myChildren.get(i);
+      child.updateTag(tags[i]);
+    }
+  }
+
   public ViewInfo getViewInfo() {
     return myViewInfo;
   }

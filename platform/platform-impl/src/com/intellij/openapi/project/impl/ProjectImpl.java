@@ -331,50 +331,51 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   public void save() {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) return; //no need to save
 
-    if (mySavingInProgress.compareAndSet(false, true)) {
-      try {
-        if (isToSaveProjectName()) {
-          final IProjectStore stateStore = getStateStore();
-          final VirtualFile baseDir = stateStore.getProjectBaseDir();
-          if (baseDir != null && baseDir.isValid()) {
-            final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
-            if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-              final File nameFile = new File(ideaDir.getPath(), ".name");
-              try {
-                FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
-                myOldName = null;
-              }
-              catch (IOException e) {
-                LOG.info("Unable to store project name to: " + nameFile.getPath());
-              }
+    if (!mySavingInProgress.compareAndSet(false, true)) {
+      return;
+    }
+    try {
+      if (isToSaveProjectName()) {
+        final IProjectStore stateStore = getStateStore();
+        final VirtualFile baseDir = stateStore.getProjectBaseDir();
+        if (baseDir != null && baseDir.isValid()) {
+          final VirtualFile ideaDir = baseDir.findChild(DIRECTORY_STORE_FOLDER);
+          if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+            final File nameFile = new File(ideaDir.getPath(), ".name");
+            try {
+              FileUtil.writeToFile(nameFile, getName().getBytes("UTF-8"), false);
+              myOldName = null;
+            }
+            catch (IOException e) {
+              LOG.info("Unable to store project name to: " + nameFile.getPath());
             }
           }
         }
+      }
 
-        StoreUtil.doSave(getStateStore());
-      }
-      catch (IComponentStore.SaveCancelledException e) {
-        LOG.info(e);
-      }
-      catch (PluginException e) {
-        PluginManager.disablePlugin(e.getPluginId().getIdString());
-        Notification notification = new Notification(
-          PLUGIN_SETTINGS_ERROR,
-          "Unable to save plugin settings!",
-          "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart" +
-          ApplicationNamesInfo.getInstance().getFullProductName() + "</p>" +
-          (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>" : ""),
-          NotificationType.ERROR);
-        Notifications.Bus.notify(notification, this);
-        LOG.info("Unable to save plugin settings",e);
-      }
-      catch (IOException e) {
-        MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
-        LOG.info("Error saving project", e);
-      } finally {
-        mySavingInProgress.set(false);
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
-      }
+      StoreUtil.doSave(getStateStore());
+    }
+    catch (IComponentStore.SaveCancelledException e) {
+      LOG.info(e);
+    }
+    catch (PluginException e) {
+      PluginManager.disablePlugin(e.getPluginId().getIdString());
+      Notification notification = new Notification(
+        PLUGIN_SETTINGS_ERROR,
+        "Unable to save plugin settings!",
+        "<p>The plugin <i>" + e.getPluginId() + "</i> failed to save settings and has been disabled. Please restart" +
+        ApplicationNamesInfo.getInstance().getFullProductName() + "</p>" +
+        (ApplicationManagerEx.getApplicationEx().isInternal() ? "<p>" + StringUtil.getThrowableText(e) + "</p>" : ""),
+        NotificationType.ERROR);
+      Notifications.Bus.notify(notification, this);
+      LOG.info("Unable to save plugin settings",e);
+    }
+    catch (IOException e) {
+      MessagesEx.error(this, ProjectBundle.message("project.save.error", e.getMessage())).showLater();
+      LOG.info("Error saving project", e);
+    } finally {
+      mySavingInProgress.set(false);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectSaved.TOPIC).saved(this);
     }
   }
 

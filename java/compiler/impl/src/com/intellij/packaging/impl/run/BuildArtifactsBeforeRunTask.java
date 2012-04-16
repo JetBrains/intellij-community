@@ -31,13 +31,14 @@ import java.util.List;
 /**
  * @author nik
  */
-public class BuildArtifactsBeforeRunTask extends BeforeRunTask {
+public class BuildArtifactsBeforeRunTask extends BeforeRunTask<BuildArtifactsBeforeRunTask> {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   @NonNls public static final String ARTIFACT_ELEMENT = "artifact";
   private List<ArtifactPointer> myArtifactPointers = new ArrayList<ArtifactPointer>();
   private final Project myProject;
 
   public BuildArtifactsBeforeRunTask(Project project) {
+    super(BuildArtifactsBeforeRunTaskProvider.ID);
     myProject = project;
   }
 

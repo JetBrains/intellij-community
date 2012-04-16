@@ -17,7 +17,6 @@
 package com.intellij.execution.junit2.ui.model;
 
 import com.intellij.execution.junit2.ui.Formatters;
-import com.intellij.execution.ExecutionBundle;
 
 public class CompletionEvent extends StateEvent {
   private final boolean myNormalExit;

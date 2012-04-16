@@ -36,12 +36,14 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenIcons;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
+import javax.swing.*;
 import java.util.Collections;
 
 public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBeforeRunTask> {
-  public static final Key<MavenBeforeRunTask> TASK_ID = Key.create("Maven.BeforeRunTask");
+  public static final Key<MavenBeforeRunTask> ID = Key.create("Maven.BeforeRunTask");
   private final Project myProject;
 
   public MavenBeforeRunTasksProvider(Project project) {
@@ -49,10 +51,21 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
   }
 
   public Key<MavenBeforeRunTask> getId() {
-    return TASK_ID;
+    return ID;
   }
 
-  public String getDescription(RunConfiguration runConfiguration, MavenBeforeRunTask task) {
+  @Override
+  public String getName() {
+    return TasksBundle.message("maven.tasks.before.run.empty");
+  }
+
+  @Override
+  public Icon getIcon() {
+    return MavenIcons.MAVEN_ICON;
+  }
+
+  @Override
+  public String getDescription(MavenBeforeRunTask task) {
     String desc = null;
     if (task.isEnabled()) {
       Pair<MavenProject, String> projectAndGoal = getProjectAndGoalChecked(task);
@@ -77,7 +90,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return Pair.create(project, goal);
   }
 
-  public boolean hasConfigurationButton() {
+  public boolean isConfigurable() {
     return true;
   }
 
@@ -96,6 +109,11 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     task.setProjectPath(dialog.getSelectedProjectPath());
     task.setGoal(dialog.getSelectedGoal());
     return true;
+  }
+
+  @Override
+  public boolean canExecuteTask(RunConfiguration configuration, MavenBeforeRunTask task) {
+    return task.getGoal() != null && task.getProjectPath() != null;
   }
 
   public boolean executeTask(final DataContext context, RunConfiguration configuration, final MavenBeforeRunTask task) {

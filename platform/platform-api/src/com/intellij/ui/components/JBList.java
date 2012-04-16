@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -224,5 +225,16 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
   public void disableEmptyText() {
     getEmptyText().setText("");
+  }
+
+  public static class StripedListCellRenderer extends DefaultListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (!isSelected && index % 2 == 0) {
+        setBackground(JBTable.DECORATED_ROW_BG_COLOR);
+      }
+      return this;
+    }
   }
 }

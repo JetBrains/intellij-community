@@ -79,7 +79,7 @@ public class GitIntegrationEnabler {
     GitCommandResult result = myGit.init(myProject, projectDir);
     if (result.success()) {
       refreshGitDir(projectDir);
-      notificator.notifySuccess("", "Created Git repository in \n" + projectDir.getPresentableUrl());
+      notificator.notifySuccess("", "Created Git repository in " + projectDir.getPresentableUrl());
       return true;
     }
     else {

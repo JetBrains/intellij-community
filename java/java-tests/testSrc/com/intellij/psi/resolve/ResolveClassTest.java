@@ -170,7 +170,7 @@ public class ResolveClassTest extends ResolveTestCase {
     PsiReference ref = configure();
     long start = System.currentTimeMillis();
     assertNull(ref.resolve());
-    PlatformTestUtil.assertTiming("exponent?", 20000, System.currentTimeMillis() - start);
+    PlatformTestUtil.assertTiming("exponent?", 200, System.currentTimeMillis() - start);
   }
 
   public void testStaticImportNetwork() throws Exception {

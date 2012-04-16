@@ -1,6 +1,7 @@
 package org.jetbrains.jps.api;
 
 import java.util.Queue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RunnableFuture;
@@ -11,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *         Date: 9/24/11
  */
 public class SequentialTaskExecutor {
-  private final AsyncTaskExecutor myExecutor;
+  private final Executor myExecutor;
   private final Queue<FutureTask> myTaskQueue = new LinkedBlockingQueue<FutureTask>();
   private final AtomicBoolean myInProgress = new AtomicBoolean(false);
   private final Runnable USER_TASK_RUNNER = new Runnable() {
@@ -31,7 +32,7 @@ public class SequentialTaskExecutor {
     }
   };
 
-  public SequentialTaskExecutor(AsyncTaskExecutor executor) {
+  public SequentialTaskExecutor(Executor executor) {
     myExecutor = executor;
   }
 
@@ -48,7 +49,7 @@ public class SequentialTaskExecutor {
 
   private void processQueue() {
     if (!myInProgress.getAndSet(true)) {
-      myExecutor.submit(USER_TASK_RUNNER);
+      myExecutor.execute(USER_TASK_RUNNER);
     }
   }
 

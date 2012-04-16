@@ -43,6 +43,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -210,8 +211,8 @@ public class RefManagerImpl extends RefManager {
 
     if (refEntity instanceof RefElement) {
       final RefElement refElement = (RefElement)refEntity;
-      PsiElement psiElement = refElement.getElement();
-      PsiFile psiFile = psiElement.getContainingFile();
+      final SmartPsiElementPointer pointer = refElement.getPointer();
+      PsiFile psiFile = pointer.getContainingFile();
 
       Element fileElement = new Element("file");
       Element lineElement = new Element("line");
@@ -220,9 +221,10 @@ public class RefManagerImpl extends RefManager {
       fileElement.addContent(virtualFile.getUrl());
 
       if (actualLine == -1) {
-        final Document document = PsiDocumentManager.getInstance(refElement.getRefManager().getProject()).getDocument(psiFile);
+        final Document document = PsiDocumentManager.getInstance(pointer.getProject()).getDocument(psiFile);
         LOG.assertTrue(document != null);
-        lineElement.addContent(String.valueOf(document.getLineNumber(psiElement.getTextOffset()) + 1));
+        final Segment range = pointer.getRange();
+        lineElement.addContent(String.valueOf(range != null ? (document.getLineNumber(range.getStartOffset()) + 1) : -1));
       }
       else {
         lineElement.addContent(String.valueOf(actualLine));
