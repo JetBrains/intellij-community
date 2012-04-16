@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,6 +46,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private final Set<String> myNoCopyJarPaths = SystemInfo.isFileSystemCaseSensitive ?
                                                new ConcurrentHashSet<String>() :
                                                new ConcurrentHashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+
+  private final static Logger LOG = Logger.getInstance(JarFileSystemImpl.class);
 
   @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
   private File myNoCopyJarDir;
@@ -86,6 +89,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
                                       SystemInfo.isFileSystemCaseSensitive)) {
                 VirtualFile jarRootToRefresh = markDirty(jarPath);
                 if (jarRootToRefresh != null) {
+                  LOG.info(jarPath + " will be refreshed due to " + event);
                   rootsToRefresh.add(jarRootToRefresh);
                 }
               }

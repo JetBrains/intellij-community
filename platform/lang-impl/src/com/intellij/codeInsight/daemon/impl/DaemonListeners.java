@@ -130,7 +130,7 @@ class DaemonListeners implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         Editor editor = e.getEditor();
-        if (!worthBothering(editor.getDocument(), editor.getProject())) {
+        if (!editor.getComponent().isShowing() || !worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
 
@@ -169,7 +169,7 @@ class DaemonListeners implements Disposable {
         Project editorProject = editor.getProject();
         // worthBothering() checks for getCachedPsiFile, so call getPsiFile here
         PsiFile file = editorProject == null ? null : PsiDocumentManager.getInstance(editorProject).getPsiFile(document);
-        if (!worthBothering(document, editorProject)) {
+        if (!editor.getComponent().isShowing() || !worthBothering(document, editorProject)) {
           LOG.debug("Not worth: " + file);
           return;
         }

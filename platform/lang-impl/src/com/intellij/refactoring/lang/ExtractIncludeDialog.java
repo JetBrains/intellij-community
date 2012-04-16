@@ -121,7 +121,8 @@ public class ExtractIncludeDialog extends DialogWrapper {
   private void validateOKButton() {
     final String fileName = myNameField.getText().trim();
     setOKActionEnabled(myTargetDirectoryField.getText().trim().length() > 0 &&
-                       fileName.length() > 0 && fileName.indexOf(File.separatorChar) < 0 && !StringUtil.containsAnyChar(fileName, "*?><\":;|"));
+                       fileName.length() > 0 && fileName.indexOf(File.separatorChar) < 0 &&
+                       !StringUtil.containsAnyChar(fileName, "*?><\":;|") && fileName.indexOf(".") != 0);
   }
 
   private static boolean isFileExist(@NotNull final String directory, @NotNull final String fileName) {

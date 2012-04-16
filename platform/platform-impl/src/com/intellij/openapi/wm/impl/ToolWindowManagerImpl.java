@@ -776,7 +776,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public String[] getToolWindowIds() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     final WindowInfoImpl[] infos = myLayout.getInfos();
     final String[] ids = ArrayUtil.newStringArray(infos.length);
     for (int i = 0; i < infos.length; i++) {
@@ -845,7 +844,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public ToolWindow getToolWindow(final String id) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myLayout.isToolWindowRegistered(id)) {
       return null;
     }
@@ -1586,7 +1584,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   boolean isToolWindowVisible(final String id) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
     return getInfo(id).isVisible();
   }

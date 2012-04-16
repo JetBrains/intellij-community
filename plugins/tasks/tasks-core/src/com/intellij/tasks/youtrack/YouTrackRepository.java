@@ -59,7 +59,8 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     if (request != null) {
       query += " " + request;
     }
-    HttpMethod method = doREST("/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max, false);
+    String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max;
+    HttpMethod method = doREST(requestUrl, false);
     InputStream stream = method.getResponseBodyAsStream();
 
     // workaround for http://youtrack.jetbrains.net/issue/JT-7984
@@ -78,11 +79,11 @@ public class YouTrackRepository extends BaseRepositoryImpl {
       element = new SAXBuilder(false).build(new StringReader(s)).getRootElement();
     }
     catch (JDOMException e) {
-      LOG.error("Can't parse YouTrack response", e);
+      LOG.error("Can't parse YouTrack response for " + requestUrl, e);
       throw e;
     }
     if ("error".equals(element.getName())) {
-      throw new Exception(element.getText());      
+      throw new Exception("Error from YouTrack for " + requestUrl + ": '" + element.getText() + "'");
     }
     @SuppressWarnings({"unchecked"})
     List<Object> children = element.getChildren("issue");

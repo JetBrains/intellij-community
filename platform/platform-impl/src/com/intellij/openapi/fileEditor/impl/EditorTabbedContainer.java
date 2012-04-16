@@ -72,7 +72,7 @@ import java.util.Map;
 final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
-  private final JBTabs myTabs;
+  private final JBEditorTabs myTabs;
 
   @NonNls public static final String HELP_ID = "ideaInterface.editor";
 
@@ -306,7 +306,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     tabActions.add(new CloseTab(comp, tab));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
-    myTabs.addTab(tab, indexToInsert);
+    myTabs.addTabSilently(tab, indexToInsert);
   }
 
   public boolean isEmptyVisible() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
       arrowButton.addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
-          if (!isSwingPopup()) {
+          if (!mySwingPopup) {
             e.consume();
             setPopupVisible(true);
           }
@@ -99,24 +99,24 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
               if (value != null) {
                 configureEditor(getEditor(), value);
                 IdeFocusManager.getGlobalInstance().requestFocus(ComboBox.this, true);
+                assert myJBPopup != null;
+                ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
+                myJBPopup.cancel();
               }
             }
           })
+          .setFocusOwners(new Component[]{this})
           .setMinSize(new Dimension(getWidth(), -1))
-          .setMovable(false)
-          .setResizable(false)
           .createPopup();
         list.setBorder(IdeBorderFactory.createEmptyBorder(0));
         myJBPopup.showUnderneathOf(this);
         list.addFocusListener(new FocusAdapter() {
           @Override
           public void focusLost(FocusEvent e) {
+            ComboBox.this.getUI().setPopupVisible(ComboBox.this, false);
             myJBPopup.cancel();
           }
         });
-      }
-      else if (!visible) {
-        super.setPopupVisible(visible);
       }
       return;
     }
@@ -170,8 +170,10 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   public void removeNotify() {
     super.removeNotify();
     Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-    if (myJBPopup != null && myJBPopup.isVisible()) {
+    if (myJBPopup != null) {
+      getUI().setPopupVisible(this, false);
       myJBPopup.cancel();
+
     }
   }
 

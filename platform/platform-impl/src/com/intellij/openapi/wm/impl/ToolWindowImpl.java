@@ -199,12 +199,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public final boolean isVisible() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.isToolWindowVisible(myId);
   }
 
   public final ToolWindowAnchor getAnchor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.getToolWindowAnchor(myId);
   }
 
@@ -257,7 +255,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   public final ToolWindowType getType() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myToolWindowManager.getToolWindowType(myId);
   }
 
@@ -316,7 +313,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
    *         passed content manager.
    */
   public final boolean isAvailable() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     return myAvailable && myComponent != null;
   }
 
