@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
       arrowButton.addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(MouseEvent e) {
-          if (!isSwingPopup()) {
+          if (!mySwingPopup) {
             e.consume();
             setPopupVisible(true);
           }
@@ -114,9 +114,6 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
             myJBPopup.cancel();
           }
         });
-      }
-      else if (!visible) {
-        super.setPopupVisible(visible);
       }
       return;
     }
