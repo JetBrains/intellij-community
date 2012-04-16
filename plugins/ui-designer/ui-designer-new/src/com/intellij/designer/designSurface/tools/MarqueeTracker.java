@@ -98,12 +98,10 @@ public class MarqueeTracker extends InputTool {
     if (myState == STATE_DRAG_IN_PROGRESS) {
       return getDefaultCursor();
     }
-    else if (myState == STATE_INVALID) {
+    if (myState == STATE_INVALID) {
       return getDisabledCursor();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   private void showFeedback() {

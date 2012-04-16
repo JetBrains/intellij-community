@@ -69,10 +69,10 @@ public class RadFrameLayout extends RadViewLayoutWithData {
       }
       return new FrameLayoutOperation(myContainer, context);
     }
-    else if (context.is(ResizeOperation.TYPE)) {
+    if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);
     }
-    else if (context.is(LayoutMarginOperation.TYPE)) {
+    if (context.is(LayoutMarginOperation.TYPE)) {
       return new LayoutMarginOperation(context);
     }
     return null;

@@ -61,8 +61,9 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
         return null;
       }
       // XXX
+      return null;
     }
-    else if (context.is(ResizeOperation.TYPE)) {
+    if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);
     }
     return null;

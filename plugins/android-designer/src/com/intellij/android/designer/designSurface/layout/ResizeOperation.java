@@ -331,11 +331,9 @@ public class ResizeOperation implements EditOperation {
     if (size == wrap) {
       return "wrap_content";
     }
-    else if (size == fill) {
+    if (size == fill) {
       return "fill_parent";
     }
-    else {
-      return Integer.toString(size) + "dp";
-    }
+    return Integer.toString(size) + "dp";
   }
 }

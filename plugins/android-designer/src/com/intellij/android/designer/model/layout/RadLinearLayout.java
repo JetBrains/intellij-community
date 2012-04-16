@@ -77,13 +77,13 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
       }
       return new LinearLayoutOperation(myContainer, context, isHorizontal());
     }
-    else if (context.is(ResizeOperation.TYPE)) {
+    if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);
     }
-    else if (context.is(LayoutMarginOperation.TYPE)) {
+    if (context.is(LayoutMarginOperation.TYPE)) {
       return new LayoutMarginOperation(context);
     }
-    else if (context.is(LayoutWeightOperation.TYPE)) {
+    if (context.is(LayoutWeightOperation.TYPE)) {
       return new LayoutWeightOperation(context);
     }
     return null;
