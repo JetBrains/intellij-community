@@ -45,7 +45,7 @@ class ServerState {
   private final List<GlobalLibrary> myGlobalLibraries = new ArrayList<GlobalLibrary>();
   private volatile String myGlobalEncoding = null;
   private volatile boolean myKeepTempCachesInMemory = false;
-  private String myIgnoredFilesPatterns;
+  private volatile String myIgnoredFilesPatterns;
 
   public void setGlobals(List<GlobalLibrary> libs, Map<String, String> pathVars, String globalEncoding, String ignoredFilesPatterns) {
     synchronized (myConfigurationLock) {
@@ -53,7 +53,7 @@ class ServerState {
       myGlobalLibraries.addAll(libs);
       myPathVariables.putAll(pathVars);
       myGlobalEncoding = StringUtil.isEmpty(globalEncoding)? null : globalEncoding;
-      myIgnoredFilesPatterns = ignoredFilesPatterns;
+      myIgnoredFilesPatterns = StringUtil.isEmpty(ignoredFilesPatterns)? "" : ignoredFilesPatterns;
     }
   }
 
