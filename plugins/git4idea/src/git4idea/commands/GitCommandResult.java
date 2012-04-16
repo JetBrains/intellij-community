@@ -73,4 +73,9 @@ public class GitCommandResult {
   public String getErrorOutputAsJoinedString() {
     return StringUtil.join(myErrorOutput, "\n");
   }
+
+  @NotNull
+  public String getOutputAsJoinedString() {
+    return StringUtil.join(myOutput, "\n");
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.zmlx.hg4idea.test;
+package git4idea.test;
 
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.vcs.*;
@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,50 +36,55 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Substitutes AbstractVcsHelperImpl for tests, where dialogs need to be tested.
- * Currently it's just a stub implementation notifying listeners about action invoked (which would mean than a dialog would have been
- * shown during normal execution).
  * @author Kirill Likhodedov
  */
-public class HgMockVcsHelper extends AbstractVcsHelper {
-
-  private Collection<VcsHelperListener> myListeners = new THashSet<VcsHelperListener>();
+public class MockVcsHelper extends AbstractVcsHelper {
+  private boolean myMergeDialogShown;
+  private CommitHandler myCommitHandler;
 
   @Override
   public void showErrors(List<VcsException> abstractVcsExceptions, @NotNull String tabDisplayName) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showErrors(Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull String tabDisplayName) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showDifferences(VcsFileRevision cvsVersionOn, VcsFileRevision cvsVersionOn1, File file) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showChangesListBrowser(CommittedChangeList changelist, @Nls String title) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showChangesBrowser(List<CommittedChangeList> changelists) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showChangesBrowser(List<CommittedChangeList> changelists, @Nls String title) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -88,20 +92,23 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                                  RepositoryLocation location,
                                  @Nls String title,
                                  @Nullable Component parent) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showWhatDiffersBrowser(@Nullable Component parent, Collection<Change> changes, @Nls String title) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public <T extends CommittedChangeList, U extends ChangeBrowserSettings> T chooseCommittedChangeList(CommittedChangesProvider<T, U> provider,
                                                                                                       RepositoryLocation location) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void openCommittedChangesTab(AbstractVcs vcs, VirtualFile root, ChangeBrowserSettings settings, int maxCount, String title) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -110,28 +117,37 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                                       ChangeBrowserSettings settings,
                                       int maxCount,
                                       String title) {
+    throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
-  public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
-    return null;
+  public List<VirtualFile> showMergeDialog(List<VirtualFile> files,
+                                           MergeProvider provider,
+                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+    myMergeDialogShown = true;
+    return Collections.emptyList();
+  }
+
+  public boolean mergeDialogWasShown() {
+    return myMergeDialogShown;
   }
 
   @NotNull
   @Override
   public List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider) {
-    return null;
+    return showMergeDialog(files, provider, new MergeDialogCustomizer());
   }
 
   @NotNull
   @Override
   public List<VirtualFile> showMergeDialog(List<VirtualFile> files) {
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, AbstractVcs vcs, String repositoryPath) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -140,13 +156,14 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                               FilePath path,
                               String repositoryPath,
                               AbstractVcs vcs) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void showRollbackChangesDialog(List<Change> changes) {
+    throw new UnsupportedOperationException();
   }
 
-  @Nullable
   @Override
   public Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files,
                                                       String title,
@@ -154,11 +171,9 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                                                       String singleFileTitle,
                                                       String singleFilePromptTemplate,
                                                       VcsShowConfirmationOption confirmationOption) {
-    notifyListeners();
-    return null;
+    throw new UnsupportedOperationException();
   }
-  
-  @Nullable
+
   @Override
   public Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
                                                        String title,
@@ -166,24 +181,24 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
                                                        String singleFileTitle,
                                                        String singleFilePromptTemplate,
                                                        VcsShowConfirmationOption confirmationOption) {
-    notifyListeners();
-    return null;
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitExecutor executor) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void addListener(VcsHelperListener listener) {
-    myListeners.add(listener);
-  }
-
-  private void notifyListeners() {
-    for (VcsHelperListener listener : myListeners) {
-      listener.dialogInvoked();
+    if (myCommitHandler != null) {
+      return myCommitHandler.commit(commitMessage);
     }
+    return false;
+  }
+
+  public void registerHandler(CommitHandler handler) {
+    myCommitHandler = handler;
+  }
+
+  public interface CommitHandler {
+    boolean commit(String commitMessage);
   }
 
 }

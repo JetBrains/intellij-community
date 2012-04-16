@@ -49,6 +49,8 @@ import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.history.*;
@@ -217,6 +219,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions);
       }
     });
+  }
+  
+  @Override
+  public boolean commitChanges(@NotNull List<Change> changes, @NotNull LocalChangeList initialChangeList,
+                               @NotNull String commitMessage, @Nullable CommitExecutor executor) {
+    return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList, executor, commitMessage);
   }
 
   private void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<VcsException> abstractVcsExceptions) {

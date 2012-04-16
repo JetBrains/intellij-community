@@ -54,6 +54,7 @@ public class GitVcsPanel {
   private JComboBox myConvertTextFilesComboBox; // The conversion policy
   private JCheckBox myAutoUpdateIfPushRejected;
   private JBCheckBox mySyncBranchControl;
+  private JCheckBox myAutoCommitOnCherryPick;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
@@ -124,6 +125,7 @@ public class GitVcsPanel {
     myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
     myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
     mySyncBranchControl.setSelected(settings.getSyncSetting() == GitBranchSyncSetting.SYNC);
+    myAutoCommitOnCherryPick.setSelected(settings.isAutoCommitOnCherryPick());
   }
 
   /**
@@ -161,7 +163,8 @@ public class GitVcsPanel {
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
-           ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected());
+           ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected() ||
+           settings.isAutoCommitOnCherryPick() == myAutoCommitOnCherryPick.isSelected());
   }
 
   /**
@@ -189,5 +192,6 @@ public class GitVcsPanel {
     }
     settings.setLineSeparatorsConversion(conversionPolicy);
     settings.setSyncSetting(mySyncBranchControl.isSelected() ? GitBranchSyncSetting.SYNC : GitBranchSyncSetting.DONT);
+    settings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
   }
 }

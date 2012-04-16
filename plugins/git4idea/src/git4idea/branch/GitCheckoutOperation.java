@@ -201,7 +201,8 @@ class GitCheckoutOperation extends GitBranchOperation {
   private boolean smartCheckout(@NotNull final List<GitRepository> repositories, @NotNull final String reference, @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
 
     final AtomicBoolean result = new AtomicBoolean();
-    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, repositories, "checkout", reference, indicator, new Runnable() {
+    GitPreservingProcess preservingProcess = new GitPreservingProcess(myProject, myGit, repositories, "checkout", reference, indicator,
+                                                                      new Runnable() {
       @Override
       public void run() {
         result.set(checkoutOrNotify(repositories, reference, newBranch, false));
