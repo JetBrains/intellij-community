@@ -2285,24 +2285,28 @@ def list_binaries(paths):
     return list(res.values())
 
 def list_sources(paths):
-    for path in paths:
-        if path == os.path.dirname(sys.argv[0]): continue
+    try:
+        for path in paths:
+            if path == os.path.dirname(sys.argv[0]): continue
 
-        path = os.path.normpath(path)
+            path = os.path.normpath(path)
 
-        for root, dirs, files in os.walk(path):
-            if root.endswith('__pycache__'): continue
-            dirs_copy = list(dirs)
-            for d in dirs_copy:
-                if d.endswith("__pycache__") or not is_module(d, root):
-                    dirs.remove(d)
-            for name in files:
-                if name.endswith('.py'):
-                    filePath = join(root, name)
-                    say("%s\t%s\t%d", os.path.normpath(filePath), path, getsize(filePath))
-    say('END')
-    sys.stdout.flush()
-
+            for root, dirs, files in os.walk(path):
+                if root.endswith('__pycache__'): continue
+                dirs_copy = list(dirs)
+                for d in dirs_copy:
+                    if d.endswith("__pycache__") or not is_module(d, root):
+                        dirs.remove(d)
+                for name in files:
+                    if name.endswith('.py'):
+                        filePath = join(root, name)
+                        say("%s\t%s\t%d", os.path.normpath(filePath), path, getsize(filePath))
+        say('END')
+        sys.stdout.flush()
+    except e:
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 def zip_sources(zip_path):
     if not os.path.exists(zip_path):
