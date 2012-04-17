@@ -34,6 +34,13 @@ public class InspectionsConfigTreeComparator implements Comparator<InspectionCon
     if (userObject1 instanceof String && userObject2 instanceof String) {
       s1 = (String)userObject1;
       s2 = (String)userObject2;
+    } else {
+      if (userObject1 instanceof String) return -1;
+      if (userObject2 instanceof String) return 1;
+    }
+
+    if (s1 != null) {
+      return getDisplayTextToSort(s1).compareToIgnoreCase(getDisplayTextToSort(s2));
     }
 
     final Descriptor descriptor1 = o1.getDesriptor();
