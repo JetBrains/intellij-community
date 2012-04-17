@@ -86,13 +86,17 @@ BITS=$?
 if [ $OPEN_JDK -eq 0 ]; then
   echo "WARNING: You are launching the IDE using OpenJDK Java runtime."
   echo
-  echo "         THIS IS STRICTLY UNSUPPORTED DUE TO KNOWN PERFORMANCE AND GRAPHICS PROBLEMS!"
+  echo "         ITS KNOWN TO HAVE PERFORMANCE AND GRAPHICS ISSUES!"
+  echo "         SWITCH TO THE ORACLE(SUN) JDK BEFORE REPORTING PROBLEMS!"
   echo
   echo "NOTE:    If you have both Oracle (Sun) JDK and OpenJDK installed"
   echo "         please validate either @@product_uc@@_JDK, JDK_HOME, or JAVA_HOME environment variable points to valid Oracle (Sun) JDK installation."
   echo "         See http://ow.ly/6TuKQ for more info on switching default JDK."
   echo
   echo "Press Enter to continue."
+# ---------------------------------------------------------------------
+# COMMENT LINE BELOW TO REMOVE PAUSE AFTER OPEN JDK WARNING
+# ---------------------------------------------------------------------
   read IGNORE
 fi
 if [ $BITS -eq 0 ]; then
@@ -141,7 +145,7 @@ if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo $OS_TYPE | "$TR" '[:upper:]' '[:lower:]'`
   AGENT_LIB="yjpagent-$OS_NAME$BITS"
   if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
-    AGENT="-agentlib:$AGENT_LIB=disablej2ee,disablecounts,disablealloc,sessionname=@@system_selector@@"
+    AGENT="-agentlib:$AGENT_LIB=disablej2ee,disablealloc,sessionname=@@system_selector@@"
   fi
 fi
 

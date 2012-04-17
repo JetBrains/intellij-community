@@ -23,6 +23,8 @@ import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +87,16 @@ public class EmptyClassInspection extends BaseInspection {
     final CheckBox checkBox2 = new CheckBox("Ignore subclasses of java.lang.Throwable", this, "ignoreThrowables");
     panel.add(checkBox2, constraints);
     return panel;
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final Object info = infos[0];
+    if (!(info instanceof PsiModifierListOwner)) {
+      return InspectionGadgetsFix.EMPTY_ARRAY;
+    }
+    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
   }
 
   @Override

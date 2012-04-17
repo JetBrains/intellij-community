@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
@@ -57,14 +56,17 @@ public class PublicMethodNotExposedInInterfaceInspection
       "public.method.not.in.interface.problem.descriptor");
   }
 
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)infos[0], ignorableAnnotations);
+  }
+
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    final JPanel annotationsListControl =
-      SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-        ignorableAnnotations,
-        InspectionGadgetsBundle.message(
-          "ignore.if.annotated.by"));
+    final JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+        ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
     constraints.gridy = 0;
@@ -74,8 +76,7 @@ public class PublicMethodNotExposedInInterfaceInspection
     constraints.fill = GridBagConstraints.BOTH;
     panel.add(annotationsListControl, constraints);
     final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
-      "public.method.not.in.interface.option"),
-                                           this, "onlyWarnIfContainingClassImplementsAnInterface");
+      "public.method.not.in.interface.option"), this, "onlyWarnIfContainingClassImplementsAnInterface");
     constraints.gridy = 1;
     constraints.weighty = 0.0;
     constraints.anchor = GridBagConstraints.WEST;
@@ -141,7 +142,7 @@ public class PublicMethodNotExposedInInterfaceInspection
       if (TestUtils.isJUnitTestMethod(method)) {
         return;
       }
-      registerMethodError(method);
+      registerMethodError(method, method);
     }
 
     private boolean exposedInInterface(PsiMethod method) {

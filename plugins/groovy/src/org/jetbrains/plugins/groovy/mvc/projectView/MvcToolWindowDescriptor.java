@@ -51,7 +51,6 @@ public abstract class MvcToolWindowDescriptor implements ToolWindowFactory, Cond
   }
 
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-    toolWindow.setIcon(myFramework.getIcon());
     toolWindow.setAvailable(true, null);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setTitle(myFramework.getDisplayName());

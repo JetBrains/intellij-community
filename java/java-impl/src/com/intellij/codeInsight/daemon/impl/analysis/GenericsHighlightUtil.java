@@ -973,6 +973,13 @@ public class GenericsHighlightUtil {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, ref, JavaErrorMessages.message("generics.cannot.instanceof.type.parameters"));
     }
 
+    if (resolved instanceof PsiClass) {
+      final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
+      if (containingClass != null && ref.getQualifier() == null && containingClass.getTypeParameters().length > 0) {
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, JavaErrorMessages.message("illegal.generic.type.for.instanceof"));
+      }
+    }
+    
     final PsiType[] parameters = ref.getTypeParameters();
     for (PsiType parameterType : parameters) {
       if (parameterType != null &&

@@ -20,7 +20,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.PathMacroManager;
@@ -105,7 +104,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       final File file = new File(fileName);
       final CharArrayWriter writer = new CharArrayWriter();
       if (!file.exists()) {
-        writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" is_local_tool=\"")
+        writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" " + GlobalInspectionContextImpl.LOCAL_TOOL_ATTRIBUTE + "=\"")
           .append(Boolean.toString(this instanceof LocalInspectionToolWrapper)).append("\">\n");
       }
       for (Object o : list) {
@@ -263,19 +262,16 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return myComposer;
   }
 
-  public void exportResults(@NotNull final Element parentNode) {
-    getRefManager().iterate(new RefVisitor() {
-      @Override public void visitElement(final RefEntity refEntity) {
-        synchronized (lock) {
-          if (getProblemElements().containsKey(refEntity)) {
-            CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
-            if (descriptions != null) {
-              exportResults(descriptions, refEntity, parentNode);
-            }
-          }
+  @Override
+  public void exportResults(final @NotNull Element parentNode, RefEntity refEntity) {
+    synchronized (lock) {
+      if (getProblemElements().containsKey(refEntity)) {
+        CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
+        if (descriptions != null) {
+          exportResults(descriptions, refEntity, parentNode);
         }
       }
-    });
+    }
   }
 
   private void exportResults(@NotNull final CommonProblemDescriptor[] descriptions, final RefEntity refEntity, final Element parentNode) {

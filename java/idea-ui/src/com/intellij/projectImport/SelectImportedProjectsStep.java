@@ -71,11 +71,20 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     return panel;
   }
 
+  protected boolean isElementEnabled(T element) {
+    return true;
+  }
+
   public void updateStep() {
     fileChooser.clear();
     for (T element : getContext().getList()) {
-      fileChooser.addElement(element, getContext().isMarked(element));
+      boolean isEnabled = isElementEnabled(element);
+      fileChooser.addElement(element, isEnabled && getContext().isMarked(element));
+      if (!isEnabled) {
+        fileChooser.disableElement(element);
+      }
     }
+
     fileChooser.setBorder(IdeBorderFactory.createTitledBorder(
       IdeBundle.message("project.import.select.title", getContext().getName()), false));
     openModuleSettingsCheckBox.setSelected(getBuilder().isOpenProjectSettingsAfter());

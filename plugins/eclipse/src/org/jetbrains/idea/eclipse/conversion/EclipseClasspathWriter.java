@@ -129,14 +129,21 @@ public class EclipseClasspathWriter {
           }
           else {
             boolean newVarLibrary = false;
+
+            boolean link = false;
             String eclipseVariablePath = eclipseModuleManager.getEclipseVariablePath(files[0]);
+            if (eclipseVariablePath == null) {
+              eclipseVariablePath = eclipseModuleManager.getEclipseLinkedVarPath(files[0]);
+              link = eclipseVariablePath != null;
+            }
+
             if (eclipseVariablePath == null && !eclipseModuleManager.isEclipseLibUrl(files[0])) { //new library was added
               newVarLibrary = true;
               eclipseVariablePath = EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry, OrderRootType.CLASSES);
             }
             Element orderEntry;
             if (eclipseVariablePath != null) {
-              orderEntry = addOrderEntry(EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot);
+              orderEntry = addOrderEntry(link ? EclipseXml.LIB_KIND : EclipseXml.VAR_KIND, eclipseVariablePath, classpathRoot);
             }
             else {
               LOG.assertTrue(!StringUtil.isEmptyOrSpaces(files[0]), "Library: " + libraryName);
@@ -156,6 +163,9 @@ public class EclipseClasspathWriter {
               srcRelativePath = EPathUtil.collapse2EclipsePath(srcFile, myModel);
               if (eclipseVariablePath != null) {
                 eclipseSrcVariablePath = eclipseModuleManager.getEclipseSrcVariablePath(srcFile);
+                if (eclipseSrcVariablePath == null) {
+                  eclipseSrcVariablePath = eclipseModuleManager.getEclipseLinkedSrcVariablePath(srcFile);
+                }
                 if (eclipseSrcVariablePath == null) {
                   eclipseSrcVariablePath = EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry, OrderRootType.SOURCES);
                   if (eclipseSrcVariablePath != null) {

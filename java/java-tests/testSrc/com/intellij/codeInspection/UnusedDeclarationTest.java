@@ -184,4 +184,8 @@ public class UnusedDeclarationTest extends InspectionTestCase {
   public void testAbstractClassWithSerializableSubclasses() throws Exception {
     doTest();
   }
+
+  public void testclassLiteralRef() throws Exception {
+    doTest();
+  }
 }

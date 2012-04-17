@@ -1399,7 +1399,7 @@ public class UIUtil {
 
     @NonNls String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
     @NonNls @Language("HTML")
-    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
     if (resource != null) {
       body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
     }

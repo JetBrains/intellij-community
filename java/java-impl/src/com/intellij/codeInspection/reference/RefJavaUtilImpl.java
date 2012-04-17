@@ -75,7 +75,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             if (refConstructor == null) {  // No explicit constructor referenced. Should use default one.
               PsiType newType = newExpr.getType();
               if (newType instanceof PsiClassType) {
-                processClassReference(PsiUtil.resolveClassInType(newType), refFrom, psiFrom);
+                processClassReference(PsiUtil.resolveClassInType(newType), refFrom, psiFrom, true);
               }
             }
           }
@@ -124,22 +124,38 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             final PsiTypeElement operand = expression.getOperand();
             final PsiType type = operand.getType();
             if (type instanceof PsiClassType) {
-              processClassReference(((PsiClassType)type).resolve(), refFrom, psiFrom);
+              processClassReference(((PsiClassType)type).resolve(), refFrom, psiFrom, false);
             }
           }
 
-          private void processClassReference(final PsiClass psiClass, final RefJavaElementImpl refFrom, final PsiModifierListOwner psiFrom) {
+          private void processClassReference(final PsiClass psiClass,
+                                             final RefJavaElementImpl refFrom,
+                                             final PsiModifierListOwner psiFrom,
+                                             boolean defaultConstructorOnly) {
             if (psiClass != null) {
               RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass);
 
               if (refClass != null) {
-                RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
+                boolean hasConstructorsMarked = false;
 
-                if (refDefaultConstructor != null && !(refDefaultConstructor instanceof RefImplicitConstructor)) {
-                  refDefaultConstructor.addInReference(refFrom);
-                  refFrom.addOutReference(refDefaultConstructor);
+                if (defaultConstructorOnly) {
+                  RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
+                  if (refDefaultConstructor != null && !(refDefaultConstructor instanceof RefImplicitConstructor)) {
+                    refDefaultConstructor.addInReference(refFrom);
+                    refFrom.addOutReference(refDefaultConstructor);
+                    hasConstructorsMarked = true;
+                  }
                 }
                 else {
+                  for (RefMethod cons : refClass.getConstructors()) {
+                    if (cons instanceof RefImplicitConstructor) continue;
+                    ((RefMethodImpl)cons).addInReference(refFrom);
+                    refFrom.addOutReference(cons);
+                    hasConstructorsMarked = true;
+                  }
+                }
+
+                if (!hasConstructorsMarked) {
                   refFrom.addReference(refClass, psiClass, psiFrom, false, true, null);
                 }
               }

@@ -417,7 +417,8 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @Override
   @NotNull
   public String getDefaultHtmlDoctype(@NotNull Project project) {
-    return getProjectResources(project).myDefaultHtmlDoctype;
+    final String doctype = getProjectResources(project).myDefaultHtmlDoctype;
+    return XmlUtil.XHTML_URI.equals(doctype) ? XmlUtil.XHTML4_SCHEMA_LOCATION : doctype;
   }
 
   @Override

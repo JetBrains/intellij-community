@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     if (profileGroovyc) {
       parameters.getVMParametersList().defineProperty("java.library.path", PathManager.getBinPath());
       parameters.getVMParametersList().defineProperty("profile.groovy.compiler", "true");
-      parameters.getVMParametersList().add("-agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=GroovyCompiler");
+      parameters.getVMParametersList().add("-agentlib:yjpagent=disablej2ee,disablealloc,sessionname=GroovyCompiler");
       classPathBuilder.add(PathManager.findFileInLibDirectory("yjp-controller-api-redist.jar").getAbsolutePath());
     }
 

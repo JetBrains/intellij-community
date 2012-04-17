@@ -379,20 +379,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setWholeWordsOnly(false);
     assertSize(2, findUsages(findModel));
 
-    /* todo
     findModel.setWholeWordsOnly(true);
     assertSize(2, findUsages(findModel));
-    */
   }
 
-  public void testLocalScopeSearchPerformance() throws Exception {
-    final int count = 3000;
+  public void testLocalScopeSearchPerformance() throws Throwable {
+    final int fileCount = 3000;
+    final int lineCount = 500;
     TempDirTestFixture fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
 
     try {
-      String sampleText = StringUtil.repeat("zoo TargetWord foo bar goo\n", count);
-      for (int i = 0; i < count; i++) {
+      String sampleText = StringUtil.repeat("zoo TargetWord foo bar goo\n", lineCount);
+      for (int i = 0; i < fileCount; i++) {
         fixture.createFile("a" + i + ".txt", sampleText);
       }
       PsiTestUtil.addSourceContentToRoots(myModule, fixture.getFile(""));
@@ -409,15 +408,15 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       ThrowableRunnable test = new ThrowableRunnable() {
         @Override
         public void run() throws Throwable {
-          assertSize(count, findUsages(findModel));
+          assertSize(lineCount, findUsages(findModel));
         }
       };
 
       findModel.setCustomScope(GlobalSearchScope.fileScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("slow", 500, test).attempts(1).cpuBound().usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("slow", 400, test).attempts(2).cpuBound().usesAllCPUCores().assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("slow", 500, test).attempts(1).cpuBound().usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("slow", 400, test).attempts(2).cpuBound().usesAllCPUCores().assertTiming();
     }
     finally {
       fixture.tearDown();
