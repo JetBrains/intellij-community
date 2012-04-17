@@ -3,36 +3,36 @@ OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('wizards')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 	')
 OBJECT_PATH_ENTITY ('newContentElement')
 OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('wizardItems')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 		')
 OBJECT_PATH_ENTITY ('forms')
 OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('elements')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('mailform')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('tt_content_defValues')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('bodytext')
 WHITE_SPACE (' ')
 MULTILINE_OPEN ('(')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 ')
 MULTILINE_VALUE ('enctype = multipart/form-data')
 WHITE_SPACE ('
@@ -44,996 +44,996 @@ MULTILINE_VALUE ('prefix = tx_form')
 WHITE_SPACE ('
 					')
 MULTILINE_CLOSE (')')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 		')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 	')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 	')
 OBJECT_PATH_ENTITY ('form')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 		')
 OBJECT_PATH_ENTITY ('defaults')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('showTabs')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('elements, options, form')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('tabs')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('elements')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('basic, predefined, content')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('basic')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showButtons')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('checkbox, fieldset, fileupload, hidden, password, radio, reset, select, submit, textarea, textline')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('predefined')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showButtons')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('email, radiogroup, checkboxgroup, name')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('content')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showButtons')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('header, textblock')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('options')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('legend, label, attributes, options, validation, filters, various')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('accept, acceptcharset, accesskey, action, alt, checked, class, cols, dir, disabled, enctype, id, label, lang, maxlength, method, multiple, name, readonly, rows, selected, size, src, style, tabindex, title, type, value')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('label')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('label')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('validation')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showRules')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('alphabetic, alphanumeric, between, date, digit, email, equals, fileallowedtypes, filemaximumsize, fileminimumsize, float, greaterthan, inarray, integer, ip, length, lessthan, regexp, required, uri')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('rules')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('alphabetic')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, allowWhiteSpace')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('alphanumeric')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, allowWhiteSpace')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('between')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, minimum, maximum, inclusive')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('date')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, format')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('digit')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('email')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('equals')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, field')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('fileallowedtypes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, types')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('filemaximumsize')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, maximum')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('fileminimumsize')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, minimum')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('float')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('greaterthan')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, minimum')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('inarray')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, array, strict')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('integer')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('ip')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('length')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, minimum, maximum')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('lessthan')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, maximum')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('regexp')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage, expression')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('required')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('uri')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('message, error, breakOnError, showMessage')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('filtering')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showFilters')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('alphabetic, alphanumeric, currency, digit, integer, lowercase, regexp, removexss, stripnewlines, titlecase, trim, uppercase')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('filters')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('alphabetic')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('allowWhiteSpace')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('alphanumeric')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('allowWhiteSpace')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('currency')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('decimalPoint, thousandSeparator')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('digit')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('integer')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('lowercase')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('regexp')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('expression')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('removexss')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('stripnewlines')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('titlecase')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('trim')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('characterList')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('uppercase')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('form')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('prefix, attributes, postProcessor')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('accept, acceptcharset, action, class, dir, enctype, id, lang, method, name, style, title')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('postProcessor')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('showPostProcessors')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('mail')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 OBJECT_PATH_ENTITY ('postProcessors')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 OBJECT_PATH_ENTITY ('mail')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 									')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('recipientEmail, senderEmail')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 								')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 							')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 		')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 		')
 OBJECT_PATH_ENTITY ('elements')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('button')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('attributes')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('value')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('checkbox')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('label, attributes')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('name, value')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('fieldset')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('legend')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('fileupload')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('label, attributes, validation')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('name')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('validation')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showRules')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('required, fileallowedtypes, filemaximumsize, fileminimumsize')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('hidden')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('attributes')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('name, value')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('password')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('label, attributes, validation')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('name')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('validation')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showRules')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('required, equals')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('radio')
 WHITE_SPACE (' ')
@@ -1041,7 +1041,7 @@ COPY ('<')
 WHITE_SPACE (' ')
 OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('checkbox')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('reset')
 WHITE_SPACE (' ')
@@ -1049,60 +1049,60 @@ COPY ('<')
 WHITE_SPACE (' ')
 OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('button')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('select')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('label, attributes, options, validation')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('name, multiple')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('validation')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showRules')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('required')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('submit')
 WHITE_SPACE (' ')
@@ -1110,181 +1110,181 @@ COPY ('<')
 WHITE_SPACE (' ')
 OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('button')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('textarea')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('label, attributes, validation, filters')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('name, cols, rows')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('filtering')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showFilters')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('alphabetic, alphanumeric, lowercase, regexp, stripnewlines, titlecase, trim, uppercase')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('validation')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showRules')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('alphabetic, alphanumeric, length, regexp, required')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('textline')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('label, attributes, validation, filters')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('attributes')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showProperties')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('name')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('validation')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showRules')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('alphabetic, alphanumeric, between, date, digit, email, equals, float, greaterthan, inarray, integer, ip, length, lessthan, regexp, required, uri')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('filtering')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showFilters')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('alphabetic, alphanumeric, currency, digit, integer, lowercase, regexp, titlecase, trim, uppercase')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('checkboxgroup')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('legend, options, various, validation')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('accordions')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 OBJECT_PATH_ENTITY ('validation')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 						')
 OBJECT_PATH_ENTITY ('showRules')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('required')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 					')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('email')
 WHITE_SPACE (' ')
@@ -1292,52 +1292,52 @@ COPY ('<')
 WHITE_SPACE (' ')
 OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('textline')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('header')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('various')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('textblock')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('various')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('name')
 WHITE_SPACE (' ')
 CODE_BLOCK_OPEN ('{')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 				')
 OBJECT_PATH_ENTITY ('showAccordions')
 WHITE_SPACE (' ')
 ASSIGN ('=')
 WHITE_SPACE (' ')
 ASSIGNMENT_VALUE ('legend, various')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 			')
 OBJECT_PATH_ENTITY ('radiogroup')
 WHITE_SPACE (' ')
@@ -1345,14 +1345,14 @@ COPY ('<')
 WHITE_SPACE (' ')
 OBJECT_PATH_SEPARATOR ('.')
 OBJECT_PATH_ENTITY ('checkboxgroup')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 		')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 	')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 ')
 CODE_BLOCK_CLOSE ('}')
-WHITE_SPACE ('
+WHITE_SPACE_WITH_NEW_LINE ('
 ')

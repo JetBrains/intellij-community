@@ -48,7 +48,7 @@ OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 %xstate MODIFICATION_OPERATOR_FUNCTION_ARGUMENT
 %%
 
-{WHITESPACE_WITH_NEW_LINE}                            { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }
+{WHITESPACE_WITH_NEW_LINE}                            { yybegin(YYINITIAL); return TypoScriptTokenTypes.WHITE_SPACE_WITH_NEW_LINE; }
 {WHITE_SPACE_CHARS}                                   { return TokenType.WHITE_SPACE; }
 
 <YYINITIAL> {ONE_LINE_COMMENT}                        { return TypoScriptTokenTypes.ONE_LINE_COMMENT; }
@@ -63,7 +63,7 @@ OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 
 <COPYING_OPERATOR_VALUE> {OBJECT_PATH_ENTITY}         { return TypoScriptTokenTypes.OBJECT_PATH_ENTITY; }
 <COPYING_OPERATOR_VALUE> "."                          { return TypoScriptTokenTypes.OBJECT_PATH_SEPARATOR; }
-<COPYING_OPERATOR_VALUE> {WHITESPACE_WITH_NEW_LINE}   { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }
+<COPYING_OPERATOR_VALUE> {WHITESPACE_WITH_NEW_LINE}   { yybegin(YYINITIAL); return TypoScriptTokenTypes.WHITE_SPACE_WITH_NEW_LINE; }
 <COPYING_OPERATOR_VALUE> {WHITE_SPACE_CHARS}          { return TokenType.WHITE_SPACE; }
 
 
@@ -88,7 +88,7 @@ OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 <MULTILINE_AFTER_SIGN_ONE_LINE_IGNORED_ZONE>  {STRING_TAIL}                                       { yybegin(MULTILINE_OPERATOR_VALUE);
                                                                                                     return TypoScriptTokenTypes.IGNORED_TEXT; }
 <MULTILINE_AFTER_SIGN_ONE_LINE_IGNORED_ZONE>  {WHITESPACE_WITH_NEW_LINE}                          { yybegin(MULTILINE_OPERATOR_VALUE);
-                                                                                                    return TokenType.WHITE_SPACE; }
+                                                                                                    return TypoScriptTokenTypes.WHITE_SPACE_WITH_NEW_LINE; }
 <MULTILINE_OPERATOR_VALUE>                    {WHITESPACE_WITH_NEW_LINE}                          { return TokenType.WHITE_SPACE; }
 <MULTILINE_OPERATOR_VALUE>                    [^\ \n\r\t\f\)]{ENDTRIMMED_STRING_TAIL}   { return TypoScriptTokenTypes.MULTILINE_VALUE; }
 <MULTILINE_OPERATOR_VALUE>                    ")"                                                 { yybegin(ONE_LINE_IGNORED_ZONE);
@@ -100,7 +100,7 @@ OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 <MODIFICATION_OPERATOR_FUNCTION_ARGUMENT>   ([^" "\r\n")"][^\r\n")"]*[^" "\r\n")"])|([^" "\r\n")"])   { return TypoScriptTokenTypes.MODIFICATION_OPERATOR_FUNCTION_ARGUMENT;}
 <MODIFICATION_OPERATOR_FUNCTION_ARGUMENT>   ")"                                                       { yybegin(ONE_LINE_IGNORED_ZONE);
                                                                                                         return TypoScriptTokenTypes.MODIFICATION_OPERATOR_FUNCTION_PARAM_END; }
-<MODIFICATION_OPERATOR_VALUE, MODIFICATION_OPERATOR_FUNCTION_ARGUMENT>   {WHITESPACE_WITH_NEW_LINE}   { yybegin(YYINITIAL); return TokenType.WHITE_SPACE; }
+<MODIFICATION_OPERATOR_VALUE, MODIFICATION_OPERATOR_FUNCTION_ARGUMENT>   {WHITESPACE_WITH_NEW_LINE}   { yybegin(YYINITIAL); return TypoScriptTokenTypes.WHITE_SPACE_WITH_NEW_LINE; }
 <MODIFICATION_OPERATOR_VALUE, MODIFICATION_OPERATOR_FUNCTION_ARGUMENT>   {WHITE_SPACE_CHARS}          { return TokenType.WHITE_SPACE; }
 
 
