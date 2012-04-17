@@ -307,7 +307,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           }
         }
         final CheckedTreeNode suiteNode = new CheckedTreeNode(coverageSuite);
-        suiteNode.setChecked(false);
+        suiteNode.setChecked(true);
         node.add(suiteNode);
         TreeUtil.sort(node, new Comparator() {
           @Override
@@ -325,6 +325,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           }
         });
         updateTree();
+        TreeUtil.selectNode(mySuitesTree, suiteNode);
       }
     }
   }
