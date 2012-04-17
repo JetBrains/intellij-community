@@ -718,8 +718,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       boolean resetNullability = isNotNull(field);
       flushVariable(field);
       if (resetNullability) {
-        getVariableState(field).setNullable(false);
       }
+      getVariableState(field).setNullable(false);
     }
   }
 
@@ -728,15 +728,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return;
     }
 
-    doFlash(variable);
+    doFlush(variable);
   }
 
   @Override
   public void flushVariableOutOfScope(DfaVariableValue variable) {
-    doFlash(variable);
+    doFlush(variable);
   }
 
-  private void doFlash(DfaVariableValue varPlain) {
+  private void doFlush(DfaVariableValue varPlain) {
     DfaVariableValue varNegated = (DfaVariableValue)varPlain.createNegated();
 
     final int idPlain = varPlain.getID();

@@ -9,9 +9,12 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.slice.SliceTreeTest;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.InspectionTestCase;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NonNls;
 
 public class DataFlowInspectionTest extends InspectionTestCase {
@@ -148,4 +151,13 @@ public class DataFlowInspectionTest extends InspectionTestCase {
 
   //public void testIDEADEV11033() throws Exception { doTest15(); }
   public void testSwitchEnumCases() throws Exception { doTest15(); }
+
+  public static Test suite() {
+    TestSuite suite = new TestSuite();
+    suite.addTestSuite(DataFlowInspectionFixtureTest.class);
+    suite.addTestSuite(DataFlowInspectionTest.class);
+    suite.addTestSuite(SliceTreeTest.class);
+    return suite;
+  }
+
 }
