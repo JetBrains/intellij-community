@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NonNls;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class Tool implements SchemeElement {
@@ -300,7 +301,15 @@ public class Tool implements SchemeElement {
       commandLine.setWorkDirectory(MacroManager.getInstance().expandMacrosInString(workingDir, false, dataContext));
       exePath = MacroManager.getInstance().expandMacrosInString(exePath, false, dataContext);
       if (exePath == null) return null;
-      commandLine.setExePath(exePath);
+
+      File exeFile = new File(exePath);
+      if (exeFile.isDirectory() && exeFile.getName().endsWith(".app")) {
+        commandLine.setExePath("open");
+        commandLine.getParametersList().prependAll("-a", exePath);
+      }
+      else {
+        commandLine.setExePath(exePath);
+      }
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;
