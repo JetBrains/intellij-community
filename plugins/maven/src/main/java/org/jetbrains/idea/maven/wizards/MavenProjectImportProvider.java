@@ -23,11 +23,13 @@ package org.jetbrains.idea.maven.wizards;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.projectImport.SelectImportedProjectsStep;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.io.File;
 
@@ -36,7 +38,7 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
     super(builder);
   }
 
-  public ModuleWizardStep[] createSteps(WizardContext wizardContext) {
+  public ModuleWizardStep[] createSteps(final WizardContext wizardContext) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     return new ModuleWizardStep[]{new MavenProjectImportStep(wizardContext), new SelectProfilesStep(wizardContext),
       new SelectImportedProjectsStep<MavenProject>(wizardContext) {
@@ -50,7 +52,20 @@ public class MavenProjectImportProvider extends ProjectImportProvider {
               stringBuilder.append(" [").append(relPath).append("]");
             }
           }
+
+          if (!isElementEnabled(project)) {
+            stringBuilder.append(" (project is ignored. See Settings -> Maven -> Ignored Files)");
+          }
+
           return stringBuilder.toString();
+        }
+
+        @Override
+        protected boolean isElementEnabled(MavenProject mavenProject) {
+          Project project = wizardContext.getProject();
+          if (project == null) return true;
+
+          return !MavenProjectsManager.getInstance(project).isIgnored(mavenProject);
         }
 
         public void updateDataModel() {
