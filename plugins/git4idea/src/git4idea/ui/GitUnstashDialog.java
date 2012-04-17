@@ -414,10 +414,7 @@ public class GitUnstashDialog extends DialogWrapper {
     if (conflict.get()) {
       VirtualFile root = d.getGitRoot();
       boolean conflictsResolved = new UnstashConflictResolver(project, root, d.getSelectedStash()).merge();
-      if (conflictsResolved) {
-        LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
-        GitStashUtils.dropStash(project, root);
-      }
+      LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
     } else if (rc != 0) {
       GitUIUtil.showOperationErrors(project, h.errors(), h.printableCommandLine());
     }
