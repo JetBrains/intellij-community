@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,15 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NonSerializableFieldInSerializableClassInspection
-  extends SerializableInspection {
+public class NonSerializableFieldInSerializableClassInspection extends SerializableInspection {
 
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
@@ -53,6 +54,13 @@ public class NonSerializableFieldInSerializableClassInspection
   protected JComponent[] createAdditionalOptions() {
     return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"))};
+  }
+
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final PsiField field = (PsiField)infos[0];
+    return AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations);
   }
 
   @Override
@@ -90,7 +98,7 @@ public class NonSerializableFieldInSerializableClassInspection
       if (AnnotationUtil.isAnnotated(field, ignorableAnnotations)) {
         return;
       }
-      registerFieldError(field);
+      registerFieldError(field, field);
     }
   }
 }
