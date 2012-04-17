@@ -439,7 +439,17 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     if (!(settings.getConfiguration() instanceof UnknownRunConfiguration)) {
       final List<BeforeRunTask> tasks = getBeforeRunTasks(settings.getConfiguration());
       final Element methodsElement = new Element(METHOD);
+      Map<Key<BeforeRunTask>,BeforeRunTask> templateTasks = null;
+      if (!settings.isTemplate()) {
+        List<BeforeRunTask> beforeRunTasks = getBeforeRunTasks(getConfigurationTemplate(settings.getFactory()).getConfiguration());
+        templateTasks = new HashMap<Key<BeforeRunTask>, BeforeRunTask>();
+        for (BeforeRunTask task : beforeRunTasks) {
+          templateTasks.put(task.getProviderId(), task);
+        }
+      }
       for (BeforeRunTask task : tasks) {
+        if (templateTasks != null && task.equals(templateTasks.get(task.getProviderId())))
+          continue; // not neccesary saving if the task is the same as template
         final Element child = new Element(OPTION);
         child.setAttribute(NAME_ATTR, task.getProviderId().toString());
         task.writeExternal(child);
@@ -859,7 +869,20 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public final void setBeforeRunTasks(final RunConfiguration runConfiguration, List<BeforeRunTask> tasks) {
-    myConfigurationToBeforeTasksMap.put(runConfiguration, tasks);
+    List<BeforeRunTask> templates = getBeforeRunTasks(runConfiguration);//here may be some disabled templates
+    Set<Key<BeforeRunTask>> idsToSet = new HashSet<Key<BeforeRunTask>>();
+    List<BeforeRunTask> result = new ArrayList<BeforeRunTask>(tasks);
+    for (BeforeRunTask task : tasks) {
+      idsToSet.add(task.getProviderId());
+    }
+    int i = 0;
+    for (BeforeRunTask template : templates) {
+      if (!idsToSet.contains(template.getProviderId())) {
+        result.add(i, template);
+        i++;
+      }
+    }
+    myConfigurationToBeforeTasksMap.put(runConfiguration, result);
     fireBeforeRunTasksUpdated();
   }
 
