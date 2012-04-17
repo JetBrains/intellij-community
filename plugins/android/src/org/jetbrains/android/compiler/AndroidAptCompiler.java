@@ -263,7 +263,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           final String[] libPackages = getLibPackages(module, packageName);
 
           final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
-          if (circularDepLibWithSamePackage != null) {
+          if (circularDepLibWithSamePackage != null && !facet.getConfiguration().LIBRARY_PROJECT) {
             myContext.addMessage(CompilerMessageCategory.WARNING,
                                  AndroidBundle.message("android.compilation.warning.circular.app.dependency",
                                                        packageName, module.getName(),
