@@ -75,6 +75,8 @@ public class PyPackageManager {
   private static final String BUILD_DIR_OPTION = "--build-dir";
 
   private List<PyPackage> myPackagesCache = null;
+  private PyExternalProcessException myExceptionCache = null;
+
   private Sdk mySdk;
 
   public static class UI {
@@ -349,7 +351,7 @@ public class PyPackageManager {
       clearCaches();
     }
   }
-  
+
   public static String getUserSite() {
     if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
@@ -360,7 +362,7 @@ public class PyPackageManager {
       return userHome + File.separator + ".local";
     }
   }
-  
+
 
   public boolean cacheIsNotNull() {
     return myPackagesCache != null;
@@ -369,14 +371,24 @@ public class PyPackageManager {
   @NotNull
   public List<PyPackage> getPackages() throws PyExternalProcessException {
     if (myPackagesCache == null) {
-      final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
-      myPackagesCache = parsePackagingToolOutput(output);
-      Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
-        @Override
-        public int compare(PyPackage aPackage, PyPackage aPackage1) {
-          return aPackage.getName().compareTo(aPackage1.getName());
-        }
-      });
+      if (myExceptionCache != null) {
+        throw myExceptionCache;
+      }
+
+      try {
+        final String output = runPythonHelper(PACKAGING_TOOL, list("list"));
+        myPackagesCache = parsePackagingToolOutput(output);
+        Collections.sort(myPackagesCache, new Comparator<PyPackage>() {
+          @Override
+          public int compare(PyPackage aPackage, PyPackage aPackage1) {
+            return aPackage.getName().compareTo(aPackage1.getName());
+          }
+        });
+      }
+      catch (PyExternalProcessException e) {
+        myExceptionCache = e;
+        throw e;
+      }
     }
     return myPackagesCache;
   }
@@ -448,6 +460,7 @@ public class PyPackageManager {
 
   public void clearCaches() {
     myPackagesCache = null;
+    myExceptionCache = null;
   }
 
   private static <T> List<T> list(T... xs) {
