@@ -28,3 +28,6 @@ var_7 += 2
 
 #PY-2514
 dy = 1 - dy
+
+var = "string"
+var = "some " + var
