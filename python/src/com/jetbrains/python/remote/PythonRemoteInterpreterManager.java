@@ -42,7 +42,7 @@ public abstract class PythonRemoteInterpreterManager {
     throws PyRemoteInterpreterException;
 
   @Nullable
-  public abstract Sdk addRemoteSdk(Project project);
+  public abstract Sdk addRemoteSdk(Project project, Sdk[] existingSdks);
 
   public abstract ProcessOutput runRemoteProcess(@Nullable Project project,
                                                  PythonRemoteSdkAdditionalData data,
@@ -59,7 +59,7 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract boolean checkRemoteConnection(final Object projectOrComponent, final PythonRemoteSdkAdditionalData data)
     throws PyRemoteInterpreterException;
 
-  public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator);
+  public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Sdk[] existingSdks);
 
   public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
 
