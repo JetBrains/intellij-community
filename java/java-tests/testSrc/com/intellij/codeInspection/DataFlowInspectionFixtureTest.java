@@ -54,4 +54,5 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
 
   public void testBigMethodNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
+  public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
 }

@@ -642,6 +642,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
         addInstruction(branch);
+        addInstruction(new EmptyStackInstruction());
         addInstruction(new GosubInstruction(cd.getJumpOffset()));
         addInstruction(new ReturnInstruction());
         branch.setOffset(myCurrentFlow.getInstructionCount());
@@ -651,6 +652,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(-1, false, null);
         addInstruction(branch);
+        addInstruction(new EmptyStackInstruction());
         addInstruction(new PushInstruction(myFactory.getNotNullFactory().create(myRuntimeException), null));
         addGotoCatch(cd);
         branch.setOffset(myCurrentFlow.getInstructionCount());
