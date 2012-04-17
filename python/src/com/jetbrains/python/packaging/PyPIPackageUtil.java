@@ -235,7 +235,7 @@ public class PyPIPackageUtil {
       }
       myPackageNames = names;
     }
-    return myPackageNames != null ? myPackageNames.contains(packageName.toLowerCase()) : false;
+    return myPackageNames != null && myPackageNames.contains(packageName.toLowerCase());
   }
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description) {

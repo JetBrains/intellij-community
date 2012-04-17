@@ -173,7 +173,7 @@ public class PythonSdkType extends SdkType {
     return interpreter == null || !interpreter.exists();
   }
 
-  public static boolean isRemote(@NotNull Sdk sdk) {
+  public static boolean isRemote(@Nullable Sdk sdk) {
     return PySdkUtil.isRemote(sdk);
   }
 

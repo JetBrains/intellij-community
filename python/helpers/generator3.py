@@ -2287,6 +2287,9 @@ def list_binaries(paths):
 def list_sources(paths):
     for path in paths:
         if path == os.path.dirname(sys.argv[0]): continue
+
+        path = os.path.normpath(path)
+
         for root, dirs, files in os.walk(path):
             if root.endswith('__pycache__'): continue
             dirs_copy = list(dirs)
@@ -2296,12 +2299,17 @@ def list_sources(paths):
             for name in files:
                 if name.endswith('.py'):
                     filePath = join(root, name)
-                    say("%s\t%s\t%d", filePath, path, getsize(filePath))
+                    say("%s\t%s\t%d", os.path.normpath(filePath), path, getsize(filePath))
     say('END')
     sys.stdout.flush()
 
 
-def zip_sources(zip_filename):
+def zip_sources(zip_path):
+    if not os.path.exists(zip_path):
+        os.makedirs(zip_path)
+
+    zip_filename = os.path.normpath(os.path.sep.join([zip_path, "skeletons.zip"]))
+
     try:
         zip = zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED)
     except:
