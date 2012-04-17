@@ -17,10 +17,14 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.Processor;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +36,6 @@ public class AddToIgnoreIfAnnotatedByListQuickFix {
 
   private AddToIgnoreIfAnnotatedByListQuickFix() {}
 
-
   public static InspectionGadgetsFix[] build(PsiModifierListOwner modifierListOwner, List<String> configurationList) {
     final List<InspectionGadgetsFix> fixes = build(modifierListOwner, configurationList, new ArrayList());
     return fixes.isEmpty() ? InspectionGadgetsFix.EMPTY_ARRAY : fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
@@ -41,16 +44,33 @@ public class AddToIgnoreIfAnnotatedByListQuickFix {
   public static List<InspectionGadgetsFix> build(final PsiModifierListOwner modifierListOwner,
                                                  final List<String> configurationList,
                                                  final List<InspectionGadgetsFix> fixes) {
-    SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(modifierListOwner, new Processor<String>() {
+    processAnnotationTexts(modifierListOwner, new Processor<String>() {
       @Override
-      public boolean process(String qualifiedName) {
+      public boolean process(String annotationText) {
         fixes.add(new DelegatingFix(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
-          "Add '" + qualifiedName + "' to 'ignore if annotated by' list", // add '@asdf' to 'ignore if annotated by' list
+          InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", annotationText),
           QuickFixBundle.message("fix.add.special.annotation.family"),
-          configurationList, qualifiedName, modifierListOwner)));
+          configurationList, annotationText, modifierListOwner)));
         return true;
       }
     });
     return fixes;
+  }
+
+  private static void processAnnotationTexts(final PsiModifierListOwner owner, final Processor<String> processor) {
+    final PsiModifierList modifierList = owner.getModifierList();
+    if (modifierList == null) {
+      return;
+    }
+    final PsiAnnotation[] annotations = modifierList.getAnnotations();
+    for (PsiAnnotation annotation : annotations) {
+      @NonNls final String text = annotation.getText();
+      if (text.startsWith("java.") || text.startsWith("javax.") || text.startsWith("org.jetbrains.")) {
+        continue;
+      }
+      if (!processor.process(text)) {
+        break;
+      }
+    }
   }
 }
