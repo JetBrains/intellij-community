@@ -26,14 +26,21 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class CaptionStaticDecorator extends StaticDecorator {
+  private final Color myColor;
+
   public CaptionStaticDecorator(RadComponent component) {
+    this(component, LightColors.GREEN);
+  }
+
+  public CaptionStaticDecorator(RadComponent component, Color color) {
     super(component);
+    myColor = color;
   }
 
   @Override
   protected void paint(DecorationLayer layer, Graphics2D g, RadComponent component) {
     Rectangle bounds = component.getBounds(layer);
-    g.setColor(LightColors.GREEN);
+    g.setColor(myColor);
     g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     g.setColor(Color.black);
     g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);

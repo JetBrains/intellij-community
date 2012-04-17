@@ -15,14 +15,13 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
-import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.model.table.GridInfo;
 import com.intellij.android.designer.model.table.RadTableLayoutComponent;
 import com.intellij.designer.designSurface.DecorationLayer;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
 
 import java.awt.*;
-import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -39,42 +38,17 @@ public class TableLayoutDecorator extends StaticDecorator {
     g.setStroke(FlowStaticDecorator.STROKE);
 
     Rectangle bounds = component.getBounds(layer);
-    int[] columnWidths = ((RadTableLayoutComponent)component).getColumnWidths();
+    GridInfo gridInfo = ((RadTableLayoutComponent)component).getGridInfo();
 
-    if (columnWidths != null && columnWidths.length > 0) {
-      int x = bounds.x;
-
-      for (int i = 0; i < columnWidths.length; i++) {
-        int width = columnWidths[i];
-
-        if (width > 0) {
-          x += width;
-
-          if (i != columnWidths.length - 1 || x < bounds.getMinX()) {
-            g.drawLine(x, bounds.y, x, bounds.y + bounds.height);
-          }
-        }
-        else {
-          g.drawLine(x + 2, bounds.y, x + 2, bounds.y + bounds.height);
-        }
-      }
-
-      bounds.width = Math.max(bounds.width, x - bounds.x);
+    for (int x : gridInfo.vLines) {
+      g.drawLine(bounds.x + x, bounds.y, bounds.x + x, bounds.y + gridInfo.height);
     }
-
-    List<RadComponent> children = component.getChildren();
-    RadComponent last = children.isEmpty() ? null : children.get(children.size() - 1);
-
-    for (RadComponent child : children) {
-      Rectangle childBounds = child.getBounds(layer);
-      int y = childBounds.y + childBounds.height + ((RadViewComponent)child).getMargins().height;
-
-      if (child != last || y < bounds.getMaxY()) {
-        g.drawLine(bounds.x, y, bounds.x + bounds.width, y);
-      }
+    for (int y : gridInfo.hLines) {
+      g.drawLine(bounds.x, bounds.y + y, bounds.x + gridInfo.width, bounds.y + y);
     }
 
     g.setStroke(stroke);
-    g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    g.drawRect(bounds.x, bounds.y, gridInfo.width, gridInfo.height);
+    g.drawRect(bounds.x + 1, bounds.y + 1, gridInfo.width - 2, gridInfo.height - 2);
   }
 }

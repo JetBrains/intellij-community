@@ -97,7 +97,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
 
   @Override
   public ComponentDecorator getChildSelectionDecorator(RadComponent component, List<RadComponent> selection) {
-    if (component.getLayout() instanceof RadTableRowLayout) {
+    if (RadTableRowLayout.is(component)) {
       return super.getChildSelectionDecorator(component, selection);
     }
 
@@ -165,10 +165,15 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
     List<RadComponent> components = new ArrayList<RadComponent>();
 
     if (horizontal) {
-      int columnOffset = 0;
-      for (int columnWidth : container.getColumnWidths()) {
-        components.add(new RadCaptionTableColumn(container, columnOffset, Math.max(columnWidth, 2)));
-        columnOffset += columnWidth;
+      GridInfo gridInfo = container.getGridInfo();
+      int[] lines = gridInfo.vLines;
+      boolean[] emptyColumns = gridInfo.emptyColumns;
+
+      for (int i = 0; i < lines.length - 1; i++) {
+        components.add(new RadCaptionTableColumn(container,
+                                                 lines[i],
+                                                 lines[i + 1] - lines[i],
+                                                 emptyColumns[i]));
       }
     }
     else {

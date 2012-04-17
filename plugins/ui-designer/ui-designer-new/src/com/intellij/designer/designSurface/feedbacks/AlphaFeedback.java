@@ -57,4 +57,32 @@ public class AlphaFeedback extends JComponent {
   protected void paintOther2(Graphics2D g2d) {
     g2d.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Utils
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public static void fillRect1(Graphics g, int x, int y, int width, int height, Color color) {
+    fillRect(g, x, y, width, height, color, myComposite1);
+  }
+
+  public static void fillRect2(Graphics g, int x, int y, int width, int height, Color color) {
+    fillRect(g, x, y, width, height, color, myComposite2);
+  }
+
+  public static void fillRect(Graphics g, int x, int y, int width, int height, Color color, Composite composite) {
+    Graphics2D g2d = (Graphics2D)g;
+    Composite oldComposite = g2d.getComposite();
+    Color oldColor = g.getColor();
+
+    g2d.setColor(color);
+    g2d.setComposite(composite);
+
+    g2d.fillRect(x, y, width, height);
+
+    g2d.setComposite(oldComposite);
+    g2d.setColor(oldColor);
+  }
 }
