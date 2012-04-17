@@ -5,6 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.jetbrains.typoscript.lang.TypoScriptElementTypes.*;
 import com.jetbrains.typoscript.lang.psi.TypoScriptCompositeElementImpl;
@@ -30,8 +31,20 @@ public class CodeBlockImpl extends TypoScriptCompositeElementImpl implements Cod
 
   @Override
   @NotNull
+  public List<ConditionElement> getConditionElementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, ConditionElement.class);
+  }
+
+  @Override
+  @NotNull
   public List<Copying> getCopyingList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, Copying.class);
+  }
+
+  @Override
+  @NotNull
+  public List<IncludeStatementElement> getIncludeStatementElementList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, IncludeStatementElement.class);
   }
 
   @Override
@@ -42,8 +55,8 @@ public class CodeBlockImpl extends TypoScriptCompositeElementImpl implements Cod
 
   @Override
   @NotNull
-  public List<ObjectPath> getObjectPathList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ObjectPath.class);
+  public ObjectPath getObjectPath() {
+    return findNotNullChildByClass(ObjectPath.class);
   }
 
   @Override
@@ -56,6 +69,11 @@ public class CodeBlockImpl extends TypoScriptCompositeElementImpl implements Cod
   @NotNull
   public List<ValueModification> getValueModificationList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, ValueModification.class);
+  }
+
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof Visitor) ((Visitor)visitor).visitCodeBlock(this);
+    else super.accept(visitor);
   }
 
 }

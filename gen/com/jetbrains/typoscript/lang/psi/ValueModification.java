@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface ValueModification extends TypoScriptCompositeElement {
 
+  @NotNull
+  ObjectPath getObjectPath();
+
 }

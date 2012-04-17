@@ -14,13 +14,19 @@ public interface CodeBlock extends TypoScriptCompositeElement {
   List<CodeBlock> getCodeBlockList();
 
   @NotNull
+  List<ConditionElement> getConditionElementList();
+
+  @NotNull
   List<Copying> getCopyingList();
+
+  @NotNull
+  List<IncludeStatementElement> getIncludeStatementElementList();
 
   @NotNull
   List<MultilineValueAssignment> getMultilineValueAssignmentList();
 
   @NotNull
-  List<ObjectPath> getObjectPathList();
+  ObjectPath getObjectPath();
 
   @NotNull
   List<Unsetting> getUnsettingList();

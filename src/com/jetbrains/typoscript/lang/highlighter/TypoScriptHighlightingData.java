@@ -25,14 +25,12 @@ public class TypoScriptHighlightingData {
     TextAttributesKey.createTextAttributesKey("TS_OBJECT_PATH_ENTITY", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
   public static final TextAttributesKey OBJECT_PATH_SEPARATOR =
     TextAttributesKey.createTextAttributesKey("TS_OBJECT_PATH_SEPARATOR", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
+  public static final TextAttributesKey CONDITION =
+    TextAttributesKey.createTextAttributesKey("TS_CONDITION", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
+  public static final TextAttributesKey INCLUDE_STATEMENT =
+    TextAttributesKey.createTextAttributesKey("TS_INCLUDE", SyntaxHighlighterColors.KEYWORD.getDefaultAttributes());
 
 
-  /*
-IElementType MODIFICATION_OPERATOR_FUNCTION = new TypoScriptTokenType("MODIFICATION_FUNCTION");
-IElementType MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN = new TypoScriptTokenType("MODIFICATION_OPEN");
-IElementType MODIFICATION_OPERATOR_FUNCTION_PARAM_END = new TypoScriptTokenType("MODIFICATION_CLOSE");
-IElementType MODIFICATION_OPERATOR_FUNCTION_ARGUMENT = new TypoScriptTokenType("MODIFICATION_VALUE");
-  */
   public static final TextAttributesKey BAD_CHARACTER =
     TextAttributesKey.createTextAttributesKey("TS_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER.getDefaultAttributes());
 }

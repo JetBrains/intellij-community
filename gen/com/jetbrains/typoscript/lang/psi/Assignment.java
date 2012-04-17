@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface Assignment extends TypoScriptCompositeElement {
 
+  @NotNull
+  ObjectPath getObjectPath();
+
 }

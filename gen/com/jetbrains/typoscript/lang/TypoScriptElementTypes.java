@@ -15,7 +15,6 @@ public interface TypoScriptElementTypes {
   IElementType INCLUDE_STATEMENT_ELEMENT = new TypoScriptTokenType("INCLUDE_STATEMENT_ELEMENT");
   IElementType MULTILINE_VALUE_ASSIGNMENT = new TypoScriptTokenType("MULTILINE_VALUE_ASSIGNMENT");
   IElementType OBJECT_PATH = new TypoScriptTokenType("OBJECT_PATH");
-  IElementType ONE_LINE_COMMENT_ELEMENT = new TypoScriptTokenType("ONE_LINE_COMMENT_ELEMENT");
   IElementType UNSETTING = new TypoScriptTokenType("UNSETTING");
   IElementType VALUE_MODIFICATION = new TypoScriptTokenType("VALUE_MODIFICATION");
 
@@ -42,9 +41,6 @@ public interface TypoScriptElementTypes {
       }
       else if (type == OBJECT_PATH) {
         return new ObjectPathImpl(node);
-      }
-      else if (type == ONE_LINE_COMMENT_ELEMENT) {
-        return new OneLineCommentElementImpl(node);
       }
       else if (type == UNSETTING) {
         return new UnsettingImpl(node);

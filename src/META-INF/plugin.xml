@@ -18,6 +18,7 @@
     <colorSettingsPage implementation="com.jetbrains.typoscript.lang.highlighter.TypoScriptColorsAndFontsPage"/>
 
     <lang.parserDefinition language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptParserDefinition"/>
+    <lang.braceMatcher language="TypoScript" implementationClass="com.jetbrains.typoscript.lang.TypoScriptBraceMatcher"/>
   </extensions>
 
 </idea-plugin>

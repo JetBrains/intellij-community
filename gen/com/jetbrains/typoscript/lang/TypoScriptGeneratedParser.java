@@ -44,9 +44,6 @@ public class TypoScriptGeneratedParser implements PsiParser {
     else if (root_ == OBJECT_PATH) {
       result_ = object_path(builder_, level_ + 1);
     }
-    else if (root_ == ONE_LINE_COMMENT_ELEMENT) {
-      result_ = one_line_comment_element(builder_, level_ + 1);
-    }
     else if (root_ == UNSETTING) {
       result_ = unsetting(builder_, level_ + 1);
     }
@@ -55,7 +52,7 @@ public class TypoScriptGeneratedParser implements PsiParser {
     }
     else {
       Marker marker_ = builder_.mark();
-      result_ = c_style_comment_element(builder_, level_ + 1);
+      result_ = parse_root_(root_, builder_, level_);
       while (builder_.getTokenType() != null) {
         builder_.advanceLexer();
       }
@@ -64,50 +61,64 @@ public class TypoScriptGeneratedParser implements PsiParser {
     return builder_.getTreeBuilt();
   }
 
+  protected boolean parse_root_(final IElementType root_, final PsiBuilder builder_, final int level_) {
+    return file(builder_, level_ + 1);
+  }
+
   /* ********************************************************** */
-  // ASSIGNMENT ASSIGNMENT_VALUE
+  // object_path '=' ASSIGNMENT_VALUE?
   public static boolean assignment(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "assignment")) return false;
-    if (!nextTokenIs(builder_, ASSIGNMENT)) return false;
+    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, ASSIGNMENT);
-    result_ = result_ && consumeToken(builder_, ASSIGNMENT_VALUE);
-    if (result_) {
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
+    result_ = object_path(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, ASSIGNMENT_OPERATOR);
+    pinned_ = result_; // pin = 2
+    result_ = result_ && assignment_2(builder_, level_ + 1);
+    if (result_ || pinned_) {
       marker_.done(ASSIGNMENT);
     }
     else {
       marker_.rollbackTo();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
+  }
+
+  // ASSIGNMENT_VALUE?
+  private static boolean assignment_2(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "assignment_2")) return false;
+    consumeToken(builder_, ASSIGNMENT_VALUE);
+    return true;
   }
 
   /* ********************************************************** */
-  // C_STYLE_COMMENT
-  static boolean c_style_comment_element(PsiBuilder builder_, int level_) {
-    return consumeToken(builder_, C_STYLE_COMMENT);
-  }
-
-  /* ********************************************************** */
-  // object_path CODE_BLOCK_OPERATOR_BEGIN IGNORED_TEXT? (internal_expression)* CODE_BLOCK_OPERATOR_END IGNORED_TEXT?
+  // object_path '{' IGNORED_TEXT? expression* '}' IGNORED_TEXT?
   public static boolean code_block(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "code_block")) return false;
-    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY)) return false;
+    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
     result_ = object_path(builder_, level_ + 1);
     result_ = result_ && consumeToken(builder_, CODE_BLOCK_OPERATOR_BEGIN);
-    result_ = result_ && code_block_2(builder_, level_ + 1);
-    result_ = result_ && code_block_3(builder_, level_ + 1);
-    result_ = result_ && consumeToken(builder_, CODE_BLOCK_OPERATOR_END);
-    result_ = result_ && code_block_5(builder_, level_ + 1);
-    if (result_) {
+    pinned_ = result_; // pin = 2
+    result_ = result_ && report_error_(builder_, code_block_2(builder_, level_ + 1));
+    result_ = pinned_ && report_error_(builder_, code_block_3(builder_, level_ + 1)) && result_;
+    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, CODE_BLOCK_OPERATOR_END)) && result_;
+    result_ = pinned_ && code_block_5(builder_, level_ + 1) && result_;
+    if (result_ || pinned_) {
       marker_.done(CODE_BLOCK);
     }
     else {
       marker_.rollbackTo();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
   // IGNORED_TEXT?
@@ -117,12 +128,12 @@ public class TypoScriptGeneratedParser implements PsiParser {
     return true;
   }
 
-  // (internal_expression)*
+  // expression*
   private static boolean code_block_3(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "code_block_3")) return false;
     int offset_ = builder_.getCurrentOffset();
     while (true) {
-      if (!code_block_3_0(builder_, level_ + 1)) break;
+      if (!expression(builder_, level_ + 1)) break;
       int next_offset_ = builder_.getCurrentOffset();
       if (offset_ == next_offset_) {
         empty_element_parsed_guard_(builder_, offset_, "code_block_3");
@@ -131,21 +142,6 @@ public class TypoScriptGeneratedParser implements PsiParser {
       offset_ = next_offset_;
     }
     return true;
-  }
-
-  // (internal_expression)
-  private static boolean code_block_3_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "code_block_3_0")) return false;
-    boolean result_ = false;
-    final Marker marker_ = builder_.mark();
-    result_ = internal_expression(builder_, level_ + 1);
-    if (!result_) {
-      marker_.rollbackTo();
-    }
-    else {
-      marker_.drop();
-    }
-    return result_;
   }
 
   // IGNORED_TEXT?
@@ -173,31 +169,94 @@ public class TypoScriptGeneratedParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // COPYING_OPERATOR object_path
+  // object_path '<' object_path
   public static boolean copying(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "copying")) return false;
-    if (!nextTokenIs(builder_, COPYING_OPERATOR)) return false;
+    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, COPYING_OPERATOR);
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
+    result_ = object_path(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, COPYING_OPERATOR);
+    pinned_ = result_; // pin = 2
     result_ = result_ && object_path(builder_, level_ + 1);
-    if (result_) {
+    if (result_ || pinned_) {
       marker_.done(COPYING);
     }
     else {
       marker_.rollbackTo();
     }
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
+  }
+
+  /* ********************************************************** */
+  // assignment | value_modification | multiline_value_assignment | copying | unsetting | code_block
+  // | condition_element | include_statement_element
+  static boolean expression(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "expression")) return false;
+    boolean result_ = false;
+    final Marker marker_ = builder_.mark();
+    enterErrorRecordingSection(builder_, level_, _SECTION_RECOVER_);
+    result_ = assignment(builder_, level_ + 1);
+    if (!result_) result_ = value_modification(builder_, level_ + 1);
+    if (!result_) result_ = multiline_value_assignment(builder_, level_ + 1);
+    if (!result_) result_ = copying(builder_, level_ + 1);
+    if (!result_) result_ = unsetting(builder_, level_ + 1);
+    if (!result_) result_ = code_block(builder_, level_ + 1);
+    if (!result_) result_ = condition_element(builder_, level_ + 1);
+    if (!result_) result_ = include_statement_element(builder_, level_ + 1);
+    if (!result_) {
+      marker_.rollbackTo();
+    }
+    else {
+      marker_.drop();
+    }
+    result_ = exitErrorRecordingSection(builder_, result_, level_, false, _SECTION_RECOVER_, top_expression_recover_parser_);
     return result_;
   }
 
   /* ********************************************************** */
-  // ONE_LINE_COMMENT
-  public static boolean include_statement_element(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "include_statement_element")) return false;
-    if (!nextTokenIs(builder_, ONE_LINE_COMMENT)) return false;
+  // (expression)*
+  static boolean file(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "file")) return false;
+    int offset_ = builder_.getCurrentOffset();
+    while (true) {
+      if (!file_0(builder_, level_ + 1)) break;
+      int next_offset_ = builder_.getCurrentOffset();
+      if (offset_ == next_offset_) {
+        empty_element_parsed_guard_(builder_, offset_, "file");
+        break;
+      }
+      offset_ = next_offset_;
+    }
+    return true;
+  }
+
+  // (expression)
+  private static boolean file_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "file_0")) return false;
     boolean result_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, ONE_LINE_COMMENT);
+    result_ = expression(builder_, level_ + 1);
+    if (!result_) {
+      marker_.rollbackTo();
+    }
+    else {
+      marker_.drop();
+    }
+    return result_;
+  }
+
+  /* ********************************************************** */
+  // INCLUDE_STATEMENT
+  public static boolean include_statement_element(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "include_statement_element")) return false;
+    if (!nextTokenIs(builder_, INCLUDE_STATEMENT)) return false;
+    boolean result_ = false;
+    final Marker marker_ = builder_.mark();
+    result_ = consumeToken(builder_, INCLUDE_STATEMENT);
     if (result_) {
       marker_.done(INCLUDE_STATEMENT_ELEMENT);
     }
@@ -208,120 +267,47 @@ public class TypoScriptGeneratedParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // internal_object_path { assignment | value_modification | multiline_value_assignment | copying | unsetting | code_block}
-  static boolean internal_expression(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "internal_expression")) return false;
-    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
-    boolean result_ = false;
-    final Marker marker_ = builder_.mark();
-    result_ = internal_object_path(builder_, level_ + 1);
-    result_ = result_ && internal_expression_1(builder_, level_ + 1);
-    if (!result_) {
-      marker_.rollbackTo();
-    }
-    else {
-      marker_.drop();
-    }
-    return result_;
-  }
-
-  // { assignment | value_modification | multiline_value_assignment | copying | unsetting | code_block}
-  private static boolean internal_expression_1(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "internal_expression_1")) return false;
-    return internal_expression_1_0(builder_, level_ + 1);
-  }
-
-  // assignment | value_modification | multiline_value_assignment | copying | unsetting | code_block
-  private static boolean internal_expression_1_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "internal_expression_1_0")) return false;
-    boolean result_ = false;
-    final Marker marker_ = builder_.mark();
-    result_ = assignment(builder_, level_ + 1);
-    if (!result_) result_ = value_modification(builder_, level_ + 1);
-    if (!result_) result_ = multiline_value_assignment(builder_, level_ + 1);
-    if (!result_) result_ = copying(builder_, level_ + 1);
-    if (!result_) result_ = unsetting(builder_, level_ + 1);
-    if (!result_) result_ = code_block(builder_, level_ + 1);
-    if (!result_) {
-      marker_.rollbackTo();
-    }
-    else {
-      marker_.drop();
-    }
-    return result_;
-  }
-
-  /* ********************************************************** */
-  // object_path | OBJECT_PATH_SEPARATOR object_path
-  static boolean internal_object_path(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "internal_object_path")) return false;
-    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
-    boolean result_ = false;
-    final Marker marker_ = builder_.mark();
-    result_ = object_path(builder_, level_ + 1);
-    if (!result_) result_ = internal_object_path_1(builder_, level_ + 1);
-    if (!result_) {
-      marker_.rollbackTo();
-    }
-    else {
-      marker_.drop();
-    }
-    return result_;
-  }
-
-  // OBJECT_PATH_SEPARATOR object_path
-  private static boolean internal_object_path_1(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "internal_object_path_1")) return false;
-    boolean result_ = false;
-    final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, OBJECT_PATH_SEPARATOR);
-    result_ = result_ && object_path(builder_, level_ + 1);
-    if (!result_) {
-      marker_.rollbackTo();
-    }
-    else {
-      marker_.drop();
-    }
-    return result_;
-  }
-
-  /* ********************************************************** */
-  // MULTILINE_VALUE_OPERATOR_BEGIN IGNORED_TEXT? (MULTILINE_VALUE)* MULTILINE_VALUE_OPERATOR_END IGNORED_TEXT?
+  // object_path MULTILINE_VALUE_OPERATOR_BEGIN IGNORED_TEXT? (MULTILINE_VALUE)* MULTILINE_VALUE_OPERATOR_END IGNORED_TEXT?
   public static boolean multiline_value_assignment(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "multiline_value_assignment")) return false;
-    if (!nextTokenIs(builder_, MULTILINE_VALUE_OPERATOR_BEGIN)) return false;
+    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, MULTILINE_VALUE_OPERATOR_BEGIN);
-    result_ = result_ && multiline_value_assignment_1(builder_, level_ + 1);
-    result_ = result_ && multiline_value_assignment_2(builder_, level_ + 1);
-    result_ = result_ && consumeToken(builder_, MULTILINE_VALUE_OPERATOR_END);
-    result_ = result_ && multiline_value_assignment_4(builder_, level_ + 1);
-    if (result_) {
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
+    result_ = object_path(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, MULTILINE_VALUE_OPERATOR_BEGIN);
+    pinned_ = result_; // pin = 2
+    result_ = result_ && report_error_(builder_, multiline_value_assignment_2(builder_, level_ + 1));
+    result_ = pinned_ && report_error_(builder_, multiline_value_assignment_3(builder_, level_ + 1)) && result_;
+    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, MULTILINE_VALUE_OPERATOR_END)) && result_;
+    result_ = pinned_ && multiline_value_assignment_5(builder_, level_ + 1) && result_;
+    if (result_ || pinned_) {
       marker_.done(MULTILINE_VALUE_ASSIGNMENT);
     }
     else {
       marker_.rollbackTo();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
   // IGNORED_TEXT?
-  private static boolean multiline_value_assignment_1(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_1")) return false;
+  private static boolean multiline_value_assignment_2(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_2")) return false;
     consumeToken(builder_, IGNORED_TEXT);
     return true;
   }
 
   // (MULTILINE_VALUE)*
-  private static boolean multiline_value_assignment_2(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_2")) return false;
+  private static boolean multiline_value_assignment_3(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_3")) return false;
     int offset_ = builder_.getCurrentOffset();
     while (true) {
-      if (!multiline_value_assignment_2_0(builder_, level_ + 1)) break;
+      if (!multiline_value_assignment_3_0(builder_, level_ + 1)) break;
       int next_offset_ = builder_.getCurrentOffset();
       if (offset_ == next_offset_) {
-        empty_element_parsed_guard_(builder_, offset_, "multiline_value_assignment_2");
+        empty_element_parsed_guard_(builder_, offset_, "multiline_value_assignment_3");
         break;
       }
       offset_ = next_offset_;
@@ -330,8 +316,8 @@ public class TypoScriptGeneratedParser implements PsiParser {
   }
 
   // (MULTILINE_VALUE)
-  private static boolean multiline_value_assignment_2_0(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_2_0")) return false;
+  private static boolean multiline_value_assignment_3_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_3_0")) return false;
     boolean result_ = false;
     final Marker marker_ = builder_.mark();
     result_ = consumeToken(builder_, MULTILINE_VALUE);
@@ -345,31 +331,43 @@ public class TypoScriptGeneratedParser implements PsiParser {
   }
 
   // IGNORED_TEXT?
-  private static boolean multiline_value_assignment_4(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_4")) return false;
+  private static boolean multiline_value_assignment_5(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "multiline_value_assignment_5")) return false;
     consumeToken(builder_, IGNORED_TEXT);
     return true;
   }
 
   /* ********************************************************** */
-  // OBJECT_PATH_ENTITY (OBJECT_PATH_SEPARATOR OBJECT_PATH_ENTITY)*
+  // '.'? (OBJECT_PATH_ENTITY '.')* OBJECT_PATH_ENTITY
   public static boolean object_path(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object_path")) return false;
-    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY)) return false;
+    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, OBJECT_PATH_ENTITY);
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
+    result_ = object_path_0(builder_, level_ + 1);
     result_ = result_ && object_path_1(builder_, level_ + 1);
-    if (result_) {
+    pinned_ = result_; // pin = 2
+    result_ = result_ && consumeToken(builder_, OBJECT_PATH_ENTITY);
+    if (result_ || pinned_) {
       marker_.done(OBJECT_PATH);
     }
     else {
       marker_.rollbackTo();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
-  // (OBJECT_PATH_SEPARATOR OBJECT_PATH_ENTITY)*
+  // '.'?
+  private static boolean object_path_0(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "object_path_0")) return false;
+    consumeToken(builder_, OBJECT_PATH_SEPARATOR);
+    return true;
+  }
+
+  // (OBJECT_PATH_ENTITY '.')*
   private static boolean object_path_1(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object_path_1")) return false;
     int offset_ = builder_.getCurrentOffset();
@@ -385,89 +383,105 @@ public class TypoScriptGeneratedParser implements PsiParser {
     return true;
   }
 
-  // (OBJECT_PATH_SEPARATOR OBJECT_PATH_ENTITY)
+  // (OBJECT_PATH_ENTITY '.')
   private static boolean object_path_1_0(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object_path_1_0")) return false;
     return object_path_1_0_0(builder_, level_ + 1);
   }
 
-  // OBJECT_PATH_SEPARATOR OBJECT_PATH_ENTITY
+  // OBJECT_PATH_ENTITY '.'
   private static boolean object_path_1_0_0(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "object_path_1_0_0")) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, OBJECT_PATH_SEPARATOR);
-    result_ = result_ && consumeToken(builder_, OBJECT_PATH_ENTITY);
-    if (!result_) {
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
+    result_ = consumeToken(builder_, OBJECT_PATH_ENTITY);
+    result_ = result_ && consumeToken(builder_, OBJECT_PATH_SEPARATOR);
+    pinned_ = result_; // pin = 2
+    if (!result_ && !pinned_) {
       marker_.rollbackTo();
     }
     else {
       marker_.drop();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
   /* ********************************************************** */
-  // ONE_LINE_COMMENT
-  public static boolean one_line_comment_element(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "one_line_comment_element")) return false;
-    if (!nextTokenIs(builder_, ONE_LINE_COMMENT)) return false;
+  // ! new_line_white_space
+  static boolean top_expression_recover(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "top_expression_recover")) return false;
     boolean result_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, ONE_LINE_COMMENT);
-    if (result_) {
-      marker_.done(ONE_LINE_COMMENT_ELEMENT);
-    }
-    else {
-      marker_.rollbackTo();
-    }
+    enterErrorRecordingSection(builder_, level_, _SECTION_NOT_);
+    result_ = !isAfterNewLine(builder_, level_ + 1);
+    marker_.rollbackTo();
+    result_ = exitErrorRecordingSection(builder_, result_, level_, false, _SECTION_NOT_, null);
     return result_;
   }
 
   /* ********************************************************** */
-  // UNSETTING_OPERATOR IGNORED_TEXT?
+  // object_path '>' IGNORED_TEXT?
   public static boolean unsetting(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "unsetting")) return false;
-    if (!nextTokenIs(builder_, UNSETTING_OPERATOR)) return false;
+    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, UNSETTING_OPERATOR);
-    result_ = result_ && unsetting_1(builder_, level_ + 1);
-    if (result_) {
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
+    result_ = object_path(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, UNSETTING_OPERATOR);
+    pinned_ = result_; // pin = 2
+    result_ = result_ && unsetting_2(builder_, level_ + 1);
+    if (result_ || pinned_) {
       marker_.done(UNSETTING);
     }
     else {
       marker_.rollbackTo();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
   // IGNORED_TEXT?
-  private static boolean unsetting_1(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "unsetting_1")) return false;
+  private static boolean unsetting_2(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "unsetting_2")) return false;
     consumeToken(builder_, IGNORED_TEXT);
     return true;
   }
 
   /* ********************************************************** */
-  // MODIFICATION_OPERATOR MODIFICATION_OPERATOR_FUNCTION MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN MODIFICATION_OPERATOR_FUNCTION_ARGUMENT MODIFICATION_OPERATOR_FUNCTION_PARAM_END
+  // object_path ':=' MODIFICATION_OPERATOR_FUNCTION MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN
+  //   MODIFICATION_OPERATOR_FUNCTION_ARGUMENT MODIFICATION_OPERATOR_FUNCTION_PARAM_END
   public static boolean value_modification(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "value_modification")) return false;
-    if (!nextTokenIs(builder_, MODIFICATION_OPERATOR)) return false;
+    if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
     boolean result_ = false;
+    boolean pinned_ = false;
     final Marker marker_ = builder_.mark();
-    result_ = consumeToken(builder_, MODIFICATION_OPERATOR);
-    result_ = result_ && consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION);
-    result_ = result_ && consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN);
-    result_ = result_ && consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION_ARGUMENT);
-    result_ = result_ && consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION_PARAM_END);
-    if (result_) {
+    enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
+    result_ = object_path(builder_, level_ + 1);
+    result_ = result_ && consumeToken(builder_, MODIFICATION_OPERATOR);
+    pinned_ = result_; // pin = 2
+    result_ = result_ && report_error_(builder_, consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION));
+    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION_PARAM_BEGIN)) && result_;
+    result_ = pinned_ && report_error_(builder_, consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION_ARGUMENT)) && result_;
+    result_ = pinned_ && consumeToken(builder_, MODIFICATION_OPERATOR_FUNCTION_PARAM_END) && result_;
+    if (result_ || pinned_) {
       marker_.done(VALUE_MODIFICATION);
     }
     else {
       marker_.rollbackTo();
     }
-    return result_;
+    result_ = exitErrorRecordingSection(builder_, result_, level_, pinned_, _SECTION_GENERAL_, null);
+    return result_ || pinned_;
   }
 
+  final static Parser top_expression_recover_parser_ = new Parser() {
+      public boolean parse(PsiBuilder builder_, int level_) {
+        return top_expression_recover(builder_, level_ + 1);
+      }
+    };
 }

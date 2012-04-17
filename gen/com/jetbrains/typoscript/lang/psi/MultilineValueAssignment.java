@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface MultilineValueAssignment extends TypoScriptCompositeElement {
 
+  @NotNull
+  ObjectPath getObjectPath();
+
 }

@@ -12,6 +12,7 @@ public interface TypoScriptTokenTypes extends TokenType {
   IElementType C_STYLE_COMMENT = new TypoScriptTokenType("C_STYLE_COMMENT");
   IElementType ONE_LINE_COMMENT = new TypoScriptTokenType("ONE_LINE_COMMENT");
   IElementType IGNORED_TEXT = new TypoScriptTokenType("IGNORED_TEXT");
+  IElementType WHITE_SPACE_WITH_NEW_LINE = new TypoScriptTokenType("WHITE_SPACE_WITH_NEW_LINE");
 
   IElementType ASSIGNMENT_OPERATOR = new TypoScriptTokenType("ASSIGN");
   IElementType ASSIGNMENT_VALUE = new TypoScriptTokenType("ASSIGNMENT_VALUE");
@@ -43,7 +44,7 @@ public interface TypoScriptTokenTypes extends TokenType {
                                        CODE_BLOCK_OPERATOR_BEGIN, CODE_BLOCK_OPERATOR_END,
                                        UNSETTING_OPERATOR, COPYING_OPERATOR);
 
-  TokenSet WHITESPACES = TokenSet.create(WHITE_SPACE);
+  TokenSet WHITESPACES = TokenSet.create(WHITE_SPACE , WHITE_SPACE_WITH_NEW_LINE);
   TokenSet COMMENTS = TokenSet.create(ONE_LINE_COMMENT, C_STYLE_COMMENT, IGNORED_TEXT);
   TokenSet STRING_LITERALS = TokenSet.create(ASSIGNMENT_VALUE, MULTILINE_VALUE);
 }
