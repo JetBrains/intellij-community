@@ -665,7 +665,7 @@ public class AndroidUtils {
   @NotNull
   public static List<AndroidFacet> getAllAndroidDependencies(@NotNull Module module, boolean androidLibrariesOnly) {
     final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
-    collectAllAndroidDependencies(module, true, result, new HashSet<AndroidFacet>());
+    collectAllAndroidDependencies(module, androidLibrariesOnly, result, new HashSet<AndroidFacet>());
     return result;
   }
 
