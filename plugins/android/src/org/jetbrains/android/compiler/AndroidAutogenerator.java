@@ -163,7 +163,7 @@ public class AndroidAutogenerator {
         final String manifestFileOsPath = FileUtil.toSystemDependentName(manifestFile.getPath());
 
         final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
-        if (circularDepLibWithSamePackage != null) {
+        if (circularDepLibWithSamePackage != null && !facet.getConfiguration().LIBRARY_PROJECT) {
           context.addMessage(CompilerMessageCategory.WARNING, AndroidBundle.message("android.compilation.warning.circular.app.dependency",
                                                                                     packageName, module.getName(),
                                                                                     circularDepLibWithSamePackage.getName()), null, -1, -1);
