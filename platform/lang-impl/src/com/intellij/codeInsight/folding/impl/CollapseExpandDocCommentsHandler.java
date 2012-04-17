@@ -20,16 +20,16 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 
-public class CollapseExpandJavadocsHandler implements CodeInsightActionHandler {
+public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandler {
   private final boolean myExpand;
 
-  public CollapseExpandJavadocsHandler(boolean isExpand) {
+  public CollapseExpandDocCommentsHandler(boolean isExpand) {
     myExpand = isExpand;
   }
 
@@ -43,7 +43,7 @@ public class CollapseExpandJavadocsHandler implements CodeInsightActionHandler {
       public void run() {
         for (FoldRegion region : allFoldRegions) {
           PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
-          if (element instanceof PsiDocComment) {
+          if (element instanceof PsiDocCommentBase) {
             region.setExpanded(myExpand);
           }
         }
