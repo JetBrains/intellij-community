@@ -430,12 +430,17 @@ public class EditorWindow {
     else if (myTabbedPane != null) {
       final boolean focusEditor = ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
       final VirtualFile currentFile = getSelectedFile();
+      if (currentFile != null) {
+        // do not close associated language console on tab placement change
+        currentFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, Boolean.TRUE);
+      }
       final VirtualFile[] files = getFiles();
       for (VirtualFile file : files) {
         closeFile(file, false);
       }
       disposeTabs();
       if (currentFile != null) {
+        currentFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
         getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this);
       }
       else {
