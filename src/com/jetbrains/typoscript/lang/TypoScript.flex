@@ -34,6 +34,7 @@ TRIMMED_STRING_TAIL = {NOT_WHITE_SPACE}{ENDTRIMMED_STRING_TAIL}
 OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 
 %state EXPRESSION_SIGN
+%state STRICT_EXPRESSION_SIGN
 %state ASSIGNMENT_VALUE
 %state ONE_LINE_IGNORED_ZONE
 
@@ -66,15 +67,16 @@ OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 <COPYING_OPERATOR_VALUE> {WHITE_SPACE_CHARS}          { return TokenType.WHITE_SPACE; }
 
 
-<EXPRESSION_SIGN>   "="                               { yybegin(ASSIGNMENT_VALUE); return TypoScriptTokenTypes.ASSIGNMENT_OPERATOR; }
-<EXPRESSION_SIGN>   ":="                              { yybegin(MODIFICATION_OPERATOR_VALUE); return TypoScriptTokenTypes.MODIFICATION_OPERATOR; }
-<EXPRESSION_SIGN>   ">"                               { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.UNSETTING_OPERATOR; }
-<EXPRESSION_SIGN>   "<"                               { yybegin(COPYING_OPERATOR_VALUE); return TypoScriptTokenTypes.COPYING_OPERATOR; }
+<EXPRESSION_SIGN>                           {WHITE_SPACE_CHARS}               {yybegin(STRICT_EXPRESSION_SIGN); return TokenType.WHITE_SPACE; }
+<EXPRESSION_SIGN, STRICT_EXPRESSION_SIGN>   "="                               { yybegin(ASSIGNMENT_VALUE); return TypoScriptTokenTypes.ASSIGNMENT_OPERATOR; }
+<EXPRESSION_SIGN, STRICT_EXPRESSION_SIGN>   ":="                              { yybegin(MODIFICATION_OPERATOR_VALUE); return TypoScriptTokenTypes.MODIFICATION_OPERATOR; }
+<EXPRESSION_SIGN, STRICT_EXPRESSION_SIGN>   ">"                               { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.UNSETTING_OPERATOR; }
+<EXPRESSION_SIGN, STRICT_EXPRESSION_SIGN>   "<"                               { yybegin(COPYING_OPERATOR_VALUE); return TypoScriptTokenTypes.COPYING_OPERATOR; }
 <YYINITIAL>         "<"{ENDTRIMMED_STRING_TAIL}       { return TypoScriptTokenTypes.INCLUDE_STATEMENT; }
             //todo[lene] create "=<" reference sign for typoscript templates; or handle < in assignment value
-<EXPRESSION_SIGN>   "("                               { yybegin(MULTILINE_AFTER_SIGN_ONE_LINE_IGNORED_ZONE);
+<EXPRESSION_SIGN, STRICT_EXPRESSION_SIGN>   "("                               { yybegin(MULTILINE_AFTER_SIGN_ONE_LINE_IGNORED_ZONE);
                                                       return TypoScriptTokenTypes.MULTILINE_VALUE_OPERATOR_BEGIN; }
-<EXPRESSION_SIGN>   "{"                               { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.CODE_BLOCK_OPERATOR_BEGIN; }
+<EXPRESSION_SIGN, STRICT_EXPRESSION_SIGN>   "{"                               { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.CODE_BLOCK_OPERATOR_BEGIN; }
 <YYINITIAL>         "{"{ENDTRIMMED_STRING_TAIL}       { return TypoScriptTokenTypes.IGNORED_TEXT; }
 <YYINITIAL>         "}"                               { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.CODE_BLOCK_OPERATOR_END; }
 
