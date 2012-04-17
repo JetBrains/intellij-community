@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.io.File;
 public class ExportOptionsDialog extends DialogWrapper implements ActionListener {
 
   private final SVNURL myURL;
+  private final Project myProject;
   private final File myFile;
   private TextFieldWithBrowseButton myPathField;
   private DepthCombo myDepth;
@@ -48,6 +49,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
   public ExportOptionsDialog(Project project, SVNURL url, File target) {
     super(project, true);
     myURL = url;
+    myProject = project;
     myFile = target;
     setTitle("SVN Export Options");
     init();
@@ -170,7 +172,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     fcd.setTitle("Export Directory");
     fcd.setDescription("Select directory to export from subversion");
     fcd.setHideIgnored(false);
-    VirtualFile file = FileChooser.chooseFile(getContentPane(), fcd);
+    VirtualFile file = FileChooser.chooseFile(fcd, getContentPane(), myProject, null);
     if (file == null) {
       return;
     }

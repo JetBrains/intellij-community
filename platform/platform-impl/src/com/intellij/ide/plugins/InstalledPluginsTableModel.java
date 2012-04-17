@@ -103,8 +103,10 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   public static void updateExistingPlugin(IdeaPluginDescriptor descriptor, IdeaPluginDescriptor existing) {
-    updateExistingPluginInfo(descriptor, existing);
-    updatedPlugins.add(existing.getPluginId());
+    if (existing != null) {
+      updateExistingPluginInfo(descriptor, existing);
+      updatedPlugins.add(existing.getPluginId());
+    }
   }
 
   public String getPluginHostUrl(String idString) {

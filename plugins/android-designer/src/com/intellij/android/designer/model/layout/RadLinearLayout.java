@@ -20,6 +20,7 @@ import com.intellij.android.designer.designSurface.layout.*;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.designer.actions.AbstractComboBoxAction;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.DirectionResizePoint;
 import com.intellij.designer.designSurface.selection.ResizePoint;
@@ -69,17 +70,20 @@ public class RadLinearLayout extends RadViewLayoutWithData implements ILayoutDec
   public EditOperation processChildOperation(OperationContext context) {
     if (context.isCreate() || context.isPaste() || context.isAdd() || context.isMove()) {
       if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
+        if (TreeEditOperation.isTarget(myContainer, context)) {
+          return new TreeDropToOperation(myContainer, context);
+        }
+        return null;
       }
       return new LinearLayoutOperation(myContainer, context, isHorizontal());
     }
-    else if (context.is(ResizeOperation.TYPE)) {
+    if (context.is(ResizeOperation.TYPE)) {
       return new ResizeOperation(context);
     }
-    else if (context.is(LayoutMarginOperation.TYPE)) {
+    if (context.is(LayoutMarginOperation.TYPE)) {
       return new LayoutMarginOperation(context);
     }
-    else if (context.is(LayoutWeightOperation.TYPE)) {
+    if (context.is(LayoutWeightOperation.TYPE)) {
       return new LayoutWeightOperation(context);
     }
     return null;

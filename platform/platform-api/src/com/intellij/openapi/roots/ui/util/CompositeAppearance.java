@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 // todo: move to lang-impl ?
-public class CompositeAppearance implements ModifiableCellAppearanceEx, ModifiableCellAppearance {
+public class CompositeAppearance implements ModifiableCellAppearanceEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
 
   private Icon myIcon;
   private final ArrayList<TextSection> mySections = new ArrayList<TextSection>();
   private int myInsertionIndex = 0;
 
-  public void customize(SimpleColoredComponent component) {
+  public void customize(@NotNull SimpleColoredComponent component) {
     synchronized (mySections) {
       for (TextSection section : mySections) {
         final TextAttributes attributes = section.getTextAttributes();
@@ -71,6 +71,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx, Modifiab
     }
   }
 
+  @NotNull
   public String getText() {
     synchronized (mySections) {
       StringBuilder buffer = new StringBuilder();

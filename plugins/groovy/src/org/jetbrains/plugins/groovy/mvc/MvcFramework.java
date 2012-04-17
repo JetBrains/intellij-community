@@ -144,10 +144,10 @@ public abstract class MvcFramework {
         return;
       }
 
-      final ProcessBuilder pb = createCommandAndShowErrors(null, module, true, result == 0 ? "create-app" : "create-plugin");
-      if (pb == null) return;
+      final GeneralCommandLine commandLine = createCommandAndShowErrors(null, module, true, result == 0 ? "create-app" : "create-plugin");
+      if (commandLine == null) return;
 
-      MvcConsole.executeProcess(module, pb, new Runnable() {
+      MvcConsole.executeProcess(module, commandLine, new Runnable() {
         public void run() {
           VirtualFile root = findAppRoot(module);
           if (root == null) return;
@@ -353,9 +353,9 @@ public abstract class MvcFramework {
     runManager.addConfiguration(runSettings, false);
     runManager.setActiveConfiguration(runSettings);
 
-    final CompileStepBeforeRun.MakeBeforeRunTask runTask = runManager.getBeforeRunTask(configuration, CompileStepBeforeRun.ID);
-    if (runTask != null) {
-      runTask.setEnabled(false);
+    final List<CompileStepBeforeRun.MakeBeforeRunTask> runTasks = runManager.getBeforeRunTasks(configuration, CompileStepBeforeRun.ID);
+    for (CompileStepBeforeRun.MakeBeforeRunTask task : runTasks) {
+      task.setEnabled(false);
     }
   }
 
@@ -368,17 +368,17 @@ public abstract class MvcFramework {
   public abstract String getSdkHomePropertyName();
 
   @Nullable
-  public ProcessBuilder createCommandAndShowErrors(@NotNull Module module, @NotNull String command, @NotNull String... args) {
+  public GeneralCommandLine createCommandAndShowErrors(@NotNull Module module, @NotNull String command, @NotNull String... args) {
     return createCommandAndShowErrors(null, module, command, args);
   }
 
   @Nullable
-  public ProcessBuilder createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, @NotNull String command, @NotNull String... args) {
+  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, @NotNull String command, @NotNull String... args) {
     return createCommandAndShowErrors(vmOptions, module, false, command, args);
   }
 
   @Nullable
-  public ProcessBuilder createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, final boolean forCreation, @NotNull String command, @NotNull String... args) {
+  public GeneralCommandLine createCommandAndShowErrors(@Nullable String vmOptions, @NotNull Module module, final boolean forCreation, @NotNull String command, @NotNull String... args) {
     try {
       return createCommand(module, vmOptions, forCreation, command, args);
     }
@@ -389,23 +389,26 @@ public abstract class MvcFramework {
   }
 
   @NotNull
-  public ProcessBuilder createCommand(@NotNull Module module, @Nullable String jvmParams, final boolean forCreation, @NotNull String command, @NotNull String... args)
-    throws ExecutionException {
+  public GeneralCommandLine createCommand(@NotNull Module module,
+                                          @Nullable String jvmParams,
+                                          final boolean forCreation,
+                                          @NotNull String command,
+                                          @NotNull String... args) throws ExecutionException {
     final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command, args);
-
     addJavaHome(params, module);
 
-    final ProcessBuilder builder = createProcessBuilder(params);
+    final GeneralCommandLine commandLine = createCommandLine(params);
+
     final VirtualFile griffonHome = getSdkRoot(module);
     if (griffonHome != null) {
-      builder.environment().put(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath()));
+      commandLine.setEnvParams(Collections.singletonMap(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath())));
     }
 
     final VirtualFile root = findAppRoot(module);
     final File ioRoot = root != null ? VfsUtil.virtualToIoFile(root) : new File(module.getModuleFilePath()).getParentFile();
-    builder.directory(forCreation ? ioRoot.getParentFile() : ioRoot);
+    commandLine.setWorkDirectory(forCreation ? ioRoot.getParentFile() : ioRoot);
 
-    return builder;
+    return commandLine;
   }
 
   public static void addJavaHome(@NotNull JavaParameters params, @NotNull Module module) {
@@ -424,20 +427,9 @@ public abstract class MvcFramework {
     }
   }
 
-  public static ProcessBuilder createProcessBuilder(JavaParameters params) {
+  public static GeneralCommandLine createCommandLine(@NotNull JavaParameters params) {
     try {
-      ProcessBuilder builder = new ProcessBuilder(CommandLineBuilder.createFromJavaParameters(params).getCommands());
-      Map<String, String> env = params.getEnv();
-      if (env != null) {
-        builder.environment().putAll(env);
-      }
-
-      String workDir = params.getWorkingDirectory();
-      if (workDir != null) {
-        builder.directory(new File(workDir));
-      }
-
-      return builder;
+      return CommandLineBuilder.createFromJavaParameters(params);
     }
     catch (CantRunException e) {
       throw new RuntimeException(e);

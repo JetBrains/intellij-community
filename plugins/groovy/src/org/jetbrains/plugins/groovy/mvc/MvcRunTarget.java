@@ -1,5 +1,21 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.groovy.mvc;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
@@ -24,10 +40,10 @@ public class MvcRunTarget extends MvcActionBase {
 
     Pair<String, String[]> parsedCmd = MvcFramework.parsedCmd(targetArgs);
 
-    ProcessBuilder pb = framework.createCommandAndShowErrors(dialog.getVmOptions(), selectedModule, parsedCmd.first, parsedCmd.second);
-    if (pb == null) return;
+    final GeneralCommandLine commandLine = framework.createCommandAndShowErrors(dialog.getVmOptions(), selectedModule, parsedCmd.first, parsedCmd.second);
+    if (commandLine == null) return;
 
-    MvcConsole.executeProcess(selectedModule, pb, null, false);
+    MvcConsole.executeProcess(selectedModule, commandLine, null, false);
   }
 
 }

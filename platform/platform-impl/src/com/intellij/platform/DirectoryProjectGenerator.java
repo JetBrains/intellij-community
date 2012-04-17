@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -33,6 +34,7 @@ public interface DirectoryProjectGenerator<T> {
   @Nls
   String getName();
 
+  @Nullable
   T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException;
 
   void generateProject(final Project project, final VirtualFile baseDir, final T settings, Module module);

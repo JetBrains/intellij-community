@@ -18,6 +18,7 @@ package git4idea.stash;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -31,6 +32,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
@@ -54,8 +56,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
   private final Set<VirtualFile> myStashedRoots = new HashSet<VirtualFile>(); // save stashed roots to unstash only them
 
-  public GitStashChangesSaver(Project project, ProgressIndicator progressIndicator, String stashMessage) {
-    super(project, progressIndicator, stashMessage);
+  public GitStashChangesSaver(Project project, @NotNull Git git, ProgressIndicator progressIndicator, String stashMessage) {
+    super(project, git, progressIndicator, stashMessage);
   }
 
   @Override
@@ -85,7 +87,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       }
     }
 
-    boolean conflictsResolved = new UnstashConflictResolver(myProject, myStashedRoots, myParams).merge();
+    boolean conflictsResolved = new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams).merge();
     if (conflictsResolved) {
       LOG.info("load: all conflicts resolved, dropping stash in " + myStashedRoots);
       for (VirtualFile root : conflictedRoots) {
@@ -194,8 +196,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     private final Set<VirtualFile> myStashedRoots;
 
-    public UnstashConflictResolver(@NotNull Project project, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
-      super(project, stashedRoots, makeParamsOrUse(params));
+    public UnstashConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Set<VirtualFile> stashedRoots, @Nullable Params params) {
+      super(project, git, ServiceManager.getService(PlatformFacade.class), stashedRoots, makeParamsOrUse(params));
       myStashedRoots = stashedRoots;
     }
 

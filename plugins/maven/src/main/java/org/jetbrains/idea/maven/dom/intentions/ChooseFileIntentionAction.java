@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -31,19 +30,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Producer;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 
 public class ChooseFileIntentionAction implements IntentionAction {
-  private FileChooserFactory myTestFileChooserFactory;
-
-  public void setTestFileChooserFactory(FileChooserFactory factory) {
-    myTestFileChooserFactory = factory;
-  }
+  private Producer<VirtualFile[]> myFileChooser = null;
 
   @NotNull
   public String getFamilyName() {
@@ -67,29 +65,38 @@ public class ChooseFileIntentionAction implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final MavenDomDependency dep = getDependency(file, editor);
-    PsiFile currentValue = dep.getSystemPath().getValue();
-    FileChooserDialog dialog =
-      getFileChooserFactory().createFileChooser(new FileChooserDescriptor(true, false, true, true, false, false),
-                                                project);
-    VirtualFile[] files = dialog.choose(currentValue == null ? null : currentValue.getVirtualFile(), project);
-    if (files.length == 0) return;
+
+    final VirtualFile[] files;
+    if (myFileChooser == null) {
+      final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, true, false, false);
+      final PsiFile currentValue = dep != null ? dep.getSystemPath().getValue() : null;
+      final VirtualFile toSelect = currentValue == null ? null : currentValue.getVirtualFile();
+      files = FileChooser.chooseFiles(descriptor, project, toSelect);
+    }
+    else {
+      files = myFileChooser.produce();
+    }
+    if (files == null || files.length == 0) return;
 
     final PsiFile selectedFile = PsiManager.getInstance(project).findFile(files[0]);
     if (selectedFile == null) return;
 
-    new WriteCommandAction(project) {
-      protected void run(Result result) throws Throwable {
-        dep.getSystemPath().setValue(selectedFile);
-      }
-    }.execute();
+    if (dep != null) {
+      new WriteCommandAction(project) {
+        protected void run(Result result) throws Throwable {
+          dep.getSystemPath().setValue(selectedFile);
+        }
+      }.execute();
+    }
   }
 
-  private FileChooserFactory getFileChooserFactory() {
-    if (myTestFileChooserFactory != null) return myTestFileChooserFactory;
-    return FileChooserFactory.getInstance();
+  @TestOnly
+  public void setFileChooser(@Nullable final Producer<VirtualFile[]> fileChooser) {
+    myFileChooser = fileChooser;
   }
 
-  private MavenDomDependency getDependency(PsiFile file, Editor editor) {
+  @Nullable
+  private static MavenDomDependency getDependency(PsiFile file, Editor editor) {
     PsiElement el = PsiUtilCore.getElementAtOffset(file, editor.getCaretModel().getOffset());
 
     XmlTag tag = PsiTreeUtil.getParentOfType(el, XmlTag.class, false);

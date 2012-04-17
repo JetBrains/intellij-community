@@ -1,5 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.mvc;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.*;
@@ -36,7 +39,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -52,7 +54,6 @@ import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.LinkedList;
 import java.util.List;
@@ -146,7 +147,7 @@ public class MvcConsole implements Disposable {
 
   private static class MyProcessInConsole implements ConsoleProcessDescriptor {
     final Module module;
-    final ProcessBuilder pb;
+    final GeneralCommandLine commandLine;
     final @Nullable Runnable onDone;
     final boolean closeOnDone;
     final boolean showConsole;
@@ -156,13 +157,13 @@ public class MvcConsole implements Disposable {
     private OSProcessHandler myHandler;
 
     public MyProcessInConsole(final Module module,
-                              final ProcessBuilder pb,
+                              final GeneralCommandLine commandLine,
                               final Runnable onDone,
                               final boolean showConsole,
                               final boolean closeOnDone,
                               final String[] input) {
       this.module = module;
-      this.pb = pb;
+      this.commandLine = commandLine;
       this.onDone = onDone;
       this.closeOnDone = closeOnDone;
       this.input = input;
@@ -204,15 +205,15 @@ public class MvcConsole implements Disposable {
   }
 
   public static ConsoleProcessDescriptor executeProcess(final Module module,
-                                                        final ProcessBuilder pb,
+                                                        final GeneralCommandLine commandLine,
                                                         final @Nullable Runnable onDone,
                                                         final boolean closeOnDone,
                                                         final String... input) {
-    return getInstance(module.getProject()).executeProcess(module, pb, onDone, true, closeOnDone, input);
+    return getInstance(module.getProject()).executeProcess(module, commandLine, onDone, true, closeOnDone, input);
   }
 
   public ConsoleProcessDescriptor executeProcess(final Module module,
-                                                 final ProcessBuilder pb,
+                                                 final GeneralCommandLine commandLine,
                                                  final @Nullable Runnable onDone,
                                                  boolean showConsole,
                                                  final boolean closeOnDone,
@@ -220,7 +221,7 @@ public class MvcConsole implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert module.getProject() == myProject;
     
-    final MyProcessInConsole process = new MyProcessInConsole(module, pb, onDone, showConsole, closeOnDone, input);
+    final MyProcessInConsole process = new MyProcessInConsole(module, commandLine, onDone, showConsole, closeOnDone, input);
     if (isExecuting()) {
       myProcessQueue.add(process);
     }
@@ -236,7 +237,7 @@ public class MvcConsole implements Disposable {
 
   private void executeProcessImpl(final MyProcessInConsole pic, boolean toFocus) {
     final Module module = pic.module;
-    final ProcessBuilder pb = pic.pb;
+    final GeneralCommandLine commandLine = pic.commandLine;
     final String[] input = pic.input;
     final boolean closeOnDone = pic.closeOnDone;
     final Runnable onDone = pic.onDone;
@@ -256,12 +257,10 @@ public class MvcConsole implements Disposable {
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    myConsole.print(StringUtil.join(pb.command(), " "), ConsoleViewContentType.SYSTEM_OUTPUT);
+    myConsole.print(commandLine.getCommandLineString(), ConsoleViewContentType.SYSTEM_OUTPUT);
     final OSProcessHandler handler;
     try {
-      if (pb.command() == null || pb.command().size() == 0) return;
-
-      Process process = pb.start();
+      Process process = commandLine.createProcess();
       handler = new OSProcessHandler(process, "");
 
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -291,7 +290,7 @@ public class MvcConsole implements Disposable {
         }
       });
     }
-    catch (final IOException e) {
+    catch (final Exception e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
           Messages.showErrorDialog(e.getMessage(), "Cannot Start Process");

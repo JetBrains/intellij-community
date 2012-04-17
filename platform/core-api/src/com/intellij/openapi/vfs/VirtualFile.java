@@ -212,13 +212,6 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return false;
   }
 
-  /** @deprecated use {@linkplain #getCanonicalFile()} (to remove in IDEA 12) */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
-  @Nullable
-  public String resolveSymLink() {
-    return null;
-  }
-
   /**
    * Checks whether this file is a special (e.g. FIFO or device) file.
    *

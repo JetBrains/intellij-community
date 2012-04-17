@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -119,6 +120,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       }
     });
 
+    final Project project = projectProfileManager.getProject();
     myImportButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false){
@@ -128,7 +130,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
           }
         };
         descriptor.setDescription("Choose profile file");
-        final VirtualFile file = FileChooser.chooseFile(myWholePanel, descriptor, null);
+        final VirtualFile file = FileChooser.chooseFile(descriptor, myWholePanel, project, null);
         if (file == null) return;
         InspectionProfileImpl profile =
         new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), myProfileManager);
@@ -193,7 +195,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
-        final VirtualFile file = FileChooser.chooseFile(myWholePanel, descriptor, null);
+        final VirtualFile file = FileChooser.chooseFile(descriptor, myWholePanel, project, null);
         if (file == null) return;
         final Element element = new Element("inspections");
         try {

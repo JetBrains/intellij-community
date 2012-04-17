@@ -9,10 +9,4 @@ import java.util.concurrent.Executors;
  */
 public class SharedThreadPool {
   public static final ExecutorService INSTANCE = Executors.newCachedThreadPool();
-  public static final AsyncTaskExecutor ASYNC_EXEC = new AsyncTaskExecutor() {
-    @Override
-    public void submit(Runnable runnable) {
-      INSTANCE.submit(runnable);
-    }
-  };
 }

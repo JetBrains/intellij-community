@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -206,7 +205,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final FileChooserDescriptor descriptor = createXmlDescriptor();
     descriptor.setTitle(AntBundle.message("select.ant.build.file.dialog.title"));
     descriptor.setDescription(AntBundle.message("select.ant.build.file.dialog.description"));
-    final VirtualFile[] files = FileChooser.chooseFiles(myProject, descriptor);
+    final VirtualFile[] files = FileChooser.chooseFiles(descriptor, myProject, null);
     if (files.length == 0) {
       return;
     }

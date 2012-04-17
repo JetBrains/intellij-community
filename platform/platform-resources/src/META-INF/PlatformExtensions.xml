@@ -264,4 +264,6 @@
   <patch.extension implementation="com.intellij.openapi.diff.impl.patch.CharsetEP"/>
 
   <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
+
+  <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
 </extensions>

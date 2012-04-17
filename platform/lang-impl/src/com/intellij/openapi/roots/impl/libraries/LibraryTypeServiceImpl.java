@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
                                                         final Project project) {
     final FileChooserDescriptor chooserDescriptor = descriptor.createAttachFilesChooserDescriptor();
     chooserDescriptor.setTitle("Select Library Files");
-    final VirtualFile[] rootCandidates = FileChooser.chooseFiles(parentComponent, chooserDescriptor, contextDirectory);
+    final VirtualFile[] rootCandidates = FileChooser.chooseFiles(chooserDescriptor, parentComponent, project, contextDirectory);
     if (rootCandidates.length == 0) {
       return null;
     }

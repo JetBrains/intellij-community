@@ -68,11 +68,23 @@ public class Notificator {
   }
 
   public void notifyError(@NotNull String title, @NotNull String message) {
-    notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, null);
+    notifyError(title, message, null);
+  }
+
+  public void notifyError(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+    notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, listener);
   }
 
   public void notifySuccess(@NotNull String title, @NotNull String message) {
     notify(GitVcs.NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION,  null);
+  }
+
+  public void notifyWeakWarning(@NotNull String title, @NotNull String message, @Nullable NotificationListener listener) {
+    notify(GitVcs.MINOR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
+  }
+
+  public void notifyStrongWarning(@NotNull String title, @NotNull String content, @Nullable NotificationListener listener) {
+    notify(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, content, NotificationType.WARNING, listener);
   }
 
 }

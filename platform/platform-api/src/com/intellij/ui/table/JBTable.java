@@ -41,7 +41,7 @@ import java.util.Comparator;
 import java.util.EventObject;
 
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
-  private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
+  public static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
   private StatusText myEmptyText;
   private ExpandableItemsHandler<TableCell> myExpandableItemsHandler;
 

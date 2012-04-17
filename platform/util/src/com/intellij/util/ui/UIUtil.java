@@ -1399,7 +1399,7 @@ public class UIUtil {
 
     @NonNls String fontFamilyAndSize = "font-family:" + font.getFamily() + "; font-size:" + font.getSize() + ";";
     @NonNls @Language("HTML")
-    String body = "body, div, td {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
+    String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:" + ColorUtil.toHex(fgColor) : "") + "}";
     if (resource != null) {
       body +=  "ul {list-style-image: " + resource.toExternalForm() +"}";
     }
@@ -2324,22 +2324,6 @@ public class UIUtil {
       myDrawShadow = isUnderAquaLookAndFeel();
       myShadowColor = Gray._220;
       myLineSpacing = 1.0f;
-    }
-
-    /** @deprecated use {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
-    @SuppressWarnings("UnusedDeclaration")
-    public TextPainter(final float lineSpacing) {
-      myDrawShadow = isUnderAquaLookAndFeel();
-      myShadowColor = Gray._220;
-      myLineSpacing = lineSpacing;
-    }
-
-    /** @deprecated use {@linkplain #withShadow(boolean, java.awt.Color)} and {@linkplain #withLineSpacing(float)} (to remove in IDEA 12) */
-    @SuppressWarnings("UnusedDeclaration")
-    public TextPainter(final boolean drawShadow, final Color shadowColor, final float lineSpacing) {
-      myDrawShadow = drawShadow;
-      myShadowColor = shadowColor;
-      myLineSpacing = lineSpacing;
     }
 
     public TextPainter withShadow(final boolean drawShadow) {

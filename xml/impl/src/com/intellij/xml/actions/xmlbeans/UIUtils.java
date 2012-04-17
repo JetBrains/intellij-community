@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,21 @@
  */
 package com.intellij.xml.actions.xmlbeans;
 
+import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xml.XmlBundle;
-import com.intellij.javaee.ExternalResourceManager;
 
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.util.List;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -62,11 +61,6 @@ public class UIUtils {
 
           fileChooserDescriptor.setTitle(selectFileDialogTitle);
 
-          final FileChooserDialog fileChooser = FileChooserFactory.getInstance().createFileChooser(
-            fileChooserDescriptor,
-            myProject
-          );
-
           VirtualFile initialFile = myProject.getBaseDir();
           String selectedItem = wsdlUrl.getTextField().getText();
           if (selectedItem != null && selectedItem.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
@@ -74,7 +68,7 @@ public class UIUtils {
             if (fileByPath != null) initialFile = fileByPath;
           }
 
-          final VirtualFile[] virtualFiles = fileChooser.choose(initialFile, myProject);
+          final VirtualFile[] virtualFiles = FileChooser.chooseFiles(fileChooserDescriptor, myProject, initialFile);
           if (virtualFiles.length == 1) {
             String url = fixIDEAUrl(virtualFiles[0].getUrl());
             wsdlUrl.setText(url);

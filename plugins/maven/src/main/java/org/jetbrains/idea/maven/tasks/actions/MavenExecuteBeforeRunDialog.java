@@ -41,7 +41,7 @@ public class MavenExecuteBeforeRunDialog extends BaseExecuteBeforeRunDialog<Mave
 
   @Override
   protected Key<MavenBeforeRunTask> getTaskID() {
-    return MavenBeforeRunTasksProvider.TASK_ID;
+    return MavenBeforeRunTasksProvider.ID;
   }
 
   @Override

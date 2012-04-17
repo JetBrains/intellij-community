@@ -17,24 +17,17 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileChooser.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.Producer;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
@@ -586,23 +579,26 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     assertNotNull(action);
 
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
-    VirtualFile libFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath);
+    final VirtualFile libFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath);
 
-    MyFileChooserFactory factory = new MyFileChooserFactory();
-    factory.setFiles(new VirtualFile[]{libFile});
-    ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setTestFileChooserFactory(factory);
+    ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setFileChooser(new Producer<VirtualFile[]>() {
+      @Override
+      public VirtualFile[] produce() {
+        return new VirtualFile[]{libFile};
+      }
+    });
     XmlCodeStyleSettings xmlSettings =
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getCustomSettings(XmlCodeStyleSettings.class);
 
     int prevValue = xmlSettings.XML_TEXT_WRAP;
     try {
       // prevent file path from wrapping.
-      xmlSettings.XML_TEXT_WRAP = CodeStyleSettings.DO_NOT_WRAP;
+      xmlSettings.XML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
       myFixture.launchAction(action);
     }
     finally {
       xmlSettings.XML_TEXT_WRAP = prevValue;
-      ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setTestFileChooserFactory(null);
+      ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setFileChooser(null);
     }
 
     MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, myProjectPom);
@@ -1004,72 +1000,5 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     checkHighlighting();
-  }
-
-  private static class MyFileChooserFactory extends FileChooserFactory {
-    private VirtualFile[] myFiles;
-
-    public void setFiles(VirtualFile[] files) {
-      myFiles = files;
-    }
-
-    @NotNull
-    @Override
-    public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
-                                               @Nullable Project project,
-                                               @Nullable Component parent) {
-      return new MyFileChooserDialog(myFiles);
-    }
-
-    @NotNull
-    @Override
-    public PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                               @Nullable Project project,
-                                               @Nullable Component parent) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, Disposable parent) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void installFileCompletion(@NotNull JTextField field, @NotNull FileChooserDescriptor descriptor, boolean showHidden, Disposable parent) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, Project project) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  private static class MyFileChooserDialog implements FileChooserDialog {
-    private final VirtualFile[] myFiles;
-
-    public MyFileChooserDialog(VirtualFile[] files) {
-      myFiles = files;
-    }
-
-    @Override
-    @NotNull
-    public VirtualFile[] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
-      return myFiles;
-    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,7 +195,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
               }
             };
             descriptor.setTitle("Choose file containing copyright notice");
-            final VirtualFile file = FileChooser.chooseFile(myProject, descriptor);
+            final VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
             if (file == null) return;
 
             final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(file));

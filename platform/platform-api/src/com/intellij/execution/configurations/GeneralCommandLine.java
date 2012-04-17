@@ -142,14 +142,6 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * @deprecated please use {@link #getCommandLineString()} (to remove in IDEA 12).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public String getCommandLineParams() {
-    return getCommandLineString();
-  }
-
-  /**
    * Returns string representation of this command line.<br/>
    * Warning: resulting string is not OS-dependent - <b>do not</b> use it for executing this command line.
    *
@@ -182,30 +174,14 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * Returns a list of command and its parameters prepared in OS-dependent way to be executed by e.g. {@link Runtime#exec(String[])}.
+   * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
+   * (suitable e.g. for passing in a environment variable).
    *
-   * @deprecated this method is not intended for internal use (to remove in IDEA 12).
+   * @return command as a newline-separated list.
    */
-  public String[] getCommands() {
-    return prepareCommands();
-  }
-
-  /**
-   * @deprecated use {@link #addParameter(String)} and {@link #addParameters(String...)} methods for adding parameters -
-   * any quoting needed will be done on {@link #createProcess()} (to remove in IDEA 12).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String quoteParameter(final String parameter) {
-    return parameter;
-  }
-
-  /**
-   * @deprecated use {@link #addParameter(String)} and {@link #addParameters(String...)} methods for adding parameters -
-   * any quoting needed will be done on {@link #createProcess()} (to remove in IDEA 12).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String quote(final String parameter) {
-    return parameter;
+  @NotNull
+  public String getPreparedCommandLine() {
+    return StringUtil.join(prepareCommands(), "\n");
   }
 
   public Process createProcess() throws ExecutionException {

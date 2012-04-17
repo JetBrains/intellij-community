@@ -349,11 +349,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     myFileSystemTree.registerMouseListener(group);
   }
 
-  /** @deprecated internal method (to remove in IDEA 12) */
-  protected VirtualFile[] getSelectedFiles() {
-    return getSelectedFilesInt();
-  }
-
   private VirtualFile[] getSelectedFilesInt() {
     final List<VirtualFile> selectedFiles = Arrays.asList(myFileSystemTree.getSelectedFiles());
     return VfsUtil.toVirtualFileArray(FileChooserUtil.getChosenFiles(myChooserDescriptor, selectedFiles));

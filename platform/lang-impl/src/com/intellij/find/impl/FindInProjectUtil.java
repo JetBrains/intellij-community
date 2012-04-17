@@ -393,7 +393,7 @@ public class FindInProjectUtil {
         public boolean processFile(@NotNull VirtualFile virtualFile) {
           if (!virtualFile.isDirectory() &&
               (fileMaskRegExp == null || fileMaskRegExp.matcher(virtualFile.getName()).matches()) &&
-              customScope.contains(virtualFile)) {
+              (customScope == null || customScope.contains(virtualFile))) {
             final PsiFile psiFile = psiManager.findFile(virtualFile);
             if (psiFile != null && !filesForFastWordSearch.contains(psiFile)) {
               myFiles.add(psiFile);
@@ -411,7 +411,7 @@ public class FindInProjectUtil {
 
       if (psiDirectory == null) {
         boolean success = fileIndex.iterateContent(iterator);
-        if (success && customScope.isSearchInLibraries()) {
+        if (success && customScope != null && customScope.isSearchInLibraries()) {
           OrderEnumerator enumerator = module == null ? OrderEnumerator.orderEntries(project) : OrderEnumerator.orderEntries(module);
           final VirtualFile[] librarySources = enumerator.withoutModuleSourceEntries().withoutDepModules().getSourceRoots();
           iterateAll(librarySources, customScope, iterator);
@@ -451,13 +451,10 @@ public class FindInProjectUtil {
     return true;
   }
 
-  @NotNull
+  @Nullable
   private static GlobalSearchScope toGlobal(@NotNull Project project, @Nullable SearchScope scope) {
-    if (scope instanceof GlobalSearchScope) {
+    if (scope instanceof GlobalSearchScope || scope == null) {
       return (GlobalSearchScope)scope;
-    }
-    if (scope == null) {
-      return projectContentScope(project);
     }
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     for (PsiElement element : ((LocalSearchScope)scope).getScope()) {
@@ -471,8 +468,8 @@ public class FindInProjectUtil {
 
   @NotNull
   private static Pair<Boolean, Collection<PsiFile>> getFilesForFastWordSearch(@NotNull final FindModel findModel, @NotNull final Project project,
-                                                               @Nullable final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
-                                                               @Nullable final Module module) {
+                                                                              @Nullable final PsiDirectory psiDirectory, final Pattern fileMaskRegExp,
+                                                                              @Nullable final Module module) {
     if (DumbService.getInstance(project).isDumb()) {
       return new Pair<Boolean, Collection<PsiFile>>(false, Collections.<PsiFile>emptyList());
     }
@@ -480,13 +477,16 @@ public class FindInProjectUtil {
     PsiManager pm = PsiManager.getInstance(project);
     CacheManager cacheManager = CacheManager.SERVICE.getInstance(project);
     SearchScope customScope = findModel.getCustomScope();
-    @NotNull GlobalSearchScope scope = psiDirectory != null
-                                       ? GlobalSearchScopes.directoryScope(psiDirectory, true)
-                                       : module != null
-                                         ? moduleContentScope(module)
-                                         : customScope instanceof GlobalSearchScope
-                                           ? (GlobalSearchScope)customScope
-                                           : toGlobal(project, customScope);
+    GlobalSearchScope scope = psiDirectory != null
+                              ? GlobalSearchScopes.directoryScope(psiDirectory, true)
+                              : module != null
+                                ? moduleContentScope(module)
+                                : customScope instanceof GlobalSearchScope
+                                  ? (GlobalSearchScope)customScope
+                                  : toGlobal(project, customScope);
+    if (scope == null) {
+      scope = GlobalSearchScope.projectScope(project);
+    }
 
     Set<Integer> keys = new THashSet<Integer>(30);
     Set<PsiFile> resultFiles = new THashSet<PsiFile>();
@@ -554,16 +554,7 @@ public class FindInProjectUtil {
     return new Pair<Boolean, Collection<PsiFile>>(fast, resultFiles);
   }
 
-  private static GlobalSearchScope projectContentScope(final Project project) {
-    GlobalSearchScope result = null;
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      GlobalSearchScope moduleContent = moduleContentScope(module);
-      result = result == null ? moduleContent : result.uniteWith(moduleContent);
-    }
-    return result == null ? GlobalSearchScope.EMPTY_SCOPE : result;
-  }
-
-  @Nullable
+  @NotNull
   private static GlobalSearchScope moduleContentScope(@NotNull final Module module) {
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
     GlobalSearchScope result = null;

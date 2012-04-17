@@ -262,14 +262,6 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     }
   }
 
-  /** @deprecated use {@linkplain #doRemoveExcludeFolder(com.intellij.openapi.roots.ExcludeFolder)} (to remove in IDEA 12) */
-  protected void doRemoveExcludeFolder(ExcludeFolder excludeFolder, VirtualFile file) {
-    if (!excludeFolder.isSynthetic()) {
-      final ContentEntry contentEntry = getContentEntry();
-      if (contentEntry != null) contentEntry.removeExcludeFolder(excludeFolder);
-    }
-  }
-
   public boolean isSource(@NotNull final VirtualFile file) {
     final SourceFolder sourceFolder = getSourceFolder(file);
     return sourceFolder != null && !sourceFolder.isTestSource();

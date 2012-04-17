@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,13 +121,6 @@ public abstract class PsiType implements PsiAnnotationOwner {
    */
   public static PsiClassType getJavaLangClass(PsiManager manager, GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLASS, resolveScope);
-  }
-
-  /**
-   * @deprecated use {@linkplain #getJavaLangThrowable(PsiManager, com.intellij.psi.search.GlobalSearchScope)} (todo: to remove in IDEA 12)
-   */
-  public static PsiClassType getJavaLangTrowable(PsiManager manager, GlobalSearchScope resolveScope) {
-    return getJavaLangThrowable(manager, resolveScope);
   }
 
   /**

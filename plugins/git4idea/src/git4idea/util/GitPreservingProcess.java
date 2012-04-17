@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitUtil;
 import git4idea.Notificator;
+import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashChangesSaver;
@@ -49,6 +50,7 @@ public class GitPreservingProcess {
   private static final Logger LOG = Logger.getInstance(GitPreservingProcess.class);
 
   @NotNull private final Project myProject;
+  @NotNull private final Git myGit;
   @NotNull private final Collection<GitRepository> myRepositories;
   @NotNull private final String myOperationTitle;
   @NotNull private final String myDestinationName;
@@ -61,10 +63,11 @@ public class GitPreservingProcess {
   private boolean myLoaded;
   private final Object LOAD_LOCK = new Object();
 
-  public GitPreservingProcess(@NotNull Project project, @NotNull Collection<GitRepository> repositories,
+  public GitPreservingProcess(@NotNull Project project, @NotNull Git git, @NotNull Collection<GitRepository> repositories,
                               @NotNull String operationTitle, @NotNull String destinationName,
                               @NotNull ProgressIndicator indicator, @NotNull Runnable operation) {
     myProject = project;
+    myGit = git;
     myRepositories = repositories;
     myOperationTitle = operationTitle;
     myDestinationName = destinationName;
@@ -110,7 +113,7 @@ public class GitPreservingProcess {
    * Configures the saver, actually notifications and texts in the GitConflictResolver used inside.
    */
   private GitStashChangesSaver configureSaver() {
-    GitStashChangesSaver saver = new GitStashChangesSaver(myProject, myProgressIndicator, myStashMessage);
+    GitStashChangesSaver saver = new GitStashChangesSaver(myProject, myGit, myProgressIndicator, myStashMessage);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @Override
       public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {

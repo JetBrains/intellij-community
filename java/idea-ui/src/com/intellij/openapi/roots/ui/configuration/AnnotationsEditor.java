@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
         FileChooserDescriptor myDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
               myDescriptor.setTitle(ProjectBundle.message("add.external.annotations.path.title"));
               myDescriptor.setDescription(ProjectBundle.message("add.external.annotations.path.description"));
-        VirtualFile[] files = FileChooser.chooseFiles(myTable, myDescriptor);
+        VirtualFile[] files = FileChooser.chooseFiles(myDescriptor, myTable, myProject, null);
         final MyTableModel tableModel = (MyTableModel)myTable.getModel();
         boolean changes = false;
         for (final VirtualFile file : files) {

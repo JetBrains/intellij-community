@@ -31,7 +31,10 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -42,7 +45,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
@@ -142,13 +144,11 @@ public class Switcher extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
-    boolean selectFirstItem = false;
     if (SWITCHER == null) {
       synchronized (Switcher.class) {
         if (SWITCHER == null) {
           SWITCHER = createAndShowSwitcher(project, SWITCHER_TITLE, false);
           FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
-          selectFirstItem = !FileEditorManagerEx.getInstanceEx(project).hasOpenedFile();
         }
       }
     }
@@ -158,7 +158,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (e.getInputEvent().isShiftDown()) {
         SWITCHER.goBack();
       } else {
-        if (selectFirstItem) {
+        if (!FileEditorManagerEx.getInstanceEx(project).hasOpenedFile()) {
           SWITCHER.files.setSelectedIndex(0);
         } else {
           SWITCHER.goForward();
@@ -323,13 +323,13 @@ public class Switcher extends AnAction implements DumbAware {
             filesData.add(info);
             if (!firstRecentMarked) {
               firstRecentMarked = true;
-              info.isSeparator = true;
-              selectionIndex = filesData.size() - 2;
+              selectionIndex = filesData.size() - 1;
             }
           }
         }
         if (editors.size() == 1 && (filesData.isEmpty() || !editors.get(0).getFirst().equals(filesData.get(0).getFirst()))) {
           filesData.add(0, editors.get(0));
+          selectionIndex--;
         }
       } else {
         for (int i = 0; i < Math.min(MAX_FILES_IN_SWITCHER, editors.size()); i++) {
@@ -342,22 +342,7 @@ public class Switcher extends AnAction implements DumbAware {
         filesModel.addElement(editor);
       }
 
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project, mySpeedSearch) {
-        @Override
-        public Component getListCellRendererComponent(JList list,
-                                                      Object value,
-                                                      int index,
-                                                      boolean selected,
-                                                      boolean hasFocus) {
-          final JComponent renderer = (JComponent)super.getListCellRendererComponent(list, value, index, selected, hasFocus);
-          if (selected) {
-            return renderer;
-          }
-          final Color bgColor = list == mouseMoveSrc && index == mouseMoveListIndex ? ON_MOUSE_OVER_BG_COLOR : Color.WHITE;
-          UIUtil.changeBackGround(renderer, bgColor);
-          return renderer;
-        }
-      };
+      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project);
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private String getTitle2Text(String fullText) {
@@ -876,7 +861,6 @@ public class Switcher extends AnAction implements DumbAware {
         }
       }
 
-      int tab = 0;
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
         final JList list = getSelectedList();
@@ -886,7 +870,6 @@ public class Switcher extends AnAction implements DumbAware {
         files.repaint();
         toolWindows.repaint();
         getSelectedList(list).setSelectedValue(value, true);
-        tab++;
       }
     }
 
@@ -901,49 +884,30 @@ public class Switcher extends AnAction implements DumbAware {
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
     private final Project myProject;
-    private final SpeedSearchBase mySearch;
-    private boolean hide = false;
-    private boolean separator = false;
 
-    public VirtualFilesRenderer(Project project, SpeedSearchBase search) {
+    public VirtualFilesRenderer(Project project) {
       myProject = project;
-      mySearch = search;
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      hide = false;
       if (value instanceof FileInfo) {
-        final VirtualFile virtualFile = ((FileInfo)value).first;
-        final String name = virtualFile.getPresentableName();
+        VirtualFile virtualFile = ((FileInfo)value).getFirst();
+        String name = virtualFile.getPresentableName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
-        separator = ((FileInfo)value).isSeparator;
 
-        if ( mySearch != null && mySearch.isPopupActive()) {
-          hide = mySearch.matchingFragments(name) == null && !StringUtil.isEmpty(mySearch.getEnteredPrefix());
-        }
-
-        final FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-        final TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null, null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
+        FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE,
+                                                       Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
-      }
-    }
 
-    @Override
-    protected void doPaint(Graphics2D g) {
-      GraphicsConfig config = new GraphicsConfig(g);
-      if (hide) {
-        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
-      }
-      super.doPaint(g);
-      config.restore();
-      if (separator) {
-        UIUtil.drawDottedLine(g, 0, 0, getWidth(), 0, Color.WHITE, Color.BLACK);
+        if (!selected && FileEditorManager.getInstance(myProject).isFileOpen(virtualFile)) {
+          setBackground(LightColors.SLIGHTLY_GREEN);
+        }
       }
     }
   }
 
   private static class FileInfo extends Pair<VirtualFile, EditorWindow> {
-    boolean isSeparator = false;
     public FileInfo(VirtualFile first, EditorWindow second) {
       super(first, second);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -537,7 +537,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     public CellAppearanceEx getAppearance(boolean selected, final boolean isBold) {
       return new CellAppearanceEx() {
         @Override
-        public void customize(SimpleColoredComponent component) {
+        public void customize(@NotNull SimpleColoredComponent component) {
           component.setIcon(getIcon());
           final Font font = UIUtil.getTreeFont();
           if (isBold) {
@@ -557,6 +557,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
           throw new UnsupportedOperationException("Rendering in combo box not supported yet.");
         }
 
+        @NotNull
         @Override
         public String getText() {
           return getDisplayName();
@@ -618,7 +619,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
         if (e.getOwnerModule() == myModule) {
           return new CellAppearanceEx() {
             @Override
-            public void customize(SimpleColoredComponent component) {
+            public void customize(@NotNull SimpleColoredComponent component) {
               component.setIcon(ModuleType.get(myModule).getNodeIcon(false));
               component.append("<This Module>", SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
             }
@@ -628,6 +629,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
               throw new UnsupportedOperationException("Rendering in combo box not supported yet.");
             }
 
+            @NotNull
             @Override
             public String getText() {
               return "<This Module>";

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         };
         descriptor.setTitle("Choose Plugin File");
         descriptor.setDescription("JAR and ZIP archives are accepted");
-        final VirtualFile virtualFile = FileChooser.chooseFile(myActionsPanel, descriptor);
+        final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, myActionsPanel, null, null);
         if (virtualFile != null) {
           final File file = VfsUtil.virtualToIoFile(virtualFile);
           try {

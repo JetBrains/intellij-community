@@ -35,8 +35,6 @@ public class ProjectScopeImpl extends GlobalSearchScope {
   public boolean contains(VirtualFile file) {
     if (file instanceof VirtualFileWindow) return true;
 
-    if (myFileIndex.isInLibraryClasses(file) && !myFileIndex.isInSourceContent(file)) return false;
-
     return myFileIndex.isInContent(file);
   }
 

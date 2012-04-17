@@ -468,7 +468,7 @@ public class BookmarksAction extends AnAction implements DumbAware {
         myFile = PlatformDataKeys.VIRTUAL_FILE.getData(myDataContext);
         myLine = -1;
 
-        if (myBookmarkAtPlace == null) {
+        if (myBookmarkAtPlace == null && myFile != null) {
           myBookmarkAtPlace = bookmarkManager.findFileBookmark(myFile);
         }
       }

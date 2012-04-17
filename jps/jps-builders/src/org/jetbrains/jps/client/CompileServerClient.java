@@ -6,7 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.*;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +24,7 @@ public class CompileServerClient extends SimpleProtobufClient<JpsServerResponseH
   private volatile ScheduledFuture<?> myPingFuture;
   private final long myServerPingInterval;
 
-  public CompileServerClient(long serverPingInterval, final AsyncTaskExecutor asyncExec) {
+  public CompileServerClient(long serverPingInterval, final Executor asyncExec) {
     super(JpsRemoteProto.Message.getDefaultInstance(), asyncExec, new UUIDGetter() {
       @NotNull
       public UUID getSessionUUID(@NotNull MessageEvent e) {

@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.intellij.android.designer.designSurface.DropToOperation;
 import com.intellij.android.designer.designSurface.TreeDropToOperation;
+import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.EditOperation;
 import com.intellij.designer.designSurface.OperationContext;
 
@@ -30,7 +31,10 @@ public class RadSingleChildrenViewLayout extends RadViewLayout {
         (context.isCreate() || context.isPaste() || context.isAdd()) &&
         context.getComponents().size() == 1) {
       if (context.isTree()) {
-        return new TreeDropToOperation(myContainer, context);
+        if (TreeEditOperation.isTarget(myContainer, context)) {
+          return new TreeDropToOperation(myContainer, context);
+        }
+        return null;
       }
       return new DropToOperation(myContainer, context);
     }
