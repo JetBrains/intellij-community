@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,57 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifierListOwner;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
+import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class UtilityClassInspection extends BaseInspection {
 
+  @SuppressWarnings({"PublicField"})
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
+
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("utility.class.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "utility.class.problem.descriptor");
   }
 
+  @NotNull
+  @Override
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    return AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner) infos[0], ignorableAnnotations);
+  }
+
+  @Override
+  public JComponent createOptionsPanel() {
+    return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by"));
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UtilityClassVisitor();
   }
 
-  private static class UtilityClassVisitor extends BaseInspectionVisitor {
+  private class UtilityClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -47,7 +73,10 @@ public class UtilityClassInspection extends BaseInspection {
       if (!UtilityClassUtil.isUtilityClass(aClass)) {
         return;
       }
-      registerClassError(aClass);
+      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
+        return;
+      }
+      registerClassError(aClass, aClass);
     }
   }
 }
