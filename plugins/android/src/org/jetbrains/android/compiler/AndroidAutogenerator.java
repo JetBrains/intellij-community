@@ -13,7 +13,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -159,8 +162,15 @@ public class AndroidAutogenerator {
 
         final String manifestFileOsPath = FileUtil.toSystemDependentName(manifestFile.getPath());
 
+        final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
+        if (circularDepLibWithSamePackage != null) {
+          context.addMessage(CompilerMessageCategory.WARNING, AndroidBundle.message("android.compilation.warning.circular.app.dependency",
+                                                                                    packageName, module.getName(),
+                                                                                    circularDepLibWithSamePackage.getName()), null, -1, -1);
+        }
+        final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
         return new AptAutogenerationItem(target, platformToolsRevision, manifestFileOsPath, packageName, sourceRootPath, resPaths,
-                                         facet.getConfiguration().LIBRARY_PROJECT, genFilePath2Package);
+                                         generateNonFinalFields, genFilePath2Package);
       }
     });
 
@@ -194,7 +204,7 @@ public class AndroidAutogenerator {
 
       final Map<AndroidCompilerMessageKind, List<String>> messages =
         AndroidApt.compile(item.myTarget, item.myPlatformToolsRevision, item.myManifestFileOsPath, item.myPackage,
-                           tempOutDir.getPath(), item.myResDirOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, item.myLibrary);
+                           tempOutDir.getPath(), item.myResDirOsPaths, ArrayUtil.EMPTY_STRING_ARRAY, item.myNonConstantFields);
 
       if (messages.get(AndroidCompilerMessageKind.ERROR).size() == 0) {
         for (String genFileRelPath : item.myGenFileRelPath2package.keySet()) {
@@ -573,7 +583,7 @@ public class AndroidAutogenerator {
     final String myPackage;
     final String myOutputDirOsPath;
     final String[] myResDirOsPaths;
-    final boolean myLibrary;
+    final boolean myNonConstantFields;
     final Map<String, String> myGenFileRelPath2package;
 
     private AptAutogenerationItem(@NotNull IAndroidTarget target,
@@ -582,7 +592,7 @@ public class AndroidAutogenerator {
                                   @NotNull String aPackage,
                                   @NotNull String outputDirOsPath,
                                   @NotNull String[] resDirOsPaths,
-                                  boolean library,
+                                  boolean nonConstantFields,
                                   @NotNull Map<String, String> genFileRelPath2package) {
       myTarget = target;
       myPlatformToolsRevision = platformToolsRevision;
@@ -590,7 +600,7 @@ public class AndroidAutogenerator {
       myPackage = aPackage;
       myOutputDirOsPath = outputDirOsPath;
       myResDirOsPaths = resDirOsPaths;
-      myLibrary = library;
+      myNonConstantFields = nonConstantFields;
       myGenFileRelPath2package = genFileRelPath2package;
     }
   }
