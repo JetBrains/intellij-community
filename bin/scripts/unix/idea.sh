@@ -145,7 +145,7 @@ if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo $OS_TYPE | "$TR" '[:upper:]' '[:lower:]'`
   AGENT_LIB="yjpagent-$OS_NAME$BITS"
   if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
-    AGENT="-agentlib:$AGENT_LIB=disablej2ee,disablecounts,disablealloc,sessionname=@@system_selector@@"
+    AGENT="-agentlib:$AGENT_LIB=disablej2ee,disablealloc,sessionname=@@system_selector@@"
   fi
 fi
 

@@ -60,10 +60,10 @@ binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDump
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions32yjp", { String systemSelector ->
-  "${vmOptions32()} -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=$systemSelector".trim()
+  "${vmOptions32()} -agentlib:yjpagent=disablej2ee,disablealloc,sessionname=$systemSelector".trim()
 })
 binding.setVariable("vmOptions64yjp", { String systemSelector ->
-  "${vmOptions64()} -agentlib:yjpagent64=disablej2ee,disablecounts,disablealloc,sessionname=$systemSelector".trim()
+  "${vmOptions64()} -agentlib:yjpagent64=disablej2ee,disablealloc,sessionname=$systemSelector".trim()
 })
 
 binding.setVariable("isDefined", {String key ->
@@ -252,7 +252,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String vmOptions = "${vmOptions()} -Xverify:none"
   if (isEap() && !args.mac_no_yjp) {
-    vmOptions += " -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=${args.system_selector}"
+    vmOptions += " -agentlib:yjpagent=disablej2ee,disablealloc,sessionname=${args.system_selector}"
   }
 
   String version = isEap() ? "EAP $args.buildNumber" : "${p("component.version.major")}.${p("component.version.minor")}"
