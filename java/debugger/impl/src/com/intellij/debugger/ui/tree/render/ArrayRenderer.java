@@ -16,18 +16,15 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.ForeachLoop;
+import com.intellij.debugger.impl.ForeachVisualization;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
-import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.debugger.ui.tree.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -44,6 +41,7 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,6 +101,8 @@ public class ArrayRenderer extends NodeRendererImpl{
     NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
     ArrayReference array = (ArrayReference)value;
+
+    ForeachLoop foreach = getForeachLoop(evaluationContext, builder.getParentDescriptor());
     if (array.length() > 0) {
       int added = 0;
 
@@ -121,7 +121,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         int idx;
 
         for (idx = start; idx <= end; idx++) {
-          DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
+          DebuggerTreeNode arrayItemNode = node(builder, evaluationContext, nodeManager, descriptorFactory, array, foreach, idx);
 
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && ((ValueDescriptorImpl)arrayItemNode.getDescriptor()).isNull()) continue;
           if(added >= (ENTRIES_LIMIT  + 1)/ 2) break;
@@ -133,7 +133,8 @@ public class ArrayRenderer extends NodeRendererImpl{
 
         List<DebuggerTreeNode> childrenTail = new ArrayList<DebuggerTreeNode>();
         for (idx = end; idx >= start; idx--) {
-          DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
+          DebuggerTreeNode arrayItemNode =
+            node(builder, evaluationContext, nodeManager, descriptorFactory, array, foreach, idx);
 
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && ((ValueDescriptorImpl)arrayItemNode.getDescriptor()).isNull()) continue;
           if(added >= ENTRIES_LIMIT) break;
@@ -178,6 +179,35 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
     }
     builder.setChildren(children);
+  }
+
+  private static ForeachLoop getForeachLoop(EvaluationContext evaluationContext, ValueDescriptor descriptor) {
+    final ForeachVisualization foreachVisualization = ((DebugProcessImpl)evaluationContext.getDebugProcess()).getForeachVisualization();
+    ForeachLoop foreach = null;
+    if (foreachVisualization != null) {
+      foreach = foreachVisualization.findForeachStatement(evaluationContext);
+      if (foreach != null)  {
+        if (!foreach.isIteratedCollection(descriptor, evaluationContext)) {
+          foreach = null;
+        }
+      }
+    }
+    return foreach;
+  }
+
+  private DebuggerTreeNodeImpl node(ChildrenBuilder builder,
+                                    EvaluationContext evaluationContext,
+                                    NodeManagerImpl nodeManager,
+                                    NodeDescriptorFactory descriptorFactory,
+                                    ArrayReference array,
+                                    @Nullable ForeachLoop foreachDescriptor,
+                                    int idx) {
+    final boolean isCurrent = foreachDescriptor != null && foreachDescriptor.isCurrentElement(idx, array.getValue(idx),
+                                                                                              evaluationContext);
+
+    final ArrayElementDescriptor arrayItemDescriptor = descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx, isCurrent, foreachDescriptor);
+    final DebuggerTreeNodeImpl result = nodeManager.createNode(arrayItemDescriptor, evaluationContext);
+    return result;
   }
 
   public void readExternal(Element element) throws InvalidDataException {

@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
 
+  public abstract DebuggerActionHandler getForeachSkipToHandler();
+
   @NotNull
   public static DebuggerSupport[] getDebuggerSupports() {
     return Extensions.getExtensions(EXTENSION_POINT);

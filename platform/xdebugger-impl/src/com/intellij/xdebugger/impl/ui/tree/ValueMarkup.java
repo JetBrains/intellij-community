@@ -49,4 +49,8 @@ public class ValueMarkup {
   public String getToolTipText() {
     return myToolTipText;
   }
+
+  public String getDisplayText() {
+    return "[" + getText() + "] ";
+  }
 }

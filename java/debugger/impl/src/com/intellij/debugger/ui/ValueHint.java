@@ -125,6 +125,7 @@ public class ValueHint extends AbstractValueHint {
             final Value value = myValueToShow != null? myValueToShow : evaluator.evaluate(evaluationContext);
 
             final WatchItemDescriptor descriptor = new WatchItemDescriptor(getProject(), text, value);
+            descriptor.setOrigin(myCurrentExpression);
             if (!isActiveTooltipApplicable(value) || getType() == ValueHintType.MOUSE_OVER_HINT) {
               if (getType() == ValueHintType.MOUSE_OVER_HINT) {
                 // force using default renderer for mouse over hint in order to not to call accidentally methods while rendering
@@ -145,8 +146,7 @@ public class ValueHint extends AbstractValueHint {
                 }
               });
             } else {
-              final InspectDebuggerTree tree = getInspectTree(descriptor);
-              showTreePopup(tree, debuggerContext, expressionText, new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
+              showTreePopup(descriptor, debuggerContext);
             }
           }
           catch (EvaluateException e) {
@@ -159,6 +159,12 @@ public class ValueHint extends AbstractValueHint {
     catch (EvaluateException e) {
       LOG.debug(e);
     }
+  }
+
+  private void showTreePopup(WatchItemDescriptor descriptor, DebuggerContextImpl debuggerContext) {
+    final InspectDebuggerTree tree = getInspectTree(descriptor);
+    final String text = descriptor.getEvaluationText().getText();
+    showTreePopup(tree, debuggerContext, text, new ValueHintTreeComponent(this, tree, text));
   }
 
   private static boolean isActiveTooltipApplicable(final Value value) {
@@ -193,15 +199,13 @@ public class ValueHint extends AbstractValueHint {
                 debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
                               public void threadAction() {
                                 descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
-                                final InspectDebuggerTree tree = getInspectTree(descriptor);
                                 final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
                                   @Override
                                   public String compute() {
                                     return myCurrentExpression.getText();
                                   }
                                 });
-                                showTreePopup(tree, debuggerContext, expressionText,
-                                              new ValueHintTreeComponent(ValueHint.this, tree, expressionText));
+                                showTreePopup(descriptor, debuggerContext);
                               }
                             });
               }

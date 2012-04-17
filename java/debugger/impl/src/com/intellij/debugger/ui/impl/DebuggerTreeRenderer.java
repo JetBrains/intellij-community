@@ -150,7 +150,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     if (descriptor instanceof ValueDescriptor) {
       final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(debuggerContext.getDebugProcess());
       if (markup != null) {
-        descriptorText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+        descriptorText.append(markup.getDisplayText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
     }
 

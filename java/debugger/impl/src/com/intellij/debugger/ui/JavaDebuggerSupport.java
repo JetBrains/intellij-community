@@ -67,6 +67,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final DebuggerActionHandler mySmartStepIntoHandler = new JvmSmartStepIntoActionHandler();
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
   private JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
+  private DebuggerActionHandler myForeachSkipToHandler = new ForeachSkipToHandler();
+
+  @Override
+  public DebuggerActionHandler getForeachSkipToHandler() {
+    return myForeachSkipToHandler;
+  }
 
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {

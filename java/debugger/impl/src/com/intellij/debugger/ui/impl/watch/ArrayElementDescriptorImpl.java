@@ -16,9 +16,11 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.ForeachLoop;
 import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -26,21 +28,47 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl");
 
   private final int myIndex;
+  private boolean myCurrent;
+  private ForeachLoop myForeach;
   private final ArrayReference myArray;
 
-  public ArrayElementDescriptorImpl(Project project, ArrayReference array, int index) {
+  public ArrayElementDescriptorImpl(Project project, ArrayReference array, int index, boolean current, @Nullable ForeachLoop loop) {
     super(project);
     myArray = array;
     myIndex = index;
+    myCurrent = current;
+    myForeach = loop;
     setLvalue(true);
+  }
+
+  public ArrayElementDescriptorImpl(Project project, ArrayReference reference, int index) {
+    this(project, reference, index, false, null);
+  }
+
+  @Override
+  public ValueMarkup getMarkup(DebugProcess debugProcess) {
+    final ValueMarkup markup = super.getMarkup(debugProcess);
+    if (myCurrent && markup == null) {
+      return new ValueMarkup("Current", new Color(34, 128, 36), "Current Element") {
+        @Override
+        public String getDisplayText() {
+          return "->";
+        }
+      };
+    }
+    return markup;
   }
 
   public int getIndex() {
@@ -76,5 +104,9 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
     catch (IncorrectOperationException e) {
       throw new EvaluateException(e.getMessage(), e);
     }
+  }
+  @Nullable
+  public ForeachLoop getForeach() {
+    return myForeach;
   }
 }

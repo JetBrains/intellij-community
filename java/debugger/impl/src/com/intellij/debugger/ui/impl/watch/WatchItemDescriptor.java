@@ -31,11 +31,15 @@ import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * update(Value, boolean) method must be called whenever the state of the target VM changes
  */
 public class WatchItemDescriptor extends EvaluationDescriptor {
+
+  @Nullable
+  private PsiElement myOrigin;
 
   public WatchItemDescriptor(Project project, TextWithImports text) {
     super(text, project);
@@ -74,5 +78,14 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
     final PsiCodeFragment fragment = getEffectiveCodeFragmentFactory(psiContext).createCodeFragment(getEvaluationText(), psiContext, myProject);
     fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
     return fragment;
+  }
+
+  public void setOrigin(PsiElement origin) {
+    myOrigin = origin;
+  }
+
+  @Nullable
+  public PsiElement getOrigin() {
+    return myOrigin;
   }
 }

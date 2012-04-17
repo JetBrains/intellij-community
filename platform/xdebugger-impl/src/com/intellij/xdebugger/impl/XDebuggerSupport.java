@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.AbstractDebuggerSession;
@@ -109,6 +110,27 @@ public class XDebuggerSupport extends DebuggerSupport {
     myQuickEvaluateHandler = new XQuickEvaluateHandler();
     mySettingsPanelProvider = new XDebuggerSettingsPanelProviderImpl();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
+  }
+
+  @Override
+  public DebuggerActionHandler getForeachSkipToHandler() {
+    return new DebuggerActionHandler() {
+
+      @Override
+      public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+        return true;
+      }
+
+      @Override
+      public void perform(@NotNull Project project, AnActionEvent event) {
+        //To change body of implemented methods use File | Settings | File Templates.
+      }
+
+      @Override
+      public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+        return false;  //To change body of implemented methods use File | Settings | File Templates.
+      }
+    };
   }
 
   @NotNull

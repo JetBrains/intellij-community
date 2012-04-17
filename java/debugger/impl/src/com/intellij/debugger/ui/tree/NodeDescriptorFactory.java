@@ -15,13 +15,13 @@
  */
 package com.intellij.debugger.ui.tree;
 
-import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
-import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
+import com.intellij.debugger.impl.ForeachLoop;
 import com.intellij.debugger.impl.descriptors.data.DescriptorData;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * creates descriptors
@@ -30,7 +30,11 @@ import com.sun.jdi.ObjectReference;
  */
 
 public interface NodeDescriptorFactory {
-  ArrayElementDescriptor getArrayItemDescriptor(NodeDescriptor parent, ArrayReference array, int index);
+  ArrayElementDescriptor getArrayItemDescriptor(NodeDescriptor parent,
+                                                ArrayReference array,
+                                                int index,
+                                                boolean current,
+                                                @Nullable ForeachLoop foreach);
 
   FieldDescriptor getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field);
 

@@ -307,7 +307,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   public void notifyPaused(SuspendContextImpl suspendContext) {
     pushPausedContext(suspendContext);
-    myDebugProcess.myDebugProcessDispatcher.getMulticaster().paused(suspendContext);
+    myDebugProcess.notifyPaused(suspendContext);
   }
 
   public void voteResume(SuspendContextImpl suspendContext) {

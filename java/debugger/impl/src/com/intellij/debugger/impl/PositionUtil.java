@@ -48,7 +48,16 @@ public class PositionUtil extends ContextUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getPsiElementAt(final Project project, final Class<T> expectedPsiElementClass, final SourcePosition sourcePosition) {
+  public static <T extends PsiElement> T getPsiElementAt(final Project project,
+                                                         final Class<T> expectedPsiElementClass,
+                                                         final SourcePosition sourcePosition) {
+    return getPsiElementAt(project, expectedPsiElementClass, sourcePosition, false);
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T getPsiElementAt(final Project project,
+                                                         final Class<T> expectedPsiElementClass,
+                                                         final SourcePosition sourcePosition, final boolean strictParent) {
     return ApplicationManager.getApplication().runReadAction(new Computable<T>() {
       public T compute() {
         final PsiFile psiFile = sourcePosition.getFile();
@@ -61,7 +70,7 @@ public class PositionUtil extends ContextUtil {
           return null;
         }
         final int offset = CharArrayUtil.shiftForward(document.getCharsSequence(), spOffset, " \t");
-        return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), expectedPsiElementClass, false);
+        return PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), expectedPsiElementClass, strictParent);
       }
     });
   }

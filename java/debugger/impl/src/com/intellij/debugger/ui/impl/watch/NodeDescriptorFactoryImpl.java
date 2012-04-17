@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.jdi.LocalVariableProxy;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
+import com.intellij.debugger.impl.ForeachLoop;
 import com.intellij.debugger.impl.descriptors.data.*;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -130,8 +131,16 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return descriptorTree;
   }
 
-  public ArrayElementDescriptorImpl getArrayItemDescriptor(NodeDescriptor parent, ArrayReference array, int index) {
-    return getDescriptor(parent, new ArrayItemData(array, index));
+  public ArrayElementDescriptorImpl getArrayItemDescriptor(LocalVariableDescriptorImpl a, ArrayReference value, int i) {
+    return getArrayItemDescriptor(a, value, i, false, null);
+  }
+
+  public ArrayElementDescriptorImpl getArrayItemDescriptor(NodeDescriptor parent,
+                                                           ArrayReference array,
+                                                           int index,
+                                                           boolean current,
+                                                           @Nullable ForeachLoop foreach) {
+    return getDescriptor(parent, new ArrayItemData(array, index, current, foreach));
   }
 
   public FieldDescriptorImpl getFieldDescriptor(NodeDescriptor parent, ObjectReference objRef, Field field) {

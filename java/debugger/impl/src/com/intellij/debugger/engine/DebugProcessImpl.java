@@ -29,10 +29,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -138,6 +135,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     };
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
+  private final ForeachVisualization myForeachVisualization = new ForeachVisualization(this);
   protected CompoundPositionManager myPositionManager = null;
   private volatile DebuggerManagerThreadImpl myDebuggerManagerThread;
   private final HashMap myUserData = new HashMap();
@@ -240,6 +238,10 @@ public abstract class DebugProcessImpl implements DebugProcess {
     }
 
     return renderer;
+  }
+
+  void notifyPaused(SuspendContextImpl context) {
+    myDebugProcessDispatcher.getMulticaster().paused(context);
   }
 
   public static NodeRenderer getDefaultRenderer(Value value) {
@@ -1309,6 +1311,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
         LOG.debug(e);
       }
     }
+  }
+
+  @Nullable
+  public ForeachVisualization getForeachVisualization() {
+    return myForeachVisualization;
   }
 
   public SuspendManager getSuspendManager() {

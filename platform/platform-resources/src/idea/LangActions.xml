@@ -661,6 +661,7 @@
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="/objectBrowser/sorted.png"/>
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction"/>
+      <action id="Debugger.ForeachSkipTo" class="com.intellij.xdebugger.impl.actions.ForeachSkipTo"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">
@@ -690,6 +691,7 @@
       <reference ref="XDebugger.CopyValue"/>
       <reference ref="XDebugger.CopyName"/>
       <reference ref="Debugger.MarkObject"/>
+      <reference ref="Debugger.ForeachSkipTo"/>
     </group>
 
     <group id="XDebugger.Evaluation.Dialog.Tree.Popup">

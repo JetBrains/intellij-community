@@ -15,19 +15,25 @@
  */
 package com.intellij.debugger.impl.descriptors.data;
 
+import com.intellij.debugger.impl.ForeachLoop;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ArrayReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorImpl>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.descriptors.data.ArrayItemData");
 
   private final ArrayReference myArray;
   private final int myIndex;
+  private boolean myCurrent;
+  private ForeachLoop myForeach;
 
-  public ArrayItemData(@NotNull ArrayReference arrRef, int idx) {
+  public ArrayItemData(@NotNull ArrayReference arrRef, int idx, boolean current, @Nullable ForeachLoop foreach) {
+    myCurrent = current;
+    myForeach = foreach;
     LOG.assertTrue(0 <= idx);
     if(LOG.isDebugEnabled()) {
       LOG.assertTrue(idx <= arrRef.length());
@@ -37,7 +43,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
   }
 
   protected ArrayElementDescriptorImpl createDescriptorImpl(Project project) {
-    return new ArrayElementDescriptorImpl(project, myArray, myIndex);
+    return new ArrayElementDescriptorImpl(project, myArray, myIndex, myCurrent, myForeach);
   }
 
   public DisplayKey<ArrayElementDescriptorImpl> getDisplayKey() {
