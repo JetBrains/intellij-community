@@ -320,6 +320,7 @@ public class GitUnstashDialog extends DialogWrapper {
     catch (VcsException e) {
       // ignore error
     }
+    myStashList.setSelectedIndex(0);
   }
 
   /**
@@ -379,6 +380,11 @@ public class GitUnstashDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.Unstash";
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myStashList;
   }
 
   /**
