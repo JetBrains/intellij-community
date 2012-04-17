@@ -43,6 +43,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
@@ -207,11 +208,18 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
       if (nsDescriptor == null) {
         String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
         if (htmlns == null || htmlns.length() == 0) {
-          htmlns = XmlUtil.XHTML_URI;
+          htmlns = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
         }
         nsDescriptor = getDefaultNSDescriptor(htmlns, false);
       }
       return new HtmlNSDescriptorImpl(nsDescriptor);
+    }
+    else if (XmlUtil.XHTML_URI.equals(namespace)) {
+      String xhtmlNamespace = XmlUtil.getDefaultXhtmlNamespace(getProject());
+      if (xhtmlNamespace == null || xhtmlNamespace.length() == 0) {
+        xhtmlNamespace = Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
+      }
+      return getDefaultNSDescriptor(xhtmlNamespace, false);
     }
     else if (namespace != null && namespace != XmlUtil.EMPTY_URI) {
       if (doctype == null || !namespace.equals(XmlUtil.getDtdUri(doctype))) {

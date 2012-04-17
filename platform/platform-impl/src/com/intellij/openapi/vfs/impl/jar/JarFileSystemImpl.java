@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -76,11 +77,10 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
 
             String[] jarPaths;
             synchronized (LOCK) {
-              if (jarPathsCache == null) {
-                Set<String> jarPathsSet = myHandlers.keySet();
-                jarPathsCache = jarPathsSet.toArray(new String[jarPathsSet.size()]);
-              }
               jarPaths = jarPathsCache;
+              if (jarPaths == null) {
+                jarPathsCache = jarPaths = ArrayUtil.toStringArray(myHandlers.keySet());
+              }
             }
 
             for (String jarPath : jarPaths) {

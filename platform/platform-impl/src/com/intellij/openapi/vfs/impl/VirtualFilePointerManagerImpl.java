@@ -134,23 +134,23 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private static boolean startsWith(final String url, final String pointerUrl) {
-    String urlSuffix = stripSuffix(url);
-    String pointerPrefix = stripToJarPrefix(pointerUrl);
-    if (urlSuffix.length() > 0) {
-      return Comparing.equal(stripToJarPrefix(url), pointerPrefix, SystemInfo.isFileSystemCaseSensitive) &&
-             StringUtil.startsWith(urlSuffix, stripSuffix(pointerUrl));
+    String urlSuffix = substringAfterJarSeparator(url);
+    String pointerPrefix = substringBeforeJarSeparator(pointerUrl);
+    if (!urlSuffix.isEmpty()) {
+      return Comparing.equal(substringBeforeJarSeparator(url), pointerPrefix, SystemInfo.isFileSystemCaseSensitive) &&
+             StringUtil.startsWith(urlSuffix, substringAfterJarSeparator(pointerUrl));
     }
 
-    return FileUtil.startsWith(pointerPrefix, stripToJarPrefix(url));
+    return FileUtil.startsWith(pointerPrefix, substringBeforeJarSeparator(url));
   }
 
-  private static String stripToJarPrefix(String url) {
+  private static String substringBeforeJarSeparator(String url) {
     int separatorIndex = url.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (separatorIndex < 0) return url;
     return url.substring(0, separatorIndex);
   }
 
-  private static String stripSuffix(String url) {
+  private static String substringAfterJarSeparator(String url) {
     int separatorIndex = url.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (separatorIndex < 0) return "";
     return url.substring(separatorIndex + JarFileSystem.JAR_SEPARATOR.length());

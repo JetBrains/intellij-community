@@ -1,3 +1,4 @@
+import java.lang.Override;
 import java.util.*;
 class GenericsTest<T> {
 
@@ -90,5 +91,31 @@ class GenericsTest2<T> {
             {
             }
         };
+    }
+}
+class Example {
+    private static <T> void assertThat(T actual, Matcher<? super T> matcher) {
+      assert actual != null;
+      assert matcher != null;
+    }
+
+    private static <E> Matcher<? super Collection<? extends E>> hasSize(int size) {
+        assert size >=0;
+        return new Matcher<Collection<? extends E>>() {
+          @Override
+          public void foo(Collection<? extends E> es) {
+            System.out.println(es);
+          }
+        };
+    }
+
+    public static void main(String[] args) {
+      List<Boolean> list = <warning descr="Unchecked assignment: 'java.util.ArrayList' to 'java.util.List<java.lang.Boolean>'">new ArrayList()</warning>;
+      System.out.println(list);
+      assertThat(new ArrayList<Boolean>(), hasSize(0));
+    }
+
+    private interface Matcher<T> {
+      void foo(T t);
     }
 }
