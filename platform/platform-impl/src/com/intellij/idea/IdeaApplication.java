@@ -48,32 +48,36 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
-
 
 @SuppressWarnings({"CallToPrintStackTrace"})
 public class IdeaApplication {
+  @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
+
+  private static IdeaApplication ourInstance;
 
   protected final String[] myArgs;
   private boolean myPerformProjectLoad = true;
-  private static IdeaApplication ourInstance;
   private ApplicationStarter myStarter;
-  @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
   public IdeaApplication(String[] args) {
     LOG.assertTrue(ourInstance == null);
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
+
     myArgs = args;
     boolean isInternal = Boolean.valueOf(System.getProperty(IDEA_IS_INTERNAL_PROPERTY)).booleanValue();
 
     if (Main.isCommandLine(args)) {
       boolean headless = Main.isHeadless(args);
-      new CommandLineApplication(isInternal, false, headless);
       if (!headless) patchSystem();
+      new CommandLineApplication(isInternal, false, headless);
     }
     else {
-      System.setProperty("sun.awt.noerasebackground","true");
       patchSystem();
       Splash splash = null;
       if (myArgs.length == 0) {
@@ -90,16 +94,82 @@ public class IdeaApplication {
   }
 
   private static void patchSystem() {
+    System.setProperty("sun.awt.noerasebackground","true");
+
     Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
+
     if (Patches.SUN_BUG_ID_6209673) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
+
+    patchWM();
+
     IconLoader.activate();
+  }
+
+  private static void patchWM() {
+    if (Boolean.parseBoolean(System.getProperty("idea.skip.wm.patching"))) return;
+    if (!"sun.awt.X11.XToolkit".equals(Toolkit.getDefaultToolkit().getClass().getName())) return;
+
+    try {
+      final Class<?> xwmClass = Class.forName("sun.awt.X11.XWM");
+      final Method getWM = xwmClass.getDeclaredMethod("getWM");
+      getWM.setAccessible(true);
+      final Object xwm = getWM.invoke(null);
+      if (xwm == null) return;
+
+      final Method getNetProtocol = xwmClass.getDeclaredMethod("getNETProtocol");
+      getNetProtocol.setAccessible(true);
+      final Object netProtocol = getNetProtocol.invoke(xwm);
+      if (netProtocol == null) return;
+
+      final Method getWMName = netProtocol.getClass().getDeclaredMethod("getWMName");
+      getWMName.setAccessible(true);
+      final String wmName = (String)getWMName.invoke(netProtocol);
+      if (wmName == null) return;
+      LOG.info("WM detected: " + wmName);
+
+      if ("Mutter".equals(wmName)) {
+        try {
+          xwmClass.getDeclaredField("MUTTER_WM");
+        }
+        catch (NoSuchFieldException e) {
+          setWM(xwm, "METACITY_WM");  // Mutter support absent - mimic Metacity
+        }
+      }
+      else if ("awesome".equals(wmName)) {
+        try {
+          xwmClass.getDeclaredField("OTHER_NONREPARENTING_WM");
+          if (System.getenv("_JAVA_AWT_WM_NONREPARENTING") == null) {
+            setWM(xwm, "OTHER_NONREPARENTING_WM");  // patch present but not activated
+          }
+        }
+        catch (NoSuchFieldException e) {
+          setWM(xwm, "LG3D_WM");  // patch absent - mimic LG3D
+        }
+      }
+    }
+    catch (Throwable e) {
+      LOG.warn(e);
+    }
+  }
+
+  private static void setWM(final Object xwm, final String wmConstant) throws NoSuchFieldException, IllegalAccessException {
+    final Field wm = xwm.getClass().getDeclaredField(wmConstant);
+    wm.setAccessible(true);
+    final Object id = wm.get(null);
+    if (id != null) {
+      final Field awtWmgr = xwm.getClass().getDeclaredField("awt_wmgr");
+      awtWmgr.setAccessible(true);
+      awtWmgr.set(null, id);
+      final Field wmID = xwm.getClass().getDeclaredField("WMID");
+      wmID.setAccessible(true);
+      wmID.set(xwm, id);
+    }
   }
 
   protected ApplicationStarter getStarter() {
     if (myArgs.length > 0) {
-      final Application app = ApplicationManager.getApplication();
       PluginManager.getPlugins();
 
       ExtensionPoint<ApplicationStarter> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.APPLICATION_STARTER);
@@ -224,6 +294,7 @@ public class IdeaApplication {
             }
           }
 
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               PluginManager.reportPluginError();
