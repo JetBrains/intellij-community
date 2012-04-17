@@ -803,7 +803,11 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   @NotNull
   @Override
   public <T extends BeforeRunTask> List<T> getBeforeRunTasks(RunConfiguration settings, Key<T> taskProviderID) {
-    List<BeforeRunTask> tasks = getBeforeRunTasks(settings);
+    List<BeforeRunTask> tasks = myConfigurationToBeforeTasksMap.get(settings);
+    if (tasks == null) {
+      tasks = getBeforeRunTasks(settings);
+      myConfigurationToBeforeTasksMap.put(settings, tasks);
+    }
     List<T> result = new ArrayList<T>();
     for (BeforeRunTask task : tasks) {
       if (task.getProviderId() == taskProviderID)
