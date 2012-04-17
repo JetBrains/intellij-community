@@ -577,21 +577,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    /*
     if (dfaRight instanceof DfaNotNullValue) {
       if (dfaLeft instanceof DfaVariableValue) {
         DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
         DfaVariableValue dfaVar = (DfaVariableValue)dfaLeft;
         DfaTypeValue type = myFactory.getTypeFactory().create(((DfaNotNullValue)dfaRight).getType());
         if (isNegated) {
-          return varState.addNotInstanceofValue(type) || applyCondition(compareToNull(dfaVar, false));
+          return varState.addNotInstanceofValue(type) ||
+                 applyCondition(myFactory.getRelationFactory().create(dfaVar, DfaUnknownValue.getInstance(), JavaTokenType.EQEQ, false));
         }
-        return applyCondition(compareToNull(dfaVar, true)) && varState.setInstanceofValue(type);
+        return applyCondition(compareToNull(dfaVar, false)) && varState.setInstanceofValue(type);
 
       }
       return true;
     }
-    */
 
     if (dfaRight == myFactory.getConstFactory().getNull() && dfaLeft instanceof DfaVariableValue) {
       final DfaVariableState varState = getVariableState((DfaVariableValue)dfaLeft);
