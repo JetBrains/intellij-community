@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.javaee.ExternalResourceManagerImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -35,9 +36,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.StringPattern;
@@ -74,6 +77,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -152,8 +156,14 @@ public class XmlUtil {
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
   public static final Key<PsiAnchor> ORIGINAL_ELEMENT = Key.create("ORIGINAL_ELEMENT");
 
+  public static final String XHTML4_SCHEMA_LOCATION;
 
   private XmlUtil() {
+  }
+
+  static {
+    final URL xhtml4SchemaLocationUrl = XmlUtil.class.getResource(ExternalResourceManagerImpl.STANDARD_SCHEMAS + "xhtml1-transitional.xsd");
+    XHTML4_SCHEMA_LOCATION = VfsUtil.urlToPath(VfsUtil.fixURLforIDEA(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm())));
   }
 
   @Nullable
@@ -604,11 +614,10 @@ public class XmlUtil {
   }
 
   public static String getDefaultXhtmlNamespace(Project project) {
-    String defaultHtmlDoctype = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(project);
-    if (Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(defaultHtmlDoctype)) {
-      defaultHtmlDoctype = Html5SchemaProvider.XHTML5_SCHEMA_LOCATION;
-    }
-    return defaultHtmlDoctype;
+    final String doctype = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(project);
+    return Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(doctype)
+           ? Html5SchemaProvider.XHTML5_SCHEMA_LOCATION
+           : doctype;
   }
   //
   //public static void expandTag(@NotNull XmlTag tag) {
