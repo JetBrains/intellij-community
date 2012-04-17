@@ -35,5 +35,6 @@ public class XsltResourceProvider implements StandardResourceProvider {
     registrar.addIgnoredResource(XsltFunctionContext.EXSLT_DYNAMIC);
     registrar.addIgnoredResource(XsltFunctionContext.EXSLT_MATH);
     registrar.addIgnoredResource(XsltFunctionContext.EXSLT_SETS);
+    registrar.addIgnoredResource(XsltFunctionContext.EXSLT_STRINGS);
   }
 }
