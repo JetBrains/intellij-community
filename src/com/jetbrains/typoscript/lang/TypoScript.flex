@@ -27,8 +27,7 @@ WHITE_SPACE_CHARS=[\ \n\r\t\f]*
 WHITESPACE_WITH_NEW_LINE = [\ \t\f]*(\n|\r|\r\n){WHITE_SPACE_CHARS}
 STRING_TAIL = [^\r\n]*
 ONE_LINE_COMMENT=("/"|"#"){STRING_TAIL}
-C_STYLE_COMMENT=("/*"[^"*"]{COMMENT_TAIL})|"/*"
-COMMENT_TAIL=([^"*"]*("*"+[^"*""/"])?)*("*"+"/")?                         //todo[lene]
+C_STYLE_COMMENT="/*" ~((\n|\r|\r\n){WHITE_SPACE_CHARS}"*/")
 ENDTRIMMED_STRING_TAIL = ({STRING_TAIL}{NOT_WHITE_SPACE})?
 TRIMMED_STRING_TAIL = {NOT_WHITE_SPACE}{ENDTRIMMED_STRING_TAIL}
 
@@ -52,7 +51,7 @@ OBJECT_PATH_ENTITY = [A-Za-z0-9\-_]*
 {WHITE_SPACE_CHARS}                                   { return TokenType.WHITE_SPACE; }
 
 <YYINITIAL> {ONE_LINE_COMMENT}                        { return TypoScriptTokenTypes.ONE_LINE_COMMENT; }
-<YYINITIAL> {C_STYLE_COMMENT}                         { return TypoScriptTokenTypes.C_STYLE_COMMENT; }
+<YYINITIAL> {C_STYLE_COMMENT}                         { yybegin(ONE_LINE_IGNORED_ZONE); return TypoScriptTokenTypes.C_STYLE_COMMENT; }
 <YYINITIAL> {OBJECT_PATH_ENTITY}                      { yybegin(EXPRESSION_SIGN); return TypoScriptTokenTypes.OBJECT_PATH_ENTITY; }
 <YYINITIAL> "."                                       { return TypoScriptTokenTypes.OBJECT_PATH_SEPARATOR; }
 <YYINITIAL> "["{ENDTRIMMED_STRING_TAIL}               { return TypoScriptTokenTypes.CONDITION; }

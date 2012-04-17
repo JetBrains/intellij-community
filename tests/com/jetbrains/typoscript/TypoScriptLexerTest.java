@@ -74,6 +74,10 @@ public class TypoScriptLexerTest extends UsefulTestCase {
     doTest();
   }
 
+  public void testComments() throws Throwable {
+    doTest();
+  }
+
   private void doTest() throws IOException {
     Lexer lexer = new TypoScriptLexer();
     String testText = getInputData(getDataSubPath(), getTestName(true));
