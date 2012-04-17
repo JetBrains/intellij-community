@@ -56,9 +56,6 @@ public abstract class PythonRemoteInterpreterManager {
                                                          @NotNull GeneralCommandLine commandLine, boolean printPidInFirstLine)
     throws PyRemoteInterpreterException;
 
-  public abstract boolean checkRemoteConnection(final Object projectOrComponent, final PythonRemoteSdkAdditionalData data)
-    throws PyRemoteInterpreterException;
-
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, Sdk[] existingSdks);
 
   public abstract PySkeletonGenerator createRemoteSkeletonGenerator(@Nullable Project project, String path, @NotNull Sdk sdk);
