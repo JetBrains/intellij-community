@@ -1506,6 +1506,10 @@ public class JavaDocInfoGenerator {
       }
     }
 
+    if (type instanceof PsiCapturedWildcardType) {
+      type = ((PsiCapturedWildcardType)type).getWildcard();
+    }
+
     if (type instanceof PsiWildcardType){
       PsiWildcardType wt = ((PsiWildcardType)type);
 
