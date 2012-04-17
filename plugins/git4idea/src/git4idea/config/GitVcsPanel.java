@@ -164,7 +164,7 @@ public class GitVcsPanel {
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected() ||
-           settings.isAutoCommitOnCherryPick() == myAutoCommitOnCherryPick.isSelected());
+           settings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected());
   }
 
   /**
