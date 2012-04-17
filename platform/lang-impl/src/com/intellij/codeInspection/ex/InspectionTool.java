@@ -29,10 +29,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -69,7 +66,16 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager);
 
-  public abstract void exportResults(@NotNull Element parentNode);
+  public void exportResults(@NotNull final Element parentNode) {
+    getRefManager().iterate(new RefVisitor(){
+      @Override
+      public void visitElement(RefEntity elem) {
+        exportResults(parentNode, elem);
+      }
+    });
+  }
+
+  public abstract void exportResults(@NotNull Element parentNode, RefEntity refEntity);
 
   public abstract boolean isGraphNeeded();
   @Nullable

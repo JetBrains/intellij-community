@@ -19,14 +19,16 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ExecutionStatus;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
-import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
@@ -42,24 +44,39 @@ public class AndroidMavenExecutor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.tools.AndroidMavenExecutor");
 
   private static final String BUILD_ERROR_INDICATOR = "[error]";
-  private static final String FAILED_TO_RESOLVE_ARTIFACT_INDICATOR = "[info] failed to resolve artifact";
 
   private AndroidMavenExecutor() {
   }
 
-  public static Map<CompilerMessageCategory, List<String>> generateResources(Module module) {
+  public static Map<CompilerMessageCategory, List<String>> generateResources(final Module module) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(module.getProject());
 
-    MavenRunnerParameters parameters =
+    final MavenRunnerParameters parameters =
       new MavenRunnerParameters(true, projectsManager.findProject(module).getDirectory(),
                                 Collections.singletonList("process-resources"),
                                 projectsManager.getExplicitProfiles());
 
-    Map<CompilerMessageCategory, List<String>> result = new HashMap<CompilerMessageCategory, List<String>>();
+    final Map<CompilerMessageCategory, List<String>> result = new HashMap<CompilerMessageCategory, List<String>>();
     result.put(CompilerMessageCategory.ERROR, new ArrayList<String>());
 
     try {
-      JavaParameters javaParams = MavenExternalParameters.createJavaParameters(module.getProject(), parameters);
+      JavaParameters javaParams = ApplicationManager.getApplication().runReadAction(new Computable<JavaParameters>() {
+        @Nullable
+        @Override
+        public JavaParameters compute() {
+          try {
+            return MavenExternalParameters.createJavaParameters(module.getProject(), parameters);
+          }
+          catch (ExecutionException e) {
+            LOG.info(e);
+            result.get(CompilerMessageCategory.ERROR).add(e.getMessage());
+            return null;
+          }
+        }
+      });
+      if (javaParams == null) {
+        return result;
+      }
 
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(javaParams);
       StringBuilder messageBuilder = new StringBuilder();
@@ -70,13 +87,7 @@ public class AndroidMavenExecutor {
         String lcmessage = message.toLowerCase();
         int buildErrorIndex = lcmessage.indexOf(BUILD_ERROR_INDICATOR);
         if (buildErrorIndex >= 0) {
-          int failedToResolveIndex = lcmessage.indexOf(FAILED_TO_RESOLVE_ARTIFACT_INDICATOR);
-          /*if (failedToResolveIndex >= 0) {
-            result.get(CompilerMessageCategory.ERROR).add("Failed to copy Android resources from Maven artifacts");
-          }
-          else {*/
-            result.get(CompilerMessageCategory.ERROR).add(message.substring(buildErrorIndex));
-          //}
+          result.get(CompilerMessageCategory.ERROR).add(message.substring(buildErrorIndex));
         }
       }
     }

@@ -196,7 +196,7 @@ public class ToolEditorDialog extends DialogWrapper {
     browseCommandButton.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+          FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
           VirtualFile file = FileChooser.chooseFile(descriptor, myProject, null);
           if (file != null) {
             myTfCommand.setText(file.getPresentableUrl());
