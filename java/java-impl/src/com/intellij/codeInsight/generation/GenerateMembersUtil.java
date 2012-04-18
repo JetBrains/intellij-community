@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +33,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -220,6 +223,12 @@ public class GenerateMembersUtil {
   }
 
   public static PsiMethod substituteGenericMethod(PsiMethod method, final PsiSubstitutor substitutor) {
+    return substituteGenericMethod(method, substitutor, null);
+  }
+
+  public static PsiMethod substituteGenericMethod(PsiMethod method,
+                                                  final PsiSubstitutor substitutor,
+                                                  final PsiElement target) {
     Project project = method.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
 
@@ -243,6 +252,9 @@ public class GenerateMembersUtil {
       if (docComment != null) {
         newMethod.addAfter(docComment, null);
       }
+
+      final Module module = target != null ? ModuleUtil.findModuleForPsiElement(target) : null;
+      final GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
 
       PsiParameter[] parameters = method.getParameterList().getParameters();
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -283,7 +295,7 @@ public class GenerateMembersUtil {
         if (parameter.getLanguage() == JavaLanguage.INSTANCE) {
           PsiModifierList modifierList = newParameter.getModifierList();
           modifierList = (PsiModifierList)modifierList.replace(parameter.getModifierList());
-          processAnnotations(project, modifierList);
+          processAnnotations(project, modifierList, moduleScope);
         }
         newMethod.getParameterList().add(newParameter);
       }
@@ -316,13 +328,17 @@ public class GenerateMembersUtil {
     }
   }
 
-  private static void processAnnotations(Project project, PsiModifierList modifierList) {
+  private static void processAnnotations(Project project, PsiModifierList modifierList, GlobalSearchScope moduleScope) {
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final Set<String> toRemove = new HashSet<String>();
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       final String qualifiedName = annotation.getQualifiedName();
       for (OverrideImplementsAnnotationsHandler handler : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
         final String[] annotations2Remove = handler.annotationsToRemove(project, qualifiedName);
         Collections.addAll(toRemove, annotations2Remove);
+        if (moduleScope != null && psiFacade.findClass(qualifiedName, moduleScope) == null) {
+          toRemove.add(qualifiedName);
+        }
       }
     }
     for (String fqn : toRemove) {
