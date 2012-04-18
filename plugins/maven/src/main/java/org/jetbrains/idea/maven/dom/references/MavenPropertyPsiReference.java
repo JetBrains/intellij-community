@@ -176,7 +176,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     MavenDomProfile profile = DomUtil.findDomElement(myElement, MavenDomProfile.class);
     if (profile != null) {
-      PsiElement result = MavenDomProjectProcessorUtils.searchPropertyInProfile(myText, profile);
+      PsiElement result = MavenDomProjectProcessorUtils.findProperty(profile.getProperties(), myText);
       if (result != null) return result;
     }
 
