@@ -743,6 +743,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       for (Pair<VirtualFile, StateStorage> cause : causes) {
         String url = cause.first.getPresentableUrl();
         if (!alreadyShown.contains(url)) {
+          if (alreadyShown.size() > 10) {
+            filesBuilder.append("\n" + "and ").append(causes.size() - alreadyShown.size()).append(" more");
+            break;
+          }
           if (!first) filesBuilder.append("\n");
           first = false;
           filesBuilder.append(url);
