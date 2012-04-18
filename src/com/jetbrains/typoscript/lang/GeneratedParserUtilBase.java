@@ -26,8 +26,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 /**
- * @author gregsh
- */
+* @author gregsh
+*/
 @SuppressWarnings("StringEquality")
 public class GeneratedParserUtilBase {
 
@@ -328,7 +328,7 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  private static int getLastVariantOffset(ErrorState state, int defValue) {
+  static int getLastVariantOffset(ErrorState state, int defValue) {
     return state.lastExpectedVariantOffset < 0? defValue : state.lastExpectedVariantOffset;
   }
 

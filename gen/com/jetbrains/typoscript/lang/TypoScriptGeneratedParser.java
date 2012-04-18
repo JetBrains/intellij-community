@@ -75,9 +75,9 @@ public class TypoScriptGeneratedParser implements PsiParser {
     final Marker marker_ = builder_.mark();
     enterErrorRecordingSection(builder_, level_, _SECTION_GENERAL_);
     result_ = object_path(builder_, level_ + 1);
-    result_ = result_ && consumeToken(builder_, ASSIGNMENT_OPERATOR);
-    pinned_ = result_; // pin = 2
-    result_ = result_ && assignment_2(builder_, level_ + 1);
+    pinned_ = result_; // pin = 1
+    result_ = result_ && report_error_(builder_, consumeToken(builder_, ASSIGNMENT_OPERATOR));
+    result_ = pinned_ && assignment_2(builder_, level_ + 1) && result_;
     if (result_ || pinned_) {
       marker_.done(ASSIGNMENT);
     }
@@ -169,7 +169,7 @@ public class TypoScriptGeneratedParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // object_path '<' object_path
+  // object_path '<' object_path_on_same_line
   public static boolean copying(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "copying")) return false;
     if (!nextTokenIs(builder_, OBJECT_PATH_ENTITY) && !nextTokenIs(builder_, OBJECT_PATH_SEPARATOR)) return false;
@@ -180,7 +180,7 @@ public class TypoScriptGeneratedParser implements PsiParser {
     result_ = object_path(builder_, level_ + 1);
     result_ = result_ && consumeToken(builder_, COPYING_OPERATOR);
     pinned_ = result_; // pin = 2
-    result_ = result_ && object_path(builder_, level_ + 1);
+    result_ = result_ && isObjectPathOnSameLine(builder_, level_ + 1);
     if (result_ || pinned_) {
       marker_.done(COPYING);
     }
@@ -192,19 +192,19 @@ public class TypoScriptGeneratedParser implements PsiParser {
   }
 
   /* ********************************************************** */
-  // assignment | value_modification | multiline_value_assignment | copying | unsetting | code_block
+  // value_modification | multiline_value_assignment | copying | unsetting | code_block | assignment
   // | condition_element | include_statement_element
   static boolean expression(PsiBuilder builder_, int level_) {
     if (!recursion_guard_(builder_, level_, "expression")) return false;
     boolean result_ = false;
     final Marker marker_ = builder_.mark();
     enterErrorRecordingSection(builder_, level_, _SECTION_RECOVER_);
-    result_ = assignment(builder_, level_ + 1);
-    if (!result_) result_ = value_modification(builder_, level_ + 1);
+    result_ = value_modification(builder_, level_ + 1);
     if (!result_) result_ = multiline_value_assignment(builder_, level_ + 1);
     if (!result_) result_ = copying(builder_, level_ + 1);
     if (!result_) result_ = unsetting(builder_, level_ + 1);
     if (!result_) result_ = code_block(builder_, level_ + 1);
+    if (!result_) result_ = assignment(builder_, level_ + 1);
     if (!result_) result_ = condition_element(builder_, level_ + 1);
     if (!result_) result_ = include_statement_element(builder_, level_ + 1);
     if (!result_) {

@@ -19,8 +19,8 @@ public class CopyingImpl extends TypoScriptCompositeElementImpl implements Copyi
 
   @Override
   @NotNull
-  public List<ObjectPath> getObjectPathList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ObjectPath.class);
+  public ObjectPath getObjectPath() {
+    return findNotNullChildByClass(ObjectPath.class);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

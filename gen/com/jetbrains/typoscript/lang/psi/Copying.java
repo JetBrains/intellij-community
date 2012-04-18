@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface Copying extends TypoScriptCompositeElement {
 
   @NotNull
-  List<ObjectPath> getObjectPathList();
+  ObjectPath getObjectPath();
 
 }
