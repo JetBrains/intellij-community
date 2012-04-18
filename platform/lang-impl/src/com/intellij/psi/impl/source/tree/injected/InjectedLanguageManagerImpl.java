@@ -226,7 +226,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     final VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
       PsiElement host = file.getContext();
-      if (host != null) {
+      if (host instanceof PsiLanguageInjectionHost) {
         return (PsiLanguageInjectionHost)host;
       }
     }
