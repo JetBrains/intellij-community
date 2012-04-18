@@ -1535,7 +1535,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           if (!myResizePending) {
             Dimension preferredSize = preferredLayoutSize(null);
             if (preferredSize.width != size.width) {
-              UISettings.getInstance().MAX_LOOKUP_WIDTH = Math.max(300, size.width);
+              UISettings.getInstance().MAX_LOOKUP_WIDTH = Math.max(500, size.width);
             }
 
             int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
