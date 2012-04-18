@@ -85,10 +85,6 @@ public class MockRunManager extends RunManagerEx {
   }
 
   @Override
-  public void setEditBeforeRun(RunConfiguration settings, boolean edit) {
-  }
-
-  @Override
   public RunManagerConfig getConfig() {
     return null;
   }

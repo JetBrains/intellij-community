@@ -116,7 +116,12 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true));
     runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
-    runManager.setEditBeforeRun(runConfiguration, myBeforeRunStepsPanel.needEditBeforeRun());
+    RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
+    if (runManagerSettings != null) {
+      runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+    } else {
+      settings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
+    }
   }
 
   public List<BeforeRunTask> getStepsBeforeLaunch() {

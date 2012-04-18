@@ -653,11 +653,6 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
     return configuration.isEditBeforeRun();
   }
 
-  public void setEditBeforeRun(@NotNull final RunConfiguration configuration, final boolean edit) {
-    final RunnerAndConfigurationSettings settings = getSettings(configuration);
-    if (settings != null) settings.setEditBeforeRun(edit);
-  }
-
   Collection<RunnerAndConfigurationSettings> getStableConfigurations() {
     final Map<Integer, RunnerAndConfigurationSettings> result =
       new LinkedHashMap<Integer, RunnerAndConfigurationSettings>(myConfigurations);
