@@ -125,7 +125,7 @@ public class DataFlowRunner {
       int count = 0;
       while (!queue.isEmpty()) {
         if (count % 50 == 0 && !unitTestMode && System.currentTimeMillis() - before > timeLimit) {
-          psiBlock.putUserData(TOO_EXPENSIVE_SIZE, psiBlock.getTextLength());
+          psiBlock.putUserData(TOO_EXPENSIVE_SIZE, psiBlock.getText().hashCode());
           return RunnerResult.TOO_COMPLEX;
         }
         ProgressManager.checkCanceled();
