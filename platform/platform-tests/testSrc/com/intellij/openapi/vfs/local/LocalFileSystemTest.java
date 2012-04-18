@@ -20,11 +20,9 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -322,5 +320,18 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       GeneralSettings.getInstance().setUseSafeWrite(safeWrite);
       FileUtil.delete(dir);
     }
+  }
+
+  public void testWindowsVirtualDirectory() throws Exception {
+    if (!SystemInfo.isWindows) return;
+    File file = new File("c:\\Documents and Settings\\desktop.ini");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull("File not found: " + file, virtualFile);
+
+    System.out.println("desktop.ini found");
+    NewVirtualFileSystem system = (NewVirtualFileSystem)virtualFile.getFileSystem();
+    system = PersistentFS.replaceWithNativeFS(system);
+
+    assertTrue(system.exists(virtualFile));
   }
 }
