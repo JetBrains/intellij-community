@@ -295,6 +295,13 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     assert 'itar' in myFixture.lookupElementStrings
   }
 
+  public void testListTemplatesSearchesPrefixInDescription() {
+    myFixture.configureByText("a.java", "class A { main<caret> }")
+
+    new ListTemplatesHandler().invoke(project, editor, myFixture.file);
+    assert myFixture.lookupElementStrings == ['psvm']
+  }
+
   public void testListTemplatesAction() {
     myFixture.configureByText("a.java", "class A {{ <caret> }}")
 
@@ -308,7 +315,6 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     myFixture.type('\b')
     new ListTemplatesHandler().invoke(project, editor, myFixture.file);
     assert myFixture.lookupElementStrings.containsAll(['iter', 'itco'])
-    assert !('toar' in myFixture.lookupElementStrings)
     LookupManager.getInstance(project).hideActiveLookup()
 
     myFixture.type('xxxxx')

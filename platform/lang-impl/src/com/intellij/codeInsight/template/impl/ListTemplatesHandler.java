@@ -53,7 +53,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     List<TemplateImpl> matchingTemplates = new ArrayList<TemplateImpl>();
     ArrayList<TemplateImpl> applicableTemplates = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false);
     for (TemplateImpl template : applicableTemplates) {
-      if (template.getKey().startsWith(prefix)) {
+      if (template.getKey().startsWith(prefix) || template.getDescription() != null && template.getDescription().contains(prefix)) {
         matchingTemplates.add(template);
       }
     }
