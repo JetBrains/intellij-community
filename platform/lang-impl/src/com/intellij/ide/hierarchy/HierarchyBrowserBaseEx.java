@@ -80,7 +80,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   private boolean myCachedIsValidBase = false;
 
-  private final List<Runnable> myRunOnDisposeList = new ArrayList<Runnable>();
   private final HashMap<String, OccurenceNavigator> myOccurrenceNavigators = new HashMap<String, OccurenceNavigator>();
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
@@ -205,7 +204,14 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected final JTree createTree(boolean dndAware) {
     final Tree tree;
     if (dndAware) {
-      tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode("")));
+      tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
+        @Override
+        public void removeNotify() {
+          super.removeNotify();
+          myRefreshAction.unregisterCustomShortcutSet(this);
+        }
+      };
+
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         DnDManager.getInstance().registerSource(new DnDSource() {
           public boolean canStartDragging(final DnDAction action, final Point dragOrigin) {
@@ -242,16 +248,17 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
     else {
-      tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")));
+      tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")))  {
+        @Override
+        public void removeNotify() {
+          super.removeNotify();
+          myRefreshAction.unregisterCustomShortcutSet(this);
+        }
+      };
     }
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
     myRefreshAction.registerShortcutOn(tree);
-    myRunOnDisposeList.add(new Runnable() {
-      public void run() {
-        myRefreshAction.unregisterCustomShortcutSet(tree);
-      }
-    });
 
     return tree;
   }
@@ -423,10 +430,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     for (final HierarchyTreeBuilder builder : builders) {
       Disposer.dispose(builder);
     }
-    for (final Runnable aRunOnDisposeList : myRunOnDisposeList) {
-      aRunOnDisposeList.run();
-    }
-    myRunOnDisposeList.clear();
     myBuilders.clear();
   }
 
