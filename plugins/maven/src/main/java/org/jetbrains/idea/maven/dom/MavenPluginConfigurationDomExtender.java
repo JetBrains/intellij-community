@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -41,13 +42,14 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomParameter;
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomConfiguration> {
   public static final Key<ParameterData> PLUGIN_PARAMETER_KEY = Key.create("MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY");
+
+  private static final Set<String> COLLECTIONS_TYPE_NAMES = ImmutableSet.of("java.util.Collection", "java.util.Set", "java.util.List",
+                                                                            "java.util.ArrayList", "java.util.HashSet",
+                                                                            "java.util.LinkedList");
 
   @Override
   public void registerExtensions(@NotNull MavenDomConfiguration config, @NotNull DomExtensionsRegistrar r) {
@@ -226,9 +228,9 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
   private static boolean isCollection(MavenDomParameter parameter) {
     String type = parameter.getType().getStringValue();
-    if (type.endsWith("[]")) return true;
+    if (type == null) return false;
 
-    return type.equals("java.util.List") || type.equals("java.util.Set") || type.equals("java.util.Collection");
+    return type.endsWith("[]") || COLLECTIONS_TYPE_NAMES.contains(type);
   }
 
   public static class ParameterData {
