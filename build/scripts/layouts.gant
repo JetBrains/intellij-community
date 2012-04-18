@@ -498,6 +498,7 @@ def reorder(String home, String targetDirectory) {
       arg(value: "$home/lib")
       classpath {
         pathelement(location: util.output)
+        pathelement(location: getProperty('util-rt').output)
         pathelement(location: "$home/lib/jna.jar")
         pathelement(location: "$home/lib/trove4j.jar")
       }
