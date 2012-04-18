@@ -33,18 +33,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.DirectoryAsPackageRenameHandlerBase;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.*;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -326,6 +323,20 @@ public class MoveClassesOrPackagesImpl {
     if (!chooser.isOK()) return;
     final PsiDirectory selectedTarget = chooser.getSelectedDirectory();
     if (selectedTarget == null) return;
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    RefactoringConflictsUtil.analyzeModuleConflicts(project, Arrays.asList(directories), UsageInfo.EMPTY_ARRAY, selectedTarget, conflicts);
+    if (!conflicts.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
+      }
+      else {
+        final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts);
+        conflictsDialog.show();
+        if (!conflictsDialog.isOK()) {
+          return;
+        }
+      }
+    }
     final Ref<IncorrectOperationException> ex = Ref.create(null);
     final String commandDescription = RefactoringBundle.message("moving.directories.command");
     Runnable runnable = new Runnable() {
