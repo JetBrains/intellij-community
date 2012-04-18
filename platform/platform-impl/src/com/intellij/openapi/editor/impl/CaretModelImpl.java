@@ -595,7 +595,6 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           listener.caretPositionChanged(event);
         }
       }
-      EditorActionUtil.selectNonexpandableFold(myEditor);
     }
     return null;
   }
