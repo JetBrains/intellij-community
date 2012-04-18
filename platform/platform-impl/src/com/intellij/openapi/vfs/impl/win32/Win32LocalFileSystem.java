@@ -114,11 +114,16 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @Override
   public boolean exists(@NotNull VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) return true;
-    boolean b = myKernel.exists(fileOrDirectory.getPath());
-    if (checkMe && b != super.exists(fileOrDirectory)) {
-      LOG.error(fileOrDirectory.getPath());
+    try {
+      myKernel.exists(fileOrDirectory.getPath());
+      if (checkMe && !super.exists(fileOrDirectory)) {
+        LOG.error(fileOrDirectory.getPath());
+      }
+      return true;
     }
-    return b;
+    catch (FileNotFoundException e) {
+      return super.exists(fileOrDirectory);
+    }
   }
 
   @Override
@@ -200,6 +205,11 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   @Override
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
-    return myKernel.getBooleanAttributes(file.getPath(), flags);
+    try {
+      return myKernel.getBooleanAttributes(file.getPath(), flags);
+    }
+    catch (FileNotFoundException e) {
+      return super.getBooleanAttributes(file, flags);
+    }
   }
 }
